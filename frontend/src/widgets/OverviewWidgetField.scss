@@ -16,22 +16,3 @@
 .smart-hub--dashboard-overview-widget-field .smart-hub--ellipsis {
     max-width: 200px;
 }
-
-// Make sure tooltip label text wraps were we expect.
-.smart-hub--dashboard-overview-widget-field-label .usa-tooltip span {
-   width: 242px;
-   display: block;
-   word-wrap:break-word;
-   white-space: normal;
-}
-
-// Vertical align for the question mark and tool tip button.
-.smart-hub--dashboard-overview-widget-field-label .usa-tooltip {
-    vertical-align: middle;
-}
-
-// Horizontally align the question mark with the tool tip button.
-.smart-hub--dashboard-overview-widget-field-label .usa-tooltip svg {
-    height: 1.3em;
-    width: 1.3em;
-}

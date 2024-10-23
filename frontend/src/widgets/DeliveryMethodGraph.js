@@ -40,6 +40,7 @@ export default function DeliveryMethodGraph({ data }) {
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
+  const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
 
   // we have to store this is in state, despite
   // it being a prop, because of other dependencies
@@ -100,7 +101,11 @@ export default function DeliveryMethodGraph({ data }) {
     // (an object for each trace)
     // and the table (an array of objects in the format defined by proptypes)
 
-    const { records: unfilteredRecords, filteredReports } = data;
+    const {
+      records: unfilteredRecords,
+      filteredReports,
+      showDashboardFiltersNotApplicable: showDashboardFiltersNotApplicableProp,
+    } = data;
     const total = [...unfilteredRecords].pop();
     const records = unfilteredRecords.filter((record) => record.month !== 'Total');
 
@@ -174,7 +179,7 @@ export default function DeliveryMethodGraph({ data }) {
       traceMap.get('Hybrid').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('Hybrid').y.push(dataset.hybrid_percentage);
     });
-
+    setShowFiltersNotApplicable(showDashboardFiltersNotApplicableProp);
     setTraces(Array.from(traceMap.values()));
     setDisplayFilteredReports(filteredReports);
     setTabularData(tableData);
@@ -243,6 +248,7 @@ export default function DeliveryMethodGraph({ data }) {
       subtitle="How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity Reports"
       subtitle2={`${displayFilteredReports.toLocaleString('en-us')} Activity reports`}
       menuItems={menuItems}
+      showFiltersNotApplicable={showFiltersNotApplicable}
     >
       <LineGraph
         showTabularData={showTabularData}
@@ -276,6 +282,7 @@ DeliveryMethodGraph.propTypes = {
     total_hybrid_count: PropTypes.number,
     average_hybrid_percentage: PropTypes.number,
     filteredReports: PropTypes.number,
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     records: PropTypes.arrayOf(
       PropTypes.shape({
         month: PropTypes.string,

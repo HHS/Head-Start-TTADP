@@ -41,6 +41,8 @@ export default function PercentageActivityReportByRole({ data }) {
     totalPercentage: 100,
   });
 
+  const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
+
   const {
     requestSort,
     sortConfig,
@@ -83,6 +85,7 @@ export default function PercentageActivityReportByRole({ data }) {
     const {
       records,
       filteredReports,
+      showDashboardFiltersNotApplicable: showFiltersNotApplicableProp,
     } = data;
 
     const totalPercentage = records.reduce((acc, record) => acc + record.percentage, 0);
@@ -114,7 +117,7 @@ export default function PercentageActivityReportByRole({ data }) {
         ],
       });
     });
-
+    setShowFiltersNotApplicable(showFiltersNotApplicableProp);
     setDisplayFilteredReports(filteredReports);
     setTrace(traceData);
     setTabularData(tableData);
@@ -142,6 +145,7 @@ export default function PercentageActivityReportByRole({ data }) {
         subtitle="Activity report by specialist role"
         subtitle2={`${displayFilteredReports.toLocaleString('en-us')} Activity reports`}
         menuItems={menuItems}
+        showFiltersNotApplicable={showFiltersNotApplicable}
       >
         {showTabularData ? (
           <HorizontalTableWidget
@@ -181,6 +185,7 @@ export default function PercentageActivityReportByRole({ data }) {
 
 PercentageActivityReportByRole.propTypes = {
   data: PropTypes.shape({
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     totalNumberOfReports: PropTypes.number,
     totalPercentage: PropTypes.number,
     filteredReports: PropTypes.number,
