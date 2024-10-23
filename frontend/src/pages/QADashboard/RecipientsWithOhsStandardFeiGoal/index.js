@@ -95,6 +95,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
           // const { grantNumber } = item;
           const { createdAt } = item;
           const { rootCause } = item;
+          const { grantNumber } = item;
 
           return {
             id: `${recipientId}-${goalId}`,
@@ -106,6 +107,10 @@ export default function RecipientsWithOhsStandardFeiGoal() {
             sortKey: mapGoalStatusKey(goalStatus),
             link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,
             data: [
+              {
+                title: 'Grant_number',
+                value: grantNumber,
+              },
               {
                 title: 'Goal_created_on',
                 value: moment(createdAt).format('MM/DD/YYYY'),
@@ -137,7 +142,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
 
         // Add headers.
         formattedRecipientPageData = {
-          headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
+          headers: ['Grant number', 'Goal created on', 'Goal number', 'Goal status', 'Root cause'],
           RecipientsWithOhsStandardFeiGoal: [...formattedRecipientPageData],
         };
 

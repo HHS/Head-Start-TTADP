@@ -76,7 +76,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
         createdAt: '2021-09-02T13:05:17.944+00:00',
         goalId: 359813,
         goalStatus: 'Not started',
-        grantNumber: '234234',
+        grantNumber: '4234232',
         rootCause: ['Testing'],
       },
       {
@@ -85,7 +85,7 @@ const recipientsWithOhsStandardFeiGoalSsdiData = [
         createdAt: '2021-09-03T13:05:17.944+00:00',
         goalId: 457825,
         goalStatus: 'In progress',
-        grantNumber: '234234',
+        grantNumber: '5678856',
         rootCause: ['Facilities'],
       },
     ],
@@ -139,6 +139,11 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
         expect(screen.getByText(/Testing/i)).toBeInTheDocument();
         expect(screen.getByText(/Facilities/i)).toBeInTheDocument();
+
+        // Check all grant numbers are displayed.
+        expect(screen.getByText(/234234/i)).toBeInTheDocument();
+        expect(screen.getByText(/4234232/i)).toBeInTheDocument();
+        expect(screen.getByText(/5678856/i)).toBeInTheDocument();
       });
     });
   });
