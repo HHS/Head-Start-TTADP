@@ -114,35 +114,35 @@ export default async function nudge(
     having: sequelize.where(sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('grant.number'))), grantNumbers.length),
   })).map((g: ISimilarGoal & { toJSON: () => ISimilarGoal }) => g.toJSON()) as ISimilarGoal[];
 
-  // const goalsWithReasons = await Promise.all(goals.map(async (goal) => {
-  //   if ([GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED].includes(goal.status)) {
-  //     // get the most recent status change for each goal
-  //     const statusChange = await GoalStatusChange.findOne({
-  //       where: {
-  //         goalId: goal.ids,
-  //         newStatus: goal.status,
-  //       },
-  //       attributes: ['reason', 'goalId'],
-  //       order: [['createdAt', 'DESC']],
-  //       limit: 1,
-  //     });
+  const goalsWithReasons = await Promise.all(goals.map(async (goal) => {
+    if ([GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED].includes(goal.status)) {
+      // get the most recent status change for each goal
+      const statusChange = await GoalStatusChange.findOne({
+        where: {
+          goalId: goal.ids,
+          newStatus: goal.status,
+        },
+        attributes: ['reason', 'goalId'],
+        order: [['createdAt', 'DESC']],
+        limit: 1,
+      });
 
-  //     return {
-  //       ...goal,
-  //       reason: statusChange ? statusChange.reason : '',
-  //     };
-  //   }
+      return {
+        ...goal,
+        reason: statusChange ? statusChange.reason : '',
+      };
+    }
 
-  //   return goal;
-  // }));
+    return goal;
+  }));
 
-  const templateIds = goals.map((goal) => goal.goalTemplateId);
+  const templateIds = goalsWithReasons.map((goal) => goal.goalTemplateId);
 
   // iterate through the goal templates and
   // add any that are not already in the goals
   goalTemplates.forEach((template) => {
     if (!templateIds.includes(template.id)) {
-      goals.unshift({
+      goalsWithReasons.unshift({
         ids: [template.id],
         name: template.name,
         status: GOAL_STATUS.NOT_STARTED,
@@ -155,5 +155,5 @@ export default async function nudge(
     }
   });
 
-  return goals;
+  return goalsWithReasons;
 }
