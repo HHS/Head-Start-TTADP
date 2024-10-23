@@ -24,7 +24,7 @@ export default function useNewGoalState(recipient, regionId) {
     defaultValues: {
       similarGoals: null, // the IDS of a goal from the similarity API
       goalIds: [], // the goal ids that the user has selected
-      selectedGrants: [], // the grants that the user has selected
+      selectedGrant: null, // the grant that the user has selected
       goalName: '', // the goal name in the textbox
       goalStatus: '', // the status of the goal, only tracked to display in alerts
       goalSource: '', // only used for curated templates

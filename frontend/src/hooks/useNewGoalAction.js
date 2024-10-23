@@ -20,7 +20,7 @@ export default function useNewGoalAction() {
       useOhsInitiativeGoal,
       goalIds,
       goalStatus,
-      selectedGrants,
+      selectedGrant,
       goalTemplate,
       goalName,
       reason,
@@ -68,7 +68,7 @@ export default function useNewGoalAction() {
           const createdGoals = await createGoalsFromTemplate(
             goalTemplate.id,
             {
-              grants: selectedGrants.map((g) => g.id),
+              grants: selectedGrant.id,
               regionId,
             },
           );
@@ -90,13 +90,13 @@ export default function useNewGoalAction() {
       // create goal from scratch
       try {
         const goals = await createOrUpdateGoals(
-          selectedGrants.map((grant) => ({
-            grantId: grant.id,
+          {
+            grantId: selectedGrant.id,
             name: goalName,
             status: GOAL_STATUS.NOT_STARTED,
             objectives: [],
             recipientId,
-          })),
+          },
         );
 
         return goals.map((g) => g.id);

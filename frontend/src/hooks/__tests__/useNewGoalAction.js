@@ -2,9 +2,6 @@ import { renderHook, act } from '@testing-library/react-hooks';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import useNewGoalAction from '../useNewGoalAction';
-import {
-  GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS, NEW_GOAL_FORM_PAGES,
-} from '../../components/SharedGoalComponents/constants';
 
 describe('useNewGoalAction', () => {
   afterEach(() => {
@@ -19,7 +16,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: false,
       goalIds,
       goalStatus: GOAL_STATUS.IN_PROGRESS,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
       goalName: 'Test Goal',
     };
@@ -42,7 +39,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: false,
       goalIds,
       goalStatus: GOAL_STATUS.CLOSED,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
       goalName: 'Test Goal',
       reason: 'Test Reason',
@@ -71,7 +68,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: false,
       goalIds,
       goalStatus: GOAL_STATUS.CLOSED,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
       goalName: 'Test Goal',
       reason: 'Test Reason',
@@ -99,7 +96,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: false,
       goalIds,
       goalStatus: GOAL_STATUS.SUSPENDED,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
       goalName: 'Test Goal',
       reason: 'Test Reason',
@@ -123,7 +120,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: false,
       goalIds,
       goalStatus: GOAL_STATUS.SUSPENDED,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
       goalName: 'Test Goal',
       reason: 'Test Reason',
@@ -147,7 +144,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: true,
       goalIds: [],
       goalStatus: null,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: { id: 1 },
     };
 
@@ -167,7 +164,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: true,
       goalIds: [],
       goalStatus: null,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: { id: 1 },
     };
 
@@ -188,7 +185,7 @@ describe('useNewGoalAction', () => {
       useOhsInitiativeGoal: true,
       goalIds: [],
       goalStatus: null,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
     };
 
@@ -213,7 +210,7 @@ describe('useNewGoalAction', () => {
       goalName: 'This is a brand new goal',
       goalIds: [],
       goalStatus: null,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
     };
 
@@ -235,7 +232,7 @@ describe('useNewGoalAction', () => {
       goalName: 'This is a brand new goal',
       goalIds: [],
       goalStatus: null,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
     };
 
@@ -256,7 +253,7 @@ describe('useNewGoalAction', () => {
       goalName: '',
       goalIds: [],
       goalStatus: null,
-      selectedGrants: [1],
+      selectedGrant: { id: 1 },
       goalTemplate: null,
     };
 
