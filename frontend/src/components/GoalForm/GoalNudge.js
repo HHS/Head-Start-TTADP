@@ -5,7 +5,6 @@ import {
   Button,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { similiarGoalsByText } from '../../fetchers/goals';
 import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useAsyncDebounceEffect from '../../hooks/useAsyncDebounceEffect';
@@ -15,7 +14,7 @@ import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 const MINIMUM_GOAL_NAME_LENGTH = 15;
 
 export default function GoalNudge({
-  selectedGrants,
+  selectedGrant,
   recipientId,
   regionId,
 }) {
@@ -43,24 +42,24 @@ export default function GoalNudge({
 
   // using DeepCompareEffect to avoid unnecessary fetches
   // as we have an object (selectedGrants) in the dependency array
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     async function fetchGoalTemplates() {
       try {
-        const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
+        const templates = await getGoalTemplates([selectedGrant.id]);
         setGoalTemplates(templates);
       } catch (err) {
         setGoalTemplates([]);
       }
     }
 
-    if (selectedGrants && selectedGrants.length > 0) {
+    if (selectedGrant) {
       fetchGoalTemplates();
     }
-  }, [selectedGrants]);
+  }, [selectedGrant]);
 
   useAsyncDebounceEffect(async () => {
     // we need all of these to populate the query
-    if (!recipientId || !regionId || !selectedGrants.length) {
+    if (!recipientId || !regionId || !selectedGrant) {
       return;
     }
 
@@ -76,7 +75,7 @@ export default function GoalNudge({
           regionId,
           recipientId,
           goalName,
-          selectedGrants.map((grant) => grant.number),
+          [selectedGrant.number],
         );
         setSimilarGoals(similarities);
       }
@@ -87,7 +86,7 @@ export default function GoalNudge({
     goalName,
     regionId,
     recipientId,
-    selectedGrants,
+    selectedGrant,
     dismissSimilar,
   ]);
 
@@ -137,11 +136,13 @@ GoalNudge.propTypes = {
     PropTypes.string,
   ]).isRequired,
   recipientId: PropTypes.number.isRequired,
-  selectedGrants: PropTypes.arrayOf(
-    PropTypes.shape({
-      numberWithProgramTypes: PropTypes.string,
-      number: PropTypes.string,
-      id: PropTypes.number,
-    }),
-  ).isRequired,
+  selectedGrant: PropTypes.shape({
+    numberWithProgramTypes: PropTypes.string,
+    number: PropTypes.string,
+    id: PropTypes.number,
+  }),
+};
+
+GoalNudge.defaultProps = {
+  selectedGrant: null,
 };

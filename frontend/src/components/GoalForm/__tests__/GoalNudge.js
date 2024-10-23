@@ -24,7 +24,7 @@ describe('GoalNudge', () => {
   const defaultProps = {
     recipientId: 1,
     regionId: 1,
-    selectedGrants: [],
+    selectedGrant: null,
   };
 
   const Test = (props) => {
@@ -33,7 +33,6 @@ describe('GoalNudge', () => {
       defaultValues: {
         similarGoals: null, // the IDS of a goal from the similarity API
         goalIds: [], // the goal ids that the user has selected
-        selectedGrants: [], // the grants that the user has selected
         goalName: '', // the goal name in the textbox
         goalStatus: '', // the status of the goal, only tracked to display in alerts
         goalSource: '', // only used for curated templates
@@ -70,9 +69,9 @@ describe('GoalNudge', () => {
 
   it('fetches goal templates when a grant is selected', async () => {
     fetchMock.get('/api/goal-templates?grantIds=1', []);
-    const selectedGrants = [{ id: 1 }];
+    const selectedGrant = { id: 1, number: '123' };
     act(() => {
-      renderTest({ selectedGrants });
+      renderTest({ selectedGrant });
     });
     expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
     expect(await screen.findByText('Use OHS standard goal')).toBeInTheDocument();
@@ -80,13 +79,9 @@ describe('GoalNudge', () => {
 
   it('always shows the use ohs standard checkbox', async () => {
     fetchMock.get('/api/goal-templates?grantIds=1', []);
-    const selectedGrants = [
-      {
-        id: 1,
-      },
-    ];
+    const selectedGrant = { id: 1, number: '123' };
     act(() => {
-      renderTest({ selectedGrants });
+      renderTest({ selectedGrant });
     });
 
     expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
@@ -95,10 +90,7 @@ describe('GoalNudge', () => {
 
   it('asks for similar goals when the qualifications are met', async () => {
     fetchMock.get('/api/goal-templates?grantIds=1', []);
-    const selectedGrants = [
-      { id: 1, number: '123' },
-    ];
-
+    const selectedGrant = { id: 1, number: '123' };
     const goalName = 'This is a brand new test goal name and it it really long';
 
     const url = join(
@@ -110,7 +102,7 @@ describe('GoalNudge', () => {
     fetchMock.get(url, []);
 
     act(() => {
-      renderTest({ selectedGrants, goalName });
+      renderTest({ selectedGrant, goalName });
     });
 
     const textbox = document.querySelector('textarea[name="goalName"]');
@@ -127,9 +119,7 @@ describe('GoalNudge', () => {
 
   it('clears out the similar goals when dismiss similar is clicked', async () => {
     fetchMock.get('/api/goal-templates?grantIds=1', []);
-    const selectedGrants = [
-      { id: 1, number: '123' },
-    ];
+    const selectedGrant = { id: 1, number: '123' };
 
     const goalName = 'This is a brand new test goal name and it it really long';
 
@@ -148,7 +138,7 @@ describe('GoalNudge', () => {
     ]);
 
     act(() => {
-      renderTest({ selectedGrants, goalName });
+      renderTest({ selectedGrant, goalName });
     });
 
     const textbox = document.querySelector('textarea[name="goalName"]');
