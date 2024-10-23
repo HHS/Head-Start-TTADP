@@ -3,7 +3,7 @@ import React from 'react';
 import {
   render,
   screen,
-  act,  
+  act,
 } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import selectEvent from 'react-select-event';
