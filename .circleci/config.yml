@@ -580,6 +580,18 @@ parameters:
   manual-trigger:
     type: boolean
     default: false
+  lower_env_list:
+    description: "List of environments to manage (start/stop)"
+    type: string
+    default: "tta-smarthub-dev,tta-smarthub-sandbox"
+  lower_space_list:
+    description: "List of Cloud Foundry spaces corresponding to each environment"
+    type: string
+    default: "dev-space,sandbox-space,env3-space,env4-space,env5-space" # TODO: fix spaces
+  env_state:
+    description: "State of the environment to change (start, stop, restart, restage)"
+    type: string
+    default: ""
 jobs:
   build_and_lint:
     executor: docker-executor
@@ -1249,10 +1261,61 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
+  manage_env_apps:
+    executor: docker-executor
+    parameters:
+      env_state:
+        type: string
+        description: "Action to perform on apps (start or stop)"
+        default: "stop"
+      env_list:
+        type: string
+        description: "List of environments to manage"
+        default: "<< pipeline.parameters.env_list >>"
+      space_list:
+        type: string
+        description: "List of Cloud Foundry spaces for each environment"
+        default: "<< pipeline.parameters.space_list >>"
+    steps:
+      - run:
+          name: Manage Apps
+          command: |
+            IFS=',' read -r -a apps <<< "<< parameters.env_list >>"
+            IFS=',' read -r -a spaces <<< "<< parameters.space_list >>"
+            
+            for i in "${!apps[@]}"; do
+              echo "Logging into space: ${spaces[$i]}"
+              cf login \
+                -a https://api.cloud.gov \
+                -u ${CLOUDGOV_USERNAME} \
+                -p ${CLOUDGOV_PASSWORD} \
+                -o hhs-acf-ohs-tta \
+                -s ${spaces[$i]}
+              
+              # Get the current state of the app
+              state=$(cf app ${apps[$i]} | grep "state:" | awk '{print $2}')
+              
+              if [[ "<< parameters.env_state >>" == "stop" && "$state" != "stopped" ]]; then
+                echo "Stopping ${apps[$i]}..."
+                cf stop ${apps[$i]}
+              elif [[ "<< parameters.env_state >>" == "start" && "$state" != "started" ]]; then
+                echo "Starting ${apps[$i]}..."
+                cf start ${apps[$i]}
+              elif [[ "<< parameters.env_state >>" == "restart" ]]; then
+                echo "Restarting ${apps[$i]}..."
+                cf restart ${apps[$i]}
+              elif [[ "<< parameters.env_state >>" == "restage" ]]; then
+                echo "Restaging ${apps[$i]}..."
+                cf restage ${apps[$i]}
+              else
+                echo "${apps[$i]} is already in the desired state: $state"
+              fi
+            done
 workflows:
   build_test_deploy:
     when:
       equal: [false, << pipeline.parameters.manual-trigger >>]
+      equal: ["", << pipeline.parameters.env_state >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1360,3 +1423,43 @@ workflows:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload_production
+  stop_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 2-6"  # Runs at 6 PM PST M-F (1 AM UTC next day)
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - manage_env_apps:
+          action: "stop"
+          lower_env_list: "<< pipeline.parameters.lower_env_list >>"
+          lower_space_list: "<< pipeline.parameters.lower_space_list >>"
+
+  start_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 11 * * 1-5"  # Runs at 6 AM EST M-F(11 AM UTC)
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - manage_env_apps:
+          action: "start"
+          lower_env_list: "<< pipeline.parameters.lower_env_list >>"
+          lower_space_list: "<< pipeline.parameters.lower_space_list >>"
+  manual_manage_env_workflow:
+    when:
+      contains:
+        - "<< pipeline.parameters.env_state_set >>"
+        - "start"
+        - "stop"
+        - "restart"
+        - "restage"
+    jobs:
+      - manage_env_apps:
+          env_state: "<< pipeline.parameters.env_state >>"
+          lower_env: "<< pipeline.parameters.lower_env_list >>"
+          lower_space: "<< pipeline.parameters.lower_space_list >>"
