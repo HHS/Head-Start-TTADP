@@ -49,7 +49,7 @@ export default function NewGoal({
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grant
     if (possibleGrants.length === 1) {
-      hookForm.setValue('selectedGrant', [possibleGrants[0]]);
+      hookForm.setValue('selectedGrant', possibleGrants[0]);
     }
   }, [possibleGrants]);
 
@@ -85,7 +85,7 @@ export default function NewGoal({
                   possibleGrants.length > 1,
                 ]}
                 label="Recipient grant numbers"
-                value={value ? value.id : ''}
+                value={value ? value.numberWithProgramTypes : ''}
               >
                 <FormItem
                   label="Recipient grant numbers"
