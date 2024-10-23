@@ -30,6 +30,10 @@ export default async function goalsFromTemplate(
     source: string,
   };
 
+  if (!template) {
+    throw new Error(`Template with id ${goalTemplateId} not found`);
+  }
+
   // Get all goals that match the templateId and grantId
   const goals = await Goal.findAll({
     attributes: ['id', 'status', 'grantId', 'goalTemplateId'],
