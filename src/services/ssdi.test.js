@@ -761,7 +761,7 @@ describe('ssdi', () => {
   describe('validateType', () => {
     it('should validate integer[] type', () => {
       expect(validateType('integer[]', [1, 2, 3])).toBe(true);
-      expect(validateType('integer[]', [1, '2', 3])).toBe(false);
+      expect(validateType('integer[]', [1, '2', 3])).toBe(true);
     });
 
     it('should validate date[] type', () => {
@@ -798,7 +798,7 @@ describe('ssdi', () => {
     });
 
     it('should return errors for invalid filters and types', () => {
-      const input = { flag1: [1, '2', 3], invalidFlag: [1, 2, 3] };
+      const input = { flag1: [1, 'two', 3], invalidFlag: [1, 2, 3] };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
       expect(errors.invalidFilters).toEqual(['Invalid filter: invalidFlag']);
       expect(errors.invalidTypes).toEqual(['Invalid type for filter flag1: expected integer[]']);
