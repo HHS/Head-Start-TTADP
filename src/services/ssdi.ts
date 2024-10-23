@@ -603,9 +603,9 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       const isArrayWithSeparator = (arr, separator) => Array.isArray(arr)
         && arr.some((item) => typeof item === 'string' && item.includes(separator));
 
-      const splitValue = (value, separator) => Array.isArray(value)
+      const splitValue = (value, separator) => (Array.isArray(value)
         ? value.flatMap((item) => item.split(separator))
-        : value.split(separator);
+        : value.split(separator));
 
       if (isDateArrayFilter(suffix, filters[newKey]?.type)) {
         if (!Array.isArray(newValue)) {
