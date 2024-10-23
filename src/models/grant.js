@@ -5,27 +5,16 @@ const {
   afterCreate,
   afterUpdate,
   beforeDestroy,
+  afterDestroy,
 } = require('./hooks/grant');
 
 const { GRANT_INACTIVATION_REASONS } = require('../constants');
 
 const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
 
-/**
- * Grants table. Stores grants.
- *
- * @param {} sequelize
- * @param {*} DataTypes
- */
 export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
-      /**
-       * Associations:
-       *  grantNumberLink: GrantNumberLink.grantId - id
-       *  grant: id - GrantNumberLink.grantId
-       */
-
       Grant.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
@@ -45,8 +34,6 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportId',
         as: 'activityReports',
       });
-      Grant.hasMany(models.Grant, { foreignKey: 'oldGrantId', as: 'oldGrants' });
-      Grant.belongsTo(models.Grant, { foreignKey: 'oldGrantId', as: 'grant' });
 
       Grant.addScope('defaultScope', {
         include: [
@@ -66,11 +53,6 @@ export default (sequelize, DataTypes) => {
     number: {
       type: DataTypes.STRING,
       allowNull: false,
-      /*
-        We're not setting unique true here to allow
-        bulkCreate/updateOnDuplicate to properly match rows on just the id.
-        unique: true,
-      */
     },
     annualFundingMonth: DataTypes.STRING,
     cdi: {
@@ -92,7 +74,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    oldGrantId: DataTypes.INTEGER,
     deleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -141,19 +122,13 @@ export default (sequelize, DataTypes) => {
       },
     },
   }, {
-  //   defaultScope: {
-  //     where: {
-  //       deleted: false
-  //     }
-  //   },
-  // },
-  // {
     sequelize,
     modelName: 'Grant',
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
   return Grant;
