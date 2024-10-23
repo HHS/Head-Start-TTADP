@@ -9,7 +9,7 @@ exec > >(tee -a "setup.log") 2>&1
 
 echo "Starting server setup..."
 
-# Check for existence of required docker compose file
+# Check for existence of required docker-compose file
 if [ ! -f "docker-compose.dss.yml" ]; then
     echo "Error: docker-compose.dss.yml does not exist."
     exit 1
