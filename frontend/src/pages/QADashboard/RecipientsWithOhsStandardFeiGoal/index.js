@@ -116,7 +116,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
                 value: `G-${goalId}`,
                 isUrl: true,
                 isInternalLink: true,
-                link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile?goalId=${goalId}`,
+                link: `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goalId}`,
                 hideLinkIcon: true,
               },
               {
