@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import GoalFormError from '../GoalFormError';
 
-describe('GoalFormButton', () => {
+describe('GoalFormError', () => {
   it('renders nothing if there is no error', async () => {
     render(<GoalFormError error={null} />);
 
