@@ -801,7 +801,7 @@ describe('ssdi', () => {
       const input = { flag1: [1, 'two', 3], invalidFlag: [1, 2, 3] };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
       expect(errors.invalidFilters).toEqual(['Invalid filter: invalidFlag']);
-      expect(errors.invalidTypes).toEqual(['Invalid type for filter flag1: expected integer[]']);
+      expect(errors.invalidTypes).toEqual(['Invalid type for filter flag1: expected integer[] recieved 1,two,3']);
     });
   });
 
