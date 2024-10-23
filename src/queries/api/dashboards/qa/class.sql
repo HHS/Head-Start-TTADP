@@ -952,7 +952,7 @@ WITH
 SELECT
   data_set,
   MAX(records) records,
-  JSONB_AGG(data ORDER BY records DESC),
+  JSONB_AGG(data ORDER BY records DESC) -> 0 data,
   active_filters
 FROM datasets
 -- Filter for datasets if ssdi.dataSetSelection is defined
