@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from 'react';
 import moment from 'moment';
-import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
@@ -36,6 +36,7 @@ import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
 import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLink';
 import GoalFormButton from '../SharedGoalComponents/GoalFormButton';
 import { GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../SharedGoalComponents/constants';
+import { canEditOrCreateGoals } from '../../permissions';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -114,13 +115,8 @@ export default function GoalForm({
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
   ).length > 0, [regionId, user.permissions]);
 
-  const canEdit = useMemo(() => user.permissions.filter(
-    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE)
-      && (
-        permission.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS
-        || permission.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS
-      ),
-  ).length > 0, [regionId, user.permissions]);
+  // eslint-disable-next-line max-len
+  const canEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
 
   // we can access the params as the third arg returned by useUrlParamState
   // (if we need it)
