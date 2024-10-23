@@ -38,6 +38,7 @@ export default function useNewGoalAction() {
         modalRef.current.toggleModal(false);
         return updatedGoals.map((g) => g.id);
       } catch (err) {
+        modalRef.current.toggleModal(false);
         return [];
       }
     }
