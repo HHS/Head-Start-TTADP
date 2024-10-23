@@ -199,5 +199,6 @@ export default function useNewGoalState(recipient, regionId) {
     alert: pageState[page].alert,
     submit,
     error,
+    page,
   };
 }
