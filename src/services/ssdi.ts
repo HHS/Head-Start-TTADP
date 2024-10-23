@@ -568,8 +568,9 @@ const validateType = (expectedType: FilterType, value: any): boolean => {
       return value.every((v, i, arr) => {
         if (Number.isInteger(v)) {
           return true;
-        } else if (!Number.isNaN(Number(v))) {
-          // eslint-disable-next-line no-param-reassigns
+        }
+        if (!Number.isNaN(Number(v))) {
+          // eslint-disable-next-line no-param-reassign
           arr[i] = Number(v); // Convert string to number
           return true;
         }
