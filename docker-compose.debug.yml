@@ -27,6 +27,8 @@ services:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
     deploy:
       resources:
         limits:
@@ -42,6 +44,8 @@ services:
     volumes:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
+      - "node_modules-frontend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
     environment:
       - BACKEND_PROXY=http://backend:8080
   worker:
@@ -58,3 +62,5 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
