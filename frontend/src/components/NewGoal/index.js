@@ -116,7 +116,7 @@ export default function NewGoal({
           <GoalNudge
             recipientId={recipient.id}
             regionId={regionId}
-            selectedGrants={[selectedGrant]}
+            selectedGrants={selectedGrant}
           />
 
           {buttons.map((button) => (
