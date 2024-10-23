@@ -161,4 +161,45 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
       });
     });
   });
+
+  it('displays a dash when there is no date or days since last tta', async () => {
+    const data = [
+      {
+        data_set: 'no_tta_widget',
+        records: '1',
+        data: [
+          {
+            total: 1,
+            'recipients without tta': 1,
+            '% recipients without tta': 100,
+          },
+        ],
+      },
+      {
+        data_set: 'no_tta_page',
+        records: '1',
+        data: [
+          {
+            'recipient id': 1,
+            'recipient name': 'Test Recipient 1',
+            'last tta': null,
+            'days since last tta': null,
+          },
+        ],
+      },
+    ];
+    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', data);
+    renderRecipientsWithNoTta();
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+
+    await act(async () => {
+      await waitFor(async () => {
+        expect(screen.getByText(/test recipient 1/i)).toBeInTheDocument();
+        expect(screen.getByText(/date of last tta/i)).toBeInTheDocument();
+        expect(screen.getByText(/days since last tta/i)).toBeInTheDocument();
+        expect(screen.queryAllByText('-').length).toBe(2);
+      });
+    });
+  });
 });
