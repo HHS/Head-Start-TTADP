@@ -490,7 +490,9 @@ datasets AS (
       'total', total
     )) data
     FROM no_tta_widget
+
     UNION
+
     SELECT 'no_tta_page' data_set, COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
         'recipient id', id,
@@ -500,6 +502,17 @@ datasets AS (
         'days since last tta', days_since_last_tta
     )) data
     FROM no_tta_page
+
+    UNION
+
+    SELECT
+      'no_tta_page' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
+    GROUP BY af.active_filters
+
     UNION
     SELECT 'process_log' data_set, COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
@@ -508,7 +521,12 @@ datasets AS (
     )) data
     FROM process_log
 )
-SELECT *
+
+SELECT
+  data_set,
+  MAX(records) records,
+  JSONB_AGG(data ORDER BY records DESC) -> 0 data,
+  active_filters
 FROM datasets
 -- Filter for datasets if ssdi.dataSetSelection is defined
 WHERE 1 = 1
@@ -517,4 +535,5 @@ AND (
   OR (
     COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
   )
-);
+)
+GROUP BY 1,4;

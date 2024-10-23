@@ -1256,7 +1256,9 @@ WITH
       'fitered_reports', fitered_reports
     )) data
     FROM activity_widget
+
     UNION
+
     SELECT
     'delivery_method_graph' data_set,
     COUNT(*) records,
@@ -1270,7 +1272,19 @@ WITH
       'hybrid_percentage', hybrid_percentage
     )) data
     FROM delivery_method_graph
+    
     UNION
+
+    SELECT
+      'delivery_method_graph' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
+    GROUP BY af.active_filters
+
+    UNION
+
     SELECT
     'role_graph' data_set,
     COUNT(*) records,
@@ -1280,7 +1294,19 @@ WITH
       'percentage', percentage
     )) data
     FROM role_graph
+    
     UNION
+
+    SELECT
+      'role_graph' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
+    GROUP BY af.active_filters
+
+    UNION
+
     SELECT
       'process_log' data_set,
       COUNT(*) records,
@@ -1290,8 +1316,13 @@ WITH
       )) data
     FROM process_log
   )
-  SELECT *
-  FROM datasets
+
+SELECT
+  data_set,
+  MAX(records) records,
+  JSONB_AGG(data ORDER BY records DESC) -> 0 data,
+  active_filters
+FROM datasets
 -- Filter for datasets if ssdi.dataSetSelection is defined
 WHERE 1 = 1
 AND (
@@ -1299,4 +1330,5 @@ AND (
   OR (
     COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
   )
-);
+)
+GROUP BY 1,4;
