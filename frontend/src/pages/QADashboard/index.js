@@ -125,15 +125,15 @@ export default function QADashboard() {
         const overviewData = {
           recipientsWithNoTTA: {
             filterApplicable: !noTTAContainsFiltersThatAreNotAllowed,
-            pct: noTTAData.data[0]['% recipients without tta'] || '0%',
+            pct: noTTAData.data[0]['% recipients without tta'] || '0',
           },
           recipientsWithOhsStandardFeiGoals: {
             filterApplicable: !feiContainsFiltersThatAreNotAllowed,
-            pct: feiOverviewData.data[0]['% recipients with fei'] || '0%',
+            pct: feiOverviewData.data[0]['% recipients with fei'] || '0',
           },
           recipientsWithOhsStandardClass: {
             filterApplicable: !classContainsFiltersThatAreNotAllowed,
-            pct: classOverviewData.data[0]['% recipients with class'] || '0%',
+            pct: classOverviewData.data[0]['% recipients with class'] || '0',
           },
         };
 
