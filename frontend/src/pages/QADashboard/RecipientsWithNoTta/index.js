@@ -87,11 +87,11 @@ export default function RecipientsWithNoTta() {
             data: [
               {
                 title: 'Date_of_Last_TTA',
-                value: dateOfLastTta ? moment(dateOfLastTta).format('MM/DD/YYYY') : null,
+                value: dateOfLastTta ? moment(dateOfLastTta).format('MM/DD/YYYY') : '-',
               },
               {
                 title: 'Days_Since_Last_TTA',
-                value: daysSinceLastTta,
+                value: daysSinceLastTta || '-',
               },
             ],
           };

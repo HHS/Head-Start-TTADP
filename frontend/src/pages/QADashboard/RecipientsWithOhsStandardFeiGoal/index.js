@@ -25,8 +25,7 @@ import { getSelfServiceData } from '../../../fetchers/ssdi';
 
 const ALLOWED_SUBFILTERS = [
   'region',
-  'startDate',
-  'endDate',
+  'createDate',
   'grantNumber',
   'recipient',
   'stateCode',
