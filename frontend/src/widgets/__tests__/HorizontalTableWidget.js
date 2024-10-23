@@ -223,6 +223,58 @@ describe('Horizontal Table Widget', () => {
     expect(sortElement).toHaveClass('sortable asc');
   });
 
+  it('properly displays a internal link in the table', async () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: 'Test Link',
+            isUrl: true,
+            link: 'example.com',
+            isInternalLink: true,
+            hideLinkIcon: true,
+          },
+        ],
+      },
+    ];
+
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
+    const url = screen.getByText(/Test Link/i);
+    expect(url).toHaveAttribute('href', '/example.com');
+  });
+
+  it('properly displays a external link in the table', async () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: 'Test Link',
+            isUrl: true,
+            link: 'http://external.example.com',
+            isInternalLink: false,
+            hideLinkIcon: true,
+          },
+        ],
+      },
+    ];
+
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
+    const url = screen.getByText(/Test Link/i);
+    expect(url).toHaveAttribute('href', 'http://external.example.com');
+  });
+
   it('specifies sort col and direction desc', async () => {
     const requestSort = jest.fn();
     const headers = ['col1'];

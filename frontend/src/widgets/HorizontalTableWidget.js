@@ -74,14 +74,14 @@ export default function HorizontalTableWidget(
     if (url.isInternalLink) {
       return (
         <Link to={url.link} className="text-overflow-ellipsis">
-          {url.heading}
+          {url.heading || url.value}
         </Link>
       );
     }
     return (
       <>
         <a href={url.link} target="_blank" rel="noreferrer" className="text-overflow-ellipsis">
-          {url.heading}
+          {url.heading || url.value}
         </a>
         {' '}
         {
@@ -194,7 +194,11 @@ export default function HorizontalTableWidget(
                 </td>
                 {(r.data || []).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
-                    {d.value}
+                    {
+                      d.isUrl
+                        ? handleUrl(d)
+                        : d.value
+                    }
                   </td>
                 ))}
               </tr>
