@@ -429,9 +429,9 @@ WITH active_filters_array AS (
     SELECT array_remove(ARRAY[
       CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
       CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
-      CASE WHEN NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NOT NULL THEN 'grantNumbers' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantNumber', true), '') IS NOT NULL THEN 'grantNumber' END,
       CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
-      CASE WHEN NULLIF(current_setting('ssdi.regionIds', true), '') IS NOT NULL THEN 'regionIds' END,
+      CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
       CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
       CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
     ], NULL) AS active_filters
@@ -488,8 +488,11 @@ datasets AS (
       '% recipients without tta', "% recipients without tta",
       'recipients without tta', "recipients without tta",
       'total', total
-    )) data
+    )) data,
+      af.active_filters  -- Use precomputed active_filters
     FROM no_tta_widget
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
 
     UNION
 
@@ -500,8 +503,11 @@ datasets AS (
         'region id', "regionId",
         'last tta', last_tta,
         'days since last tta', days_since_last_tta
-    )) data
+    )) data,
+      af.active_filters  -- Use precomputed active_filters
     FROM no_tta_page
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
 
     UNION
 
@@ -518,8 +524,11 @@ datasets AS (
     JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-    )) data
+    )) data,
+      af.active_filters  -- Use precomputed active_filters
     FROM process_log
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
 )
 
 SELECT

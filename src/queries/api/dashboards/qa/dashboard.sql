@@ -1190,6 +1190,29 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  active_filters_array AS (
+    SELECT array_remove(ARRAY[
+      CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
+      CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantNumber', true), '') IS NOT NULL THEN 'grantNumber' END,
+      CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
+      CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
+      CASE WHEN NULLIF(current_setting('ssdi.group', true), '') IS NOT NULL THEN 'group' END,
+      CASE WHEN NULLIF(current_setting('ssdi.goalName', true), '') IS NOT NULL THEN 'goalName' END,
+      CASE WHEN NULLIF(current_setting('ssdi.createDate', true), '') IS NOT NULL THEN 'createDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '') IS NOT NULL THEN 'activityReportGoalResponse' END,
+      CASE WHEN NULLIF(current_setting('ssdi.reportId', true), '') IS NOT NULL THEN 'reportId' END,
+      CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.reason', true), '') IS NOT NULL THEN 'reason' END,
+      CASE WHEN NULLIF(current_setting('ssdi.targetPopulations', true), '') IS NOT NULL THEN 'targetPopulations' END,
+      CASE WHEN NULLIF(current_setting('ssdi.ttaType', true), '') IS NOT NULL THEN 'ttaType' END,
+      CASE WHEN NULLIF(current_setting('ssdi.reportText', true), '') IS NOT NULL THEN 'reportText' END,
+      CASE WHEN NULLIF(current_setting('ssdi.topic', true), '') IS NOT NULL THEN 'topic' END,
+      CASE WHEN NULLIF(current_setting('ssdi.singleOrMultiRecipients', true), '') IS NOT NULL THEN 'singleOrMultiRecipients' END,
+      CASE WHEN NULLIF(current_setting('ssdi.role', true), '') IS NOT NULL THEN 'role' END
+    ], NULL) AS active_filters
+),
   activity_widget AS (
     SELECT
       COUNT(DISTINCT a.id) fitered_reports
@@ -1254,8 +1277,11 @@ WITH
     COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
       'fitered_reports', fitered_reports
-    )) data
+    )) data,
+      af.active_filters
     FROM activity_widget
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
 
     UNION
 
@@ -1270,8 +1296,11 @@ WITH
       'in_person_percentage', in_person_percentage,
       'virtual_percentage', virtual_percentage,
       'hybrid_percentage', hybrid_percentage
-    )) data
+    )) data,
+      af.active_filters
     FROM delivery_method_graph
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
     
     UNION
 
@@ -1292,8 +1321,11 @@ WITH
       'role_name', role_name,
       'role_count', role_count,
       'percentage', percentage
-    )) data
+    )) data,
+      af.active_filters
     FROM role_graph
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
     
     UNION
 
@@ -1313,8 +1345,11 @@ WITH
       JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-      )) data
+      )) data,
+      af.active_filters
     FROM process_log
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
   )
 
 SELECT
