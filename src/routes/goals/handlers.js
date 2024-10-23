@@ -76,7 +76,6 @@ export async function createGoalsFromTemplate(req, res) {
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-
     const canCreate = new Goal(user, null, parseInt(regionId, DECIMAL_BASE)).canCreate();
 
     if (!canCreate) {
