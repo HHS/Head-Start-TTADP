@@ -34,7 +34,6 @@ describe('NewGoalAlert', () => {
 
   it('other goal status', async () => {
     render(<NewGoalAlert goalStatus={GOAL_STATUS.IN_PROGRESS} />);
-
     const message = await screen.findByText(/You have chosen an existing goal with a status of In Progress/i);
     const instructions = await screen.findByText(/You can either use the goal or go back to create a new goal/i);
     expect(message).toBeInTheDocument();
