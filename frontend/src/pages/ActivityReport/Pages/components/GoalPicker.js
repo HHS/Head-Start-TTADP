@@ -232,8 +232,8 @@ const GoalPicker = ({
           label="Use OHS standard goal"
           id="useOhsStandardGoal"
           name="useOhsStandardGoal"
-          className="margin-top-2 smart-hub--report-checkbox"
           checked={useOhsStandardGoal}
+          className="margin-top-1"
           onChange={() => setOhsStandardGoal(!useOhsStandardGoal)}
         />
         {goalForEditing ? (
