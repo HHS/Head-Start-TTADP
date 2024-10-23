@@ -927,6 +927,33 @@ describe('Recipient DB service', () => {
       expect(noResponse.ids.length).toBe(1);
     });
 
+    it('does not de-duplicate goals when the param is set to false', async () => {
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(
+        recipient.id,
+        region,
+        {},
+        false,
+      );
+      expect(goalRows.length).toBe(5);
+      expect(allGoalIds.length).toBe(5);
+
+      let goalToCheck = allGoalIds.find((g) => g.id === goals[1].id);
+      expect(goalToCheck).not.toBeNull();
+      expect(goalToCheck.goalIds).toStrictEqual([goals[1].id]);
+
+      goalToCheck = allGoalIds.find((g) => g.id === goals[2].id);
+      expect(goalToCheck).not.toBeNull();
+      expect(goalToCheck.goalIds).toStrictEqual([goals[2].id]);
+
+      goalToCheck = allGoalIds.find((g) => g.id === goals[0].id);
+      expect(goalToCheck).not.toBeNull();
+      expect(goalToCheck.goalIds).toStrictEqual([goals[0].id]);
+
+      goalToCheck = allGoalIds.find((g) => g.id === goals[3].id);
+      expect(goalToCheck).not.toBeNull();
+      expect(goalToCheck.goalIds).toStrictEqual([goals[3].id]);
+    });
+
     it('properly marks is fei goal', async () => {
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(4);
