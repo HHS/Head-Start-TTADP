@@ -565,7 +565,8 @@ const readFiltersFromFile = async (
 const validateType = (expectedType: FilterType, value: any): boolean => {
   switch (expectedType) {
     case FilterType.IntegerArray:
-      return Array.isArray(value) && value.every((v) => Number.isInteger(v) || !isNaN(Number(v)));
+      return Array.isArray(value)
+        && value.every((v) => Number.isInteger(v) || !Number.isNaN(Number(v)));
     case FilterType.DateArray:
       return Array.isArray(value) && value.every((v) => !Number.isNaN(Date.parse(v)));
     case FilterType.StringArray:
@@ -596,17 +597,16 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       const mappedSuffix = suffixMapping[suffix];
       newKey = key.replace(suffix, mappedSuffix ?? '');
 
-      console.log(key, input[key]);
+      const isDateArrayFilter = (suf, filterType) => (suf === '.win' || suf === '.in')
+        && filterType === FilterType.DateArray;
 
-      const isDateArrayFilter = (suffix, filterType) => 
-        (suffix === '.win' || suffix === '.in') && filterType === FilterType.DateArray;
-      
-      const isArrayWithSeparator = (arr, separator) => 
-        Array.isArray(arr) && arr.some(item => typeof item === 'string' && item.includes(separator));
-      
-      const splitValue = (value, separator) => 
-        Array.isArray(value) ? value.flatMap(item => item.split(separator)) : value.split(separator);
-      
+      const isArrayWithSeparator = (arr, separator) => Array.isArray(arr)
+        && arr.some((item) => typeof item === 'string' && item.includes(separator));
+
+      const splitValue = (value, separator) => Array.isArray(value)
+        ? value.flatMap((item) => item.split(separator))
+        : value.split(separator);
+
       if (isDateArrayFilter(suffix, filters[newKey]?.type)) {
         if (!Array.isArray(newValue)) {
           newValue = splitValue(newValue, '-');
