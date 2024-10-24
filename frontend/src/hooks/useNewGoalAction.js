@@ -89,7 +89,7 @@ export default function useNewGoalAction() {
     if (goalName) {
       // create goal from scratch
       try {
-        const goals = await createOrUpdateGoals(
+        const goals = await createOrUpdateGoals([
           {
             grantId: selectedGrant.id,
             name: goalName,
@@ -97,7 +97,7 @@ export default function useNewGoalAction() {
             objectives: [],
             recipientId,
           },
-        );
+        ]);
 
         return goals.map((g) => g.id);
       } catch (err) {
