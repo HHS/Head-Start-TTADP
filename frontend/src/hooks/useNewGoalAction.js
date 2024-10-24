@@ -93,7 +93,7 @@ export default function useNewGoalAction() {
           {
             grantId: selectedGrant.id,
             name: goalName,
-            status: GOAL_STATUS.NOT_STARTED,
+            status: GOAL_STATUS.DRAFT,
             objectives: [],
             recipientId,
           },
