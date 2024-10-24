@@ -1446,7 +1446,6 @@ workflows:
           env_state: "stop"
           env_list: "<< pipeline.parameters.env_list >>"
           space_list: "<< pipeline.parameters.space_list >>"
-
   start_lower_env_workflow:
     triggers:
       - schedule:
@@ -1463,12 +1462,16 @@ workflows:
   manual_manage_env_workflow:
     when:
       condition:
-        # This ensures that the workflow only triggers when env_state is explicitly set
-        - or:
-          - equal: ["start", << pipeline.parameters.env_state >>]
-          - equal: ["stop", << pipeline.parameters.env_state >>]
-          - equal: ["restart", << pipeline.parameters.env_state >>]
-          - equal: ["restage", << pipeline.parameters.env_state >>]
+        and:
+          # Ensure the workflow only triggers when `env_state` is one of the valid values
+          - or:
+              - equal: ["start", << pipeline.parameters.env_state >>]
+              - equal: ["stop", << pipeline.parameters.env_state >>]
+              - equal: ["restart", << pipeline.parameters.env_state >>]
+              - equal: ["restage", << pipeline.parameters.env_state >>]
+          # Ensure `env_state` is not empty, to avoid running with default or invalid values
+          - not:
+              - equal: ["", << pipeline.parameters.env_state >>]
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
