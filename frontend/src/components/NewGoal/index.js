@@ -118,7 +118,6 @@ export default function NewGoal({
             regionId={regionId}
             selectedGrant={selectedGrant}
           />
-
           {buttons.map((button) => (
             <GoalFormButton
               key={button.id}

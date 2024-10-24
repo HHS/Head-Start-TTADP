@@ -96,6 +96,7 @@ export default function useNewGoalAction() {
             status: GOAL_STATUS.DRAFT,
             objectives: [],
             recipientId,
+            regionId,
           },
         ]);
 

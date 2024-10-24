@@ -100,7 +100,7 @@ export async function createGoals(req, res) {
     let canCreate = true;
 
     goals.forEach((goal) => {
-      if (canCreate && !new Goal(user, null, goal.regionId).canCreate()) {
+      if (canCreate && !new Goal(user, null, parseInt(goal.regionId, DECIMAL_BASE)).canCreate()) {
         canCreate = false;
       }
     });
