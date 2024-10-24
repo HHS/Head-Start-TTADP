@@ -1458,7 +1458,7 @@ workflows:
   manual_manage_env_workflow:
     when:
       contains:
-        - "<< pipeline.parameters.env_state_set >>"
+        - "<< pipeline.parameters.env_state >>"
         - "start"
         - "stop"
         - "restart"
