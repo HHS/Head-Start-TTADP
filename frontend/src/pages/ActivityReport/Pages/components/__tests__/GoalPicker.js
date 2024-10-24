@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import {
   render,
   screen,
+  act,
+  fireEvent,
 } from '@testing-library/react';
 import React from 'react';
 import fetchMock from 'fetch-mock';
@@ -27,8 +29,8 @@ const defaultGoalForEditing = {
   goalIds: [],
 };
 
-// eslint-disable-next-line react/prop-types
-const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
+// eslint-disable-next-line react/prop-types, object-curly-newline
+const GP = ({ availableGoals, selectedGoals, goalForEditing, goalTemplates }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -57,7 +59,7 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing }) => {
         <FormProvider {...hookForm}>
           <GoalPicker
             availableGoals={availableGoals}
-            roles={['central office']}
+            goalTemplates={goalTemplates}
             grantIds={[]}
             reportId={1}
           />
@@ -71,12 +73,14 @@ const renderGoalPicker = (
   availableGoals,
   selectedGoals = defaultSelectedGoals,
   goalForEditing = defaultGoalForEditing,
+  goalTemplates = [],
 ) => {
   render(
     <GP
       availableGoals={availableGoals}
       selectedGoals={selectedGoals}
       goalForEditing={goalForEditing}
+      goalTemplates={goalTemplates}
     />,
   );
 };
@@ -221,9 +225,64 @@ describe('GoalPicker', () => {
     expect(selector).toBeVisible();
   });
 
+  describe('with checkbox', () => {
+    it('you can toggle the list of curated goals', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', []);
+      fetchMock.get('/api/goal-templates/1/prompts', []);
+      const availableGoals = [];
+
+      renderGoalPicker(availableGoals, null, null, [
+        {
+          id: 1,
+          goalTemplateId: 1,
+          name: 'Goal Template 1',
+          label: 'Goal Template 1',
+          goals: [],
+          isCurated: true,
+          objectives: [],
+          value: 1,
+          source: '',
+        },
+      ]);
+
+      let selector = screen.queryByLabelText(/Select recipient's goal*/i);
+      expect(selector).toBeVisible();
+
+      const checkbox = await screen.findByLabelText(/use ohs standard goal/i);
+      act(() => {
+        userEvent.click(checkbox);
+      });
+
+      selector = screen.queryByLabelText(/Select recipient's goal*/i);
+      expect(selector).toBeNull();
+
+      selector = await screen.findByLabelText(/Select ohs standard goal/i);
+
+      fireEvent.focus(selector);
+      fireEvent.keyDown(selector, {
+        key: 'ArrowDown',
+        keyCode: 40,
+        code: 40,
+      });
+
+      const option = await screen.findByText('Goal Template 1');
+      expect(option).toBeVisible();
+    });
+  });
+
   describe('curated goals', () => {
     it('with no prompts', async () => {
-      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', []);
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [
+        {
+          type: 'multiselect',
+          title: 'prompt-1',
+          options: [
+            'Option 1',
+            'Option 2',
+          ],
+          prompt: 'WHYYYYYYYY?',
+        },
+      ]);
       const availableGoals = [{
         label: 'Goal 1',
         value: 1,
@@ -239,7 +298,7 @@ describe('GoalPicker', () => {
 
       await selectEvent.select(selector, [availableGoal.label]);
 
-      const input = document.querySelector('[name="goalForEditing"');
+      const input = document.querySelector('[name="goalForEditing"]');
       expect(input.value).toBe(availableGoal.value.toString());
     });
     it('with prompts', async () => {
@@ -269,7 +328,7 @@ describe('GoalPicker', () => {
 
       await selectEvent.select(selector, [availableGoal.label]);
 
-      const input = document.querySelector('[name="goalForEditing"');
+      const input = document.querySelector('[name="goalForEditing"]');
       expect(input.value).toBe(availableGoal.value.toString());
     });
   });

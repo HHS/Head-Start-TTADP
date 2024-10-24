@@ -14,7 +14,6 @@ import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
@@ -105,21 +104,18 @@ describe('SessionReportForm', () => {
     trainingReportId,
     currentPage,
     sessionId,
-    setErrorResponseCode = jest.fn,
     user = { user: { id: 1, permissions: [], name: 'Ted User' } },
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={user}>
-            <SessionForm match={{
-              params: { currentPage, trainingReportId, sessionId },
-              path: currentPage,
-              url: currentPage,
-            }}
-            />
-          </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
+        <UserContext.Provider value={user}>
+          <SessionForm match={{
+            params: { currentPage, trainingReportId, sessionId },
+            path: currentPage,
+            url: currentPage,
+          }}
+          />
+        </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,
   );
@@ -189,16 +185,16 @@ describe('SessionReportForm', () => {
 
   it('sets response error', async () => {
     const url = join(sessionsUrl, 'id', '1');
-
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(
       url, 500,
     );
-    const setErrorResponseCode = jest.fn();
     act(() => {
-      renderSessionForm('1', 'session-summary', '1', setErrorResponseCode);
+      renderSessionForm('1', 'session-summary', '1');
     });
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('saves draft', async () => {
@@ -491,7 +487,7 @@ describe('SessionReportForm', () => {
     };
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1', jest.fn(), adminUser);
+      renderSessionForm('1', 'session-summary', '1', adminUser);
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -529,7 +525,7 @@ describe('SessionReportForm', () => {
     );
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1', jest.fn(), adminUser);
+      renderSessionForm('1', 'session-summary', '1', adminUser);
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
