@@ -806,7 +806,7 @@ describe('ssdi', () => {
       expect(errors.invalidFilters).toEqual(['Invalid filter: invalidFlag']);
       expect(errors.invalidTypes).toEqual(['Invalid type for filter flag1: expected integer[] recieved 1,two,3']);
     });
-  
+
     it('should preprocess date array filters with separator correctly', () => {
       const input = { 'dateFlag.in': ['2023/01/01', '2023/02/01-2023/03/01'] };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
@@ -814,7 +814,7 @@ describe('ssdi', () => {
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
     });
-  
+
     it('should handle non-array date flag input and split it with a dash', () => {
       const input = { 'dateFlag.in': '2023/01/01-2023/02/01' };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
@@ -822,7 +822,7 @@ describe('ssdi', () => {
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
     });
-  
+
     it('should split string values with comma for .in suffix', () => {
       const input = { 'stringFlag.in': 'value1,value2,value3' };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
@@ -830,10 +830,15 @@ describe('ssdi', () => {
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
     });
-  
+
     it('should return default values for missing filters', () => {
       const filtersWithDefaults = {
-        flag1: { type: 'integer[]', name: 'flag1', description: 'Flag description', defaultValues: [1, 2, 3] },
+        flag1: {
+          type: 'integer[]',
+          name: 'flag1',
+          description: 'Flag description',
+          defaultValues: [1, 2, 3],
+        },
       };
       const input = {};
       const { result, errors } = preprocessAndValidateFilters(filtersWithDefaults, input);
@@ -841,16 +846,15 @@ describe('ssdi', () => {
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
     });
-  
+
     it('should handle filters with .nin suffix and split them by comma', () => {
       const input = { 'flag1.nin': '1,2,3' };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
       expect(result).toEqual({ 'flag1.not': [1, 2, 3] });
-      console.log(errors);
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
     });
-  
+
     it('should handle array input with .in suffix correctly', () => {
       const input = { 'flag1.in': [1, 2, '3,4'] };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
@@ -858,7 +862,7 @@ describe('ssdi', () => {
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
     });
-  
+
     it('should add empty array as value if an invalid type is received', () => {
       const input = { flag1: 'not an array' };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
@@ -866,10 +870,15 @@ describe('ssdi', () => {
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(1);
     });
-  
+
     it('should correctly handle cases where a filter is missing but has a default value', () => {
       const filtersWithDefaults = {
-        flag2: { type: 'string', name: 'flag2', description: 'Flag 2 description', defaultValues: ['default'] },
+        flag2: {
+          type: 'string',
+          name: 'flag2',
+          description: 'Flag 2 description',
+          defaultValues: ['default'],
+        },
       };
       const input = {};
       const { result, errors } = preprocessAndValidateFilters(filtersWithDefaults, input);
@@ -878,7 +887,6 @@ describe('ssdi', () => {
       expect(errors.invalidTypes.length).toBe(0);
     });
   });
-  
 
   describe('setFilters', () => {
     it('should set filters in the database', async () => {
@@ -906,110 +914,110 @@ describe('ssdi', () => {
     let pathResolveSpy;
     let fsReadFileSpy;
     let fsStatSpy;
-  
+
     beforeEach(() => {
       jest.clearAllMocks();
       db.sequelize.query = mockQuery;
       cache.clear();
     });
-  
+
     afterEach(() => {
       // Restore the original implementations after each test
       if (pathResolveSpy) pathResolveSpy.mockRestore();
       if (fsReadFileSpy) fsReadFileSpy.mockRestore();
       if (fsStatSpy) fsStatSpy.mockRestore();
     });
-  
+
     it('should throw an error if the file path is not a string', async () => {
       await expect(executeQuery(123)).rejects.toThrow(
         'The "paths[1]" argument must be of type string. Received type number (123)',
       );
     });
-  
+
     it('should resolve the file path correctly using safeResolvePath', async () => {
       const mockResolvedPath = '/app/src/queries/resolved/path/to/test.sql';
       // Spy on path.resolve to mock it only for this test
       pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-      
+
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
       fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
-  
+
       await executeQuery('test.sql');
-  
+
       expect(path.resolve).toHaveBeenCalledWith(expect.anything(), 'test.sql');
       const cachedFile = cache.get(mockResolvedPath);
       expect(cachedFile).toBeDefined();
       expect(cachedFile?.query).toEqual('SELECT * FROM test;');
     });
-  
+
     it('should cache the query after reading the file', async () => {
       const mockResolvedPath = '/app/src/queries/resolved/path/to/test.sql';
       pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-  
+
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
       fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
-  
+
       await executeQuery('test.sql');
-  
+
       expect(cache.has(mockResolvedPath)).toBe(true);
       expect(cache.get(mockResolvedPath)?.query).toEqual('SELECT * FROM test;');
     });
-  
+
     it('should throw an error if the JSON header cannot be read from the file', async () => {
       const mockResolvedPath = '/app/src/queries/resolved/path/to/invalid.sql';
       pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-  
+
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
       fs.promises.readFile.mockResolvedValue('INVALID CONTENT');
-  
+
       await expect(executeQuery('invalid.sql')).rejects.toThrow(
         `Unable to read and parse the JSON header from file: ${mockResolvedPath}`,
       );
     });
-  
+
     it('should execute the query and return the result', async () => {
       const mockResolvedPath = '/app/src/queries/resolved/path/to/valid.sql';
       pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-  
+
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
       fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
       mockQuery.mockResolvedValue([{ id: 1, name: 'Test' }]);
-  
+
       const result = await executeQuery('valid.sql');
-  
+
       expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM test;', { type: QueryTypes.SELECT });
       expect(result).toEqual([{ id: 1, name: 'Test' }]);
     });
-  
+
     it('should throw an error if the query execution fails', async () => {
       const mockResolvedPath = '/app/src/queries/resolved/path/to/valid.sql';
       pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-  
+
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
       fs.promises.readFile.mockResolvedValue('/* JSON: { "name": "test", "filters": [] } */\nSELECT * FROM test;');
       mockQuery.mockRejectedValue(new Error('Database error'));
-  
+
       await expect(executeQuery('valid.sql')).rejects.toThrow('Query failed: Database error');
     });
-  
+
     it('should use the cached result if the file has been cached', async () => {
       const mockResolvedPath = '/app/src/queries/resolved/path/to/cached.sql';
       pathResolveSpy = jest.spyOn(path, 'resolve').mockReturnValue(mockResolvedPath);
-  
+
       cache.set(mockResolvedPath, {
         jsonHeader: { name: 'test', filters: [] },
         query: 'SELECT * FROM cached;',
         modificationTime: new Date(),
       });
       mockQuery.mockResolvedValue([{ id: 2, name: 'Cached' }]);
-  
+
       const result = await executeQuery('cached.sql');
-  
+
       expect(mockQuery).toHaveBeenCalledWith('SELECT * FROM cached;', { type: QueryTypes.SELECT });
       expect(result).toEqual([{ id: 2, name: 'Cached' }]);
     });

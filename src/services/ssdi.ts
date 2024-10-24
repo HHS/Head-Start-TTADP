@@ -600,7 +600,7 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
   Object.keys(input).forEach((key) => {
     const suffix = Object.keys(suffixMapping).find((s) => key.endsWith(s));
     let newKey = key;
-    let baseKey = newKey.split('.')[0];
+    const baseKey = newKey.split('.')[0];
     let newValue = input[key];
 
     if (suffix) {
@@ -614,7 +614,7 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
         && arr.some((item) => typeof item === 'string' && item.includes(separator));
 
       const splitValue = (value, separator) => (Array.isArray(value)
-        ? value.flatMap((item) => (typeof item === 'string' 
+        ? value.flatMap((item) => (typeof item === 'string'
           ? item.split(separator)
           : item))
         : value.split(separator));
