@@ -1438,7 +1438,7 @@ workflows:
                 - master
     jobs:
       - manage_env_apps:
-          action: "stop"
+          env_state: "stop"
           env_list: "<< pipeline.parameters.lower_env_list >>"
           space_list: "<< pipeline.parameters.lower_space_list >>"
 
@@ -1452,7 +1452,7 @@ workflows:
                 - master
     jobs:
       - manage_env_apps:
-          action: "start"
+          env_state: "start"
           env_list: "<< pipeline.parameters.lower_env_list >>"
           space_list: "<< pipeline.parameters.lower_space_list >>"
   manual_manage_env_workflow:
