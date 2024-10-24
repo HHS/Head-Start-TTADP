@@ -80,7 +80,7 @@ export default function HorizontalTableWidget(
     }
     return (
       <>
-        <a href={url.link} target="_blank" rel="noreferrer" className="text-overflow-ellipsis">
+        <a href={url.link} target="_self" rel="noreferrer" className="text-overflow-ellipsis">
           {url.heading || url.value}
         </a>
         {' '}

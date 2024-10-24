@@ -26,6 +26,7 @@ import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
 import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
 import Loader from '../../components/Loader';
 import { formatDateRange } from '../../utils';
+import './index.scss';
 
 const DISALLOWED_FILTERS = [
   'domainClassroomOrganization',
@@ -200,7 +201,7 @@ export default function QADashboard() {
       <Helmet>
         <title>Quality Assurance Dashboard</title>
       </Helmet>
-      <div className="ttahub-dashboard">
+      <div className="ttahub-qa-dashboard">
         <h1 className="landing margin-top-0 margin-bottom-3">
           Quality assurance dashboard
         </h1>

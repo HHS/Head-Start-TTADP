@@ -1,18 +1,18 @@
 // Make sure tooltip label text wraps were we expect.
-.usa-tooltip span {
+.ttahub-qa-dashboard .usa-tooltip span {
     width: 242px;
     display: block;
     word-wrap:break-word;
     white-space: normal;
  }
- 
+
  // Vertical align for the question mark and tool tip button.
- .usa-tooltip {
+ .ttahub-qa-dashboard .usa-tooltip {
      vertical-align: middle;
  }
- 
+
  // Horizontally align the question mark with the tool tip button.
-.usa-tooltip svg {
+.ttahub-qa-dashboard .usa-tooltip svg {
      height: 1.3em;
      width: 1.3em;
  }
