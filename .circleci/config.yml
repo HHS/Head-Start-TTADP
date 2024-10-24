@@ -1320,9 +1320,10 @@ jobs:
 workflows:
   build_test_deploy:
     when:
-      and:
-        equal: [false, << pipeline.parameters.manual-trigger >>]
-        equal: ["", << pipeline.parameters.env_state >>]
+      condition:
+        - and:
+          - equal: [false, << pipeline.parameters.manual-trigger >>]
+          - equal: ["", << pipeline.parameters.env_state >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1459,11 +1460,12 @@ workflows:
           space_list: "<< pipeline.parameters.space_list >>"
   manual_manage_env_workflow:
     when:
-      or:
-        equal: ["start", << pipeline.parameters.env_state >>]
-        equal: ["stop", << pipeline.parameters.env_state >>]
-        equal: ["restart", << pipeline.parameters.env_state >>]
-        equal: ["restage", << pipeline.parameters.env_state >>]
+      condition:
+        - or:
+          - equal: ["start", << pipeline.parameters.env_state >>]
+          - equal: ["stop", << pipeline.parameters.env_state >>]
+          - equal: ["restart", << pipeline.parameters.env_state >>]
+          - equal: ["restage", << pipeline.parameters.env_state >>]
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
