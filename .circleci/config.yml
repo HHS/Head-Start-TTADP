@@ -1315,7 +1315,6 @@ workflows:
   build_test_deploy:
     when:
       equal: [false, << pipeline.parameters.manual-trigger >>]
-      equal: ["", << pipeline.parameters.env_state >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
