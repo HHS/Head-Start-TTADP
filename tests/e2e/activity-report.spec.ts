@@ -476,9 +476,12 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
+    await page.waitForTimeout(5000);
+
     // select recipients
     await page.getByLabel(/recipient grant numbers/i).focus();
     // both of the top recipients
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
@@ -488,9 +491,12 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
   
+    await page.waitForTimeout(5000);
+
     // select recipients
     await page.getByLabel(/recipient grant numbers/i).focus();
     // both of the top recipients
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
