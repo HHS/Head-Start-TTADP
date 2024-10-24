@@ -6,6 +6,9 @@ const useSize = (target) => {
   const [size, setSize] = useState();
 
   useLayoutEffect(() => {
+    if (!target) {
+      return;
+    }
     setSize(target.current.getBoundingClientRect());
   }, [target]);
 

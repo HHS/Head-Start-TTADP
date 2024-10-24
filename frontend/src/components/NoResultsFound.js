@@ -13,7 +13,7 @@ function NoResultsFound() {
   const drawerTriggerRef = useRef(null);
   return (
     <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center">
-      <FontAwesomeIcon icon={faChartColumn} color={colors.ttahubMediumBlue} size="3x" />
+      <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="3x" />
       <span>
         <h4 className="margin-bottom-1">No results found.</h4>
       </span>

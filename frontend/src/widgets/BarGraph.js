@@ -112,7 +112,7 @@ function BarGraph({
     hovermode: 'none',
   };
 
-  if (true) {
+  if (data.length === 0) {
     return <NoResultsFound />;
   }
 
