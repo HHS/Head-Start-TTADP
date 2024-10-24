@@ -12,6 +12,7 @@ const INPUT_NAME = 'goalName';
 const FIELD_LABEL = 'Recipient\'s goal';
 export default function GoalNudgeText({
   similar,
+  dismissSimilar,
   setDismissSimilar,
   useOhsInitiativeGoal,
 }) {
@@ -32,8 +33,9 @@ export default function GoalNudgeText({
       <FormItem label={FIELD_LABEL} name={INPUT_NAME} required>
         <Textarea
           onBlur={(e) => {
+            e.stopPropagation();
             if (similar.length) {
-              dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
+              dismissOnNoMatch(e, '.ttahub-goal-nudge--container *, .ttahub-similar-goal--input', setDismissSimilar);
             }
           }}
           id={INPUT_NAME}
@@ -42,9 +44,11 @@ export default function GoalNudgeText({
           inputRef={register({ required: 'Enter goal text' })}
           defaultValue=""
           required
+          className="ttahub-goal-nudge--textarea"
         />
         <SimilarGoals
           similar={similar}
+          dismissSimilar={dismissSimilar}
           setDismissSimilar={setDismissSimilar}
         />
       </FormItem>
@@ -55,5 +59,6 @@ export default function GoalNudgeText({
 GoalNudgeText.propTypes = {
   similar: PropTypes.arrayOf(SimilarGoalProp).isRequired,
   setDismissSimilar: PropTypes.func.isRequired,
+  dismissSimilar: PropTypes.bool.isRequired,
   useOhsInitiativeGoal: PropTypes.bool.isRequired,
 };
