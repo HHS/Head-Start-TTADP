@@ -8,9 +8,10 @@ import './SimilarGoals.scss';
 
 export default function SimilarGoals({
   similar,
+  dismissSimilar,
   setDismissSimilar,
 }) {
-  if (similar.length === 0) {
+  if (similar.length === 0 || dismissSimilar) {
     return null;
   }
 
@@ -49,4 +50,5 @@ export default function SimilarGoals({
 SimilarGoals.propTypes = {
   similar: PropTypes.arrayOf(SimilarGoalProp).isRequired,
   setDismissSimilar: PropTypes.func.isRequired,
+  dismissSimilar: PropTypes.bool.isRequired,
 };

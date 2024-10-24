@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import SimilarGoals from '../SimilarGoals';
 
 describe('SimilarGoal', () => {
-  const similar = [
+  const defaultSimilar = [
     {
       id: 1,
       name: 'Similar goal 1',
@@ -19,7 +19,8 @@ describe('SimilarGoal', () => {
   ];
   const setDismissSimilar = jest.fn();
 
-  const RenderTest = () => {
+  // eslint-disable-next-line react/prop-types
+  const RenderTest = ({ dismissSimilar = false, similar = defaultSimilar }) => {
     const hookForm = useForm({
       mode: 'onBlur',
       defaultValues: {
@@ -40,6 +41,7 @@ describe('SimilarGoal', () => {
       <FormProvider {...hookForm}>
         <SimilarGoals
           similar={similar}
+          dismissSimilar={dismissSimilar}
           setDismissSimilar={setDismissSimilar}
         />
       </FormProvider>
@@ -63,5 +65,23 @@ describe('SimilarGoal', () => {
 
     userEvent.click(screen.getByLabelText('Dismiss similar goals'));
     expect(setDismissSimilar).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders nothing if menu is forced close', () => {
+    render(
+      <RenderTest dismissSimilar />,
+    );
+
+    const similarDiv = document.querySelector('.ttahub-similar-goals');
+    expect(similarDiv).toBeNull();
+  });
+
+  it('renders nothing if no similar goals are passed in', () => {
+    render(
+      <RenderTest similar={[]} />,
+    );
+
+    const similarDiv = document.querySelector('.ttahub-similar-goals');
+    expect(similarDiv).toBeNull();
   });
 });

@@ -15,6 +15,7 @@ describe('GoalNudgeText', () => {
   const defaultProps = {
     setDismissSimilar: jest.fn(),
     similar: [],
+    dismissSimilar: false,
     useOhsInitiativeGoal: false,
   };
 

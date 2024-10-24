@@ -97,6 +97,7 @@ export default function GoalNudge({
     <div className="ttahub-goal-nudge--container position-relative margin-bottom-3">
       <GoalNudgeText
         similar={similar}
+        dismissSimilar={dismissSimilar}
         setDismissSimilar={setDismissSimilar}
         useOhsInitiativeGoal={useOhsInitiativeGoal}
       />
