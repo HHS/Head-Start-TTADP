@@ -484,7 +484,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
 
     // enter goal name
-    await page.getByTestId('textarea').fill('This is a goal for multiple grants');
+    await page.getByLabel('Recipient\'s goal *').fill('This is a goal for multiple grants');
   
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');

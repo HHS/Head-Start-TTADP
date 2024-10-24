@@ -27,7 +27,7 @@ test.describe('Recipient record', () => {
 
     await blur(page);
 
-    await page.getByTestId('textarea').fill('This is the first goal for this recipient');
+    await page.getByLabel('Recipient\'s goal *').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -66,7 +66,7 @@ test.describe('Recipient record', () => {
 
     await blur(page);
 
-    await page.getByTestId('textarea').fill('This is the second goal for this recipient');
+    await page.getByLabel('Recipient\'s goal *').fill('This is the second goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
