@@ -479,13 +479,21 @@ test.describe('Activity Report', () => {
     // select recipients
     await page.getByLabel(/recipient grant numbers/i).focus();
     // both of the top recipients
-    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await page.keyboard.press('Enter');
+    await blur(page);
 
     // enter goal name
     await page.getByLabel('Recipient\'s goal *').fill('This is a goal for multiple grants');
+
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByRole('button', { name: 'Save and continue' }).click();
   
+    // select recipients
+    await page.getByLabel(/recipient grant numbers/i).focus();
+    // both of the top recipients
+    await page.keyboard.press('Enter');
+    await blur(page);
+
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
 
