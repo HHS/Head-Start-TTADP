@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, useRef, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   Checkbox,
   Button,
 } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form';
 import { similiarGoalsByText } from '../../fetchers/goals';
 import { getGoalTemplates } from '../../fetchers/goalTemplates';
@@ -14,17 +17,23 @@ import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 const MINIMUM_GOAL_NAME_LENGTH = 15;
 
 export default function GoalNudge({
-  selectedGrant,
   recipientId,
   regionId,
+  selectedGrant,
 }) {
   const { watch, register, setValue } = useFormContext();
-  const { goalName, isGoalNameEditable, useOhsInitiativeGoal } = watch();
+  const {
+    goalName,
+    isGoalNameEditable,
+    useOhsInitiativeGoal,
+  } = watch();
   const initiativeRef = useRef(null);
 
   const [similar, setSimilarGoals] = useState([]);
   const [dismissSimilar, setDismissSimilar] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState(null);
+
+  const selectedGrants = useMemo(() => [selectedGrant], [selectedGrant]);
 
   useEffect(() => {
     if (dismissSimilar) {
@@ -41,25 +50,25 @@ export default function GoalNudge({
   }, [setValue, useOhsInitiativeGoal]);
 
   // using DeepCompareEffect to avoid unnecessary fetches
-  // as we have an object (selectedGrants) in the dependency array
-  useEffect(() => {
+  // as we have an object (selectedGrant) in the dependency array
+  useDeepCompareEffect(() => {
     async function fetchGoalTemplates() {
       try {
-        const templates = await getGoalTemplates([selectedGrant.id]);
+        const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
         setGoalTemplates(templates);
       } catch (err) {
         setGoalTemplates([]);
       }
     }
 
-    if (selectedGrant) {
+    if (selectedGrants[0] && selectedGrants[0].id) {
       fetchGoalTemplates();
     }
-  }, [selectedGrant]);
+  }, [selectedGrants]);
 
   useAsyncDebounceEffect(async () => {
     // we need all of these to populate the query
-    if (!recipientId || !regionId || !selectedGrant) {
+    if (!recipientId || !regionId || !selectedGrant || !selectedGrant.number) {
       return;
     }
 
@@ -82,13 +91,7 @@ export default function GoalNudge({
     } catch (err) {
       setSimilarGoals([]);
     }
-  }, [
-    goalName,
-    regionId,
-    recipientId,
-    selectedGrant,
-    dismissSimilar,
-  ]);
+  }, [dismissSimilar, goalName, recipientId, regionId, selectedGrant]);
 
   // what a hack
   const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
