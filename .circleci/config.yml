@@ -592,6 +592,9 @@ parameters:
     description: "State of the environment to change (start, stop, restart, restage)"
     type: string
     default: "none"
+  manual-manage-env:
+    type: boolean
+    default: false
 jobs:
   build_and_lint:
     executor: docker-executor
@@ -1337,7 +1340,7 @@ workflows:
           # Ensure the workflow is only triggered when `manual-trigger` is false
           # and `env_state` is empty (i.e., it's not for starting/stopping environments)
           - equal: [false, << pipeline.parameters.manual-trigger >>]
-          - equal: ["none", << pipeline.parameters.env_state >>]
+          - equal: [false, << pipeline.parameters.manual-manage-env >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1479,15 +1482,7 @@ workflows:
     when:
       condition:
         and:
-          # Ensure `env_state` is not empty, to avoid running with default or invalid values
-          - not:
-              - equal: ["none", << pipeline.parameters.env_state >>]
-          # Ensure the workflow only triggers when `env_state` is one of the valid values
-          - or:
-              - equal: ["start", << pipeline.parameters.env_state >>]
-              - equal: ["stop", << pipeline.parameters.env_state >>]
-              - equal: ["restart", << pipeline.parameters.env_state >>]
-              - equal: ["restage", << pipeline.parameters.env_state >>]
+          - equal: [true, << pipeline.parameters.manual-manage-env >>]
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
