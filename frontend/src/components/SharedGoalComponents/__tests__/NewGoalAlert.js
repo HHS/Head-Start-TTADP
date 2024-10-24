@@ -11,7 +11,7 @@ describe('NewGoalAlert', () => {
   it('closed goal, no reason', async () => {
     render(<NewGoalAlert goalStatus={GOAL_STATUS.CLOSED} goalStatusReason="" />);
 
-    const message = await screen.findByText('You have chosen an existing goal with a status of Closed. You can:')
+    const message = await screen.findByText('You have chosen an existing goal with a status of Closed. You can:');
     const reopenThisGoal = await screen.findByText('Reopen this goal and change the status to in progress');
     const goBack = await screen.findByText('Go back to create a new goal');
     expect(message).toBeInTheDocument();
