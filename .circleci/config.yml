@@ -587,7 +587,7 @@ parameters:
   space_list:
     description: "List of Cloud Foundry spaces corresponding to each environment"
     type: string
-    default: "ttahub-dev,ttahub-sandbox"
+    default: ""
   env_state:
     description: "State of the environment to change (start, stop, restart, restage)"
     type: string
@@ -1296,9 +1296,15 @@ jobs:
       - run:
           name: Manage Apps
           command: |
+            set -x
             # Assign parameters from CircleCI
             env_list="<< parameters.env_list >>"
-            space_list="<< parameters.space_list >>"
+            # Check if `space_list` is empty; if so, fallback to environment variables
+            if [ -z "<< parameters.space_list >>" ]; then
+              space_list="${CLOUDGOV_DEV_SPACE},${CLOUDGOV_SANDBOX_SPACE}"
+            else
+              space_list="<< parameters.space_list >>"
+            fi
             env_state="<< parameters.env_state >>"
 
             # Split env_list and space_list manually using a simple loop
