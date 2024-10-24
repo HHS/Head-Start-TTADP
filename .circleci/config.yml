@@ -1280,9 +1280,15 @@ jobs:
       - run:
           name: Manage Apps
           command: |
-            IFS=',' read -r -a apps <<< "<< parameters.env_list >>"
-            IFS=',' read -r -a spaces <<< "<< parameters.space_list >>"
-            
+            # Assign parameters from CircleCI
+            env_list="<< parameters.env_list >>"
+            space_list="<< parameters.space_list >>"
+            env_state="<< parameters.env_state >>"
+
+            # Split env_list and space_list manually using a simple loop
+            apps=(${env_list//,/ })
+            spaces=(${space_list//,/ })
+
             for i in "${!apps[@]}"; do
               echo "Logging into space: ${spaces[$i]}"
               cf login \
@@ -1290,23 +1296,23 @@ jobs:
                 -u ${CLOUDGOV_USERNAME} \
                 -p ${CLOUDGOV_PASSWORD} \
                 -o hhs-acf-ohs-tta \
-                -s ${spaces[$i]}
+                -s "${spaces[$i]}"
               
               # Get the current state of the app
-              state=$(cf app ${apps[$i]} | grep "state:" | awk '{print $2}')
+              state=$(cf app "${apps[$i]}" | grep "state:" | awk '{print $2}')
               
-              if [[ "<< parameters.env_state >>" == "stop" && "$state" != "stopped" ]]; then
+              if [[ "$env_state" == "stop" && "$state" != "stopped" ]]; then
                 echo "Stopping ${apps[$i]}..."
-                cf stop ${apps[$i]}
-              elif [[ "<< parameters.env_state >>" == "start" && "$state" != "started" ]]; then
+                cf stop "${apps[$i]}"
+              elif [[ "$env_state" == "start" && "$state" != "started" ]]; then
                 echo "Starting ${apps[$i]}..."
-                cf start ${apps[$i]}
-              elif [[ "<< parameters.env_state >>" == "restart" ]]; then
+                cf start "${apps[$i]}"
+              elif [[ "$env_state" == "restart" ]]; then
                 echo "Restarting ${apps[$i]}..."
-                cf restart ${apps[$i]}
-              elif [[ "<< parameters.env_state >>" == "restage" ]]; then
+                cf restart "${apps[$i]}"
+              elif [[ "$env_state" == "restage" ]]; then
                 echo "Restaging ${apps[$i]}..."
-                cf restage ${apps[$i]}
+                cf restage "${apps[$i]}"
               else
                 echo "${apps[$i]} is already in the desired state: $state"
               fi
