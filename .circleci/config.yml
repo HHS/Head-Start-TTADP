@@ -1267,7 +1267,7 @@ jobs:
       env_state:
         type: string
         description: "Action to perform on apps (start or stop)"
-        default: "stop"
+        default: "<< pipeline.parameters.env_state >>"
       env_list:
         type: string
         description: "List of environments to manage"
@@ -1277,6 +1277,11 @@ jobs:
         description: "List of Cloud Foundry spaces for each environment"
         default: "<< pipeline.parameters.space_list >>"
     steps:
+      - run:
+          name: Install Cloud Foundry
+          command: |
+            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
+            sudo dpkg -i cf-cli_amd64.deb
       - run:
           name: Manage Apps
           command: |
@@ -1325,7 +1330,7 @@ workflows:
           # Ensure the workflow is only triggered when `manual-trigger` is false
           # and `env_state` is empty (i.e., it's not for starting/stopping environments)
           - equal: [false, << pipeline.parameters.manual-trigger >>]
-          - equal: [none, << pipeline.parameters.env_state >>]
+          - equal: ["none", << pipeline.parameters.env_state >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1465,13 +1470,13 @@ workflows:
         and:
           # Ensure the workflow only triggers when `env_state` is one of the valid values
           - or:
-              - equal: [start, << pipeline.parameters.env_state >>]
-              - equal: [stop, << pipeline.parameters.env_state >>]
-              - equal: [restart, << pipeline.parameters.env_state >>]
-              - equal: [restage, << pipeline.parameters.env_state >>]
+              - equal: ["start", << pipeline.parameters.env_state >>]
+              - equal: ["stop", << pipeline.parameters.env_state >>]
+              - equal: ["restart", << pipeline.parameters.env_state >>]
+              - equal: ["restage", << pipeline.parameters.env_state >>]
           # Ensure `env_state` is not empty, to avoid running with default or invalid values
           - not:
-              - equal: [none, << pipeline.parameters.env_state >>]
+              - equal: ["none", << pipeline.parameters.env_state >>]
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
