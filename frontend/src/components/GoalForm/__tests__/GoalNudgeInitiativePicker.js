@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import fetchMock from 'fetch-mock';
 import {
   render, screen,
 } from '@testing-library/react';
-// import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
-import userEvent from '@testing-library/user-event';
+import { FormProvider, useForm } from 'react-hook-form';
 import GoalNudgeInitiativePicker from '../GoalNudgeInitiativePicker';
 
 describe('GoalNudgeInitiativePicker', () => {
@@ -13,27 +11,37 @@ describe('GoalNudgeInitiativePicker', () => {
     fetchMock.restore();
   });
 
-  const renderTest = (props) => {
+  const Test = (props) => {
+    const hookForm = useForm({
+      mode: 'onBlur',
+      defaultValues: {},
+      shouldUnregister: false,
+    });
+
+    const initiativeRef = useRef();
+
     const defaultProps = {
       goalTemplates: [],
-      setUseOhsInitiativeGoal: jest.fn(),
       useOhsInitiativeGoal: true,
-      setSimilarGoals: jest.fn(),
-      dismissSimilar: false,
-      setDismissSimilar: jest.fn(),
-      onSelectNudgedGoal: jest.fn(),
-      error: <></>,
-      validateGoalName: jest.fn(),
+      initiativeRef,
     };
 
-    render(
-      <>
+    return (
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <FormProvider {...hookForm}>
         <GoalNudgeInitiativePicker
-            // eslint-disable-next-line react/jsx-props-no-spreading
+          // eslint-disable-next-line react/jsx-props-no-spreading
           {...{ ...defaultProps, ...props }}
         />
         <input type="text" id="tab-stop" />
-      </>,
+      </FormProvider>
+    );
+  };
+
+  const renderTest = (props) => {
+    render(
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <Test {...props} />,
     );
   };
 
@@ -44,36 +52,6 @@ describe('GoalNudgeInitiativePicker', () => {
 
   it('renders without errors', async () => {
     renderTest();
-    expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
-  });
-
-  it('calls the passed in handlers on change', async () => {
-    const onSelectNudgedGoal = jest.fn();
-    const goalTemplates = [{ id: 1, name: 'test' }];
-    renderTest({
-      onSelectNudgedGoal,
-      goalTemplates,
-    });
-    expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
-
-    await selectEvent.select(screen.getByLabelText(/Recipient's goal/), 'test');
-    expect(onSelectNudgedGoal).toHaveBeenCalled();
-  });
-
-  it('calls validateGoalName on blur', async () => {
-    const goalTemplates = [{ id: 1, name: 'test' }];
-    const validateGoalName = jest.fn();
-    renderTest({
-      goalTemplates,
-      validateGoalName,
-    });
-    expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
-
-    // tab 3 times
-    for (let i = 0; i < 3; i += 1) {
-      userEvent.tab();
-    }
-
-    expect(validateGoalName).toHaveBeenCalled();
+    expect(await screen.findByText(/OHS initiative goal/)).toBeInTheDocument();
   });
 });

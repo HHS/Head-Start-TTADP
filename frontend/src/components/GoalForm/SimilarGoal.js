@@ -1,22 +1,45 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useFormContext } from 'react-hook-form';
 import { uniqueId } from 'lodash';
-import './SimilarGoal.scss';
+import { GOAL_STATUS } from '@ttahub/common';
 import { dismissOnNoMatch } from './constants';
+import './SimilarGoal.scss';
 
 export const SimilarGoalProp = PropTypes.shape({
   name: PropTypes.string,
   status: PropTypes.string,
   ids: PropTypes.arrayOf(PropTypes.number),
+  isCuratedTemplate: PropTypes.bool,
+  source: PropTypes.string,
 });
 
 const SimilarGoal = ({
   goal,
   setDismissSimilar,
-  onSelectNudgedGoal,
 }) => {
+  const { register, setValue } = useFormContext();
+
   const onClick = () => {
-    onSelectNudgedGoal(goal);
+    if (goal.isCuratedTemplate) {
+      const [templateId] = goal.ids;
+      setValue('goalTemplate', {
+        id: templateId,
+        name: goal.name,
+        source: goal.source,
+      });
+      setValue('useOhsInitiativeGoal', true);
+      setValue('goalName', '');
+      setValue('goalIds', []);
+      setValue('goalStatus', GOAL_STATUS.NOT_STARTED);
+    } else {
+      setValue('goalTemplate', null);
+      setValue('useOhsInitiativeGoal', false);
+      setValue('goalName', goal.name);
+      setValue('goalIds', goal.ids);
+      setValue('goalStatus', goal.status);
+    }
+    setDismissSimilar(true);
   };
 
   const onKeyDown = async (e) => {
@@ -38,16 +61,17 @@ const SimilarGoal = ({
         className="ttahub-similar-goal--label usa-label margin-top-0 padding-2 position-relative z-100"
       >
         <input
-          onChange={onClick}
+          ref={register()}
           type="radio"
           className="ttahub-similar-goal--input position-absolute z-200"
           id={id}
           value={goal.ids}
-          name={id}
+          name="similarGoals"
           onKeyDown={onKeyDown}
           onBlur={(e) => {
             dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
           }}
+          onClick={onClick}
         />
         <span>{goal.name}</span>
         {' '}
@@ -62,7 +86,6 @@ const SimilarGoal = ({
 SimilarGoal.propTypes = {
   goal: SimilarGoalProp.isRequired,
   setDismissSimilar: PropTypes.func.isRequired,
-  onSelectNudgedGoal: PropTypes.func.isRequired,
 };
 
 export default SimilarGoal;

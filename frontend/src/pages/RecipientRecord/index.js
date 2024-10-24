@@ -22,6 +22,7 @@ import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
+import NewGoal from '../../components/NewGoal';
 
 export function PageWithHeading({
   children,
@@ -265,11 +266,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <Helmet>
                 <title>Create a New Goal</title>
               </Helmet>
-              <GoalForm
+              <NewGoal
                 regionId={regionId}
                 recipient={recipientData}
-                showRTRnavigation
-                isNew
               />
             </>
           )}

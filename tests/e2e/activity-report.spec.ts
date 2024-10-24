@@ -476,16 +476,30 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
+    await page.waitForTimeout(5000);
+
     // select recipients
     await page.getByLabel(/recipient grant numbers/i).focus();
     // both of the top recipients
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await page.keyboard.press('Enter');
+    await blur(page);
 
     // enter goal name
-    await page.getByTestId('textarea').fill('This is a goal for multiple grants');
+    await page.getByLabel('Recipient\'s goal *').fill('This is a goal for multiple grants');
+
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByRole('button', { name: 'Save and continue' }).click();
   
+    await page.waitForTimeout(5000);
+
+    // select recipients
+    await page.getByLabel(/recipient grant numbers/i).focus();
+    // both of the top recipients
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
 

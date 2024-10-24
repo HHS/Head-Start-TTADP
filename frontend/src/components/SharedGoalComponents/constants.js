@@ -1,0 +1,25 @@
+export const GOAL_FORM_BUTTON_TYPES = Object.freeze({
+  LINK: 'link',
+  MODAL_OPENER: 'modal-opener',
+  SUBMIT: 'submit',
+  BUTTON: 'button',
+});
+
+export const GOAL_FORM_BUTTON_VARIANTS = Object.freeze({
+  PRIMARY: 'primary',
+  SECONDARY: 'secondary',
+  OUTLINE: 'outline',
+});
+
+export const GOAL_FORM_BUTTON_LABELS = Object.freeze({
+  CANCEL: 'Cancel',
+  BACK: 'Back',
+  SAVE_AND_CONTINUE: 'Save and continue',
+  GO_TO_EXISTING: 'Go to existing goal',
+});
+
+export const NEW_GOAL_FORM_PAGES = Object.freeze({
+  INITIAL: 'initial',
+  CONFIRMATION: 'confirmation',
+  NEW_GOAL: 'new',
+});
