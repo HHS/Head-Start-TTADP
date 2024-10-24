@@ -4,6 +4,7 @@ import {
   render,
   waitFor,
   act,
+  screen,
 } from '@testing-library/react';
 import BarGraph from '../BarGraph';
 
@@ -43,5 +44,15 @@ describe('Bar Graph', () => {
     const point2 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe('0');
+  });
+
+  it('shows no results found', async () => {
+    renderBarGraph([]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /no results found\./i })).toBeDefined();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeDefined();
+      expect(screen.getByText('Get help using filters')).toBeDefined();
+    });
   });
 });
