@@ -1465,10 +1465,10 @@ workflows:
         and:
           # Ensure the workflow only triggers when `env_state` is one of the valid values
           - or:
-              - equal: ["start", << pipeline.parameters.env_state >>]
-              - equal: ["stop", << pipeline.parameters.env_state >>]
-              - equal: ["restart", << pipeline.parameters.env_state >>]
-              - equal: ["restage", << pipeline.parameters.env_state >>]
+              - equal: [start, << pipeline.parameters.env_state >>]
+              - equal: [stop, << pipeline.parameters.env_state >>]
+              - equal: [restart, << pipeline.parameters.env_state >>]
+              - equal: [restage, << pipeline.parameters.env_state >>]
           # Ensure `env_state` is not empty, to avoid running with default or invalid values
           - not:
               - equal: ["", << pipeline.parameters.env_state >>]
