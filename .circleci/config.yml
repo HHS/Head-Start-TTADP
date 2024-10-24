@@ -580,11 +580,11 @@ parameters:
   manual-trigger:
     type: boolean
     default: false
-  lower_env_list:
+  env_list:
     description: "List of environments to manage (start/stop)"
     type: string
     default: "tta-smarthub-dev,tta-smarthub-sandbox"
-  lower_space_list:
+  space_list:
     description: "List of Cloud Foundry spaces corresponding to each environment"
     type: string
     default: "ttahub-dev,ttahub-sandbox"
@@ -1271,11 +1271,11 @@ jobs:
       env_list:
         type: string
         description: "List of environments to manage"
-        default: "<< pipeline.parameters.lower_env_list >>"
+        default: "<< pipeline.parameters.env_list >>"
       space_list:
         type: string
         description: "List of Cloud Foundry spaces for each environment"
-        default: "<< pipeline.parameters.lower_space_list >>"
+        default: "<< pipeline.parameters.space_list >>"
     steps:
       - run:
           name: Manage Apps
@@ -1320,7 +1320,9 @@ jobs:
 workflows:
   build_test_deploy:
     when:
-      equal: [false, << pipeline.parameters.manual-trigger >>]
+      and:
+        equal: [false, << pipeline.parameters.manual-trigger >>]
+        equal: ["", << pipeline.parameters.env_state >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1439,8 +1441,8 @@ workflows:
     jobs:
       - manage_env_apps:
           env_state: "stop"
-          env_list: "<< pipeline.parameters.lower_env_list >>"
-          space_list: "<< pipeline.parameters.lower_space_list >>"
+          env_list: "<< pipeline.parameters.env_list >>"
+          space_list: "<< pipeline.parameters.space_list >>"
 
   start_lower_env_workflow:
     triggers:
@@ -1453,18 +1455,17 @@ workflows:
     jobs:
       - manage_env_apps:
           env_state: "start"
-          env_list: "<< pipeline.parameters.lower_env_list >>"
-          space_list: "<< pipeline.parameters.lower_space_list >>"
+          env_list: "<< pipeline.parameters.env_list >>"
+          space_list: "<< pipeline.parameters.space_list >>"
   manual_manage_env_workflow:
     when:
-      contains:
-        - "<< pipeline.parameters.env_state >>"
-        - "start"
-        - "stop"
-        - "restart"
-        - "restage"
+      or:
+        equal: ["start", << pipeline.parameters.env_state >>]
+        equal: ["stop", << pipeline.parameters.env_state >>]
+        equal: ["restart", << pipeline.parameters.env_state >>]
+        equal: ["restage", << pipeline.parameters.env_state >>]
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
-          env_list: "<< pipeline.parameters.lower_env_list >>"
-          space_list: "<< pipeline.parameters.lower_space_list >>"
+          env_list: "<< pipeline.parameters.env_list >>"
+          space_list: "<< pipeline.parameters.space_list >>"
