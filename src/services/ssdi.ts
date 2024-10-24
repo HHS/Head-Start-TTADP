@@ -565,8 +565,17 @@ const readFiltersFromFile = async (
 const validateType = (expectedType: FilterType, value: any): boolean => {
   switch (expectedType) {
     case FilterType.IntegerArray:
-      return Array.isArray(value)
-        && value.every((v) => Number.isInteger(v) || !Number.isNaN(Number(v)));
+      return value.every((v, i, arr) => {
+        if (Number.isInteger(v)) {
+          return true;
+        }
+        if (!Number.isNaN(Number(v))) {
+          // eslint-disable-next-line no-param-reassign
+          arr[i] = Number(v); // Convert string to number
+          return true;
+        }
+        return false;
+      });
     case FilterType.DateArray:
       return Array.isArray(value) && value.every((v) => !Number.isNaN(Date.parse(v)));
     case FilterType.StringArray:
