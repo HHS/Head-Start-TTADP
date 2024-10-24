@@ -21,15 +21,15 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async (data = TEST_DATA) => {
+const renderBarGraph = async (props) => {
   act(() => {
-    render(<VBarGraph data={data} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
+    render(<VBarGraph data={props.data} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
   });
 };
 
 describe('VBar Graph', () => {
   it('is shown', async () => {
-    renderBarGraph();
+    renderBarGraph({ data: TEST_DATA });
 
     await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
 
@@ -43,12 +43,12 @@ describe('VBar Graph', () => {
   });
 
   it('shows no results found', async () => {
-    renderBarGraph([]);
+    renderBarGraph({ data: [] });
 
     await waitFor(() => {
-      expect(screen.getByText(/no results found/i)).toBe(null);
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeDefined();
-      expect(screen.getByText('Get help using filters')).toBeDefined();
+      expect(screen.getByText(/no results found/i)).toBeVisible();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
+      expect(screen.getByText('Get help using filters')).toBeVisible();
     });
   });
 });

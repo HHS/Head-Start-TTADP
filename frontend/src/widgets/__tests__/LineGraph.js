@@ -4,6 +4,7 @@ import {
   render,
   waitFor,
   act,
+  screen,
 } from '@testing-library/react';
 import LineGraph from '../LineGraph';
 
@@ -589,11 +590,11 @@ const tableConfig = {
 };
 
 describe('LineGraph', () => {
-  const renderTest = (showTabularData = false) => {
+  const renderTest = (showTabularData = false, data = traces) => {
     act(() => {
       render(
         <LineGraph
-          data={traces}
+          data={data}
           hideYAxis={false}
           xAxisTitle="Months"
           yAxisTitle="Percentage"
@@ -658,6 +659,16 @@ describe('LineGraph', () => {
 
     await waitFor(() => {
       expect(document.querySelector('.smarthub-horizontal-table-widget')).toBeInTheDocument();
+    });
+  });
+
+  it('shows no results found', async () => {
+    renderTest(false, []);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /no results found\./i })).toBeVisible();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
+      expect(screen.getByRole('button', { name: /get help using filters/i })).toBeInTheDocument();
     });
   });
 });
