@@ -95,15 +95,17 @@ function mapGrantsWithReplacements(grants) {
         grantsWithReplacementsDictionary[grant.id] = [grant.id];
       }
     } else {
-      grant.grantRelationships.forEach((relationship) => {
-        if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
-          if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
-            grantsWithReplacementsDictionary[grant.id].push(relationship.activeGrantId);
-          } else {
-            grantsWithReplacementsDictionary[grant.id] = [relationship.activeGrantId];
+      if (Array.isArray(grant.grantRelationships)) {
+        grant.grantRelationships.forEach((relationship) => {
+          if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
+            if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+              grantsWithReplacementsDictionary[grant.id].push(relationship.activeGrantId);
+            } else {
+              grantsWithReplacementsDictionary[grant.id] = [relationship.activeGrantId];
+            }
           }
-        }
-      });
+        });
+      }
     }
   });
 
