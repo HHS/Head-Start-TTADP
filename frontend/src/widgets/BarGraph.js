@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
+import NoResultsFound from '../components/NoResultsFound';
 import colors from '../colors';
 import './BarGraph.css';
 
@@ -110,6 +111,10 @@ function BarGraph({
     displayModeBar: false,
     hovermode: 'none',
   };
+
+  if (true) {
+    return <NoResultsFound />;
+  }
 
   return (
     <div ref={widgetRef}>
