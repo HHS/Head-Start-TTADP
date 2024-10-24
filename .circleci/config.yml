@@ -1321,7 +1321,9 @@ workflows:
   build_test_deploy:
     when:
       condition:
-        - and:
+        and:
+          # Ensure the workflow is only triggered when `manual-trigger` is false
+          # and `env_state` is empty (i.e., it's not for starting/stopping environments)
           - equal: [false, << pipeline.parameters.manual-trigger >>]
           - equal: ["", << pipeline.parameters.env_state >>]
     jobs:
@@ -1461,6 +1463,7 @@ workflows:
   manual_manage_env_workflow:
     when:
       condition:
+        # This ensures that the workflow only triggers when env_state is explicitly set
         - or:
           - equal: ["start", << pipeline.parameters.env_state >>]
           - equal: ["stop", << pipeline.parameters.env_state >>]
