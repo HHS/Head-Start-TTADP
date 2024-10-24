@@ -587,7 +587,7 @@ parameters:
   lower_space_list:
     description: "List of Cloud Foundry spaces corresponding to each environment"
     type: string
-    default: "dev-space,sandbox-space,env3-space,env4-space,env5-space" # TODO: fix spaces
+    default: "ttahub-dev,ttahub-sandbox"
   env_state:
     description: "State of the environment to change (start, stop, restart, restage)"
     type: string
@@ -1271,11 +1271,11 @@ jobs:
       env_list:
         type: string
         description: "List of environments to manage"
-        default: "<< pipeline.parameters.env_list >>"
+        default: "<< pipeline.parameters.lower_env_list >>"
       space_list:
         type: string
         description: "List of Cloud Foundry spaces for each environment"
-        default: "<< pipeline.parameters.space_list >>"
+        default: "<< pipeline.parameters.lower_space_list >>"
     steps:
       - run:
           name: Manage Apps
@@ -1434,8 +1434,8 @@ workflows:
     jobs:
       - manage_env_apps:
           action: "stop"
-          lower_env_list: "<< pipeline.parameters.lower_env_list >>"
-          lower_space_list: "<< pipeline.parameters.lower_space_list >>"
+          env_list: "<< pipeline.parameters.lower_env_list >>"
+          space_list: "<< pipeline.parameters.lower_space_list >>"
 
   start_lower_env_workflow:
     triggers:
@@ -1448,8 +1448,8 @@ workflows:
     jobs:
       - manage_env_apps:
           action: "start"
-          lower_env_list: "<< pipeline.parameters.lower_env_list >>"
-          lower_space_list: "<< pipeline.parameters.lower_space_list >>"
+          env_list: "<< pipeline.parameters.lower_env_list >>"
+          space_list: "<< pipeline.parameters.lower_space_list >>"
   manual_manage_env_workflow:
     when:
       contains:
@@ -1461,5 +1461,5 @@ workflows:
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
-          lower_env: "<< pipeline.parameters.lower_env_list >>"
-          lower_space: "<< pipeline.parameters.lower_space_list >>"
+          env_list: "<< pipeline.parameters.lower_env_list >>"
+          space_list: "<< pipeline.parameters.lower_space_list >>"
