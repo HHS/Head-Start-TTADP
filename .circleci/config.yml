@@ -1474,7 +1474,7 @@ workflows:
             - equal: ["restart", << pipeline.parameters.env_state >>]
             - equal: ["restage", << pipeline.parameters.env_state >>]
           # Ensure `env_state` is not empty, to avoid running with default or invalid values
-          - not:
+          not:
             - equal: ["none", << pipeline.parameters.env_state >>]
     jobs:
       - manage_env_apps:
