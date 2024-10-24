@@ -20,6 +20,7 @@ const createOverviewFieldArray = (data) => ([
     data: data && data.recipientsWithNoTTA ? `${data.recipientsWithNoTTA.pct}%` : '0%',
     route: 'qa-dashboard/recipients-with-no-tta',
     filterApplicable: data.recipientsWithNoTTA.filterApplicable,
+    showNoResults: true,
   },
   {
     icon: faBus,
@@ -32,6 +33,7 @@ const createOverviewFieldArray = (data) => ([
       : '0%',
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
+    showNoResults: true,
   },
   {
     key: 'recipients-with-ohs-standard-class-goals',
@@ -45,6 +47,7 @@ const createOverviewFieldArray = (data) => ([
       : '0%',
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
+    showNoResults: true,
   },
 ]);
 

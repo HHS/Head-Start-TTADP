@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import FiltersNotApplicable from '../components/FiltersNotApplicable';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import Drawer from '../components/Drawer';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 import './OverviewWidgetField.scss';
 
@@ -21,7 +24,10 @@ export function OverviewWidgetField({
   tooltipText,
   filterApplicable,
   iconSize,
+  showNoResults,
 }) {
+  const drawerTriggerRef = useRef(null);
+  const noData = data === '0%';
   return (
     <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-y-2 padding-x-1">
       <span className="smart-hub--dashboard-overview-widget-field-icon flex-1 display-flex flex-justify-center flex-align-center">
@@ -31,9 +37,21 @@ export function OverviewWidgetField({
       </span>
       <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-2 flex-column flex-justify-center">
         <div>
-          <span className="text-bold font-sans-xs">{data}</span>
-          { !filterApplicable && (
-            <FiltersNotApplicable />
+          {showNoResults && noData ? (
+            <>
+              <span className="text-bold font-sans-xs">No results</span>
+              <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+                Get help using filters
+              </DrawerTriggerButton>
+              <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
+                <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
+              </Drawer>
+            </>
+          ) : (
+            <>
+              <span className="text-bold font-sans-xs">{data}</span>
+              {!filterApplicable ? <FiltersNotApplicable /> : null}
+            </>
           )}
         </div>
 
@@ -48,7 +66,7 @@ export function OverviewWidgetField({
           <span className="margin-top-1">{label1}</span>
         )}
         {label2}
-        {route && (
+        {route && (!showNoResults || !noData) && (
           <Link to={route.to} className="margin-top-1">
             {route.label}
           </Link>
@@ -78,6 +96,7 @@ OverviewWidgetField.propTypes = {
   }),
   filterApplicable: PropTypes.bool,
   iconSize: PropTypes.string,
+  showNoResults: PropTypes.bool,
 };
 
 OverviewWidgetField.defaultProps = {
@@ -87,6 +106,7 @@ OverviewWidgetField.defaultProps = {
   route: null,
   filterApplicable: true,
   iconSize: 'sm',
+  showNoResults: false,
 };
 
 export default OverviewWidgetField;
