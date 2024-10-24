@@ -147,6 +147,15 @@ const SiteNav = ({
                     </NavLink>
                   </li>
                   <FeatureFlag flag="regional_goal_dashboard">
+                    <FeatureFlag flag="quality_assurance_dashboard">
+                      <li>
+                        <NavLink
+                          to="/dashboards/qa-dashboard"
+                        >
+                          Quality Assurance Dashboard
+                        </NavLink>
+                      </li>
+                    </FeatureFlag>
                     <li>
                       <NavLink
                         withinDisclosure
@@ -164,15 +173,7 @@ const SiteNav = ({
                       Resource Dashboard
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="quality_assurance_dashboard">
-                    <li>
-                      <NavLink
-                        to="/dashboards/qa-dashboard"
-                      >
-                        Quality Assurance Dashboard
-                      </NavLink>
-                    </li>
-                  </FeatureFlag>
+
                 </SiteNavDisclosureGroup>
                 <ul className="add-list-reset">
                   <li>

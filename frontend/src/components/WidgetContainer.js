@@ -38,6 +38,8 @@ export default function WidgetContainer(
     TitleDrawer,
     widgetContainerTitleClass,
     displayPaginationBoxOutline,
+
+    showFiltersNotApplicable,
   },
 ) {
   return (
@@ -50,6 +52,7 @@ export default function WidgetContainer(
         showHeaderBorder={showHeaderBorder}
         displayTable={displayTable}
         setDisplayTable={setDisplayTable}
+        showFiltersNotApplicable={showFiltersNotApplicable}
         pagination={showPagingTop ? (
           <PaginationCard
             currentPage={currentPage}
@@ -135,6 +138,7 @@ WidgetContainer.propTypes = {
   displayPaginationBoxOutline: PropTypes.bool,
   enableCheckboxes: PropTypes.bool,
   exportRows: PropTypes.func,
+  showFiltersNotApplicable: PropTypes.bool,
 };
 
 WidgetContainer.defaultProps = {
@@ -166,4 +170,5 @@ WidgetContainer.defaultProps = {
   TitleDrawer: null,
   widgetContainerTitleClass: 'padding-x-3',
   displayPaginationBoxOutline: false,
+  showFiltersNotApplicable: false,
 };

@@ -22,7 +22,9 @@ import './QaDetailsDrawer.scss';
 
 function RecipientsWithClassScoresAndGoalsWidget({
   data,
+  parentLoading,
 }) {
+  const { widgetData, pageData } = data;
   const titleDrawerRef = useRef(null);
   const subtitleRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -31,17 +33,17 @@ function RecipientsWithClassScoresAndGoalsWidget({
   const [selectedRecipientCheckBoxes, setSelectedRecipientCheckBoxes] = useState({});
   const [allRecipientsChecked, setAllRecipientsChecked] = useState(false);
   const [resetPagination, setResetPagination] = useState(false);
-  const [perPage, setPerPage] = useState(RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE);
+  const [perPage, setPerPage] = useState([RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE]);
 
   const defaultSort = {
-    sortBy: 'Recipient',
+    sortBy: 'name',
     direction: 'asc',
     activePage: 1,
   };
 
-  // Probably we WONT use the useWidgetPaging hook here.
   const {
     handlePageChange,
+    requestSort,
     exportRows,
     sortConfig,
     setSortConfig,
@@ -50,7 +52,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
     'recipientsWithClassScoresAndGoals',
     defaultSort,
     RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE,
-    allRecipientsData,
+    allRecipientsData, // data to use.
     setAllRecipientsData,
     resetPagination,
     setResetPagination,
@@ -58,9 +60,10 @@ function RecipientsWithClassScoresAndGoalsWidget({
     selectedRecipientCheckBoxes,
     'recipientsWithClassScoresAndGoals',
     setRecipientsDataToDisplay,
-    [],
-    [],
+    ['name'],
+    ['lastARStartDate', 'reportDeliveryDate'],
     'recipientsWithClassScoresAndGoals.csv',
+    'dataForExport',
   );
 
   const perPageChange = (e) => {
@@ -76,14 +79,17 @@ function RecipientsWithClassScoresAndGoalsWidget({
     setPerPage(perPageValue);
   };
 
-  const setSortBy = () => {
-    // Handle sort by, not sure how we will handle this yet.
+  const setSortBy = (e) => {
+    const [sortBy, direction] = e.target.value.split('-');
+    requestSort(sortBy, direction);
   };
 
-  const numberOfGrants = 70;
   const getSubtitleWithPct = () => {
-    const totalRecipients = 159;
-    return `${allRecipientsData.length} of ${totalRecipients} (${((allRecipientsData.length / totalRecipients) * 100).toFixed(2)}%) recipients (${numberOfGrants} grants)`;
+    const totalRecipients = widgetData ? widgetData.total : 0;
+    const grants = widgetData ? widgetData['grants with class'] : 0;
+    const pct = widgetData ? widgetData['% recipients with class'] : 0;
+    const recipoientsWithClass = widgetData ? widgetData['recipients with class'] : 0;
+    return `${recipoientsWithClass} of ${totalRecipients} (${pct}%) recipients (${grants} grants)`;
   };
 
   const makeRecipientCheckboxes = (goalsArr, checked) => (
@@ -118,12 +124,11 @@ function RecipientsWithClassScoresAndGoalsWidget({
     try {
       // Set local data.
       setLoading(true);
-      const recipientToUse = data.RecipientsWithOhsStandardFeiGoal || [];
-      setAllRecipientsData(recipientToUse);
+      setAllRecipientsData(pageData || []);
     } finally {
       setLoading(false);
     }
-  }, [data.RecipientsWithOhsStandardFeiGoal]);
+  }, [pageData]);
 
   useEffect(() => {
     const recipientIds = allRecipientsData.map((g) => g.id);
@@ -163,7 +168,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
   return (
     <WidgetContainer
       title="Recipients with CLASS&reg; scores and"
-      loading={loading}
+      loading={loading || parentLoading}
       loadingLabel="Recipients with CLASS&reg; scores and goals loading"
       showPagingBottom
       currentPage={sortConfig.activePage}
@@ -230,15 +235,15 @@ function RecipientsWithClassScoresAndGoalsWidget({
             >
               <option value="name-asc">Recipient name (A-Z) </option>
               <option value="name-desc">Recipient name (Z-A) </option>
-              <option value="reportReceived-asc">Report received (newest to oldest) </option>
-              <option value="reportReceived-desc">Report received (oldest to newest) </option>
-              <option value="LastArStartDate-asc">Last AR start date (newest to oldest) </option>
-              <option value="LastArStartDate-desc">Last AR start date (oldest to newest) </option>
+              <option value="reportDeliveryDate-desc">Report received (newest to oldest) </option>
+              <option value="reportDeliveryDate-asc">Report received (oldest to newest) </option>
+              <option value="lastARStartDate-desc">Last AR start date (newest to oldest) </option>
+              <option value="lastARStartDate-asc">Last AR start date (oldest to newest) </option>
             </Dropdown>
           </div>
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <Label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</Label>
+            <Label className="display-block margin-right-1 margin-y-0" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</Label>
             <Dropdown
               className="margin-top-0 margin-right-1 width-auto"
               id="perPage"
@@ -313,8 +318,13 @@ function RecipientsWithClassScoresAndGoalsWidget({
 
 RecipientsWithClassScoresAndGoalsWidget.propTypes = {
   data: PropTypes.shape({
-    headers: PropTypes.arrayOf(PropTypes.string),
-    RecipientsWithOhsStandardFeiGoal: PropTypes.oneOfType([
+    widgetData: PropTypes.shape({
+      total: PropTypes.number,
+      '% recipients with class': PropTypes.number,
+      'recipients with class': PropTypes.number,
+      'grants with class': PropTypes.number,
+    }),
+    pageData: PropTypes.oneOfType([
       PropTypes.shape({
         id: PropTypes.number,
         name: PropTypes.string,
@@ -334,6 +344,7 @@ RecipientsWithClassScoresAndGoalsWidget.propTypes = {
       PropTypes.shape({}),
     ]),
   }),
+  parentLoading: PropTypes.bool.isRequired,
 };
 
 RecipientsWithClassScoresAndGoalsWidget.defaultProps = {

@@ -3,9 +3,10 @@ import React, {
   useRef,
   useContext,
 } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
@@ -22,6 +23,7 @@ import useFilters from '../../../hooks/useFilters';
 import RecipientsWithClassScoresAndGoalsWidget from '../../../widgets/RecipientsWithClassScoresAndGoalsWidget';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import UserContext from '../../../UserContext';
+import { getSelfServiceData } from '../../../fetchers/ssdi';
 
 const ALLOWED_SUBFILTERS = [
   'domainClassroomOrganization',
@@ -35,50 +37,12 @@ const ALLOWED_SUBFILTERS = [
   'region',
   'stateCode',
 ];
-
-const recipients = [{
-  id: 1,
-  name: 'Abernathy, Mraz and Bogan',
-  lastArStartDate: '01/02/2021',
-  emotionalSupport: 6.0430,
-  classroomOrganization: 5.0430,
-  instructionalSupport: 4.0430,
-  reportReceivedDate: '03/01/2022',
-  goals: [
-    {
-      goalNumber: 'G-45641',
-      status: 'In progress',
-      creator: 'John Doe',
-      collaborator: 'Jane Doe',
-    },
-    {
-      goalNumber: 'G-25858',
-      status: 'Suspended',
-      creator: 'Bill Smith',
-      collaborator: 'Bob Jones',
-    },
-  ],
-},
-{
-  id: 2,
-  name: 'Recipient 2',
-  lastArStartDate: '04/02/2021',
-  emotionalSupport: 5.254,
-  classroomOrganization: 8.458,
-  instructionalSupport: 1.214,
-  reportReceivedDate: '05/01/2022',
-  goals: [
-    {
-      goalNumber: 'G-68745',
-      status: 'Complete',
-      creator: 'Bill Parks',
-      collaborator: 'Jack Jones',
-    },
-  ],
-}];
 export default function RecipientsWithClassScoresAndGoals() {
   const pageDrawerRef = useRef(null);
-  const [error] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, updateError] = useState();
+  const [recipientsWithClassScoresAndGoalsData,
+    setRecipientsWithClassScoresAndGoalsData] = useState({});
   const { user } = useContext(UserContext);
   const {
     // from useUserDefaultRegionFilters
@@ -96,6 +60,124 @@ export default function RecipientsWithClassScoresAndGoals() {
     [],
     QA_DASHBOARD_FILTER_CONFIG,
   );
+
+  useDeepCompareEffect(() => {
+    async function fetchQaData() {
+      setIsLoading(true);
+      // Filters passed also contains region.
+      try {
+        const data = await getSelfServiceData(
+          'recipients-with-class-scores-and-goals',
+          filters,
+          ['with_class_widget', 'with_class_page'],
+        );
+
+        // Get summary and row data.
+        const pageData = data.filter((d) => d.data_set === 'with_class_page');
+        const widgetData = data.filter((d) => d.data_set === 'with_class_widget');
+
+        // Convert data to the format the widget expects.
+        const reducedRecipientData = pageData[0].data.reduce((acc, item) => {
+          const {
+            recipientId,
+            recipientName,
+            classroomOrganization,
+            emotionalSupport,
+            goalCreatedAt,
+            goalId,
+            goalStatus,
+            grantNumber,
+            instructionalSupport,
+            lastARStartDate,
+            reportDeliveryDate,
+            collaborators,
+            creator,
+          } = item;
+
+          const regionId = item['region id'];
+          // Check if recipientId is already in the accumulator.
+          const existingRecipient = acc.find((recipient) => recipient.id === recipientId);
+          if (existingRecipient) {
+            // Add goal info.
+            existingRecipient.goals.push({
+              id: goalId,
+              goalNumber: `G-${goalId}`,
+              status: goalStatus,
+              creator,
+              collaborator: collaborators,
+              goalCreatedAt,
+            });
+            return acc;
+          }
+
+          // Else add a new recipient.
+          const newRecipient = {
+            id: recipientId,
+            name: recipientName,
+            heading: recipientName,
+            emotionalSupport,
+            classroomOrganization,
+            instructionalSupport,
+            grantNumber,
+            lastARStartDate: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+            reportDeliveryDate: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            regionId,
+            dataForExport: [
+              {
+                title: 'Last AR Start Date',
+                value: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+              },
+              {
+                title: 'Emotional Support',
+                value: emotionalSupport,
+              },
+              {
+                title: 'Classroom Organization',
+                value: classroomOrganization,
+              },
+              {
+                title: 'Instructional Support',
+                value: instructionalSupport,
+              },
+              {
+                title: 'Report Delivery Date',
+                value: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+              },
+            ],
+            goals: [
+              {
+                id: goalId,
+                goalNumber: `G-${goalId}`,
+                status: goalStatus,
+                creator,
+                collaborator: collaborators,
+                goalCreatedAt,
+              },
+            ],
+          };
+
+          return [...acc, newRecipient];
+        }, []);
+
+        // Sort by name for initial display.
+        const sortedReducedRecipients = reducedRecipientData.sort(
+          (a, b) => a.name.localeCompare(b.name),
+        );
+
+        setRecipientsWithClassScoresAndGoalsData({
+          widgetData: widgetData[0].data[0],
+          pageData: sortedReducedRecipients,
+        });
+        updateError('');
+      } catch (e) {
+        updateError('Unable to fetch QA data');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    // Call resources fetch.
+    fetchQaData();
+  }, [filters]);
 
   return (
     <div className="ttahub-recipients-with-ohs-standard-fei-goal">
@@ -139,12 +221,8 @@ export default function RecipientsWithClassScoresAndGoals() {
         <ContentFromFeedByTag tagName="ttahub-qa-dash-class-filters" />
       </Drawer>
       <RecipientsWithClassScoresAndGoalsWidget
-        data={
-        {
-          headers: ['Emotional Support', 'Classroom Organization', 'Instructional Support', 'Report Received Date', 'Goals'],
-          RecipientsWithOhsStandardFeiGoal: recipients,
-        }
-      }
+        data={recipientsWithClassScoresAndGoalsData}
+        parentLoading={isLoading}
       />
     </div>
   );

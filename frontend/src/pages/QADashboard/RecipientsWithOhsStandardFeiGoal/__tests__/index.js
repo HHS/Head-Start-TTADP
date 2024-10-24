@@ -1,11 +1,14 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import fetchMock from 'fetch-mock';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import { SCOPE_IDS } from '@ttahub/common';
-import { render, screen, act } from '@testing-library/react';
+import {
+  render, screen, act, waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import RecipientsWithOhsStandardFeiGoal from '../index';
+import RecipientsWithOhsStandardFeiGoal, { mapGoalStatusKey } from '../index';
 import UserContext from '../../../../UserContext';
 
 const history = createMemoryHistory();
@@ -21,214 +24,131 @@ const defaultUser = {
   }],
 };
 
-const renderRecipientsWithOhsStandardFeiGoal = (data, user = defaultUser) => {
+const recipientsWithOhsStandardFeiGoalEmptyData = [
+  {
+    data_set: 'with_fei_widget',
+    records: '1',
+    data: [
+      {
+        total: 1550,
+        '% recipients with fei': 0,
+        'grants with fei': 0,
+        'recipients with fei': 0,
+      },
+    ],
+  },
+  {
+    data_set: 'with_fei_page',
+    records: '0',
+    data: [],
+  },
+];
+
+const recipientsWithOhsStandardFeiGoalSsdiData = [
+  {
+    data_set: 'with_fei_widget',
+    records: '1',
+    data: [
+      {
+        total: 1550,
+        '% recipients with fei': 55.35,
+        'grants with fei': 1093,
+        'recipients with fei': 858,
+      },
+    ],
+  },
+  {
+    data_set: 'with_fei_page',
+    records: '799',
+    data: [
+      {
+        recipientId: 1,
+        recipientName: 'Test Recipient 1',
+        createdAt: '2021-09-01T13:05:17.944+00:00',
+        goalId: 20628,
+        goalStatus: 'In progress',
+        grantNumber: '234234',
+        rootCause: ['Community Partnership', 'Workforce'],
+      },
+      {
+        recipientId: 2,
+        recipientName: 'Test Recipient 2',
+        createdAt: '2021-09-02T13:05:17.944+00:00',
+        goalId: 359813,
+        goalStatus: 'Not started',
+        grantNumber: '4234232',
+        rootCause: ['Testing'],
+      },
+      {
+        recipientId: 3,
+        recipientName: 'Test Recipient 3',
+        createdAt: '2021-09-03T13:05:17.944+00:00',
+        goalId: 457825,
+        goalStatus: 'In progress',
+        grantNumber: '5678856',
+        rootCause: ['Facilities'],
+      },
+    ],
+  },
+];
+
+const renderRecipientsWithOhsStandardFeiGoal = (user = defaultUser) => {
   render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
-        <RecipientsWithOhsStandardFeiGoal
-          data={data}
-          loading={false}
-          resetPagination={false}
-          setResetPagination={() => {}}
-          perPageNumber={10}
-        />
+        <RecipientsWithOhsStandardFeiGoal />
       </UserContext.Provider>
     </Router>,
   );
 };
 
 describe('Recipients With Ohs Standard Fei Goal', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
   it('renders correctly without data', async () => {
-    const emptyData = {
-      headers: ['Recipient', 'Date of Last TTA', 'Days Since Last TTA'],
-      RecipientsWithNoTta: [],
-    };
-    renderRecipientsWithOhsStandardFeiGoal(emptyData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalEmptyData);
+    renderRecipientsWithOhsStandardFeiGoal();
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
     expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
-    const data = {
-      headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
-      RecipientsWithOhsStandardFeiGoal: [
-        {
-          heading: 'Test Recipient 1',
-          name: 'Test Recipient 1',
-          recipient: 'Test Recipient 1',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: '2021-09-01',
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-20628',
-          },
-          {
-            title: 'Goal_status',
-            value: 'In progress',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Community Partnership, Workforce',
-          },
-          ],
-        },
-        {
-          heading: 'Test Recipient 2',
-          name: 'Test Recipient 2',
-          recipient: 'Test Recipient 2',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: '2021-09-02',
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-359813',
-          },
-          {
-            title: 'Goal_status',
-            value: 'Not started',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Testing',
-          }],
-        },
-        {
-          heading: 'Test Recipient 3',
-          name: 'Test Recipient 3',
-          recipient: 'Test Recipient 3',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: '2021-09-03',
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-457825',
-          },
-          {
-            title: 'Goal_status',
-            value: 'Unavailable',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Facilities',
-          }],
-        }],
-    };
-    renderRecipientsWithOhsStandardFeiGoal(data);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalSsdiData);
+    renderRecipientsWithOhsStandardFeiGoal();
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
     expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/Test Recipient 1/i)).toBeInTheDocument();
+        expect(screen.getByText(/Test Recipient 2/i)).toBeInTheDocument();
+        expect(screen.getByText(/Test Recipient 3/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/Recipient 2/i)).toBeInTheDocument();
-    expect(screen.getByText(/Recipient 3/i)).toBeInTheDocument();
+        expect(screen.getByText('09/01/2021')).toBeInTheDocument();
+        expect(screen.getByText('09/02/2021')).toBeInTheDocument();
+        expect(screen.getByText('09/03/2021')).toBeInTheDocument();
 
-    expect(screen.getByText('09/01/2021')).toBeInTheDocument();
-    expect(screen.getByText('09/02/2021')).toBeInTheDocument();
-    expect(screen.getByText('09/03/2021')).toBeInTheDocument();
+        expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
+        expect(screen.getByText(/G-359813/i)).toBeInTheDocument();
+        expect(screen.getByText(/G-457825/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
-    expect(screen.getByText(/G-359813/i)).toBeInTheDocument();
-    expect(screen.getByText(/G-457825/i)).toBeInTheDocument();
+        expect(screen.queryAllByText(/In progress/i).length).toBe(2);
+        expect(screen.getByText(/Not started/i)).toBeInTheDocument();
+        expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
+        expect(screen.getByText(/Testing/i)).toBeInTheDocument();
+        expect(screen.getByText(/Facilities/i)).toBeInTheDocument();
 
-    expect(screen.queryAllByText(/In progress/i).length).toBe(2);
-    expect(screen.getByText(/Not started/i)).toBeInTheDocument();
-
-    expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
-    expect(screen.getByText(/Testing/i)).toBeInTheDocument();
-    expect(screen.getByText(/Facilities/i)).toBeInTheDocument();
+        // Check all grant numbers are displayed.
+        expect(screen.getByText(/234234/i)).toBeInTheDocument();
+        expect(screen.getByText(/4234232/i)).toBeInTheDocument();
+        expect(screen.getByText(/5678856/i)).toBeInTheDocument();
+      });
+    });
   });
+
   it('handles a user with only one region', async () => {
-    const data = {
-      headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
-      RecipientsWithOhsStandardFeiGoal: [
-        {
-          heading: 'Test Recipient 1',
-          name: 'Test Recipient 1',
-          recipient: 'Test Recipient 1',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: '2021-09-01',
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-20628',
-          },
-          {
-            title: 'Goal_status',
-            value: 'In progress',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Community Partnership, Workforce',
-          },
-          ],
-        },
-        {
-          heading: 'Test Recipient 2',
-          name: 'Test Recipient 2',
-          recipient: 'Test Recipient 2',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: '2021-09-02',
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-359813',
-          },
-          {
-            title: 'Goal_status',
-            value: 'Not started',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Testing',
-          }],
-        },
-        {
-          heading: 'Test Recipient 3',
-          name: 'Test Recipient 3',
-          recipient: 'Test Recipient 3',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: '2021-09-03',
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-457825',
-          },
-          {
-            title: 'Goal_status',
-            value: 'Unavailable',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Facilities',
-          }],
-        }],
-    };
     const u = {
       homeRegionId: 14,
       permissions: [{
@@ -236,7 +156,8 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       }],
     };
-    renderRecipientsWithOhsStandardFeiGoal(data, u);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalSsdiData);
+    renderRecipientsWithOhsStandardFeiGoal(u);
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
     const filters = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -250,5 +171,26 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     // expect select not to have "region" as an option
     const option = select.querySelector('option[value="region"]');
     expect(option).toBeNull();
+  });
+
+  it('handles error on fetch', async () => {
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', 500);
+    renderRecipientsWithOhsStandardFeiGoal();
+
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  it('returns correct sort order from mapGoalStatusKey', () => {
+    expect(mapGoalStatusKey('Not Started')).toBe(4);
+    expect(mapGoalStatusKey('In Progress')).toBe(3);
+    expect(mapGoalStatusKey('Suspended')).toBe(2);
+    expect(mapGoalStatusKey('Closed')).toBe(1);
+    expect(mapGoalStatusKey('')).toBe(0);
   });
 });

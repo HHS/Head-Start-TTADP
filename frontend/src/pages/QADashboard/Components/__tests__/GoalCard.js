@@ -22,6 +22,8 @@ describe('GoalCard', () => {
       status: 'In progress',
       creator: 'Jon Doe',
       collaborator: 'Jane Doe',
+      recipientId: 1,
+      regionId: 2,
     };
 
     renderGoalCard(goal);

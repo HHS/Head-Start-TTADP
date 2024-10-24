@@ -51,4 +51,30 @@ describe('Quality Assurance Dashboard Overview Widget', () => {
     expect(await screen.findByText(/33.5%/)).toBeVisible();
     expect(await screen.findByText(/One or more of the selected filters cannot be applied to this data./)).toBeVisible();
   });
+
+  it('shows no results message', async () => {
+    const data = {
+      recipientsWithNoTTA: {
+        pct: '0',
+        filterApplicable: true,
+      },
+      recipientsWithOhsStandardFeiGoals: {
+        pct: '0',
+        filterApplicable: true,
+      },
+      recipientsWithOhsStandardClass: {
+        pct: '0',
+        filterApplicable: true,
+      },
+    };
+
+    renderQualityAssuranceDashboardOverview({ data });
+
+    expect(screen.getByText(/Recipients with no TTA/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recipients with OHS standard FEI goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recipients with OHS standard CLASS goal/i)).toBeInTheDocument();
+
+    expect(screen.queryAllByText(/No results/i).length).toBe(3);
+    expect(screen.queryAllByText(/display details/i).length).toBe(0);
+  });
 });
