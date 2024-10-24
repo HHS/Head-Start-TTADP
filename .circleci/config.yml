@@ -1335,12 +1335,11 @@ jobs:
 workflows:
   build_test_deploy:
     when:
-      condition:
-        and:
-          # Ensure the workflow is only triggered when `manual-trigger` is false
-          # and `env_state` is empty (i.e., it's not for starting/stopping environments)
-          - equal: [false, << pipeline.parameters.manual-trigger >>]
-          - equal: [false, << pipeline.parameters.manual-manage-env >>]
+      and:
+        # Ensure the workflow is only triggered when `manual-trigger` is false
+        # and `env_state` is empty (i.e., it's not for starting/stopping environments)
+        - equal: [false, << pipeline.parameters.manual-trigger >>]
+        - equal: [false, << pipeline.parameters.manual-manage-env >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
