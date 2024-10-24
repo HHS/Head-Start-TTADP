@@ -20,7 +20,6 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
     await blur(page);
@@ -35,14 +34,13 @@ test.describe('Recipient record', () => {
      // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
     // add an objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective');
 
-    await page.getByRole('button', { name: /Save/i }).click();
+    await page.getByRole('button', { name: /Save and continue/i }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
 
     // verify the goal appears in the table
@@ -77,7 +75,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective for this second goal');
-    await page.getByRole('button', { name: /Save/i }).click();
+    await page.getByRole('button', { name: /Save and continue/i }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
   
     // verify the goal appears in the table
