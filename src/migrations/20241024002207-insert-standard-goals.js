@@ -27,6 +27,7 @@ const standardGoal = (templateName) => ({
   hash: md5(templateName),
   createdAt: new Date(),
   updatedAt: new Date(),
+  templateNameModifiedAt: new Date(),
 });
 
 const standardGoalTemplates = standardGoalTexts.map((templateName) => ({
