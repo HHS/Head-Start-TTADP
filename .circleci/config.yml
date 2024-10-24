@@ -1481,8 +1481,7 @@ workflows:
   manual_manage_env_workflow:
     when:
       condition:
-        and:
-          - equal: [true, << pipeline.parameters.manual-manage-env >>]
+        equal: [true, << pipeline.parameters.manual-manage-env >>]
     jobs:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
