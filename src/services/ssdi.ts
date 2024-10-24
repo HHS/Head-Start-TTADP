@@ -600,6 +600,7 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
   Object.keys(input).forEach((key) => {
     const suffix = Object.keys(suffixMapping).find((s) => key.endsWith(s));
     let newKey = key;
+    let baseKey = newKey.split('.')[0];
     let newValue = input[key];
 
     if (suffix) {
@@ -613,10 +614,12 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
         && arr.some((item) => typeof item === 'string' && item.includes(separator));
 
       const splitValue = (value, separator) => (Array.isArray(value)
-        ? value.flatMap((item) => item.split(separator))
+        ? value.flatMap((item) => (typeof item === 'string' 
+          ? item.split(separator)
+          : item))
         : value.split(separator));
 
-      if (isDateArrayFilter(suffix, filters[newKey]?.type)) {
+      if (isDateArrayFilter(suffix, filters[baseKey]?.type)) {
         if (!Array.isArray(newValue)) {
           newValue = splitValue(newValue, '-');
         } else if (isArrayWithSeparator(newValue, '-')) {
@@ -635,10 +638,10 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       newValue = [newValue];
     }
 
-    if (!filters[newKey]) {
+    if (!filters[baseKey]) {
       errors.invalidFilters.push(`Invalid filter: ${newKey}`);
     } else {
-      const expectedType = filters[newKey].type as FilterType;
+      const expectedType = filters[baseKey].type as FilterType;
       if (!validateType(expectedType, newValue)) {
         errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType} recieved ${newValue}`);
       }
