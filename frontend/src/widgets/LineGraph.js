@@ -11,6 +11,7 @@ import LegendControl from './LegendControl';
 import LegendControlFieldset from './LegendControlFieldset';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import { arrayExistsAndHasLength } from '../Constants';
+import NoResultsFound from '../components/NoResultsFound';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
@@ -193,6 +194,10 @@ export default function LineGraph({
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
   }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle]);
+
+  if (!data || data.length === 0) {
+    return <NoResultsFound />;
+  }
 
   return (
     <div className="ttahub-three-trace-line-graph padding-3" ref={widgetRef}>
