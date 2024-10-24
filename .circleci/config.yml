@@ -1276,6 +1276,14 @@ jobs:
         type: string
         description: "List of Cloud Foundry spaces for each environment"
         default: "<< pipeline.parameters.space_list >>"
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
     steps:
       - run:
           name: Install Cloud Foundry
@@ -1444,12 +1452,14 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - manage_env_apps:
           env_state: "stop"
           env_list: "<< pipeline.parameters.env_list >>"
           space_list: "<< pipeline.parameters.space_list >>"
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
   start_lower_env_workflow:
     triggers:
       - schedule:
@@ -1457,12 +1467,14 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - manage_env_apps:
           env_state: "start"
           env_list: "<< pipeline.parameters.env_list >>"
           space_list: "<< pipeline.parameters.space_list >>"
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
   manual_manage_env_workflow:
     when:
       condition:
@@ -1481,3 +1493,5 @@ workflows:
           env_state: "<< pipeline.parameters.env_state >>"
           env_list: "<< pipeline.parameters.env_list >>"
           space_list: "<< pipeline.parameters.space_list >>"
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
