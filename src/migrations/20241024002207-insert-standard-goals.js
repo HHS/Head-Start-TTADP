@@ -3,7 +3,7 @@ const { prepMigration } = require('../lib/migration');
 const { CREATION_METHOD } = require('../constants');
 
 const standardGoalTexts = [
-  '(Teaching Practices) The recipient will implement systems and services that ensure eﬀective adult-child interactions and responsive care using eﬀective teaching and home visiting practice',
+  '(Teaching Practices) The recipient will implement systems and services that ensure eﬀective adult-child interactions and responsive care using eﬀective teaching and home visiting practices.',
   '(Child Safety) The recipient will implement systems and services to ensure that everyone promotes a culture of program safety, so children are kept safe at all times.',
   '(ERSEA) The recipient will implement systems and services to ensure their Eligibility, Recruitment, Selection, Enrollment, and Attendance procedures meet the needs of their children, families, and community.',
   '(Governance) The recipient will establish and maintain a formal structure for program governance that ensures clear roles, responsibilities and procedures, eﬀective training, and representation of families and the community.',
