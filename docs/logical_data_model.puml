@@ -435,9 +435,27 @@ class GrantNumberLinks{
  deletedAt : timestamp with time zone
 }
 
+class GrantReplacementTypes{
+ * id : integer : <generated>
+ mapsTo : integer : REFERENCES "GrantReplacementTypes".id
+ * createdAt : timestamp with time zone : now()
+ * name : text
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+}
+
+class GrantReplacements{
+ * id : integer : <generated>
+ grantReplacementTypeId : integer : REFERENCES "GrantReplacementTypes".id
+ * replacedGrantId : integer : REFERENCES "Grants".id
+ * replacingGrantId : integer : REFERENCES "Grants".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ replacementDate : date
+}
+
 class Grants{
  * id : integer
- oldGrantId : integer : REFERENCES "Grants".id
  regionId : integer : REFERENCES "Regions".id
  * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone : now()
@@ -1614,6 +1632,34 @@ class ZALGrantNumberLinks{
  session_sig : text
 }
 
+class ZALGrantReplacementTypes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALGrantReplacements{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2481,12 +2527,15 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grantNumberLink
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grantNumberLink
+GrantReplacementTypes "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacementTypes : mapsFromReplacementType, mapsToReplacementType
+GrantReplacementTypes "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacements : grantReplacements, grantReplacementType
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
-Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacements : replacedGrant, replacingGrant, replacedGrantReplacements, replacingGrantReplacements
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
