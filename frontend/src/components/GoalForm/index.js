@@ -3,7 +3,6 @@ import React, {
   useState,
   useMemo,
   useContext,
-  useRef,
 } from 'react';
 import moment from 'moment';
 import { DECIMAL_BASE } from '@ttahub/common';
@@ -31,7 +30,6 @@ import ReadOnly from './ReadOnly';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
-import VanillaModal from '../VanillaModal';
 import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
 import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLink';
 import GoalFormButton from '../SharedGoalComponents/GoalFormButton';
@@ -44,8 +42,6 @@ export default function GoalForm({
   recipient,
   regionId,
 }) {
-  const unsuspendModalRef = useRef(null);
-  const openExistingGoalModalRef = useRef(null);
   const history = useHistory();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
@@ -711,49 +707,6 @@ export default function GoalForm({
             onEdit={onEdit}
           />
         ) : null }
-        <VanillaModal
-          forceAction
-          id="reopen-suspended-goal"
-          heading="This goal is currently suspended"
-          modalRef={unsuspendModalRef}
-        >
-          <p className="usa-prose">The reason for suspending the goal was:</p>
-          <ul className="usa-list">
-            {/* {(nudgedGoalSelection.closeSuspendReasons || []).map((reason) => (
-              <li key={uniqueId('nudged-goalclose-suspend-reason-')}>{reason}</li>
-            ))} */}
-          </ul>
-          <p className="usa-prose">Would you like to reopen this goal and change the status to In progress?</p>
-          <Button
-            type="button"
-            onClick={async () => {
-              // await unsuspender();
-              unsuspendModalRef.current.toggleModal();
-            }}
-          >
-            Yes, reopen
-          </Button>
-          <button type="button" id="unsuspend" onClick={() => unsuspendModalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
-        </VanillaModal>
-        <VanillaModal
-          forceAction
-          id="switch-to-existing-goal"
-          heading="You are selecting an existing goal."
-          modalRef={openExistingGoalModalRef}
-        >
-          <p className="usa-prose">Do you want to edit this goal?</p>
-          <p className="usa-prose">Information entered here will be lost when choosing an existing goal.</p>
-          <Button
-            type="button"
-            onClick={async () => {
-              // forwardToGoalWithIds(nudgedGoalSelection.ids);
-              openExistingGoalModalRef.current.toggleModal();
-            }}
-          >
-            Yes, edit
-          </Button>
-          <button type="button" id="openExisting" onClick={() => openExistingGoalModalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
-        </VanillaModal>
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form
