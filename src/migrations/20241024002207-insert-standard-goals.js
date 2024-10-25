@@ -49,7 +49,7 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         DELETE FROM "GoalTemplates"
-        WHERE "creationMethod" = 'Curated' AND "templateName" IN (${standardGoalTexts.map((templateName) => `'${templateName}'`).join(',')});
+        WHERE "creationMethod" = '${CREATION_METHOD.CURATED}' AND "templateName" IN (${standardGoalTexts.map((templateName) => `'${templateName}'`).join(',')});
       `, { transaction });
     },
   ),
