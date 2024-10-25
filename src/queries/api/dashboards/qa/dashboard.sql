@@ -110,11 +110,11 @@ JSON: {
       },
       {
         "name": "activity_widget",
-        "defaultName": "Activity Widgeth",
+        "defaultName": "Activity Widget",
         "description": "Number of activity reports matching filters",
         "schema": [
           {
-            "columnName": "fitered_reports",
+            "columnName": "filtered_reports",
             "type": "number",
             "nullable": false,
             "description": "The number of reports that match the filters."
@@ -168,6 +168,20 @@ JSON: {
         "query": {
           "sqlQuery": "SELECT number FROM \"Grants\"",
           "column": "number"
+        }
+      }
+    },
+        {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal status",
+      "description": "Filter based on the goal status.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT status FROM \"Goals\"",
+          "column": "status"
         }
       }
     },
@@ -286,10 +300,10 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
-      "name": "roles",
+      "name": "role",
       "type": "string[]",
-      "display": "Specialist roles",
-      "description": "Filter based on the selected Specialist roles.",
+      "display": "Specialist role",
+      "description": "Filter based on the selected Specialist role.",
       "supportsExclusion": true
     },
     {
@@ -881,7 +895,7 @@ BEGIN
       ON fa.id = a.id
       JOIN "ActivityReportGoals" arg
       ON a.id = arg."activityReportId"
-      JOIN filterd_goals fg
+      JOIN filtered_goals fg
       ON arg."goalId" = fg.id
       JOIN "ActivityReportObjectives" aro
       ON a.id = aro."activityReportId"
@@ -1215,7 +1229,7 @@ WITH
 ),
   activity_widget AS (
     SELECT
-      COUNT(DISTINCT a.id) fitered_reports
+      COUNT(DISTINCT a.id) filtered_reports
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
@@ -1276,7 +1290,7 @@ WITH
     'activity_widget' data_set,
     COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
-      'fitered_reports', fitered_reports
+      'filtered_reports', filtered_reports
     )) data,
       af.active_filters
     FROM activity_widget

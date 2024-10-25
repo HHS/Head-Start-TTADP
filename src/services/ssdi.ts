@@ -724,7 +724,12 @@ const executeQuery = async (filePath: string): Promise<any> => {
   }
 
   try {
-    const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
+    const result = await db.sequelize.query(
+      query,
+      {
+        type: QueryTypes.SELECT,
+      },
+    );
     return result;
   } catch (error) {
     throw new Error(`Query failed: ${error.message}`);

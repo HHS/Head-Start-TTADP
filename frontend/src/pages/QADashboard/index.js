@@ -158,7 +158,7 @@ export default function QADashboard() {
         const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
         const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
         const activityWidgetData = dashboardData.find((item) => item.data_set === 'activity_widget');
-        const filteredReports = activityWidgetData.data[0].fitered_reports;
+        const filteredReports = activityWidgetData.data[0].filtered_reports;
 
         const deliveryMethod = {
           filteredReports,
