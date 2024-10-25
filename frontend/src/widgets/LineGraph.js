@@ -31,8 +31,10 @@ export default function LineGraph({
   // the dom el for drawing the chart
   const lines = useRef();
 
+  const hasData = data && data.length && data.some((d) => d.x.length > 0);
+
   useEffect(() => {
-    if (!lines || showTabularData || !arrayExistsAndHasLength(data)) {
+    if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
       return;
     }
 
@@ -193,9 +195,9 @@ export default function LineGraph({
       .filter((trace) => Boolean(trace));
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle]);
+  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData]);
 
-  if (!data || data.length === 0) {
+  if (!hasData) {
     return <NoResultsFound />;
   }
 
