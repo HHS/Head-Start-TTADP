@@ -165,19 +165,23 @@ export default function RootCauseFeiGoals({ data }) {
             selectAllIdPrefix="qa-dashboard-root-cause-on-fei-goals"
           />
         ) : (
-          <BarGraph
-            data={trace}
-            topMargin={24}
-            leftMargin={200}
-            barGraphTopHeight="auto"
-            barHeightMultiplier={40}
-            widgetRef={widgetRef}
-            xAxisConfig={{
-              title: 'Percentage',
-              ticksuffix: '%',
-              standoff: 40,
-            }}
-          />
+          <div className="padding-bottom-1">
+            <BarGraph
+              data={trace}
+              topMargin={24}
+              leftMargin={200}
+              barGraphTopHeight="auto"
+              barHeightMultiplier={40}
+              widgetRef={widgetRef}
+              xAxisConfig={{
+                title: {
+                  text: 'Percentage',
+                  standoff: 100,
+                },
+                ticksuffix: '%',
+              }}
+            />
+          </div>
         )}
       </WidgetContainer>
     </div>
