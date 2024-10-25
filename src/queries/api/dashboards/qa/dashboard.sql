@@ -889,7 +889,7 @@ BEGIN
     WITH
       applied_filtered_activity_reports AS (
       SELECT DISTINCT
-        a.id
+        a.id "activityReportId"
       FROM filtered_activity_reports fa
       JOIN "ActivityReports" a
       ON fa.id = a.id
