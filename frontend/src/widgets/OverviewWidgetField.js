@@ -39,7 +39,7 @@ export function OverviewWidgetField({
         <div>
           {showNoResults && noData ? (
             <>
-              <span className="text-bold font-sans-xs">No results</span>
+              <span className="text-bold font-sans-xs margin-right-1">No results</span>
               <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
                 Get help using filters
               </DrawerTriggerButton>

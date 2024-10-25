@@ -13,9 +13,9 @@ function NoResultsFound() {
   const drawerTriggerRef = useRef(null);
   return (
     <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center">
-      <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="3x" />
+      <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="2x" />
       <span>
-        <h4 className="margin-bottom-1">No results found.</h4>
+        <h4 className="margin-bottom-1 margin-top-2">No results found.</h4>
       </span>
       <span className="margin-bottom-1">Try removing or changing the selected filters.</span>
       <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
