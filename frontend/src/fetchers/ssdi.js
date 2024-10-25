@@ -43,7 +43,7 @@ const allowedTopicsForQuery = {
     'domainInstructionalSupport',
     'createDate',
   ],
-  'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter),
+  'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter.id),
     'region',
     'reportId',
     'activityReportGoalResponse',
@@ -57,11 +57,8 @@ export const containsFiltersThatAreNotApplicable = (filterName, filters) => {
   }
 
   const config = allowedTopicsForQuery[filterName];
-  let configNames = [];
-  if (config.length) {
-    configNames = typeof config[0] === 'string' ? config : config.map((c) => c.id);
-  }
-  return filters.some((filter) => !configNames.includes(filter.topic));
+
+  return filters.some((filter) => !config.includes(filter.topic));
 };
 
 export const getSelfServiceDataQueryString = (filterName, filters) => {
@@ -70,13 +67,7 @@ export const getSelfServiceDataQueryString = (filterName, filters) => {
   }
 
   const config = allowedTopicsForQuery[filterName];
-
-  let configNames = [];
-  if (config.length) {
-    configNames = typeof config[0] === 'string' ? config : config.map((c) => c.id);
-  }
-
-  const allowedFilters = filters.filter((filter) => configNames.includes(filter.topic));
+  const allowedFilters = filters.filter((filter) => config.includes(filter.topic));
   return filtersToQueryString(allowedFilters);
 };
 
