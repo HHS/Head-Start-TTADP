@@ -57,7 +57,11 @@ export const containsFiltersThatAreNotApplicable = (filterName, filters) => {
   }
 
   const config = allowedTopicsForQuery[filterName];
-  return filters.some((filter) => !config.includes(filter.topic));
+  let configNames = [];
+  if (config.length) {
+    configNames = typeof config[0] === 'string' ? config : config.map((c) => c.id);
+  }
+  return filters.some((filter) => !configNames.includes(filter.topic));
 };
 
 export const getSelfServiceDataQueryString = (filterName, filters) => {
@@ -67,7 +71,12 @@ export const getSelfServiceDataQueryString = (filterName, filters) => {
 
   const config = allowedTopicsForQuery[filterName];
 
-  const allowedFilters = filters.filter((filter) => config.includes(filter.topic));
+  let configNames = [];
+  if (config.length) {
+    configNames = typeof config[0] === 'string' ? config : config.map((c) => c.id);
+  }
+
+  const allowedFilters = filters.filter((filter) => configNames.includes(filter.topic));
   return filtersToQueryString(allowedFilters);
 };
 
@@ -79,6 +88,7 @@ const getSelfServiceUrl = (filterName, filters) => {
 
 export const getSelfServiceData = async (filterName, filters, dataSetSelection = []) => {
   const url = getSelfServiceUrl(filterName, filters);
+
   const urlToUse = url + dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('');
   const response = await get(urlToUse);
   if (!response.ok) {
