@@ -119,7 +119,9 @@ describe('Filter Menu', () => {
     const condition = screen.getByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'is on or after');
 
-    const del = screen.getByRole('button', { name: /remove date started is on or after/i });
+    const del = screen.getByRole('button', {
+      name: /remove date started \(ar\) is on or after filter\. click apply filters to make your changes/i,
+    });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
@@ -435,7 +437,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Date ended');
+    userEvent.selectOptions(topics, 'Date ended (AR)');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
@@ -463,7 +465,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Date ended');
+    userEvent.selectOptions(topics, 'Date ended (AR)');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 

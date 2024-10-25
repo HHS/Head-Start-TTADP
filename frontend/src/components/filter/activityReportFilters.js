@@ -61,7 +61,7 @@ const defaultDateValues = {
 
 export const startDateFilter = {
   id: 'startDate',
-  display: 'Date started',
+  display: 'Date started (AR)',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
@@ -89,7 +89,7 @@ export const startDateFilter = {
 
 export const endDateFilter = {
   id: 'endDate',
-  display: 'Date ended',
+  display: 'Date ended (AR)',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
