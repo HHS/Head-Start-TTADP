@@ -84,7 +84,7 @@ const logContext = {
  * @returns {Object} A dictionary where the keys are grant IDs and the values are
  *   arrays of active grant IDs related to each key grant.
  */
-function mapGrantsWithReplacements(grants) {
+export function mapGrantsWithReplacements(grants) {
   const grantsWithReplacementsDictionary = {};
 
   grants.forEach((grant) => {

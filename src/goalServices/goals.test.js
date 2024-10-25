@@ -19,6 +19,7 @@ import {
   goalByIdWithActivityReportsAndRegions,
   getGoalIdsBySimilarity,
   destroyGoal,
+  mapGrantsWithReplacements,
 } from './goals';
 import {
   sequelize,
@@ -50,6 +51,7 @@ import {
 import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
+import getGoalsForReport from './getGoalsForReport';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
@@ -76,6 +78,11 @@ jest.mock('../services/goalSimilarityGroup', () => ({
 }));
 jest.mock('../models/helpers/genericCollaborator', () => ({
   mergeCollaborators: jest.fn(),
+}));
+
+jest.mock('./getGoalsForReport', () => ({
+  __esModule: true, // This property helps Jest handle both default and named exports
+  default: jest.fn(),
 }));
 
 const mockObjectiveId = 10000001;
@@ -719,6 +726,85 @@ describe('Goals DB service', () => {
       await saveGoalsForReport(goals, report);
 
       expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Test Response' }]);
+    });
+
+    it('creates a new goal when none exists by goalIds or goalTemplateId', async () => {
+      const goals = [
+        {
+          goalIds: [], // no matching goal by ID
+          grantIds: [1],
+          name: 'New Goal',
+          status: 'In Progress',
+          endDate: '2023-12-31',
+          isActivelyBeingEditing: true,
+          goalTemplateId: null,
+        },
+      ];
+
+      const report = {
+        id: 1001,
+      };
+
+      Goal.findAll.mockResolvedValue([]);
+      Goal.findOne.mockResolvedValue(null);
+      Goal.create.mockResolvedValue({
+        id: 2,
+        grantId: 1,
+        name: 'New Goal',
+        status: 'In Progress',
+        save: jest.fn().mockResolvedValue({}),
+        set: jest.fn(),
+      });
+
+      await saveGoalsForReport(goals, report);
+
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
+        createdVia: 'activityReport',
+        grantId: 1,
+        name: 'New Goal',
+        status: 'In Progress',
+      }), { individualHooks: true });
+    });
+
+    it('creates a new goal when goalTemplateId exists and is curated', async () => {
+      const goals = [
+        {
+          goalIds: [],
+          grantIds: [1],
+          name: 'New Curated Goal',
+          status: 'In Progress',
+          endDate: '2023-12-31',
+          isActivelyBeingEditing: true,
+        },
+      ];
+
+      const report = {
+        id: 10,
+      };
+
+      Goal.findAll.mockResolvedValue([]);
+      Goal.findOne.mockResolvedValue(null);
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({
+        creationMethod: 'curated',
+      });
+      Goal.create.mockResolvedValue({
+        id: 3,
+        grantId: 1,
+        name: 'New Curated Goal',
+        status: 'In Progress',
+        createdVia: 'activityReport',
+        save: jest.fn().mockResolvedValue({}),
+        set: jest.fn(),
+      });
+
+      await saveGoalsForReport(goals, report);
+
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
+        grantId: 1,
+        name: 'New Curated Goal',
+        status: 'In Progress',
+        createdVia: 'activityReport',
+      }), { individualHooks: true });
     });
   });
 
@@ -1989,6 +2075,116 @@ describe('Goals DB service', () => {
 
       expect(goalIdGroups).toEqual(expectedGoalIdGroups);
     });
+
+    it('should mark a goal as being on an active report if it has activityReportGoals with activityReport', async () => {
+      const mockGoals = [
+        {
+          id: 1,
+          status: 'Active',
+          name: 'Goal 1',
+          source: 'Source 1',
+          goalTemplateId: 101,
+          grantId: 1,
+          activityReportGoals: [
+            {
+              activityReport: { id: 1, calculatedStatus: 'Submitted' },
+              goalId: 1,
+            },
+          ],
+          responses: [{ response: 'Response 1', goalId: 1 }],
+        },
+        {
+          id: 2,
+          status: 'Active',
+          name: 'Goal 2',
+          source: 'Source 2',
+          goalTemplateId: 102,
+          grantId: 2,
+          activityReportGoals: [
+            {
+              activityReport: null,
+              goalId: 2,
+            },
+          ],
+          responses: [{ response: 'Response 2', goalId: 2 }],
+        },
+      ];
+
+      Goal.findAll = jest.fn().mockImplementation((options) => {
+        const { where } = options;
+        return Promise.resolve(mockGoals.filter((goal) => where.id.includes(goal.id)));
+      });
+
+      similarGoalsForRecipient.mockResolvedValue({
+        result: [
+          { id: 1, matches: [{ id: 2 }] },
+        ],
+      });
+
+      getSimilarityGroupsByRecipientId.mockResolvedValue([
+        {
+          id: 1,
+          goals: [1, 2],
+          finalGoalId: null,
+          recipientId: 1,
+          userHasInvalidated: false,
+        },
+      ]);
+
+      const goalIdGroups = await getGoalIdsBySimilarity(1, 14);
+
+      expect(goalIdGroups).toEqual(expect.any(Array));
+
+      const firstGroup = goalIdGroups[0];
+      expect(firstGroup.goals).toContain(1); // Goal with active report
+      expect(firstGroup.goals).toContain(2); // Goal without active report
+    });
+
+    it('should mark goals correctly based on the absence of activityReport in activityReportGoals', async () => {
+      const mockGoals = [
+        {
+          id: 3,
+          status: 'Active',
+          name: 'Goal 3',
+          source: 'Source 3',
+          goalTemplateId: 103,
+          grantId: 3,
+          activityReportGoals: [
+            {
+              activityReport: null,
+              goalId: 3,
+            },
+          ],
+          responses: [{ response: 'Response 3', goalId: 3 }],
+        },
+      ];
+
+      Goal.findAll = jest.fn().mockImplementation((options) => {
+        const { where } = options;
+        return Promise.resolve(mockGoals.filter((goal) => where.id.includes(goal.id)));
+      });
+
+      similarGoalsForRecipient.mockResolvedValue({
+        result: [
+          { id: 3, matches: [] },
+        ],
+      });
+
+      getSimilarityGroupsByRecipientId.mockResolvedValue([
+        {
+          id: 1,
+          goals: [3],
+          finalGoalId: null,
+          recipientId: 1,
+          userHasInvalidated: false,
+        },
+      ]);
+
+      const goalIdGroups = await getGoalIdsBySimilarity(1, 14);
+
+      expect(goalIdGroups).toEqual(expect.any(Array));
+      expect(goalIdGroups[0].goals).toContain(3);
+    });
   });
 
   describe('destroyGoal', () => {
@@ -2029,6 +2225,95 @@ describe('Goals DB service', () => {
         goalsDestroyed: 2,
         objectivesDestroyed: 2,
       });
+    });
+  });
+
+  describe('mapGrantsWithReplacements', () => {
+    it('should add active grants to the dictionary', () => {
+      const grants = [
+        { id: 1, status: 'Active', grantRelationships: [] },
+        { id: 2, status: 'Inactive', grantRelationships: [] },
+      ];
+
+      const result = mapGrantsWithReplacements(grants);
+
+      expect(result).toEqual({
+        1: [1],
+      });
+    });
+
+    it('should add active grants from grantRelationships', () => {
+      const grants = [
+        {
+          id: 1,
+          status: 'Inactive',
+          grantRelationships: [
+            { activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 },
+          ],
+        },
+      ];
+
+      const result = mapGrantsWithReplacements(grants);
+
+      expect(result).toEqual({
+        1: [3],
+      });
+    });
+
+    it('should add both active grants and active relationship grants', () => {
+      const grants = [
+        { id: 1, status: 'Active', grantRelationships: [] },
+        {
+          id: 2,
+          status: 'Inactive',
+          grantRelationships: [
+            { activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 },
+          ],
+        },
+      ];
+
+      const result = mapGrantsWithReplacements(grants);
+
+      expect(result).toEqual({
+        1: [1],
+        2: [3],
+      });
+    });
+
+    it('should handle multiple active grants for a single grant', () => {
+      const grants = [
+        {
+          id: 1,
+          status: 'Inactive',
+          grantRelationships: [
+            { activeGrant: { id: 3, status: 'Active' }, activeGrantId: 3 },
+            { activeGrant: { id: 4, status: 'Active' }, activeGrantId: 4 },
+          ],
+        },
+      ];
+
+      const result = mapGrantsWithReplacements(grants);
+
+      expect(result).toEqual({
+        1: [3, 4],
+      });
+    });
+
+    it('should return an empty dictionary if no active grants or relationships are found', () => {
+      const grants = [
+        { id: 1, status: 'Inactive', grantRelationships: [] },
+        {
+          id: 2,
+          status: 'Inactive',
+          grantRelationships: [
+            { activeGrant: { id: 3, status: 'Inactive' }, activeGrantId: 3 },
+          ],
+        },
+      ];
+
+      const result = mapGrantsWithReplacements(grants);
+
+      expect(result).toEqual({});
     });
   });
 });
