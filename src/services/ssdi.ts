@@ -643,7 +643,7 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
     } else {
       const expectedType = filters[baseKey].type as FilterType;
       if (!validateType(expectedType, newValue)) {
-        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType} recieved ${newValue}`);
+        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType} received ${newValue}`);
       }
     }
 
