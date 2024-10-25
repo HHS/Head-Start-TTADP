@@ -38,14 +38,15 @@ const WidgetContainerTitleGroup = ({
           {subtitle ? <p className={`smart-hub-table-widget--subtitle usa-prose margin-x-0 margin-y-${subtitle2 ? '0' : '2'}`}>{subtitle}</p> : null}
           {subtitle2 && (
             <div className="smart-hub-table-widget--subtitle-2-container display-flex align-items-baseline">
-              <strong><p className="smart-hub-table-widget--subtitle-2 usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
-              {
+              <p className="smart-hub-table-widget--subtitle-2 usa-prose margin-x-0 margin-top-0 margin-bottom-2">
+                <strong>{subtitle2}</strong>
+                {
             showFiltersNotApplicable && (
-              <div className="margin-left-1">
-                <FiltersNotApplicable />
-              </div>
+            <FiltersNotApplicable />
             )
           }
+              </p>
+
             </div>
           )}
           <SubtitleDrawer />
