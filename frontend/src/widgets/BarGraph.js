@@ -134,7 +134,7 @@ function BarGraph({
           data={[{ mode: 'bar' }]}
           layout={{
             width,
-            height: 40,
+            height: 60,
             margin: {
               l: leftMargin,
               t: 0,
@@ -169,9 +169,11 @@ BarGraph.propTypes = {
   ]),
   widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   xAxisConfig: PropTypes.shape({
-    title: PropTypes.string,
+    title: PropTypes.shape({
+      text: PropTypes.string,
+      standoff: PropTypes.number,
+    }),
     ticksuffix: PropTypes.string,
-    standoff: PropTypes.number,
   }),
 };
 
