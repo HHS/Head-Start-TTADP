@@ -60,7 +60,7 @@ app.use((req, res, next) => {
         'font-src',
       ),
       styleSrc: ["'self'", "'unsafe-inline'"],
-      // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`, 
+      // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`,
       // "'sha256-7oERheaqPgauHfP5d4xw0v6p4MUYc+/Quwioe/4rjOI='", "'unsafe-inline'"],
       fontSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
       'form-action': ["'self'"],
