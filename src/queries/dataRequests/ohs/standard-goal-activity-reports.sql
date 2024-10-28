@@ -90,7 +90,11 @@ WITH
   ),
   "DistinctIDs" AS (
     SELECT DISTINCT
-      a.id
+      CASE
+	WHEN a.id > 9999 THEN a.id::text
+	WHEN a."legacyId" IS NOT NULL THEN "legacyId"
+        ELSE '-' || a.id::text || '$'
+      END AS id
     FROM "Goals" g
     JOIN "ActivityReportGoals" arg
     ON g.id = arg."goalId"
