@@ -22,10 +22,14 @@ export default function useWidgetSorting(
 ) {
   const [sortConfig, setSortConfig] = useSessionSort(defaultSortConfig, localStorageKey);
 
-  const requestSort = useCallback((sortBy) => {
+  const requestSort = useCallback((sortBy, passedDirection = null) => {
     // Get sort direction.
     let direction = 'asc';
-    if (
+    // If we have a passed direction this means that we are sorting via a dropdown and not arrow.
+    if (passedDirection) {
+      // If the direction is passed, use it.
+      direction = passedDirection;
+    } else if (
       sortConfig
       && sortConfig.sortBy === sortBy
       && sortConfig.direction === 'asc'
@@ -42,20 +46,23 @@ export default function useWidgetSorting(
 
     // default is "value", otherwise use the key from the lookup
     const sortingBy = sorts[sortBy] || 'value';
-
     let valuesToSort;
     switch (sortingBy) {
       case 'string':
         valuesToSort = dataToUse.map((t) => ({
           ...t,
-          sortBy: t.heading,
+          sortBy: !t.heading
+            ? t[sortBy].toString().toLowerCase() // If we don't have heading data, use the value.
+            : t.heading.toString().toLowerCase(),
         }));
         break;
       case 'date':
         valuesToSort = dataToUse.map((t) => (
           {
             ...t,
-            sortBy: new Date(t.data.find((tp) => (tp.sortKey || tp.title) === sortBy).value),
+            sortBy: !t.data
+              ? new Date(t[sortBy]) // If we don't have data, use the value.
+              : new Date(t.data.find((tp) => (tp.sortKey || tp.title) === sortBy).value),
           }));
         break;
       case 'key':
@@ -69,7 +76,9 @@ export default function useWidgetSorting(
         valuesToSort = dataToUse.map((t) => (
           {
             ...t,
-            sortBy: parseValue(t.data.find((tp) => (tp.sortKey || tp.title) === sortBy).value),
+            sortBy: !t.data
+              ? parseValue(t[sortBy]) // If we don't have data, use the value.
+              : parseValue(t.data.find((tp) => (tp.sortKey || tp.title) === sortBy).value),
           }));
         break;
     }

@@ -11,6 +11,7 @@ import LegendControl from './LegendControl';
 import LegendControlFieldset from './LegendControlFieldset';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import { arrayExistsAndHasLength } from '../Constants';
+import NoResultsFound from '../components/NoResultsFound';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
@@ -30,8 +31,10 @@ export default function LineGraph({
   // the dom el for drawing the chart
   const lines = useRef();
 
+  const hasData = data && data.length && data.some((d) => d.x.length > 0);
+
   useEffect(() => {
-    if (!lines || showTabularData || !arrayExistsAndHasLength(data)) {
+    if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
       return;
     }
 
@@ -186,15 +189,17 @@ export default function LineGraph({
           bgcolor: colors.textInk,
         },
       },
-
     ];
 
     const tracesToDraw = legends.map((legend, index) => (legend.selected ? traces[index] : null))
-      .filter((trace) => trace !== null);
-
+      .filter((trace) => Boolean(trace));
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle]);
+  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData]);
+
+  if (!hasData) {
+    return <NoResultsFound />;
+  }
 
   return (
     <div className="ttahub-three-trace-line-graph padding-3" ref={widgetRef}>

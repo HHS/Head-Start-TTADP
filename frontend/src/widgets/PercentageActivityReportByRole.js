@@ -19,8 +19,8 @@ const TABLE_HEADINGS = [
 ];
 
 const DEFAULT_SORT_CONFIG = {
-  sortBy: '1',
-  direction: 'desc',
+  sortBy: 'Specialist_role',
+  direction: 'asc',
   activePage: 1,
 };
 
@@ -29,6 +29,7 @@ export default function PercentageActivityReportByRole({ data }) {
   const capture = useMediaCapture(widgetRef, 'Percentage of activity reports by role');
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
+  const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
 
   // we have to store this is in state, despite
   // it being a prop, because of other dependencies
@@ -40,6 +41,8 @@ export default function PercentageActivityReportByRole({ data }) {
     totalPercentage: 100,
   });
 
+  const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
+
   const {
     requestSort,
     sortConfig,
@@ -48,7 +51,7 @@ export default function PercentageActivityReportByRole({ data }) {
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
-    [FIRST_COLUMN], // stringColumns
+    ['Specialist_role'], // stringColumns
     EMPTY_ARRAY, // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
@@ -64,6 +67,16 @@ export default function PercentageActivityReportByRole({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTrace([]);
+      setTotals({
+        totalNumberOfReports: 0,
+        totalPercentage: 100,
+      });
+      return;
+    }
+
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects
@@ -71,14 +84,17 @@ export default function PercentageActivityReportByRole({ data }) {
     // and the table (an array of objects in the format defined by proptypes)
     const {
       records,
-      totalNumberOfReports,
-      totalPercentage,
+      filteredReports,
+      showDashboardFiltersNotApplicable: showFiltersNotApplicableProp,
     } = data;
+
+    const totalPercentage = records.reduce((acc, record) => acc + record.percentage, 0);
+    const totalNumberOfReports = records.reduce((acc, record) => acc + record.role_count, 0);
 
     const tableData = [];
     const traceData = [];
 
-    records.forEach((dataset, index) => {
+    (records || []).forEach((dataset, index) => {
       traceData.push({
         name: dataset.role_name,
         count: dataset.percentage,
@@ -86,7 +102,7 @@ export default function PercentageActivityReportByRole({ data }) {
 
       tableData.push({
         heading: dataset.role_name,
-        id: index + 1,
+        id: `${dataset.role_name}-${index + 1}`,
         data: [
           {
             value: dataset.role_count,
@@ -94,14 +110,15 @@ export default function PercentageActivityReportByRole({ data }) {
             sortKey: 'Number_of_activity_reports',
           },
           {
-            value: dataset.percentage,
+            value: `${String(dataset.percentage)}%`,
             title: 'Percentage of activity reports',
             sortKey: 'Percentage_of_activity_reports',
           },
         ],
       });
     });
-
+    setShowFiltersNotApplicable(showFiltersNotApplicableProp);
+    setDisplayFilteredReports(filteredReports);
     setTrace(traceData);
     setTabularData(tableData);
     setTotals({
@@ -126,8 +143,9 @@ export default function PercentageActivityReportByRole({ data }) {
         loading={false}
         title="Percentage of activity reports by role"
         subtitle="Activity report by specialist role"
-        subtitle2="11,510 Activity reports"
+        subtitle2={`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
         menuItems={menuItems}
+        showFiltersNotApplicable={showFiltersNotApplicable}
       >
         {showTabularData ? (
           <HorizontalTableWidget
@@ -146,9 +164,10 @@ export default function PercentageActivityReportByRole({ data }) {
               '', // empty string for the first column, checkboxes
               'Total',
               String(totals.totalNumberOfReports),
-              String(totals.totalPercentage),
+              `${String(totals.totalPercentage.toFixed(2))}%`,
             ]}
             hideFirstColumnBorder
+            selectAllIdPrefix="qa-dash-percentage-ars-by-role"
           />
         ) : (
           <VBarGraph
@@ -166,8 +185,10 @@ export default function PercentageActivityReportByRole({ data }) {
 
 PercentageActivityReportByRole.propTypes = {
   data: PropTypes.shape({
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     totalNumberOfReports: PropTypes.number,
     totalPercentage: PropTypes.number,
+    filteredReports: PropTypes.number,
     records: PropTypes.arrayOf(PropTypes.shape({
       role_name: PropTypes.string,
       role_count: PropTypes.number,

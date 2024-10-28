@@ -1,15 +1,16 @@
 import React, {
-  // useState,
+  useState,
   useRef,
   useContext,
 } from 'react';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid } from '@trussworks/react-uswds';
+import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
 import Drawer from '../../../components/Drawer';
@@ -20,18 +21,36 @@ import FilterPanelContainer from '../../../components/filter/FilterPanelContaine
 import useFilters from '../../../hooks/useFilters';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import UserContext from '../../../UserContext';
+import { getSelfServiceData } from '../../../fetchers/ssdi';
 
 const ALLOWED_SUBFILTERS = [
   'region',
-  'startDate',
-  'endDate',
+  'createDate',
   'grantNumber',
   'recipient',
   'stateCode',
 ];
+
+export const mapGoalStatusKey = (status) => {
+  switch (status) {
+    case 'Not Started':
+      return 4;
+    case 'In Progress':
+      return 3;
+    case 'Suspended':
+      return 2;
+    case 'Closed':
+      return 1;
+    default:
+      return 0;
+  }
+};
+
 export default function RecipientsWithOhsStandardFeiGoal() {
   const pageDrawerRef = useRef(null);
-  // const [error] = useState();
+  const [error, updateError] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const [recipientsWithOhsStandardFeiGoal, setRecipientsWithOhsStandardFeiGoal] = useState([]);
 
   const { user } = useContext(UserContext);
 
@@ -52,6 +71,96 @@ export default function RecipientsWithOhsStandardFeiGoal() {
     QA_DASHBOARD_FILTER_CONFIG,
   );
 
+  useDeepCompareEffect(() => {
+    async function fetchQaData() {
+      setIsLoading(true);
+      // Filters passed also contains region.
+      try {
+        const data = await getSelfServiceData(
+          'recipients-with-ohs-standard-fei-goal',
+          filters,
+          ['with_fei_widget', 'with_fei_page'],
+        );
+
+        // Get summary and row data.
+        const pageData = data.filter((d) => d.data_set === 'with_fei_page');
+        const widgetData = data.filter((d) => d.data_set === 'with_fei_widget');
+        // Convert data to format that widget expects.
+        let formattedRecipientPageData = pageData[0].data.map((item) => {
+          const { recipientId } = item;
+          const regionId = item['region id'];
+          const { recipientName } = item;
+          const { goalId } = item;
+          const { goalStatus } = item;
+          // const { grantNumber } = item;
+          const { createdAt } = item;
+          const { rootCause } = item;
+          const { grantNumber } = item;
+
+          return {
+            id: `${recipientId}-${goalId}`,
+            heading: recipientName,
+            name: recipientName,
+            isUrl: true,
+            isInternalLink: true,
+            hideLinkIcon: true,
+            sortKey: mapGoalStatusKey(goalStatus),
+            link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,
+            data: [
+              {
+                title: 'Grant_number',
+                value: grantNumber,
+              },
+              {
+                title: 'Goal_created_on',
+                value: moment(createdAt).format('MM/DD/YYYY'),
+              },
+              {
+                title: 'Goal_number',
+                value: `G-${goalId}`,
+                isUrl: true,
+                isInternalLink: true,
+                link: `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goalId}`,
+                hideLinkIcon: true,
+              },
+              {
+                title: 'Goal_status',
+                value: goalStatus,
+              },
+              {
+                title: 'Root_cause',
+                value: rootCause && rootCause.length ? rootCause.join(', ') : '', // Convert array to string.
+              },
+            ],
+          };
+        });
+
+        // Sort formattedRecipientPageData SortKey desc.
+        formattedRecipientPageData = formattedRecipientPageData.sort(
+          (a, b) => b.sortKey - a.sortKey,
+        );
+
+        // Add headers.
+        formattedRecipientPageData = {
+          headers: ['Grant number', 'Goal created on', 'Goal number', 'Goal status', 'Root cause'],
+          RecipientsWithOhsStandardFeiGoal: [...formattedRecipientPageData],
+        };
+
+        setRecipientsWithOhsStandardFeiGoal({
+          pageData: formattedRecipientPageData,
+          widgetData: widgetData[0].data[0],
+        });
+        updateError('');
+      } catch (e) {
+        updateError('Unable to fetch QA data');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    // Call resources fetch.
+    fetchQaData();
+  }, [filters]);
+
   return (
     <div className="ttahub-recipients-with-ohs-standard-fei-goal">
       <Helmet>
@@ -65,11 +174,11 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         Recipients with OHS standard FEI goal
       </h1>
       <Grid row>
-        {/* {error && (
+        {error && (
           <Alert className="margin-bottom-2" type="error" role="alert">
             {error}
           </Alert>
-        )} */}
+        )}
       </Grid>
       <FilterPanelContainer>
         <FilterPanel
@@ -94,87 +203,8 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         <ContentFromFeedByTag tagName="ttahub-qa-dash-fei-filters" />
       </Drawer>
       <RecipientsWithOhsStandardFeiGoalWidget
-        data={{
-          headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
-          RecipientsWithOhsStandardFeiGoal: [
-            {
-              id: 1,
-              heading: 'Test Recipient 1',
-              name: 'Test Recipient 1',
-              recipient: 'Test Recipient 1',
-              isUrl: true,
-              hideLinkIcon: true,
-              link: '/recipient-tta-records/376/region/1/profile',
-              data: [{
-                title: 'Goal_created_on',
-                value: moment('2021-09-01').format('MM/DD/YYYY'),
-              },
-              {
-                title: 'Goal_number',
-                value: 'G-20628',
-              },
-              {
-                title: 'Goal_status',
-                value: 'In progress',
-              },
-              {
-                title: 'Root_cause',
-                value: 'Community Partnership, Workforce',
-              },
-              ],
-            },
-            {
-              id: 2,
-              heading: 'Test Recipient 2',
-              name: 'Test Recipient 2',
-              recipient: 'Test Recipient 2',
-              isUrl: true,
-              hideLinkIcon: true,
-              link: '/recipient-tta-records/376/region/1/profile',
-              data: [{
-                title: 'Goal_created_on',
-                value: moment('2021-09-02').format('MM/DD/YYYY'),
-              },
-              {
-                title: 'Goal_number',
-                value: 'G-359813',
-              },
-              {
-                title: 'Goal_status',
-                value: 'Not started',
-              },
-              {
-                title: 'Root_cause',
-                value: 'Testing',
-              }],
-            },
-            {
-              id: 3,
-              heading: 'Test Recipient 3',
-              name: 'Test Recipient 3',
-              recipient: 'Test Recipient 3',
-              isUrl: true,
-              hideLinkIcon: true,
-              link: '/recipient-tta-records/376/region/1/profile',
-              data: [{
-                title: 'Goal_created_on',
-                value: moment('2021-09-03').format('MM/DD/YYYY'),
-              },
-              {
-                title: 'Goal_number',
-                value: 'G-457825',
-              },
-              {
-                title: 'Goal_status',
-                value: 'In progress',
-              },
-              {
-                title: 'Root_cause',
-                value: 'Facilities',
-              }],
-            }],
-        }}
-        loading={false}
+        data={recipientsWithOhsStandardFeiGoal}
+        loading={isLoading}
       />
     </div>
   );

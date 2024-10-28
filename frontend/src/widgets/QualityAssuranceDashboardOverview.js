@@ -17,9 +17,10 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with no TTA',
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
-    data: data.recipientsWithNoTTA.pct,
+    data: data && data.recipientsWithNoTTA ? `${data.recipientsWithNoTTA.pct}%` : '0%',
     route: 'qa-dashboard/recipients-with-no-tta',
     filterApplicable: data.recipientsWithNoTTA.filterApplicable,
+    showNoResults: true,
   },
   {
     icon: faBus,
@@ -27,9 +28,12 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with OHS standard FEI goal',
     iconColor: colors.ttahubOrange,
     backgroundColor: colors.ttahubOrangeLight,
-    data: data.recipientsWithOhsStandardFeiGoals.pct,
+    data: data && data.recipientsWithOhsStandardFeiGoals
+      ? `${data.recipientsWithOhsStandardFeiGoals.pct}%`
+      : '0%',
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
+    showNoResults: true,
   },
   {
     key: 'recipients-with-ohs-standard-class-goals',
@@ -38,15 +42,21 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with OHS standard CLASS goal',
     iconColor: colors.success,
     backgroundColor: colors.ttahubDeepTealLight,
-    data: data.recipientsWithOhsStandardClass.pct,
+    data: data && data.recipientsWithOhsStandardClass
+      ? `${data.recipientsWithOhsStandardClass.pct}%`
+      : '0%',
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
+    showNoResults: true,
   },
 ]);
 
 export function QualityAssuranceDashboardOverview({
   data, loading,
 }) {
+  if (!data) {
+    return null;
+  }
   const DASHBOARD_FIELDS = createOverviewFieldArray(data);
   return (
     <DashboardOverviewContainer
@@ -59,13 +69,13 @@ export function QualityAssuranceDashboardOverview({
 QualityAssuranceDashboardOverview.propTypes = {
   data: PropTypes.shape({
     recipientsWithNoTTA: PropTypes.shape({
-      pct: PropTypes.string,
+      pct: PropTypes.number,
     }),
     recipientsWithOhsStandardFeiGoals: PropTypes.shape({
-      pct: PropTypes.string,
+      pct: PropTypes.number,
     }),
     recipientsWithOhsStandardClass: PropTypes.shape({
-      pct: PropTypes.string,
+      pct: PropTypes.number,
     }),
   }),
   loading: PropTypes.bool,
@@ -74,15 +84,15 @@ QualityAssuranceDashboardOverview.propTypes = {
 QualityAssuranceDashboardOverview.defaultProps = {
   data: {
     recipientsWithNoTTA: {
-      pct: '0%',
+      pct: 0,
       filterApplicable: false,
     },
     recipientsWithOhsStandardFeiGoals: {
-      pct: '0%',
+      pct: 0,
       filterApplicable: false,
     },
     recipientsWithOhsStandardClass: {
-      pct: '0%',
+      pct: 0,
       filterApplicable: false,
     },
   },

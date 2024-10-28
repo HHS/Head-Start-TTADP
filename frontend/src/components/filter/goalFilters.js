@@ -22,7 +22,7 @@ const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: tr
 
 export const createDateFilter = {
   id: 'createDate',
-  display: 'Created on',
+  display: 'Created on (goal)',
   conditions: DATE_CONDITIONS,
   defaultValues: {
     'is within': '',

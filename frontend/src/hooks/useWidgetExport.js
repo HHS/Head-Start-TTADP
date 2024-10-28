@@ -7,6 +7,7 @@ export default function useWidgetExport(
   checkboxes,
   exportHeading,
   exportName,
+  exportDataName = null, // Specify the data to export.
 ) {
   const exportRows = useCallback((exportType) => {
     let url = null;
@@ -16,7 +17,11 @@ export default function useWidgetExport(
         // Get all the ids of the rowsToExport that have a value of true.
         const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
         // Loop all selected rows and parseInt to an array of integers.
-        const selectedRowsIds = selectedRowsStrings.map((s) => parseInt(s, DECIMAL_BASE));
+        // If the ID isn't a number, keep it as a string.
+        const selectedRowsIds = selectedRowsStrings.map((s) => {
+          const parsedInt = parseInt(s, DECIMAL_BASE);
+          return Number.isNaN(parsedInt) ? s : parsedInt;
+        });
         // Filter the recipients to export to only include the selected rows.
         dataToExport = data.filter((row) => selectedRowsIds.includes(row.id));
       }
@@ -33,7 +38,8 @@ export default function useWidgetExport(
 
       // create a csv file of all the rows.
       const csvRows = dataToExport.map((row) => {
-        const rowValues = row.data.map((d) => d.value);
+        const dataToUse = !row.data && exportDataName ? row[exportDataName] : row.data;
+        const rowValues = dataToUse.map((d) => d.value);
         // If the heading has a comma, wrap it in quotes.
         const rowHeadingToUse = row.heading.includes(',') ? `"${row.heading}"` : row.heading;
         return `${rowHeadingToUse},${rowValues.join(',')}`;
@@ -59,7 +65,7 @@ export default function useWidgetExport(
     } finally {
       window.URL.revokeObjectURL(url);
     }
-  }, [checkboxes, data, exportHeading, exportName, headers]);
+  }, [checkboxes, data, exportHeading, exportName, headers, exportDataName]);
 
   return {
     exportRows,

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
+import NoResultsFound from '../components/NoResultsFound';
 import colors from '../colors';
 import './BarGraph.css';
 
@@ -37,7 +38,7 @@ function BarGraph({
 
     // removes the event listener when the component is unmounted
     return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  }, [data]);
 
   if (!data || !Array.isArray(data)) {
     return null;
@@ -111,6 +112,10 @@ function BarGraph({
     hovermode: 'none',
   };
 
+  if (data.length === 0) {
+    return <NoResultsFound />;
+  }
+
   return (
     <div ref={widgetRef}>
       <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
@@ -129,7 +134,7 @@ function BarGraph({
           data={[{ mode: 'bar' }]}
           layout={{
             width,
-            height: 40,
+            height: 60,
             margin: {
               l: leftMargin,
               t: 0,
@@ -164,9 +169,11 @@ BarGraph.propTypes = {
   ]),
   widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   xAxisConfig: PropTypes.shape({
-    title: PropTypes.string,
+    title: PropTypes.shape({
+      text: PropTypes.string,
+      standoff: PropTypes.number,
+    }),
     ticksuffix: PropTypes.string,
-    standoff: PropTypes.number,
   }),
 };
 

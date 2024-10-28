@@ -4,6 +4,7 @@ import {
   render,
   waitFor,
   act,
+  screen,
 } from '@testing-library/react';
 import VBarGraph from '../VBarGraph';
 
@@ -20,15 +21,15 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async () => {
+const renderBarGraph = async (props) => {
   act(() => {
-    render(<VBarGraph data={TEST_DATA} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
+    render(<VBarGraph data={props.data} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
   });
 };
 
 describe('VBar Graph', () => {
   it('is shown', async () => {
-    renderBarGraph();
+    renderBarGraph({ data: TEST_DATA });
 
     await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
 
@@ -39,5 +40,15 @@ describe('VBar Graph', () => {
     const point2 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe('one');
+  });
+
+  it('shows no results found', async () => {
+    renderBarGraph({ data: [] });
+
+    await waitFor(() => {
+      expect(screen.getByText(/no results found/i)).toBeVisible();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeVisible();
+      expect(screen.getByText('Get help using filters')).toBeVisible();
+    });
   });
 });
