@@ -4,7 +4,7 @@ declare -i exit_code=0
 
 check_exit() {
     if [[ "$1" -ne 0 ]]; then
-        echo "$lr last docker-compose command failed"
+        echo "$lr last docker compose command failed"
         ((exit_code++))
     fi
 }
