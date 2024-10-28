@@ -20,10 +20,11 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequ
       WHERE
         ar."startDate" < DATE ${sequelize.escape(finishActivityDate)} + 1
         AND ar."endDate" > DATE ${sequelize.escape(beginActivityDate)} - 1
-      SELECT
-        g."id"
-      FROM "Grants" g
-      WHERE g."recipientId" NOT IN (SELECT used_recipient_id FROM  activity))
+    )
+    SELECT
+      g."id"
+    FROM "Grants" g
+    WHERE g."recipientId" NOT IN (SELECT used_recipient_id FROM activity))
     `,
 );
 
