@@ -1366,6 +1366,7 @@ describe('goal filtersToScopes', () => {
         where: {
           id: greatGrant.id,
         },
+        individualHooks: true,
       });
 
       await Recipient.destroy({

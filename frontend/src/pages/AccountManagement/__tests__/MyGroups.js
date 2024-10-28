@@ -8,13 +8,13 @@ import {
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const error = 'This group name already exists, please use a different name';
 
@@ -23,19 +23,19 @@ const user = {
 };
 
 describe('MyGroups', () => {
-  const renderMyGroups = (groupId = null, setErrorResponseCode = jest.fn()) => {
+  const history = createMemoryHistory();
+
+  const renderMyGroups = (groupId = null) => {
     render(
-      <MemoryRouter>
+      <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-            <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-              <MyGroupsProvider>
-                <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-              </MyGroupsProvider>
-            </AppLoadingContext.Provider>
-          </SomethingWentWrongContext.Provider>
+          <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+            <MyGroupsProvider>
+              <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+            </MyGroupsProvider>
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
-      </MemoryRouter>,
+      </Router>,
     );
   };
 
@@ -216,12 +216,12 @@ describe('MyGroups', () => {
   });
 
   it('handles fetch errors', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get('/api/group/1', 500);
-    const setErrorResponseCode = jest.fn();
     await act(async () => {
-      renderMyGroups(1, setErrorResponseCode);
+      renderMyGroups(1);
       await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
       });
     });
   });

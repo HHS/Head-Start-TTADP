@@ -9,7 +9,7 @@ log() {
 
 check_exit() {
     if [[ "$1" -ne 0 ]]; then
-        echo "$lr last docker-compose command failed"
+        echo "$lr last docker compose command failed"
         ((exit_code++))
     fi
 }
@@ -42,19 +42,19 @@ main() {
       esac
     done
 
-    docker-compose \
+    docker compose \
         -f 'docker-compose.test.yml' \
         down --volumes --remove-orphans
 
     log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
     if [[ $docker == "true" ]]; then
-      docker-compose -f 'docker-compose.test.yml' up -d
+      docker compose -f 'docker-compose.test.yml' up -d
       check_exit "$?"
     else
-      docker-compose -f 'docker-compose.test.yml' up -d test-db
+      docker compose -f 'docker-compose.test.yml' up -d test-db
       check_exit "$?"
-      IFS=: read host port <<< "$(docker-compose -f 'docker-compose.test.yml' port test-db 5432)"
+      IFS=: read host port <<< "$(docker compose -f 'docker-compose.test.yml' port test-db 5432)"
       echo "Postgres is running on port $port"
       export POSTGRES_PORT=$port
     fi
@@ -177,7 +177,7 @@ main() {
     # Cleanup
     echo
     log "Cleaning up test containers"
-    docker-compose \
+    docker compose \
         -f 'docker-compose.test.yml' \
         down --volumes --remove-orphans
     check_exit "$?"
