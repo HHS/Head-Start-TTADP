@@ -59,8 +59,7 @@ app.use((req, res, next) => {
         'style-src',
         'font-src',
       ),
-      // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
-      styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
+      styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`, "'sha256-7oERheaqPgauHfP5d4xw0v6p4MUYc+/Quwioe/4rjOI='"],
       fontSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
       'form-action': ["'self'"],
       scriptSrc: ["'self'", `'nonce-${res.locals.nonce}'`, '*.googletagmanager.com'],
@@ -72,11 +71,6 @@ app.use((req, res, next) => {
   });
   cspMiddleware(req, res, next);
 });
-
-// app.post('/csp-violation-report-endpoint', express.json(), (req, res) => {
-//   console.log('CSP Violation:', req.body);
-//   res.status(204).end();
-// });
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   app.use('/index.html', serveIndex);
