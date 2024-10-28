@@ -810,6 +810,7 @@ describe('ssdi', () => {
     it('should preprocess date array filters with separator correctly', () => {
       const input = { 'dateFlag.in': ['2023/01/01', '2023/02/01-2023/03/01'] };
       const { result, errors } = preprocessAndValidateFilters(filters, input);
+
       expect(result).toEqual({ dateFlag: ['2023/01/01', '2023/02/01', '2023/03/01'] });
       expect(errors.invalidFilters.length).toBe(0);
       expect(errors.invalidTypes.length).toBe(0);
