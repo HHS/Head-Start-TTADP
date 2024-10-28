@@ -246,7 +246,7 @@ export default function DeliveryMethodGraph({ data }) {
       loading={false}
       title="Delivery method"
       subtitle="How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity Reports"
-      subtitle2={`${displayFilteredReports.toLocaleString('en-us')} Activity reports`}
+      subtitle2={`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
       menuItems={menuItems}
       showFiltersNotApplicable={showFiltersNotApplicable}
     >

@@ -109,8 +109,8 @@ export default function QADashboard() {
 
         const rootCauseFeiGoalsGraph = {
           records: feiGraphData.data.sort((a, b) => a.rootCause.localeCompare(b.rootCause)),
-          totalNumberOfGoals: feiOverviewData.data[0].total,
-          totalNumberOfRootCauses: feiOverviewData.data[0]['recipients with fei'],
+          totalNumberOfGoals: feiOverviewData.data.length ? feiOverviewData.data[0].total : 0,
+          totalNumberOfRootCauses: feiOverviewData.data.length ? feiOverviewData.data[0]['recipients with fei'] : 0,
           showDashboardFiltersNotApplicable: feiContainsFiltersThatAreNotAllowed,
         };
 
@@ -158,7 +158,8 @@ export default function QADashboard() {
         const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
         const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
         const activityWidgetData = dashboardData.find((item) => item.data_set === 'activity_widget');
-        const filteredReports = activityWidgetData.data[0].filtered_reports;
+        const filteredReports = activityWidgetData.data.length
+          ? activityWidgetData.data[0].filtered_report : 0;
 
         const deliveryMethod = {
           filteredReports,
@@ -175,7 +176,9 @@ export default function QADashboard() {
         const roleGraph = {
           showDashboardFiltersNotApplicable,
           filteredReports,
-          records: roleGraphData.data.sort((a, b) => a.role_name.localeCompare(b.role_name)),
+          records: roleGraphData.data
+            ? roleGraphData.data.sort((a, b) => a.role_name.localeCompare(b.role_name))
+            : [],
         };
 
         // Set data.
