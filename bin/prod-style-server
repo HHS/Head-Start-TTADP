@@ -25,20 +25,20 @@ fi
 
 # Run a production style build (single BE server with static FE)
 echo "Running yarn install on server..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn install --production=false
+docker compose -f docker-compose.dss.yml run --rm server yarn install --production=false
 echo "Running yarn install on frontend..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
+docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
 echo "Building backend..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn build
+docker compose -f docker-compose.dss.yml run --rm server yarn build
 echo "Building frontend..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
+docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
 
 # Starting services
 echo "Starting services..."
-docker-compose -f docker-compose.dss.yml up -d
+docker compose -f docker-compose.dss.yml up -d
 
 # Running database migrations
 echo "Running database migrations..."
-docker-compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci
+docker compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci
 
 echo "Server setup completed successfully."
