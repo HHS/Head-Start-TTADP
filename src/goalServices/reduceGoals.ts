@@ -139,21 +139,22 @@ export function reduceObjectivesForActivityReport(
       ? objective.activityReportObjectives[0].supportType : null;
 
     const objectiveCreatedHere = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].objectiveCreatedHere
-      ? objective.activityReportObjectives[0].objectiveCreatedHere : null;
+        && objective.activityReportObjectives.some((aro) => aro.objectiveCreatedHere) ? true : null;
 
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
       o.title.trim() === objective.title.trim()
       && o.status === objectiveStatus
-      && o.objectiveCreatedHere === objectiveCreatedHere
     ));
 
     if (exists) {
       const { id } = objective;
       exists.ids = [...exists.ids, id];
+
+      if (objectiveCreatedHere && !exists.objectiveCreatedHere) {
+        exists.objectiveCreatedHere = true;
+      }
 
       // we can dedupe these using lodash
       exists.resources = reduceRelationThroughActivityReportObjectives(

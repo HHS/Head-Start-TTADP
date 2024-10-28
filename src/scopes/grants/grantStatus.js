@@ -19,20 +19,24 @@ const grantStatusSql = (grantStatus, notWithin) => {
 
 export function withGrantStatus(cdiStatus) {
   return {
-    id: {
-      [Op.in]: sequelize.literal(`(
-        ${grantStatusSql(cdiStatus[0], false)}
-      )`),
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(`(
+          ${grantStatusSql(cdiStatus[0], false)}
+        )`),
+      },
     },
   };
 }
 
 export function withoutGrantStatus(cdiStatus) {
   return {
-    id: {
-      [Op.in]: sequelize.literal(`(
-          ${grantStatusSql(cdiStatus[0], true)}
-        )`),
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(`(
+            ${grantStatusSql(cdiStatus[0], true)}
+          )`),
+      },
     },
   };
 }
