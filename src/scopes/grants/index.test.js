@@ -227,6 +227,13 @@ describe('grant filtersToScopes', () => {
         startDate: new Date('01/01/2021'),
         endDate: new Date('03/01/2021'),
       }),
+      // Just outside of range by one day. Not included in results for recipientsWithoutTTA.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('04/01/2022'),
+        endDate: new Date('04/02/2022'),
+      }),
     ]);
 
     // Create Activity Report Goals.
