@@ -143,7 +143,7 @@ export default function PercentageActivityReportByRole({ data }) {
         loading={false}
         title="Percentage of activity reports by role"
         subtitle="Activity report by specialist role"
-        subtitle2={`${displayFilteredReports.toLocaleString('en-us')} Activity reports`}
+        subtitle2={`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
         menuItems={menuItems}
         showFiltersNotApplicable={showFiltersNotApplicable}
       >

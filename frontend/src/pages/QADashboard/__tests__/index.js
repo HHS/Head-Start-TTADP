@@ -42,7 +42,6 @@ const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate
 const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
 const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&createDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
 const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`;
-
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {
     data_set: 'no_tta_widget',
@@ -377,6 +376,15 @@ describe('Resource Dashboard page', () => {
     // Mock Dashboard data.
     fetchMock.get(dashboardApi, [
       {
+        data_set: 'activity_widget',
+        records: '1',
+        data: [
+          {
+            fitered_reports: 38462,
+          },
+        ],
+      },
+      {
         data_set: 'role_graph',
         records: '0',
         data: null,
@@ -510,6 +518,15 @@ describe('Resource Dashboard page', () => {
             hybrid_percentage: 0,
             virtual_percentage: 0,
             in_person_percentage: 0,
+          },
+        ],
+      },
+      {
+        data_set: 'activity_widget',
+        records: '1',
+        data: [
+          {
+            fitered_reports: 38462,
           },
         ],
       },
