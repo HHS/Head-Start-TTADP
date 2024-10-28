@@ -359,9 +359,9 @@ describe('Horizontal Table Widget', () => {
 
     renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
-    expect(screen.getByText(/col1/i)).toBeInTheDocument();
-    expect(screen.getByText(/col2/i)).toBeInTheDocument();
-    expect(screen.queryByText(/col3/i)).toBeInTheDocument();
+    expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
+    expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
+    expect(screen.getByText(/col3/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
     expect(screen.getByText(/17/i)).toBeInTheDocument();
     expect(screen.getByText(/18/i)).toBeInTheDocument();
