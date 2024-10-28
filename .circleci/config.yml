@@ -1264,81 +1264,80 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
-manage_env_apps:
-  executor: docker-executor
-  parameters:
-    env_list:
-      type: string
-      description: "Comma-separated list of environments to manage"
-      default: "<< pipeline.parameters.env_list >>"
-    env_state:
-      type: string
-      description: "Action to perform on apps (start, stop, restart, restage)"
-      default: "<< pipeline.parameters.env_state >>"
-  steps:
-    - run:
-        name: Install Cloud Foundry CLI
-        command: |
-          curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
-          sudo dpkg -i cf-cli_amd64.deb
-
-    - run:
-        name: Manage Apps
-        command: |
-          set -x
-          env_list="<< parameters.env_list >>"
-          env_state="<< parameters.env_state >>"
-          
-          # Split env_list manually
-          apps=(${env_list//,/ })
-
-          for env in "${apps[@]}"; do
-            # Map full environment name to variable prefixes
-            if [[ "$env" == "tta-smarthub-sandbox" ]]; then
-              prefix="SANDBOX"
-            elif [[ "$env" == "tta-smarthub-dev" ]]; then
-              prefix="DEV"
-            else
-              echo "Unrecognized environment: $env"
-              exit 1
-            fi
-
-            # Retrieve the environment-specific variables
-            space_var="CLOUDGOV_${prefix}_SPACE"
-            username_var="CLOUDGOV_${prefix}_USERNAME"
-            password_var="CLOUDGOV_${prefix}_PASSWORD"
-            space="${!space_var}"
-            username="${!username_var}"
-            password="${!password_var}"
-
-            echo "Logging into space: $space for environment: $env"
-            cf login \
-              -a << pipeline.parameters.cg_api >> \
-              -u "$username" \
-              -p "$password" \
-              -o << pipeline.parameters.cg_org >> \
-              -s "$space"
-
-            # Get the current state of the app
-            state=$(cf app "$env" | grep "state:" | awk '{print $2}')
+  manage_env_apps:
+    executor: docker-executor
+    parameters:
+      env_list:
+        type: string
+        description: "Comma-separated list of environments to manage"
+        default: "<< pipeline.parameters.env_list >>"
+      env_state:
+        type: string
+        description: "Action to perform on apps (start, stop, restart, restage)"
+        default: "<< pipeline.parameters.env_state >>"
+    steps:
+      - run:
+          name: Install Cloud Foundry CLI
+          command: |
+            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
+            sudo dpkg -i cf-cli_amd64.deb
+      - run:
+          name: Manage Apps
+          command: |
+            set -x
+            env_list="<< parameters.env_list >>"
+            env_state="<< parameters.env_state >>"
             
-            # Control app state based on env_state parameter
-            if [[ "$env_state" == "stop" && "$state" != "stopped" ]]; then
-              echo "Stopping $env..."
-              cf stop "$env"
-            elif [[ "$env_state" == "start" && "$state" != "started" ]]; then
-              echo "Starting $env..."
-              cf start "$env"
-            elif [[ "$env_state" == "restart" ]]; then
-              echo "Restarting $env..."
-              cf restart "$env"
-            elif [[ "$env_state" == "restage" ]]; then
-              echo "Restaging $env..."
-              cf restage "$env"
-            else
-              echo "$env is already in the desired state: $state"
-            fi
-          done
+            # Split env_list manually
+            apps=(${env_list//,/ })
+
+            for env in "${apps[@]}"; do
+              # Map full environment name to variable prefixes
+              if [[ "$env" == "tta-smarthub-sandbox" ]]; then
+                prefix="SANDBOX"
+              elif [[ "$env" == "tta-smarthub-dev" ]]; then
+                prefix="DEV"
+              else
+                echo "Unrecognized environment: $env"
+                exit 1
+              fi
+
+              # Retrieve the environment-specific variables
+              space_var="CLOUDGOV_${prefix}_SPACE"
+              username_var="CLOUDGOV_${prefix}_USERNAME"
+              password_var="CLOUDGOV_${prefix}_PASSWORD"
+              space="${!space_var}"
+              username="${!username_var}"
+              password="${!password_var}"
+
+              echo "Logging into space: $space for environment: $env"
+              cf login \
+                -a << pipeline.parameters.cg_api >> \
+                -u "$username" \
+                -p "$password" \
+                -o << pipeline.parameters.cg_org >> \
+                -s "$space"
+
+              # Get the current state of the app
+              state=$(cf app "$env" | grep "state:" | awk '{print $2}')
+              
+              # Control app state based on env_state parameter
+              if [[ "$env_state" == "stop" && "$state" != "stopped" ]]; then
+                echo "Stopping $env..."
+                cf stop "$env"
+              elif [[ "$env_state" == "start" && "$state" != "started" ]]; then
+                echo "Starting $env..."
+                cf start "$env"
+              elif [[ "$env_state" == "restart" ]]; then
+                echo "Restarting $env..."
+                cf restart "$env"
+              elif [[ "$env_state" == "restage" ]]; then
+                echo "Restaging $env..."
+                cf restage "$env"
+              else
+                echo "$env is already in the desired state: $state"
+              fi
+            done
 workflows:
   build_test_deploy:
     when:
