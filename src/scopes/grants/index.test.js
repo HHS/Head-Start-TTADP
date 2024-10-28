@@ -227,6 +227,13 @@ describe('grant filtersToScopes', () => {
         startDate: new Date('01/01/2021'),
         endDate: new Date('03/01/2021'),
       }),
+      // Just outside of range by one day. Not included in results for recipientsWithoutTTA.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('04/01/2022'),
+        endDate: new Date('04/02/2022'),
+      }),
     ]);
 
     // Create Activity Report Goals.
@@ -792,7 +799,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -804,7 +811,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -816,7 +823,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -828,7 +835,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -840,7 +847,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -852,7 +859,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(2);

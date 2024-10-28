@@ -84,7 +84,7 @@ const logContext = {
  * @returns {Object} A dictionary where the keys are grant IDs and the values are
  *   arrays of active grant IDs related to each key grant.
  */
-function mapGrantsWithReplacements(grants) {
+export function mapGrantsWithReplacements(grants) {
   const grantsWithReplacementsDictionary = {};
 
   grants.forEach((grant) => {
@@ -94,7 +94,7 @@ function mapGrantsWithReplacements(grants) {
       } else {
         grantsWithReplacementsDictionary[grant.id] = [grant.id];
       }
-    } else {
+    } else if (Array.isArray(grant.grantRelationships)) {
       grant.grantRelationships.forEach((relationship) => {
         if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
           if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
@@ -287,7 +287,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       })),
   }));
 
-  const reducedGoals = reduceGoals(reformattedGoals);
+  const reducedGoals = reduceGoals(reformattedGoals) || [];
 
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {
@@ -391,7 +391,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  const goal = Goal.findOne({
+  const goal = await Goal.findOne({
     attributes: [
       'name',
       'id',
@@ -740,7 +740,6 @@ export async function goalsForGrants(grantIds) {
       'endDate',
       'source',
       'createdVia',
-      [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
     group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"', '"Goal".id'],
     where: {
@@ -770,13 +769,7 @@ export async function goalsForGrants(grantIds) {
         required: false,
       },
     ],
-    order: [[sequelize.fn(
-      'MAX',
-      sequelize.fn(
-        'DISTINCT',
-        sequelize.col('"Goal"."createdAt"'),
-      ),
-    ), 'desc']],
+    order: [['name', 'asc']],
   });
 }
 
@@ -1253,6 +1246,7 @@ export async function saveGoalsForReport(goals, report) {
         prompts,
         source,
         grant,
+        goalTemplateId,
         grantId: discardedGrantId,
         id, // we can't be trying to set this
         endDate: discardedEndDate, // get this outta here
@@ -1263,6 +1257,33 @@ export async function saveGoalsForReport(goals, report) {
       newOrUpdatedGoal = existingGoals.find((extantGoal) => (
         (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
       ));
+
+      // let's check for goal by template ID first
+      if (!newOrUpdatedGoal && goalTemplateId) {
+        newOrUpdatedGoal = await Goal.findOne({
+          where: {
+            goalTemplateId,
+            grantId,
+            status: { [Op.not]: GOAL_STATUS.CLOSED },
+          },
+        });
+
+        // if we don't find one, we check to see if that template is curated
+        if (!newOrUpdatedGoal) {
+          const goalTemplate = await GoalTemplate.findByPk(goalTemplateId);
+          // if the template is curated, we do not want to go to the next step,
+          // where we look up a goal with a matching name, as this can have inconsistent results
+          // instead: we create a new goal
+          if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+            newOrUpdatedGoal = await Goal.create({
+              goalTemplateId,
+              name: goal.name ? goal.name.trim() : '',
+              grantId,
+              status,
+            }, { individualHooks: true });
+          }
+        }
+      }
 
       // if not, does it exist for this name and grantId combination
       if (!newOrUpdatedGoal) {
@@ -1614,7 +1635,7 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 */
 export async function getGoalIdsBySimilarity(recipientId, regionId, user = null) {
   /**
-   * if a user has the ability to merged closed curated goals, we will show them in the UI
+   * if a user has the ability to merge closed curated goals, we will show them in the UI
    */
   const hasClosedMergeGoalOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
 
@@ -2266,7 +2287,9 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   }
 
   if (goalsForNameCheck.length) {
-    message = `A goal with that name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
+    message = `A goal with that name already exists for grants ${goalsForNameCheck
+      .map((g) => (g.grant ? g.grant.number : 'Unknown'))
+      .join(', ')}`;
   }
 
   if (goalsForNameCheck.length && !data.createMissingGoals) {
