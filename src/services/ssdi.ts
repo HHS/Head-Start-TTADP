@@ -565,7 +565,17 @@ const readFiltersFromFile = async (
 const validateType = (expectedType: FilterType, value: any): boolean => {
   switch (expectedType) {
     case FilterType.IntegerArray:
-      return Array.isArray(value) && value.every((v) => Number.isInteger(v));
+      return value.every((v, i, arr) => {
+        if (Number.isInteger(v)) {
+          return true;
+        }
+        if (!Number.isNaN(Number(v))) {
+          // eslint-disable-next-line no-param-reassign
+          arr[i] = Number(v); // Convert string to number
+          return true;
+        }
+        return false;
+      });
     case FilterType.DateArray:
       return Array.isArray(value) && value.every((v) => !Number.isNaN(Date.parse(v)));
     case FilterType.StringArray:
@@ -590,16 +600,37 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
   Object.keys(input).forEach((key) => {
     const suffix = Object.keys(suffixMapping).find((s) => key.endsWith(s));
     let newKey = key;
+    const baseKey = newKey.split('.')[0];
     let newValue = input[key];
 
     if (suffix) {
       const mappedSuffix = suffixMapping[suffix];
       newKey = key.replace(suffix, mappedSuffix ?? '');
 
-      if ((suffix === '.win' || suffix === '.in')
-        && filters[newKey]?.type === FilterType.DateArray
-        && !Array.isArray(newValue)) {
-        newValue = newValue.split('-');
+      const isDateArrayFilter = (suf, filterType) => (suf === '.win' || suf === '.in')
+        && filterType === FilterType.DateArray;
+
+      const isArrayWithSeparator = (arr, separator) => Array.isArray(arr)
+        && arr.some((item) => typeof item === 'string' && item.includes(separator));
+
+      const splitValue = (value, separator) => (Array.isArray(value)
+        ? value.flatMap((item) => (typeof item === 'string'
+          ? item.split(separator)
+          : item))
+        : value.split(separator));
+
+      if (isDateArrayFilter(suffix, filters[baseKey]?.type)) {
+        if (!Array.isArray(newValue)) {
+          newValue = splitValue(newValue, '-');
+        } else if (isArrayWithSeparator(newValue, '-')) {
+          newValue = splitValue(newValue, '-');
+        }
+      } else if (suffix === '.in' || suffix === '.nin') {
+        if (!Array.isArray(newValue) && newValue.includes(',')) {
+          newValue = splitValue(newValue, ',');
+        } else if (isArrayWithSeparator(newValue, ',')) {
+          newValue = splitValue(newValue, ',');
+        }
       }
     }
 
@@ -607,12 +638,12 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       newValue = [newValue];
     }
 
-    if (!filters[newKey]) {
+    if (!filters[baseKey]) {
       errors.invalidFilters.push(`Invalid filter: ${newKey}`);
     } else {
-      const expectedType = filters[newKey].type as FilterType;
+      const expectedType = filters[baseKey].type as FilterType;
       if (!validateType(expectedType, newValue)) {
-        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType}`);
+        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType} received ${newValue}`);
       }
     }
 
@@ -693,7 +724,12 @@ const executeQuery = async (filePath: string): Promise<any> => {
   }
 
   try {
-    const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
+    const result = await db.sequelize.query(
+      query,
+      {
+        type: QueryTypes.SELECT,
+      },
+    );
     return result;
   } catch (error) {
     throw new Error(`Query failed: ${error.message}`);

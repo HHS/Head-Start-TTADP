@@ -22,8 +22,8 @@ const TABLE_HEADINGS = [
 ];
 
 const DEFAULT_SORT_CONFIG = {
-  sortBy: '1',
-  direction: 'desc',
+  sortBy: 'Root_cause',
+  direction: 'asc',
   activePage: 1,
 };
 
@@ -42,6 +42,7 @@ export default function RootCauseFeiGoals({ data }) {
     totalNumberOfGoals: 0,
     totalNumberOfRootCauses: 0,
   });
+  const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
 
   const {
     requestSort,
@@ -51,7 +52,7 @@ export default function RootCauseFeiGoals({ data }) {
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
-    [FIRST_COLUMN], // stringColumns
+    ['Root_cause'], // stringColumns
     EMPTY_ARRAY, // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
@@ -67,6 +68,15 @@ export default function RootCauseFeiGoals({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTrace([]);
+      setTotals({
+        totalNumberOfGoals: 0,
+        totalNumberOfRootCauses: 0,
+      });
+      return;
+    }
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects
@@ -76,12 +86,13 @@ export default function RootCauseFeiGoals({ data }) {
       records,
       totalNumberOfGoals,
       totalNumberOfRootCauses,
+      showDashboardFiltersNotApplicable: showDashboardFiltersNotApplicableProp,
     } = data;
 
     const tableData = [];
     const traceData = [];
 
-    records.forEach((dataset, index) => {
+    (records || []).forEach((dataset, index) => {
       traceData.push({
         category: dataset.rootCause,
         count: dataset.percentage,
@@ -89,7 +100,7 @@ export default function RootCauseFeiGoals({ data }) {
 
       tableData.push({
         heading: dataset.rootCause,
-        id: index + 1,
+        id: `${dataset.rootCause} - ${index + 1}`,
         data: [
           {
             value: dataset.response_count,
@@ -97,7 +108,7 @@ export default function RootCauseFeiGoals({ data }) {
             sortKey: 'Root_cause',
           },
           {
-            value: dataset.percentage,
+            value: `${String(dataset.percentage)}%`,
             title: 'Number',
             sortKey: 'Number',
           },
@@ -105,6 +116,9 @@ export default function RootCauseFeiGoals({ data }) {
       });
     });
 
+    // Sort traceData by rootCause in descending order
+    traceData.sort((a, b) => b.category.localeCompare(a.category));
+    setShowFiltersNotApplicable(showDashboardFiltersNotApplicableProp);
     setTrace(traceData);
     setTabularData(tableData);
     setTotals({
@@ -131,6 +145,7 @@ export default function RootCauseFeiGoals({ data }) {
         subtitle="Each goal can have up to 2 root causes"
         subtitle2={`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
         menuItems={menuItems}
+        showFiltersNotApplicable={showFiltersNotApplicable}
       >
         {showTabularData ? (
           <HorizontalTableWidget
@@ -147,21 +162,26 @@ export default function RootCauseFeiGoals({ data }) {
             showTotalColumn={false}
             footerData={false}
             hideFirstColumnBorder
+            selectAllIdPrefix="qa-dashboard-root-cause-on-fei-goals"
           />
         ) : (
-          <BarGraph
-            data={trace}
-            topMargin={24}
-            leftMargin={200}
-            barGraphTopHeight="auto"
-            barHeightMultiplier={40}
-            widgetRef={widgetRef}
-            xAxisConfig={{
-              title: 'Percentage',
-              ticksuffix: '%',
-              standoff: 40,
-            }}
-          />
+          <div className="padding-bottom-1">
+            <BarGraph
+              data={trace}
+              topMargin={24}
+              leftMargin={200}
+              barGraphTopHeight="auto"
+              barHeightMultiplier={40}
+              widgetRef={widgetRef}
+              xAxisConfig={{
+                title: {
+                  text: 'Percentage',
+                  standoff: 100,
+                },
+                ticksuffix: '%',
+              }}
+            />
+          </div>
         )}
       </WidgetContainer>
     </div>
@@ -172,6 +192,7 @@ RootCauseFeiGoals.propTypes = {
   data: PropTypes.shape({
     totalNumberOfGoals: PropTypes.number,
     totalNumberOfRootCauses: PropTypes.number,
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     records: PropTypes.arrayOf(PropTypes.shape({
       rootCause: PropTypes.string,
       response_count: PropTypes.number,

@@ -5,6 +5,7 @@ import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import useSize from '../hooks/useSize';
+import NoResultsFound from '../components/NoResultsFound';
 import './VBarGraph.css';
 
 const Plot = createPlotlyComponent(Plotly);
@@ -17,7 +18,7 @@ function VBarGraph({
   widthOffset,
 }) {
   const [plot, updatePlot] = useState({});
-  const size = useSize(widgetRef);
+  const size = useSize(data.length > 0 ? widgetRef : null);
 
   useEffect(() => {
     if (!data || !Array.isArray(data) || !size) {
@@ -92,6 +93,14 @@ function VBarGraph({
       },
     });
   }, [data, xAxisLabel, size, yAxisLabel, widthOffset]);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="position-relative margin-bottom-3 display-flex flex-justify-center" ref={widgetRef}>
+        <NoResultsFound />
+      </div>
+    );
+  }
 
   return (
     <div className="display-flex flex-align-center position-relative" ref={widgetRef}>

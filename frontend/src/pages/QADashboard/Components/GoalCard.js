@@ -6,6 +6,8 @@ import DataRow from '../../../components/DataRow';
 
 function GoalCard({
   goal,
+  recipientId,
+  regionId,
   expanded,
 }) {
   return (
@@ -15,7 +17,7 @@ function GoalCard({
         <DataRow
           label="Goal number"
           value={(
-            <Link to="recipient-tta-records/376/region/1/goals?id[]=83697">
+            <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goal.id}`}>
               {goal.goalNumber}
             </Link>
           )}
@@ -48,5 +50,7 @@ export const goalPropTypes = PropTypes.shape({
 GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
+  recipientId: PropTypes.string.isRequired,
+  regionId: PropTypes.string.isRequired,
 };
 export default GoalCard;

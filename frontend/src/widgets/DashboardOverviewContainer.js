@@ -21,6 +21,7 @@ const renderDashboardField = (fieldData) => (
     filterApplicable={fieldData.filterApplicable}
     iconSize={fieldData.iconSize}
     tooltipText={fieldData.tooltipText}
+    showNoResults={fieldData.showNoResults}
   />
 );
 

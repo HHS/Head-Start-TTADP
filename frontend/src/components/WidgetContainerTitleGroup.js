@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from './ContextMenu';
 import DisplayTableToggle from './DisplayTableToggleButton';
+import FiltersNotApplicable from './FiltersNotApplicable';
 import './WidgetContainerTitleGroup.scss';
 
 const WidgetContainerTitleGroup = ({
@@ -18,6 +19,7 @@ const WidgetContainerTitleGroup = ({
 
   TitleDrawer,
   SubtitleDrawer,
+  showFiltersNotApplicable,
 }) => {
   if (!title) {
     return null;
@@ -35,8 +37,16 @@ const WidgetContainerTitleGroup = ({
           </div>
           {subtitle ? <p className={`smart-hub-table-widget--subtitle usa-prose margin-x-0 margin-y-${subtitle2 ? '0' : '2'}`}>{subtitle}</p> : null}
           {subtitle2 && (
-            <div>
-              <strong><p className="smart-hub-table-widget--subtitle-2 usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
+            <div className="smart-hub-table-widget--subtitle-2-container display-flex align-items-baseline">
+              <p className="smart-hub-table-widget--subtitle-2 usa-prose margin-x-0 margin-top-0 margin-bottom-2">
+                <strong>{subtitle2}</strong>
+                {
+            showFiltersNotApplicable && (
+            <FiltersNotApplicable />
+            )
+          }
+              </p>
+
             </div>
           )}
           <SubtitleDrawer />
@@ -79,6 +89,7 @@ WidgetContainerTitleGroup.propTypes = {
     label: PropTypes.string,
     onClick: PropTypes.func,
   })),
+  showFiltersNotApplicable: PropTypes.bool,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -95,6 +106,7 @@ WidgetContainerTitleGroup.defaultProps = {
 
   SubtitleDrawer: null,
   TitleDrawer: null,
+  showFiltersNotApplicable: false,
 };
 
 export default WidgetContainerTitleGroup;

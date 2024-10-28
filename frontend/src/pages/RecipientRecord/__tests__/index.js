@@ -215,7 +215,7 @@ describe('recipient record page', () => {
     });
 
     const remove = screen.getByRole('button', {
-      name: /this button removes the filter: date started is within/i,
+      name: /this button removes the filter: date started \(ar\) is within/i,
     });
 
     userEvent.click(remove);
