@@ -1312,7 +1312,7 @@ jobs:
             spaces=(${space_list//,/ })
 
             for i in "${!apps[@]}"; do
-              echo "Logging into space: $( echo {spaces[$i]} | head -c-1)"
+              echo "Logging into space: $( echo ${spaces[$i]} | head -c-1)"
               cf login \
                 -a << pipeline.parameters.cg_api >> \
                 -u ${<< parameters.cloudgov_username >>} \
