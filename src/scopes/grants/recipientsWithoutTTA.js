@@ -18,10 +18,8 @@ const grantsMissingActivitySql = (beginActivityDate, finishActivityDate) => sequ
       JOIN "ActivityReports" ar
         ON arr."activityReportId" = ar.id
       WHERE
-        (ar."startDate", ar."endDate")
-          OVERLAPS
-        (DATE ${sequelize.escape(beginActivityDate)} - 1, DATE ${sequelize.escape(finishActivityDate)} + 1)
-      )
+        ar."startDate" < DATE ${sequelize.escape(finishActivityDate)} + 1
+        AND ar."endDate" > DATE ${sequelize.escape(beginActivityDate)} - 1
       SELECT
         g."id"
       FROM "Grants" g
