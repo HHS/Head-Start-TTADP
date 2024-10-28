@@ -166,6 +166,7 @@ test.describe('Activity Report', () => {
     const fullName = await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
+
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
 
     const regionNumber = await getRegionNumber(page);
@@ -221,6 +222,7 @@ test.describe('Activity Report', () => {
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();
 
+    // PROBLEM: the side nav is not updating to reflect the saved goal..
     // navigate back
     await page.getByRole('button', { name: 'Goals and objectives' }).click()
 
@@ -380,8 +382,14 @@ test.describe('Activity Report', () => {
     // navigate to the 'Goals & Objectives page
     await page.getByRole('link', { name: 'RTTAPA' }).click();
     // check that previously created goals g1 and g2 are visible
-    await expect(page.getByText('g1', { exact: true })).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+    // Assert there are two insances of 'g1' and 'g2' on the page
+    await expect(page.getByText('g1', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('g1', { exact: true }).nth(2)).toBeVisible();
+
+
+
+    await expect(page.getByText('g2', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('g2', { exact: true }).nth(2)).toBeVisible();
 
     // look for the goals heading for the previously created goal, e.g. 'Goal G-6, G-5RTTAPA'
     const g1Goals = page.locator('h3:above(p:text("g1"))').first();
