@@ -1312,13 +1312,14 @@ jobs:
             spaces=(${space_list//,/ })
 
             for i in "${!apps[@]}"; do
-              echo "Logging into space: $( echo ${spaces[$i]} | head -c-2)"
+              space=${spaces[$i]}
+              echo "Logging into space: $( echo ${space} | head -c-2)"
               cf login \
                 -a << pipeline.parameters.cg_api >> \
                 -u ${<< parameters.cloudgov_username >>} \
                 -p ${<< parameters.cloudgov_password >>} \
                 -o << pipeline.parameters.cg_org >> \
-                -s "${spaces[$i]}"
+                -s ${space}
               
               # Get the current state of the app
               state=$(cf app "${apps[$i]}" | grep "state:" | awk '{print $2}')
