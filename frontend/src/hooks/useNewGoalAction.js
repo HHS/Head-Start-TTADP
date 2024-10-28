@@ -68,7 +68,7 @@ export default function useNewGoalAction() {
           const createdGoals = await createGoalsFromTemplate(
             goalTemplate.id,
             {
-              grants: selectedGrant.id,
+              grants: [selectedGrant.id],
               regionId,
             },
           );
