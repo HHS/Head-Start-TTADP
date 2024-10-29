@@ -290,20 +290,22 @@ function check_app_running {
     local app_name="tta-automation"
 
     # Get the application information
-    local output
-    output=$(cf app "$app_name" 2>&1 | head -n22)
+    local INSTANCE_STATUS
+    
+    # Get the current status of the app instance
+    INSTANCE_STATUS=$(cf app $app_name | grep "state" | awk '{print $3}')
     local status=$?
 
     if [ $status -eq 0 ]; then
-        if echo "$output" | grep -q "running"; then
+        if [ "$INSTANCE_STATUS" = "running" ]; then
             log "INFO" "Application '$app_name' is running."
             return 0  # true in Bash, application is running
         else
-            log "INFO" "Application '$app_name' is not running."
+            log "INFO" "Application '$app_name' is not running: $INSTANCE_STATUS"
             return 1  # false in Bash, application is not running
         fi
     else
-        log "ERROR" "Failed to check if application '$app_name' is running. Error output: $output"
+        log "ERROR" "Failed to check if application '$app_name' is running. Error output: $INSTANCE_STATUS"
         return $status  # return the actual error code
     fi
 }
@@ -424,15 +426,8 @@ function push_app {
 
     # Wait until the instance is running
     while true; do
-        # Get the current status of the app instance
-        INSTANCE_STATUS=$(cf app tta-automation | grep "state" | awk '{print $2}')
-
-        # Check if the instance is in the "running" state
-        if [ "$INSTANCE_STATUS" = "running" ]; then
-            log "INFO" "App instance is running. App is ready."
-            break
-        else
-            log "INFO" "Current status: $INSTANCE_STATUS. Waiting for the app instance to be running..."
+        if !check_app_running; then
+            log "INFO" "Waiting for the app instance to be running..."
             sleep 5
         fi
     done
