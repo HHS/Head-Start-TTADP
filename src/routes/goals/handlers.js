@@ -86,7 +86,6 @@ export async function createGoalsFromTemplate(req, res) {
 
     res.json(newGoals);
   } catch (error) {
-    console.log(error);
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
   }
 }

@@ -82,8 +82,7 @@ describe('useGoalState', () => {
       await result.current.submit();
     });
 
-
-    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals/edit?id[]=1,2');   
+    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals/edit?id[]=1,2');
   });
 
   it('closed goal confirmation page has different data', async () => {
