@@ -3,7 +3,6 @@ import React, {
   useState, useRef, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
-import { useHistory } from 'react-router-dom';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalsCardsHeader from './GoalsCardsHeader';
@@ -12,6 +11,7 @@ import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { reopenGoal, updateGoalStatus } from '../../fetchers/goals';
 import ReopenReasonModal from '../ReopenReasonModal';
+import { parseCheckboxEvent } from '../../Constants';
 
 function GoalCards({
   recipientId,
@@ -33,9 +33,6 @@ function GoalCards({
   dismissMergeSuccess,
   goalBuckets,
 }) {
-  const history = useHistory();
-  const [rttapaValidation, setRttapaValidation] = useState(false);
-
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
   const [allGoalsChecked, setAllGoalsChecked] = useState(false);
@@ -117,7 +114,7 @@ function GoalCards({
   );
 
   const selectAllGoalCheckboxSelect = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
 
     // Preserve checked goals on other pages.
     const thisPagesGoalIds = goals.map((g) => g.id);
@@ -147,7 +144,7 @@ function GoalCards({
   }, [goals, selectedGoalCheckBoxes]);
 
   const handleGoalCheckboxSelect = (event) => {
-    const { target: { checked = null, value = null } = {} } = event;
+    const { checked, value } = parseCheckboxEvent(event);
     if (checked === true) {
       setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: true });
     } else {
@@ -173,27 +170,6 @@ function GoalCards({
     const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
     return selection.map((g) => g.id);
   })();
-
-  const rttapaLink = (() => {
-    if (selectedCheckBoxes && selectedCheckBoxes.length) {
-      const selectedGoalIdsQuery = allSelectedPageGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
-      return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
-    }
-
-    return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new`;
-  })();
-
-  const showRttapaValidation = (
-    rttapaValidation && !!(draftSelectedRttapa.length)
-  );
-
-  const createRttapa = async () => {
-    if (draftSelectedRttapa.length) {
-      setRttapaValidation(true);
-    } else {
-      history.push(rttapaLink);
-    }
-  };
 
   return (
     <>
@@ -240,8 +216,6 @@ function GoalCards({
           pageSelectedGoalIds={allSelectedPageGoalIds}
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
-          showRttapaValidation={showRttapaValidation}
-          createRttapa={createRttapa}
           draftSelectedRttapa={draftSelectedRttapa}
           canMergeGoals={canMergeGoals}
           shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
@@ -264,10 +238,8 @@ function GoalCards({
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
-              erroneouslySelected={showRttapaValidation && draftSelectedRttapa.includes(goal.id)}
             />
           ))}
-
         </div>
       </Container>
     </>

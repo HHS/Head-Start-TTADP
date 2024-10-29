@@ -77,6 +77,12 @@ JSON: {
             "description": "Name of the recipient."
           },
           {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
+          },
+          {
             "columnName": "last tta",
             "type": "date",
             "nullable": true,
@@ -423,9 +429,9 @@ WITH active_filters_array AS (
     SELECT array_remove(ARRAY[
       CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
       CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
-      CASE WHEN NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NOT NULL THEN 'grantNumbers' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantNumber', true), '') IS NOT NULL THEN 'grantNumber' END,
       CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
-      CASE WHEN NULLIF(current_setting('ssdi.regionIds', true), '') IS NOT NULL THEN 'regionIds' END,
+      CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
       CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
       CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
     ], NULL) AS active_filters
@@ -454,14 +460,17 @@ no_tta AS (
 ),
 no_tta_widget AS (
     SELECT
-      (((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/COUNT(*))*100)::decimal(5,2) "% recipients without tta",
+      (COALESCE((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/NULLIF(COUNT(*),0),0)*100)::decimal(5,2) "% recipients without tta",
       COUNT(*) FILTER (WHERE not has_tta ) "recipients without tta",
       COUNT(*) total
     FROM no_tta
 ),
 no_tta_page AS (
-    SELECT r.id, r.name,
-      (array_agg(a."endDate" ORDER BY a."endDate" DESC))[1] last_tta,
+    SELECT
+      r.id,
+      r.name,
+      gr."regionId",
+      ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::timestamp last_tta,
       now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
@@ -471,7 +480,7 @@ no_tta_page AS (
     LEFT JOIN "ActivityReports" a ON ar."activityReportId" = a.id
     AND a."calculatedStatus" = 'approved'
     WHERE gr.status = 'Active'
-    GROUP BY 1,2
+    GROUP BY 1,2,3
 ),
 datasets AS (
     SELECT 'no_tta_widget' data_set, COUNT(*) records,
@@ -479,26 +488,54 @@ datasets AS (
       '% recipients without tta', "% recipients without tta",
       'recipients without tta', "recipients without tta",
       'total', total
-    )) data
+    )) data,
+      af.active_filters  -- Use precomputed active_filters
     FROM no_tta_widget
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+
     UNION
+
     SELECT 'no_tta_page' data_set, COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
         'recipient id', id,
         'recipient name', name,
+        'region id', "regionId",
         'last tta', last_tta,
         'days since last tta', days_since_last_tta
-    )) data
+    )) data,
+      af.active_filters  -- Use precomputed active_filters
     FROM no_tta_page
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+
+    UNION
+
+    SELECT
+      'no_tta_page' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
+    GROUP BY af.active_filters
+
     UNION
     SELECT 'process_log' data_set, COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-    )) data
+    )) data,
+      af.active_filters  -- Use precomputed active_filters
     FROM process_log
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
 )
-SELECT *
+
+SELECT
+  data_set,
+  MAX(records) records,
+  JSONB_AGG(data ORDER BY records DESC) -> 0 data,
+  active_filters
 FROM datasets
 -- Filter for datasets if ssdi.dataSetSelection is defined
 WHERE 1 = 1
@@ -507,4 +544,5 @@ AND (
   OR (
     COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
   )
-);
+)
+GROUP BY 1,4;

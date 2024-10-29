@@ -1,17 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
-import Container from '../components/Container';
-import AccessibleWidgetData from './AccessibleWidgetData';
-import MediaCaptureButton from '../components/MediaCaptureButton';
-import WidgetH2 from '../components/WidgetH2';
 import useSize from '../hooks/useSize';
+import NoResultsFound from '../components/NoResultsFound';
 import './VBarGraph.css';
-import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -19,16 +14,11 @@ function VBarGraph({
   data,
   yAxisLabel,
   xAxisLabel,
-  title,
-  subtitle,
-  loading,
-  loadingLabel,
+  widgetRef,
+  widthOffset,
 }) {
   const [plot, updatePlot] = useState({});
-  const bars = useRef(null);
-  const [showAccessibleData, updateShowAccessibleData] = useState(false);
-
-  const size = useSize(bars);
+  const size = useSize(data.length > 0 ? widgetRef : null);
 
   useEffect(() => {
     if (!data || !Array.isArray(data) || !size) {
@@ -56,7 +46,7 @@ function VBarGraph({
     const layout = {
       bargap: 0.5,
       height: 350,
-      width: size.width - 40,
+      width: (size.width - widthOffset),
       hoverlabel: {
         bgcolor: '#000',
         bordercolor: '#000',
@@ -102,65 +92,24 @@ function VBarGraph({
         responsive: true, displayModeBar: false, hovermode: 'none',
       },
     });
-  }, [data, xAxisLabel, size, yAxisLabel]);
+  }, [data, xAxisLabel, size, yAxisLabel, widthOffset]);
 
-  const tableData = data.map((row) => ({
-    data: [
-      row.name,
-      parseFloat(row.count).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    ],
-  }));
+  if (!data || data.length === 0) {
+    return (
+      <div className="position-relative margin-bottom-3 display-flex flex-justify-center" ref={widgetRef}>
+        <NoResultsFound />
+      </div>
+    );
+  }
 
   return (
-    <Container className="smarthub-vbar-graph shadow-2" loading={loading} loadingLabel={loadingLabel} ref={bars}>
-      <Grid row className="position-relative margin-bottom-2 flex-align-start">
-        <div className="ttahub-widget-heading-grid">
-          <div className="ttahub-widget-heading-grid--title">
-            <WidgetH2>
-              {title}
-            </WidgetH2>
-            <p className="usa-prose margin-0">{subtitle}</p>
-          </div>
-          {!showAccessibleData
-            ? (
-              <MediaCaptureButton
-                reference={bars}
-                buttonText="Save screenshot"
-                id="rd-save-screenshot-vbars"
-                title={title}
-              />
-            )
-            : null}
-          <DisplayTableToggle
-            title={title}
-            displayTable={showAccessibleData}
-            setDisplayTable={updateShowAccessibleData}
-          />
-        </div>
-
-      </Grid>
-      { showAccessibleData
-        ? (
-          <AccessibleWidgetData
-            caption="Hours of training by National Center Table"
-            columnHeadings={['National Center', 'Hours']}
-            rows={tableData}
-          />
-        )
-        : (
-          <>
-            <div className="display-flex flex-align-center position-relative">
-              <Plot
-                data={plot.data}
-                layout={plot.layout}
-                config={plot.config}
-              />
-
-            </div>
-          </>
-        )}
-    </Container>
-
+    <div className="display-flex flex-align-center position-relative" ref={widgetRef}>
+      <Plot
+        data={plot.data}
+        layout={plot.layout}
+        config={plot.config}
+      />
+    </div>
   );
 }
 
@@ -173,18 +122,13 @@ VBarGraph.propTypes = {
   ),
   yAxisLabel: PropTypes.string.isRequired,
   xAxisLabel: PropTypes.string.isRequired,
-  title: PropTypes.string,
-  subtitle: PropTypes.string,
-  loading: PropTypes.bool,
-  loadingLabel: PropTypes.string,
+  widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
+  widthOffset: PropTypes.number,
 };
 
 VBarGraph.defaultProps = {
   data: [],
-  title: 'Vertical Bar Graph',
-  subtitle: '',
-  loading: false,
-  loadingLabel: 'Vertical Bar Graph Loading',
+  widthOffset: 40,
 };
 
 export default VBarGraph;

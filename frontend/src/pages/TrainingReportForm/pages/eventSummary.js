@@ -215,42 +215,28 @@ const EventSummary = ({
                 defaultValue=""
               />
             </div>
+
             <div className="margin-top-2">
               <Label htmlFor="eventOrganizer">
                 Event organizer
                 <Req />
               </Label>
-              <Controller
-                render={({ onChange: controllerOnChange, value }) => (
-                  <Select
-                    value={eventOrganizerOptions.find((option) => option.value === value)}
-                    inputId="eventOrganizer"
-                    name="eventOrganizer"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.value);
-                    }}
-                    inputRef={register({ required: 'Select an event organizer' })}
-                    options={eventOrganizerOptions}
-                    required
-                  />
-                )}
-                control={control}
-                rules={{
-                  validate: (value) => {
-                    if (!value || value.length === 0) {
-                      return 'Select an event organizer';
-                    }
-                    return true;
-                  },
-                }}
+              <Dropdown
+                required
+                id="eventOrganizer"
                 name="eventOrganizer"
-                defaultValue=""
-              />
+                inputRef={register({ required: 'Select an event organizer' })}
+              >
+                {eventOrganizerOptions.map((option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                    selected={option.value === data.eventOrganizer}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </Dropdown>
             </div>
           </>
         )
