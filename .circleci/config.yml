@@ -613,7 +613,7 @@ commands:
           config: "process"
           success_message: ':database: Restored data processed'
           directory: "./"
-          timeout: "1200"
+          timeout: "3000"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
