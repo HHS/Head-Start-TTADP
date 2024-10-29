@@ -28,7 +28,6 @@ import {
 } from './constants';
 import ReadOnly from './ReadOnly';
 import AppLoadingContext from '../../AppLoadingContext';
-import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
 import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLink';
@@ -43,7 +42,6 @@ export default function GoalForm({
   regionId,
   goalIds,
 }) {
-
   const history = useHistory();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
@@ -778,6 +776,7 @@ export default function GoalForm({
 }
 
 GoalForm.propTypes = {
+  goalIds: PropTypes.arrayOf(PropTypes.number),
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -789,4 +788,8 @@ GoalForm.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
+};
+
+GoalForm.defaultProps = {
+  goalIds: [],
 };

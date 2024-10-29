@@ -9,7 +9,6 @@ import {
   act,
 } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -17,7 +16,6 @@ import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
 import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
-import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 import AppLoadingContext from '../../../AppLoadingContext';
 
 const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
@@ -507,7 +505,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
 
-    const cancel = await screen.findByRole('link', { name: 'Cancel' })
+    const cancel = await screen.findByRole('link', { name: 'Cancel' });
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
