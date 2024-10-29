@@ -104,7 +104,7 @@ export default function WhatsNew({ data }) {
   useEffect(() => {
     try {
       // set the loaded articles as seen
-      const articleIds = articles ? Object.values(articles).reduce((acc, year) => {
+      const articleIds = Object.values(articles).reduce((acc, year) => {
         const months = Object.values(year);
         months.forEach((month) => {
           month.forEach((article) => {
@@ -112,7 +112,7 @@ export default function WhatsNew({ data }) {
           });
         });
         return acc;
-      }, []) : [];
+      }, []);
 
       // we don't need to save anything if there are no articles
       if (!articleIds.length) {
