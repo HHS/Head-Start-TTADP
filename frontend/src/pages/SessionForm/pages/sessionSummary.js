@@ -48,6 +48,7 @@ import Drawer from '../../../components/Drawer';
 import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
+import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -324,12 +325,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                   required: 'Enter duration',
                   valueAsNumber: true,
                   validate: {
-                    mustBeQuarterHalfOrWhole: (value) => {
-                      if (value % 0.25 !== 0) {
-                        return 'Duration must be rounded to the nearest quarter hour';
-                      }
-                      return true;
-                    },
+                    mustBeQuarterHalfOrWhole,
                   },
                   min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
                   max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
