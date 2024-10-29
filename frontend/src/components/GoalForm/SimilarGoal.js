@@ -12,6 +12,7 @@ export const SimilarGoalProp = PropTypes.shape({
   ids: PropTypes.arrayOf(PropTypes.number),
   isCuratedTemplate: PropTypes.bool,
   source: PropTypes.string,
+  reason: PropTypes.string,
 });
 
 const SimilarGoal = ({
@@ -33,6 +34,7 @@ const SimilarGoal = ({
       setValue('goalIds', []);
       setValue('goalStatus', GOAL_STATUS.NOT_STARTED);
     } else {
+      setValue('goalStatusReason', goal.reason || '');
       setValue('goalTemplate', null);
       setValue('useOhsInitiativeGoal', false);
       setValue('goalName', goal.name);
