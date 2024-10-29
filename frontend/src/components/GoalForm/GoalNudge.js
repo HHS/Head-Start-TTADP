@@ -21,7 +21,9 @@ export default function GoalNudge({
   regionId,
   selectedGrant,
 }) {
-  const { watch, register, setValue } = useFormContext();
+  const {
+    watch, register, setValue, clearErrors,
+  } = useFormContext();
   const {
     goalName,
     isGoalNameEditable,
@@ -47,7 +49,10 @@ export default function GoalNudge({
       // should also clear out the goal name
       setValue('goalName', '');
     }
-  }, [setValue, useOhsInitiativeGoal]);
+
+    // we should clear out any errors when useOhsInitiativeGoal is toggled
+    clearErrors();
+  }, [clearErrors, setValue, useOhsInitiativeGoal]);
 
   // using DeepCompareEffect to avoid unnecessary fetches
   // as we have an object (selectedGrant) in the dependency array
