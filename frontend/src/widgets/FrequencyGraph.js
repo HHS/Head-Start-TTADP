@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { capitalize } from 'lodash';
@@ -30,6 +30,7 @@ export function FreqGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
   const [selectedGraph, updateSelectedGraph] = useState(TOPIC_STR);
+  const widgetRef = useRef(null);
 
   const selectedData = data[selectedGraph];
   const sortedData = sortData(selectedData, showAccessibleData);
@@ -77,7 +78,13 @@ export function FreqGraph({ data, loading }) {
             rows={accessibleRows}
           />
         )
-        : <BarGraph data={sortedData} xAxisLabel={capitalize(selectedGraph)} />}
+        : (
+          <BarGraph
+            data={sortedData}
+            xAxisLabel={capitalize(selectedGraph)}
+            widgetRef={widgetRef}
+          />
+        )}
     </Container>
   );
 }

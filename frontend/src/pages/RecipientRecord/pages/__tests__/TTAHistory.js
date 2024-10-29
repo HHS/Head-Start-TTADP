@@ -65,7 +65,7 @@ describe('Recipient Record - TTA History', () => {
 
   it('renders the TTA History page appropriately', async () => {
     act(() => renderTTAHistory());
-    const overview = document.querySelector('.smart-hub--dashboard-overview');
+    const overview = document.querySelector('.smart-hub--dashboard-overview-container');
     expect(overview).toBeTruthy();
   });
 

@@ -10,6 +10,7 @@ import isAdmin, {
   canChangeGoalStatus,
   canEditOrCreateGoals,
   hasTrainingReportWritePermissions,
+  canEditOrCreateSessionReports,
 } from '../permissions';
 
 describe('permissions', () => {
@@ -413,6 +414,43 @@ describe('permissions', () => {
         ],
       };
       expect(hasTrainingReportWritePermissions(user)).toBeFalsy();
+    });
+  });
+
+  describe('canEditOrCreateSessionReports', () => {
+    it('returns true if the user is an admin', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+        ],
+      };
+      expect(canEditOrCreateSessionReports(user, 1)).toBeTruthy();
+    });
+
+    it('returns true if the user has read_write_training_reports', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canEditOrCreateSessionReports(user, 1)).toBeTruthy();
+    });
+
+    it('returns false otherwise', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canEditOrCreateSessionReports(user, 1)).toBeFalsy();
     });
   });
 });
