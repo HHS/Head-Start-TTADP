@@ -97,4 +97,38 @@ describe('useWidgetExport', () => {
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
   });
+
+  it('exports a value with a comma', () => {
+    const data = [
+      {
+        id: 1,
+        heading: 'Heading',
+        data: [
+          { title: 'ID', value: 1 },
+          { title: 'Name', value: 'John, Doe' },
+        ],
+      },
+    ];
+
+    const headers = ['ID', 'Name'];
+    const checkboxes = { 1: true };
+    const exportHeading = 'Export Heading';
+    const exportName = 'export.csv';
+
+    const { result } = renderHook(() => useWidgetExport(
+      data,
+      headers,
+      checkboxes,
+      exportHeading,
+      exportName,
+    ));
+    const { exportRows } = result.current;
+
+    exportRows();
+    const csvString = 'Export Heading,ID,Name\n,1,"John, Doe"';
+
+    const blob = new Blob([csvString], { type: 'text/csv' });
+
+    expect(createObjectURL).toHaveBeenCalledWith(blob);
+  });
 });

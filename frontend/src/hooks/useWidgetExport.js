@@ -23,7 +23,14 @@ export default function useWidgetExport(
           return Number.isNaN(parsedInt) ? s : parsedInt;
         });
         // Filter the recipients to export to only include the selected rows.
-        dataToExport = data.filter((row) => selectedRowsIds.includes(row.id));
+        dataToExport = data.filter((row) => {
+          let rowId = row.id;
+          if (typeof rowId === 'string') {
+            const splitId = rowId.split('-');
+            rowId = parseInt(splitId[0], DECIMAL_BASE);
+          }
+          return selectedRowsIds.includes(rowId);
+        });
       }
 
       // Create a header row.
@@ -39,7 +46,10 @@ export default function useWidgetExport(
       // create a csv file of all the rows.
       const csvRows = dataToExport.map((row) => {
         const dataToUse = !row.data && exportDataName ? row[exportDataName] : row.data;
-        const rowValues = dataToUse.map((d) => d.value);
+        const rowValues = dataToUse.map((d) => {
+          const { value } = d;
+          return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+        });
         // If the heading has a comma, wrap it in quotes.
         const rowHeadingToUse = row.heading.includes(',') ? `"${row.heading}"` : row.heading;
         return `${rowHeadingToUse},${rowValues.join(',')}`;
