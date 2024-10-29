@@ -20,20 +20,18 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
+    await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Enter');
 
     await blur(page);
 
-    // select a second grant as well
-    await page.keyboard.press('Enter');
-
     await page.getByLabel('Recipient\'s goal *').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: /Save and continue/i }).click();
-    await page.getByRole('button', { name: /Save and continue/i }).click();
-
+  
      // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
+    await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Enter');
 
     // add an objective
@@ -53,7 +51,6 @@ test.describe('Recipient record', () => {
     // navigate through the recipient record tabs
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'TTA History' }).click();
 
     // goals and objectives, add a new goal
     await page.getByRole('link', { name: 'RTTAPA' }).click();
@@ -62,12 +59,12 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
+    await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Enter');
 
     await blur(page);
 
     await page.getByLabel('Recipient\'s goal *').fill('This is the second goal for this recipient');
-    await page.getByRole('button', { name: /Save and continue/i }).click();
     await page.getByRole('button', { name: /Save and continue/i }).click();
 
     // edit that goal to add an objective
