@@ -426,7 +426,7 @@ function push_app {
 
     # Wait until the instance is running
     while true; do
-        if !check_app_running; then
+        if ! check_app_running; then
             log "INFO" "Waiting for the app instance to be running..."
             sleep 5
         fi
