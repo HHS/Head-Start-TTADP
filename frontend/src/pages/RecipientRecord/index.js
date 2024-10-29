@@ -284,17 +284,21 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
-          render={({ location }) => (
-            <GoalForm
-              regionId={regionId}
-              recipient={recipientData}
-              goalIds={(() => {
-                const searchParams = new URLSearchParams(location.search);
-                return searchParams.get('id[]') ? searchParams.getAll('id[]').map((id) => parseInt(id, DECIMAL_BASE)) : [];
-              })()}
-              showRTRnavigation
-            />
-          )}
+          render={({ location }) => {
+            const goalIds = (() => {
+              const searchParams = new URLSearchParams(location.search);
+              return searchParams.get('id[]') ? searchParams.getAll('id[]').map((id) => parseInt(id, DECIMAL_BASE)) : [];
+            })();
+
+            return (
+              <GoalForm
+                regionId={regionId}
+                recipient={recipientData}
+                goalIds={goalIds}
+                showRTRnavigation
+              />
+            );
+          }}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals"
