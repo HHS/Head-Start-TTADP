@@ -180,6 +180,7 @@ test.describe('Activity Report', () => {
     // create the first goal
 
     await page.getByLabel(/Select recipient's goal/i).click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
@@ -239,6 +240,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
     await page.getByTestId('label').click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('button', { name: 'Save goal' }).click();
