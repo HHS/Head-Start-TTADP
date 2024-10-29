@@ -56,6 +56,12 @@ JSON: {
             "type": "number",
             "nullable": false,
             "description": "Total number of recipients."
+          },
+          {
+            "columnName": "grants with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of grants with a FEI goal."
           }
         ]
       },
@@ -81,6 +87,12 @@ JSON: {
             "type": "string",
             "nullable": true,
             "description": "Grant number associated with the recipient."
+          },
+          {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
           },
           {
             "columnName": "goalId",
@@ -129,6 +141,18 @@ JSON: {
             "type": "date",
             "nullable": true,
             "description": "Date when the monitoring report was delivered."
+          },
+          {
+            "columnName": "creator",
+            "type": "string",
+            "nullable": true,
+            "description": "User who created the goal"
+          },
+          {
+            "columnName": "colaborators",
+            "type": "string[]",
+            "nullable": true,
+            "description": "Users who collaborated on the goal"
           }
         ]
       },
@@ -250,6 +274,27 @@ JSON: {
       "display": "Creation Date",
       "description": "Filter based on the date range of creation",
       "supportsExclusion": true
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "Filter based on goal status",
+      "supportsExclusion": true
+    },
+    {
+      "name": "group",
+      "type": "integer[]",
+      "display": "Group",
+      "description": "Filter based on group membership.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "currentUserId",
+      "type": "integer[]",
+      "display": "Current User",
+      "description": "Filter based on the current user ID.",
+      "supportsExclusion": true
     }
   ]
 }
@@ -268,6 +313,7 @@ DECLARE
     domain_classroom_organization_filter TEXT := NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '');
     domain_instructional_support_filter TEXT := NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
+    goal_status_filter TEXT := NULLIF(current_setting('ssdi.status', true), '');
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
@@ -281,6 +327,7 @@ DECLARE
     domain_classroom_organization_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainClassroomOrganization.not', true), 'false') = 'true';
     domain_instructional_support_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainInstructionalSupport.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
+    goal_status_not_filter BOOLEAN := COALESCE(current_setting('ssdi.status.not', true), 'false') = 'true';
 
 BEGIN
 ---------------------------------------------------------------------------------------------------
@@ -420,7 +467,7 @@ BEGIN
         AND (
           group_filter IS NULL
           OR (
-            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.name) != group_not_filter
+            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.id::text) != group_not_filter
           )
         )
         LEFT JOIN "GroupCollaborators" gc
@@ -467,6 +514,7 @@ BEGIN
     domain_classroom_organization_filter IS NOT NULL OR
     domain_instructional_support_filter IS NOT NULL
   THEN
+    RAISE WARNING 'domain_classroom_organization_filter: %', domain_classroom_organization_filter;
     WITH
       applied_filtered_grants AS (
         SELECT
@@ -490,16 +538,16 @@ BEGIN
           COALESCE(
             domain_emotional_support_filter,
             domain_classroom_organization_filter,
-            NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '')
+            domain_instructional_support_filter
           ) IS NOT NULL
-          AND (ARRAY_AGG(DISTINCT mrs.id))[0] IS NOT NULL
+          AND (ARRAY_AGG(DISTINCT mrs.id))[1] IS NOT NULL
           )
           -- If all domain filters are NULL, then mrs.id can be anything
           OR (
           COALESCE(
             domain_emotional_support_filter,
             domain_classroom_organization_filter,
-            NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '')
+            domain_instructional_support_filter
           ) IS NULL
           )
         )
@@ -514,8 +562,8 @@ BEGIN
             ) AS json_values
             WHERE json_values.value = (
             CASE
-              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 6 THEN 'Above all thresholds'
-              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 5 THEN 'Below competitive'
+              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 6 THEN 'Above all thresholds'
+              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 5 THEN 'Below competitive'
               ELSE 'Below quality'
             END
             )
@@ -534,8 +582,8 @@ BEGIN
             ) AS json_values
             WHERE json_values.value = (
             CASE
-              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 6 THEN 'Above all thresholds'
-              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 5 THEN 'Below competitive'
+              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 6 THEN 'Above all thresholds'
+              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 5 THEN 'Below competitive'
               ELSE 'Below quality'
             END
             )
@@ -555,12 +603,12 @@ BEGIN
             WHERE json_values.value = (
             CASE
               -- Get the max reportDeliveryDate for the instructionalSupport domain
-              WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 3 THEN 'Above all thresholds'
+              WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 3 THEN 'Above all thresholds'
               WHEN (MAX(mcs."reportDeliveryDate") >= '2025-08-01'
-              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 2.5)
+              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.5)
               THEN 'Below competitive'
               WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2025-07-31'
-              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 2.3)
+              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.3)
               THEN 'Below competitive'
               ELSE 'Below quality'
             END
@@ -618,7 +666,8 @@ BEGIN
 -- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
 
     IF
-        create_date_filter IS NOT NULL
+        create_date_filter IS NOT NULL OR
+        goal_status_filter IS NOT NULL
     THEN
     WITH
       applied_filtered_goals AS (
@@ -644,6 +693,16 @@ BEGIN
             COALESCE(create_date_filter, '[]')::json
             ) AS value
           ) != create_date_not_filter
+          )
+        )
+        -- Filter for status if ssdi.status is defined
+        AND (
+          goal_status_filter IS NULL
+          OR (
+            LOWER(g.status) IN (
+              SELECT LOWER(value)
+              FROM json_array_elements_text(COALESCE(goal_status_filter, '[]')::json) AS value
+            ) != goal_status_not_filter
           )
         )
       ),
@@ -698,8 +757,9 @@ WITH
   with_class AS (
     SELECT
       r.id,
-      COUNT(DISTINCT g.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
-      COUNT(DISTINCT mcs.id) > 0 has_scores
+      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
+      COUNT(DISTINCT mcs.id) > 0 has_scores,
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172 AND fg.id IS NOT NULL AND mcs.id IS NOT NULL) grant_count
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
@@ -707,6 +767,8 @@ WITH
     ON gr.id = fgr.id
     LEFT JOIN "Goals" g
     ON gr.id = g."grantId"
+    LEFT JOIN filtered_goals fg
+    ON g.id = fg.id
     LEFT JOIN "MonitoringReviewGrantees" mrg
     ON gr.number = mrg."grantNumber"
     LEFT JOIN "MonitoringReviews" mr
@@ -717,29 +779,36 @@ WITH
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
     WHERE gr.status = 'Active'
+    AND g."deletedAt" IS NULL
+    AND (mrs.id IS NULL OR mrs.name = 'Complete')
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1
   ),
   with_class_widget AS (
     SELECT
-      (((COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
-      COUNT(DISTINCT wc.id)))*100)::decimal(5,2) "% recipients with class",
-      COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class) "recipients with class",
-      COUNT(DISTINCT wc.id) total
+      (COALESCE(COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class AND wc.has_scores)::decimal/
+      NULLIF(COUNT(DISTINCT wc.id), 0), 0)*100)::decimal(5,2) "% recipients with class",
+      COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class AND wc.has_scores) "recipients with class",
+      COUNT(DISTINCT wc.id) total,
+      SUM(grant_count) "grants with class"
     FROM with_class wc
   ),
   with_class_page AS (
     SELECT
-      r.id "recipientId",
-      r.name "recipientName",
-      gr.number "grantNumber",
-      (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
-      (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
-      (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
-      (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
-      (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
-      (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
-      (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
-      (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate"
+        r.id "recipientId",
+        r.name "recipientName",
+        gr.number "grantNumber",
+        gr."regionId",
+        (ARRAY_AGG(g.id ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalId",
+        (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalCreatedAt",
+        (ARRAY_AGG(g.status ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalStatus",
+        (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "lastARStartDate",
+        (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "emotionalSupport",
+        (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "classroomOrganization",
+        (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "instructionalSupport",
+        (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "reportDeliveryDate",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator' AND fg.id IS NOT NULL))[1] "creator",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator' AND fg.id IS NOT NULL)) "collaborators"
     FROM with_class wc
     JOIN "Recipients" r
     ON wc.id = r.id
@@ -752,6 +821,25 @@ WITH
     ON gr.id = g."grantId"
     AND has_class
     AND g."goalTemplateId" = 18172
+    LEFT JOIN filtered_goals fg
+    ON g.id = fg.id
+    LEFT JOIN "GoalCollaborators" gc
+    ON g.id = gc."goalId"
+    LEFT JOIN "CollaboratorTypes" ct
+    ON gc."collaboratorTypeId" = ct.id
+    AND ct.name IN ('Creator', 'Collaborator')
+    LEFT JOIN "ValidFor" vf
+    ON ct."validForId" = vf.id
+    AND vf.name = 'Goals'
+    LEFT JOIN "Users" u
+    ON gc."userId" = u.id
+    LEFT JOIN LATERAL (
+        SELECT ur."userId", STRING_AGG(r.name, ', ') AS agg_roles
+        FROM "UserRoles" ur
+        JOIN "Roles" r ON ur."roleId" = r.id
+        WHERE ur."userId" = u.id
+        GROUP BY ur."userId"
+    ) ur ON u.id = ur."userId"
     LEFT JOIN "ActivityReportGoals" arg
     ON g.id = arg."goalId"
     LEFT JOIN "ActivityReports" a
@@ -770,8 +858,12 @@ WITH
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
-    GROUP BY 1,2,3
-    ORDER BY 1,3
+    AND (mcs.id IS NOT NULL)
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
+    GROUP BY 1, 2, 3, 4
+    HAVING (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] IS NOT NULL
+    ORDER BY 1, 3
   ),
   
   -- CTE for fetching active filters using NULLIF() to handle empty strings
@@ -780,13 +872,14 @@ WITH
       CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
       CASE WHEN NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NOT NULL THEN 'grantNumbers' END,
       CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
-      CASE WHEN NULLIF(current_setting('ssdi.regionIds', true), '') IS NOT NULL THEN 'regionIds' END,
+      CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
       CASE WHEN NULLIF(current_setting('ssdi.group', true), '') IS NOT NULL THEN 'group' END,
       CASE WHEN NULLIF(current_setting('ssdi.currentUserId', true), '') IS NOT NULL THEN 'currentUserId' END,
       CASE WHEN NULLIF(current_setting('ssdi.domainEmotionalSupport', true), '') IS NOT NULL THEN 'domainEmotionalSupport' END,
       CASE WHEN NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '') IS NOT NULL THEN 'domainClassroomOrganization' END,
       CASE WHEN NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '') IS NOT NULL THEN 'domainInstructionalSupport' END,
-      CASE WHEN NULLIF(current_setting('ssdi.createDate', true), '') IS NOT NULL THEN 'createDate' END
+      CASE WHEN NULLIF(current_setting('ssdi.createDate', true), '') IS NOT NULL THEN 'createDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.status', true), '') IS NOT NULL THEN 'status' END
     ], NULL) AS active_filters
   ),
   
@@ -797,7 +890,8 @@ WITH
         JSONB_AGG(JSONB_BUILD_OBJECT(
         '% recipients with class', "% recipients with class",
         'recipients with class', "recipients with class",
-        'total', total
+        'total', total,
+        'grants with class', "grants with class"
         )) AS data,
         af.active_filters  -- Use precomputed active_filters
     FROM with_class_widget
@@ -813,6 +907,7 @@ WITH
         'recipientId', "recipientId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
+        'region id', "regionId",
         'goalId', "goalId",
         'goalCreatedAt', "goalCreatedAt",
         'goalStatus', "goalStatus",
@@ -820,11 +915,23 @@ WITH
         'emotionalSupport', "emotionalSupport",
         'classroomOrganization', "classroomOrganization",
         'instructionalSupport', "instructionalSupport",
-        'reportDeliveryDate', "reportDeliveryDate"
+        'reportDeliveryDate', "reportDeliveryDate",
+        'creator', "creator",
+        'collaborators', "collaborators"
       )) AS data,
       af.active_filters  -- Use precomputed active_filters
     FROM with_class_page
     CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
+    UNION
+
+    SELECT
+      'with_class_page' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
     GROUP BY af.active_filters
     
     UNION
@@ -842,7 +949,11 @@ WITH
     GROUP BY af.active_filters
   )
   
-SELECT *
+SELECT
+  data_set,
+  MAX(records) records,
+  JSONB_AGG(data ORDER BY records DESC) -> 0 data,
+  active_filters
 FROM datasets
 -- Filter for datasets if ssdi.dataSetSelection is defined
 WHERE 1 = 1
@@ -851,4 +962,5 @@ AND (
   OR (
     COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
   )
-);
+)
+GROUP BY 1,4;

@@ -41,6 +41,9 @@ import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import QADashboard from './pages/QADashboard';
 import SomethingWentWrong from './components/SomethingWentWrong';
+import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
+import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
+import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 
 export default function Routes({
   alert,
@@ -154,6 +157,33 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <CourseDashboard />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/qa-dashboard/recipients-with-no-tta"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <RecipientsWithNoTta />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/qa-dashboard/recipients-with-ohs-standard-fei-goal"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <RecipientsWithOhsStandardFeiGoal />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/qa-dashboard/recipients-with-class-scores-and-goals"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <RecipientsWithClassScoresAndGoals />
             </AppWrapper>
           )}
         />
