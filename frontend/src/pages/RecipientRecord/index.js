@@ -300,11 +300,12 @@ export default function RecipientRecord({ match, hasAlerts }) {
           path="/recipient-tta-records/:recipientId/region/:regionId/goals"
           render={({ location }) => {
             const goalIds = getIdParamArray(location.search);
+
             return (
               <GoalNameForm
                 regionId={regionId}
                 recipient={recipientData}
-                goalIds={goalIds}
+                ids={goalIds}
                 isExistingGoal
               />
             );
