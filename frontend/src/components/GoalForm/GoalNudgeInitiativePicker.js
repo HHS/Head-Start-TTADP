@@ -65,7 +65,6 @@ GoalNudgeInitiativePicker.propTypes = {
     name: PropTypes.string.isRequired,
   })).isRequired,
   useOhsInitiativeGoal: PropTypes.bool.isRequired,
-  // onSelectNudgedGoal: PropTypes.func.isRequired,
   initiativeRef: PropTypes.shape({
     current: PropTypes.instanceOf(Element),
   }).isRequired,
