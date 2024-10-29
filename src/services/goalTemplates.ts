@@ -125,7 +125,7 @@ export async function getCuratedTemplates(
         { regionId: null },
       ],
     },
-    order: [[ 'templateName', 'ASC' ]],
+    order: [['templateName', 'ASC']],
   });
 }
 
