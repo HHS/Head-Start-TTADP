@@ -20,17 +20,10 @@ export default function useWidgetExport(
         // If the ID isn't a number, keep it as a string.
         const selectedRowsIds = selectedRowsStrings.map((s) => {
           const parsedInt = parseInt(s, DECIMAL_BASE);
-          return Number.isNaN(parsedInt) ? s : parsedInt;
+          return s.includes('-') ? s : parsedInt;
         });
         // Filter the recipients to export to only include the selected rows.
-        dataToExport = data.filter((row) => {
-          let rowId = row.id;
-          if (typeof rowId === 'string') {
-            const splitId = rowId.split('-');
-            rowId = parseInt(splitId[0], DECIMAL_BASE);
-          }
-          return selectedRowsIds.includes(rowId);
-        });
+        dataToExport = data.filter((row) => selectedRowsIds.includes(row.id));
       }
 
       // Create a header row.
