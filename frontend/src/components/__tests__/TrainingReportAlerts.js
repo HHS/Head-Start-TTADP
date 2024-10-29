@@ -71,6 +71,27 @@ describe('TrainingReportAlerts', () => {
         sessionName: 'Session 1',
         alertType: 'noSessionsCreated',
       },
+      {
+        id: 2,
+        eventId: 'event-2',
+        eventName: 'Event 2',
+        sessionName: 'Session 2',
+        alertType: 'missingEventInfo',
+      },
+      {
+        id: 3,
+        eventId: 'event-3',
+        eventName: 'Event 3',
+        sessionName: 'Session 3',
+        alertType: 'missingSessionInfo',
+      },
+      {
+        id: 4,
+        eventId: 'event-4',
+        eventName: 'Event 4',
+        sessionName: 'Session 4',
+        alertType: 'eventNotCompleted',
+      },
     ]);
 
     act(() => {
@@ -79,7 +100,11 @@ describe('TrainingReportAlerts', () => {
 
     expect(await screen.findByText('Event 1')).toBeInTheDocument();
     expect(await screen.findByText('Session 1')).toBeInTheDocument();
-    expect(await screen.findByText('Create a session')).toBeInTheDocument();
+
+    for (let i = 2; i <= 4; i += 1) {
+      expect(screen.getByText(`Event ${i}`)).toBeInTheDocument();
+      expect(screen.getByText(`Session ${i}`)).toBeInTheDocument();
+    }
   });
 
   it('handles a weird "alertType" key', async () => {
