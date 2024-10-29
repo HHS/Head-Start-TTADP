@@ -6,7 +6,7 @@ import { lowerCase } from 'lodash';
 const CloseSuspendNewGoalAlert = ({ goalStatus, goalStatusReason }) => {
   let prefix = '';
   if (goalStatusReason) {
-    prefix = `The reason for closing the goal was "${goalStatusReason}."`;
+    prefix = ` The reason for closing the goal was "${goalStatusReason}."`;
   }
 
   return (
