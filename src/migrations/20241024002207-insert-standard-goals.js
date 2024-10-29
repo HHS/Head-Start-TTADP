@@ -22,12 +22,15 @@ const standardGoalTexts = [
   '(Disaster Recovery) The recipient will implement systems and services to support children, families, and staﬀ with recovering from disasters.',
   '(RAN investigation) The recipient will implement systems and services to address a reported child incident during the RO investigation.',
 ];
+
+const now = new Date();
+
 const standardGoal = (templateName) => ({
   creationMethod: CREATION_METHOD.CURATED,
   hash: md5(templateName),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  templateNameModifiedAt: new Date(),
+  createdAt: now,
+  updatedAt: now,
+  templateNameModifiedAt: now,
 });
 
 const standardGoalTemplates = standardGoalTexts.map((templateName) => ({
@@ -47,10 +50,14 @@ module.exports = {
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
 
-      await queryInterface.sequelize.query(`
-        DELETE FROM "GoalTemplates"
-        WHERE "creationMethod" = '${CREATION_METHOD.CURATED}' AND "templateName" IN (${standardGoalTexts.map((templateName) => `'${templateName}'`).join(',')});
-      `, { transaction });
+      await queryInterface.bulkDelete(
+        'GoalTemplates',
+        {
+          creationMethod: CREATION_METHOD.CURATED,
+          templateName: standardGoalTexts.map((templateName) => templateName),
+        },
+        { transaction },
+      );
     },
   ),
 };
