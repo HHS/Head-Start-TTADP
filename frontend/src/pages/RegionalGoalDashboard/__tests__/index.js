@@ -147,7 +147,7 @@ describe('RegionalGoalDashboard', () => {
     let heading = await screen.findByText(/region 1 goal dashboard/i);
     expect(heading).toBeVisible();
 
-    const removeDate = await screen.findByRole('button', { name: /this button removes the filter: date started is within/i });
+    const removeDate = await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i });
     act(() => userEvent.click(removeDate));
 
     heading = await screen.findByText(/region 1 goal dashboard/i);
