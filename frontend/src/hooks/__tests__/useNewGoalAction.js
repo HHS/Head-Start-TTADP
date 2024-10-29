@@ -202,6 +202,50 @@ describe('useNewGoalAction', () => {
     expect(response).toEqual([]);
   });
 
+  it('updates an existing goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const goalsUrl = '/api/goals';
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalName: 'This is a brand new goal',
+      goalIds: [],
+      goalStatus: null,
+      selectedGrant: { id: 1 },
+      goalTemplate: null,
+    };
+
+    fetchMock.post(goalsUrl, [{ id: 1 }]);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, true, data);
+    });
+
+    expect(response).toEqual([1]);
+  });
+
+  it('handles an error to an existing goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const goalsUrl = '/api/goals';
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalName: 'This is a brand new goal',
+      goalIds: [],
+      goalStatus: null,
+      selectedGrant: { id: 1 },
+      goalTemplate: null,
+    };
+
+    fetchMock.post(goalsUrl, 500);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, true, data);
+    });
+
+    expect(response).toEqual([]);
+  });
+
   it('creates a goal name from scratch', async () => {
     const { result } = renderHook(() => useNewGoalAction());
     const goalsUrl = '/api/goals';
