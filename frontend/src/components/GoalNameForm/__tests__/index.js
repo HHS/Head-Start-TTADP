@@ -34,6 +34,8 @@ describe('NewGoalForm', () => {
   const renderNewGoalForm = (
     user = defaultUser,
     recipient = defaultRecipient,
+    isExistingGoal = false,
+    ids = [],
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{
@@ -47,6 +49,8 @@ describe('NewGoalForm', () => {
           <NewGoal
             recipient={recipient}
             regionId="1"
+            isExistingGoal={isExistingGoal}
+            ids={ids}
           />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
@@ -98,6 +102,14 @@ describe('NewGoalForm', () => {
     };
     act(() => {
       renderNewGoalForm(regionTwoUser);
+    });
+
+    expect(history.location.pathname).toBe('/something-went-wrong/401');
+  });
+
+  it('fetches goal if there is an existing goal', async () => {
+    act(() => {
+      renderNewGoalForm(defaultUser, defaultRecipient, true, [1]);
     });
 
     expect(history.location.pathname).toBe('/something-went-wrong/401');

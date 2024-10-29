@@ -15,7 +15,7 @@ import GoalsObjectives from './pages/GoalsObjectives';
 import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
-import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
+import { getIdParamArray, GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
@@ -285,30 +285,30 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
           render={({ location }) => {
-            const goalIds = (() => {
-              const searchParams = new URLSearchParams(location.search);
-              return searchParams.get('id[]') ? searchParams.getAll('id[]').map((id) => parseInt(id, DECIMAL_BASE)) : [];
-            })();
+            const goalIds = getIdParamArray(location.search);
 
             return (
               <GoalForm
                 regionId={regionId}
                 recipient={recipientData}
                 goalIds={goalIds}
-                showRTRnavigation
               />
             );
           }}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals"
-          render={() => (
-            <GoalNameForm
-              regionId={regionId}
-              recipient={recipientData}
-              isExistingGoal
-            />
-          )}
+          render={({ location }) => {
+            const goalIds = getIdParamArray(location.search);
+            return (
+              <GoalNameForm
+                regionId={regionId}
+                recipient={recipientData}
+                goalIds={goalIds}
+                isExistingGoal
+              />
+            );
+          }}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
