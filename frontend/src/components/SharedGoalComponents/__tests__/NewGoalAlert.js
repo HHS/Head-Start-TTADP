@@ -23,7 +23,7 @@ describe('NewGoalAlert', () => {
     render(<NewGoalAlert goalStatus={GOAL_STATUS.SUSPENDED} goalStatusReason="too fancy" />);
 
     const message = await screen.findByText(/You have chosen an existing goal with a status of suspended/i);
-    const reason = await screen.findByText(/The reason for closing the goal was "too fancy"/i);
+    const reason = await screen.findByText(/The reason for closing the goal was "too fancy\."/i);
     const reopenThisGoal = await screen.findByText('Reopen this goal and change the status to in progress');
     const goBack = await screen.findByText('Go back to create a new goal');
     expect(message).toBeInTheDocument();
