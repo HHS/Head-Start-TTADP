@@ -291,7 +291,7 @@ function check_app_running {
 
     # Get the application information
     local output
-    output=$(cf app "$app_name" 2>&1)
+    output=$(cf app "$app_name" 2>&1 | head -n22)
     local status=$?
 
     if [ $status -eq 0 ]; then
