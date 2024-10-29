@@ -20,6 +20,7 @@ const renderHorizontalTableWidget = (
   requestSort = () => {},
   enableCheckboxes = false,
   showTotalColumn = true,
+  showDashForNullValue = false,
 ) => render(
   <Router history={history}>
     <HorizontalTableWidget
@@ -32,6 +33,7 @@ const renderHorizontalTableWidget = (
       requestSort={requestSort}
       enableCheckboxes={enableCheckboxes}
       showTotalColumn={showTotalColumn}
+      showDashForNullValue={showDashForNullValue}
     />
   </Router>,
 );
@@ -396,5 +398,39 @@ describe('Horizontal Table Widget', () => {
 
     const { container } = renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, true);
     expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeNull();
+  });
+
+  it('shows a dash when showDashForNullValue is true', async () => {
+    const headers = ['col1', 'col2', 'col3'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+          {
+            title: 'col2',
+            value: null,
+          },
+          {
+            title: 'col3',
+            value: '19',
+          },
+        ],
+      },
+    ];
+
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false, true);
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
+    expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
+    expect(screen.getByText(/col3/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
+    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
+    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/-/i)).toBeInTheDocument();
+    expect(screen.getByText(/19/i)).toBeInTheDocument();
   });
 });
