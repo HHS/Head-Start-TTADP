@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useHistory } from 'react-router';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import useNewGoalState from '../useNewGoalState';
+import useGoalState from '../useGoalState';
 import useNewGoalAction from '../useNewGoalAction';
 import {
   GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS, NEW_GOAL_FORM_PAGES,
@@ -10,9 +10,9 @@ import {
 jest.mock('../useNewGoalAction');
 jest.mock('react-router');
 
-describe('useNewGoalState', () => {
+describe('useGoalState', () => {
   it('returns default values', async () => {
-    const { result } = renderHook(() => useNewGoalState({ id: 1 }, 1));
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.INITIAL);
     expect(result.current.error).toBe(null);
@@ -32,7 +32,7 @@ describe('useNewGoalState', () => {
   });
 
   it('submit on initial increments the page to confirmation', async () => {
-    const { result } = renderHook(() => useNewGoalState({ id: 1 }, 1));
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.INITIAL);
 
@@ -72,7 +72,7 @@ describe('useNewGoalState', () => {
     const push = jest.fn();
     useHistory.mockReturnValue({ push });
 
-    const { result } = renderHook(() => useNewGoalState({ id: 1 }, 1));
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
 
     act(() => {
       result.current.hookForm.setValue('goalName', 'A brand new goal');
@@ -82,17 +82,12 @@ describe('useNewGoalState', () => {
       await result.current.submit();
     });
 
-    expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.NEW_GOAL);
 
-    await act(async () => {
-      await result.current.submit();
-    });
-
-    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals/edit?id[]=1,2');   
   });
 
   it('closed goal confirmation page has different data', async () => {
-    const { result } = renderHook(() => useNewGoalState({ id: 1 }, 1));
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.INITIAL);
 
@@ -136,7 +131,7 @@ describe('useNewGoalState', () => {
     const push = jest.fn();
     useHistory.mockReturnValue({ push });
 
-    const { result } = renderHook(() => useNewGoalState({ id: 1 }, 1));
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
 
     await act(async () => {
       await result.current.submit();
@@ -148,7 +143,7 @@ describe('useNewGoalState', () => {
       await result.current.submit();
     });
 
-    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals/edit?id[]=1,2');
   });
 
   it('action returning no ids sets an error', async () => {
@@ -158,7 +153,7 @@ describe('useNewGoalState', () => {
     const push = jest.fn();
     useHistory.mockReturnValue({ push });
 
-    const { result } = renderHook(() => useNewGoalState({ id: 1 }, 1));
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
 
     await act(async () => {
       await result.current.submit();

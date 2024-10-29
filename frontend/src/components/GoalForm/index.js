@@ -41,7 +41,9 @@ const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 export default function GoalForm({
   recipient,
   regionId,
+  goalIds,
 }) {
+
   const history = useHistory();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
@@ -89,6 +91,7 @@ export default function GoalForm({
   const [goalNumbers, setGoalNumbers] = useState('');
   const [goalCollaborators, setGoalCollaborators] = useState([]);
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
+  const [ids, setIds] = useState(goalIds || []);
 
   useDeepCompareEffect(() => {
     const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
@@ -113,10 +116,6 @@ export default function GoalForm({
 
   // eslint-disable-next-line max-len
   const canEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
-
-  // we can access the params as the third arg returned by useUrlParamState
-  // (if we need it)
-  const [ids, setIds] = useUrlParamState('id[]');
 
   // for fetching goal data from api if it exists
   useEffect(() => {
@@ -237,24 +236,6 @@ export default function GoalForm({
   };
 
   /**
-   *
-   * @returns bool
-   */
-  const validateGoalName = (message = GOAL_NAME_ERROR) => {
-    let error = <></>;
-
-    if (!goalName || !goalName.trim()) {
-      error = <span className="usa-error-message">{message}</span>;
-    }
-
-    const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.NAME, 1, error);
-    setErrors(newErrors);
-
-    return !error.props.children;
-  };
-
-  /**
    * @returns bool
    */
 
@@ -369,14 +350,12 @@ export default function GoalForm({
   // (different validations for not started and draft)
   const isValidNotStarted = () => (
     validateGrantNumbers()
-    && validateGoalName()
     && validateEndDate()
     && validateObjectives()
     && validateAllPrompts()
   );
   const isValidDraft = () => (
     validateGrantNumbers()
-    && validateGoalName()
   );
 
   const updateObjectives = (updatedObjectives) => {
@@ -718,12 +697,10 @@ export default function GoalForm({
               goalName={goalName}
               prompts={prompts}
               setPrompts={setPrompts}
-              setGoalName={setGoalName}
               endDate={endDate}
               setEndDate={setEndDate}
               datePickerKey={datePickerKey}
               errors={errors}
-              validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}
               validateGrantNumbers={validateGrantNumbers}
               validateGoalNameAndRecipients={validateGoalNameAndRecipients}
@@ -752,7 +729,14 @@ export default function GoalForm({
           <div className="margin-top-4">
             { !showForm ? <Button type="submit">Submit goal</Button> : null }
             { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
-            { showForm ? <Button type="button" outline onClick={onSaveDraft}>Save draft</Button> : null }
+            { showForm ? (
+              <Link
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals?id[]=${ids.join('&id[]=')}`}
+                className=" usa-button usa-button--outline"
+              >
+                Back
+              </Link>
+            ) : null }
             { showForm && !createdGoals.length ? (
               <Link
                 to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}

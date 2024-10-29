@@ -1,11 +1,11 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FormProvider, Controller } from 'react-hook-form';
-import { Redirect } from 'react-router';
+import { Redirect, useHistory } from 'react-router';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { GOAL_STATUS, DECIMAL_BASE } from '@ttahub/common';
 import Select from 'react-select';
-import useNewGoalState from '../../hooks/useNewGoalState';
+import useGoalState from '../../hooks/useGoalState';
 import Container from '../Container';
 import FormFieldThatIsSometimesReadOnly from '../GoalForm/FormFieldThatIsSometimesReadOnly';
 import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
@@ -21,10 +21,13 @@ import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import selectOptionsReset from '../selectOptionsReset';
+import useUrlParamState from '../../hooks/useUrlParamState';
+import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 
-export default function NewGoal({
+export default function GoalNameForm({
   recipient,
   regionId,
+  isExistingGoal,
 }) {
   // this hook will manage the state for the page within itself
   const {
@@ -34,7 +37,12 @@ export default function NewGoal({
     hookForm,
     submit,
     modalRef,
-  } = useNewGoalState(recipient, regionId);
+  } = useGoalState(recipient, regionId, isExistingGoal);
+
+  // we can access the params as the third arg returned by useUrlParamState
+  // (if we need it)
+  const [ids] = useUrlParamState('id[]');
+  const history = useHistory();
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
   const possibleGrants = useMemo(() => recipient.grants.filter(((g) => g.status === 'Active')), [recipient.grants]);
@@ -45,6 +53,53 @@ export default function NewGoal({
   const { setIsAppLoading } = useContext(AppLoadingContext);
   // eslint-disable-next-line max-len
   const userCanEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
+
+  // for fetching goal data from api if it exists
+  useDeepCompareEffect(() => {
+    async function fetchGoal() {
+      try {
+        const [goal] = await goalsByIdAndRecipient(
+          ids, recipient.id.toString(),
+        );
+
+        // if the goal name is not editable, we redirect to the edit page
+        const shouldRedirect = (() => {
+          if (goal.onAR) {
+            return false;
+          }
+
+          if (goal.status === GOAL_STATUS.CLOSED) {
+            return false;
+          }
+
+          if (goal.isCurated) {
+            return false;
+          }
+
+          return true;
+        })();
+
+        if (!shouldRedirect) {
+          history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/goals/edit?id[]=${goal.id}`);
+        }
+
+        if (goal && goal.name) {
+          hookForm.setValue('goalName', goal.name);
+          hookForm.setValue('goalStatus', goal.status);
+          hookForm.setValue('goalIds', goal.goalIds);
+        }
+      } catch (err) {
+        history.push('/something-went-wrong/500');
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+
+    if (ids && ids.length && isExistingGoal) {
+      setIsAppLoading(true);
+      fetchGoal();
+    }
+  }, [history, ids, recipient.id, setIsAppLoading, isExistingGoal]);
 
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grant
@@ -83,6 +138,7 @@ export default function NewGoal({
                   userCanEdit,
                   isGoalNameEditable,
                   possibleGrants.length > 1,
+                  !isExistingGoal,
                 ]}
                 label="Recipient grant numbers"
                 value={value ? value.numberWithProgramTypes : ''}
@@ -154,7 +210,7 @@ export default function NewGoal({
   );
 }
 
-NewGoal.propTypes = {
+GoalNameForm.propTypes = {
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -166,4 +222,9 @@ NewGoal.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
+  isExistingGoal: PropTypes.bool,
+};
+
+GoalNameForm.defaultProps = {
+  isExistingGoal: false,
 };

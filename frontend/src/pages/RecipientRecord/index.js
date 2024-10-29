@@ -22,7 +22,7 @@ import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
-import NewGoal from '../../components/NewGoal';
+import GoalNameForm from '../../components/GoalNameForm';
 
 export function PageWithHeading({
   children,
@@ -266,7 +266,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <Helmet>
                 <title>Create a New Goal</title>
               </Helmet>
-              <NewGoal
+              <GoalNameForm
                 regionId={regionId}
                 recipient={recipientData}
               />
@@ -283,12 +283,26 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
-          render={() => (
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
+          render={({ location }) => (
             <GoalForm
               regionId={regionId}
               recipient={recipientData}
+              goalIds={(() => {
+                const searchParams = new URLSearchParams(location.search);
+                return searchParams.get('id[]') ? searchParams.getAll('id[]').map((id) => parseInt(id, DECIMAL_BASE)) : [];
+              })()}
               showRTRnavigation
+            />
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          render={() => (
+            <GoalNameForm
+              regionId={regionId}
+              recipient={recipientData}
+              isExistingGoal
             />
           )}
         />

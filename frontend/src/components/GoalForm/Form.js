@@ -16,12 +16,12 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import RTRGoalPrompts from './RTRGoalPrompts';
 import ReadOnlyGoalCollaborators from '../ReadOnlyGoalCollaborators';
 import GoalFormTitleGroup from '../SharedGoalComponents/GoalFormTitleGroup';
+import ReadOnlyField from '../ReadOnlyField';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -33,11 +33,9 @@ export default function Form({
   goalName,
   prompts,
   setPrompts,
-  setGoalName,
   endDate,
   setEndDate,
   errors,
-  validateGoalName,
   validateEndDate,
   validateGrantNumbers,
   validateGoalNameAndRecipients,
@@ -139,17 +137,11 @@ export default function Form({
         />
       </FormFieldThatIsSometimesReadOnly>
 
-      <GoalName
-        goalName={goalName}
-        goalNameError={errors[FORM_FIELD_INDEXES.NAME]}
-        setGoalName={setGoalName}
-        validateGoalName={validateGoalName}
-        isAppLoading={isAppLoading}
-        status={status}
-        isOnReport={isOnReport}
-        userCanEdit={userCanEdit}
-        isCurated={isCurated}
-      />
+      <ReadOnlyField
+        label="Recipient's goal"
+      >
+        {goalName}
+      </ReadOnlyField>
 
       <RTRGoalPrompts
         isCurated={isCurated || false}
@@ -234,7 +226,6 @@ Form.propTypes = {
       PropTypes.node,
     ]),
   ).isRequired,
-  validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
@@ -252,17 +243,6 @@ Form.propTypes = {
   ).isRequired,
   setSelectedGrants: PropTypes.func.isRequired,
   goalName: PropTypes.string.isRequired,
-  setGoalName: PropTypes.func.isRequired,
-  recipient: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    grants: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        numberWithProgramTypes: PropTypes.string,
-      }),
-    ),
-  }).isRequired,
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
