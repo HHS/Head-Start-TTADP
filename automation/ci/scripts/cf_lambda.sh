@@ -290,23 +290,31 @@ function check_app_running {
     local app_name="tta-automation"
 
     # Get the application information
-    local INSTANCE_STATUS
-    
-    # Get the current status of the app instance
-    INSTANCE_STATUS=$(cf app $app_name | grep "state" | awk '{print $3}')
+    local output
+    output=$(cf app "$app_name" 2>&1)
     local status=$?
 
     if [ $status -eq 0 ]; then
-        if [ "$INSTANCE_STATUS" = "running" ]; then
+        # Extract the 'requested state' and 'instances' lines
+        local requested_state
+        requested_state=$(echo "$output" | awk -F": *" '/requested state:/ {print $2}' | xargs)
+        local instances_line
+        instances_line=$(echo "$output" | awk -F": *" '/instances:/ {print $2}' | xargs)
+
+        # Extract the number of running instances
+        local running_instances=$(echo "$instances_line" | cut -d'/' -f1)
+        local total_instances=$(echo "$instances_line" | cut -d'/' -f2)
+
+        if [[ "$requested_state" == "started" && "$running_instances" -ge 1 ]]; then
             log "INFO" "Application '$app_name' is running."
-            return 0  # true in Bash, application is running
+            return 0  # Application is running
         else
-            log "INFO" "Application '$app_name' is not running: $INSTANCE_STATUS"
-            return 1  # false in Bash, application is not running
+            log "INFO" "Application '$app_name' is not running."
+            return 1  # Application is not running
         fi
     else
-        log "ERROR" "Failed to check if application '$app_name' is running. Error output: $INSTANCE_STATUS"
-        return $status  # return the actual error code
+        log "ERROR" "Failed to check if application '$app_name' is running. Error output: $output"
+        return $status  # Return the actual error code
     fi
 }
 
@@ -423,14 +431,6 @@ function push_app {
     else
         log "INFO" "Application pushed successfully."
     fi
-
-    # Wait until the instance is running
-    while true; do
-        if ! check_app_running; then
-            log "INFO" "Waiting for the app instance to be running..."
-            sleep 5
-        fi
-    done
 
     # Restore original directory
     cd "$original_dir"
