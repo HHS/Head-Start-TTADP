@@ -21,13 +21,13 @@ import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import selectOptionsReset from '../selectOptionsReset';
-import useUrlParamState from '../../hooks/useUrlParamState';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 
 export default function GoalNameForm({
   recipient,
   regionId,
   isExistingGoal,
+  ids,
 }) {
   // this hook will manage the state for the page within itself
   const {
@@ -39,9 +39,6 @@ export default function GoalNameForm({
     modalRef,
   } = useGoalState(recipient, regionId, isExistingGoal);
 
-  // we can access the params as the third arg returned by useUrlParamState
-  // (if we need it)
-  const [ids] = useUrlParamState('id[]');
   const history = useHistory();
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
@@ -223,8 +220,10 @@ GoalNameForm.propTypes = {
   }).isRequired,
   regionId: PropTypes.string.isRequired,
   isExistingGoal: PropTypes.bool,
+  ids: PropTypes.arrayOf(PropTypes.number),
 };
 
 GoalNameForm.defaultProps = {
   isExistingGoal: false,
+  ids: [],
 };
