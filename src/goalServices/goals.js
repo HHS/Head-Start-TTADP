@@ -507,6 +507,7 @@ export async function createOrUpdateGoals(goals) {
       isCurated,
       source,
       goalTemplateId,
+      skipObjectiveCleanup,
       ...options
     } = goalData;
 
@@ -549,7 +550,7 @@ export async function createOrUpdateGoals(goals) {
         ...(options && options.name && { name: options.name.trim() }),
       });
 
-      if (newGoal.status !== status) {
+      if (status && newGoal.status !== status) {
         newGoal.set({ status });
       }
     }
@@ -649,7 +650,11 @@ export async function createOrUpdateGoals(goals) {
     );
 
     // this function deletes unused objectives
-    await cleanupObjectivesForGoal(newGoal.id, newObjectives);
+    // we can pass a flag to skip this if we are updating the goal without changing objectives
+    if (!skipObjectiveCleanup) {
+      await cleanupObjectivesForGoal(newGoal.id, newObjectives);
+    }
+
     return newGoal.id;
   }));
 
