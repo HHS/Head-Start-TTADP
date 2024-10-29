@@ -15,7 +15,7 @@ export default function useNewGoalAction() {
  * @param {*} data
  * @returns {Promise<number[]>} goalIds
  */
-  return useCallback(async (recipientId, regionId, data) => {
+  return useCallback(async (recipientId, regionId, isExistingGoal, data) => {
     const {
       useOhsInitiativeGoal,
       goalIds,
@@ -27,6 +27,27 @@ export default function useNewGoalAction() {
       context,
       modalRef,
     } = data;
+
+    if (isExistingGoal && goalName) {
+      // update existing goal
+      try {
+        const goals = await createOrUpdateGoals([
+          {
+            grantId: selectedGrant.id,
+            name: goalName,
+            status: GOAL_STATUS.DRAFT,
+            objectives: [],
+            recipientId,
+            regionId,
+            ids: goalIds,
+          },
+        ]);
+
+        return goals.map((g) => g.id);
+      } catch (err) {
+        return [];
+      }
+    }
 
     if (goalStatus === GOAL_STATUS.CLOSED) {
       try {

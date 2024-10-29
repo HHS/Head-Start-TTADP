@@ -1,15 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Alert } from '@trussworks/react-uswds';
 
 export default function GoalFormAlert({ alert }) {
   if (!alert) {
     return null;
   }
+
   return (
-    <Alert type={alert.type || 'warning'} className="margin-top-2">
-      {alert.message}
-    </Alert>
+    <div className={`usa-alert usa-alert--${alert.type || 'warning'} margin-top-2`} data-testid="alert">
+      <div className="usa-alert__body">
+        {alert.message}
+      </div>
+    </div>
+
   );
 }
 

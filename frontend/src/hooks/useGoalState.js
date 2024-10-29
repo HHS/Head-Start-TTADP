@@ -1,5 +1,4 @@
-import React,
-{
+import React, {
   useState,
   useCallback,
   useMemo,
@@ -18,7 +17,7 @@ import {
 import NewGoalAlert from '../components/SharedGoalComponents/NewGoalAlert';
 import useNewGoalAction from './useNewGoalAction';
 
-export default function useNewGoalState(recipient, regionId) {
+export default function useGoalState(recipient, regionId, isExistingGoal = false) {
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues: {
@@ -52,7 +51,7 @@ export default function useNewGoalState(recipient, regionId) {
       return;
     }
     const urlFragment = `id[]=${ids.join(',')}`;
-    const url = `/recipient-tta-records/${recipient.id}/region/${regionId}/goals?${urlFragment}`;
+    const url = `/recipient-tta-records/${recipient.id}/region/${regionId}/goals/edit?${urlFragment}`;
     history.push(url);
   }, [history, recipient.id, regionId]);
 
@@ -78,12 +77,16 @@ export default function useNewGoalState(recipient, regionId) {
             to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
           },
         ],
-        submit: async () => {
+        submit: async (data) => {
           setValue('isGoalNameEditable', false);
-          if (goalName && (!goalIds.length && !useOhsInitiativeGoal)) {
-            setPage(NEW_GOAL_FORM_PAGES.NEW_GOAL);
+          const isCreatingNewGoal = goalName && (!goalIds.length && !useOhsInitiativeGoal);
+
+          if (isExistingGoal || isCreatingNewGoal) {
+            const ids = await action(recipient.id, regionId, isExistingGoal, data);
+            forwardToGoalWithIds(ids);
             return;
           }
+
           setPage(NEW_GOAL_FORM_PAGES.CONFIRMATION);
         },
       },
@@ -128,44 +131,13 @@ export default function useNewGoalState(recipient, regionId) {
           },
         ],
         submit: async (data) => {
-          const ids = await action(recipient.id, regionId, data);
-          forwardToGoalWithIds(ids);
-        },
-      },
-      [NEW_GOAL_FORM_PAGES.NEW_GOAL]: {
-        alert: null,
-        buttons: [
-          {
-            id: uniqueId('goal-form-button-'),
-            type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-            variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-            label: GOAL_FORM_BUTTON_LABELS.SAVE_AND_CONTINUE,
-          },
-          {
-            id: uniqueId('goal-form-button-'),
-            type: GOAL_FORM_BUTTON_TYPES.BUTTON,
-            variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-            label: GOAL_FORM_BUTTON_LABELS.BACK,
-            onClick: () => {
-              setValue('isGoalNameEditable', true);
-              setPage(NEW_GOAL_FORM_PAGES.INITIAL);
-            },
-          },
-          {
-            id: uniqueId('goal-form-button-'),
-            type: GOAL_FORM_BUTTON_TYPES.LINK,
-            variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-            label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-            to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
-          },
-        ],
-        submit: async (data) => {
-          const ids = await action(recipient.id, regionId, data);
+          const ids = await action(recipient.id, regionId, isExistingGoal, data);
           forwardToGoalWithIds(ids);
         },
       },
     }),
     [
+      isExistingGoal,
       action,
       forwardToGoalWithIds,
       goalIds.length,

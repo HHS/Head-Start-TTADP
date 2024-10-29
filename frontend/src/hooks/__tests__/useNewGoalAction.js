@@ -23,7 +23,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([1]);
@@ -51,7 +51,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(toggleModal).toHaveBeenCalledWith(false);
@@ -80,7 +80,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(toggleModal).toHaveBeenCalledWith(false);
@@ -107,7 +107,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([1]);
@@ -131,7 +131,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([]);
@@ -152,7 +152,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([1]);
@@ -172,7 +172,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([]);
@@ -194,7 +194,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(fetchMock.called(templateUrl)).toBe(false);
@@ -218,7 +218,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([1]);
@@ -240,7 +240,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([]);
@@ -259,7 +259,7 @@ describe('useNewGoalAction', () => {
 
     let response;
     await act(async () => {
-      response = await result.current(1, 1, data);
+      response = await result.current(1, 1, false, data);
     });
 
     expect(response).toEqual([]);
