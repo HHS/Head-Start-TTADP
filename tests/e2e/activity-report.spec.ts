@@ -240,7 +240,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
     await page.getByTestId('label').click();
-    await page.keyboard.press('ArrowDown');
+
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('button', { name: 'Save goal' }).click();
