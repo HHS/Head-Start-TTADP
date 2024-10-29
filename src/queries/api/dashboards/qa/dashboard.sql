@@ -1282,6 +1282,7 @@ WITH
     ON a."creatorRole"::text = r."fullName"
     WHERE a."calculatedStatus" = 'approved'
     AND a."creatorRole" IS NOT NULL
+    AND r."isSpecialist" = true -- We only want to show specialist roles in the role graph.
     GROUP BY COALESCE(r.name, a."creatorRole"::text)
     ORDER BY 1 DESC
   ),
