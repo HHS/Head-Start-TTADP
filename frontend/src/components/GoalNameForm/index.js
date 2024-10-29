@@ -62,22 +62,23 @@ export default function GoalNameForm({
         // if the goal name is not editable, we redirect to the edit page
         const shouldRedirect = (() => {
           if (goal.onAR) {
-            return false;
+            return true;
           }
 
           if (goal.status === GOAL_STATUS.CLOSED) {
-            return false;
+            return true;
           }
 
           if (goal.isCurated) {
-            return false;
+            return true;
           }
 
-          return true;
+          return false;
         })();
 
-        if (!shouldRedirect) {
-          history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/goals/edit?id[]=${goal.id}`);
+        if (shouldRedirect) {
+          history.replace(`/recipient-tta-records/${recipient.id}/region/${regionId}/goals/edit?id[]=${goal.goalIds.join('&id[]=')}`);
+          return;
         }
 
         if (goal && goal.name) {
