@@ -61,6 +61,32 @@ describe('filtersToQueryString', () => {
     const str = filtersToQueryString(filters);
     expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
+
+  it('handles region, second param', () => {
+    const filters = [
+      {
+        id: '07bc65ed-a4ce-410f-b7be-f685bc8921ed',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+    ];
+    const str = filtersToQueryString(filters, '14');
+    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=14`);
+  });
+
+  it('handles oddball region', () => {
+    const filters = [
+      {
+        id: '07bc65ed-a4ce-410f-b7be-f685bc8921ed',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+    ];
+    const str = filtersToQueryString(filters, 'YOLO');
+    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
+  });
 });
 
 describe('formatDateRange', () => {

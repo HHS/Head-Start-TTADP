@@ -21,9 +21,18 @@ const baseFields = [
   'In person activities',
 ];
 
-const renderDashboardOverview = (props) => {
-  const fields = props.fields || baseFields;
-  render(<DashboardOverviewWidget loading={props.loading} data={props.data} fields={fields} />);
+const renderDashboardOverview = ({
+  fields = baseFields,
+  data = baseData,
+  loading = false,
+  showTooltips = false,
+}) => {
+  render(<DashboardOverviewWidget
+    loading={loading}
+    data={data}
+    fields={fields || baseFields}
+    showTooltips={showTooltips}
+  />);
 };
 
 describe('Dashboard Overview Widget', () => {
@@ -73,5 +82,10 @@ describe('Dashboard Overview Widget', () => {
 
     renderDashboardOverview({ data, fields });
     expect(screen.getByText(/2 recipients/i)).toBeInTheDocument();
+  });
+
+  it('shows tooltips', async () => {
+    renderDashboardOverview({ showTooltips: true });
+    expect(screen.getAllByTestId('tooltip')).toHaveLength(baseFields.length);
   });
 });

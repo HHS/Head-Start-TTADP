@@ -60,7 +60,6 @@ export default function ContentFromFeedByTag({
   }, [tagName, contentSelector]);
 
   const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
-
   return (
     <div className={classNames}>
       <FeedArticle title="" content={content} unread={false} key={content} openLinksInNewTab={openLinksInNewTab} partial />
