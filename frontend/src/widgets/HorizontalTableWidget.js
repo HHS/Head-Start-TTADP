@@ -26,6 +26,7 @@ export default function HorizontalTableWidget(
     caption,
     footerData,
     selectAllIdPrefix,
+    showDashForNullValue,
   },
 ) {
   // State for select all check box.
@@ -230,9 +231,10 @@ export default function HorizontalTableWidget(
                 {(r.data || []).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {
+                      // eslint-disable-next-line no-nested-ternary
                       d.isUrl
                         ? handleUrl(d)
-                        : d.value
+                        : showDashForNullValue && !d.value ? '-' : d.value
                     }
                   </td>
                 ))}
@@ -286,6 +288,7 @@ HorizontalTableWidget.propTypes = {
     PropTypes.bool,
     PropTypes.arrayOf(PropTypes.string),
   ]),
+  showDashForNullValue: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -307,4 +310,5 @@ HorizontalTableWidget.defaultProps = {
   hideFirstColumnBorder: false,
   caption: '',
   selectAllIdPrefix: null,
+  showDashForNullValue: false,
 };

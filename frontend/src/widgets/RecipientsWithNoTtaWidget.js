@@ -109,6 +109,7 @@ function RecipientsWithNoTtaWidget({
         setCheckboxes={setCheckBoxes}
         showTotalColumn={false}
         hideFirstColumnBorder
+        showDashForNullValue
       />
     </WidgetContainer>
   );
