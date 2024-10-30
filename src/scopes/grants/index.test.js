@@ -5,6 +5,7 @@ import filtersToScopes from '../index';
 import {
   Recipient,
   Grant,
+  Goal,
   ActivityReport,
   Program,
   User,
@@ -13,6 +14,8 @@ import {
   ActivityRecipient,
   sequelize,
   GroupCollaborator,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
 } from '../../models';
 import {
   createGrant,
@@ -721,6 +724,107 @@ describe('grant filtersToScopes', () => {
       expectedGrants.forEach((grant) => {
         expect(foundGrants).not.toContain(grant);
       });
+    });
+  });
+
+  describe('goalResponse', () => {
+    let prompt;
+    let goal1;
+    let goal2;
+    let goal3;
+    let response1;
+    let response2;
+    let response3;
+
+    beforeAll(async () => {
+      prompt = await GoalTemplateFieldPrompt.findOne({
+        where: { title: 'FEI root cause' },
+      });
+
+      goal1 = await Goal.create({
+        name: 'Goal 6',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: grants[1].id,
+        createdVia: 'rtr',
+      });
+
+      goal2 = await Goal.create({
+        name: 'Goal 7',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: grants[2].id,
+        createdVia: 'rtr',
+      });
+
+      goal3 = await Goal.create({
+        name: 'Goal 8',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: grants[3].id,
+        createdVia: 'rtr',
+      });
+
+      response1 = await GoalFieldResponse.create({
+        goalId: goal1.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Community Partnerships'],
+      });
+
+      response2 = await GoalFieldResponse.create({
+        goalId: goal2.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Workforce', 'Family circumstances'],
+      });
+
+      response2 = await GoalFieldResponse.create({
+        goalId: goal3.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Facilities'],
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({
+        where: {
+          id: [response1.id, response2.id, response3.id],
+        },
+      });
+
+      await Goal.destroy({
+        where: {
+          id: [goal1.id, goal2.id, goal3.id],
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('finds goals with responses', async () => {
+      const filters = { 'goalResponse.in': ['Workforce'] };
+      const { grant: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.where, { id: [grants[1].id, grants[2].id, grants[3].id] }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([grants[2].id]));
+    });
+
+    it('finds goals without responses', async () => {
+      const filters = { 'goalResponse.nin': ['Workforce'] };
+      const { grant: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.where, { id: [grants[1].id, grants[2].id, grants[3].id] }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([grants[1].id, grants[3].id]));
     });
   });
 
