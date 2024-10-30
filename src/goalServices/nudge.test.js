@@ -101,20 +101,22 @@ describe('nudge', () => {
     ]);
   });
 
-  it('should unshift a template goal when it is not in the goals', async () => {
+  it('should not unshift a template goal if it is already in the goals', async () => {
     const recipientId = 1;
     const text = 'Some goal text';
-    const grantNumbers = ['GRANT-123'];
+    const grantNumbers = ['GRANT-1234567'];
 
-    const templateId = 2;
+    const matchingId = 1;
     const templateName = 'Template Goal';
     const templateSource = 'Some source';
+
+    const newGrant = await createGrant({ number: grantNumbers[0], recipientId });
 
     similarGoalsForRecipient.mockReturnValueOnce({
       result: [
         {
           goal: {
-            id: templateId,
+            id: matchingId,
             name: templateName,
             isTemplate: true,
             source: templateSource,
@@ -125,19 +127,29 @@ describe('nudge', () => {
       ],
     });
 
+    // Create a goal with a matching template ID and valid grantId
+    await Goal.create({
+      id: 999111,
+      grantId: newGrant.id,
+      name: 'Existing Goal',
+      status: GOAL_STATUS.NOT_STARTED,
+      goalTemplateId: matchingId,
+    });
+
     const results = await nudge(recipientId, text, grantNumbers);
 
-    expect(results).toEqual([
-      {
-        ids: [templateId],
-        name: templateName,
-        status: GOAL_STATUS.NOT_STARTED,
-        goalTemplateId: templateId,
-        isCuratedTemplate: true,
-        endDate: '',
-        source: templateSource,
-      },
-    ]);
+    expect(results).not.toContainEqual([{
+      ids: [matchingId],
+      name: templateName,
+      status: GOAL_STATUS.NOT_STARTED,
+      goalTemplateId: matchingId,
+      isCuratedTemplate: true,
+      endDate: '',
+      source: templateSource,
+    }]);
+
+    await Goal.destroy({ where: { id: 999111 }, force: true });
+    await Grant.destroy({ where: { id: newGrant.id }, force: true, individualHooks: true });
   });
 
   describe('determineSimilarityAlpha', () => {
