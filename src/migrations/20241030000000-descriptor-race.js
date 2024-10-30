@@ -61,15 +61,15 @@ module.exports = {
         ALTER TABLE public."ZADescriptor"
         ADD CONSTRAINT unique_descriptor UNIQUE (descriptor);
       `, { transaction });
-    }
+    },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
-    await prepMigration(queryInterface, transaction, __filename);
-    await queryInterface.sequelize.query(/* sql */`
-      ALTER TABLE public."ZADescriptor"
-      DROP CONSTRAINT unique_descriptor;
-    `, { transaction });
+      await prepMigration(queryInterface, transaction, __filename);
+      await queryInterface.sequelize.query(/* sql */`
+        ALTER TABLE public."ZADescriptor"
+        DROP CONSTRAINT unique_descriptor;
+      `, { transaction });
     },
   ),
 };
