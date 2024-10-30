@@ -13,7 +13,6 @@ import {
   grantNumberFilter,
   userRolesFilter,
   goalNameFilter,
-  feiRootCauseFilter,
 } from '../../../components/filter/goalFilters';
 
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
@@ -24,7 +23,6 @@ export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
   statusFilter,
   topicsFilter,
   userRolesFilter,
-  feiRootCauseFilter,
 ].sort((a, b) => a.display.localeCompare(b.display));
 
 const TTAHISTORY_FILTER_CONFIG = [
