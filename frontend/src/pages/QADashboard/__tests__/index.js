@@ -134,7 +134,7 @@ const DASHBOARD_DATA = [
     records: '1',
     data: [
       {
-        fitered_reports: 38462,
+        filtered_reports: 38462,
       },
     ],
   },
@@ -380,7 +380,7 @@ describe('Resource Dashboard page', () => {
         records: '1',
         data: [
           {
-            fitered_reports: 38462,
+            filtered_reports: 38462,
           },
         ],
       },
@@ -526,7 +526,7 @@ describe('Resource Dashboard page', () => {
         records: '1',
         data: [
           {
-            fitered_reports: 38462,
+            filtered_reports: 38462,
           },
         ],
       },

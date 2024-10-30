@@ -1273,7 +1273,7 @@ WITH
   role_graph AS (
     SELECT
       COALESCE(r.name, a."creatorRole"::text) AS role_name,
-      COUNT(*) AS role_count,
+      COUNT(DISTINCT a.id) AS role_count,
       (COALESCE((COUNT(*) * 100.0) / NULLIF(SUM(COUNT(*)) OVER (), 0), 0))::decimal(5,2) AS percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
