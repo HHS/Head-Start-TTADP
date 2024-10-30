@@ -65,6 +65,7 @@ export default function GoalForm({
     createdVia: '',
     goalTemplateId: null,
     isReopenedGoal: false,
+    isSourceEditable: true,
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -81,6 +82,7 @@ export default function GoalForm({
   const [source, setSource] = useState(grantsToMultiValue(goalDefaults.grants));
   const [createdVia, setCreatedVia] = useState('');
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
+  const [isSourceEditable, setIsSourceEditable] = useState(goalDefaults.isSourceEditable);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
@@ -156,6 +158,7 @@ export default function GoalForm({
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalonAR(goal.onAR);
         setIsCurated(goal.isCurated);
+        setIsSourceEditable(goal.isSourceEditable);
         setGoalTemplateId(goal.goalTemplateId);
         setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
         setCreatedVia(goal.createdVia || '');
@@ -638,6 +641,7 @@ export default function GoalForm({
     setGoalNumbers(goal.goalNumbers);
     setSelectedGrants(goal.grants);
     setIsCurated(goal.isCurated);
+    setIsSourceEditable(goal.isSourceEditable);
     setPrompts(goal.prompts);
     setSource(goal.source);
     setCreatedVia(goal.createdVia);
@@ -897,6 +901,7 @@ export default function GoalForm({
               isOnReport={goalOnAR}
               isOnApprovedReport={goalOnApprovedAR}
               isCurated={isCurated}
+              isSourceEditable={isSourceEditable}
               status={status || 'Needs status'}
               goalNumbers={goalNumbers}
               userCanEdit={canEdit}
