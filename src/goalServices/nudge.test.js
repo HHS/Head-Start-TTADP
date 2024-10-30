@@ -101,6 +101,45 @@ describe('nudge', () => {
     ]);
   });
 
+  it('should unshift a template goal when it is not in the goals', async () => {
+    const recipientId = 1;
+    const text = 'Some goal text';
+    const grantNumbers = ['GRANT-123'];
+
+    const templateId = 2;
+    const templateName = 'Template Goal';
+    const templateSource = 'Some source';
+
+    similarGoalsForRecipient.mockReturnValueOnce({
+      result: [
+        {
+          goal: {
+            id: templateId,
+            name: templateName,
+            isTemplate: true,
+            source: templateSource,
+            endDate: '',
+          },
+          similarity: 0.7,
+        },
+      ],
+    });
+
+    const results = await nudge(recipientId, text, grantNumbers);
+
+    expect(results).toEqual([
+      {
+        ids: [templateId],
+        name: templateName,
+        status: GOAL_STATUS.NOT_STARTED,
+        goalTemplateId: templateId,
+        isCuratedTemplate: true,
+        endDate: '',
+        source: templateSource,
+      },
+    ]);
+  });
+
   describe('determineSimilarityAlpha', () => {
     it('returns a minimum value of 0.5', () => {
       const alpha = determineSimilarityAlpha(1);
