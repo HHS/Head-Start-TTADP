@@ -1,24 +1,38 @@
-import { filterAssociation } from './utils';
+import { Op, WhereOptions } from 'sequelize';
+import { sequelize } from '../../models';
 
-const sql = `
-  WITH unnested_responses AS (
-    SELECT "goalId", unnest("response") AS res
-    FROM "GoalFieldResponses"
-  )
-  SELECT DISTINCT "Grants"."recipientId"
-  FROM "Goals" "Goals"
-  INNER JOIN unnested_responses arr
-    ON arr."goalId" = "Goals"."id"
-  INNER JOIN "Grants" "Grants"
-    ON "Grants"."id" = "Goals"."grantId"
-  INNER JOIN "ActivityRecipients" ar
-    ON ar."grantId" = "Grants"."id"
-  WHERE arr."res"`;
+function getSql(responses: string[]) {
+  return sequelize.literal(`(
+    WITH unnested_responses AS (
+      SELECT "goalId", unnest("response") AS res
+      FROM "GoalFieldResponses"
+    )
+    SELECT DISTINCT "Grants"."id"
+    FROM "Goals" "Goals"
+    INNER JOIN unnested_responses arr
+      ON arr."goalId" = "Goals"."id"
+    INNER JOIN "Grants" "Grants"
+      ON "Grants"."id" = "Goals"."grantId"
+    WHERE arr."res" IN (${responses.map((s) => `'${s}'`).join(', ')})
+  )`);
+}
 
-export function withGoalResponse(searchText: string[]) {
-  return filterAssociation(sql, searchText, false);
+export function withGoalResponse(searchText: string[]): WhereOptions {
+  return {
+    where: {
+      id: {
+        [Op.in]: getSql(searchText),
+      },
+    },
+  };
 }
 
 export function withoutGoalResponse(searchText: string[]) {
-  return filterAssociation(sql, searchText, true);
+  return {
+    where: {
+      id: {
+        [Op.notIn]: getSql(searchText),
+      },
+    },
+  };
 }
