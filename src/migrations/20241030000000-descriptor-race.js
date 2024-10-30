@@ -32,9 +32,6 @@ module.exports = {
                 END IF;
             END IF;
 
-            -- Optional: Log the mapping from descriptor to id
-            RAISE NOTICE 'DescriptorToID: % -> %', _param_id, Did;
-
             RETURN Did;
         END
         $BODY$;
