@@ -185,7 +185,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
     {
       model: GoalTemplate,
       as: 'goalTemplate',
-      attributes: ['source', 'creationMethod'],
+      attributes: [],
       required: false,
     },
     {
