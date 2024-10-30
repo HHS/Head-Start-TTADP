@@ -152,16 +152,17 @@ const GoalPicker = ({
         setTemplatePrompts(false);
       }
 
-      // update the goal date forcefully
-      // also update the date picker key to force a re-render
-      setValue('goalEndDate', goal.endDate || '');
-      if (goal.goalIds) {
-        setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
-      }
-
       setSelectedGoal(null);
     } catch (err) {
-    // handle this
+      onChange(goal);
+      setTemplatePrompts(false);
+    }
+
+    // update the goal date forcefully
+    // also update the date picker key to force a re-render
+    setValue('goalEndDate', goal.endDate || '');
+    if (goal.goalIds) {
+      setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
     }
   };
 
