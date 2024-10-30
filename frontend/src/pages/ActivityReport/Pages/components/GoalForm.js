@@ -181,10 +181,10 @@ export default function GoalForm({
       />
 
       <FormFieldThatIsSometimesReadOnly
-        permissions={[
+        permissions={isCurated ? [
           isSourceEditable,
           !goal.onApprovedAR,
-        ]}
+        ] : [!goal.onApprovedAR]}
         label="Goal source"
         value={goalSource}
       >
@@ -196,8 +196,6 @@ export default function GoalForm({
           inputName={goalSourceInputName}
           goalStatus={status}
           isLoading={isAppLoading}
-          userCanEdit={!isCurated}
-          isOnReport={false}
           isMultiRecipientGoal={isMultiRecipientReport}
         />
       </FormFieldThatIsSometimesReadOnly>

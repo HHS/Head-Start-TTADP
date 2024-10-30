@@ -185,12 +185,18 @@ export default function Form({
       />
 
       <FormFieldThatIsSometimesReadOnly
-        permissions={[
-          isSourceEditable,
-          status !== 'Closed',
-          userCanEdit,
-          !isOnApprovedReport,
-        ]}
+        permissions={
+          isCurated ? [
+            isSourceEditable,
+            status !== 'Closed',
+            userCanEdit,
+            !isOnApprovedReport,
+          ] : [
+            status !== 'Closed',
+            userCanEdit,
+            !isOnApprovedReport,
+          ]
+        }
         label="Goal source"
         value={uniq(Object.values(source || {})).join(', ') || ''}
       >
