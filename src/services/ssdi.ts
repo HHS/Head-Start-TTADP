@@ -732,10 +732,6 @@ const executeQuery = async (filePath: string): Promise<any> => {
     );
     return result;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Query failed with error:', error);
-    // eslint-disable-next-line no-console
-    console.error('Error stack:', error.stack);
     throw new Error(`Query failed: ${error.message}`);
   }
 };
