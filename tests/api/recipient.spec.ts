@@ -185,6 +185,7 @@ test.describe('get /recipient', () => {
       Joi.object({
         id: Joi.number(),
         isCurated: Joi.boolean(),
+        isSourceEditable: Joi.boolean(),
         prompts: Joi.object(),
         promptsForReview: Joi.array().items(Joi.object({
           key: Joi.string(),

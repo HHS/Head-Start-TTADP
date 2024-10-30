@@ -686,6 +686,13 @@ export async function goalsForGrants(grantIds) {
     group: ['"Grant".id'],
   });
 
+  const curatedTemplates = await GoalTemplate.findAll({
+    attributes: ['id'],
+    where: {
+      creationMethod: CREATION_METHOD.CURATED,
+    },
+  });
+
   /**
    * we need one big array that includes the old recipient id as well,
    * removing all the nulls along the way
@@ -742,7 +749,15 @@ export async function goalsForGrants(grantIds) {
       'source',
       'createdVia',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"', '"Goal".id'],
+    group: [
+      '"Goal"."name"',
+      '"Goal"."status"',
+      '"Goal"."endDate"',
+      '"Goal"."onApprovedAR"',
+      '"Goal"."source"',
+      '"Goal"."createdVia"',
+      '"Goal".id',
+    ],
     where: {
       name: {
         [Op.ne]: '', // exclude "blank" goals
@@ -750,6 +765,16 @@ export async function goalsForGrants(grantIds) {
       '$grant.id$': ids,
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
+      },
+      goalTemplateId: {
+        [Op.or]: [
+          {
+            [Op.notIn]: curatedTemplates.map((ct) => ct.id),
+          },
+          {
+            [Op.is]: null,
+          },
+        ],
       },
     },
     include: [
@@ -770,7 +795,13 @@ export async function goalsForGrants(grantIds) {
         required: false,
       },
     ],
-    order: [['name', 'asc']],
+    order: [[sequelize.fn(
+      'MAX',
+      sequelize.fn(
+        'DISTINCT',
+        sequelize.col('"Goal"."createdAt"'),
+      ),
+    ), 'desc']],
   });
 }
 
