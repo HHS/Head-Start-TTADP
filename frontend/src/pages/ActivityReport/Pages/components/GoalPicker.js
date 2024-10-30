@@ -6,7 +6,7 @@ import { Label, Button, Checkbox } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
-import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
+import { getGoalTemplatePrompts, getGoalTemplateSource } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -131,24 +131,39 @@ const GoalPicker = ({
   ];
 
   const onChangeGoal = async (goal) => {
-    onChange(goal);
-    if (goal.isCurated) {
-      const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
-      if (prompts) {
-        setTemplatePrompts(prompts);
+    try {
+      if (goal.isCurated) {
+        const [prompts, source] = await Promise.all([
+          getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds),
+          // eslint-disable-next-line max-len
+          getGoalTemplateSource(goal.goalTemplateId, activityRecipients.map((ar) => ar.activityRecipientId)),
+        ]);
+
+        onChange({
+          ...goal,
+          source: source.source,
+        });
+
+        if (prompts) {
+          setTemplatePrompts(prompts);
+        }
+      } else {
+        onChange(goal);
+        setTemplatePrompts(false);
       }
-    } else {
-      setTemplatePrompts(false);
-    }
 
-    // update the goal date forcefully
-    // also update the date picker key to force a re-render
-    setValue('goalEndDate', goal.endDate || '');
-    if (goal.goalIds) {
-      setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
-    }
+      // update the goal date forcefully
+      // also update the date picker key to force a re-render
+      setValue('goalEndDate', goal.endDate || '');
+      if (goal.goalIds) {
+        setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
+      }
 
-    setSelectedGoal(null);
+      setSelectedGoal(null);
+    } catch (err) {
+    // handle this
+      console.log(err);
+    }
   };
 
   const onKeep = async () => {

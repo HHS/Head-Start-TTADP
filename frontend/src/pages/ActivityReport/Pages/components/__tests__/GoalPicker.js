@@ -40,6 +40,7 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing, goalTemplates }) =>
         role: 'central office',
       },
       collaborators: [],
+      activityRecipients: [{ activityRecipientId: 1 }],
     },
   });
 
@@ -283,6 +284,10 @@ describe('GoalPicker', () => {
           prompt: 'WHYYYYYYYY?',
         },
       ]);
+      fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
+        source: 'source',
+      });
+
       const availableGoals = [{
         label: 'Goal 1',
         value: 1,
@@ -291,17 +296,25 @@ describe('GoalPicker', () => {
         goalTemplateId: 1,
       }];
 
-      renderGoalPicker(availableGoals, null);
+      act(() => {
+        renderGoalPicker(availableGoals, null);
+      });
 
       const selector = await screen.findByLabelText(/Select recipient's goal*/i);
       const [availableGoal] = availableGoals;
 
-      await selectEvent.select(selector, [availableGoal.label]);
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
 
       const input = document.querySelector('[name="goalForEditing"]');
       expect(input.value).toBe(availableGoal.value.toString());
     });
     it('with prompts', async () => {
+      fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
+        source: 'source',
+      });
+
       fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [
         {
           type: 'multiselect',
@@ -321,12 +334,16 @@ describe('GoalPicker', () => {
         goalTemplateId: 1,
       }];
 
-      renderGoalPicker(availableGoals, null);
+      act(() => {
+        renderGoalPicker(availableGoals, null);
+      });
 
       const selector = await screen.findByLabelText(/Select recipient's goal*/i);
       const [availableGoal] = availableGoals;
 
-      await selectEvent.select(selector, [availableGoal.label]);
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
 
       const input = document.querySelector('[name="goalForEditing"]');
       expect(input.value).toBe(availableGoal.value.toString());

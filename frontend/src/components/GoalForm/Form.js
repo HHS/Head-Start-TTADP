@@ -48,6 +48,7 @@ export default function Form({
   isOnApprovedReport,
   isOnReport,
   isCurated,
+  isSourceEditable,
   isNew,
   status,
   datePickerKey,
@@ -185,7 +186,7 @@ export default function Form({
 
       <FormFieldThatIsSometimesReadOnly
         permissions={[
-          !isCurated,
+          isSourceEditable,
           status !== 'Closed',
           userCanEdit,
           !isOnApprovedReport,
@@ -337,11 +338,13 @@ Form.propTypes = {
   isNew: PropTypes.bool.isRequired,
   goalTemplateId: PropTypes.number,
   isReopenedGoal: PropTypes.bool.isRequired,
+  isSourceEditable: PropTypes.bool,
 };
 
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
   isCurated: false,
+  isSourceEditable: true,
   goalTemplateId: null,
 };
