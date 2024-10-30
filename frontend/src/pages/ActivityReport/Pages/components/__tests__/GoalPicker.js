@@ -255,9 +255,6 @@ describe('GoalPicker', () => {
       });
 
       selector = screen.queryByLabelText(/Select recipient's goal*/i);
-      expect(selector).toBeNull();
-
-      selector = await screen.findByLabelText(/Select ohs standard goal/i);
 
       fireEvent.focus(selector);
       fireEvent.keyDown(selector, {

@@ -197,7 +197,6 @@ const GoalPicker = ({
     onChangeGoal(goal);
   };
 
-  const pickerLabel = useOhsStandardGoal ? 'Select OHS standard goal' : 'Select recipient\'s goal';
   const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
 
   return (
@@ -219,7 +218,7 @@ const GoalPicker = ({
       </Modal>
       <div className="margin-top-3 position-relative">
         <Label>
-          {pickerLabel}
+          Select recipient&apos;s goal
           <Req />
           <Select
             name="goalForEditing"
