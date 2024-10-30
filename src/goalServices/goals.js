@@ -131,6 +131,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     },
     include: [
       {
+        modal: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+      },
+      {
         model: Grant,
         as: 'grant',
       },
@@ -265,6 +270,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
 
   const reformattedGoals = goals.map((goal) => ({
     ...goal,
+    isSourceEditable: goal.isSourceEditable,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
       .map((objective) => ({
