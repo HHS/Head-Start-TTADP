@@ -7,12 +7,10 @@ function getSql(responses: string[]) {
       SELECT "goalId", unnest("response") AS res
       FROM "GoalFieldResponses"
     )
-    SELECT DISTINCT "Grants"."id"
+    SELECT DISTINCT "Goals"."grantId"
     FROM "Goals" "Goals"
     INNER JOIN unnested_responses arr
       ON arr."goalId" = "Goals"."id"
-    INNER JOIN "Grants" "Grants"
-      ON "Grants"."id" = "Goals"."grantId"
     WHERE arr."res" IN (${responses.map((s) => `'${s}'`).join(', ')})
   )`);
 }
