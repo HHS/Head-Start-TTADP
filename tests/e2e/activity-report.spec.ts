@@ -396,17 +396,16 @@ test.describe('Activity Report', () => {
     const g1GoalsTxt = await g1Goals.textContent();
     // get text for the previously created goal's objectives button,
     // e.g. 'Goal G-5, G-6RTTAPA' will become 'G-5G-6'
-    const g1GoalsForObjectives = getGoals(g1GoalsTxt || '');
+
     // strip 'Goals' and 'RTTAPA' from g1GoalsTxt: e.g "Goal G-5, G-6RTTAPA" will become "G-5, G-6"
     // look for the goals heading for the previously created goal, e.g. 'Goal G-8, G-7RTTAPA'
     const g2Goals = page.locator('h3:above(p:text("g2"))').first();
     const g2GoalsTxt = await g2Goals.textContent();
     // extract text used to locate the correct objective's button,
     // e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
-    const g2GoalsForObjectives = getGoals(g2GoalsTxt || '');
 
     // expand objectives for g1
-    await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
+    await page.getByRole('button', { name: `View objective for goal ${g1GoalsTxt}` }).click();
 
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
     // verify a link to the activity report is found in the objective section
@@ -427,7 +426,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Not started')).toBeVisible();
 
     // expand objectives for g2
-    await page.getByRole('button', { name: `View objectives for goal ${g2GoalsForObjectives}` }).click();
+    await page.getByRole('button', { name: `View objective for goal ${g2GoalsTxt}` }).click();
 
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     // verify a link to the activity report is found in the objective section
