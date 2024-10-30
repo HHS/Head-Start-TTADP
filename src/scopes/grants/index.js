@@ -12,6 +12,7 @@ import { withGroup, withoutGroup } from './group';
 import { noActivityWithin } from './recipientsWithoutTTA';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withGrantStatus, withoutGrantStatus } from './grantStatus';
+import { withGoalResponse, withoutGoalResponse } from './goalResponse';
 
 export const topicToQuery = {
   recipient: {
@@ -58,6 +59,10 @@ export const topicToQuery = {
   grantStatus: {
     in: (query) => withGrantStatus(query),
     nin: (query) => withoutGrantStatus(query),
+  },
+  goalResponse: {
+    in: (query) => withGoalResponse(query),
+    nin: (query) => withoutGoalResponse(query),
   },
 };
 
