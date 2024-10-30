@@ -1273,7 +1273,7 @@ WITH
   role_graph AS (
     SELECT
       COALESCE(r.name, a."creatorRole"::text) AS role_name,
-      COUNT(*) AS role_count,
+      COUNT(DISTINCT a.id) AS role_count,
       (COALESCE((COUNT(*) * 100.0) / NULLIF(SUM(COUNT(*)) OVER (), 0), 0))::decimal(5,2) AS percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
@@ -1282,7 +1282,6 @@ WITH
     ON a."creatorRole"::text = r."fullName"
     WHERE a."calculatedStatus" = 'approved'
     AND a."creatorRole" IS NOT NULL
-    AND r."isSpecialist" = true -- We only want to show specialist roles in the role graph.
     GROUP BY COALESCE(r.name, a."creatorRole"::text)
     ORDER BY 1 DESC
   ),
