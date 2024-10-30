@@ -162,7 +162,6 @@ const GoalPicker = ({
       setSelectedGoal(null);
     } catch (err) {
     // handle this
-      console.log(err);
     }
   };
 
