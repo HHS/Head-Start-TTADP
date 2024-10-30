@@ -121,14 +121,14 @@ export default function DeliveryMethodGraph({ data }) {
     const tableData = [];
     // use a map for quick lookup
     const traceMap = new Map();
+    traceMap.set('Virtual', {
+      x: [], y: [], name: 'Virtual', traceOrder: 0,
+    });
     traceMap.set('In person', {
       x: [], y: [], name: 'In person', traceOrder: 1,
     });
-    traceMap.set('Virtual', {
-      x: [], y: [], name: 'Virtual', traceOrder: 2,
-    });
     traceMap.set('Hybrid', {
-      x: [], y: [], name: 'Hybrid', traceOrder: 3,
+      x: [], y: [], name: 'Hybrid', traceOrder: 2,
     });
 
     (records || []).forEach((dataset, index) => {
@@ -180,7 +180,9 @@ export default function DeliveryMethodGraph({ data }) {
       traceMap.get('Hybrid').y.push(dataset.hybrid_percentage);
     });
     setShowFiltersNotApplicable(showDashboardFiltersNotApplicableProp);
-    setTraces(Array.from(traceMap.values()));
+    const traceArray = Array.from(traceMap.values());
+    traceArray.sort((a, b) => a.traceOrder - b.traceOrder);
+    setTraces(traceArray);
     setDisplayFilteredReports(filteredReports);
     setTabularData(tableData);
     setTotals({
@@ -260,10 +262,10 @@ export default function DeliveryMethodGraph({ data }) {
             label: 'In person', selected: true, shape: 'circle', id: 'show-in-person-checkbox',
           },
           {
-            label: 'Hybrid', selected: true, shape: 'square', id: 'show-hybrid-checkbox',
+            label: 'Virtual', selected: true, shape: 'triangle', id: 'show-virtual-checkbox',
           },
           {
-            label: 'Virtual', selected: true, shape: 'triangle', id: 'show-virtual-checkbox',
+            label: 'Hybrid', selected: true, shape: 'square', id: 'show-hybrid-checkbox',
           },
         ]}
         tableConfig={tableConfig}
