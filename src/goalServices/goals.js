@@ -124,6 +124,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       ['name', 'label'],
       'id',
       'name',
+      'isSourceEditable',
     ],
     where: {
       id,
