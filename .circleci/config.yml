@@ -580,6 +580,9 @@ parameters:
   manual-trigger:
     type: boolean
     default: false
+  fail-on-modified-lines:
+    type: boolean
+    default: false
 jobs:
   build_and_lint:
     executor: docker-executor
@@ -696,6 +699,18 @@ jobs:
           command: |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
+      # Run coverage check script
+      - run:
+          name: Check coverage for modified lines
+          command: |
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              chomd +x ./src/tools/check-coverage.js
+              node ./src/tools/check-coverage.js \
+                --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
+                --output-format=json,markdown,html
+            else
+              echo "Not a PR build. Skipping coverage check."
+            fi
       - run:
           name: Compress coverage artifacts
           command: tar -cvzf backend-coverage-artifacts.tar coverage/
@@ -705,6 +720,10 @@ jobs:
           path: backend-coverage-artifacts.tar
       - store_test_results:
           path: reports/
+      # Store uncovered lines artifact if exists
+      - store_artifacts:
+          path: coverage-artifacts/
+          destination: uncovered-lines
     resource_class: large
   test_similarity_api:
     executor: docker-python-executor
