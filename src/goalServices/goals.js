@@ -25,6 +25,7 @@ import {
   GoalTemplateFieldPrompt,
   ActivityReportGoalFieldResponse,
   File,
+  Program,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -125,19 +126,28 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       'id',
       'name',
       'isSourceEditable',
+      'onApprovedAR',
+      'source',
     ],
     where: {
       id,
     },
     include: [
       {
-        modal: GoalTemplate,
+        model: GoalTemplate,
         as: 'goalTemplate',
         attributes: [],
       },
       {
         model: Grant,
         as: 'grant',
+        include: [
+          {
+            model: Program,
+            as: 'programs',
+            attributes: [],
+          },
+        ],
       },
       {
         model: Objective,
@@ -272,6 +282,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     ...goal,
     isSourceEditable: goal.isSourceEditable,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
+    onApprovedAR: goal.onApprovedAR,
     objectives: goal.objectives
       .map((objective) => ({
         ...objective.toJSON(),
@@ -294,17 +305,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       })),
   }));
 
-  const reducedGoals = reduceGoals(reformattedGoals) || [];
-
-  // sort reduced goals by rtr order
-  reducedGoals.sort((a, b) => {
-    if (a.rtrOrder < b.rtrOrder) {
-      return -1;
-    }
-    return 1;
-  });
-
-  return reducedGoals;
+  return reduceGoals(reformattedGoals) || [];
 }
 
 /**
