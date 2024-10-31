@@ -81,6 +81,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     })),
     source: Joi.any(),
     onApprovedAR: Joi.boolean(),
+    isSourceEditable: Joi.boolean(),
     statusChanges: Joi.array().items(Joi.object({
       oldStatus: Joi.string(),
       newStatus: Joi.string(),
