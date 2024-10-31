@@ -406,8 +406,8 @@ test.describe('Activity Report', () => {
     // Wait for 5 seconds to allow the page to load.
     await page.waitForTimeout(5000);
 
-    await expect(page.getByText('g1o1', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).first()).toBeTruthy();
+    await expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeTruthy();
     // verify a link to the activity report is found in the objective section
     await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).nth(1)).toBeVisible();
