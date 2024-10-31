@@ -28,7 +28,8 @@ const argv = yargs(hideBin(process.argv))
 
 const COVERAGE_FILE = path.resolve(__dirname, '../../coverage/coverage-final.json');
 const BASE_BRANCH = 'origin/main'; // Update if your main branch has a different name
-const ARTIFACT_DIR = path.resolve(__dirname, '../../coverage-artifacts'); // Directory to store artifacts
+// Directory to store artifacts
+const ARTIFACT_DIR = path.resolve(__dirname, '../../coverage-artifacts');
 
 /**
  * Fetch the base branch to ensure it's up-to-date.
@@ -91,6 +92,7 @@ async function getModifiedLines(mergeBase) {
  */
 function loadCoverage() {
   if (!fs.existsSync(COVERAGE_FILE)) {
+    // eslint-disable-next-line no-console
     console.error(`Coverage file not found at ${COVERAGE_FILE}`);
     process.exit(1);
   }
@@ -145,7 +147,12 @@ function generateMarkdownReport(uncovered) {
   const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.md');
 
   if (uncovered.length === 0) {
-    fs.writeFileSync(artifactPath, '# Coverage Report\n\nAll modified lines are covered by tests.', 'utf-8');
+    fs.writeFileSync(
+      artifactPath,
+      '# Coverage Report\n\nAll modified lines are covered by tests.',
+      'utf-8',
+    );
+    // eslint-disable-next-line no-console
     console.log(`Markdown report generated at ${artifactPath}`);
     return;
   }
@@ -163,6 +170,7 @@ ${markdownTable(table)}
 `;
 
   fs.writeFileSync(artifactPath, markdownContent, 'utf-8');
+  // eslint-disable-next-line no-console
   console.log(`Markdown report generated at ${artifactPath}`);
 }
 
@@ -176,6 +184,7 @@ function generateArtifact(uncovered) {
 
   const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.json');
   fs.writeFileSync(artifactPath, JSON.stringify(uncovered, null, 2), 'utf-8');
+  // eslint-disable-next-line no-console
   console.log(`JSON artifact generated at ${artifactPath}`);
 }
 
@@ -200,6 +209,7 @@ function generateHtmlReport(uncovered) {
       </html>
     `;
     fs.writeFileSync(artifactPath, htmlContent, 'utf-8');
+    // eslint-disable-next-line no-console
     console.log(`HTML report generated at ${artifactPath}`);
     return;
   }
@@ -247,30 +257,39 @@ function generateHtmlReport(uncovered) {
   `;
 
   fs.writeFileSync(artifactPath, htmlContent, 'utf-8');
+  // eslint-disable-next-line no-console
   console.log(`HTML report generated at ${artifactPath}`);
 }
 
 (async () => {
   try {
+    // eslint-disable-next-line no-console
     console.log('Fetching base branch...');
     await fetchBaseBranch();
 
+    // eslint-disable-next-line no-console
     console.log('Determining merge base...');
     const mergeBase = await getMergeBase();
+    // eslint-disable-next-line no-console
     console.log(`Merge base is: ${mergeBase}`);
 
+    // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
     const modifiedLines = await getModifiedLines(mergeBase);
 
+    // eslint-disable-next-line no-console
     console.log('Loading coverage data...');
     const coverageMap = loadCoverage();
 
+    // eslint-disable-next-line no-console
     console.log('Checking coverage...');
     const uncovered = checkCoverage(modifiedLines, coverageMap);
 
     if (uncovered.length > 0) {
+      // eslint-disable-next-line no-console
       console.error('Uncovered lines detected:');
       uncovered.forEach(({ file, line }) => {
+        // eslint-disable-next-line no-console
         console.error(`- ${file}:${line}`);
       });
 
@@ -288,10 +307,12 @@ function generateHtmlReport(uncovered) {
       }
 
       if (argv['fail-on-uncovered']) {
+        // eslint-disable-next-line no-console
         console.error('Coverage check failed due to uncovered lines.');
         process.exit(1);
       }
     } else {
+      // eslint-disable-next-line no-console
       console.log('All modified lines are covered by tests.');
 
       // Optionally, generate empty reports
@@ -303,6 +324,7 @@ function generateHtmlReport(uncovered) {
       }
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error during coverage check:', error);
     process.exit(1);
   }
