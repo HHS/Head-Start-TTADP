@@ -13,18 +13,18 @@ const MERGED_COVERAGE_FILE = path.join(COVERAGE_DIR, 'coverage-final.json');
  * @returns {string[]} - Array of file paths.
  */
 function findCoverageFiles(dir) {
-  let coverageFiles = [];
+  const coverageFiles = [];
 
   function traverse(currentPath) {
     const entries = fs.readdirSync(currentPath, { withFileTypes: true });
-    for (const entry of entries) {
+    entries.forEach((entry) => {
       const fullPath = path.join(currentPath, entry.name);
       if (entry.isDirectory()) {
         traverse(fullPath);
       } else if (entry.isFile() && entry.name === 'coverage-final.json') {
         coverageFiles.push(fullPath);
       }
-    }
+    });
   }
 
   traverse(dir);
@@ -45,7 +45,7 @@ function mergeCoverageFiles(coverageFiles) {
 
   const mergedCoverageMap = createCoverageMap({});
 
-  coverageFiles.forEach(file => {
+  coverageFiles.forEach((file) => {
     const coverageData = JSON.parse(fs.readFileSync(file, 'utf8'));
     mergedCoverageMap.merge(coverageData);
   });
