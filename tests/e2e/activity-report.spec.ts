@@ -403,6 +403,9 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
     await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
 
+    // Wait for 5 seconds to allow the page to load.
+    await page.waitForTimeout(5000);
+
     await expect(page.getByText('g1o1', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeVisible();
     // verify a link to the activity report is found in the objective section
