@@ -403,6 +403,11 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
     await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
 
+    // scroll down the page to ensure the objectives are visible.
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
     await expect(page.getByText('g1o1', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeVisible();
     // verify a link to the activity report is found in the objective section
