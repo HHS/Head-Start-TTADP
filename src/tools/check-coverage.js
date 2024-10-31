@@ -56,11 +56,11 @@ async function getModifiedLines(mergeBase) {
   const diffFiles = await git.diff(['--name-only', `${mergeBase}..HEAD`]);
   const files = diffFiles
     .split('\n')
-    .filter(file => /\.(js|jsx|ts|tsx)$/.test(file));
+    .filter((file) => /\.(js|jsx|ts|tsx)$/.test(file));
 
   const modifiedLines = {};
 
-  for (const file of files) {
+  files.forEach(async (file) => {
     const diff = await git.diff(['-U0', `${mergeBase}..HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
     let match;
@@ -72,17 +72,17 @@ async function getModifiedLines(mergeBase) {
       if (!modifiedLines[file]) {
         modifiedLines[file] = new Set();
       }
-
+      // eslint-disable-next-line no-plusplus
       for (let i = startLine; i < startLine + lineCount; i++) {
         modifiedLines[file].add(i);
       }
     }
-  }
+  });
 
   // Convert sets to arrays
-  for (const file in modifiedLines) {
+  modifiedLines.forEach((file) => {
     modifiedLines[file] = Array.from(modifiedLines[file]);
-  }
+  });
 
   return modifiedLines;
 }
@@ -106,9 +106,9 @@ function loadCoverage() {
  * Check if modified lines are covered.
  */
 function checkCoverage(modifiedLines, coverageMap) {
-  let uncovered = [];
+  const uncovered = [];
 
-  for (const [file, lines] of Object.entries(modifiedLines)) {
+  Object.entries(modifiedLines).forEach(([file, lines]) => {
     // Normalize file path to match coverage map keys
     const normalizedFile = path.relative(process.cwd(), path.resolve(__dirname, '../../', file));
 
@@ -117,21 +117,21 @@ function checkCoverage(modifiedLines, coverageMap) {
       fileCoverage = coverageMap.fileCoverageFor(normalizedFile);
     } catch (e) {
       // If the file is not in the coverage report, consider all lines uncovered
-      lines.forEach(line => {
+      lines.forEach((line) => {
         uncovered.push({ file, line });
       });
-      continue;
+      return;
     }
 
     const detailedCoverage = fileCoverage.toJSON().lines.details;
 
-    lines.forEach(line => {
-      const lineCoverage = detailedCoverage.find(detail => detail.line === line);
+    lines.forEach((line) => {
+      const lineCoverage = detailedCoverage.find((detail) => detail.line === line);
       if (!lineCoverage || lineCoverage.hit === 0) {
         uncovered.push({ file, line });
       }
     });
-  }
+  });
 
   return uncovered;
 }
@@ -159,7 +159,7 @@ function generateMarkdownReport(uncovered) {
 
   const table = [
     ['File', 'Line Number'],
-    ...uncovered.map(entry => [entry.file, entry.line.toString()]),
+    ...uncovered.map((entry) => [entry.file, entry.line.toString()]),
   ];
 
   const markdownContent = `# Uncovered Lines Report
@@ -214,7 +214,7 @@ function generateHtmlReport(uncovered) {
     return;
   }
 
-  const tableRows = uncovered.map(entry => `
+  const tableRows = uncovered.map((entry) => `
     <tr>
       <td>${entry.file}</td>
       <td>${entry.line}</td>
