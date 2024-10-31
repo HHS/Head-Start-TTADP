@@ -54,7 +54,7 @@ module.exports = {
         'GoalTemplates',
         {
           creationMethod: CREATION_METHOD.CURATED,
-          templateName: standardGoalTexts.map((templateName) => templateName),
+          templateName: standardGoalTexts,
         },
         { transaction },
       );
