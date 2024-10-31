@@ -421,7 +421,11 @@ describe('mergeGoals', () => {
     const otherMergedGoal = mergedGoals.find((g) => g.id !== mergedGoalFromGrantOne.id);
 
     expect(
-      [...(new Set([mergedGoalFromGrantOne.id, mergedGoalFromGrantOne.id, otherMergedGoal.id]))].sort(),
+      [...(new Set([
+        mergedGoalFromGrantOne.id,
+        mergedGoalFromGrantOne.id,
+        otherMergedGoal.id,
+      ]))].sort(),
     ).toEqual([...(new Set(mapsToParentGoalIds))]);
 
     goalsThatAreMergedAway.forEach((goal) => {
