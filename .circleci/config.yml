@@ -560,7 +560,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-unsafe-inline"
+    default: "mb/TTAHUB-3484/insert-standard-goals"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
     default: "mb/TTAHUB-3478/goal-nudge-version-2"
