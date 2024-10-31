@@ -93,7 +93,9 @@ test.describe('Recipient record', () => {
     await expect(page.getByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i)).toBeVisible();
     await page.locator('div').filter({ hasText: /^View objective\(1\)$/ }).first().click();
     const objective = goal.getByTestId('objectiveList').first();
-    await page.getByLabel('View objectives for goal G-5').click();
+    await page.getByLabel(/view objectives for goal G/i).first().click();
+
+
     await page.getByRole('button', { name: 'Change status for objective' }).click();
     await objective.getByRole('button', { name: /complete/i }).click();
     await page.waitForTimeout(3000);
