@@ -80,6 +80,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
       responses: Joi.array().items(Joi.string()),
     })),
     source: Joi.any(),
+    onApprovedAR: Joi.boolean(),
     statusChanges: Joi.array().items(Joi.object({
       oldStatus: Joi.string(),
       newStatus: Joi.string(),

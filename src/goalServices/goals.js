@@ -305,7 +305,17 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       })),
   }));
 
-  return reduceGoals(reformattedGoals) || [];
+  const reducedGoals = reduceGoals(reformattedGoals) || [];
+
+  // sort reduced goals by rtr order
+  reducedGoals.sort((a, b) => {
+    if (a.rtrOrder < b.rtrOrder) {
+      return -1;
+    }
+    return 1;
+  });
+
+  return reducedGoals;
 }
 
 /**
