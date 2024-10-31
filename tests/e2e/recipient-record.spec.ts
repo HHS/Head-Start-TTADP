@@ -20,24 +20,25 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    // select a second grant as well
+    await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Enter');
 
     await blur(page);
 
-    await page.getByTestId('textarea').fill('This is the first goal for this recipient');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByLabel('Recipient\'s goal *').fill('This is the first goal for this recipient');
+    await page.getByRole('button', { name: /Save and continue/i }).click();
+  
+     // save first goal, without an objective
+    // click inside of the grants multi-select dropdown
+    await page.getByText('Recipient grant numbers *').click();
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter');
 
-    // edit that goal to add an objective
-    await page.getByTestId('ellipsis-button').first().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    // add an objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective');
 
-    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByRole('button', { name: /Save and continue/i }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
 
     // verify the goal appears in the table
@@ -50,7 +51,6 @@ test.describe('Recipient record', () => {
     // navigate through the recipient record tabs
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
-    await page.getByRole('link', { name: 'TTA History' }).click();
 
     // goals and objectives, add a new goal
     await page.getByRole('link', { name: 'RTTAPA' }).click();
@@ -59,24 +59,18 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    // select a second grant as well
+    await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Enter');
 
     await blur(page);
 
-    await page.getByTestId('textarea').fill('This is the second goal for this recipient');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByLabel('Recipient\'s goal *').fill('This is the second goal for this recipient');
+    await page.getByRole('button', { name: /Save and continue/i }).click();
 
     // edit that goal to add an objective
-    await page.getByTestId('ellipsis-button').first().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective for this second goal');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByRole('button', { name: /Save and continue/i }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
   
     // verify the goal appears in the table

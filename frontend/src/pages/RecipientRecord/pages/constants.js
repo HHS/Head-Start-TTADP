@@ -1,3 +1,4 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   specialistRoleFilter,
   endDateFilter,
@@ -37,3 +38,8 @@ TTAHISTORY_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 export { TTAHISTORY_FILTER_CONFIG };
 
 export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) => `goals-objectives-filters-${recipientId}`;
+
+export const getIdParamArray = (search) => {
+  const searchParams = new URLSearchParams(search);
+  return searchParams.get('id[]') ? searchParams.getAll('id[]').map((id) => parseInt(id, DECIMAL_BASE)) : [];
+};

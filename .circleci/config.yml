@@ -560,10 +560,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-unsafe-inline"
+    default: "mb/TTAHUB-3484/insert-standard-goals"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "mb/TTAHUB-3483/checkbox-to-activity-reports"
+    default: "mb/TTAHUB-3478/goal-nudge-version-2"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -578,6 +578,21 @@ parameters:
     default: "867346799"
     type: string
   manual-trigger:
+    type: boolean
+    default: false
+  env_list:
+    description: "List of environments to manage (start/stop)"
+    type: string
+    default: "tta-smarthub-dev,tta-smarthub-sandbox"
+  space_list:
+    description: "List of Cloud Foundry spaces corresponding to each environment"
+    type: string
+    default: ""
+  env_state:
+    description: "State of the environment to change (start, stop, restart, restage)"
+    type: string
+    default: "none"
+  manual-manage-env:
     type: boolean
     default: false
 jobs:
@@ -1249,10 +1264,88 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
+  manage_env_apps:
+    executor: docker-executor
+    parameters:
+      env_list:
+        type: string
+        description: "Comma-separated list of environments to manage"
+        default: "<< pipeline.parameters.env_list >>"
+      env_state:
+        type: string
+        description: "Action to perform on apps (start, stop, restart, restage)"
+        default: "<< pipeline.parameters.env_state >>"
+    steps:
+      - run:
+          name: Install Cloud Foundry CLI
+          command: |
+            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
+            sudo dpkg -i cf-cli_amd64.deb
+      - run:
+          name: Manage Apps
+          command: |
+            set -x
+            env_list="<< parameters.env_list >>"
+            env_state="<< parameters.env_state >>"
+            
+            # Split env_list manually
+            apps=(${env_list//,/ })
+
+            for env in "${apps[@]}"; do
+              # Map full environment name to variable prefixes
+              if [[ "$env" == "tta-smarthub-sandbox" ]]; then
+                prefix="SANDBOX"
+              elif [[ "$env" == "tta-smarthub-dev" ]]; then
+                prefix="DEV"
+              else
+                echo "Unrecognized environment: $env"
+                exit 1
+              fi
+
+              # Retrieve the environment-specific variables
+              space_var="CLOUDGOV_${prefix}_SPACE"
+              username_var="CLOUDGOV_${prefix}_USERNAME"
+              password_var="CLOUDGOV_${prefix}_PASSWORD"
+              space="${!space_var}"
+              username="${!username_var}"
+              password="${!password_var}"
+
+              echo "Logging into space: $space for environment: $env"
+              cf login \
+                -a << pipeline.parameters.cg_api >> \
+                -u "$username" \
+                -p "$password" \
+                -o << pipeline.parameters.cg_org >> \
+                -s "$space"
+
+              # Get the current state of the app
+              state=$(cf app "$env" | grep "state:" | awk '{print $2}')
+              
+              # Control app state based on env_state parameter
+              if [[ "$env_state" == "stop" && "$state" != "stopped" ]]; then
+                echo "Stopping $env..."
+                cf stop "$env"
+              elif [[ "$env_state" == "start" && "$state" != "started" ]]; then
+                echo "Starting $env..."
+                cf start "$env"
+              elif [[ "$env_state" == "restart" ]]; then
+                echo "Restarting $env..."
+                cf restart "$env"
+              elif [[ "$env_state" == "restage" ]]; then
+                echo "Restaging $env..."
+                cf restage "$env"
+              else
+                echo "$env is already in the desired state: $state"
+              fi
+            done
 workflows:
   build_test_deploy:
     when:
-      equal: [false, << pipeline.parameters.manual-trigger >>]
+      and:
+        # Ensure the workflow is only triggered when `manual-trigger` is false
+        # and `env_state` is empty (i.e., it's not for starting/stopping environments)
+        - equal: [false, << pipeline.parameters.manual-trigger >>]
+        - equal: [false, << pipeline.parameters.manual-manage-env >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1360,3 +1453,34 @@ workflows:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload_production
+  stop_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 2-6"  # Runs at 6 PM PST M-F (1 AM UTC next day)
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "stop"
+          env_list: "<< pipeline.parameters.env_list >>"
+  start_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 11 * * 1-5"  # Runs at 6 AM EST M-F(11 AM UTC)
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "start"
+          env_list: "<< pipeline.parameters.env_list >>"
+  manual_manage_env_workflow:
+    when:
+      equal: [true, << pipeline.parameters.manual-manage-env >>]
+    jobs:
+      - manage_env_apps:
+          env_state: "<< pipeline.parameters.env_state >>"
+          env_list: "<< pipeline.parameters.env_list >>"
