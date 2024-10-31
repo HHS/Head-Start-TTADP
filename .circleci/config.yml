@@ -704,8 +704,8 @@ jobs:
           name: Check coverage for modified lines
           command: |
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-              chomd +x ./src/tools/check-coverage.js
-              node ./src/tools/check-coverage.js \
+              chomd +x ./tools/check-coverage.js
+              node ./tools/check-coverage.js \
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
                 --output-format=json,markdown,html
             else
