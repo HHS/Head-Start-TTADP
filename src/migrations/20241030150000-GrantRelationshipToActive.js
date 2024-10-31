@@ -17,23 +17,23 @@ module.exports = {
                 g.id AS "activeGrantId",
                 ARRAY[g.id] AS "visited_grantIds"
               FROM "Grants" g
-              WHERE g.status::text = 'Active'::text
-            UNION ALL
+              WHERE g.status::text = 'Active'
+            UNION
             SELECT g.id AS "grantId",
                 NULL::integer AS "activeGrantId",
                 ARRAY[g.id] AS "visited_grantIds"
               FROM "Grants" g
                 JOIN "GrantReplacements" gr1 ON g.id = gr1."replacingGrantId"
                 LEFT JOIN "GrantReplacements" gr2 ON g.id = gr2."replacedGrantId"
-              WHERE g.status::text <> 'Active'::text AND gr2.id IS NULL
-            UNION ALL
+              WHERE g.status::text <> 'Active' AND gr2.id IS NULL
+            UNION
             SELECT g.id AS "grantId",
                 NULL::integer AS "activeGrantId",
                 ARRAY[g.id] AS "visited_grantIds"
               FROM "Grants" g
                 JOIN "GrantReplacements" gr ON g.id = gr."replacingGrantId" OR g.id = gr."replacedGrantId"
-              WHERE g.status::text <> 'Active'::text AND gr.id IS NULL
-            UNION ALL
+              WHERE g.status::text <> 'Active' AND gr.id IS NULL
+            UNION
             SELECT g.id AS "grantId",
                 rcte_1."activeGrantId",
                 rcte_1."visited_grantIds" || g.id
