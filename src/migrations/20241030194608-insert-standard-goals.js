@@ -10,7 +10,7 @@ const standardGoalTexts = [
   '(Fiscal Management) The recipient will implement strong fiscal management and reporting systems to ensure the safeguarding of federal funds, facilities, and resources.',
   '(Development and Learning) The recipient will implement child development and early learning services that are developmentally, culturally, and linguistically appropriate for all children and families.',
   '(Mental Health) The recipient will implement systems and services that promote the mental and behavioral health of all children and families.',
-  '(Physical Health) The recipient will implement systems and services that ensure expectant families and children\'s health, oral health, and nutrition needs are met in developmentally, culturally, and linguistically appropriate ways',
+  '(Physical Health) The recipient will implement systems and services that ensure expectant families and children\'s health, oral health, and nutrition needs are met in developmentally, culturally, and linguistically appropriate ways.',
   '(DEIA) The recipient will implement comprehensive systems and services that promote diversity, equity, inclusion, accessibility, and belonging.',
   '(Family Engagement) The recipient will implement family engagement strategies that are relationship-based and culturally and linguistically appropriate.',
   '(Family Support) The recipient will implement collaborative systems and services with families and community partners to support family well-being and the needs of vulnerable families.',
