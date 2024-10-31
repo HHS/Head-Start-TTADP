@@ -45,6 +45,7 @@ export default function Form({
   isOnApprovedReport,
   isOnReport,
   isCurated,
+  isSourceEditable,
   status,
   datePickerKey,
   fetchError,
@@ -155,12 +156,18 @@ export default function Form({
       />
 
       <FormFieldThatIsSometimesReadOnly
-        permissions={[
-          !isCurated,
-          status !== 'Closed',
-          userCanEdit,
-          !isOnApprovedReport,
-        ]}
+        permissions={
+          isCurated ? [
+            isSourceEditable,
+            status !== 'Closed',
+            userCanEdit,
+            !isOnApprovedReport,
+          ] : [
+            status !== 'Closed',
+            userCanEdit,
+            !isOnApprovedReport,
+          ]
+        }
         label="Goal source"
         value={uniq(Object.values(source || {})).join(', ') || ''}
       >
@@ -290,11 +297,13 @@ Form.propTypes = {
   })).isRequired,
   goalTemplateId: PropTypes.number,
   isReopenedGoal: PropTypes.bool.isRequired,
+  isSourceEditable: PropTypes.bool,
 };
 
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
   isCurated: false,
+  isSourceEditable: true,
   goalTemplateId: null,
 };
