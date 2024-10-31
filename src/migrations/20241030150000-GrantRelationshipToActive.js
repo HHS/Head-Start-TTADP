@@ -5,7 +5,7 @@ module.exports = {
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
 
-      // adding the distinct_cte layer to 
+      // adding the distinct_cte layer to GrantRelationshipToActive
       await queryInterface.sequelize.query(/* sql */`
         DROP MATERIALIZED VIEW IF EXISTS public."GrantRelationshipToActive";
 
