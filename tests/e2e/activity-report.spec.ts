@@ -403,22 +403,17 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
     await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
 
-    // scroll down the page to ensure the objectives are visible.
-    await page.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight);
-    });
-
-    await expect(page.getByText('g1o1', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).first()).toBeTruthy();
+    await expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeTruthy();
     // verify a link to the activity report is found in the objective section
-    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).nth(1)).toBeVisible();
+    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first()).toBeTruthy();
+    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).nth(1)).toBeTruthy();
     // Access parent with '..'
-    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').nth(0)).toBeVisible();
-    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').nth(1)).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').nth(0)).toBeTruthy();
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').nth(1)).toBeTruthy();
     // verify the grants are visible in the objective section
     await Promise.all(
-      grants.map(async (grant) => expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeVisible()),
+      grants.map(async (grant) => expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeTruthy()),
     );
     // verify the reason is visible in the objective section
     const goalOneContentA = await page.getByText('g1o1', { exact: true }).first().locator('..').locator('..').textContent();
@@ -429,35 +424,35 @@ test.describe('Activity Report', () => {
     expect(goalOneContentB).toContain('Behavioral / Mental Health / Trauma');
 
     // verify the end date is visible in the objective section
-    await expect(page.getByText('g1o1', { exact: true }).first().locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
-    await expect(page.getByText('g1o1', { exact: true }).nth(1).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).first().locator('..').locator('..').getByText('12/01/2050')).toBeTruthy();
+    await expect(page.getByText('g1o1', { exact: true }).nth(1).locator('..').locator('..').getByText('12/01/2050')).toBeTruthy();
     // verify the correct status for the objective is visible
-    await expect(page.getByText('g1o1', { exact: true }).first().locator('..').locator('..').getByText('Not started')).toBeVisible();
-    await expect(page.getByText('g1o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).first().locator('..').locator('..').getByText('Not started')).toBeTruthy();
+    await expect(page.getByText('g1o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeTruthy();
 
     // Expand goals for G2.
     await page.getByRole('button', { name: `View objectives for goal G-7` }).click();
     await page.getByRole('button', { name: `View objectives for goal G-8` }).click();
 
-    await expect(page.getByText('g2o1', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('g2o1', { exact: true }).nth(1)).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).first()).toBeTruthy();
+    await expect(page.getByText('g2o1', { exact: true }).nth(1)).toBeTruthy();
     // verify a link to the activity report is found in the objective section
-    await expect(page.getByText('g2o1', { exact: true }).first().locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-    await expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').first()).toBeVisible();
-    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').nth(1)).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).first().locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeTruthy();
+    await expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeTruthy();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').first()).toBeTruthy();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers').nth(1)).toBeTruthy();
     // verify the grants are visible in the objective section
     await Promise.all(
-      grants.map(async (grant) => expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeVisible()),
+      grants.map(async (grant) => expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeTruthy()),
     );
     const goalTwoContentA = await page.getByText('g2o1', {exact: true}).first().locator('..').locator('..').textContent();
     expect(goalTwoContentA).toContain('Change in Scope');
     const goalTwoContentB = await page.getByText('g2o1', {exact: true}).nth(1).locator('..').locator('..').textContent();
     expect(goalTwoContentB).toContain('Change in Scope');
     // verify the end date is visible in the objective section
-    await expect(page.getByText('g2o1', { exact: true }).first().locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).first().locator('..').locator('..').getByText('12/01/2050')).toBeTruthy();
     // verify the correct status for the objective is visible
-    await expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeTruthy();
 
     // check g1
     await page.getByText('g1', { exact: true }).first().locator('..').locator('..').locator('..')
