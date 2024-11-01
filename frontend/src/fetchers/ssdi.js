@@ -43,7 +43,7 @@ const allowedTopicsForQuery = {
     'domainInstructionalSupport',
     'createDate',
   ],
-  'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter.id),
+  'qa-dashboard': [
     'endDate',
     'startDate',
     'activityReportGoalResponse',
