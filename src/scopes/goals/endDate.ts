@@ -18,7 +18,7 @@ function getDateSql(dates: string[], operator: string) {
 export function beforeEndDate(date: string): WhereOptions {
   return {
     id: {
-      [Op.in]: getDateSql([`'${date}'`], '<='),
+      [Op.in]: getDateSql([`'${new Date(date).toISOString()}'`], '<='),
     },
   };
 }
@@ -26,7 +26,7 @@ export function beforeEndDate(date: string): WhereOptions {
 export function afterEndDate(date: string): WhereOptions {
   return {
     id: {
-      [Op.in]: getDateSql([`'${date}'`], '>='),
+      [Op.in]: getDateSql([`'${new Date(date).toISOString()}'`], '>='),
     },
   };
 }
