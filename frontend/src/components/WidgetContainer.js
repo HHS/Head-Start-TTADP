@@ -11,6 +11,7 @@ export default function WidgetContainer(
   {
     title,
     subtitle,
+    subtitle2,
     children,
     showPagingBottom,
     showPagingTop,
@@ -25,22 +26,33 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
-    enableCheckboxes,
-    exportRows,
+    menuItems,
     footNote,
     displayTable,
     setDisplayTable,
+    enableCheckboxes,
+    exportRows,
+
+    // slot components
+    SubtitleDrawer,
+    TitleDrawer,
+    widgetContainerTitleClass,
+    displayPaginationBoxOutline,
+
+    showFiltersNotApplicable,
   },
 ) {
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className="padding-x-3"
+        className={widgetContainerTitleClass}
         title={title}
         subtitle={subtitle}
+        subtitle2={subtitle2}
         showHeaderBorder={showHeaderBorder}
         displayTable={displayTable}
         setDisplayTable={setDisplayTable}
+        showFiltersNotApplicable={showFiltersNotApplicable}
         pagination={showPagingTop ? (
           <PaginationCard
             currentPage={currentPage}
@@ -51,6 +63,9 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
+        TitleDrawer={() => TitleDrawer || null}
+        SubtitleDrawer={() => SubtitleDrawer || null}
+        menuItems={menuItems}
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
       >
@@ -67,7 +82,7 @@ export default function WidgetContainer(
         {children}
       </div>
       {showPagingBottom || footNote ? (
-        <div className="border-bottom smart-hub-border-base-lighter padding-3">
+        <div className={`border-bottom smart-hub-border-base-lighter padding-3 ${displayPaginationBoxOutline ? 'smart-hub-border-base--pagination-box' : ''}`}>
           {footNote && (
           <p className="usa-prose font-sans-3xs margin-top-0">
             {footNote}
@@ -80,6 +95,7 @@ export default function WidgetContainer(
               offset={offset}
               perPage={perPage}
               handlePageChange={handlePageChange}
+              displayPaginationBoxOutline={displayPaginationBoxOutline}
             />
           )}
         </div>
@@ -91,6 +107,7 @@ export default function WidgetContainer(
 WidgetContainer.propTypes = {
   title: PropTypes.string,
   subtitle: PropTypes.string,
+  subtitle2: PropTypes.string,
   children: PropTypes.node,
   showPagingBottom: PropTypes.bool,
   showPagingTop: PropTypes.bool,
@@ -105,17 +122,30 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
-  enableCheckboxes: PropTypes.bool,
-  exportRows: PropTypes.func,
+  menuItems: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    onClick: PropTypes.func,
+  })),
   footNote: PropTypes.string,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
+
+  // Drawer components
+  SubtitleDrawer: PropTypes.node,
+  TitleDrawer: PropTypes.node,
+
+  widgetContainerTitleClass: PropTypes.string,
+  displayPaginationBoxOutline: PropTypes.bool,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
+  showFiltersNotApplicable: PropTypes.bool,
 };
 
 WidgetContainer.defaultProps = {
   children: <></>,
   title: null,
   subtitle: null,
+  subtitle2: null,
   showPagingBottom: false,
   showPagingTop: false,
   totalCount: 0,
@@ -128,9 +158,17 @@ WidgetContainer.defaultProps = {
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
-  enableCheckboxes: false,
-  exportRows: null,
+  menuItems: [],
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
+  enableCheckboxes: false,
+  exportRows: null,
+
+  // Drawer components
+  SubtitleDrawer: null,
+  TitleDrawer: null,
+  widgetContainerTitleClass: 'padding-x-3',
+  displayPaginationBoxOutline: false,
+  showFiltersNotApplicable: false,
 };

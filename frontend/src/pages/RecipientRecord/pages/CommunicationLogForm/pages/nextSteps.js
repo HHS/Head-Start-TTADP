@@ -48,14 +48,12 @@ const NextSteps = () => {
   );
 };
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
   label: 'Next steps',
   path,
-  reviewSection: () => <ReviewSection />,
   review: false,
   fields,
   render: (
