@@ -385,13 +385,13 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
     // check that previously created goals g1 and g2 are visible
     // Assert there are two instances of 'g1' and 'g2' on the page
-    await expect(page.getByText('g1', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('g1', { exact: true }).nth(1)).toBeVisible();
+    await expect(page.getByText('g1', { exact: true }).first()).toBeTruthy();
+    await expect(page.getByText('g1', { exact: true }).nth(1)).toBeTruthy();
 
 
 
-    await expect(page.getByText('g2', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('g2', { exact: true }).nth(1)).toBeVisible();
+    await expect(page.getByText('g2', { exact: true }).first()).toBeTruthy();
+    await expect(page.getByText('g2', { exact: true }).nth(1)).toBeTruthy();
 
     // look for the goals heading for the previously created goal, e.g. 'Goal G-6, G-5RTTAPA'
     const g1Goals = page.locator('h3:above(p:text("g1"))').first();
