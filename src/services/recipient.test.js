@@ -609,7 +609,7 @@ describe('Recipient DB service', () => {
 
     it('finds inactive grants that fall in the accepted range', async () => {
       const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(2);
+      expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
@@ -781,7 +781,7 @@ describe('Recipient DB service', () => {
       });
 
       const goal1 = await Goal.create({
-        name: goal.name,
+        name: 'Sample goal 1',
         status: goal.status,
         grantId: grant.id,
         onApprovedAR: true,
@@ -789,7 +789,7 @@ describe('Recipient DB service', () => {
       });
 
       const goal2 = await Goal.create({
-        name: goal.name,
+        name: 'Sample goal 2',
         status: goal.status,
         grantId: grant.id,
         onApprovedAR: true,
@@ -797,7 +797,7 @@ describe('Recipient DB service', () => {
       });
 
       const goal3 = await Goal.create({
-        name: goal.name,
+        name: 'Sample goal 3',
         status: goal.status,
         grantId: grant.id,
         onApprovedAR: true,
@@ -805,7 +805,7 @@ describe('Recipient DB service', () => {
       });
 
       const goal4 = await Goal.create({
-        name: goal.name,
+        name: 'Sample goal 4',
         status: goal.status,
         grantId: grant.id,
         onApprovedAR: true,
@@ -813,7 +813,7 @@ describe('Recipient DB service', () => {
       });
 
       const feiGoal = await Goal.create({
-        name: goal2Info.name,
+        name: 'Sample goal FEI 1',
         status: goal2Info.status,
         grantId: grant.id,
         onApprovedAR: true,
@@ -904,60 +904,54 @@ describe('Recipient DB service', () => {
       });
     });
 
-    it('properly de-duplicates based on responses', async () => {
+    it('maintains separate goals for different responses', async () => {
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(4);
-      expect(allGoalIds.length).toBe(4);
-
-      const goalWithMultipleIds = allGoalIds.find((g) => g.id === goals[2].id);
-      expect(goalWithMultipleIds).not.toBeNull();
-      expect(goalWithMultipleIds.goalIds).toStrictEqual([goals[2].id, goals[1].id]);
-
-      const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
-      expect(doubler).toBeTruthy();
-
-      expect(doubler.ids.length).toBe(2);
-
-      const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
-      expect(singler).toBeTruthy();
-      expect(singler.ids.length).toBe(1);
-
-      const noResponse = goalRows.find((r) => r.responsesForComparison === '');
-      expect(noResponse).toBeTruthy();
-      expect(noResponse.ids.length).toBe(1);
-    });
-
-    it('does not de-duplicate goals when the param is set to false', async () => {
-      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(
-        recipient.id,
-        region,
-        {},
-        false,
-      );
       expect(goalRows.length).toBe(5);
       expect(allGoalIds.length).toBe(5);
 
-      let goalToCheck = allGoalIds.find((g) => g.id === goals[1].id);
-      expect(goalToCheck).not.toBeNull();
-      expect(goalToCheck.goalIds).toStrictEqual([goals[1].id]);
+      // Assert every goal has its own entry.
+      const goal1 = goalRows.find((r) => r.ids.includes(goals[0].id));
+      expect(goal1).toBeTruthy();
+      expect(goal1.ids.length).toBe(1);
 
-      goalToCheck = allGoalIds.find((g) => g.id === goals[2].id);
-      expect(goalToCheck).not.toBeNull();
-      expect(goalToCheck.goalIds).toStrictEqual([goals[2].id]);
+      const goal2 = goalRows.find((r) => r.ids.includes(goals[1].id));
+      expect(goal2).toBeTruthy();
 
-      goalToCheck = allGoalIds.find((g) => g.id === goals[0].id);
-      expect(goalToCheck).not.toBeNull();
-      expect(goalToCheck.goalIds).toStrictEqual([goals[0].id]);
+      const goal3 = goalRows.find((r) => r.ids.includes(goals[2].id));
+      expect(goal3).toBeTruthy();
 
-      goalToCheck = allGoalIds.find((g) => g.id === goals[3].id);
-      expect(goalToCheck).not.toBeNull();
-      expect(goalToCheck.goalIds).toStrictEqual([goals[3].id]);
+      const goal4 = goalRows.find((r) => r.ids.includes(goals[3].id));
+      expect(goal4).toBeTruthy();
+
+      const feiGoal = goalRows.find((r) => r.ids.includes(goals[4].id));
+      expect(feiGoal).toBeTruthy();
+
+      // Assert every response has its own entry.
+      const gottaResponse = goalRows.find((r) => r.id === goals[0].id);
+      expect(gottaResponse).toBeTruthy();
+      expect(gottaResponse.responsesForComparison).toBe('gotta');
+
+      const notSureResponse = goalRows.find((r) => r.id === goals[1].id);
+      expect(notSureResponse).toBeTruthy();
+      expect(notSureResponse.responsesForComparison).toBe('not sure,dont have to');
+
+      const notSureResponse2 = goalRows.find((r) => r.id === goals[2].id);
+      expect(notSureResponse2).toBeTruthy();
+      expect(notSureResponse2.responsesForComparison).toBe('not sure,dont have to');
+
+      const notSureResponse3 = goalRows.find((r) => r.id === goals[3].id);
+      expect(notSureResponse3).toBeTruthy();
+      expect(notSureResponse3.responsesForComparison).toBe('');
+
+      const feiResponse = goalRows.find((r) => r.id === goals[4].id);
+      expect(feiResponse).toBeTruthy();
+      expect(feiResponse.responsesForComparison).toBe('fei response 1,fei response 2');
     });
 
     it('properly marks is fei goal', async () => {
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(4);
-      expect(allGoalIds.length).toBe(4);
+      expect(goalRows.length).toBe(5);
+      expect(allGoalIds.length).toBe(5);
 
       // From goal Rows get goal 1.
       const goal1 = goalRows.find((r) => r.ids.includes(goals[0].id));
@@ -980,19 +974,32 @@ describe('Recipient DB service', () => {
       expect(feiGoal.isFei).toBe(true);
     });
 
-    it('properly combines the same goals with no creators/collaborators', async () => {
+    it('keeps goals separated by goal text when they share the same grant with no creators/collaborators', async () => {
       // Remove other goals
       goals[0].destroy();
       goals[3].destroy();
       goals[4].destroy();
 
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(1);
-      expect(allGoalIds.length).toBe(1);
-      // Verify goal 2 and 3 have empty creators/collaborators
-      expect(goalRows[0].collaborators[0].goalCreator).toBe(undefined);
-      // Verify goal 2 and 3 are rolled up
-      expect(goalRows[0].ids.length).toBe(2);
+      expect(goalRows.length).toBe(5);
+      expect(allGoalIds.length).toBe(5);
+
+      // Verify we have all four goals.
+      const goal1 = goalRows.find((r) => r.ids.includes(goals[0].id));
+      expect(goal1).toBeTruthy();
+
+      const goal2 = goalRows.find((r) => r.ids.includes(goals[1].id));
+      expect(goal2).toBeTruthy();
+
+      const goal3 = goalRows.find((r) => r.ids.includes(goals[2].id));
+      expect(goal3).toBeTruthy();
+
+      const goal4 = goalRows.find((r) => r.ids.includes(goals[3].id));
+      expect(goal4).toBeTruthy();
+
+      // Verify FEI
+      const feiGoal = goalRows.find((r) => r.ids.includes(goals[4].id));
+      expect(feiGoal).toBeTruthy();
     });
   });
 

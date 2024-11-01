@@ -542,7 +542,6 @@ export async function getGoalsByActivityRecipient(
     goalIds = [],
     ...filters
   },
-  deDuplicateGoals = true,
 ) {
   // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
   const feiCacheKey = 'feiRootCauseFieldPrompt';
@@ -812,34 +811,32 @@ export async function getGoalsByActivityRecipient(
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
-    if (deDuplicateGoals) {
-      const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
+    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
-      if (existingGoal) {
-        existingGoal.ids = [...existingGoal.ids, current.id];
-        existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
-        existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
-        existingGoal.objectives = reduceObjectivesForRecipientRecord(
-          current,
-          existingGoal,
-          existingGoal.grantNumbers,
-        );
-        existingGoal.objectiveCount = existingGoal.objectives.length;
-        existingGoal.isCurated = isCurated || existingGoal.isCurated;
-        existingGoal.collaborators = existingGoal.collaborators || [];
-        existingGoal.collaborators = uniqBy([
-          ...existingGoal.collaborators,
-          ...createCollaborators(current),
-        ], 'goalCreatorName');
+    if (existingGoal) {
+      existingGoal.ids = [...existingGoal.ids, current.id];
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
+      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
+      existingGoal.objectives = reduceObjectivesForRecipientRecord(
+        current,
+        existingGoal,
+        existingGoal.grantNumbers,
+      );
+      existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.isCurated = isCurated || existingGoal.isCurated;
+      existingGoal.collaborators = existingGoal.collaborators || [];
+      existingGoal.collaborators = uniqBy([
+        ...existingGoal.collaborators,
+        ...createCollaborators(current),
+      ], 'goalCreatorName');
 
-        existingGoal.onAR = existingGoal.onAR || current.onAR;
-        existingGoal.isReopenedGoal = existingGoal.isReopenedGoal
+      existingGoal.onAR = existingGoal.onAR || current.onAR;
+      existingGoal.isReopenedGoal = existingGoal.isReopenedGoal
           || wasGoalPreviouslyClosed(current);
 
-        return {
-          goalRows: previous.goalRows,
-        };
-      }
+      return {
+        goalRows: previous.goalRows,
+      };
     }
 
     const goalToAdd = {

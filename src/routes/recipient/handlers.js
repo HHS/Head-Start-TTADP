@@ -128,7 +128,6 @@ export async function getGoalsByRecipient(req, res) {
       recipientId,
       regionId,
       req.query,
-      false,
     );
     res.json(recipientGoals);
   } catch (error) {
