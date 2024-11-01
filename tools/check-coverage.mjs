@@ -6,7 +6,7 @@ import simpleGit from 'simple-git';
 import pkg from 'istanbul-lib-coverage';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
-import markdownTable from 'markdown-table';
+import { markdownTable } from 'markdown-table';
 
 const { createCoverageMap } = pkg;
 
