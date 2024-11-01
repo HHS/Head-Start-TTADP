@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import simpleGit from 'simple-git';
 import pkg from 'istanbul-lib-coverage';
 import yargs from 'yargs/yargs';
@@ -9,6 +10,8 @@ import { hideBin } from 'yargs/helpers';
 import { markdownTable } from 'markdown-table';
 
 const { createCoverageMap } = pkg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const argv = yargs(hideBin(process.argv))
