@@ -181,6 +181,7 @@ test.describe('Activity Report', () => {
     // create the first goal
 
     await page.getByLabel(/Select recipient's goal/i).click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
@@ -241,6 +242,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
     await page.getByTestId('label').click();
+
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -500,16 +502,27 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
+    await page.waitForTimeout(5000);
+
+    // select recipients
+    await page.getByLabel(/recipient grant numbers/i).focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
+    // enter goal name
+    await page.getByLabel('Recipient\'s goal *').fill('This is a goal for multiple grants');
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+  
+    await page.waitForTimeout(5000);
+
     // select recipients
     await page.getByLabel(/recipient grant numbers/i).focus();
     // both of the top recipients
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await page.keyboard.press('Enter');
+    await blur(page);
 
-    // enter goal name
-    await page.getByTestId('textarea').fill('This is a goal for multiple grants');
-  
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
 

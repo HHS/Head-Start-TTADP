@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, useRef, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   Checkbox,
   Button,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import { useFormContext } from 'react-hook-form';
 import { similiarGoalsByText } from '../../fetchers/goals';
 import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useAsyncDebounceEffect from '../../hooks/useAsyncDebounceEffect';
@@ -13,32 +16,26 @@ import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 
 const MINIMUM_GOAL_NAME_LENGTH = 15;
 
-export const filterOutGrantUsedGoalTemplates = (goalTemplates, selectedGrants) => goalTemplates
-  .filter((template) => {
-    if (!template.goals || !template.goals.length) {
-      return true;
-    }
-    const usedGrantIds = template.goals.map((goal) => goal.grantId);
-    return !selectedGrants.some((grant) => usedGrantIds.includes(grant.id));
-  });
 export default function GoalNudge({
-  error,
-  goalName,
-  validateGoalName,
-  onUpdateText,
-  inputName,
-  isLoading,
-  selectedGrants,
   recipientId,
   regionId,
-  onSelectNudgedGoal,
+  selectedGrant,
 }) {
+  const {
+    watch, register, setValue, clearErrors,
+  } = useFormContext();
+  const {
+    goalName,
+    isGoalNameEditable,
+    useOhsInitiativeGoal,
+  } = watch();
+  const initiativeRef = useRef(null);
+
   const [similar, setSimilarGoals] = useState([]);
-  const [useOhsInitiativeGoal, setUseOhsInitiativeGoal] = useState(false);
   const [dismissSimilar, setDismissSimilar] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState(null);
 
-  const initiativeRef = useRef();
+  const selectedGrants = useMemo(() => [selectedGrant], [selectedGrant]);
 
   useEffect(() => {
     if (dismissSimilar) {
@@ -48,31 +45,35 @@ export default function GoalNudge({
 
   useEffect(() => {
     if (useOhsInitiativeGoal && initiativeRef.current) {
-      onUpdateText('');
       initiativeRef.current.focus();
+      // should also clear out the goal name
+      setValue('goalName', '');
     }
-  }, [onUpdateText, useOhsInitiativeGoal]);
+
+    // we should clear out any errors when useOhsInitiativeGoal is toggled
+    clearErrors();
+  }, [clearErrors, setValue, useOhsInitiativeGoal]);
 
   // using DeepCompareEffect to avoid unnecessary fetches
-  // as we have an object (selectedGrants) in the dependency array
+  // as we have an object (selectedGrant) in the dependency array
   useDeepCompareEffect(() => {
     async function fetchGoalTemplates() {
       try {
         const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
-        setGoalTemplates(filterOutGrantUsedGoalTemplates(templates, selectedGrants));
+        setGoalTemplates(templates);
       } catch (err) {
         setGoalTemplates([]);
       }
     }
 
-    if (selectedGrants && selectedGrants.length > 0) {
+    if (selectedGrants[0] && selectedGrants[0].id) {
       fetchGoalTemplates();
     }
   }, [selectedGrants]);
 
   useAsyncDebounceEffect(async () => {
     // we need all of these to populate the query
-    if (!recipientId || !regionId || !selectedGrants.length) {
+    if (!recipientId || !regionId || !selectedGrant || !selectedGrant.number) {
       return;
     }
 
@@ -88,63 +89,41 @@ export default function GoalNudge({
           regionId,
           recipientId,
           goalName,
-          selectedGrants.map((grant) => grant.number),
+          [selectedGrant.number],
         );
         setSimilarGoals(similarities);
       }
     } catch (err) {
       setSimilarGoals([]);
     }
-  }, [
-    goalName,
-    regionId,
-    recipientId,
-    selectedGrants,
-    dismissSimilar,
-  ]);
-
-  const onChange = (e) => {
-    onUpdateText(e.target.value);
-  };
+  }, [dismissSimilar, goalName, recipientId, regionId, selectedGrant]);
 
   // what a hack
   const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
-  const showOhsInitiativeGoalCheckbox = goalTemplates && goalTemplates.length > 0;
-  const buttonGroupFlex = showOhsInitiativeGoalCheckbox ? 'flex-justify' : 'flex-justify-end';
 
   return (
     <div className="ttahub-goal-nudge--container position-relative margin-bottom-3">
       <GoalNudgeText
-        error={error}
-        inputName={inputName}
-        validateGoalName={validateGoalName}
-        goalName={goalName}
-        onChange={onChange}
-        isLoading={isLoading}
         similar={similar}
-        onSelectNudgedGoal={onSelectNudgedGoal}
+        dismissSimilar={dismissSimilar}
         setDismissSimilar={setDismissSimilar}
         useOhsInitiativeGoal={useOhsInitiativeGoal}
       />
       <GoalNudgeInitiativePicker
-        error={error}
         useOhsInitiativeGoal={useOhsInitiativeGoal}
-        validateGoalName={validateGoalName}
         goalTemplates={goalTemplates || []}
-        onSelectNudgedGoal={onSelectNudgedGoal}
         initiativeRef={initiativeRef}
       />
-      <div className={`desktop:display-flex ${buttonGroupFlex} margin-top-1 smart-hub-maxw-form-field`}>
-        { (showOhsInitiativeGoalCheckbox) && (
+      {isGoalNameEditable && (
+      <div className="desktop:display-flex flex-justify margin-top-1 smart-hub-maxw-form-field">
         <Checkbox
-          id="use-ohs-standard-goal"
-          name="use-ohs-standard-goal"
+          id="useOhsInitiativeGoal"
+          name="useOhsInitiativeGoal"
           label="Use OHS standard goal"
           className={`position-relative ${checkboxZed}`}
-          onChange={() => setUseOhsInitiativeGoal(!useOhsInitiativeGoal)}
-          checked={useOhsInitiativeGoal}
+          defaultChecked={false}
+          inputRef={register()}
         />
-        )}
         {(dismissSimilar && !useOhsInitiativeGoal) && (
         <Button
           type="button"
@@ -155,33 +134,24 @@ export default function GoalNudge({
         </Button>
         )}
       </div>
+      )}
     </div>
   );
 }
 
 GoalNudge.propTypes = {
-  error: PropTypes.node.isRequired,
-  goalName: PropTypes.string.isRequired,
-  validateGoalName: PropTypes.func.isRequired,
-  onUpdateText: PropTypes.func.isRequired,
-  inputName: PropTypes.string,
-  isLoading: PropTypes.bool,
   regionId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,
   ]).isRequired,
   recipientId: PropTypes.number.isRequired,
-  selectedGrants: PropTypes.arrayOf(
-    PropTypes.shape({
-      numberWithProgramTypes: PropTypes.string,
-      number: PropTypes.string,
-      id: PropTypes.number,
-    }),
-  ).isRequired,
-  onSelectNudgedGoal: PropTypes.func.isRequired,
+  selectedGrant: PropTypes.shape({
+    numberWithProgramTypes: PropTypes.string,
+    number: PropTypes.string,
+    id: PropTypes.number,
+  }),
 };
 
 GoalNudge.defaultProps = {
-  inputName: 'goalText',
-  isLoading: false,
+  selectedGrant: null,
 };

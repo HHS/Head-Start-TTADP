@@ -17,12 +17,13 @@ import FilterSelect from './FilterSelect';
 import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
 import FilterRoles from './FilterRoles';
+import FilterFEIRootCause from './FilterFEIRootCause';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
 export const createDateFilter = {
   id: 'createDate',
-  display: 'Created on',
+  display: 'Created on (goal)',
   conditions: DATE_CONDITIONS,
   defaultValues: {
     'is within': '',
@@ -103,6 +104,21 @@ export const userRolesFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterRoles
       inputId={`user-role-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const feiRootCauseFilter = {
+  id: 'goalResponse',
+  display: 'FEI root cause',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterFEIRootCause
+      inputId={`fei-root-cause-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
