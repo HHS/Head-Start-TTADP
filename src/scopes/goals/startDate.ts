@@ -32,9 +32,9 @@ export function afterStartDate(date: string): WhereOptions {
 }
 
 export function withinStartDates(dates: string[]): WhereOptions {
-  // got: [ '2022/11/23-2023/02/22' ]
-  // need: [ '2022-11-23', '2023-02-22']
-  const escapedDates = dates[0].split('-').map((d) => `'${d.replace(/\//g, '-')}'`);
+  const escapedDates = dates[0]
+    .split('-')
+    .map((d) => `'${new Date(d).toISOString()}'`);
   return {
     id: {
       [Op.in]: getDateSql(escapedDates, 'BETWEEN'),
