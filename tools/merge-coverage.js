@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { createCoverageMap } = require('istanbul-lib-coverage');
 
-const COVERAGE_DIR = path.resolve(__dirname, '../../coverage');
+const COVERAGE_DIR = path.resolve(__dirname, '../coverage');
 const MERGED_COVERAGE_FILE = path.join(COVERAGE_DIR, 'coverage-final.json');
 
 /**
