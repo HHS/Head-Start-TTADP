@@ -1,7 +1,6 @@
 import join from 'url-join';
 import { get } from './index';
 import { filtersToQueryString } from '../utils';
-import { QA_DASHBOARD_FILTER_CONFIG } from '../pages/QADashboard/constants';
 
 const ssdiUrl = join('/', 'api', 'ssdi');
 
