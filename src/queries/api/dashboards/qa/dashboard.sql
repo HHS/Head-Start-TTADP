@@ -235,13 +235,6 @@ JSON: {
       "supportsExclusion": true
     },
     {
-      "name": "createDate",
-      "type": "date[]",
-      "display": "Creation Date",
-      "description": "Filter based on the date range of creation.",
-      "supportsExclusion": true
-    },
-    {
       "name": "activityReportGoalResponse",
       "type": "string[]",
       "display": "Activity Report Goal Response",
@@ -341,7 +334,6 @@ DECLARE
     group_filter TEXT := NULLIF(current_setting('ssdi.group', true), '');
     current_user_id_filter TEXT := NULLIF(current_setting('ssdi.currentUserId', true), '');
     goal_name_filter TEXT := NULLIF(current_setting('ssdi.goalName', true), '');
-    create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
     report_id_filter TEXT := NULLIF(current_setting('ssdi.reportId', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
@@ -363,7 +355,6 @@ DECLARE
     group_not_filter BOOLEAN := COALESCE(current_setting('ssdi.group.not', true), 'false') = 'true';
     current_user_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.currentUserId.not', true), 'false') = 'true';
     goal_name_not_filter BOOLEAN := COALESCE(current_setting('ssdi.goalName.not', true), 'false') = 'true';
-    create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
     activity_report_goal_response_not_filter BOOLEAN := COALESCE(current_setting('ssdi.activityReportGoalResponse.not', true), 'false') = 'true';
     report_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reportId.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
@@ -581,7 +572,6 @@ BEGIN
 
     IF
         goal_name_filter IS NOT NULL OR
-        create_date_filter IS NOT NULL OR
         activity_report_goal_response_filter IS NOT NULL
     THEN
     WITH
@@ -602,25 +592,6 @@ BEGIN
             ) AS value
             WHERE g.name ~* value::text
           ) != goal_name_not_filter
-          )
-        )
-        -- Filter for createDate dates between two values if ssdi.createDate is defined
-        AND (
-          create_date_filter IS NULL
-          OR (
-          g."createdAt"::date <@ (
-            SELECT
-            CONCAT(
-              '[',
-              MIN(value::timestamp),
-              ',',
-              COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
-              ')'
-            )::daterange AS my_array
-            FROM json_array_elements_text(
-            COALESCE(create_date_filter, '[]')::json
-            ) AS value
-          ) != create_date_not_filter
           )
         )
         LEFT JOIN "GoalFieldResponses" gfr
