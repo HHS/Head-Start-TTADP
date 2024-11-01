@@ -26,10 +26,10 @@ const argv = yargs(hideBin(process.argv))
   .alias('help', 'h')
   .argv;
 
-const COVERAGE_FILE = path.resolve(__dirname, '../../coverage/coverage-final.json');
+const COVERAGE_FILE = path.resolve(__dirname, '../coverage/coverage-final.json');
 const BASE_BRANCH = 'origin/main'; // Update if your main branch has a different name
 // Directory to store artifacts
-const ARTIFACT_DIR = path.resolve(__dirname, '../../coverage-artifacts');
+const ARTIFACT_DIR = path.resolve(__dirname, '../coverage-artifacts');
 
 /**
  * Fetch the base branch to ensure it's up-to-date.
