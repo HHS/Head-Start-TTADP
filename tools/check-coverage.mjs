@@ -3,10 +3,12 @@
 import fs from 'fs';
 import path from 'path';
 import simpleGit from 'simple-git';
-import { createCoverageMap } from 'istanbul-lib-coverage';
+import pkg from 'istanbul-lib-coverage';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import markdownTable from 'markdown-table';
+
+const { createCoverageMap } = pkg;
 
 // Configuration
 const argv = yargs(hideBin(process.argv))
