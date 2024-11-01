@@ -1,12 +1,12 @@
 // src/tools/check-coverage.js
 
-const fs = require('fs');
-const path = require('path');
-const simpleGit = require('simple-git');
-const { createCoverageMap } = require('istanbul-lib-coverage');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
-const markdownTable = require('markdown-table');
+import fs from 'fs';
+import path from 'path';
+import simpleGit from 'simple-git';
+import { createCoverageMap } from 'istanbul-lib-coverage';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
+import markdownTable from 'markdown-table';
 
 // Configuration
 const argv = yargs(hideBin(process.argv))
