@@ -285,7 +285,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  -- DROP TABLE IF EXISTS process_log;
+  DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -293,14 +293,16 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  -- DROP TABLE IF EXISTS filtered_grants;
+  DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
       INSERT INTO filtered_grants (id)
-      SELECT DISTINCT id
+      SELECT
+        id
       FROM "Grants"
       WHERE COALESCE(deleted, false) = false
+      GROUP BY 1
       ORDER BY 1
       RETURNING id
   )
@@ -375,15 +377,16 @@ BEGIN
             COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId")::jsonb
           )
         )
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
@@ -436,15 +439,16 @@ BEGIN
         WHERE 1 = 1
         -- Continued Filter for group if ssdi.group is defined from left joined table above
         AND (group_filter IS NULL OR (g.id IS NOT NULL AND (gc.id IS NOT NULL OR g."sharedWith" = 'Everyone')))
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
@@ -467,13 +471,15 @@ BEGIN
 
   WITH seed_filtered_goals AS (
       INSERT INTO filtered_goals (id)
-      SELECT DISTINCT g.id
+      SELECT
+        g.id
       FROM "Goals" g
       JOIN filtered_grants fgr
       ON g."grantId" = fgr.id
       WHERE g."deletedAt" IS NULL
       AND g."mapsToParentGoalId" IS NULL
-      ORDER BY g.id  -- Add ORDER BY here
+      GROUP BY 1
+      ORDER BY 1
       RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
@@ -491,7 +497,7 @@ BEGIN
     THEN
     WITH
       applied_filtered_goals AS (
-        SELECT DISTINCT
+        SELECT
           g.id
         FROM filtered_goals fg
         JOIN "Goals" g
@@ -538,12 +544,16 @@ BEGIN
         WHERE 1 = 1
         -- Continued Filter for activityReportGoalResponse if ssdi.activityReportGoalResponse is defined, for array columns
         AND (activity_report_goal_response_filter IS NULL OR gfr.id IS NOT NULL)
+        GROUP BY 1
+        ORDER BY 1
       ),
         applied_filtered_out_goals AS (
-            SELECT fg.id
+            SELECT
+              fg.id
             FROM filtered_goals fg
             LEFT JOIN applied_filtered_goals afg ON fg.id = afg.id
-            WHERE afg.id IS NULL
+            GROUP BY 1
+            HAVING COUNT(afg.id) = 0
             ORDER BY 1
         ),
         delete_from_goal_filter AS (
@@ -553,11 +563,13 @@ BEGIN
             RETURNING fg.id
         ),
         applied_filtered_out_grants AS (
-            SELECT fgr.id
+            SELECT
+              fgr.id
             FROM filtered_grants fgr
             LEFT JOIN "Goals" g ON fgr.id = g."grantId"
             LEFT JOIN filtered_goals fg ON g.id = fg.id
-            WHERE fg.id IS NULL
+            GROUP BY 1
+            HAVING COUNT(fg.id) = 0
             ORDER BY 1
         ),
         delete_from_grant_filter AS (
