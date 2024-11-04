@@ -826,8 +826,6 @@ WITH
     ON r.id = gr."recipientId"
     JOIN filtered_grants fgr
     ON gr.id = fgr.id
-    JOIN filtered_grants fgr
-    ON gr.id = fgr.id
     LEFT JOIN "Goals" g
     ON gr.id = g."grantId"
     AND has_class
