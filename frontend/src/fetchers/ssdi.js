@@ -42,7 +42,7 @@ const allowedTopicsForQuery = {
     'domainInstructionalSupport',
     'createDate',
   ],
-  'qa-dashboard': [
+  'qa-dashboard': [ //all staticly defined
     'endDate',
     'startDate',
     'activityReportGoalResponse',
