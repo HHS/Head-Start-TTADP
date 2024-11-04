@@ -11,7 +11,7 @@ export default function BackLink({
 }) {
   return (
     <>
-      <FontAwesomeIcon className={`margin-right-1 no-print ${iconClasses}`} data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+      <FontAwesomeIcon className={`margin-right-1 no-print ${iconClasses}`} data-testid="back-link-icon" color={colors.ttahubBlue} icon={faArrowLeft} />
       <Link className={`no-print ttahub-back-link text-ttahub-blue margin-bottom-2 display-inline-block ${linkClasses}`} to={to}>{children}</Link>
     </>
   );
