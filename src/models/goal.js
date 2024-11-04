@@ -146,6 +146,16 @@ export default (sequelize, DataTypes) => {
     source: {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
+    isSourceEditable: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.goalTemplate && this.goalTemplate.source) {
+          return this.goalTemplate.source === null;
+        }
+
+        return true;
+      },
+    },
   }, {
     sequelize,
     modelName: 'Goal',

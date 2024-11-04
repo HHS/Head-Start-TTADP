@@ -1,77 +1,64 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  FormGroup,
-  Label,
-  Textarea,
-} from '@trussworks/react-uswds';
-import Req from '../Req';
+import { Textarea } from '@trussworks/react-uswds';
+import { useFormContext } from 'react-hook-form';
 import { SimilarGoalProp } from './SimilarGoal';
 import SimilarGoals from './SimilarGoals';
 import { dismissOnNoMatch } from './constants';
+import FormItem from '../FormItem';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
+const INPUT_NAME = 'goalName';
+const FIELD_LABEL = 'Recipient\'s goal';
 export default function GoalNudgeText({
-  error,
-  inputName,
-  validateGoalName,
-  goalName,
-  onChange,
-  isLoading,
   similar,
-  onSelectNudgedGoal,
+  dismissSimilar,
   setDismissSimilar,
   useOhsInitiativeGoal,
 }) {
+  const { register, watch } = useFormContext();
+
   if (useOhsInitiativeGoal) {
     return null;
   }
 
+  const { goalName, isGoalNameEditable } = watch();
+
   return (
-    <FormGroup error={error.props.children} className="position-relative">
-      <Label htmlFor={inputName}>
-        Recipient&apos;s goal
-        {' '}
-        <Req />
-      </Label>
-      <span className="usa-hint">
-        Get goal suggestions while you type
-      </span>
-      <>
-        {error}
+    <FormFieldThatIsSometimesReadOnly
+      label={FIELD_LABEL}
+      permissions={[isGoalNameEditable]}
+      value={goalName}
+    >
+      <FormItem label={FIELD_LABEL} name={INPUT_NAME} required>
         <Textarea
           onBlur={(e) => {
+            e.stopPropagation();
             if (similar.length) {
-              dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
+              dismissOnNoMatch(e, '.ttahub-goal-nudge--container *, .ttahub-similar-goal--input', setDismissSimilar);
             }
-            validateGoalName();
           }}
-          id={inputName}
-          name={inputName}
-          value={goalName}
-          onChange={onChange}
-          required
-          disabled={isLoading}
+          id={INPUT_NAME}
+          name={INPUT_NAME}
           style={{ height: '80px' }}
+          inputRef={register({ required: 'Enter goal text' })}
+          defaultValue=""
+          required
+          className="ttahub-goal-nudge--textarea"
         />
         <SimilarGoals
           similar={similar}
+          dismissSimilar={dismissSimilar}
           setDismissSimilar={setDismissSimilar}
-          onSelectNudgedGoal={onSelectNudgedGoal}
         />
-      </>
-    </FormGroup>
+      </FormItem>
+    </FormFieldThatIsSometimesReadOnly>
   );
 }
 
 GoalNudgeText.propTypes = {
-  error: PropTypes.node.isRequired,
-  inputName: PropTypes.string.isRequired,
-  validateGoalName: PropTypes.func.isRequired,
-  goalName: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  isLoading: PropTypes.bool.isRequired,
   similar: PropTypes.arrayOf(SimilarGoalProp).isRequired,
-  onSelectNudgedGoal: PropTypes.func.isRequired,
   setDismissSimilar: PropTypes.func.isRequired,
+  dismissSimilar: PropTypes.bool.isRequired,
   useOhsInitiativeGoal: PropTypes.bool.isRequired,
 };
