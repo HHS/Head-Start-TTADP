@@ -330,7 +330,8 @@ BEGIN
       SELECT DISTINCT a.id
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar ON a.id = ar."activityReportId"
-      JOIN filtered_grants fgr ON ar."grantId" = fgr.id
+      JOIN "GrantRelationshipToActive" grta ON ar."grantId" = grta."grantId"
+      JOIN filtered_grants fgr ON grta."activeGrantId" = fgr.id
       JOIN "ActivityReportGoals" arg ON a.id = arg."activityReportId"
       --JOIN filtered_goals fg ON arg."goalId" = fg.id
       WHERE a."calculatedStatus" = 'approved'
@@ -399,9 +400,10 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.3: Update filtered_grants based on the reduced filtered_activity_reports dataset
 WITH reduced_grants AS (
-    SELECT DISTINCT ar."grantId"
+    SELECT DISTINCT grta."activeGrantId" "grantId"
     FROM filtered_activity_reports fa
     JOIN "ActivityRecipients" ar ON fa.id = ar."activityReportId"
+    JOIN "GrantRelationshipToActive" grta ON ar."grantId" = grta."grantId"
 ),
 applied_filtered_out_grants AS (
     SELECT fgr.id
@@ -442,6 +444,7 @@ no_tta AS (
         COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
     FROM "Recipients" r
     JOIN "Grants" gr ON r.id = gr."recipientId"
+    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
     JOIN filtered_grants fgr ON gr.id = fgr.id
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN filtered_activity_reports far ON ar."activityReportId" = far.id
@@ -455,7 +458,7 @@ no_tta AS (
     )
     AND srp.data ->> 'status' = 'Complete'
     AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
-    WHERE gr.status = 'Active'
+    WHERE grta."activeGrantId" IS NOT NULL
     GROUP BY 1
 ),
 no_tta_widget AS (
@@ -470,16 +473,17 @@ no_tta_page AS (
       r.id,
       r.name,
       gr."regionId",
-      ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::timestamp last_tta,
-      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
+      ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::timestamp last_tta,
+      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
     AND NOT nt.has_tta
     JOIN "Grants" gr ON r.id = gr."recipientId"
+    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN "ActivityReports" a ON ar."activityReportId" = a.id
     AND a."calculatedStatus" = 'approved'
-    WHERE gr.status = 'Active'
+    WHERE grta."activeGrantId" IS NOT NULL
     GROUP BY 1,2,3
 ),
 datasets AS (
