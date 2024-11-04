@@ -48,7 +48,7 @@ const FeedArticle = ({
   return (
     <article className={`${className} position-relative margin-bottom-3 padding-bottom-3 ${unread ? 'ttahub-feed-article--unread' : ''}`}>
       <div className="ttahub-feed-article-content position-relative maxw-tablet">
-        <h4 className="ttahub-feed-article-title usa-prose margin-0 padding-0">{title}</h4>
+        {title && (<h4 className="ttahub-feed-article-title usa-prose margin-0 padding-0">{title}</h4>)}
         {parse(content)}
       </div>
     </article>
