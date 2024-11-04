@@ -520,7 +520,7 @@ BEGIN
         )
         WHERE 1 = 1
         -- Continued Filter for group if ssdi.group is defined from left joined table above
-        AND (group_filter IS NULL OR (g.id IS NOT NULL AND gc.id IS NOT NULL))
+        AND (group_filter IS NULL OR (g.id IS NOT NULL AND (gc.id IS NOT NULL OR g."sharedWith" = 'Everyone')))
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (

@@ -40,7 +40,7 @@ const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComp
 const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
 const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=no_tta_widget`;
 const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
-const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&createDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
+const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
 const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`;
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {

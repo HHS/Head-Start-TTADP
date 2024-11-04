@@ -88,21 +88,37 @@ export default function QADashboard() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
-        // Recipient with no tta data.
-        const recipientsWithNoTtaData = await getSelfServiceData(
-          'recipients-with-no-tta',
-          filters,
-          ['no_tta_widget'],
-        );
+        const [
+          recipientsWithNoTtaData,
+          feiData,
+          classData,
+          dashboardData,
+        ] = await Promise.all([
+          getSelfServiceData(
+            'recipients-with-no-tta',
+            filters,
+            ['no_tta_widget'],
+          ),
+          getSelfServiceData(
+            'recipients-with-ohs-standard-fei-goal',
+            filters,
+            ['with_fei_widget', 'with_fei_graph'],
+          ),
+          getSelfServiceData(
+            'recipients-with-class-scores-and-goals',
+            filters,
+            ['with_class_widget'],
+          ),
+          getSelfServiceData(
+            'qa-dashboard',
+            filters,
+            ['delivery_method_graph', 'role_graph', 'activity_widget'],
+          ),
+        ]);
+
         const noTTAContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable('recipients-with-no-tta', filters);
         const noTTAData = recipientsWithNoTtaData.find((item) => item.data_set === 'no_tta_widget');
 
-        // FEI data.
-        const feiData = await getSelfServiceData(
-          'recipients-with-ohs-standard-fei-goal',
-          filters,
-          ['with_fei_widget', 'with_fei_graph'],
-        );
         const feiContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable('recipients-with-ohs-standard-fei-goal', filters);
         const feiOverviewData = feiData.find((item) => item.data_set === 'with_fei_widget');
         const feiGraphData = feiData.find((item) => item.data_set === 'with_fei_graph');
@@ -114,12 +130,6 @@ export default function QADashboard() {
           showDashboardFiltersNotApplicable: feiContainsFiltersThatAreNotAllowed,
         };
 
-        // CLASS data.
-        const classData = await getSelfServiceData(
-          'recipients-with-class-scores-and-goals',
-          filters,
-          ['with_class_widget'],
-        );
         const classContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable('recipients-with-class-scores-and-goals', filters);
         const classOverviewData = classData.find((item) => item.data_set === 'with_class_widget');
 
@@ -145,13 +155,6 @@ export default function QADashboard() {
               : '0',
           },
         };
-
-        // Dashboard data.
-        const dashboardData = await getSelfServiceData(
-          'qa-dashboard',
-          filters,
-          ['delivery_method_graph', 'role_graph', 'activity_widget'],
-        );
 
         const showDashboardFiltersNotApplicable = containsFiltersThatAreNotApplicable('qa-dashboard', filters);
 
