@@ -86,7 +86,7 @@ services:
       - full_stack
     platform: linux/arm64
     user: zap
-    command: zap-api-scan.py -t http://similarity:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
+    command: zap-api-scan.py -t http://similarity_api:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
