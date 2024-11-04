@@ -8,16 +8,16 @@ import './SimilarGoals.scss';
 
 export default function SimilarGoals({
   similar,
+  dismissSimilar,
   setDismissSimilar,
-  onSelectNudgedGoal,
 }) {
-  if (similar.length === 0) {
+  if (similar.length === 0 || dismissSimilar) {
     return null;
   }
 
   return (
     <div className="ttahub-similar-goals position-absolute shadow-2 z-top">
-      <fieldset className="bg-white border-0 margin-0 padding-0">
+      <fieldset className="bg-white border-0 margin-0 padding-0" name="similarGoals">
         <legend className="ttahub-similar-goals--legend usa-prose padding-2">
           <span className="text-bold" aria-live="polite" aria-label={`we found ${similar.length} goals with similar text`}>
             Similar goals (
@@ -40,7 +40,6 @@ export default function SimilarGoals({
             key={uniqueId('similar-goal-')}
             goal={goal}
             setDismissSimilar={setDismissSimilar}
-            onSelectNudgedGoal={onSelectNudgedGoal}
           />
         ))}
       </fieldset>
@@ -51,5 +50,5 @@ export default function SimilarGoals({
 SimilarGoals.propTypes = {
   similar: PropTypes.arrayOf(SimilarGoalProp).isRequired,
   setDismissSimilar: PropTypes.func.isRequired,
-  onSelectNudgedGoal: PropTypes.func.isRequired,
+  dismissSimilar: PropTypes.bool.isRequired,
 };
