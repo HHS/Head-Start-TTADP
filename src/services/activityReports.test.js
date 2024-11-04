@@ -703,8 +703,8 @@ describe('Activity report service', () => {
         // Given an report with some notes
         const reportObjectWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-02T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-22T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '05/31/2022' }, { note: 'harry', completeDate: '06/10/2022' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/22/2022' }],
         };
         // When that report is created
         let report;
@@ -728,7 +728,7 @@ describe('Activity report service', () => {
         // And no recipient notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '05/31/2022' }, { note: 'harry', completeDate: '06/10/2022' }],
           recipientNextSteps: [],
         };
 
@@ -755,7 +755,7 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-02T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-22T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/22/2022' }],
         };
 
         // When that report is created
@@ -779,13 +779,13 @@ describe('Activity report service', () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of specialist notes
-        const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
+        const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '06/04/2022' }, { note: 'spongebob', completeDate: '06/06/2022' }] };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
@@ -801,12 +801,12 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-01T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-02T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/01/2022' }, { note: 'Toy Story', completeDate: '06/02/2022' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of recipient notes
-        const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
+        const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '06/04/2022' }, { note: 'spongebob', completeDate: '06/06/2022' }] };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
@@ -821,8 +821,8 @@ describe('Activity report service', () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/04/2022' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
@@ -845,8 +845,8 @@ describe('Activity report service', () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/03/2022' }, { note: 'Toy Story', completeDate: '06/04/2022' }],
         };
         const report = await createOrUpdate(reportWithNotes);
         const recipientIds = report.recipientNextSteps.map((note) => note.id);
