@@ -754,6 +754,13 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  has_current_grant AS (
+    SELECT
+      "grantId" grid,
+      BOOL_OR("activeGrantId" IS NOT NULL) has_current_active_grant
+    FROM "GrantRelationshipToActive"
+    GROUP BY 1
+  ),
   with_class AS (
     SELECT
       r.id,
@@ -763,6 +770,8 @@ WITH
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
+    JOIN has_current_grant hcg
+    ON gr.id = hcg.grid
     JOIN filtered_grants fgr
     ON gr.id = fgr.id
     LEFT JOIN "Goals" g
@@ -778,7 +787,7 @@ WITH
     ON mr."statusId" = mrs."statusId"
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
     AND g."mapsToParentGoalId" IS NULL
@@ -815,6 +824,8 @@ WITH
     AND (has_class OR has_scores)
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
+    JOIN filtered_grants fgr
+    ON gr.id = fgr.id
     JOIN filtered_grants fgr
     ON gr.id = fgr.id
     LEFT JOIN "Goals" g
@@ -854,7 +865,7 @@ WITH
     ON mr."statusId" = mrs."statusId"
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
