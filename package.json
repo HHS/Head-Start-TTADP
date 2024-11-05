@@ -104,7 +104,7 @@
     "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish",
     "merge-coverage": "node ./src/tools/merge-coverage.js",
-    "check-coverage": "node ./src/tools/check-coverage.mjs --fail-on-uncovered=true"
+    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true"
   },
   "repository": {
     "type": "git",
@@ -294,6 +294,7 @@
     "eslint-plugin-jest": "^25.3.4",
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.6",
+    "esm": "^3.2.25",
     "ioredis-mock": "^8.9.0",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
