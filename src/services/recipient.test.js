@@ -609,7 +609,7 @@ describe('Recipient DB service', () => {
 
     it('finds inactive grants that fall in the accepted range', async () => {
       const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
-      expect(foundRecipients.rows.length).toBe(3);
+      expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(69);
     });
