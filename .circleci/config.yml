@@ -783,9 +783,11 @@ jobs:
             chmod 744 ./checkcolorhash.sh
             ./checkcolorhash.sh;
       - run:
+          name: Add GitHub to known_hosts
+          command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
-      # Run coverage check script
       - run:
           name: Check coverage for modified lines
           command: |
