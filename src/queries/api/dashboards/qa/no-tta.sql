@@ -330,8 +330,7 @@ BEGIN
       SELECT DISTINCT a.id
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar ON a.id = ar."activityReportId"
-      JOIN "GrantRelationshipToActive" grta ON ar."grantId" = grta."grantId"
-      JOIN filtered_grants fgr ON grta."activeGrantId" = fgr.id
+      JOIN filtered_grants fgr ON ar."grantId" = fgr.id
       JOIN "ActivityReportGoals" arg ON a.id = arg."activityReportId"
       --JOIN filtered_goals fg ON arg."goalId" = fg.id
       WHERE a."calculatedStatus" = 'approved'
@@ -400,10 +399,9 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.3: Update filtered_grants based on the reduced filtered_activity_reports dataset
 WITH reduced_grants AS (
-    SELECT DISTINCT grta."activeGrantId" "grantId"
+    SELECT DISTINCT gr."grantId"
     FROM filtered_activity_reports fa
     JOIN "ActivityRecipients" ar ON fa.id = ar."activityReportId"
-    JOIN "GrantRelationshipToActive" grta ON ar."grantId" = grta."grantId"
 ),
 applied_filtered_out_grants AS (
     SELECT fgr.id
@@ -427,7 +425,15 @@ END $$;
 
 ---------------------------------------------------------------------------------------------------
 -- Final CTEs for dataset generation
-WITH active_filters_array AS (
+WITH
+has_current_grant AS (
+  SELECT
+    "recipientId" rid,
+    BOOL_OR(status = 'Active') has_current_active_grant
+  FROM "Grants"
+  GROUP BY 1
+),
+active_filters_array AS (
     SELECT array_remove(ARRAY[
       CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
       CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
@@ -443,6 +449,7 @@ no_tta AS (
     SELECT DISTINCT r.id, 
         COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
     FROM "Recipients" r
+    JOIN has_current_grant hcg ON r.id = hcg.rid
     JOIN "Grants" gr ON r.id = gr."recipientId"
     JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
     JOIN filtered_grants fgr ON gr.id = fgr.id
@@ -458,7 +465,7 @@ no_tta AS (
     )
     AND srp.data ->> 'status' = 'Complete'
     AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
-    WHERE grta."activeGrantId" IS NOT NULL
+    WHERE hcg.has_current_active_grant
     GROUP BY 1
 ),
 no_tta_widget AS (
@@ -478,12 +485,12 @@ no_tta_page AS (
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
     AND NOT nt.has_tta
+    JOIN has_current_grant hcg ON r.id = hcg.rid
     JOIN "Grants" gr ON r.id = gr."recipientId"
-    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN "ActivityReports" a ON ar."activityReportId" = a.id
     AND a."calculatedStatus" = 'approved'
-    WHERE grta."activeGrantId" IS NOT NULL
+    WHERE hcg.has_current_active_grant
     GROUP BY 1,2,3
 ),
 datasets AS (

@@ -585,9 +585,9 @@ END $$;
 WITH
   has_current_grant AS (
     SELECT
-      "grantId" grid,
-      BOOL_OR("activeGrantId" IS NOT NULL) has_current_active_grant
-    FROM "GrantRelationshipToActive"
+      "recipientId" rid,
+      BOOL_OR(status = 'Active') has_current_active_grant
+    FROM "Grants"
     GROUP BY 1
   ),
   with_fei AS (
@@ -596,10 +596,10 @@ WITH
       COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei,
       COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017 AND fg.id IS NOT NULL) grant_count
     FROM "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
-    JOIN has_current_grant hcg
-    ON gr.id = hcg.grid
     JOIN filtered_grants fgr
     ON gr.id = fgr.id
     LEFT JOIN "Goals" g
