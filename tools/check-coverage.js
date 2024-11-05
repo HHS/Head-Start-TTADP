@@ -59,16 +59,18 @@ async function getMergeBase() {
 async function getModifiedLines(mergeBase) {
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${mergeBase}..HEAD`]);
+  // eslint-disable-next-line no-console
+  console.log('getModifiedLines:', diffFiles);
   const files = diffFiles
     .split('\n')
-    .filter((file) => /\.(js|jsx|ts|tsx)$/.test(file));
+    .filter((file) => /\.(js|ts)$/.test(file));
 
   const modifiedLines = {};
 
   for (const file of files) {
     // Log the file being processed
     // eslint-disable-next-line no-console
-    console.log(file);
+    console.log('getModifiedLines:', file);
     const diff = await git.diff(['-U0', `${mergeBase}..HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
     let match;
@@ -129,7 +131,7 @@ function checkCoverage(modifiedLines, coverageMap) {
     } catch (e) {
       // If the file is not in the coverage report, consider all lines uncovered
       // eslint-disable-next-line no-console
-      console.log('checkCoverage:', file, lines);
+      console.log('checkCoverage:', file, lines, e);
       if (!uncovered[file]) {
         uncovered[file] = [];
       }
