@@ -63,8 +63,9 @@ const FileTable = ({ onFileRemoved, files }) => {
             <th width="20%">
               Status
             </th>
-            <th width="10%" aria-label="remove file" />
-
+            <th width="10%">
+              <span className="usa-sr-only">Remove file</span>
+            </th>
           </tr>
         </thead>
         <tbody>
