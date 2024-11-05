@@ -85,7 +85,7 @@ async function getModifiedLines(mergeBase) {
   });
 
   // Convert sets to arrays
-  modifiedLines.forEach((file) => {
+  Object.keys(modifiedLines).forEach((file) => {
     modifiedLines[file] = Array.from(modifiedLines[file]);
   });
 
