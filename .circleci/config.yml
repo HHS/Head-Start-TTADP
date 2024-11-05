@@ -785,10 +785,27 @@ jobs:
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
+      # Run coverage check script
+      - run:
+          name: Check coverage for modified lines
+          command: |
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              chmod +x ./tools/check-coverage.mjs
+              cd frontend
+              node ../tools/check-coverage.mjs \
+                --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
+                --output-format=json,markdown,html
+              cd -
+            else
+              echo "Not a PR build. Skipping coverage check."
+            fi
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+      - store_artifacts:
+          path: frontend/coverage-artifacts/
+          destination: uncovered-lines
     resource_class: large
   test_e2e:
     executor: docker-postgres-executor
