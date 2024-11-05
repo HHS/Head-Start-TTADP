@@ -115,7 +115,7 @@ function loadCoverage() {
  * Check if modified lines are covered.
  */
 function checkCoverage(modifiedLines, coverageMap) {
-  const uncovered = [];
+  const uncovered = {};
 
   Object.entries(modifiedLines).forEach(([file, lines]) => {
     // eslint-disable-next-line no-console
@@ -130,9 +130,10 @@ function checkCoverage(modifiedLines, coverageMap) {
       // If the file is not in the coverage report, consider all lines uncovered
       // eslint-disable-next-line no-console
       console.log('checkCoverage:', file, lines);
-      lines.forEach((line) => {
-        uncovered.push({ file, line });
-      });
+      if (!uncovered[file]) {
+        uncovered[file] = [];
+      }
+      uncovered[file].push(...lines);
       return;
     }
 
@@ -143,12 +144,46 @@ function checkCoverage(modifiedLines, coverageMap) {
       console.log('checkCoverage:', file, line);
       const lineCoverage = detailedCoverage.find((detail) => detail.line === line);
       if (!lineCoverage || lineCoverage.hit === 0) {
-        uncovered.push({ file, line });
+        if (!uncovered[file]) {
+          uncovered[file] = [];
+        }
+        uncovered[file].push(line);
       }
     });
   });
 
+  // Sort and deduplicate the uncovered lines per file
+  Object.keys(uncovered).forEach((file) => {
+    uncovered[file] = Array.from(new Set(uncovered[file])).sort((a, b) => a - b);
+  });
+
   return uncovered;
+}
+
+function groupIntoRanges(lines) {
+  const ranges = [];
+  if (lines.length === 0) {
+    return ranges;
+  }
+
+  let start = lines[0];
+  let end = lines[0];
+
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] === end + 1) {
+      // Contiguous line
+      end = lines[i];
+    } else {
+      // Not contiguous, save the previous range
+      ranges.push({ start, end });
+      start = lines[i];
+      end = lines[i];
+    }
+  }
+  // Push the last range
+  ranges.push({ start, end });
+
+  return ranges;
 }
 
 /**
@@ -172,10 +207,15 @@ function generateMarkdownReport(uncovered) {
     return;
   }
 
-  const table = [
-    ['File', 'Line Number'],
-    ...uncovered.map((entry) => [entry.file, entry.line.toString()]),
-  ];
+  const table = [['File', 'Line Ranges']];
+
+  Object.entries(uncovered).forEach(([file, lines]) => {
+    const ranges = groupIntoRanges(lines);
+    const rangeStrings = ranges
+      .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+      .join(', ');
+    table.push([file, rangeStrings]);
+  });
 
   const markdownContent = `# Uncovered Lines Report
 
@@ -198,7 +238,16 @@ function generateArtifact(uncovered) {
   }
 
   const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.json');
-  fs.writeFileSync(artifactPath, JSON.stringify(uncovered, null, 2), 'utf-8');
+
+  // Convert uncovered to include ranges
+  const result = {};
+
+  Object.entries(uncovered).forEach(([file, lines]) => {
+    const ranges = groupIntoRanges(lines);
+    result[file] = ranges;
+  });
+
+  fs.writeFileSync(artifactPath, JSON.stringify(result, null, 2), 'utf-8');
   // eslint-disable-next-line no-console
   console.log(`JSON artifact generated at ${artifactPath}`);
 }
@@ -213,7 +262,7 @@ function generateHtmlReport(uncovered) {
 
   const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.html');
 
-  if (uncovered.length === 0) {
+  if (Object.keys(uncovered).length === 0) {
     const htmlContent = `
       <html>
         <head><title>Coverage Report</title></head>
@@ -224,17 +273,25 @@ function generateHtmlReport(uncovered) {
       </html>
     `;
     fs.writeFileSync(artifactPath, htmlContent, 'utf-8');
-    // eslint-disable-next-line no-console
     console.log(`HTML report generated at ${artifactPath}`);
     return;
   }
 
-  const tableRows = uncovered.map((entry) => `
-    <tr>
-      <td>${entry.file}</td>
-      <td>${entry.line}</td>
-    </tr>
-  `).join('');
+  let tableRows = '';
+
+  Object.entries(uncovered).forEach(([file, lines]) => {
+    const ranges = groupIntoRanges(lines);
+    const rangeStrings = ranges
+      .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+      .join(', ');
+
+    tableRows += `
+      <tr>
+        <td>${file}</td>
+        <td>${rangeStrings}</td>
+      </tr>
+    `;
+  });
 
   const htmlContent = `
     <html>
@@ -260,7 +317,7 @@ function generateHtmlReport(uncovered) {
           <thead>
             <tr>
               <th>File</th>
-              <th>Line Number</th>
+              <th>Line Ranges</th>
             </tr>
           </thead>
           <tbody>
@@ -272,7 +329,6 @@ function generateHtmlReport(uncovered) {
   `;
 
   fs.writeFileSync(artifactPath, htmlContent, 'utf-8');
-  // eslint-disable-next-line no-console
   console.log(`HTML report generated at ${artifactPath}`);
 }
 
@@ -303,9 +359,12 @@ function generateHtmlReport(uncovered) {
     if (uncovered.length > 0) {
       // eslint-disable-next-line no-console
       console.error('Uncovered lines detected:');
-      uncovered.forEach(({ file, line }) => {
-        // eslint-disable-next-line no-console
-        console.error(`- ${file}:${line}`);
+      Object.entries(uncovered).forEach(([file, lines]) => {
+        const ranges = groupIntoRanges(lines);
+        const rangeStrings = ranges
+          .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+          .join(', ');
+        console.error(`- ${file}: ${rangeStrings}`);
       });
 
       // Generate JSON artifact
