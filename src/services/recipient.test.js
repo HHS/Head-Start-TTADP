@@ -976,10 +976,6 @@ describe('Recipient DB service', () => {
 
     it('keeps goals separated by goal text when they share the same grant with no creators/collaborators', async () => {
       // Remove other goals
-      goals[0].destroy();
-      goals[3].destroy();
-      goals[4].destroy();
-
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(5);
       expect(allGoalIds.length).toBe(5);
@@ -1065,10 +1061,11 @@ describe('Recipient DB service', () => {
       const reason = faker.animal.cetacean();
 
       topics = await Topic.bulkCreate([
-        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
-        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
-        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
-        { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
+        { name: 'Topic for Objective 1 a' },
+        { name: 'Topic for Objective 1 b' },
+        { name: 'Topic for Objective 1 c' },
+        { name: 'Topic for Objective 2 b' },
+        { name: 'Report Level Topic' },
       ]);
 
       report = await createReport({
@@ -1079,7 +1076,7 @@ describe('Recipient DB service', () => {
         ],
         reason: [reason],
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        topics: [topics[0].name],
+        topics: [topics[4].name],
         regionId: grant.regionId,
       });
 
@@ -1088,12 +1085,23 @@ describe('Recipient DB service', () => {
         objectiveId: o.id,
       })));
 
-      await Promise.all((aros.map((aro) => ActivityReportObjectiveTopic.bulkCreate(
-        topics.map((t) => ({
-          activityReportObjectiveId: aro.id,
-          topicId: t.id,
-        })),
-      ))).flat());
+      // Disperse topics over objectives to make sure we don't lose any.
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aros[0].id,
+        topicId: topics[0].id,
+      });
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aros[0].id,
+        topicId: topics[1].id,
+      });
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aros[1].id,
+        topicId: topics[2].id,
+      });
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aros[2].id,
+        topicId: topics[3].id,
+      });
 
       await ActivityReportGoal.create({
         activityReportId: report.id,
@@ -1156,20 +1164,54 @@ describe('Recipient DB service', () => {
       });
     });
 
-    it('successfully reduces data without losing topics', async () => {
+    it('successfully maintains two goals without losing topics', async () => {
       const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
-      expect(goalsForRecord.count).toBe(1);
-      expect(goalsForRecord.goalRows.length).toBe(1);
-      expect(goalsForRecord.allGoalIds.length).toBe(1);
+      // Assert counts.
+      expect(goalsForRecord.count).toBe(2);
+      expect(goalsForRecord.goalRows.length).toBe(2);
+      expect(goalsForRecord.allGoalIds.length).toBe(2);
 
-      expect(goalsForRecord.goalRows.flatMap((g) => g.goalTopics)).toHaveLength(4);
-      const goal = goalsForRecord.goalRows[0];
+      // Select the first goal by goal id.
+      const goal = goalsForRecord.goalRows.find((g) => g.id === goals[0].id);
+      expect(goal).toBeTruthy();
+
+      // Assert the goal has the correct number of objectives.
       expect(goal.objectives.length).toBe(1);
-      const objective = goal.objectives[0];
-      expect(objective.ids).toHaveLength(3);
-      expect(objective.ids.every(Boolean)).toBeTruthy();
-      expect(objective.topics.length).toBe(4);
+
+      // Assert objective text and status.
+      expect(goal.objectives[0].title).toBe(objectives[0].title);
+      expect(goal.objectives[0].status).toBe(objectives[0].status);
+      expect(goal.objectives[0].title).toBe(objectives[1].title);
+      expect(goal.objectives[0].status).toBe(objectives[1].status);
+
+      // Assert the goal has the correct number of topics.
+      expect(goal.goalTopics.length).toBe(4);
+
+      // Assert topic names.
+      expect(goal.objectives[0].topics).toEqual(
+        expect.arrayContaining([topics[0].name, topics[1].name, topics[2].name, topics[4].name]),
+      );
+
+      // Assert the second goal by id.
+      const goal2 = goalsForRecord.goalRows.find((g) => g.id === goals[1].id);
+      expect(goal2).toBeTruthy();
+
+      // Assert the second goal has the correct number of objectives.
+      expect(goal2.objectives.length).toBe(1);
+      // Assert it contains id for objective 3.
+
+      // Assert objective text and status.
+      expect(goal2.objectives[0].title).toBe(objectives[2].title);
+      expect(goal2.objectives[0].status).toBe(objectives[2].status);
+
+      // Assert the second goal has the correct number of topics.
+      expect(goal2.goalTopics.length).toBe(2);
+
+      // Assert topic name.
+      expect(goal2.objectives[0].topics).toEqual(
+        expect.arrayContaining([topics[3].name, topics[4].name]),
+      );
     });
   });
 
