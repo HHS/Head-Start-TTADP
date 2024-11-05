@@ -66,6 +66,8 @@ async function getModifiedLines(mergeBase) {
   const modifiedLines = {};
 
   files.forEach(async (file) => {
+    // eslint-disable-next-line no-console
+    console.log(file);
     const diff = await git.diff(['-U0', `${mergeBase}..HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
     let match;
@@ -79,6 +81,8 @@ async function getModifiedLines(mergeBase) {
       }
       // eslint-disable-next-line no-plusplus
       for (let i = startLine; i < startLine + lineCount; i++) {
+        // eslint-disable-next-line no-console
+        console.log(i);
         modifiedLines[file].add(i);
       }
     }
@@ -114,6 +118,8 @@ function checkCoverage(modifiedLines, coverageMap) {
   const uncovered = [];
 
   Object.entries(modifiedLines).forEach(([file, lines]) => {
+    // eslint-disable-next-line no-console
+    console.log('checkCoverage:', file);
     // Normalize file path to match coverage map keys
     const normalizedFile = path.relative(process.cwd(), path.resolve(__dirname, '../../', file));
 
@@ -122,6 +128,8 @@ function checkCoverage(modifiedLines, coverageMap) {
       fileCoverage = coverageMap.fileCoverageFor(normalizedFile);
     } catch (e) {
       // If the file is not in the coverage report, consider all lines uncovered
+      // eslint-disable-next-line no-console
+      console.log('checkCoverage:', file, lines);
       lines.forEach((line) => {
         uncovered.push({ file, line });
       });
@@ -131,6 +139,8 @@ function checkCoverage(modifiedLines, coverageMap) {
     const detailedCoverage = fileCoverage.toJSON().lines.details;
 
     lines.forEach((line) => {
+      // eslint-disable-next-line no-console
+      console.log('checkCoverage:', file, line);
       const lineCoverage = detailedCoverage.find((detail) => detail.line === line);
       if (!lineCoverage || lineCoverage.hit === 0) {
         uncovered.push({ file, line });
