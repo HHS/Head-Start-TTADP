@@ -402,7 +402,19 @@ test.describe('Activity Report', () => {
 
     /* We have Two goals and Two Recipients this should result in 4 goals */
     // Expand objectives for G1.
+
+    // Scroll until the button with the name 'View objectives for goal G-6' is visible.
+    await page.evaluate(() => {
+      document.querySelector('button[name="View objectives for goal G-6"]')?.scrollIntoView();
+    });
+
     await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
+
+    // Scroll until the button with the name 'View objectives for goal G-5' is visible.
+    await page.evaluate(() => {
+      document.querySelector('button[name="View objectives for goal G-5"]')?.scrollIntoView();
+    });
+
     await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
 
     await expect(page.getByText('g1o1', { exact: true }).first()).toBeTruthy();
