@@ -32,7 +32,7 @@ const argv = yargs(hideBin(process.argv))
   .argv;
 
 const COVERAGE_FILE = path.resolve(__dirname, '../coverage/coverage-final.json');
-const BASE_BRANCH = 'origin/main'; // Update if your main branch has a different name
+const BASE_BRANCH = 'main';
 // Directory to store artifacts
 const ARTIFACT_DIR = path.resolve(__dirname, '../coverage-artifacts');
 
@@ -65,7 +65,8 @@ async function getModifiedLines(mergeBase) {
 
   const modifiedLines = {};
 
-  files.forEach(async (file) => {
+  for (const file of files) {
+    // Log the file being processed
     // eslint-disable-next-line no-console
     console.log(file);
     const diff = await git.diff(['-U0', `${mergeBase}..HEAD`, '--', file]);
@@ -79,14 +80,13 @@ async function getModifiedLines(mergeBase) {
       if (!modifiedLines[file]) {
         modifiedLines[file] = new Set();
       }
-      // eslint-disable-next-line no-plusplus
       for (let i = startLine; i < startLine + lineCount; i++) {
         // eslint-disable-next-line no-console
         console.log(i);
         modifiedLines[file].add(i);
       }
     }
-  });
+  }
 
   // Convert sets to arrays
   Object.keys(modifiedLines).forEach((file) => {
