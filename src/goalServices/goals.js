@@ -1728,7 +1728,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     regionId,
   );
 
-  if (existingRecipientGroups) {
+  if (existingRecipientGroups && existingRecipientGroups.length) {
     return existingRecipientGroups;
   }
 
