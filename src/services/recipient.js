@@ -37,7 +37,6 @@ import filtersToScopes, { mergeIncludes } from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import {
-  findOrFailExistingGoal,
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
@@ -811,34 +810,6 @@ export async function getGoalsByActivityRecipient(
 
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
-
-    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
-
-    if (existingGoal) {
-      existingGoal.ids = [...existingGoal.ids, current.id];
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
-      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
-      existingGoal.objectives = reduceObjectivesForRecipientRecord(
-        current,
-        existingGoal,
-        existingGoal.grantNumbers,
-      );
-      existingGoal.objectiveCount = existingGoal.objectives.length;
-      existingGoal.isCurated = isCurated || existingGoal.isCurated;
-      existingGoal.collaborators = existingGoal.collaborators || [];
-      existingGoal.collaborators = uniqBy([
-        ...existingGoal.collaborators,
-        ...createCollaborators(current),
-      ], 'goalCreatorName');
-
-      existingGoal.onAR = existingGoal.onAR || current.onAR;
-      existingGoal.isReopenedGoal = existingGoal.isReopenedGoal
-          || wasGoalPreviouslyClosed(current);
-
-      return {
-        goalRows: previous.goalRows,
-      };
-    }
 
     const goalToAdd = {
       id: current.id,
