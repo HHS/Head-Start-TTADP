@@ -404,16 +404,17 @@ test.describe('Activity Report', () => {
     // Expand objectives for G1.
 
     // Scroll until the button with the name 'View objectives for goal G-6' is visible.
-    await page.evaluate(() => {
-      document.querySelector('button[name="View objectives for goal G-6"]')?.scrollIntoView();
-    });
+    await page.getByRole('button', { name: 'View objectives for goal G-6' }).scrollIntoViewIfNeeded();
+
+    // wait for 3 seconds.
+    await page.waitForTimeout(3000);
 
     await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
 
     // Scroll until the button with the name 'View objectives for goal G-5' is visible.
-    await page.evaluate(() => {
-      document.querySelector('button[name="View objectives for goal G-5"]')?.scrollIntoView();
-    });
+    await page.getByRole('button', { name: 'View objectives for goal G-5' }).scrollIntoViewIfNeeded();
+
+    await page.waitForTimeout(3000);
 
     await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
 
