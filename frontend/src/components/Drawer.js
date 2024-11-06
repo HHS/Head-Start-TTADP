@@ -98,7 +98,7 @@ export default function Drawer({
       }}
     >
       <Trap>
-        <div className="bg-white shadow-3">
+        <div className="bg-white shadow-3 display-flex">
           {title && (
             <div
               className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${
