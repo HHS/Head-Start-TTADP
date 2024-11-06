@@ -124,6 +124,46 @@ function loadCoverage() {
   return coverageMap;
 }
 
+// Helper function to get an array of lines from a location
+function getLinesFromLocation(loc) {
+  const lines = [];
+  for (let i = loc.start.line; i <= loc.end.line; i++) {
+    lines.push(i);
+  }
+  return lines;
+}
+
+// Helper function to get overlapping lines between two arrays
+function linesIntersect(lines1, lines2) {
+  return lines1.filter((line) => lines2.includes(line));
+}
+
+// Helper function to adjust location to only include overlapping lines
+function intersectLocationWithLines(loc, overlappingLines) {
+  if (overlappingLines.length === 0) {
+    return null; // No overlap
+  }
+  const newStartLine = Math.max(loc.start.line, Math.min(...overlappingLines));
+  const newEndLine = Math.min(loc.end.line, Math.max(...overlappingLines));
+
+  const newStart = { ...loc.start };
+  const newEnd = { ...loc.end };
+
+  // Adjust start line and column
+  if (newStartLine !== loc.start.line) {
+    newStart.line = newStartLine;
+    newStart.column = 0; // Reset column since line changed
+  }
+
+  // Adjust end line and column
+  if (newEndLine !== loc.end.line) {
+    newEnd.line = newEndLine;
+    newEnd.column = undefined; // Column is unknown
+  }
+
+  return { start: newStart, end: newEnd };
+}
+
 /**
  * Check if modified lines are covered.
  */
@@ -131,11 +171,8 @@ function checkCoverage(modifiedLines, coverageMap) {
   const uncovered = {};
 
   Object.entries(modifiedLines).forEach(([file, lines]) => {
-    // eslint-disable-next-line no-console
-    console.log('checkCoverage:', file);
     // Normalize file path to match coverage map keys
     const normalizedFile = path.resolve(process.cwd(), file);
-
 
     let fileCoverage;
     try {
@@ -148,31 +185,89 @@ function checkCoverage(modifiedLines, coverageMap) {
       // eslint-disable-next-line no-console
       console.log('checkCoverage:', file, lines, e);
       if (!uncovered[file]) {
-        uncovered[file] = [];
+        uncovered[file] = {
+          statements: [],
+          functions: [],
+          branches: [],
+        };
       }
-      uncovered[file].push(...lines);
+      lines.forEach((line) => {
+        uncovered[file].statements.push({ line });
+        uncovered[file].functions.push({ line });
+        uncovered[file].branches.push({ line });
+      });
       return;
     }
-    // eslint-disable-next-line no-console
-    console.log(fileCoverage);
-    const detailedCoverage = fileCoverage.toJSON().lines.details;
 
-    lines.forEach((line) => {
-      // eslint-disable-next-line no-console
-      console.log('checkCoverage:', file, line);
-      const lineCoverage = detailedCoverage.find((detail) => detail.line === line);
-      if (!lineCoverage || lineCoverage.hit === 0) {
-        if (!uncovered[file]) {
-          uncovered[file] = [];
+    const statementMap = fileCoverage.statementMap;
+    const fnMap = fileCoverage.fnMap;
+    const branchMap = fileCoverage.branchMap;
+    const s = fileCoverage.s;
+    const f = fileCoverage.f;
+    const b = fileCoverage.b;
+
+    if (!uncovered[file]) {
+      uncovered[file] = {
+        statements: [],
+        functions: [],
+        branches: [],
+      };
+    }
+
+    // Check uncovered statements
+    Object.entries(statementMap).forEach(([id, loc]) => {
+      const statementLines = getLinesFromLocation(loc);
+      const overlappingLines = linesIntersect(lines, statementLines);
+      if (overlappingLines.length > 0 && s[id] === 0) {
+        // Adjust loc to only include overlapping lines
+        const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
+        if (intersectedLoc) {
+          uncovered[file].statements.push({
+            id,
+            start: intersectedLoc.start,
+            end: intersectedLoc.end,
+          });
         }
-        uncovered[file].push(line);
       }
     });
-  });
 
-  // Sort and deduplicate the uncovered lines per file
-  Object.keys(uncovered).forEach((file) => {
-    uncovered[file] = Array.from(new Set(uncovered[file])).sort((a, b) => a - b);
+    // Check uncovered functions
+    Object.entries(fnMap).forEach(([id, fn]) => {
+      const functionLines = getLinesFromLocation(fn.loc);
+      const overlappingLines = linesIntersect(lines, functionLines);
+      if (overlappingLines.length > 0 && f[id] === 0) {
+        // Adjust loc to only include overlapping lines
+        const intersectedLoc = intersectLocationWithLines(fn.loc, overlappingLines);
+        if (intersectedLoc) {
+          uncovered[file].functions.push({
+            id,
+            name: fn.name,
+            start: intersectedLoc.start,
+            end: intersectedLoc.end,
+          });
+        }
+      }
+    });
+
+    // Check uncovered branches
+    Object.entries(branchMap).forEach(([id, branch]) => {
+      branch.locations.forEach((loc, idx) => {
+        const branchLines = getLinesFromLocation(loc);
+        const overlappingLines = linesIntersect(lines, branchLines);
+        if (overlappingLines.length > 0 && b[id][idx] === 0) {
+          // Adjust loc to only include overlapping lines
+          const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
+          if (intersectedLoc) {
+            uncovered[file].branches.push({
+              id,
+              locationIndex: idx,
+              start: intersectedLoc.start,
+              end: intersectedLoc.end,
+            });
+          }
+        }
+      });
+    });
   });
 
   return uncovered;
@@ -184,6 +279,7 @@ function groupIntoRanges(lines) {
     return ranges;
   }
 
+  lines.sort((a, b) => a - b);
   let start = lines[0];
   let end = lines[0];
 
@@ -208,7 +304,6 @@ function groupIntoRanges(lines) {
  * Generate a Markdown report for uncovered lines.
  */
 async function generateMarkdownReport(uncovered) {
-  
   const { markdownTable } = await import('markdown-table');
   if (!fs.existsSync(ARTIFACT_DIR)) {
     fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
@@ -216,7 +311,7 @@ async function generateMarkdownReport(uncovered) {
 
   const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.md');
 
-  if (uncovered.length === 0) {
+  if (Object.keys(uncovered).length === 0) {
     fs.writeFileSync(
       artifactPath,
       '# Coverage Report\n\nAll modified lines are covered by tests.',
@@ -227,22 +322,56 @@ async function generateMarkdownReport(uncovered) {
     return;
   }
 
-  const table = [['File', 'Line Ranges']];
+  let markdownContent = `# Uncovered Lines Report
 
-  Object.entries(uncovered).forEach(([file, lines]) => {
-    const ranges = groupIntoRanges(lines);
-    const rangeStrings = ranges
-      .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
-      .join(', ');
-    table.push([file, rangeStrings]);
-  });
+The following code segments are not covered by tests:
 
-  const markdownContent = `# Uncovered Lines Report
-
-The following lines are not covered by tests:
-
-${await markdownTable(table)}
 `;
+
+  Object.entries(uncovered).forEach(([file, data]) => {
+    markdownContent += `## ${file}\n\n`;
+
+    if (data.statements.length > 0) {
+      markdownContent += `### Statements\n\n`;
+      const table = [['ID', 'Start Line', 'End Line']];
+      data.statements.forEach((stmt) => {
+        table.push([
+          stmt.id,
+          stmt.start.line,
+          stmt.end.line,
+        ]);
+      });
+      markdownContent += markdownTable(table) + '\n\n';
+    }
+
+    if (data.functions.length > 0) {
+      markdownContent += `### Functions\n\n`;
+      const table = [['ID', 'Name', 'Start Line', 'End Line']];
+      data.functions.forEach((fn) => {
+        table.push([
+          fn.id,
+          fn.name,
+          fn.start.line,
+          fn.end.line,
+        ]);
+      });
+      markdownContent += markdownTable(table) + '\n\n';
+    }
+
+    if (data.branches.length > 0) {
+      markdownContent += `### Branches\n\n`;
+      const table = [['ID', 'Branch Index', 'Start Line', 'End Line']];
+      data.branches.forEach((branch) => {
+        table.push([
+          branch.id,
+          branch.locationIndex,
+          branch.start.line,
+          branch.end.line,
+        ]);
+      });
+      markdownContent += markdownTable(table) + '\n\n';
+    }
+  });
 
   fs.writeFileSync(artifactPath, markdownContent, 'utf-8');
   // eslint-disable-next-line no-console
@@ -259,15 +388,7 @@ function generateArtifact(uncovered) {
 
   const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.json');
 
-  // Convert uncovered to include ranges
-  const result = {};
-
-  Object.entries(uncovered).forEach(([file, lines]) => {
-    const ranges = groupIntoRanges(lines);
-    result[file] = ranges;
-  });
-
-  fs.writeFileSync(artifactPath, JSON.stringify(result, null, 2), 'utf-8');
+  fs.writeFileSync(artifactPath, JSON.stringify(uncovered, null, 2), 'utf-8');
   // eslint-disable-next-line no-console
   console.log(`JSON artifact generated at ${artifactPath}`);
 }
@@ -297,34 +418,23 @@ function generateHtmlReport(uncovered) {
     return;
   }
 
-  let tableRows = '';
-
-  Object.entries(uncovered).forEach(([file, lines]) => {
-    const ranges = groupIntoRanges(lines);
-    const rangeStrings = ranges
-      .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
-      .join(', ');
-
-    tableRows += `
-      <tr>
-        <td>${file}</td>
-        <td>${rangeStrings}</td>
-      </tr>
-    `;
-  });
-
-  const htmlContent = `
+  let htmlContent = `
     <html>
       <head>
         <title>Uncovered Lines Report</title>
         <style>
+          body { font-family: Arial, sans-serif; }
+          h1 { color: #333; }
+          h2 { color: #555; }
           table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 20px;
           }
           th, td {
             padding: 8px 12px;
             border: 1px solid #ddd;
+            text-align: left;
           }
           th {
             background-color: #f4f4f4;
@@ -333,17 +443,101 @@ function generateHtmlReport(uncovered) {
       </head>
       <body>
         <h1>Uncovered Lines Report</h1>
+  `;
+
+  Object.entries(uncovered).forEach(([file, data]) => {
+    htmlContent += `<h2>${file}</h2>`;
+
+    if (data.statements.length > 0) {
+      htmlContent += `<h3>Statements</h3>`;
+      htmlContent += `
         <table>
           <thead>
             <tr>
-              <th>File</th>
-              <th>Line Ranges</th>
+              <th>ID</th>
+              <th>Start Line</th>
+              <th>End Line</th>
             </tr>
           </thead>
           <tbody>
-            ${tableRows}
+      `;
+      data.statements.forEach((stmt) => {
+        htmlContent += `
+          <tr>
+            <td>${stmt.id}</td>
+            <td>${stmt.start.line}</td>
+            <td>${stmt.end.line}</td>
+          </tr>
+        `;
+      });
+      htmlContent += `
           </tbody>
         </table>
+      `;
+    }
+
+    if (data.functions.length > 0) {
+      htmlContent += `<h3>Functions</h3>`;
+      htmlContent += `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Start Line</th>
+              <th>End Line</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.functions.forEach((fn) => {
+        htmlContent += `
+          <tr>
+            <td>${fn.id}</td>
+            <td>${fn.name}</td>
+            <td>${fn.start.line}</td>
+            <td>${fn.end.line}</td>
+          </tr>
+        `;
+      });
+      htmlContent += `
+          </tbody>
+        </table>
+      `;
+    }
+
+    if (data.branches.length > 0) {
+      htmlContent += `<h3>Branches</h3>`;
+      htmlContent += `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Branch Index</th>
+              <th>Start Line</th>
+              <th>End Line</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.branches.forEach((branch) => {
+        htmlContent += `
+          <tr>
+            <td>${branch.id}</td>
+            <td>${branch.locationIndex}</td>
+            <td>${branch.start.line}</td>
+            <td>${branch.end.line}</td>
+          </tr>
+        `;
+      });
+      htmlContent += `
+          </tbody>
+        </table>
+      `;
+    }
+  });
+
+  htmlContent += `
       </body>
     </html>
   `;
@@ -376,15 +570,41 @@ function generateHtmlReport(uncovered) {
     console.log('Checking coverage...');
     const uncovered = checkCoverage(modifiedLines, coverageMap);
 
-    if (uncovered.length > 0) {
+    if (Object.keys(uncovered).length > 0) {
       // eslint-disable-next-line no-console
       console.error('Uncovered lines detected:');
-      Object.entries(uncovered).forEach(([file, lines]) => {
-        const ranges = groupIntoRanges(lines);
-        const rangeStrings = ranges
-          .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
-          .join(', ');
-        console.error(`- ${file}: ${rangeStrings}`);
+      Object.entries(uncovered).forEach(([file, data]) => {
+        console.error(`- ${file}:`);
+        if (data.statements.length > 0) {
+          const lines = data.statements.map((stmt) => stmt.start.line).sort((a, b) => a - b);
+          const ranges = groupIntoRanges(lines);
+          const rangeStrings = ranges
+            .map((range) =>
+              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
+            )
+            .join(', ');
+          console.error(`  Statements: ${rangeStrings}`);
+        }
+        if (data.functions.length > 0) {
+          const lines = data.functions.map((fn) => fn.start.line).sort((a, b) => a - b);
+          const ranges = groupIntoRanges(lines);
+          const rangeStrings = ranges
+            .map((range) =>
+              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
+            )
+            .join(', ');
+          console.error(`  Functions: ${rangeStrings}`);
+        }
+        if (data.branches.length > 0) {
+          const lines = data.branches.map((branch) => branch.start.line).sort((a, b) => a - b);
+          const ranges = groupIntoRanges(lines);
+          const rangeStrings = ranges
+            .map((range) =>
+              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
+            )
+            .join(', ');
+          console.error(`  Branches: ${rangeStrings}`);
+        }
       });
 
       // Generate JSON artifact
@@ -411,7 +631,7 @@ function generateHtmlReport(uncovered) {
 
       // Optionally, generate empty reports
       if (argv['output-format'].includes('markdown')) {
-        generateMarkdownReport(uncovered);
+        await generateMarkdownReport(uncovered);
       }
       if (argv['output-format'].includes('html')) {
         generateHtmlReport(uncovered);
