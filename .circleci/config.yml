@@ -796,13 +796,11 @@ jobs:
           command: |
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               chmod +x ./tools/check-coverage.js
-              cd frontend
-              node -r esm ../tools/check-coverage.js \
-                --coverage-file=../frontend/coverage/coverage-final.json
-                --artifact-dir=../frontend/coverage-artifacts
+              node -r esm ./tools/check-coverage.js \
+                --coverage-file=./frontend/coverage/coverage-final.json
+                --artifact-dir=./frontend/coverage-artifacts
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
                 --output-format=json,markdown,html
-              cd -
             else
               echo "Not a PR build. Skipping coverage check."
             fi
