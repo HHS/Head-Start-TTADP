@@ -1692,7 +1692,7 @@ export function groupSimilarGoalsByGrant(result) {
   // Return groups by grant id.
   const goalIdGroups = completeGroupsByGrant.map(
     (matchedGoalsByGrant) => uniq(Object.values(matchedGoalsByGrant.grantIdGroups)),
-  ).flat();
+  ).flat().filter((group) => group.length > 1);
   return goalIdGroups;
 }
 

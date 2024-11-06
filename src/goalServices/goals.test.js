@@ -2188,7 +2188,7 @@ describe('Goals DB service', () => {
       expect(goalIdGroups[0].goals).toContain(3);
     });
 
-    it('groupSimilarGoalsByGrant works when undefined is passed to the funciton', async () => {
+    it('groupSimilarGoalsByGrant works when undefined is passed to the function', async () => {
       const resultToTest = undefined;
 
       const groupedResult = groupSimilarGoalsByGrant(resultToTest);
@@ -2257,13 +2257,11 @@ describe('Goals DB service', () => {
       const groupedResult = groupSimilarGoalsByGrant(resultToTest);
 
       // Assert that the result is grouped by grantId.
-      expect(groupedResult.length).toBe(5);
+      // Ensure groups that had only one goal are excluded.
+      expect(groupedResult.length).toBe(2);
       expect(groupedResult).toEqual(expect.arrayContaining([
         expect.arrayContaining([1, 3]),
-        expect.arrayContaining([2]),
-        expect.arrayContaining([4]),
         expect.arrayContaining([5, 6]),
-        expect.arrayContaining([7]),
       ]));
     });
   });
