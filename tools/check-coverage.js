@@ -184,17 +184,85 @@ function checkCoverage(modifiedLines, coverageMap) {
       // If the file is not in the coverage report, consider all lines uncovered
       // eslint-disable-next-line no-console
       console.log('checkCoverage:', file, lines, e);
+      const ranges = groupIntoRanges(lines);
       if (!uncovered[file]) {
         uncovered[file] = {
-          statements: [],
-          functions: [],
-          branches: [],
+          statements: {},
+          functions: {},
+          branches: {},
         };
       }
-      lines.forEach((line) => {
-        uncovered[file].statements.push({ line });
-        uncovered[file].functions.push({ line });
-        uncovered[file].branches.push({ line });
+      ranges.forEach(({ start, end }, n) => {
+        uncovered[file].statements[`${n}`] = {
+          start: {
+            line: start,
+            column: 0,
+          },
+          end: {
+            line: end,
+            column: 0,
+          },
+        };
+        uncovered[file].functions[`${n}`] = {
+          name: null,
+          decl: {
+            start: {
+              line: start,
+              column: 0
+            },
+            end: {
+              line: end,
+              column: 0
+            }
+          },
+          loc: {
+            start: {
+              line: start,
+              column: 0
+            },
+            end: {
+              line: end,
+              column: 0
+            }
+          },
+          line: start
+        };
+        uncovered[file].branches[`${n}`] = {
+          loc: {
+            start: {
+              line: start,
+              column: 0
+            },
+            end: {
+              line: end,
+              column: 0
+            }
+          },
+          type: null,
+          locations: [
+            {
+              start: {
+                line: start,
+                column: 0
+              },
+              end: {
+                line: end,
+                column: 0
+              }
+            },
+            {
+              start: {
+                line: start,
+                column: 0
+              },
+              end: {
+                line: end,
+                column: 0
+              }
+            }
+          ],
+          line: start
+        };
       });
       return;
     }
@@ -572,7 +640,7 @@ function generateHtmlReport(uncovered) {
 
     if (Object.keys(uncovered).length > 0) {
       // eslint-disable-next-line no-console
-      console.error('Uncovered lines detected:');
+      console.log('Uncovered lines detected:');
       Object.entries(uncovered).forEach(([file, data]) => {
         console.error(`- ${file}:`);
         if (data.statements.length > 0) {
@@ -583,7 +651,7 @@ function generateHtmlReport(uncovered) {
               range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
             )
             .join(', ');
-          console.error(`  Statements: ${rangeStrings}`);
+          console.log(`  Statements: ${rangeStrings}`);
         }
         if (data.functions.length > 0) {
           const lines = data.functions.map((fn) => fn.start.line).sort((a, b) => a - b);
@@ -593,7 +661,7 @@ function generateHtmlReport(uncovered) {
               range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
             )
             .join(', ');
-          console.error(`  Functions: ${rangeStrings}`);
+          console.log(`  Functions: ${rangeStrings}`);
         }
         if (data.branches.length > 0) {
           const lines = data.branches.map((branch) => branch.start.line).sort((a, b) => a - b);
@@ -603,7 +671,7 @@ function generateHtmlReport(uncovered) {
               range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
             )
             .join(', ');
-          console.error(`  Branches: ${rangeStrings}`);
+          console.log(`  Branches: ${rangeStrings}`);
         }
       });
 
@@ -622,7 +690,7 @@ function generateHtmlReport(uncovered) {
 
       if (argv['fail-on-uncovered']) {
         // eslint-disable-next-line no-console
-        console.error('Coverage check failed due to uncovered lines.');
+        console.log('Coverage check failed due to uncovered lines.');
         process.exit(1);
       }
     } else {
