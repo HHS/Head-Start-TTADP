@@ -7,7 +7,6 @@ const simpleGit = require('simple-git');
 const pkg = require('istanbul-lib-coverage');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
-const { markdownTable } = require('markdown-table');
 
 const { createCoverageMap } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -191,7 +190,9 @@ function groupIntoRanges(lines) {
 /**
  * Generate a Markdown report for uncovered lines.
  */
-function generateMarkdownReport(uncovered) {
+async function generateMarkdownReport(uncovered) {
+  
+  const { markdownTable } = await import('markdown-table');
   if (!fs.existsSync(ARTIFACT_DIR)) {
     fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
   }
@@ -223,7 +224,7 @@ function generateMarkdownReport(uncovered) {
 
 The following lines are not covered by tests:
 
-${markdownTable(table)}
+${await markdownTable(table)}
 `;
 
   fs.writeFileSync(artifactPath, markdownContent, 'utf-8');
@@ -374,7 +375,7 @@ function generateHtmlReport(uncovered) {
 
       // Generate Markdown report if specified
       if (argv['output-format'].includes('markdown')) {
-        generateMarkdownReport(uncovered);
+        await generateMarkdownReport(uncovered);
       }
 
       // Generate HTML report if specified
