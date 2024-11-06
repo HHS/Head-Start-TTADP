@@ -122,7 +122,8 @@ function checkCoverage(modifiedLines, coverageMap) {
     // eslint-disable-next-line no-console
     console.log('checkCoverage:', file);
     // Normalize file path to match coverage map keys
-    const normalizedFile = path.relative(process.cwd(), path.resolve(__dirname, '../../', file));
+    const normalizedFile = path.resolve(process.cwd(), file);
+
 
     let fileCoverage;
     try {
