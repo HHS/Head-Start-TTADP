@@ -784,7 +784,10 @@ jobs:
             ./checkcolorhash.sh;
       - run:
           name: Add GitHub to known_hosts
-          command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          command: |
+            mkdir -p /home/circleci/.ssh
+            ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
+
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
