@@ -797,8 +797,8 @@ jobs:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               chmod +x ./tools/check-coverage.js
               node -r esm ./tools/check-coverage.js \
-                --coverage-file=./frontend/coverage/coverage-final.json
-                --artifact-dir=./frontend/coverage-artifacts
+                --coverage-file=../frontend/coverage/coverage-final.json
+                --artifact-dir=../frontend/coverage-artifacts
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
                 --output-format=json,markdown,html
             else

@@ -35,8 +35,8 @@ const argv = yargs(hideBin(process.argv))
   .option('output-format', {
     alias: 'o',
     type: 'string',
-    description: 'Specify output formats (comma-separated, e.g., json,markdown,html)',
-    default: 'json,markdown',
+    description: 'Specify output formats (comma-separated, e.g., json,html)',
+    default: 'json',
   })
   .help()
   .alias('help', 'h')
@@ -369,84 +369,6 @@ function groupIntoRanges(lines) {
 }
 
 /**
- * Generate a Markdown report for uncovered lines.
- */
-async function generateMarkdownReport(uncovered) {
-  const { markdownTable } = await import('markdown-table');
-  if (!fs.existsSync(ARTIFACT_DIR)) {
-    fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
-  }
-
-  const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.md');
-
-  if (Object.keys(uncovered).length === 0) {
-    fs.writeFileSync(
-      artifactPath,
-      '# Coverage Report\n\nAll modified lines are covered by tests.',
-      'utf-8',
-    );
-    // eslint-disable-next-line no-console
-    console.log(`Markdown report generated at ${artifactPath}`);
-    return;
-  }
-
-  let markdownContent = `# Uncovered Lines Report
-
-The following code segments are not covered by tests:
-
-`;
-
-  Object.entries(uncovered).forEach(([file, data]) => {
-    markdownContent += `## ${file}\n\n`;
-
-    if (data.statements.length > 0) {
-      markdownContent += `### Statements\n\n`;
-      const table = [['ID', 'Start Line', 'End Line']];
-      data.statements.forEach((stmt) => {
-        table.push([
-          stmt.id,
-          stmt.start.line,
-          stmt.end.line,
-        ]);
-      });
-      markdownContent += markdownTable(table) + '\n\n';
-    }
-
-    if (data.functions.length > 0) {
-      markdownContent += `### Functions\n\n`;
-      const table = [['ID', 'Name', 'Start Line', 'End Line']];
-      data.functions.forEach((fn) => {
-        table.push([
-          fn.id,
-          fn.name,
-          fn.start.line,
-          fn.end.line,
-        ]);
-      });
-      markdownContent += markdownTable(table) + '\n\n';
-    }
-
-    if (data.branches.length > 0) {
-      markdownContent += `### Branches\n\n`;
-      const table = [['ID', 'Branch Index', 'Start Line', 'End Line']];
-      data.branches.forEach((branch) => {
-        table.push([
-          branch.id,
-          branch.locationIndex,
-          branch.start.line,
-          branch.end.line,
-        ]);
-      });
-      markdownContent += markdownTable(table) + '\n\n';
-    }
-  });
-
-  fs.writeFileSync(artifactPath, markdownContent, 'utf-8');
-  // eslint-disable-next-line no-console
-  console.log(`Markdown report generated at ${artifactPath}`);
-}
-
-/**
  * Generate an artifact report for uncovered lines.
  */
 function generateArtifact(uncovered) {
@@ -678,11 +600,6 @@ function generateHtmlReport(uncovered) {
       // Generate JSON artifact
       generateArtifact(uncovered);
 
-      // Generate Markdown report if specified
-      if (argv['output-format'].includes('markdown')) {
-        await generateMarkdownReport(uncovered);
-      }
-
       // Generate HTML report if specified
       if (argv['output-format'].includes('html')) {
         generateHtmlReport(uncovered);
@@ -697,10 +614,6 @@ function generateHtmlReport(uncovered) {
       // eslint-disable-next-line no-console
       console.log('All modified lines are covered by tests.');
 
-      // Optionally, generate empty reports
-      if (argv['output-format'].includes('markdown')) {
-        await generateMarkdownReport(uncovered);
-      }
       if (argv['output-format'].includes('html')) {
         generateHtmlReport(uncovered);
       }
