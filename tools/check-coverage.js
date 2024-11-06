@@ -14,6 +14,18 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const argv = yargs(hideBin(process.argv))
+  .option('coverage-file', {
+    alias: 'c',
+    type: 'string',
+    description: 'Specify location of coverage file',
+    default: '../coverage/coverage-final.json',
+  })
+  .option('artifact-dir', {
+    alias: 'a',
+    type: 'string',
+    description: 'Specify location of artifact dir',
+    default: '../coverage-artifacts',
+  })
   .option('fail-on-uncovered', {
     alias: 'f',
     type: 'boolean',
@@ -30,10 +42,10 @@ const argv = yargs(hideBin(process.argv))
   .alias('help', 'h')
   .argv;
 
-const COVERAGE_FILE = path.resolve(__dirname, '../coverage/coverage-final.json');
+const COVERAGE_FILE = path.resolve(__dirname, argv['coverage-file']);
 const BASE_BRANCH = 'main';
 // Directory to store artifacts
-const ARTIFACT_DIR = path.resolve(__dirname, '../coverage-artifacts');
+const ARTIFACT_DIR = path.resolve(__dirname, argv['artifact-dir']);
 
 /**
  * Fetch the base branch to ensure it's up-to-date.
@@ -128,6 +140,9 @@ function checkCoverage(modifiedLines, coverageMap) {
     let fileCoverage;
     try {
       fileCoverage = coverageMap.fileCoverageFor(normalizedFile);
+      if (!fileCoverage) {
+        throw new Error(`File not found in coverage map: ${normalizedFile}`);
+      }
     } catch (e) {
       // If the file is not in the coverage report, consider all lines uncovered
       // eslint-disable-next-line no-console
@@ -138,7 +153,8 @@ function checkCoverage(modifiedLines, coverageMap) {
       uncovered[file].push(...lines);
       return;
     }
-
+    // eslint-disable-next-line no-console
+    console.log(fileCoverage);
     const detailedCoverage = fileCoverage.toJSON().lines.details;
 
     lines.forEach((line) => {
