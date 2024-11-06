@@ -1,13 +1,13 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
+import FocusTrap from 'focus-trap-react';
 import PropTypes from 'prop-types';
 import './Drawer.scss';
-import useOnClickOutside from '../hooks/useOnOutsideClick';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -20,15 +20,15 @@ export default function Drawer({
   triggerRef,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const elementRef = useRef(null);
   const closeButtonRef = useRef(null);
 
-  const headerHeight = useMemo(() => {
+  useLayoutEffect(() => {
+    if (!isOpen) return;
     const header = document.querySelector('.smart-hub-header');
-    return header ? header.offsetHeight : 0;
-  }, []);
-
-  useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
+    setHeaderHeight(header ? header.offsetHeight : 0);
+  }, [isOpen]);
 
   useEffect(() => {
     const triggerElement = triggerRef.current;
@@ -53,9 +53,12 @@ export default function Drawer({
     return undefined;
   }, [isOpen]);
 
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-  }, [setIsOpen]);
+  const onEscape = useCallback(
+    (event) => {
+      if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
+    },
+    [setIsOpen],
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -67,21 +70,23 @@ export default function Drawer({
 
   const classNames = [
     'smart-hub-drawer',
-    'bg-white',
+    'bg-transparent',
     'position-fixed',
     'pin-right',
     'pin-bottom',
     'z-100',
     'overflow-y-auto',
-    'shadow-3',
     'flex-column',
-    'flex-justify',
+    'flex-align-end',
   ];
 
   if (isOpen) {
+    classNames.push('smart-hub-drawer--open');
     classNames.push('display-flex');
     classNames.push('slide-in-right');
   }
+
+  const Trap = isOpen ? FocusTrap : React.Fragment;
 
   return (
     <div
@@ -92,40 +97,40 @@ export default function Drawer({
         top: headerHeight,
       }}
     >
-      <div>
-        {title && (
-          <div
-            className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
-          >
-            <span className="text-bold font-serif-lg">{title}</span>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="usa-button usa-button--outline smart-hub-button--no-margin"
+      <Trap>
+        <div className="bg-white shadow-3">
+          {title && (
+            <div
+              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${
+                stickyHeader ? 'position-sticky pin-top' : ''
+              }`}
             >
-              Close
-            </button>
-          </div>
-        )}
+              <span className="text-bold font-serif-lg">{title}</span>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="usa-button usa-button--outline smart-hub-button--no-margin"
+              >
+                Close
+              </button>
+            </div>
+          )}
 
-        <div
-          className="overflow-y-auto padding-1 margin-1"
-          // eslint-disable-next-line
-          tabIndex="0"
-        >
-          {children}
+          <div className="overflow-y-auto padding-1 margin-1">
+            {children}
+          </div>
         </div>
-      </div>
+      </Trap>
 
       {footer && (
-      <div
-        className={`bg-base-lightest padding-105 ${
-          stickyFooter ? 'position-sticky pin-bottom' : ''
-        }`}
-      >
-        {footer}
-      </div>
+        <div
+          className={`bg-base-lightest padding-105 ${
+            stickyFooter ? 'position-sticky pin-bottom' : ''
+          }`}
+        >
+          {footer}
+        </div>
       )}
     </div>
   );
