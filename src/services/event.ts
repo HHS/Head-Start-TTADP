@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
-import { get } from 'lodash';
 import {
   TRAINING_REPORT_STATUSES as TRS,
   REASONS,
@@ -405,6 +404,9 @@ const checkSessionForCompletion = (
   checker: TChecker,
   missingSessionInfo: TRAlertShape[],
 ) => {
+  // this checks to see if the session has been completed
+  // with a lookup in the form data
+  // by the owner or the poc (depending on the checker parameter)
   const sessionValid = !!(session.data[checker]);
 
   if (!sessionValid) {
@@ -418,8 +420,8 @@ const checkSessionForCompletion = (
       ownerId: event.ownerId,
       pocIds: event.pocIds,
       collaboratorIds: event.collaboratorIds,
-      endDate: session.data.startDate,
-      startDate: session.data.endDate,
+      endDate: session.data.endDate,
+      startDate: session.data.startDate,
       sessionId: session.id,
       eventStatus: event.data.status,
     });
@@ -461,6 +463,9 @@ export async function getTrainingReportAlerts(
 
   const today = moment().startOf('day');
 
+  // the following three filters are used to determine if the user is the owner, collaborator, or poc
+  // or if there is no user, in which case the alert is triggered for everyone
+  // this handles both cases: the alerts table in the UI and the email alerts for a given day
   const ownerUserIdFilter = (event: EventShape, user: number | undefined) => {
     if (!user || event.ownerId === user) {
       return true;
