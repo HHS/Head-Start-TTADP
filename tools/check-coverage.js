@@ -43,7 +43,7 @@ const argv = yargs(hideBin(process.argv))
   .alias('help', 'h').argv;
 
 const COVERAGE_FILE = path.resolve(__dirname, argv['coverage-file']);
-const BASE_BRANCH = 'main';
+const BASE_BRANCH = 'origin/main';
 // Directory to store artifacts
 const ARTIFACT_DIR = path.resolve(__dirname, argv['artifact-dir']);
 
@@ -79,7 +79,7 @@ async function getModifiedLines(mergeBase, directory) {
   let files = diffFiles
     .split('\n')
     .filter((file) => /\.(js|ts)$/.test(file))
-    .filter((file) => !file.includes('/_test/'))
+    .filter((file) => !file.includes('/__tests__/'))
     .filter((file) => !file.includes('.test.'));
 
   // If a directory is provided, filter files that start with the directory
@@ -88,6 +88,7 @@ async function getModifiedLines(mergeBase, directory) {
   } else {
     // Directories that are tested in non-defualt path
     files = files
+      .filter((file) => !file.includes('packages/common/'))
       .filter((file) => !file.includes('similarity_api/'))
       .filter((file) => file.includes(`frontend/`));
   }
