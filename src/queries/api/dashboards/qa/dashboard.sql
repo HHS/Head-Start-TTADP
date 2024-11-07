@@ -370,7 +370,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  -- DROP TABLE IF EXISTS process_log;
+  DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -378,21 +378,23 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  -- DROP TABLE IF EXISTS filtered_grants;
+  DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
-      INSERT INTO filtered_grants (id)
-      SELECT DISTINCT id
-      FROM "Grants"
-      WHERE COALESCE(deleted, false) = false
-      ORDER BY 1
-      RETURNING id
+    INSERT INTO filtered_grants (id)
+    SELECT
+      id
+    FROM "Grants"
+    WHERE COALESCE(deleted, false) = false
+    GROUP BY 1
+    ORDER BY 1
+    RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
   SELECT
-      'Seed filtered_grants' AS action,
-      COUNT(*)
+    'Seed filtered_grants' AS action,
+    COUNT(*)
   FROM seed_filtered_grants
   GROUP BY 1;
 ---------------------------------------------------------------------------------------------------
@@ -460,22 +462,23 @@ BEGIN
             COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId")::jsonb
           )
         )
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afogr
-            WHERE fgr.id = afogr.id
-            RETURNING fgr.id
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afogr
+        WHERE fgr.id = afogr.id
+        RETURNING fgr.id
       )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -521,22 +524,23 @@ BEGIN
         WHERE 1 = 1
         -- Continued Filter for group if ssdi.group is defined from left joined table above
         AND (group_filter IS NULL OR (g.id IS NOT NULL AND (gc.id IS NOT NULL OR g."sharedWith" = 'Everyone')))
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afogr
-            WHERE fgr.id = afogr.id
-            RETURNING fgr.id
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afogr
+        WHERE fgr.id = afogr.id
+        RETURNING fgr.id
       )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -547,24 +551,26 @@ BEGIN
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 2.1: Seed filtered_goals using filtered_grants
-  -- DROP TABLE IF EXISTS filtered_goals;
+  DROP TABLE IF EXISTS filtered_goals;
   CREATE TEMP TABLE IF NOT EXISTS filtered_goals (id INT);
 
   WITH seed_filtered_goals AS (
       INSERT INTO filtered_goals (id)
-      SELECT DISTINCT g.id
+      SELECT
+        g.id
       FROM "Goals" g
       JOIN filtered_grants fgr
       ON g."grantId" = fgr.id
       WHERE g."deletedAt" IS NULL
       AND g."mapsToParentGoalId" IS NULL
-      ORDER BY g.id  -- Add ORDER BY here
+      GROUP BY 1
+      ORDER BY 1
       RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
   SELECT
-      'Seed filtered_goals' AS action,
-      COUNT(*)
+    'Seed filtered_goals' AS action,
+    COUNT(*)
   FROM seed_filtered_goals
   GROUP BY 1;
 ---------------------------------------------------------------------------------------------------
@@ -576,7 +582,7 @@ BEGIN
     THEN
     WITH
       applied_filtered_goals AS (
-        SELECT DISTINCT
+        SELECT
           g.id
         FROM filtered_goals fg
         JOIN "Goals" g
@@ -613,38 +619,39 @@ BEGIN
         WHERE 1 = 1
         -- Continued Filter for activityReportGoalResponse if ssdi.activityReportGoalResponse is defined, for array columns
         AND (activity_report_goal_response_filter IS NULL OR gfr.id IS NOT NULL)
+        GROUP BY 1
+        ORDER BY 1
       ),
         applied_filtered_out_goals AS (
-            SELECT
-                fg.id
-            FROM filtered_goals fg
-            LEFT JOIN applied_filtered_goals afg
-            ON fg.id = afg.id
-            WHERE afg.id IS NULL
-            ORDER BY 1
+          SELECT
+            fg.id
+          FROM filtered_goals fg
+          LEFT JOIN applied_filtered_goals afg ON fg.id = afg.id
+          GROUP BY 1
+          HAVING COUNT(afg.id) = 0
+          ORDER BY 1
         ),
         delete_from_goal_filter AS (
-            DELETE FROM filtered_goals fg
-            USING applied_filtered_out_goals afog
-            WHERE fg.id = afog.id
-            RETURNING fg.id
+          DELETE FROM filtered_goals fg
+          USING applied_filtered_out_goals afog
+          WHERE fg.id = afog.id
+          RETURNING fg.id
         ),
         applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
-            FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
-            WHERE fg.id IS NULL
-            ORDER BY 1
+          SELECT
+              fgr.id
+          FROM filtered_grants fgr
+          LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+          LEFT JOIN filtered_goals fg ON g.id = fg.id
+          GROUP BY 1
+          HAVING COUNT(fg.id) = 0
+          ORDER BY 1
         ),
         delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afog
-            WHERE fgr.id = afog.id
-            RETURNING fgr.id
+          DELETE FROM filtered_grants fgr
+          USING applied_filtered_out_grants afog
+          WHERE fgr.id = afog.id
+          RETURNING fgr.id
         )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -661,31 +668,32 @@ BEGIN
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 3.1: Seed filterd_activity_reports
-  -- DROP TABLE IF EXISTS filtered_activity_reports;
+  DROP TABLE IF EXISTS filtered_activity_reports;
   CREATE TEMP TABLE IF NOT EXISTS filtered_activity_reports (id INT);
 
   WITH seed_filtered_activity_reports AS (
-      INSERT INTO filtered_activity_reports (id)
-      SELECT DISTINCT
-          a.id
-      FROM "ActivityReports" a
-      JOIN "ActivityRecipients" ar
-          ON a.id = ar."activityReportId"
-      JOIN filtered_grants fgr
-          ON ar."grantId" = fgr.id
-      JOIN "ActivityReportGoals" arg
-          ON a.id = arg."activityReportId"
-      JOIN filtered_goals fg
-          ON arg."goalId" = fg.id
-      WHERE a."calculatedStatus" = 'approved'
-      ORDER BY a.id  -- Add ORDER BY here
-      RETURNING
+    INSERT INTO filtered_activity_reports (id)
+    SELECT
+        a.id
+    FROM "ActivityReports" a
+    JOIN "ActivityRecipients" ar
+        ON a.id = ar."activityReportId"
+    JOIN filtered_grants fgr
+        ON ar."grantId" = fgr.id
+    JOIN "ActivityReportGoals" arg
+        ON a.id = arg."activityReportId"
+    JOIN filtered_goals fg
+        ON arg."goalId" = fg.id
+    WHERE a."calculatedStatus" = 'approved'
+    GROUP BY 1
+    ORDER BY 1
+    RETURNING
       id
   )
   INSERT INTO process_log (action, record_cnt)
   SELECT
-      'Seed filtered_activity_reports' AS action,
-      COUNT(*)
+    'Seed filtered_activity_reports' AS action,
+    COUNT(*)
   FROM seed_filtered_activity_reports
   GROUP BY 1;
 ---------------------------------------------------------------------------------------------------
@@ -782,55 +790,55 @@ BEGIN
           ) != tta_type_not_filter
           )
         )
+        GROUP BY 1
+        ORDER BY 1
       ),
         applied_filtered_out_activity_reports AS (
-            SELECT
-                fa.id
-            FROM filtered_activity_reports fa
-            LEFT JOIN applied_filtered_activity_reports afa
-            ON fa.id = afa."activityReportId"
-            WHERE afa."activityReportId" IS NULL
-            ORDER BY 1
+          SELECT
+            fa.id
+          FROM filtered_activity_reports fa
+          LEFT JOIN applied_filtered_activity_reports afa ON fa.id = afa."activityReportId"
+          GROUP BY 1
+          HAVING COUNT(afa."activityReportId") = 0
+          ORDER BY 1
         ),
         delete_from_activity_report_filter AS (
-            DELETE FROM filtered_activity_reports fa
-            USING applied_filtered_out_activity_reports afaoar
-            WHERE fa.id = afaoar.id
-            RETURNING fa.id
+          DELETE FROM filtered_activity_reports fa
+          USING applied_filtered_out_activity_reports afaoar
+          WHERE fa.id = afaoar.id
+          RETURNING fa.id
         ),
         applied_filtered_out_goals AS (
-            SELECT
-                fg.id
-            FROM filtered_goals fg
-            LEFT JOIN "ActivityReportGoals" arg
-            ON fg.id = arg."goalId"
-            LEFT JOIN filtered_activity_reports fa
-            ON arg."activityReportId" = fa.id
-            WHERE fa.id IS NULL
-            ORDER BY 1
+          SELECT
+              fg.id
+          FROM filtered_goals fg
+          LEFT JOIN "ActivityReportGoals" arg ON fg.id = arg."goalId"
+          LEFT JOIN filtered_activity_reports fa ON arg."activityReportId" = fa.id
+          GROUP BY 1
+          HAVING COUNT(fa.id) = 0
+          ORDER BY 1
         ),
         delete_from_goal_filter AS (
-            DELETE FROM filtered_goals fg
-            USING applied_filtered_out_goals afog
-            WHERE fg.id = afog.id
-            RETURNING fg.id
+          DELETE FROM filtered_goals fg
+          USING applied_filtered_out_goals afog
+          WHERE fg.id = afog.id
+          RETURNING fg.id
         ),
         applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
-            FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
-            WHERE fg.id IS NULL
-            ORDER BY 1
+          SELECT
+              fgr.id
+          FROM filtered_grants fgr
+          LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+          LEFT JOIN filtered_goals fg ON g.id = fg.id
+          GROUP BY 1
+          HAVING COUNT(fg.id) = 0
+          ORDER BY 1
         ),
         delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afog
-            WHERE fgr.id = afog.id
-            RETURNING fgr.id
+          DELETE FROM filtered_grants fgr
+          USING applied_filtered_out_grants afog
+          WHERE fgr.id = afog.id
+          RETURNING fgr.id
         )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -859,113 +867,113 @@ BEGIN
     THEN
     WITH
       applied_filtered_activity_reports AS (
-      SELECT DISTINCT
-        a.id "activityReportId"
-      FROM filtered_activity_reports fa
-      JOIN "ActivityReports" a
-      ON fa.id = a.id
-      JOIN "ActivityReportGoals" arg
-      ON a.id = arg."activityReportId"
-      JOIN filtered_goals fg
-      ON arg."goalId" = fg.id
-      JOIN "ActivityReportObjectives" aro
-      ON a.id = aro."activityReportId"
-      JOIN "Objectives" o
-      ON aro."objectiveId" = o.id
-      AND arg."goalId" = o."goalId"
-      JOIN "ActivityReportObjectiveTopics" arot
-      ON aro.id = arot."activityReportObjectiveId"
-      JOIN "Topics" t
-      ON arot."topicId" = t.id
-      JOIN "NextSteps" ns
-      ON a.id = ns."activityReportId"
-      WHERE 1 = 1
-      -- Filter for reportText if ssdi.reportText is defined
-      AND (
-        report_text_filter IS NULL
-        OR (
-        EXISTS (
-          SELECT 1
-          FROM json_array_elements_text(COALESCE(report_text_filter, '[]')::json) AS value
-          WHERE CONCAT(a.context, '\n', arg.name, '\n', aro.title, '\n', aro."ttaProvided", '\n', ns.note) ~* value::text
-        ) != report_text_not_filter
+        SELECT
+          a.id "activityReportId"
+        FROM filtered_activity_reports fa
+        JOIN "ActivityReports" a
+        ON fa.id = a.id
+        JOIN "ActivityReportGoals" arg
+        ON a.id = arg."activityReportId"
+        JOIN filtered_goals fg
+        ON arg."goalId" = fg.id
+        JOIN "ActivityReportObjectives" aro
+        ON a.id = aro."activityReportId"
+        JOIN "Objectives" o
+        ON aro."objectiveId" = o.id
+        AND arg."goalId" = o."goalId"
+        JOIN "ActivityReportObjectiveTopics" arot
+        ON aro.id = arot."activityReportObjectiveId"
+        JOIN "Topics" t
+        ON arot."topicId" = t.id
+        JOIN "NextSteps" ns
+        ON a.id = ns."activityReportId"
+        WHERE 1 = 1
+        -- Filter for reportText if ssdi.reportText is defined
+        AND (
+          report_text_filter IS NULL
+          OR (
+          EXISTS (
+            SELECT 1
+            FROM json_array_elements_text(COALESCE(report_text_filter, '[]')::json) AS value
+            WHERE CONCAT(a.context, '\n', arg.name, '\n', aro.title, '\n', aro."ttaProvided", '\n', ns.note) ~* value::text
+          ) != report_text_not_filter
+          )
         )
-      )
-      -- Filter for topic if ssdi.topic is defined
-      AND (
-        topic_filter IS NULL
-        OR (
-          COALESCE(topic_filter, '[]')::jsonb @> to_jsonb(t.name) != topic_not_filter
+        -- Filter for topic if ssdi.topic is defined
+        AND (
+          topic_filter IS NULL
+          OR (
+            COALESCE(topic_filter, '[]')::jsonb @> to_jsonb(t.name) != topic_not_filter
+          )
         )
-      )
+        GROUP BY 1
+        ORDER BY 1
       ),
-        applied_filtered_out_activity_reports AS (
-            SELECT
-                fa.id
-            FROM filtered_activity_reports fa
-            LEFT JOIN applied_filtered_activity_reports afa
-            ON fa.id = afa."activityReportId"
-            WHERE afa."activityReportId" IS NULL
-            ORDER BY 1
-        ),
-        delete_from_activity_report_filter AS (
-            DELETE FROM filtered_activity_reports fa
-            USING applied_filtered_out_activity_reports afaoar
-            WHERE fa.id = afaoar.id
-            RETURNING fa.id
-        ),
-        applied_filtered_out_goals AS (
-            SELECT
-                fg.id
-            FROM filtered_goals fg
-            LEFT JOIN "ActivityReportGoals" arg
-            ON fg.id = arg."goalId"
-            LEFT JOIN filtered_activity_reports fa
-            ON arg."activityReportId" = fa.id
-            WHERE fa.id IS NULL
-            ORDER BY 1
-        ),
-        delete_from_goal_filter AS (
-            DELETE FROM filtered_goals fg
-            USING applied_filtered_out_goals afog
-            WHERE fg.id = afog.id
-            RETURNING fg.id
-        ),
-        applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
-            FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
-            WHERE fg.id IS NULL
-            ORDER BY 1
-        ),
-        delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afog
-            WHERE fgr.id = afog.id
-            RETURNING fgr.id
-        )
-      INSERT INTO process_log (action, record_cnt)
-      SELECT
-        'Apply Activity Report Filters' AS action,
-        COUNT(*)
-      FROM delete_from_activity_report_filter
-      GROUP BY 1
-      UNION
-      SELECT
-        'Apply Activity Report Filters To Goals' AS action,
-        COUNT(*)
-      FROM delete_from_goal_filter
-      GROUP BY 1
-      UNION
-      SELECT
-        'Apply Activity Report Filters To Grants' AS action,
-        COUNT(*)
-      FROM delete_from_grant_filter
-      GROUP BY 1;
+      applied_filtered_out_activity_reports AS (
+        SELECT
+            fa.id
+        FROM filtered_activity_reports fa
+        LEFT JOIN applied_filtered_activity_reports afa ON fa.id = afa."activityReportId"
+        GROUP BY 1
+        HAVING COUNT(afa."activityReportId") = 0
+        ORDER BY 1
+      ),
+      delete_from_activity_report_filter AS (
+        DELETE FROM filtered_activity_reports fa
+        USING applied_filtered_out_activity_reports afaoar
+        WHERE fa.id = afaoar.id
+        RETURNING fa.id
+      ),
+      applied_filtered_out_goals AS (
+        SELECT
+            fg.id
+        FROM filtered_goals fg
+        LEFT JOIN "ActivityReportGoals" arg ON fg.id = arg."goalId"
+        LEFT JOIN filtered_activity_reports fa ON arg."activityReportId" = fa.id
+        GROUP BY 1
+        HAVING COUNT(fa.id) = 0
+        ORDER BY 1
+      ),
+      delete_from_goal_filter AS (
+        DELETE FROM filtered_goals fg
+        USING applied_filtered_out_goals afog
+        WHERE fg.id = afog.id
+        RETURNING fg.id
+      ),
+      applied_filtered_out_grants AS (
+        SELECT
+            fgr.id
+        FROM filtered_grants fgr
+        LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+        LEFT JOIN filtered_goals fg ON g.id = fg.id
+        GROUP BY 1
+        HAVING COUNT(fg.id) = 0
+        ORDER BY 1
+      ),
+      delete_from_grant_filter AS (
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afog
+        WHERE fgr.id = afog.id
+        RETURNING fgr.id
+      )
+    INSERT INTO process_log (action, record_cnt)
+    SELECT
+      'Apply Activity Report Filters' AS action,
+      COUNT(*)
+    FROM delete_from_activity_report_filter
+    GROUP BY 1
+    UNION
+    SELECT
+      'Apply Activity Report Filters To Goals' AS action,
+      COUNT(*)
+    FROM delete_from_goal_filter
+    GROUP BY 1
+    UNION
+    SELECT
+      'Apply Activity Report Filters To Grants' AS action,
+      COUNT(*)
+    FROM delete_from_grant_filter
+    GROUP BY 1;
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 3.2: If activity reports filters (set 3), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
@@ -974,7 +982,7 @@ BEGIN
     THEN
     WITH
       applied_filtered_activity_reports AS (
-        SELECT DISTINCT
+        SELECT
           a.id "activityReportId"
         FROM filtered_activity_reports fa
         JOIN "ActivityReports" a
@@ -997,75 +1005,72 @@ BEGIN
           ('["single-recipient"]'::jsonb @> COALESCE(recipient_single_or_multi_filter, '[]')::jsonb)
           ) != recipient_single_or_multi_not_filter
         )
-
       ),
-        applied_filtered_out_activity_reports AS (
-            SELECT
-                fa.id
-            FROM filtered_activity_reports fa
-            LEFT JOIN applied_filtered_activity_reports afa
-            ON fa.id = afa."activityReportId"
-            WHERE afa."activityReportId" IS NULL
-            ORDER BY 1
-        ),
-        delete_from_activity_report_filter AS (
-            DELETE FROM filtered_activity_reports fa
-            USING applied_filtered_out_activity_reports afaoar
-            WHERE fa.id = afaoar.id
-            RETURNING fa.id
-        ),
-        applied_filtered_out_goals AS (
-            SELECT
-                fg.id
-            FROM filtered_goals fg
-            LEFT JOIN "ActivityReportGoals" arg
-            ON fg.id = arg."goalId"
-            LEFT JOIN filtered_activity_reports fa
-            ON arg."activityReportId" = fa.id
-            WHERE fa.id IS NULL
-            ORDER BY 1
-        ),
-        delete_from_goal_filter AS (
-            DELETE FROM filtered_goals fg
-            USING applied_filtered_out_goals afog
-            WHERE fg.id = afog.id
-            RETURNING fg.id
-        ),
-        applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
-            FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
-            WHERE fg.id IS NULL
-            ORDER BY 1
-        ),
-        delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afog
-            WHERE fgr.id = afog.id
-            RETURNING fgr.id
-        )
-      INSERT INTO process_log (action, record_cnt)
-      SELECT
-        'Apply Activity Report Filters' AS action,
-        COUNT(*)
-      FROM delete_from_activity_report_filter
-      GROUP BY 1
-      UNION
-      SELECT
-        'Apply Activity Report Filters To Goals' AS action,
-        COUNT(*)
-      FROM delete_from_goal_filter
-      GROUP BY 1
-      UNION
-      SELECT
-        'Apply Activity Report Filters To Grants' AS action,
-        COUNT(*)
-      FROM delete_from_grant_filter
-      GROUP BY 1;
+      applied_filtered_out_activity_reports AS (
+        SELECT
+            fa.id
+        FROM filtered_activity_reports fa
+        LEFT JOIN applied_filtered_activity_reports afa ON fa.id = afa."activityReportId"
+        GROUP BY 1
+        HAVING COUNT(afa."activityReportId") = 0
+        ORDER BY 1
+      ),
+      delete_from_activity_report_filter AS (
+        DELETE FROM filtered_activity_reports fa
+        USING applied_filtered_out_activity_reports afaoar
+        WHERE fa.id = afaoar.id
+        RETURNING fa.id
+      ),
+      applied_filtered_out_goals AS (
+        SELECT
+            fg.id
+        FROM filtered_goals fg
+        LEFT JOIN "ActivityReportGoals" arg ON fg.id = arg."goalId"
+        LEFT JOIN filtered_activity_reports fa ON arg."activityReportId" = fa.id
+        GROUP BY 1
+        HAVING COUNT(fa.id) = 0
+        ORDER BY 1
+      ),
+      delete_from_goal_filter AS (
+        DELETE FROM filtered_goals fg
+        USING applied_filtered_out_goals afog
+        WHERE fg.id = afog.id
+        RETURNING fg.id
+      ),
+      applied_filtered_out_grants AS (
+        SELECT
+            fgr.id
+        FROM filtered_grants fgr
+        LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+        LEFT JOIN filtered_goals fg ON g.id = fg.id
+        GROUP BY 1
+        HAVING COUNT(fg.id) = 0
+        ORDER BY 1
+      ),
+      delete_from_grant_filter AS (
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afog
+        WHERE fgr.id = afog.id
+        RETURNING fgr.id
+      )
+    INSERT INTO process_log (action, record_cnt)
+    SELECT
+      'Apply Activity Report Filters' AS action,
+      COUNT(*)
+    FROM delete_from_activity_report_filter
+    GROUP BY 1
+    UNION
+    SELECT
+      'Apply Activity Report Filters To Goals' AS action,
+      COUNT(*)
+    FROM delete_from_goal_filter
+    GROUP BY 1
+    UNION
+    SELECT
+      'Apply Activity Report Filters To Grants' AS action,
+      COUNT(*)
+    FROM delete_from_grant_filter
+    GROUP BY 1;
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 3.2: If activity reports filters (set 3), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
@@ -1074,7 +1079,7 @@ BEGIN
     THEN
     WITH
       applied_filtered_activity_reports AS (
-        SELECT DISTINCT
+        SELECT
           a.id "activityReportId"
         FROM filtered_activity_reports fa
         JOIN "ActivityReports" a
@@ -1099,74 +1104,73 @@ BEGIN
           ) != roles_not_filter
         )
         GROUP BY 1
+        ORDER BY 1
       ),
-        applied_filtered_out_activity_reports AS (
-            SELECT
-                fa.id
-            FROM filtered_activity_reports fa
-            LEFT JOIN applied_filtered_activity_reports afa
-            ON fa.id = afa."activityReportId"
-            WHERE afa."activityReportId" IS NULL
-            ORDER BY 1
-        ),
-        delete_from_activity_report_filter AS (
-            DELETE FROM filtered_activity_reports fa
-            USING applied_filtered_out_activity_reports afaoar
-            WHERE fa.id = afaoar.id
-            RETURNING fa.id
-        ),
-        applied_filtered_out_goals AS (
-            SELECT
-                fg.id
-            FROM filtered_goals fg
-            LEFT JOIN "ActivityReportGoals" arg
-            ON fg.id = arg."goalId"
-            LEFT JOIN filtered_activity_reports fa
-            ON arg."activityReportId" = fa.id
-            WHERE fa.id IS NULL
-            ORDER BY 1
-        ),
-        delete_from_goal_filter AS (
-            DELETE FROM filtered_goals fg
-            USING applied_filtered_out_goals afog
-            WHERE fg.id = afog.id
-            RETURNING fg.id
-        ),
-        applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
-            FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
-            WHERE fg.id IS NULL
-            ORDER BY 1
-        ),
-        delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afog
-            WHERE fgr.id = afog.id
-            RETURNING fgr.id
-        )
-      INSERT INTO process_log (action, record_cnt)
-      SELECT
-        'Apply Activity Report Filters' AS action,
-        COUNT(*)
-      FROM delete_from_activity_report_filter
-      GROUP BY 1
-      UNION
-      SELECT
-        'Apply Activity Report Filters To Goals' AS action,
-        COUNT(*)
-      FROM delete_from_goal_filter
-      GROUP BY 1
-      UNION
-      SELECT
-        'Apply Activity Report Filters To Grants' AS action,
-        COUNT(*)
-      FROM delete_from_grant_filter
-      GROUP BY 1;
+      applied_filtered_out_activity_reports AS (
+        SELECT
+            fa.id
+        FROM filtered_activity_reports fa
+        LEFT JOIN applied_filtered_activity_reports afa ON fa.id = afa."activityReportId"
+        GROUP BY 1
+        HAVING COUNT(afa."activityReportId") = 0
+        ORDER BY 1
+      ),
+      delete_from_activity_report_filter AS (
+        DELETE FROM filtered_activity_reports fa
+        USING applied_filtered_out_activity_reports afaoar
+        WHERE fa.id = afaoar.id
+        RETURNING fa.id
+      ),
+      applied_filtered_out_goals AS (
+        SELECT
+            fg.id
+        FROM filtered_goals fg
+        LEFT JOIN "ActivityReportGoals" arg ON fg.id = arg."goalId"
+        LEFT JOIN filtered_activity_reports fa ON arg."activityReportId" = fa.id
+        GROUP BY 1
+        HAVING COUNT(fa.id) = 0
+        ORDER BY 1
+      ),
+      delete_from_goal_filter AS (
+        DELETE FROM filtered_goals fg
+        USING applied_filtered_out_goals afog
+        WHERE fg.id = afog.id
+        RETURNING fg.id
+      ),
+      applied_filtered_out_grants AS (
+        SELECT
+            fgr.id
+        FROM filtered_grants fgr
+        LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+        LEFT JOIN filtered_goals fg ON g.id = fg.id
+        GROUP BY 1
+        HAVING COUNT(fg.id) = 0
+        ORDER BY 1
+      ),
+      delete_from_grant_filter AS (
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afog
+        WHERE fgr.id = afog.id
+        RETURNING fgr.id
+      )
+    INSERT INTO process_log (action, record_cnt)
+    SELECT
+      'Apply Activity Report Filters' AS action,
+      COUNT(*)
+    FROM delete_from_activity_report_filter
+    GROUP BY 1
+    UNION
+    SELECT
+      'Apply Activity Report Filters To Goals' AS action,
+      COUNT(*)
+    FROM delete_from_goal_filter
+    GROUP BY 1
+    UNION
+    SELECT
+      'Apply Activity Report Filters To Grants' AS action,
+      COUNT(*)
+    FROM delete_from_grant_filter
+    GROUP BY 1;
   END IF;
 
 --EXCEPTION
