@@ -43,7 +43,7 @@ const argv = yargs(hideBin(process.argv))
   .alias('help', 'h').argv;
 
 const COVERAGE_FILE = path.resolve(__dirname, argv['coverage-file']);
-const BASE_BRANCH = 'origin/main';
+const BASE_BRANCH = 'main';
 // Directory to store artifacts
 const ARTIFACT_DIR = path.resolve(__dirname, argv['artifact-dir']);
 
