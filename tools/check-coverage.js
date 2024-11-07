@@ -71,7 +71,7 @@ async function getMergeBase() {
  */
 async function getModifiedLines(mergeBase, directory) {
   const git = simpleGit();
-  const diffFiles = await git.diff(['--name-only', `${mergeBase}..HEAD`]);
+  const diffFiles = await git.diff(['--name-only', `${BASE_BRANCH}...HEAD`]);
   // eslint-disable-next-line no-console
   console.log('getModifiedLines:', diffFiles);
 
@@ -510,11 +510,11 @@ async function main({
     console.log('Fetching base branch...');
     await fetchBaseBranch();
 
-    // eslint-disable-next-line no-console
-    console.log('Determining merge base...');
-    const mergeBase = await getMergeBase();
-    // eslint-disable-next-line no-console
-    console.log(`Merge base is: ${mergeBase}`);
+    // // eslint-disable-next-line no-console
+    // console.log('Determining merge base...');
+    // const mergeBase = await getMergeBase();
+    // // eslint-disable-next-line no-console
+    // console.log(`Merge base is: ${mergeBase}`);
 
     // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
