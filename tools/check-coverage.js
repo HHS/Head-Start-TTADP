@@ -52,7 +52,7 @@ const ARTIFACT_DIR = path.resolve(__dirname, argv['artifact-dir']);
  */
 async function fetchBaseBranch() {
   const git = simpleGit();
-  await git.fetch();
+  await git.fetch('origin', BASE_BRANCH);
 }
 
 /**
