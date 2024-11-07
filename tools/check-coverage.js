@@ -56,20 +56,10 @@ async function fetchBaseBranch() {
 }
 
 /**
- * Get the merge base between current HEAD and the base branch.
- */
-async function getMergeBase() {
-  const git = simpleGit();
-  const mergeBase = await git.raw(['merge-base', 'HEAD', BASE_BRANCH]);
-  return mergeBase.trim();
-}
-
-/**
  * Get the list of modified or added lines in the PR, optionally filtered by directory.
- * @param {string} mergeBase - The base commit to compare against.
  * @param {string} [directory] - The directory to filter files by (optional).
  */
-async function getModifiedLines(mergeBase, directory) {
+async function getModifiedLines(directory) {
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${BASE_BRANCH}...HEAD`]);
   // eslint-disable-next-line no-console
@@ -101,7 +91,7 @@ async function getModifiedLines(mergeBase, directory) {
     // Log the file being processed
     // eslint-disable-next-line no-console
     console.log('getModifiedLines:', file);
-    const diff = await git.diff(['-U0', `${mergeBase}..HEAD`, '--', file]);
+    const diff = await git.diff(['-U0', `${BASE_BRANCH}...HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
     let match;
 
@@ -510,15 +500,9 @@ async function main({
     console.log('Fetching base branch...');
     await fetchBaseBranch();
 
-    // // eslint-disable-next-line no-console
-    // console.log('Determining merge base...');
-    // const mergeBase = await getMergeBase();
-    // // eslint-disable-next-line no-console
-    // console.log(`Merge base is: ${mergeBase}`);
-
     // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
-    const modifiedLines = await getModifiedLines(mergeBase, githubSubdir);
+    const modifiedLines = await getModifiedLines(githubSubdir);
 
     // eslint-disable-next-line no-console
     console.log('Loading coverage data...');
@@ -602,7 +586,6 @@ if (require.main === module) {
 
 module.exports = {
   fetchBaseBranch,
-  getMergeBase,
   getModifiedLines,
   loadCoverage,
   getLinesFromLocation,
