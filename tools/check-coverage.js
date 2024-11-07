@@ -2,15 +2,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { fileURLToPath } = require('url');
 const simpleGit = require('simple-git');
-const pkg = require('istanbul-lib-coverage');
+const { createCoverageMap } = require('istanbul-lib-coverage');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
-
-const { createCoverageMap } = pkg;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Configuration
 const argv = yargs(hideBin(process.argv))
@@ -29,7 +24,7 @@ const argv = yargs(hideBin(process.argv))
   .option('github-subdir', {
     alias: 'g',
     type: 'string',
-    description: 'Specify github subdir',
+    description: 'Specify GitHub subdir',
     default: '',
   })
   .option('fail-on-uncovered', {
@@ -45,8 +40,7 @@ const argv = yargs(hideBin(process.argv))
     default: 'json',
   })
   .help()
-  .alias('help', 'h')
-  .argv;
+  .alias('help', 'h').argv;
 
 const COVERAGE_FILE = path.resolve(__dirname, argv['coverage-file']);
 const BASE_BRANCH = 'main';
@@ -127,14 +121,15 @@ async function getModifiedLines(mergeBase, directory) {
 /**
  * Load and parse the merged coverage report.
  */
-function loadCoverage() {
-  if (!fs.existsSync(COVERAGE_FILE)) {
+function loadCoverage(coverageFile = COVERAGE_FILE) {
+  if (!fs.existsSync(coverageFile)) {
+    const errorMessage = `Coverage file not found at ${coverageFile}`;
     // eslint-disable-next-line no-console
-    console.error(`Coverage file not found at ${COVERAGE_FILE}`);
-    process.exit(1);
+    console.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
-  const coverageData = JSON.parse(fs.readFileSync(COVERAGE_FILE, 'utf8'));
+  const coverageData = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
   const coverageMap = createCoverageMap(coverageData);
   return coverageMap;
 }
@@ -188,6 +183,7 @@ function checkCoverage(modifiedLines, coverageMap) {
   Object.entries(modifiedLines).forEach(([file, lines]) => {
     // Normalize file path to match coverage map keys
     const normalizedFile = path.resolve(process.cwd(), file);
+    const relativeFile = path.relative(process.cwd(), normalizedFile);
 
     let fileCoverage;
     try {
@@ -200,15 +196,15 @@ function checkCoverage(modifiedLines, coverageMap) {
       // eslint-disable-next-line no-console
       console.log('checkCoverage:', file, lines, e);
       const ranges = groupIntoRanges(lines);
-      if (!uncovered[file]) {
-        uncovered[file] = {
+      if (!uncovered[relativeFile]) {
+        uncovered[relativeFile] = {
           statements: [],
           functions: [],
           branches: [],
         };
       }
       ranges.forEach(({ start, end }) => {
-        uncovered[file].statements.push({
+        uncovered[relativeFile].statements.push({
           start: {
             line: start,
             column: 0,
@@ -217,20 +213,13 @@ function checkCoverage(modifiedLines, coverageMap) {
             line: end,
             column: 0,
           },
-        });;
+        });
       });
       return;
     }
 
-    const statementMap = fileCoverage.statementMap;
-    const fnMap = fileCoverage.fnMap;
-    const branchMap = fileCoverage.branchMap;
-    const s = fileCoverage.s;
-    const f = fileCoverage.f;
-    const b = fileCoverage.b;
-
-    if (!uncovered[file]) {
-      uncovered[file] = {
+    if (!uncovered[relativeFile]) {
+      uncovered[relativeFile] = {
         statements: [],
         functions: [],
         branches: [],
@@ -238,14 +227,13 @@ function checkCoverage(modifiedLines, coverageMap) {
     }
 
     // Check uncovered statements
-    Object.entries(statementMap).forEach(([id, loc]) => {
+    Object.entries(fileCoverage.statementMap).forEach(([id, loc]) => {
       const statementLines = getLinesFromLocation(loc);
       const overlappingLines = linesIntersect(lines, statementLines);
-      if (overlappingLines.length > 0 && s[id] === 0) {
-        // Adjust loc to only include overlapping lines
+      if (overlappingLines.length > 0 && fileCoverage.s[id] === 0) {
         const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
         if (intersectedLoc) {
-          uncovered[file].statements.push({
+          uncovered[relativeFile].statements.push({
             id,
             start: intersectedLoc.start,
             end: intersectedLoc.end,
@@ -255,14 +243,13 @@ function checkCoverage(modifiedLines, coverageMap) {
     });
 
     // Check uncovered functions
-    Object.entries(fnMap).forEach(([id, fn]) => {
+    Object.entries(fileCoverage.fnMap).forEach(([id, fn]) => {
       const functionLines = getLinesFromLocation(fn.loc);
       const overlappingLines = linesIntersect(lines, functionLines);
-      if (overlappingLines.length > 0 && f[id] === 0) {
-        // Adjust loc to only include overlapping lines
+      if (overlappingLines.length > 0 && fileCoverage.f[id] === 0) {
         const intersectedLoc = intersectLocationWithLines(fn.loc, overlappingLines);
         if (intersectedLoc) {
-          uncovered[file].functions.push({
+          uncovered[relativeFile].functions.push({
             id,
             name: fn.name,
             start: intersectedLoc.start,
@@ -273,15 +260,14 @@ function checkCoverage(modifiedLines, coverageMap) {
     });
 
     // Check uncovered branches
-    Object.entries(branchMap).forEach(([id, branch]) => {
+    Object.entries(fileCoverage.branchMap).forEach(([id, branch]) => {
       branch.locations.forEach((loc, idx) => {
         const branchLines = getLinesFromLocation(loc);
         const overlappingLines = linesIntersect(lines, branchLines);
-        if (overlappingLines.length > 0 && b[id][idx] === 0) {
-          // Adjust loc to only include overlapping lines
+        if (overlappingLines.length > 0 && fileCoverage.b[id][idx] === 0) {
           const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
           if (intersectedLoc) {
-            uncovered[file].branches.push({
+            uncovered[relativeFile].branches.push({
               id,
               locationIndex: idx,
               start: intersectedLoc.start,
@@ -291,6 +277,13 @@ function checkCoverage(modifiedLines, coverageMap) {
         }
       });
     });
+
+    console.log(relativeFile, uncovered[relativeFile].statements, uncovered[relativeFile].functions, uncovered[relativeFile].branches);
+    if(uncovered[relativeFile].statements.length === 0
+      && uncovered[relativeFile].functions.length === 0
+      && uncovered[relativeFile].branches.length === 0) {
+      delete uncovered[relativeFile];
+    }
   });
 
   return uncovered;
@@ -326,12 +319,12 @@ function groupIntoRanges(lines) {
 /**
  * Generate an artifact report for uncovered lines.
  */
-function generateArtifact(uncovered) {
-  if (!fs.existsSync(ARTIFACT_DIR)) {
-    fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+function generateArtifact(uncovered, artifactDir = ARTIFACT_DIR) {
+  if (!fs.existsSync(artifactDir)) {
+    fs.mkdirSync(artifactDir, { recursive: true });
   }
 
-  const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.json');
+  const artifactPath = path.join(artifactDir, 'uncovered-lines.json');
 
   fs.writeFileSync(artifactPath, JSON.stringify(uncovered, null, 2), 'utf-8');
   // eslint-disable-next-line no-console
@@ -341,12 +334,12 @@ function generateArtifact(uncovered) {
 /**
  * Generate an HTML report for uncovered lines.
  */
-function generateHtmlReport(uncovered) {
-  if (!fs.existsSync(ARTIFACT_DIR)) {
-    fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
+  if (!fs.existsSync(artifactDir)) {
+    fs.mkdirSync(artifactDir, { recursive: true });
   }
 
-  const artifactPath = path.join(ARTIFACT_DIR, 'uncovered-lines.html');
+  const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
 
   if (Object.keys(uncovered).length === 0) {
     const htmlContent = `
@@ -409,7 +402,7 @@ function generateHtmlReport(uncovered) {
       data.statements.forEach((stmt) => {
         htmlContent += `
           <tr>
-            <td>${stmt.id}</td>
+            <td>${stmt.id || ''}</td>
             <td>${stmt.start.line}</td>
             <td>${stmt.end.line}</td>
           </tr>
@@ -491,7 +484,17 @@ function generateHtmlReport(uncovered) {
   console.log(`HTML report generated at ${artifactPath}`);
 }
 
-(async () => {
+/**
+ * Main function to execute the coverage check.
+ * Extracted for testing purposes.
+ */
+async function main({
+  coverageFile = COVERAGE_FILE,
+  artifactDir = ARTIFACT_DIR,
+  githubSubdir = argv['github-subdir'],
+  failOnUncovered = argv['fail-on-uncovered'],
+  outputFormat = argv['output-format'],
+} = {}) {
   try {
     // eslint-disable-next-line no-console
     console.log('Fetching base branch...');
@@ -505,11 +508,11 @@ function generateHtmlReport(uncovered) {
 
     // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
-    const modifiedLines = await getModifiedLines(mergeBase, argv['github-subdir']);
+    const modifiedLines = await getModifiedLines(mergeBase, githubSubdir);
 
     // eslint-disable-next-line no-console
     console.log('Loading coverage data...');
-    const coverageMap = loadCoverage();
+    const coverageMap = loadCoverage(coverageFile);
 
     // eslint-disable-next-line no-console
     console.log('Checking coverage...');
@@ -517,7 +520,7 @@ function generateHtmlReport(uncovered) {
 
     if (Object.keys(uncovered).length > 0) {
       // eslint-disable-next-line no-console
-      console.log('Uncovered lines detected:');
+      console.log('Uncovered lines detected:', uncovered);
       Object.entries(uncovered).forEach(([file, data]) => {
         console.error(`- ${file}:`);
         if (data.statements.length > 0) {
@@ -553,14 +556,16 @@ function generateHtmlReport(uncovered) {
       });
 
       // Generate JSON artifact
-      generateArtifact(uncovered);
-
-      // Generate HTML report if specified
-      if (argv['output-format'].includes('html')) {
-        generateHtmlReport(uncovered);
+      if (outputFormat.includes('json')) {
+        generateArtifact(uncovered, artifactDir);
       }
 
-      if (argv['fail-on-uncovered']) {
+      // Generate HTML report if specified
+      if (outputFormat.includes('html')) {
+        generateHtmlReport(uncovered, artifactDir);
+      }
+
+      if (failOnUncovered) {
         // eslint-disable-next-line no-console
         console.log('Coverage check failed due to uncovered lines.');
         process.exit(1);
@@ -569,8 +574,8 @@ function generateHtmlReport(uncovered) {
       // eslint-disable-next-line no-console
       console.log('All modified lines are covered by tests.');
 
-      if (argv['output-format'].includes('html')) {
-        generateHtmlReport(uncovered);
+      if (outputFormat.includes('html')) {
+        generateHtmlReport(uncovered, artifactDir);
       }
     }
   } catch (error) {
@@ -578,4 +583,27 @@ function generateHtmlReport(uncovered) {
     console.error('Error during coverage check:', error);
     process.exit(1);
   }
-})();
+}
+
+// Run the script only if it's the main module
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  fetchBaseBranch,
+  getMergeBase,
+  getModifiedLines,
+  loadCoverage,
+  getLinesFromLocation,
+  linesIntersect,
+  intersectLocationWithLines,
+  checkCoverage,
+  groupIntoRanges,
+  generateArtifact,
+  generateHtmlReport,
+  main,
+  argv,
+  COVERAGE_FILE,
+  ARTIFACT_DIR,
+};
