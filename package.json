@@ -302,6 +302,7 @@
     "jest-cli": "26.4.2",
     "jest-junit": "^12.0.0",
     "markdown-table": "^3.0.4",
+    "mock-fs": "^5.4.1",
     "nodemon": "^2.0.4",
     "playwright": "^1.46.0",
     "puppeteer": "^13.1.1",

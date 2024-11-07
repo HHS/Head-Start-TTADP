@@ -4,8 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const { createCoverageMap } = require('istanbul-lib-coverage');
 
-const COVERAGE_DIR = path.resolve(__dirname, '../coverage');
-const MERGED_COVERAGE_FILE = path.join(COVERAGE_DIR, 'coverage-final.json');
+const DEFAULT_COVERAGE_DIR = path.resolve(__dirname, '../coverage');
+const DEFAULT_MERGED_COVERAGE_FILE = path.join(DEFAULT_COVERAGE_DIR, 'coverage-final.json');
 
 /**
  * Recursively find all coverage-final.json files within the coverage directory.
@@ -38,9 +38,10 @@ function findCoverageFiles(dir) {
  */
 function mergeCoverageFiles(coverageFiles) {
   if (coverageFiles.length === 0) {
+    const errorMessage = 'No coverage-final.json files found to merge.';
     // eslint-disable-next-line no-console
-    console.error('No coverage-final.json files found to merge.');
-    process.exit(1);
+    console.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   const mergedCoverageMap = createCoverageMap({});
@@ -56,30 +57,56 @@ function mergeCoverageFiles(coverageFiles) {
 /**
  * Write the merged coverage data to coverage-final.json.
  * @param {Object} mergedCoverage - Merged coverage data.
+ * @param {string} outputFile - The output file path.
  */
-function writeMergedCoverage(mergedCoverage) {
-  fs.writeFileSync(MERGED_COVERAGE_FILE, JSON.stringify(mergedCoverage), 'utf-8');
+function writeMergedCoverage(mergedCoverage, outputFile) {
+  fs.writeFileSync(outputFile, JSON.stringify(mergedCoverage), 'utf-8');
   // eslint-disable-next-line no-console
-  console.log(`Merged coverage written to ${MERGED_COVERAGE_FILE}`);
+  console.log(`Merged coverage written to ${outputFile}`);
 }
 
-function main() {
-  // eslint-disable-next-line no-console
-  console.log('Searching for coverage-final.json files...');
-  const coverageFiles = findCoverageFiles(COVERAGE_DIR);
-  // eslint-disable-next-line no-console
-  console.log('Found coverage files:', coverageFiles);
+/**
+ * Main function to execute the coverage merging process.
+ * @param {string} coverageDir - Directory to search for coverage files.
+ * @param {string} mergedCoverageFile - Output file path for the merged coverage.
+ */
+function main(
+  coverageDir = DEFAULT_COVERAGE_DIR,
+  mergedCoverageFile = DEFAULT_MERGED_COVERAGE_FILE
+) {
+  try {
+    // eslint-disable-next-line no-console
+    console.log('Searching for coverage-final.json files...');
+    const coverageFiles = findCoverageFiles(coverageDir);
+    // eslint-disable-next-line no-console
+    console.log('Found coverage files:', coverageFiles);
 
-  // eslint-disable-next-line no-console
-  console.log('Merging coverage files...');
-  const mergedCoverage = mergeCoverageFiles(coverageFiles);
+    // eslint-disable-next-line no-console
+    console.log('Merging coverage files...');
+    const mergedCoverage = mergeCoverageFiles(coverageFiles);
 
-  // eslint-disable-next-line no-console
-  console.log('Writing merged coverage report...');
-  writeMergedCoverage(mergedCoverage);
+    // eslint-disable-next-line no-console
+    console.log('Writing merged coverage report...');
+    writeMergedCoverage(mergedCoverage, mergedCoverageFile);
 
-  // eslint-disable-next-line no-console
-  console.log('Coverage merging completed successfully.');
+    // eslint-disable-next-line no-console
+    console.log('Coverage merging completed successfully.');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error during coverage merging:', error.message);
+    process.exit(1);
+  }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  findCoverageFiles,
+  mergeCoverageFiles,
+  writeMergedCoverage,
+  main,
+  DEFAULT_COVERAGE_DIR,
+  DEFAULT_MERGED_COVERAGE_FILE,
+};
