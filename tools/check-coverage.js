@@ -83,9 +83,11 @@ async function getModifiedLines(mergeBase, directory) {
     .filter((file) => !file.includes('.test.'));
 
   // If a directory is provided, filter files that start with the directory
-  if (directory) {
-    files = files.filter((file) => file.includes(`/${directory}/`));
+  if (directory && directory.length !== 0) {
+    files = files.filter((file) => file.includes(`${directory}/`));
   }
+  // eslint-disable-next-line no-console
+  console.log('files:', files);
 
   const modifiedLines = {};
 
