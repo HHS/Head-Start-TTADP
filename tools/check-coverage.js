@@ -78,11 +78,13 @@ async function getModifiedLines(mergeBase, directory) {
   // Filter files based on the file extension and optional directory
   let files = diffFiles
     .split('\n')
-    .filter((file) => /\.(js|ts)$/.test(file));
+    .filter((file) => /\.(js|ts)$/.test(file))
+    .filter((file) => !file.includes('/_test/'))
+    .filter((file) => !file.includes('.test.'));
 
   // If a directory is provided, filter files that start with the directory
   if (directory) {
-    files = files.filter((file) => file.startsWith(directory));
+    files = files.filter((file) => file.includes(`/${directory}/`));
   }
 
   const modifiedLines = {};
