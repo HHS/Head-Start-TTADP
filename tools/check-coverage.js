@@ -26,6 +26,12 @@ const argv = yargs(hideBin(process.argv))
     description: 'Specify location of artifact dir',
     default: '../coverage-artifacts',
   })
+  .option('github-subdir', {
+    alias: 'g',
+    type: 'string',
+    description: 'Specify github subdir',
+    default: '',
+  })
   .option('fail-on-uncovered', {
     alias: 'f',
     type: 'boolean',
@@ -65,16 +71,25 @@ async function getMergeBase() {
 }
 
 /**
- * Get the list of modified or added lines in the PR.
+ * Get the list of modified or added lines in the PR, optionally filtered by directory.
+ * @param {string} mergeBase - The base commit to compare against.
+ * @param {string} [directory] - The directory to filter files by (optional).
  */
-async function getModifiedLines(mergeBase) {
+async function getModifiedLines(mergeBase, directory) {
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${mergeBase}..HEAD`]);
   // eslint-disable-next-line no-console
   console.log('getModifiedLines:', diffFiles);
-  const files = diffFiles
+
+  // Filter files based on the file extension and optional directory
+  let files = diffFiles
     .split('\n')
     .filter((file) => /\.(js|ts)$/.test(file));
+
+  // If a directory is provided, filter files that start with the directory
+  if (directory) {
+    files = files.filter((file) => file.startsWith(directory));
+  }
 
   const modifiedLines = {};
 
@@ -550,7 +565,7 @@ function generateHtmlReport(uncovered) {
 
     // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
-    const modifiedLines = await getModifiedLines(mergeBase);
+    const modifiedLines = await getModifiedLines(mergeBase, argv['github-subdir']);
 
     // eslint-disable-next-line no-console
     console.log('Loading coverage data...');
