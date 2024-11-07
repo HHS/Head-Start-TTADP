@@ -9463,6 +9463,11 @@ mobx@^6.3.2:
   resolved "https://registry.yarnpkg.com/mobx/-/mobx-6.6.2.tgz#9d9102a0e337e3fc09cb2d8ca0c6f00b61270d5a"
   integrity sha512-IOpS0bf3+hXIhDIy+CmlNMBfFpAbHS0aVHcNC+xH/TFYEKIIVDKNYRh9eKlXuVfJ1iRKAp0cRVmO145CyJAMVQ==
 
+mock-fs@^5.4.1:
+  version "5.4.1"
+  resolved "https://registry.yarnpkg.com/mock-fs/-/mock-fs-5.4.1.tgz#b00abc658cb19dbbf282fde2f05bb751cd1e12a5"
+  integrity sha512-sz/Q8K1gXXXHR+qr0GZg2ysxCRr323kuN10O7CtQjraJsFDJ4SJ+0I5MzALz7aRp9lHk8Cc/YdsT95h9Ka1aFw==
+
 module-details-from-path@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/module-details-from-path/-/module-details-from-path-1.0.3.tgz#114c949673e2a8a35e9d35788527aa37b679da2b"
