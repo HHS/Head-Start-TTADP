@@ -7,7 +7,6 @@ const simpleGit = require('simple-git');
 const { createCoverageMap } = require('istanbul-lib-coverage');
 const {
   fetchBaseBranch,
-  getMergeBase,
   getModifiedLines,
   loadCoverage,
   checkCoverage,
@@ -45,17 +44,6 @@ describe('check-coverage script', () => {
     });
   });
 
-  describe('getMergeBase', () => {
-    it('should return the merge base commit hash', async () => {
-      const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
-      simpleGit.mockReturnValue({ raw: gitRawMock });
-
-      const mergeBase = await getMergeBase();
-      expect(mergeBase).toBe('1234567890abcdef');
-      expect(gitRawMock).toHaveBeenCalledWith(['merge-base', 'HEAD', 'main']);
-    });
-  });
-
   describe('getModifiedLines', () => {
     it('should return modified lines for JavaScript files', async () => {
       const gitDiffMock = jest.fn()
@@ -65,8 +53,7 @@ describe('check-coverage script', () => {
 
       simpleGit.mockReturnValue({ diff: gitDiffMock });
 
-      const mergeBase = '1234567890abcdef';
-      const modifiedLines = await getModifiedLines(mergeBase);
+      const modifiedLines = await getModifiedLines('');
 
       expect(modifiedLines).toEqual({
         'file1.js': [1, 2],
