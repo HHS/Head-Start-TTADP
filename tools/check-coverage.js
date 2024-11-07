@@ -202,13 +202,13 @@ function checkCoverage(modifiedLines, coverageMap) {
       const ranges = groupIntoRanges(lines);
       if (!uncovered[file]) {
         uncovered[file] = {
-          statements: {},
-          functions: {},
-          branches: {},
+          statements: [],
+          functions: [],
+          branches: [],
         };
       }
-      ranges.forEach(({ start, end }, n) => {
-        uncovered[file].statements[`${n}`] = {
+      ranges.forEach(({ start, end }) => {
+        uncovered[file].statements.push({
           start: {
             line: start,
             column: 0,
@@ -217,67 +217,7 @@ function checkCoverage(modifiedLines, coverageMap) {
             line: end,
             column: 0,
           },
-        };
-        uncovered[file].functions[`${n}`] = {
-          name: null,
-          decl: {
-            start: {
-              line: start,
-              column: 0
-            },
-            end: {
-              line: end,
-              column: 0
-            }
-          },
-          loc: {
-            start: {
-              line: start,
-              column: 0
-            },
-            end: {
-              line: end,
-              column: 0
-            }
-          },
-          line: start
-        };
-        uncovered[file].branches[`${n}`] = {
-          loc: {
-            start: {
-              line: start,
-              column: 0
-            },
-            end: {
-              line: end,
-              column: 0
-            }
-          },
-          type: null,
-          locations: [
-            {
-              start: {
-                line: start,
-                column: 0
-              },
-              end: {
-                line: end,
-                column: 0
-              }
-            },
-            {
-              start: {
-                line: start,
-                column: 0
-              },
-              end: {
-                line: end,
-                column: 0
-              }
-            }
-          ],
-          line: start
-        };
+        });;
       });
       return;
     }
