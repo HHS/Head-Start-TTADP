@@ -804,8 +804,8 @@ export async function getGoalsByActivityRecipient(
     return goal;
   });
 
-  // reduce
-  const r = sorted.reduce((previous, current) => {
+  // map the goals to the format we need
+  const r = sorted.map((current) => {
     allGoalIds.push(current.id);
 
     const isCurated = current.goalTemplate
@@ -846,11 +846,7 @@ export async function getGoalsByActivityRecipient(
 
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
-    return {
-      goalRows: [...previous.goalRows, goalToAdd],
-    };
-  }, {
-    goalRows: [],
+    return goalToAdd;
   });
 
   const statuses = await goalStatusByGoalName({
@@ -860,7 +856,7 @@ export async function getGoalsByActivityRecipient(
   });
 
   // For checkbox selection we only need the primary goal id.
-  const rolledUpGoalIds = r.goalRows.map((goal) => {
+  const rolledUpGoalIds = r.map((goal) => {
     const bucket = {
       id: goal.id,
       goalIds: goal.ids,
@@ -870,16 +866,16 @@ export async function getGoalsByActivityRecipient(
 
   if (limitNum) {
     return {
-      count: r.goalRows.length,
-      goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+      count: r.length,
+      goalRows: r.slice(offSetNum, offSetNum + limitNum),
       statuses,
       allGoalIds: rolledUpGoalIds,
     };
   }
 
   return {
-    count: r.goalRows.length,
-    goalRows: r.goalRows.slice(offSetNum),
+    count: r.length,
+    goalRows: r.slice(offSetNum),
     statuses,
     allGoalIds: rolledUpGoalIds,
   };
