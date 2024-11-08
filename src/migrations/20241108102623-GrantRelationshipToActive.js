@@ -1,6 +1,6 @@
 const { prepMigration } = require('../lib/migration');
 
-const goalText = 'The recipient will develop and implement a CAP/QIP to address monitoring findings.';
+const goalText = '(Monitoring) The recipient will develop and implement a CAP/QIP to address monitoring findings.';
 module.exports = {
   up: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
