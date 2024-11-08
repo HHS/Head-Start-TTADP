@@ -795,18 +795,14 @@ export async function getGoalsByActivityRecipient(
     ];
   }
 
-  sorted = sorted.map((goal) => {
-    if (goal.goalCollaborators.length === 0) return goal;
-
-    // eslint-disable-next-line no-param-reassign
-    goal.collaborators = createCollaborators(goal);
-
-    return goal;
-  });
-
   // map the goals to the format we need
   const r = sorted.map((current) => {
     allGoalIds.push(current.id);
+
+    if (current.goalCollaborators.length > 0) {
+      // eslint-disable-next-line no-param-reassign
+      current.collaborators = createCollaborators(current);
+    }
 
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
