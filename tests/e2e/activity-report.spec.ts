@@ -406,15 +406,10 @@ test.describe('Activity Report', () => {
     // Scroll until the button with the name 'View objectives for goal G-6' is visible.
     await page.getByRole('button', { name: 'View objectives for goal G-6' }).scrollIntoViewIfNeeded();
 
-    // wait for 3 seconds.
-    await page.waitForTimeout(3000);
-
     await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
 
     // Scroll until the button with the name 'View objectives for goal G-5' is visible.
     await page.getByRole('button', { name: 'View objectives for goal G-5' }).scrollIntoViewIfNeeded();
-
-    await page.waitForTimeout(3000);
 
     await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
 
