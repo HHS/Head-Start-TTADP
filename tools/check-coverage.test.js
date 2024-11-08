@@ -42,6 +42,13 @@ describe('check-coverage script', () => {
       await expect(fetchBaseBranch()).resolves.not.toThrow();
       expect(gitFetchMock).toHaveBeenCalled();
     });
+
+    it('should throw an error if git fetch fails', async () => {
+      const gitFetchMock = jest.fn().mockRejectedValue(new Error('Fetch failed'));
+      simpleGit.mockReturnValue({ fetch: gitFetchMock });
+
+      await expect(fetchBaseBranch()).rejects.toThrow('Fetch failed');
+    });
   });
 
   describe('getModifiedLines', () => {
@@ -76,6 +83,25 @@ describe('check-coverage script', () => {
         'src/file1.js': [1, 2],
       });
     });
+
+    it('should return an empty object if there are no modified files', async () => {
+      const gitDiffMock = jest.fn().mockResolvedValue('');
+      simpleGit.mockReturnValue({ diff: gitDiffMock });
+
+      const modifiedLines = await getModifiedLines('');
+      expect(modifiedLines).toEqual({});
+    });
+
+    it('should ignore non-JavaScript/TypeScript files', async () => {
+      const gitDiffMock = jest.fn()
+        .mockResolvedValueOnce('file1.py\nfile2.txt\n')  // Files that should be ignored
+        .mockResolvedValue('');  // No line diffs
+
+      simpleGit.mockReturnValue({ diff: gitDiffMock });
+
+      const modifiedLines = await getModifiedLines('');
+      expect(modifiedLines).toEqual({});
+    });
   });
 
   describe('loadCoverage', () => {
@@ -109,6 +135,15 @@ describe('check-coverage script', () => {
 
       expect(consoleErrorMock).toHaveBeenCalledWith(
         expect.stringContaining('Coverage file not found at')
+      );
+    });
+
+    it('should throw an error if the coverage file is corrupted', () => {
+      const coverageFile = path.join(tmpDir, 'corrupted-coverage.json');
+      fs.writeFileSync(coverageFile, 'Not JSON content');
+
+      expect(() => loadCoverage(coverageFile)).toThrow(
+        'Failed to parse coverage data'
       );
     });
   });
@@ -165,6 +200,44 @@ describe('check-coverage script', () => {
         'file1.js': {
           statements: [
             { start: { line: 1, column: 0 }, end: { line: 3, column: 0 } },
+          ],
+          functions: [],
+          branches: [],
+        },
+      });
+    });
+
+    it('should mark all lines as uncovered if none are covered in modified files', () => {
+      const modifiedLines = {
+        'file1.js': [1, 2, 3],
+      };
+
+      const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: {
+            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            '1': { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            '2': { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
+          },
+          fnMap: {},
+          branchMap: {},
+          s: { '0': 0, '1': 0, '2': 0 },
+          f: {},
+          b: {},
+        },
+      };
+
+      const coverageMap = createCoverageMap(coverageData);
+      const uncovered = checkCoverage(modifiedLines, coverageMap);
+
+      expect(uncovered).toEqual({
+        'file1.js': {
+          statements: [
+            { id: '0', start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            { id: '1', start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            { id: '2', start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
           ],
           functions: [],
           branches: [],
@@ -327,6 +400,63 @@ describe('check-coverage script', () => {
 
       expect(console.log.mock.calls.flat()).toContain('Uncovered lines detected:');
       expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should log an error if the coverage file is missing', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+      await main({
+        coverageFile: 'missing-coverage.json',
+        artifactDir: path.join(tmpDir, 'artifacts'),
+        outputFormat: 'json',
+      });
+
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Coverage file not found at'));
+      expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should succeed if no uncovered lines are detected', async () => {
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+      // Mock git functions to simulate a covered file
+      const gitFetchMock = jest.fn().mockResolvedValue();
+      const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
+      const gitDiffMock = jest.fn()
+        .mockResolvedValueOnce('file1.js\n')
+        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n');
+      simpleGit.mockReturnValue({
+        fetch: gitFetchMock,
+        raw: gitRawMock,
+        diff: gitDiffMock,
+      });
+
+      // Set up a covered line
+      const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+          fnMap: {},
+          branchMap: {},
+          s: { '0': 1 },
+          f: {},
+          b: {},
+        },
+      };
+
+      const coverageFile = path.join(tmpDir, 'coverage-final.json');
+      fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
+
+      await main({
+        coverageFile,
+        artifactDir: path.join(tmpDir, 'artifacts'),
+        outputFormat: 'json',
+      });
+
+      expect(console.log.mock.calls.flat()).toContain('All modified lines are covered by tests.');
+      expect(process.exit).not.toHaveBeenCalled();
     });
   });
 });
