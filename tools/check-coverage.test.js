@@ -54,9 +54,9 @@ describe('check-coverage script', () => {
   describe('getModifiedLines', () => {
     it('should return modified lines for JavaScript files', async () => {
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('file1.js\nfile2.ts\nfile3.txt\n') // For diffFiles
-        .mockResolvedValueOnce('@@ -0,0 +1,2 @@\n+line1\n+line2\n') // For file1.js diff
-        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n'); // For file2.ts diff
+        .mockResolvedValueOnce('file1.js\nfile2.ts\n') // Return file names
+        .mockResolvedValueOnce('@@ -0,0 +1,2 @@\n+line1\n+line2\n') // Return line diffs for file1.js
+        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n'); // Return line diff for file2.ts
 
       simpleGit.mockReturnValue({ diff: gitDiffMock });
 
@@ -70,9 +70,9 @@ describe('check-coverage script', () => {
 
     it('should filter files by directory if provided', async () => {
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('src/file1.js\ntests/file2.ts\n') // For diffFiles
-        .mockResolvedValueOnce('@@ -0,0 +1,2 @@\n+line1\n+line2\n') // For src/file1.js diff
-        .mockResolvedValueOnce(''); // For tests/file2.ts diff
+        .mockResolvedValueOnce('src/file1.js\ntests/file2.ts\n') // Return file names
+        .mockResolvedValueOnce('@@ -0,0 +1,2 @@\n+line1\n+line2\n') // Return line diffs for src/file1.js
+        .mockResolvedValueOnce(''); // No line diffs for tests/file2.ts
 
       simpleGit.mockReturnValue({ diff: gitDiffMock });
 
@@ -377,8 +377,8 @@ describe('check-coverage script', () => {
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('file1.js\n')
-        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n');
+        .mockResolvedValueOnce('file1.js\n') // File with changes
+        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n'); // Modified line
 
       simpleGit.mockReturnValue({
         fetch: gitFetchMock,
@@ -386,8 +386,20 @@ describe('check-coverage script', () => {
         diff: gitDiffMock,
       });
 
-      // Prepare coverage data with no coverage
-      const coverageData = {};
+      // Set up coverage data without coverage for the modified lines
+      const coverageData = {
+        'file1.js': {
+          path: 'file1.js',
+          statementMap: {
+            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+          },
+          fnMap: {},
+          branchMap: {},
+          s: { '0': 0 }, // No coverage for line 1
+          f: {},
+          b: {},
+        },
+      };
 
       const coverageFile = path.join(tmpDir, 'coverage-final.json');
       fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
