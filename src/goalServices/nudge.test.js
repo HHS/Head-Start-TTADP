@@ -71,6 +71,57 @@ describe('nudge', () => {
     await db.sequelize.close();
   });
 
+  it('should not unshift a template goal if it is already in the goals', async () => {
+    const recipientId = 1;
+    const text = 'Some goal text';
+    const grantNumbers = ['GRANT-1234567'];
+
+    const matchingId = 1;
+    const templateName = 'Template Goal';
+    const templateSource = 'Some source';
+
+    const newGrant = await createGrant({ number: grantNumbers[0], recipientId });
+
+    similarGoalsForRecipient.mockReturnValueOnce({
+      result: [
+        {
+          goal: {
+            id: matchingId,
+            name: templateName,
+            isTemplate: true,
+            source: templateSource,
+            endDate: '',
+          },
+          similarity: 0.7,
+        },
+      ],
+    });
+
+    // Create a goal with a matching template ID and valid grantId
+    await Goal.create({
+      id: 999111,
+      grantId: newGrant.id,
+      name: 'Existing Goal',
+      status: GOAL_STATUS.NOT_STARTED,
+      goalTemplateId: matchingId,
+    });
+
+    const results = await nudge(recipientId, text, grantNumbers);
+
+    expect(results).not.toContainEqual([{
+      ids: [matchingId],
+      name: templateName,
+      status: GOAL_STATUS.NOT_STARTED,
+      goalTemplateId: matchingId,
+      isCuratedTemplate: true,
+      endDate: '',
+      source: templateSource,
+    }]);
+
+    await Goal.destroy({ where: { id: 999111 }, force: true });
+    await Grant.destroy({ where: { id: newGrant.id }, force: true, individualHooks: true });
+  });
+
   it('should return a nudge', async () => {
     const goalName = goal.name;
     const goalId = goal.id;
