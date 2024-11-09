@@ -317,6 +317,110 @@ describe('check-coverage script', () => {
 
       expect(uncovered).toEqual({});
     });
+    it('should identify uncovered functions', () => {
+      const modifiedLines = {
+        'fileWithUncoveredFunctions.js': [1, 2, 3],
+      };
+
+      const normalizedFilePath = path.resolve(process.cwd(), 'fileWithUncoveredFunctions.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: {},
+          fnMap: {
+            '0': { name: 'functionOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+            '1': { name: 'functionTwo', loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } } },
+          },
+          branchMap: {},
+          s: {},
+          f: { '0': 0, '1': 1 },
+          b: {},
+        },
+      };
+
+      const coverageMap = createCoverageMap(coverageData);
+      const uncovered = checkCoverage(modifiedLines, coverageMap);
+
+      expect(uncovered).toEqual({
+        'fileWithUncoveredFunctions.js': {
+          statements: [],
+          functions: [
+            { id: '0', name: 'functionOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+          ],
+          branches: [],
+        },
+      });
+    });
+
+    it('should identify uncovered branches', () => {
+      const modifiedLines = {
+        'fileWithUncoveredBranches.js': [1, 2, 3],
+      };
+
+      const normalizedFilePath = path.resolve(process.cwd(), 'fileWithUncoveredBranches.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: {},
+          fnMap: {},
+          branchMap: {
+            '0': { locations: [{ start: { line: 1, column: 0 }, end: { line: 1, column: 0 } }] },
+            '1': { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
+          },
+          s: {},
+          f: {},
+          b: { '0': [0], '1': [1] },
+        },
+      };
+
+      const coverageMap = createCoverageMap(coverageData);
+      const uncovered = checkCoverage(modifiedLines, coverageMap);
+
+      expect(uncovered).toEqual({
+        'fileWithUncoveredBranches.js': {
+          statements: [],
+          functions: [],
+          branches: [
+            { id: '0', locationIndex: 0, start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+          ],
+        },
+      });
+    });
+
+    it('should return uncovered functions and branches when both are not covered', () => {
+      const modifiedLines = { 'complexFile.js': [1, 2, 3] };
+      const normalizedFilePath = path.resolve(process.cwd(), 'complexFile.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: {},
+          fnMap: {
+            '0': { name: 'funcOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+          },
+          branchMap: {
+            '1': { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
+          },
+          s: {},
+          f: { '0': 0 },
+          b: { '1': [0] },
+        },
+      };
+
+      const coverageMap = createCoverageMap(coverageData);
+      const uncovered = checkCoverage(modifiedLines, coverageMap);
+
+      expect(uncovered).toEqual({
+        'complexFile.js': {
+          statements: [],
+          functions: [
+            { id: '0', name: 'funcOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+          ],
+          branches: [
+            { id: '1', locationIndex: 0, start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+          ],
+        },
+      });
+    });
   });
 
   describe('groupIntoRanges', () => {
