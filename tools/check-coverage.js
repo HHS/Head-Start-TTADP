@@ -21,8 +21,8 @@ const argv = yargs(hideBin(process.argv))
     description: 'Specify location of artifact dir',
     default: '../coverage-artifacts',
   })
-  .option('directory- filter', {
-    alias: 'g',
+  .option('directory-filter', {
+    alias: 'd',
     type: 'string',
     description: 'filter subdirs',
     default: '',

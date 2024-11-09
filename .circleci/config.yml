@@ -710,7 +710,7 @@ jobs:
               chmod +x ./tools/check-coverage.js
               node -r esm ./tools/check-coverage.js \
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
-                --output-format=json,markdown,html
+                --output-format=json,html
             else
               echo "Not a PR build. Skipping coverage check."
             fi
@@ -799,9 +799,9 @@ jobs:
               node -r esm ./tools/check-coverage.js \
                 --coverage-file=../frontend/coverage/coverage-final.json
                 --artifact-dir=../frontend/coverage-artifacts
-                --github-subdir=frontend/
+                --directory-filter=frontend/
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
-                --output-format=json,markdown,html
+                --output-format=json,html
             else
               echo "Not a PR build. Skipping coverage check."
             fi
