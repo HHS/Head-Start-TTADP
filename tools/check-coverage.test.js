@@ -54,31 +54,30 @@ describe('check-coverage script', () => {
   describe('getModifiedLines', () => {
     it('should return modified lines for JavaScript files', async () => {
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('file1.js\nfile2.ts\n') // Return file names
-        .mockResolvedValueOnce('@@ -0,0 +1,2 @@\n+line1\n+line2\n') // Return line diffs for file1.js
-        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n'); // Return line diff for file2.ts
-
+        .mockResolvedValueOnce('src/file1.js\nsrc/file2.ts\n') // Mock for diffFiles
+        .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n') // Mock diff for file1.js
+        .mockResolvedValueOnce('@@ -1,0 +1 @@\n+line1\n'); // Mock diff for file2.ts
+  
       simpleGit.mockReturnValue({ diff: gitDiffMock });
-
-      const modifiedLines = await getModifiedLines('');
-
+  
+      const modifiedLines = await getModifiedLines();
+  
       expect(modifiedLines).toEqual({
-        'file1.js': [1, 2],
-        'file2.ts': [1],
+        'src/file1.js': [1, 2],
+        'src/file2.ts': [1],
       });
     });
 
     it('should filter files by directory if provided', async () => {
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('src/file1.js\ntests/file2.ts\n') // Return file names
-        .mockResolvedValueOnce('@@ -0,0 +1,2 @@\n+line1\n+line2\n') // Return line diffs for src/file1.js
-        .mockResolvedValueOnce(''); // No line diffs for tests/file2.ts
-
+        .mockResolvedValueOnce('src/file1.js\ntests/file2.ts\n') // Mock for diffFiles
+        .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n') // Mock diff for src/file1.js
+        .mockResolvedValueOnce(''); // No diff for tests/file2.ts
+  
       simpleGit.mockReturnValue({ diff: gitDiffMock });
-
-      const mergeBase = '1234567890abcdef';
-      const modifiedLines = await getModifiedLines(mergeBase, 'src');
-
+  
+      const modifiedLines = await getModifiedLines(['src/']);
+  
       expect(modifiedLines).toEqual({
         'src/file1.js': [1, 2],
       });
@@ -88,7 +87,7 @@ describe('check-coverage script', () => {
       const gitDiffMock = jest.fn().mockResolvedValue('');
       simpleGit.mockReturnValue({ diff: gitDiffMock });
 
-      const modifiedLines = await getModifiedLines('');
+      const modifiedLines = await getModifiedLines();
       expect(modifiedLines).toEqual({});
     });
 
@@ -99,7 +98,7 @@ describe('check-coverage script', () => {
 
       simpleGit.mockReturnValue({ diff: gitDiffMock });
 
-      const modifiedLines = await getModifiedLines('');
+      const modifiedLines = await getModifiedLines();
       expect(modifiedLines).toEqual({});
     });
   });
@@ -130,7 +129,7 @@ describe('check-coverage script', () => {
       const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => loadCoverage('non-existent-file.json')).toThrow(
-        'Coverage file not found at non-existent-file.json'
+        'Failed to parse coverage data at non-existent-file.json'
       );
 
       expect(consoleErrorMock).toHaveBeenCalledWith(
@@ -140,10 +139,10 @@ describe('check-coverage script', () => {
 
     it('should throw an error if the coverage file is corrupted', () => {
       const coverageFile = path.join(tmpDir, 'corrupted-coverage.json');
-      fs.writeFileSync(coverageFile, 'Not JSON content');
-
+      fs.writeFileSync(coverageFile, 'Not JSON content'); // Non-JSON content
+  
       expect(() => loadCoverage(coverageFile)).toThrow(
-        'Failed to parse coverage data'
+        'Failed to parse coverage data at'
       );
     });
   });
@@ -372,44 +371,43 @@ describe('check-coverage script', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       jest.spyOn(console, 'error').mockImplementation(() => {});
       jest.spyOn(process, 'exit').mockImplementation(() => {});
-
+  
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('file1.js\n') // File with changes
-        .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n'); // Modified line
-
+        .mockResolvedValueOnce('file1.js\n') // Modified file
+        .mockResolvedValueOnce('@@ -1,0 +1 @@\n+line1\n'); // Modified line in file1.js
+  
       simpleGit.mockReturnValue({
         fetch: gitFetchMock,
         raw: gitRawMock,
         diff: gitDiffMock,
       });
-
-      // Set up coverage data without coverage for the modified lines
+  
+      // Provide coverage data without coverage for the modified lines
+      const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
       const coverageData = {
-        'file1.js': {
-          path: 'file1.js',
-          statementMap: {
-            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
-          },
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
           fnMap: {},
           branchMap: {},
-          s: { '0': 0 }, // No coverage for line 1
+          s: { '0': 0 }, // Mark line as uncovered
           f: {},
           b: {},
         },
       };
-
+  
       const coverageFile = path.join(tmpDir, 'coverage-final.json');
       fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
-
+  
       await main({
         coverageFile,
         artifactDir: path.join(tmpDir, 'artifacts'),
         outputFormat: 'json',
       });
-
+  
       expect(console.log.mock.calls.flat()).toContain('Uncovered lines detected:');
       expect(process.exit).toHaveBeenCalledWith(1);
     });
