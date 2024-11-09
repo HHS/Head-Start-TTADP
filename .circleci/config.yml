@@ -799,7 +799,7 @@ jobs:
               node -r esm ./tools/check-coverage.js \
                 --coverage-file=../frontend/coverage/coverage-final.json
                 --artifact-dir=../frontend/coverage-artifacts
-                --github-subdir=frontend
+                --github-subdir=frontend/
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
                 --output-format=json,markdown,html
             else

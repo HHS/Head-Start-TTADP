@@ -21,10 +21,10 @@ const argv = yargs(hideBin(process.argv))
     description: 'Specify location of artifact dir',
     default: '../coverage-artifacts',
   })
-  .option('github-subdir', {
+  .option('directory- filter', {
     alias: 'g',
     type: 'string',
-    description: 'Specify GitHub subdir',
+    description: 'filter subdirs',
     default: '',
   })
   .option('fail-on-uncovered', {
@@ -57,31 +57,26 @@ async function fetchBaseBranch() {
 
 /**
  * Get the list of modified or added lines in the PR, optionally filtered by directory.
- * @param {string} [directory] - The directory to filter files by (optional).
+ * @param {string} [directoryFilter] - The directory to filter files by (optional).
  */
-async function getModifiedLines(directory) {
+async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/common/']) {
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${BASE_BRANCH}...HEAD`]);
   // eslint-disable-next-line no-console
-  console.log('getModifiedLines:', diffFiles);
+  console.log('getModifiedLines:\n', diffFiles);
 
   // Filter files based on the file extension and optional directory
-  let files = diffFiles
+  let files = (diffFiles || '')
     .split('\n')
     .filter((file) => /\.(js|ts)$/.test(file))
     .filter((file) => !file.includes('/__tests__/'))
     .filter((file) => !file.includes('.test.'));
 
   // If a directory is provided, filter files that start with the directory
-  if (directory && directory.length !== 0) {
-    files = files.filter((file) => file.includes(`${directory}/`));
-  } else {
-    // Directories that are tested in non-defualt path
-    files = files
-      .filter((file) => !file.includes('packages/common/'))
-      .filter((file) => !file.includes('similarity_api/'))
-      .filter((file) => file.includes(`frontend/`));
+  if (directoryFilter && directoryFilter.length !== 0) {
+    files = files.filter((file) => directoryFilter.some((directory) => file.includes(directory)));
   }
+
   // eslint-disable-next-line no-console
   console.log('files:', files);
 
@@ -122,16 +117,20 @@ async function getModifiedLines(directory) {
  * Load and parse the merged coverage report.
  */
 function loadCoverage(coverageFile = COVERAGE_FILE) {
-  if (!fs.existsSync(coverageFile)) {
-    const errorMessage = `Coverage file not found at ${coverageFile}`;
-    // eslint-disable-next-line no-console
-    console.error(errorMessage);
-    throw new Error(errorMessage);
-  }
+  try {
+    if (!fs.existsSync(coverageFile)) {
+      const errorMessage = `Coverage file not found at ${coverageFile}`;
+      // eslint-disable-next-line no-console
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
 
-  const coverageData = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
-  const coverageMap = createCoverageMap(coverageData);
-  return coverageMap;
+    const coverageData = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
+    const coverageMap = createCoverageMap(coverageData);
+    return coverageMap;
+  } catch (error) {
+    throw new Error(`Failed to parse coverage data at ${coverageFile}`);
+  }
 }
 
 // Helper function to get an array of lines from a location
@@ -491,7 +490,7 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
 async function main({
   coverageFile = COVERAGE_FILE,
   artifactDir = ARTIFACT_DIR,
-  githubSubdir = argv['github-subdir'],
+  directoryFilter = (argv['directory- filter'] || '').split(','),
   failOnUncovered = argv['fail-on-uncovered'],
   outputFormat = argv['output-format'],
 } = {}) {
@@ -502,7 +501,7 @@ async function main({
 
     // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
-    const modifiedLines = await getModifiedLines(githubSubdir);
+    const modifiedLines = await getModifiedLines(directoryFilter);
 
     // eslint-disable-next-line no-console
     console.log('Loading coverage data...');
