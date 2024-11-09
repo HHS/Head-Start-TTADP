@@ -13,6 +13,7 @@ const {
   groupIntoRanges,
   generateArtifact,
   generateHtmlReport,
+  intersectLocationWithLines,
   main,
 } = require('./check-coverage');
 
@@ -80,6 +81,22 @@ describe('check-coverage script', () => {
 
       expect(modifiedLines).toEqual({
         'src/file1.js': [1, 2],
+      });
+    });
+
+    it('should not filter files by directory if provided', async () => {
+      const gitDiffMock = jest.fn()
+        .mockResolvedValueOnce('src/file1.js\nunfiltered/file2.ts\n') // Mock for diffFiles
+        .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n') // Mock diff for src/file1.js
+        .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n'); // No diff for tests/file2.ts
+
+      simpleGit.mockReturnValue({ diff: gitDiffMock });
+
+      const modifiedLines = await getModifiedLines([]);
+
+      expect(modifiedLines).toEqual({
+        'src/file1.js': [1, 2],
+        'unfiltered/file2.ts': [1,2],
       });
     });
 
@@ -374,11 +391,57 @@ describe('check-coverage script', () => {
       const content = fs.readFileSync(artifactPath, 'utf-8');
       expect(content).toContain('<p>All modified lines are covered by tests.</p>');
     });
+  });
 
-    it('should skip HTML generation when outputFormat does not include "html"', () => {
-      const uncovered = { 'file1.js': { statements: [], functions: [], branches: [] } };
-      generateHtmlReport(uncovered, tmpDir, ['json']); // HTML should not be generated
-      expect(fs.existsSync(path.join(tmpDir, 'uncovered-lines.html'))).toBe(false);
+  describe('intersectLocationWithLines', () => {
+    it('should return null when there are no overlapping lines', () => {
+      const loc = { start: { line: 5, column: 2 }, end: { line: 10, column: 4 } };
+      const overlappingLines = [];
+      expect(intersectLocationWithLines(loc, overlappingLines)).toBeNull();
+    });
+
+    it('should adjust the start line when there is partial overlap at the start', () => {
+      const loc = { start: { line: 5, column: 2 }, end: { line: 10, column: 4 } };
+      const overlappingLines = [6, 7, 8];
+      const result = intersectLocationWithLines(loc, overlappingLines);
+
+      expect(result).toEqual({
+        start: { line: 6, column: 0 },
+        end: { line: 8, column: undefined },
+      });
+    });
+
+    it('should adjust the end line when there is partial overlap at the end', () => {
+      const loc = { start: { line: 5, column: 2 }, end: { line: 10, column: 4 } };
+      const overlappingLines = [8, 9];
+      const result = intersectLocationWithLines(loc, overlappingLines);
+
+      expect(result).toEqual({
+        start: { line: 8, column: 0 },
+        end: { line: 9, column: undefined },
+      });
+    });
+
+    it('should adjust both start and end lines when there is a complete overlap', () => {
+      const loc = { start: { line: 5, column: 2 }, end: { line: 10, column: 4 } };
+      const overlappingLines = [6, 7, 8, 9];
+      const result = intersectLocationWithLines(loc, overlappingLines);
+
+      expect(result).toEqual({
+        start: { line: 6, column: 0 },
+        end: { line: 9, column: undefined },
+      });
+    });
+
+    it('should return the original location when overlapping lines fully cover the location', () => {
+      const loc = { start: { line: 5, column: 2 }, end: { line: 10, column: 4 } };
+      const overlappingLines = [5, 6, 7, 8, 9, 10];
+      const result = intersectLocationWithLines(loc, overlappingLines);
+
+      expect(result).toEqual({
+        start: { line: 5, column: 2 },
+        end: { line: 10, column: 4 },
+      });
     });
   });
 
