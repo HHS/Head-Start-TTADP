@@ -19,7 +19,7 @@ import {
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import logEmailNotification from './logNotifications';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 import transactionQueueWrapper from '../../workers/transactionWrapper';
 import referenceData from '../../workers/referenceData';
 import safeParse from '../../models/helpers/safeParse';
@@ -96,8 +96,15 @@ export const filterAndDeduplicateEmails = (emails) => {
 };
 
 export const onFailedNotification = (job, error) => {
-  auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
-  logEmailNotification(job, false, error);
+  if (job.data.reports && Array.isArray(job.data.reports)) {
+    job.data.reports.forEach((report) => {
+      auditLogger.error(`job ${job.name} failed for report ${report.displayId} with error ${error}`);
+    });
+    logDigestEmailNotification(job, false, error);
+  } else {
+    auditLogger.error(`job ${job.name} failed for report ${(job.data.report?.displayId) || 'unknown'} with error ${error}`);
+    logEmailNotification(job, false, error);
+  }
 };
 
 export const onCompletedNotification = (job, result) => {
@@ -105,12 +112,14 @@ export const onCompletedNotification = (job, result) => {
     job.data.reports.forEach((report) => {
       if (result != null) {
         logger.info(`Successfully sent ${job.name} notification for ${report.displayId}`);
+        logDigestEmailNotification(job, true, result);
       } else {
         logger.info(`Did not send ${job.name} notification for ${report.displayId} preferences are not set or marked as "no-send"`);
       }
     });
   } else if (result != null) {
     logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data}`);
+    logEmailNotification(job, true, result);
   } else {
     logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data} preferences are not set or marked as "no-send"`);
   }
