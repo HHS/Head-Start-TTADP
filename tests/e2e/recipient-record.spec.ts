@@ -69,10 +69,10 @@ test.describe('Recipient record', () => {
 
     await page.getByLabel('Recipient\'s goal *').fill('This is the second goal for this recipient');
 
+    await page.getByRole('button', { name: /Save and continue/i }).click();    
+
     // goal source
     await page.getByLabel(/Goal source/i).selectOption('Recipient request');
-
-    await page.getByRole('button', { name: /Save and continue/i }).click();    
 
     // edit that goal to add an objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
