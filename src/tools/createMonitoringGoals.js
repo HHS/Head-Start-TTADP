@@ -2,24 +2,23 @@ import {
   sequelize,
   GoalTemplate,
 } from '../models';
+
 import { auditLogger } from '../logger';
 
 const createMonitoringGoals = async () => {
-  console.log('\n\n\n----- start of job');
   const cutOffDate = '2023-12-01';
-  const monitoringGoalTemplateId = 18172;
+  const monitoringTemplateName = '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
 
   // Verify that the monitoring goal template exists.
   const monitoringGoalTemplate = await GoalTemplate.findOne({
     where: {
-      id: monitoringGoalTemplateId,
+      templateName: monitoringTemplateName,
     },
   });
-  console.log('\n\n\n------monitoringGoalTemplate', monitoringGoalTemplate);
 
   // If the monitoring goal template does not exist, throw an error.
   if (!monitoringGoalTemplate) {
-    auditLogger.error(`Monitoring Goal template with ID ${monitoringGoalTemplateId} not found`);
+    auditLogger.error('Monitoring Goal template not found');
     return;
   }
 
@@ -51,7 +50,7 @@ const createMonitoringGoals = async () => {
       LEFT JOIN "Goals" g
       ON (grta."grantId" = g."grantId"
       OR grta."activeGrantId" = g."grantId")
-      AND g."goalTemplateId" = ${monitoringGoalTemplateId} -- NEEDS TO BE CHANGED TO THE MONITORING GOAL
+      AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
       WHERE gr.status = 'Active'
       AND mrs."name" = 'Complete'
       AND mfs."name" = 'Active'
@@ -72,28 +71,24 @@ const createMonitoringGoals = async () => {
         gt."templateName" "name",
         'Not started' "status",
         NULL "timeframe",
-        FALSE "isFromSmartSheetTtaPlan",
+        FALSE "isFromSmartsheetTtaPlan",
         NOW() "createdAt",
         NOW() "updatedAt",
-        NULL "endDate",
         gt.id "goalTemplateId",
         gng."grantId" "grantId",
         FALSE "onApprovedAR",
-        'monitoring' "createdVIA",
-        FALSE "isRttapa",
+       'monitoring'::"enum_Goals_createdVia" "createdVia",
+        'Yes'::"enum_Goals_isRttapa" "isRttapa",
         FALSE "onAR",
-        NULL "rtrOrder",
-        'Federal monitoring issues, including CLASS and RANs' "source",
-        NULL "deletedAt",
-        NULL "mapsToParrentGoalId"
+        'Federal monitoring issues, including CLASS and RANs'::"enum_Goals_source" "source"
       FROM "GoalTemplates" gt
       CROSS JOIN grants_needing_goal gng
-      WHERE gt.id = 18172 -- NEEDS TO BE CHANGED TO THE MONITORING GOAL
+      WHERE gt.id = ${monitoringGoalTemplate.id}
     )
     INSERT INTO "Goals"
-    ("name", "status", "timeframe", "isFromSmartSheetTtaPlan", "createdAt", "updatedAt", "endDate", "goalTemplateId", "grantId", "onApprovedAR", "createdVIA", "isRttapa", "onAR", "rtrOrder", "source", "deletedAt", "mapsToParrentGoalId")
+    ("name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source")
     SELECT
-      "name", "status", "timeframe", "isFromSmartSheetTtaPlan", "createdAt", "updatedAt", "endDate", "goalTemplateId", "grantId", "onApprovedAR", "createdVIA", "isRttapa", "onAR", "rtrOrder", "source", "deletedAt", "mapsToParrentGoalId"
+      "name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source"
     FROM new_goals;
     `);
 };
