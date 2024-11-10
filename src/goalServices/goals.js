@@ -1331,6 +1331,7 @@ export async function saveGoalsForReport(goals, report) {
           if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
             newOrUpdatedGoal = await Goal.create({
               goalTemplateId,
+              createdVia: 'activityReport',
               name: goal.name ? goal.name.trim() : '',
               grantId,
               status,

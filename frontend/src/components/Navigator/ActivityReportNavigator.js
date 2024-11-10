@@ -19,6 +19,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
+import useFormGrantData from '../../hooks/useFormGrantData';
 
 /**
    *
@@ -166,13 +167,10 @@ const ActivityReportNavigator = ({
   const recipients = watch('activityRecipients');
   const isRecipientReport = activityRecipientType === 'recipient';
 
-  const grantIds = isRecipientReport ? recipients.map((r) => {
-    if (r.grant) {
-      return r.grant.id;
-    }
-
-    return r.activityRecipientId;
-  }) : [];
+  const {
+    grantIds,
+    hasMultipleGrants,
+  } = useFormGrantData(activityRecipientType, recipients);
 
   const { isDirty, isValid } = formState;
 
@@ -542,6 +540,7 @@ const ActivityReportNavigator = ({
     const areGoalsValid = validateGoals(
       [goal],
       setError,
+      hasMultipleGrants,
     );
 
     if (areGoalsValid !== true) {
