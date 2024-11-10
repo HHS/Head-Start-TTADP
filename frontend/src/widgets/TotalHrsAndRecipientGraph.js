@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS as TRACE_IDS } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
@@ -66,13 +67,13 @@ export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
         yAxisTitle="Number of hours"
         legendConfig={[
           {
-            label: 'Technical Assistance', selected: true, shape: 'circle', id: 'show-ta-checkbox',
+            label: 'Technical Assistance', selected: true, shape: 'circle', id: 'show-ta-checkbox', traceId: TRACE_IDS.TECHNICAL_ASSISTANCE,
           },
           {
-            label: 'Training', selected: true, shape: 'square', id: 'show-training-checkbox',
+            label: 'Training', selected: true, shape: 'square', id: 'show-training-checkbox', traceId: TRACE_IDS.TRAINING,
           },
           {
-            label: 'Both', selected: true, shape: 'triangle', id: 'show-both-checkbox',
+            label: 'Both', selected: true, shape: 'triangle', id: 'show-both-checkbox', traceId: TRACE_IDS.BOTH,
           },
         ]}
         tableConfig={{

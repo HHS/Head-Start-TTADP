@@ -34,6 +34,12 @@ const DEFAULT_SORT_CONFIG = {
 
 const KEY_COLUMNS = ['Months'];
 
+const TRACE_IDS = {
+  IN_PERSON: 'in-person',
+  VIRTUAL: 'virtual',
+  HYBRID: 'hybrid',
+};
+
 export default function DeliveryMethodGraph({ data }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'Total TTA hours');
@@ -122,13 +128,13 @@ export default function DeliveryMethodGraph({ data }) {
     // use a map for quick lookup
     const traceMap = new Map();
     traceMap.set('Virtual', {
-      x: [], y: [], name: 'Virtual', traceOrder: 0,
+      x: [], y: [], name: 'Virtual', traceOrder: 0, id: TRACE_IDS.VIRTUAL, trace: 'triangle',
     });
     traceMap.set('In person', {
-      x: [], y: [], name: 'In person', traceOrder: 1,
+      x: [], y: [], name: 'In person', traceOrder: 1, id: TRACE_IDS.IN_PERSON, trace: 'circle',
     });
     traceMap.set('Hybrid', {
-      x: [], y: [], name: 'Hybrid', traceOrder: 2,
+      x: [], y: [], name: 'Hybrid', traceOrder: 2, id: TRACE_IDS.HYBRID, trace: 'square',
     });
 
     (records || []).forEach((dataset, index) => {
@@ -259,13 +265,13 @@ export default function DeliveryMethodGraph({ data }) {
         yAxisTitle="Percentage"
         legendConfig={[
           {
-            label: 'In person', selected: true, shape: 'circle', id: 'show-in-person-checkbox',
+            label: 'In person', selected: true, shape: 'circle', id: 'show-in-person-checkbox', traceId: TRACE_IDS.IN_PERSON,
           },
           {
-            label: 'Virtual', selected: true, shape: 'triangle', id: 'show-virtual-checkbox',
+            label: 'Virtual', selected: true, shape: 'triangle', id: 'show-virtual-checkbox', traceId: TRACE_IDS.VIRTUAL,
           },
           {
-            label: 'Hybrid', selected: true, shape: 'square', id: 'show-hybrid-checkbox',
+            label: 'Hybrid', selected: true, shape: 'square', id: 'show-hybrid-checkbox', traceId: TRACE_IDS.HYBRID,
           },
         ]}
         tableConfig={tableConfig}
