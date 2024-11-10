@@ -209,16 +209,7 @@ function EventCard({
 
   return (
     <>
-      <Modal
-        modalRef={modalRef}
-        title="Are you sure you want to delete this event?"
-        modalId={`remove-event-modal-${idForLink}`}
-        onOk={async () => onDeleteEvent(idForLink, id)}
-        okButtonText="Delete"
-        okButtonAriaLabel="delete event"
-      >
-        <p>The event and all session reports will be lost.</p>
-      </Modal>
+
       <article
         className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2 position-relative"
         data-testid="eventCard"
@@ -260,12 +251,22 @@ function EventCard({
             <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
           </div>
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu position-absolute right-0">
-            {true && (
+            {menuItems.length > 0 && (
             <ContextMenu
               label={contextMenuLabel}
               menuItems={menuItems}
             />
             )}
+            <Modal
+              modalRef={modalRef}
+              title="Are you sure you want to delete this event?"
+              modalId={`remove-event-modal-${idForLink}`}
+              onOk={async () => onDeleteEvent(idForLink, id)}
+              okButtonText="Delete"
+              okButtonAriaLabel="delete event"
+            >
+              <p>The event and all session reports will be lost.</p>
+            </Modal>
           </div>
         </div>
 
