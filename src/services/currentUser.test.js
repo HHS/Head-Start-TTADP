@@ -139,8 +139,8 @@ describe('currentUser', () => {
       };
       const mockResponse = {
         locals: {},
-        status: jest.fn().mockReturnThis(), // Enables chaining: status(...).end()
-        end: jest.fn(), // Mock the end function
+        status: jest.fn().mockReturnThis(),
+        end: jest.fn(),
       };
 
       await currentUserId(mockRequest, mockResponse);
