@@ -73,8 +73,8 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
     .filter((file) => !file.includes('.test.'));
 
   // If a directory is provided, filter files that start with the directory
-  if (directoryFilter && directoryFilter.length !== 0) {
-    files = files.filter((file) => directoryFilter.some((directory) => file.includes(directory)));
+  if (directoryFilter.length > 0) {
+    files = files.filter((file) => directoryFilter.some((directory) => file.startsWith(directory)));
   }
 
   // eslint-disable-next-line no-console
