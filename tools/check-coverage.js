@@ -180,7 +180,6 @@ function checkCoverage(modifiedLines, coverageMap) {
   const uncovered = {};
 
   Object.entries(modifiedLines).forEach(([file, lines]) => {
-    // Normalize file path to match coverage map keys
     const normalizedFile = path.resolve(process.cwd(), file);
     const relativeFile = path.relative(process.cwd(), normalizedFile);
 
@@ -191,44 +190,25 @@ function checkCoverage(modifiedLines, coverageMap) {
         throw new Error(`File not found in coverage map: ${normalizedFile}`);
       }
     } catch (e) {
-      // If the file is not in the coverage report, consider all lines uncovered
-      // eslint-disable-next-line no-console
-      console.log('checkCoverage:', file, lines, e);
       const ranges = groupIntoRanges(lines);
-      if (!uncovered[relativeFile]) {
-        uncovered[relativeFile] = {
-          statements: [],
-          functions: [],
-          branches: [],
-        };
-      }
+      console.log('checkCoverage:',ranges);
+      uncovered[relativeFile] = uncovered[relativeFile] || { statements: [], functions: [], branches: [] };
       ranges.forEach(({ start, end }) => {
         uncovered[relativeFile].statements.push({
-          start: {
-            line: start,
-            column: 0,
-          },
-          end: {
-            line: end,
-            column: 0,
-          },
+          start: { line: start, column: 0 },
+          end: { line: end, column: 0 },
         });
       });
       return;
     }
 
-    if (!uncovered[relativeFile]) {
-      uncovered[relativeFile] = {
-        statements: [],
-        functions: [],
-        branches: [],
-      };
-    }
+    uncovered[relativeFile] = { statements: [], functions: [], branches: [] };
 
     // Check uncovered statements
     Object.entries(fileCoverage.statementMap).forEach(([id, loc]) => {
       const statementLines = getLinesFromLocation(loc);
       const overlappingLines = linesIntersect(lines, statementLines);
+      console.log('checkCoverage:',overlappingLines);
       if (overlappingLines.length > 0 && fileCoverage.s[id] === 0) {
         const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
         if (intersectedLoc) {
@@ -277,10 +257,12 @@ function checkCoverage(modifiedLines, coverageMap) {
       });
     });
 
-    console.log(relativeFile, uncovered[relativeFile].statements, uncovered[relativeFile].functions, uncovered[relativeFile].branches);
-    if(uncovered[relativeFile].statements.length === 0
-      && uncovered[relativeFile].functions.length === 0
-      && uncovered[relativeFile].branches.length === 0) {
+    // Remove empty file entry if no uncovered items were found
+    if (
+      uncovered[relativeFile].statements.length === 0 &&
+      uncovered[relativeFile].functions.length === 0 &&
+      uncovered[relativeFile].branches.length === 0
+    ) {
       delete uncovered[relativeFile];
     }
   });
