@@ -60,6 +60,9 @@ async function fetchBaseBranch() {
  * @param {string} [directoryFilter] - The directory to filter files by (optional).
  */
 async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/common/']) {
+  // eslint-disable-next-line no-console
+  console.log('getModifiedLines:', directoryFilter);
+
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${BASE_BRANCH}...HEAD`]);
   // eslint-disable-next-line no-console
@@ -472,7 +475,7 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
 async function main({
   coverageFile = COVERAGE_FILE,
   artifactDir = ARTIFACT_DIR,
-  directoryFilter = (argv['directory- filter'] || '').split(','),
+  directoryFilter = (argv['directory-filter'] || '').split(','),
   failOnUncovered = argv['fail-on-uncovered'],
   outputFormat = argv['output-format'],
 } = {}) {
