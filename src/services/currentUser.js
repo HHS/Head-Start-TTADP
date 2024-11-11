@@ -9,6 +9,12 @@ import findOrCreateUser from './findOrCreateUser';
 import handleErrors from '../lib/apiErrorHandler';
 import { validateUserAuthForAdmin } from './accessValidation';
 
+const namespace = 'MIDDLEWARE:CURRENT USER';
+
+const logContext = {
+  namespace,
+};
+
 /**
  * Get Current User ID
  *
@@ -67,7 +73,7 @@ export async function currentUserId(req, res) {
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
         } catch (e) {
-          return handleErrors(req, res, e);
+          return handleErrors(req, res, e, logContext);
         }
 
         httpContext.set('impersonationUserId', Number(impersonatedUserId));
@@ -75,7 +81,7 @@ export async function currentUserId(req, res) {
       }
     } catch (e) {
       auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
-      return handleErrors(req, res, e);
+      return handleErrors(req, res, e, logContext);
     }
   }
 

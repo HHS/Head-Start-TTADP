@@ -2,6 +2,7 @@ import {} from 'dotenv/config';
 import axios from 'axios';
 import httpCodes from 'http-codes';
 
+import httpContext from 'express-http-context';
 import { retrieveUserDetails, currentUserId } from './currentUser';
 import findOrCreateUser from './findOrCreateUser';
 import userInfoClassicLogin from '../mocks/classicLogin';
@@ -21,6 +22,9 @@ jest.mock('../logger', () => ({
     error: jest.fn(),
     warn: jest.fn(),
   },
+}));
+jest.mock('express-http-context', () => ({
+  set: jest.fn(),
 }));
 
 describe('currentUser', () => {
@@ -87,7 +91,7 @@ describe('currentUser', () => {
       await currentUserId(mockRequest, mockResponse);
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure'));
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure. User (100) attempted to impersonate user (200), but the session user (100) is not an admin.'));
     });
 
     test('handles impersonation when Auth-Impersonation-Id header is set and impersonated user is an admin', async () => {
@@ -110,7 +114,39 @@ describe('currentUser', () => {
       await currentUserId(mockRequest, mockResponse);
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure'));
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure. User (100) attempted to impersonate user (300), but the session user (100) is not an admin.'));
+    });
+
+    test('allows impersonation when Auth-Impersonation-Id header is set and both users pass validation', async () => {
+      const mockRequest = {
+        session: {},
+      };
+      const mockResponse = {
+        sendStatus: jest.fn(),
+        locals: { userId: 100 },
+      };
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toEqual(100);
+      expect(mockResponse.sendStatus).not.toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
+    });
+
+    test('handles invalid JSON in Auth-Impersonation-Id header gracefully', async () => {
+      const mockRequest = {
+        headers: { 'auth-impersonation-id': '{invalidJson}' },
+        session: {},
+      };
+      const mockResponse = {
+        locals: {},
+        status: jest.fn().mockReturnThis(), // Enables chaining: status(...).end()
+        end: jest.fn(), // Mock the end function
+      };
+
+      await currentUserId(mockRequest, mockResponse);
+
+      const expectedMessage = 'Could not parse the Auth-Impersonation-Id header';
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
     });
   });
 
