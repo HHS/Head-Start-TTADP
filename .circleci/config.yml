@@ -714,6 +714,7 @@ jobs:
             else
               echo "Not a PR build. Skipping coverage check."
             fi
+          when: always
       - run:
           name: Compress coverage artifacts
           command: tar -cvzf backend-coverage-artifacts.tar coverage/
@@ -805,6 +806,7 @@ jobs:
             else
               echo "Not a PR build. Skipping coverage check."
             fi
+          when: always
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
