@@ -589,6 +589,104 @@ describe('check-coverage script', () => {
       const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
       expect(fs.existsSync(artifactPath)).toBe(true);
     });
+    it('should include functions in the HTML report when uncovered functions are present', () => {
+      const uncovered = {
+        'file1.js': {
+          statements: [],
+          functions: [
+            { id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 } },
+          ],
+          branches: [],
+        },
+      };
+  
+      const artifactDir = path.join(tmpDir, 'artifacts');
+      generateHtmlReport(uncovered, artifactDir);
+  
+      const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
+      expect(fs.existsSync(artifactPath)).toBe(true);
+  
+      const content = fs.readFileSync(artifactPath, 'utf-8');
+      expect(content).toContain('<h2>file1.js</h2>');
+      expect(content).toContain('<h3>Functions</h3>');
+      expect(content).toContain('<td>1</td>'); // function ID
+      expect(content).toContain('<td>myFunction</td>'); // function name
+      expect(content).toContain('<td>5</td>'); // start line
+      expect(content).toContain('<td>10</td>'); // end line
+    });
+  
+    it('should include branches in the HTML report when uncovered branches are present', () => {
+      const uncovered = {
+        'file1.js': {
+          statements: [],
+          functions: [],
+          branches: [
+            {
+              id: '2',
+              locationIndex: 0,
+              start: { line: 15 },
+              end: { line: 20 },
+            },
+          ],
+        },
+      };
+  
+      const artifactDir = path.join(tmpDir, 'artifacts');
+      generateHtmlReport(uncovered, artifactDir);
+  
+      const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
+      expect(fs.existsSync(artifactPath)).toBe(true);
+  
+      const content = fs.readFileSync(artifactPath, 'utf-8');
+      expect(content).toContain('<h2>file1.js</h2>');
+      expect(content).toContain('<h3>Branches</h3>');
+      expect(content).toContain('<td>2</td>'); // branch ID
+      expect(content).toContain('<td>0</td>'); // location index
+      expect(content).toContain('<td>15</td>'); // start line
+      expect(content).toContain('<td>20</td>'); // end line
+    });
+  
+    it('should include statements, functions, and branches in the same HTML report when all are present', () => {
+      const uncovered = {
+        'file1.js': {
+          statements: [{ id: '0', start: { line: 1 }, end: { line: 1 } }],
+          functions: [
+            { id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 } },
+          ],
+          branches: [
+            {
+              id: '2',
+              locationIndex: 0,
+              start: { line: 15 },
+              end: { line: 20 },
+            },
+          ],
+        },
+      };
+  
+      const artifactDir = path.join(tmpDir, 'artifacts');
+      generateHtmlReport(uncovered, artifactDir);
+  
+      const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
+      expect(fs.existsSync(artifactPath)).toBe(true);
+  
+      const content = fs.readFileSync(artifactPath, 'utf-8');
+      expect(content).toContain('<h2>file1.js</h2>');
+      expect(content).toContain('<h3>Statements</h3>');
+      expect(content).toContain('<td>1</td>'); // statement start line
+  
+      expect(content).toContain('<h3>Functions</h3>');
+      expect(content).toContain('<td>1</td>'); // function ID
+      expect(content).toContain('<td>myFunction</td>');
+      expect(content).toContain('<td>5</td>'); // function start line
+      expect(content).toContain('<td>10</td>'); // function end line
+  
+      expect(content).toContain('<h3>Branches</h3>');
+      expect(content).toContain('<td>2</td>'); // branch ID
+      expect(content).toContain('<td>0</td>'); // location index
+      expect(content).toContain('<td>15</td>'); // branch start line
+      expect(content).toContain('<td>20</td>'); // branch end line
+    });
   });
 
   describe('intersectLocationWithLines', () => {
@@ -791,6 +889,99 @@ describe('check-coverage script', () => {
 
       expect(console.log.mock.calls.flat()).toContain('All modified lines are covered by tests.');
       expect(process.exit).not.toHaveBeenCalled();
+    });
+    it('should detect uncovered functions and report them', async () => {
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(process, 'exit').mockImplementation(() => {});
+  
+      // Mock git functions
+      const gitFetchMock = jest.fn().mockResolvedValue();
+      const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
+      const gitDiffMock = jest.fn()
+        .mockResolvedValueOnce('file1.js\n')
+        .mockResolvedValueOnce('@@ -4,0 +5 @@\n+line5\n');
+  
+      simpleGit.mockReturnValue({
+        fetch: gitFetchMock,
+        raw: gitRawMock,
+        diff: gitDiffMock,
+      });
+  
+      // Coverage data with uncovered function
+      const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: {},
+          fnMap: { '1': { name: 'uncoveredFunction', loc: { start: { line: 5 }, end: { line: 10 } } } },
+          branchMap: {},
+          s: {},
+          f: { '1': 0 }, // Mark function as uncovered
+          b: {},
+        },
+      };
+  
+      const coverageFile = path.join(tmpDir, 'coverage-final.json');
+      fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
+  
+      await main({
+        coverageFile,
+        artifactDir: path.join(tmpDir, 'artifacts'),
+        outputFormat: 'json',
+      });
+  
+      expect(console.log.mock.calls.flat()).toContain('Uncovered lines detected:');
+    });
+  
+    it('should detect uncovered branches and report them', async () => {
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(process, 'exit').mockImplementation(() => {});
+  
+      // Mock git functions
+      const gitFetchMock = jest.fn().mockResolvedValue();
+      const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
+      const gitDiffMock = jest.fn()
+        .mockResolvedValueOnce('file1.js\n')
+        .mockResolvedValueOnce('@@ -15,0 +16 @@\n+line16\n');
+  
+      simpleGit.mockReturnValue({
+        fetch: gitFetchMock,
+        raw: gitRawMock,
+        diff: gitDiffMock,
+      });
+  
+      // Coverage data with uncovered branch
+      const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
+      const coverageData = {
+        [normalizedFilePath]: {
+          path: normalizedFilePath,
+          statementMap: {},
+          fnMap: {},
+          branchMap: {
+            '2': {
+              locations: [
+                { start: { line: 16 }, end: { line: 20 } },
+              ],
+            },
+          },
+          s: {},
+          f: {},
+          b: { '2': [0] }, // Mark branch as uncovered
+        },
+      };
+  
+      const coverageFile = path.join(tmpDir, 'coverage-final.json');
+      fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
+  
+      await main({
+        coverageFile,
+        artifactDir: path.join(tmpDir, 'artifacts'),
+        outputFormat: 'json',
+      });
+  
+      expect(console.log.mock.calls.flat()).toContain('Uncovered lines detected:');
     });
   });
 });
