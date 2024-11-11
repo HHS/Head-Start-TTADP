@@ -8,6 +8,7 @@ import findOrCreateUser from './findOrCreateUser';
 import userInfoClassicLogin from '../mocks/classicLogin';
 import userInfoPivCardLogin from '../mocks/pivCardLogin';
 import { auditLogger } from '../logger';
+import { validateUserAuthForAdmin } from './accessValidation';
 
 jest.mock('axios');
 jest.mock('./findOrCreateUser');
@@ -74,8 +75,6 @@ describe('currentUser', () => {
     });
 
     test('handles impersonation when Auth-Impersonation-Id header is set and user is not an admin', async () => {
-      const { validateUserAuthForAdmin } = await import('./accessValidation');
-
       const mockRequest = {
         headers: { 'auth-impersonation-id': JSON.stringify(200) },
         session: {},
@@ -95,7 +94,6 @@ describe('currentUser', () => {
     });
 
     test('handles impersonation when Auth-Impersonation-Id header is set and impersonated user is an admin', async () => {
-      const { validateUserAuthForAdmin } = await import('./accessValidation');
       const mockRequest = {
 
         headers: { 'auth-impersonation-id': JSON.stringify(300) },
@@ -114,11 +112,12 @@ describe('currentUser', () => {
       await currentUserId(mockRequest, mockResponse);
 
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure. User (100) attempted to impersonate user (300), but the session user (100) is not an admin.'));
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure. User (100) attempted to impersonate user (300), but the impersonated user is an admin.'));
     });
 
     test('allows impersonation when Auth-Impersonation-Id header is set and both users pass validation', async () => {
       const mockRequest = {
+        headers: { 'auth-impersonation-id': JSON.stringify(200) },
         session: {},
       };
       const mockResponse = {
@@ -126,10 +125,15 @@ describe('currentUser', () => {
         locals: { userId: 100 },
       };
 
+      validateUserAuthForAdmin
+        .mockResolvedValueOnce(true) // Current user is an admin
+        .mockResolvedValueOnce(false); // Impersonated user is not an admin
+
       const userId = await currentUserId(mockRequest, mockResponse);
 
-      expect(userId).toEqual(100);
+      expect(userId).toEqual(200);
       expect(mockResponse.sendStatus).not.toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
+      expect(httpContext.set).toHaveBeenCalledWith('impersonationUserId', 200);
     });
 
     test('handles invalid JSON in Auth-Impersonation-Id header gracefully', async () => {
@@ -147,6 +151,98 @@ describe('currentUser', () => {
 
       const expectedMessage = 'Could not parse the Auth-Impersonation-Id header';
       expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
+    });
+
+    test('handles null Auth-Impersonation-Id header gracefully', async () => {
+      const mockRequest = {
+        headers: { 'auth-impersonation-id': null },
+        session: {},
+      };
+      const mockResponse = {
+        locals: { userId: 100 },
+        status: jest.fn().mockReturnThis(),
+        end: jest.fn(),
+      };
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toEqual(100);
+      expect(auditLogger.error).not.toHaveBeenCalledWith();
+    });
+
+    test('calls handleErrors if an error occurs during impersonation admin validation', async () => {
+      const mockRequest = {
+        headers: { 'auth-impersonation-id': JSON.stringify(155) },
+        session: {},
+      };
+      const mockResponse = {
+        locals: {},
+        status: jest.fn().mockReturnThis(),
+        end: jest.fn(),
+      };
+
+      validateUserAuthForAdmin.mockImplementationOnce(() => {
+        throw new Error('Admin validation failed');
+      });
+
+      await currentUserId(mockRequest, mockResponse);
+
+      const expectedMessage = 'MIDDLEWARE:CURRENT USER - UNEXPECTED ERROR - Error: Admin validation failed';
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
+    });
+
+    test('logs error and returns UNAUTHORIZED if userId is null', async () => {
+      process.env.BYPASS_AUTH = 'false';
+      const mockRequest = {
+        headers: { 'auth-impersonation-id': JSON.stringify(155) },
+        session: null,
+      };
+      const mockResponse = {
+        sendStatus: jest.fn(),
+        locals: {},
+      };
+
+      await currentUserId(mockRequest, mockResponse);
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Impersonation failure. No valid user ID found in session or locals.',
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
+    });
+
+    test('bypasses authentication with playwright-user-id header in non-production environment', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.BYPASS_AUTH = 'true';
+      const mockRequest = {
+        headers: { 'playwright-user-id': '123' },
+        session: {},
+      };
+      const mockResponse = {};
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toEqual(123);
+      expect(mockRequest.session.userId).toEqual('123');
+      expect(mockRequest.session.uuid).toBeDefined();
+      expect(auditLogger.warn).toHaveBeenCalledWith(
+        'Bypassing authentication in authMiddleware. Using user id 123 from playwright-user-id header.',
+      );
+    });
+
+    test('does not set session if req.session is undefined', async () => {
+      const mockRequest = {
+        headers: { 'playwright-user-id': '123' },
+        session: undefined,
+      };
+      const mockResponse = {};
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toEqual(123);
+      expect(mockRequest.session).toBeUndefined();
+      expect(auditLogger.warn).toHaveBeenCalledWith(
+        'Bypassing authentication in authMiddleware. Using user id 123 from playwright-user-id header.',
+      );
     });
   });
 
