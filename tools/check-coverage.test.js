@@ -317,6 +317,7 @@ describe('check-coverage script', () => {
 
       expect(uncovered).toEqual({});
     });
+
     it('should identify uncovered functions', () => {
       const modifiedLines = {
         'fileWithUncoveredFunctions.js': [1, 2, 3],
@@ -421,6 +422,43 @@ describe('check-coverage script', () => {
         },
       });
     });
+
+    it('should throw an error when file is not found in the coverage map', () => {
+      const modifiedLines = { 'missingFile.js': [1, 2] };
+      const coverageMap = {
+        fileCoverageFor: () => null,
+      };
+
+      const uncovered = checkCoverage(modifiedLines, coverageMap);
+      expect(uncovered).toEqual({
+        'missingFile.js': {
+          statements: [
+            { start: { line: 1, column: 0 }, end: { line: 2, column: 0 } },
+          ],
+          functions: [],
+          branches: [],
+        },
+      });
+    });
+
+    it('should not create a new entry in uncovered if already exists', () => {
+      const modifiedLines = { 'file1.js': [1] };
+      const coverageMap = createCoverageMap({ 
+        'file1.js': {
+          path: 'file1.js',
+          statementMap: {},
+          fnMap: {},
+          branchMap: {},
+          s: {},
+          f: {},
+          b: {}
+        }
+      });
+      const uncovered = { 'file1.js': { statements: [], functions: [], branches: [] } };
+    
+      checkCoverage(modifiedLines, coverageMap);
+      expect(Object.keys(uncovered)).toContain('file1.js');
+    });
   });
 
   describe('groupIntoRanges', () => {
@@ -460,6 +498,47 @@ describe('check-coverage script', () => {
       const content = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
       expect(content).toEqual(uncovered);
     });
+
+    it('should not create artifact directory if it exists', () => {
+      const uncovered = {};
+      const artifactDir = path.join(tmpDir, 'existingDir');
+      fs.mkdirSync(artifactDir);
+    
+      generateArtifact(uncovered, artifactDir);
+      expect(fs.existsSync(artifactDir)).toBe(true);
+    });
+
+    it('should include statements in the artifact if uncovered statements exist', () => {
+      const uncovered = {
+        'file1.js': {
+          statements: [{ id: '0', start: { line: 1 }, end: { line: 2 } }],
+          functions: [],
+          branches: [],
+        },
+      };
+      const artifactDir = path.join(tmpDir, 'artifacts');
+      generateArtifact(uncovered, artifactDir);
+    
+      const artifactPath = path.join(artifactDir, 'uncovered-lines.json');
+      const content = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
+      expect(content['file1.js'].statements).toHaveLength(1);
+    });
+
+    it('should include functions in the artifact if uncovered functions exist', () => {
+      const uncovered = {
+        'file1.js': {
+          statements: [],
+          functions: [{ id: '0', name: 'myFunc', start: { line: 1 }, end: { line: 2 } }],
+          branches: [],
+        },
+      };
+      const artifactDir = path.join(tmpDir, 'artifacts');
+      generateArtifact(uncovered, artifactDir);
+    
+      const artifactPath = path.join(artifactDir, 'uncovered-lines.json');
+      const content = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
+      expect(content['file1.js'].functions).toHaveLength(1);
+    });
   });
 
   describe('generateHtmlReport', () => {
@@ -494,6 +573,21 @@ describe('check-coverage script', () => {
 
       const content = fs.readFileSync(artifactPath, 'utf-8');
       expect(content).toContain('<p>All modified lines are covered by tests.</p>');
+    });
+
+    it('should generate HTML report if outputFormat includes html', () => {
+      const uncovered = {
+        'file1.js': {
+          statements: [],
+          functions: [],
+          branches: [],
+        },
+      };
+      const artifactDir = path.join(tmpDir, 'artifacts');
+      generateHtmlReport(uncovered, artifactDir);
+    
+      const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
+      expect(fs.existsSync(artifactPath)).toBe(true);
     });
   });
 
