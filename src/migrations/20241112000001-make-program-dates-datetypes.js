@@ -6,8 +6,8 @@ module.exports = {
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
       // Add monitor goal template.
-      await queryInterface.sequelize.query(`
-        -- change Programs startDate and endDate types to date
+      await queryInterface.sequelize.query(
+        `-- change Programs startDate and endDate types to date
         ALTER TABLE "Programs" ALTER COLUMN "startDate" TYPE date
         USING (NULLIF("startDate", '')::date)
         ;
@@ -23,8 +23,8 @@ module.exports = {
   down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(`
-        -- change Programs startDate and endDate types back to varchar
+      await queryInterface.sequelize.query(
+        `-- change Programs startDate and endDate types back to varchar
         ALTER TABLE "Programs" ALTER COLUMN "startDate" TYPE VARCHAR(255)
         USING ("startDate"::varchar(255))
         ;
