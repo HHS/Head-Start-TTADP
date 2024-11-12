@@ -213,6 +213,10 @@ On the frontend, the lcov and HTML files are generated as normal, however on the
 
 Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
 
+On PR builds, an additional set of artifacts is generated to aid in providing test coverage for each PR.
+ * coverage/coverage-final.json  - Only on test_backend, all the distinct jest run outputs are consolidated into a unified coverage-final.json file.
+ * uncovered-lines/uncovered-lines.html - A human readable structure identifing all the lines from this PR that are uncovered by jest tests.
+ * uncovered-lines/uncovered-lines.json - A json structure identifing all the lines from this PR that are uncovered by jest tests.
 
 ## Yarn Commands
 
