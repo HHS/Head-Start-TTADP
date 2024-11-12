@@ -1,5 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import withWidgetData from './withWidgetData';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
@@ -8,7 +14,11 @@ import { arrayExistsAndHasLength, NOOP } from '../Constants';
 
 export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'Total TTA hours');
+  const exportName = useMemo(() => {
+    const TODAY = moment().format('YYYY-MM-DD');
+    return `${TODAY} Total TTA hours`;
+  }, []);
+  const capture = useMediaCapture(widgetRef, exportName);
   const [showTabularData, setShowTabularData] = useState(false);
 
   const [columnHeadings, setColumnHeadings] = useState([]);

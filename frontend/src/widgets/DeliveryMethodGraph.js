@@ -35,8 +35,13 @@ const DEFAULT_SORT_CONFIG = {
 const KEY_COLUMNS = ['Months'];
 
 export default function DeliveryMethodGraph({ data }) {
+  const exportName = useMemo(() => {
+    const TODAY = moment().format('YYYY-MM-DD');
+    return `${TODAY} Delivery Method`;
+  }, []);
+
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'Total TTA hours');
+  const capture = useMediaCapture(widgetRef, exportName);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
@@ -74,7 +79,7 @@ export default function DeliveryMethodGraph({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     'Months',
-    'DeliveryMethod',
+    exportName,
   );
 
   // records is an array of objects
