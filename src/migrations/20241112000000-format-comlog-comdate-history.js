@@ -7,8 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       return queryInterface.sequelize.query(`
-        -- This reformats all historical communicationDate values to
-        -- mm/dd/yyyy
+        -- This reformats all historical communicationDate values to mm/dd/yyyy
+        -- 
         -- Assumptions of preexisting data:
         -- -always day-month-year
         -- -always separated by a slash, period, or space [/. ]
@@ -16,8 +16,9 @@ module.exports = {
         -- -if the third position is at least two characters, it's the year, else it's the fourth position
         -- -the first four characters of a long year string holds the year
         --
-        -- These assumptions are based on the data we have, so aren't guaranteed to be correct if this is rerun
-        -- However the logic is slightly overengineered for extra robustness if new errors show up
+        -- These assumptions are based on the data we have, so aren't guaranteed to be correct if this is rerun.
+        -- However the logic is slightly overengineered for extra robustness if new errors show up. At the time of
+        -- writing, this produces all valid strings where to_date(data->>'communicationDate','mm/dd/yyyy') succeeds
 
         DROP TABLE IF EXISTS comdate_corrections;
         CREATE TEMP TABLE comdate_corrections
