@@ -10,7 +10,7 @@ module.exports = {
         -- This reformats all historical communicationDate values to mm/dd/yyyy
         -- 
         -- Assumptions of preexisting data:
-        -- -always day-month-year
+        -- -always month-day-year
         -- -always separated by a slash, period, or space [/. ]
         -- -if there is an extra separator it impacts the year
         -- -if the third position is at least two characters, it's the year, else it's the fourth position
@@ -29,15 +29,15 @@ module.exports = {
           data->>'communicationDate' orig,
           regexp_replace(data->>'communicationDate','[-. ]','/','g') reseparated
         FROM "CommunicationLogs"
-        WHERE data->>'communicationDate' !~ '^\d\d/\d\d/\d\d\d\d$'
+        WHERE data->>'communicationDate' !~ '^\\d{2}/\\d{2}/\\d{4}$'
           AND COALESCE(data->>'communicationDate','') != ''
         ),
         date_particles AS (
         SELECT
           clid,
           orig,
-          SPLIT_PART(reseparated,'/',1) day_part,
-          SPLIT_PART(reseparated,'/',2) month_part,
+          SPLIT_PART(reseparated,'/',1) month_part,
+          SPLIT_PART(reseparated,'/',2) day_part,
           CASE
             WHEN LENGTH(SPLIT_PART(reseparated,'/',3)) > 1 THEN SPLIT_PART(reseparated,'/',3)
             ELSE SPLIT_PART(reseparated,'/',4)
@@ -48,8 +48,8 @@ module.exports = {
         SELECT
           clid,
           orig,
-          LPAD(day_part,2,'0') padded_day,
           LPAD(month_part,2,'0') padded_month,
+          LPAD(day_part,2,'0') padded_day,
           LPAD(
             LEFT(year_part,4),
             4,
@@ -60,7 +60,7 @@ module.exports = {
         SELECT
           clid,
           orig,
-          padded_day || '/' || padded_month || '/' || padded_year reformat
+          padded_month || '/' || padded_day || '/' || padded_year reformat
         FROM padded_particles
         ;
 
