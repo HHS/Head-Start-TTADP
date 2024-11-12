@@ -32,7 +32,7 @@ const DEFAULT_SORT_CONFIG = {
 export default function RootCauseFeiGoals({ data }) {
   const exportName = useMemo(() => {
     const TODAY = moment().format('YYYY-MM-DD');
-    return `${TODAY} Percentage of Root cause on FEI goals`;
+    return `${TODAY} Root cause on FEI goals`;
   }, []);
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
