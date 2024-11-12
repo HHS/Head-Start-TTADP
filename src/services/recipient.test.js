@@ -165,7 +165,7 @@ describe('Recipient DB service', () => {
         startYear: 'Aeons ago',
         status: 'active',
         startDate: new Date('2023-01-01',
-        endDate: new Date('2026-01-01',
+        endDate: new Date('2026-01-01'),
       }),
       Program.create({
         id: 75,
