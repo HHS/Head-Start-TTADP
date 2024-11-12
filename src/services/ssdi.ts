@@ -705,8 +705,6 @@ const generateFilterString = (filterValues: FilterValues): string => Object.entr
 // Execute query asynchronously and set read-only transaction
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const executeQuery = async (filePath: string): Promise<any> => {
-  // eslint-disable-next-line no-console
-  if (!filePath) console.log('no path');
   const resolvedFilePath = safeResolvePath(filePath);
 
   if (!cache.has(resolvedFilePath)) {
