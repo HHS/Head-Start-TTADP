@@ -164,8 +164,8 @@ describe('Recipient DB service', () => {
         programType: 'EHS',
         startYear: 'Aeons ago',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 75,
@@ -174,8 +174,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 76,
@@ -184,8 +184,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 77,
@@ -194,8 +194,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 78,
@@ -204,8 +204,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 79,
@@ -214,8 +214,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 80,
@@ -224,8 +224,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
       Program.create({
         id: 81,
@@ -234,8 +234,8 @@ describe('Recipient DB service', () => {
         programType: 'HS',
         startYear: 'The murky depths of time',
         status: 'active',
-        startDate: 'today',
-        endDate: 'tomorrow',
+        startDate: new Date('2023-01-01',
+        endDate: new Date('2026-01-01',
       }),
     ]);
   });
