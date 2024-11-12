@@ -72,6 +72,7 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
   let files = (diffFiles || '')
     .split('\n')
     .filter((file) => /\.(js|ts)$/.test(file))
+    .filter((file) => !file.includes('CLI.js'))
     .filter((file) => !file.includes('/__tests__/'))
     .filter((file) => !file.includes('.test.'));
 
