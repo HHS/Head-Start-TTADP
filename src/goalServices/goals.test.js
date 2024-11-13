@@ -2271,6 +2271,14 @@ describe('Goals DB service', () => {
       jest.clearAllMocks();
     });
 
+    it('should return 0 when goalIds is not a valid array of numbers', async () => {
+      const singleResult = await destroyGoal('notAnArray');
+      const arrayResult = await destroyGoal([]);
+
+      expect(singleResult).toEqual(0);
+      expect(arrayResult).toEqual({ goalsDestroyed: undefined, objectivesDestroyed: undefined });
+    });
+
     it('should delete objectives and goals if goalIds are provided', async () => {
       const goalIds = [1, 2];
       const objectiveIds = [10, 11];

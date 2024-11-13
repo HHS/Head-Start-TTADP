@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
+import AvatarGroup from './AvatarGroup';
 import DropdownMenu from './DropdownMenu';
 import './HeaderUserMenu.scss';
 import NavLink from './NavLink';
@@ -19,8 +20,10 @@ function UserMenuNav({ items }) {
   return (
     <div>
       <ul className="user-menu-nav">
-        {items.map(({ key, element, liClass }) => (
-          <li key={key} className={liClass}>
+        {items.map(({
+          key, element, liClass, presentation,
+        }) => (
+          <li key={key} className={liClass} role={presentation ? 'presentation' : 'listitem'}>
             {element}
           </li>
         ))}
@@ -33,6 +36,7 @@ UserMenuNav.propTypes = {
   items: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.number,
     element: PropTypes.element,
+    presentation: PropTypes.bool,
   })).isRequired,
 };
 
@@ -105,12 +109,13 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
-    if (divider) return { key, element: <hr /> };
-    if (space) return { key, element: <div className="height-6" /> };
+    if (divider) return { key, presentation: true, element: <hr /> };
+    if (space) return { key, presentation: true, element: <div aria-hidden="true" className="height-6" /> };
 
     if (external) {
       return {
         key,
+        presentation: false,
         element: (
           <Link key={key} className="usa-nav__link" href={to} target="_blank" rel="noopener noreferrer">
             <span>{label}</span>
@@ -123,6 +128,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
 
     return {
       key,
+      presentation: false,
       element: (
         <>
           <NavLink key={key} to={to} fn={fn}>
@@ -195,12 +201,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
       className="no-print"
     >
       <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
-        <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">
-          <Avatar name={user.name} />
-          <span className="margin-left-2">
-            {user.name}
-          </span>
-        </h4>
+        <AvatarGroup userName={user.name} />
         {isImpersonating && (
           <div className="display-flex flex-justify-center margin-top-2">
             <Button type="button" onClick={stopImpersonating}>
