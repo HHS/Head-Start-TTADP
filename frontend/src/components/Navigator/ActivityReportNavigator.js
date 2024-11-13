@@ -21,6 +21,8 @@ import { objectivesWithValidResourcesOnly, validateListOfResources } from '../Go
 import Navigator from '.';
 import useFormGrantData from '../../hooks/useFormGrantData';
 
+const GOALS_AND_OBJECTIVES_POSITION = 2;
+
 /**
    *
    * @param {String[]} promptTitles
@@ -110,6 +112,8 @@ const ActivityReportNavigator = ({
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
+  // eslint-disable-next-line max-len
+  const goalsAndObjectivesPage = useMemo(() => pages.find((p) => p.position === GOALS_AND_OBJECTIVES_POSITION), [pages]);
 
   const hookForm = useForm({
     mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
@@ -174,14 +178,30 @@ const ActivityReportNavigator = ({
 
   const { isDirty, isValid } = formState;
 
+  const recalculatePageState = () => {
+    const newPageState = { ...pageState };
+    const currentPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
+    const isComplete = goalsAndObjectivesPage.isPageComplete(getValues(), formState);
+    if (isComplete) {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
+    } else if (currentPageState === COMPLETE) {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+    } else {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentPageState;
+    }
+
+    return newPageState;
+  };
+
   const newNavigatorState = () => {
-    if (page.review) {
-      return pageState;
+    const newPageState = recalculatePageState();
+
+    if (page.review || page.position === GOALS_AND_OBJECTIVES_POSITION) {
+      return newPageState;
     }
 
     const currentPageState = pageState[page.position];
     const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
-    const newPageState = { ...pageState };
 
     if (isComplete) {
       newPageState[page.position] = COMPLETE;
@@ -193,6 +213,7 @@ const ActivityReportNavigator = ({
 
     return newPageState;
   };
+
   const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
     if (!editable) {
