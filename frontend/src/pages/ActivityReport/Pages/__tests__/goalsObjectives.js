@@ -346,7 +346,11 @@ describe('goals objectives', () => {
 
     describe('for recipient reports', () => {
       it('is false if goals are not valid', () => {
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals: [] });
+        const complete = goalsObjectives.isPageComplete({
+          activityRecipientType: 'recipient',
+          activityRecipients: [],
+          goals: [],
+        });
         expect(complete).toBeFalsy();
       });
 
@@ -355,6 +359,7 @@ describe('goals objectives', () => {
           name: 'Is goal',
           endDate: '2021-01-01',
           isRttapa: 'No',
+          source: 'Source!!',
           objectives: [{
             id: 1,
             title: 'title',
@@ -366,7 +371,11 @@ describe('goals objectives', () => {
             supportType: SUPPORT_TYPES[3],
           }],
         }];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
+        const complete = goalsObjectives.isPageComplete({
+          activityRecipientType: 'recipient',
+          activityRecipients: [],
+          goals,
+        });
         expect(complete).toBeTruthy();
       });
 
@@ -385,7 +394,12 @@ describe('goals objectives', () => {
             roles: ['Chief Inspector'],
           }],
         }];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals, goalForEditing: { name: 'is goal 2' } });
+        const complete = goalsObjectives.isPageComplete({
+          activityRecipientType: 'recipient',
+          activityRecipients: [],
+          goals,
+          goalForEditing: { name: 'is goal 2' },
+        });
         expect(complete).toBeFalsy();
       });
     });
@@ -421,7 +435,7 @@ describe('goals objectives', () => {
     });
 
     it('isPageComplete is false', async () => {
-      const formData = { activityRecipientType: 'recipient', goals: [] };
+      const formData = { activityRecipientType: 'recipient', goals: [], activityRecipients: [] };
       const isComplete = goalsObjectives.isPageComplete(formData);
       expect(isComplete).not.toBeTruthy();
     });

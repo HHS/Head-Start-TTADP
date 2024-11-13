@@ -534,6 +534,9 @@ test.describe('Activity Report', () => {
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
 
+    // goal source
+    await page.getByLabel(/Goal source/i).selectOption('Recipient request');
+
     // add new objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
 
