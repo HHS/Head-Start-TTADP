@@ -3,6 +3,7 @@ import axios from 'axios';
 import httpCodes from 'http-codes';
 
 import httpContext from 'express-http-context';
+import isEmail from 'validator/lib/isEmail';
 import { retrieveUserDetails, currentUserId } from './currentUser';
 import findOrCreateUser from './findOrCreateUser';
 import userInfoClassicLogin from '../mocks/classicLogin';
@@ -27,6 +28,7 @@ jest.mock('../logger', () => ({
 jest.mock('express-http-context', () => ({
   set: jest.fn(),
 }));
+jest.mock('validator/lib/isEmail', () => jest.fn());
 
 describe('currentUser', () => {
   beforeEach(async () => {
@@ -72,6 +74,35 @@ describe('currentUser', () => {
       expect(userId).toEqual(999);
       expect(mockRequest.session.userId).toEqual('999');
       expect(mockRequest.session.uuid).toBeDefined();
+    });
+
+    test('does not bypass auth and retrieves userId from environment variables when not in production and BYPASS_AUTH is false', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.BYPASS_AUTH = 'false';
+      process.env.CURRENT_USER_ID = '999';
+
+      const mockRequest = { session: {}, headers: {} };
+      const mockResponse = {};
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toBeNull();
+      expect(mockRequest.session.userId).not.toBeDefined();
+      expect(mockRequest.session.uuid).not.toBeDefined();
+    });
+
+    test('does not set the session userId when not in production and BYPASS_AUTH is true', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.BYPASS_AUTH = 'true';
+      process.env.CURRENT_USER_ID = '999';
+
+      const mockRequest = { headers: {} };
+      const mockResponse = {};
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toEqual(999);
+      expect(mockRequest.session).toBeUndefined();
     });
 
     test('handles impersonation when Auth-Impersonation-Id header is set and user is not an admin', async () => {
@@ -154,12 +185,15 @@ describe('currentUser', () => {
     });
 
     test('handles null Auth-Impersonation-Id header gracefully', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.BYPASS_AUTH = 'false';
       const mockRequest = {
-        headers: { 'auth-impersonation-id': null },
+        headers: { 'auth-impersonation-id': '""' },
         session: {},
       };
       const mockResponse = {
-        locals: { userId: 100 },
+        sendStatus: jest.fn(),
+        locals: {},
         status: jest.fn().mockReturnThis(),
         end: jest.fn(),
       };
@@ -168,6 +202,8 @@ describe('currentUser', () => {
 
       expect(userId).toEqual(100);
       expect(auditLogger.error).not.toHaveBeenCalledWith();
+      expect(httpContext.set).not.toHaveBeenCalled(); // `httpContext.set` should not be called
+      expect(mockResponse.sendStatus).not.toHaveBeenCalled();
     });
 
     test('calls handleErrors if an error occurs during impersonation admin validation', async () => {
@@ -253,6 +289,7 @@ describe('currentUser', () => {
         data: userInfoClassicLogin,
       };
       axios.get.mockResolvedValueOnce(responseFromUserInfo);
+      isEmail.mockReturnValueOnce(true);
 
       const accessToken = { sign: jest.fn().mockReturnValue({ url: '/auth/user/me' }) };
 
@@ -274,6 +311,7 @@ describe('currentUser', () => {
         data: userInfoPivCardLogin,
       };
       axios.get.mockResolvedValueOnce(responseFromUserInfoPiv);
+      isEmail.mockReturnValueOnce(true);
 
       const accessToken = { sign: jest.fn().mockReturnValue({ url: '/auth/user/me' }) };
 
@@ -283,6 +321,28 @@ describe('currentUser', () => {
       expect(findOrCreateUser).toHaveBeenCalledWith({
         name: 'testUser@adhocteam.us',
         email: 'testUser@adhocteam.us',
+        hsesUsername: 'testUser@adhocteam.us',
+        hsesAuthorities: ['ROLE_FEDERAL'],
+        hsesUserId: '1',
+      });
+    });
+
+    test('can handle oauth piv card login user response from HSES with null email', async () => {
+      const responseFromUserInfoPiv = {
+        status: 200,
+        data: userInfoPivCardLogin,
+      };
+      axios.get.mockResolvedValueOnce(responseFromUserInfoPiv);
+      isEmail.mockReturnValueOnce(false);
+
+      const accessToken = { sign: jest.fn().mockReturnValue({ url: '/auth/user/me' }) };
+
+      await retrieveUserDetails(accessToken);
+
+      expect(axios.get).toHaveBeenCalled();
+      expect(findOrCreateUser).toHaveBeenCalledWith({
+        name: 'testUser@adhocteam.us',
+        email: null,
         hsesUsername: 'testUser@adhocteam.us',
         hsesAuthorities: ['ROLE_FEDERAL'],
         hsesUserId: '1',
