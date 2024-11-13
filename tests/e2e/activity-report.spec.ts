@@ -175,7 +175,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
-    await page.getByRole('button', { name: 'Goals and objectives In Progress' }).click();
+    await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
     // create the first goal
 
@@ -762,7 +762,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
-    await page.getByRole('button', { name: /Goals and objectives in progress/i }).click();
+    await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
     // create the goal
     await page.getByLabel(/Select recipient's goal/i).click();
