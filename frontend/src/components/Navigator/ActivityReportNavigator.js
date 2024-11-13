@@ -180,14 +180,18 @@ const ActivityReportNavigator = ({
 
   const recalculatePageState = () => {
     const newPageState = { ...pageState };
-    const currentPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
-    const isComplete = goalsAndObjectivesPage.isPageComplete(getValues(), formState);
-    if (isComplete) {
+    const currentGoalsObjectivesPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
+    // eslint-disable-next-line max-len
+    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage.isPageComplete(getValues(), formState);
+    const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
+
+    if (isGoalsObjectivesPageComplete) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
-    } else if (currentPageState === COMPLETE) {
+    } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-    } else {
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentPageState;
+    } else if (isCurrentPageGoalsObjectives) {
+      // eslint-disable-next-line max-len
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
     }
 
     return newPageState;
