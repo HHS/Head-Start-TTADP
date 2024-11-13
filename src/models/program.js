@@ -22,9 +22,14 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     programType: DataTypes.STRING,
-    startYear: DataTypes.STRING,
-    startDate: DataTypes.DATE,
-    endDate: DataTypes.DATE,
+    startDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
     status: DataTypes.STRING,
     name: DataTypes.STRING,
   }, {
