@@ -51,7 +51,10 @@ const createMonitoringGoals = async () => {
       ON (grta."grantId" = g."grantId"
       OR grta."activeGrantId" = g."grantId")
       AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
-      WHERE gr.status = 'Active'
+      JOIN "Grants" gr2
+      ON grta."activeGrantId" = gr2.id
+      AND gr."recipientId" = gr2."recipientId"
+      WHERE NOT gr2.cdi
       AND mrs."name" = 'Complete'
       AND mfs."name" = 'Active'
       AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
@@ -90,7 +93,62 @@ const createMonitoringGoals = async () => {
     SELECT
       "name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source"
     FROM new_goals;
-    `);
+  `);
+
+  // Reopen monitoring goals for grants that need them.
+  await sequelize.query(`
+    WITH
+      grants_needing_goal_reopend AS (
+        SELECT
+          g.id AS "goalId"
+        FROM "Grants" gr
+        JOIN "GrantRelationshipToActive" grta
+          ON gr.id = grta."grantId"
+          AND grta."activeGrantId" IS NOT NULL
+        JOIN "MonitoringReviewGrantees" mrg
+          ON gr.number = mrg."grantNumber"
+        JOIN "MonitoringReviews" mr
+          ON mrg."reviewId" = mr."reviewId"
+        JOIN "MonitoringReviewStatuses" mrs
+          ON mr."statusId" = mrs."statusId"
+        JOIN "MonitoringFindingHistories" mfh
+          ON mr."reviewId" = mfh."reviewId"
+        JOIN "MonitoringFindings" mf
+          ON mfh."findingId" = mf."findingId"
+        JOIN "MonitoringFindingStatuses" mfs
+          ON mf."statusId" = mfs."statusId"
+        JOIN "MonitoringFindingGrants" mfg
+          ON mf."findingId" = mfg."findingId"
+          AND mrg."granteeId" = mfg."granteeId"
+        LEFT JOIN "Goals" g
+          ON (grta."grantId" = g."grantId"
+          OR grta."activeGrantId" = g."grantId")
+          AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
+        JOIN "Grants" gr2
+          ON grta."activeGrantId" = gr2.id
+          AND gr."recipientId" = gr2."recipientId"
+        WHERE NOT gr2.cdi
+          AND mrs."name" = 'Complete'
+          AND mfs."name" = 'Active'
+          AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
+          AND mr."reviewType" IN (
+            'AIAN-DEF',
+            'RAN',
+            'Follow-up',
+            'FA-1', 'FA1-FR',
+            'FA-2', 'FA2-CR',
+            'Special'
+          )
+          AND g.status = 'Closed'
+        GROUP BY 1
+      )
+    UPDATE "Goals"
+    SET "status" = 'In progress',
+      "updatedAt" = NOW()
+    FROM grants_needing_goal_reopend
+    WHERE "Goals".id = grants_needing_goal_reopend."goalId";
+  `);
+
 };
 
 export default createMonitoringGoals;
