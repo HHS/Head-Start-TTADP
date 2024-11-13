@@ -240,6 +240,7 @@ const FEATURE_FLAGS = [
   'training_reports_dashboard',
   'quality_assurance_dashboard',
   'manual_mark_goals_similar',
+  'monitoring_integration',
 ];
 
 const MAINTENANCE_CATEGORY = {
