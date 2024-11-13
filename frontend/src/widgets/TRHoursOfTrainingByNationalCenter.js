@@ -1,5 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
-import moment from 'moment';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import VBarGraph from './VBarGraph';
 import withWidgetData from './withWidgetData';
@@ -16,13 +15,9 @@ const TITLE = 'Hours of training by National Center';
 const TRHoursWidget = ({
   data,
 }) => {
-  const exportName = useMemo(() => {
-    const TODAY = moment().format('YYYY-MM-DD');
-    return `${TODAY} ${TITLE}`;
-  }, []);
   const widgetRef = useRef(null);
   const [showTabularData, setShowTabularData] = useState(false);
-  const capture = useMediaCapture(widgetRef, exportName);
+  const capture = useMediaCapture(widgetRef, TITLE);
 
   const menuItems = [{
     label: showTabularData ? 'Display graph' : 'Display table',

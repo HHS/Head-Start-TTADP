@@ -33,15 +33,11 @@ const DEFAULT_SORT_CONFIG = {
 };
 
 const KEY_COLUMNS = ['Months'];
+const EXPORT_NAME = 'Delivery Method';
 
 export default function DeliveryMethodGraph({ data }) {
-  const exportName = useMemo(() => {
-    const TODAY = moment().format('YYYY-MM-DD');
-    return `${TODAY} Delivery Method`;
-  }, []);
-
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, exportName);
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
@@ -79,7 +75,7 @@ export default function DeliveryMethodGraph({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     'Months',
-    exportName,
+    EXPORT_NAME,
   );
 
   // records is an array of objects

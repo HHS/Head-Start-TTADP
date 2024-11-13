@@ -1,8 +1,7 @@
 import React, {
-  useRef, useEffect, useState, useMemo,
+  useRef, useEffect, useState,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import WidgetContainer from '../components/WidgetContainer';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -25,14 +24,11 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
-export default function PercentageActivityReportByRole({ data }) {
-  const exportName = useMemo(() => {
-    const TODAY = moment().format('YYYY-MM-DD');
-    return `${TODAY} Percentage of Activity Reports by Role`;
-  }, []);
+const EXPORT_NAME = 'Percentage of Activity Reports by Role';
 
+export default function PercentageActivityReportByRole({ data }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, exportName);
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
@@ -67,7 +63,7 @@ export default function PercentageActivityReportByRole({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     FIRST_COLUMN,
-    exportName,
+    EXPORT_NAME,
   );
 
   // records is an array of objects

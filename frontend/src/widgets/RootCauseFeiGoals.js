@@ -2,10 +2,8 @@ import React, {
   useRef,
   useEffect,
   useState,
-  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import WidgetContainer from '../components/WidgetContainer';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -29,13 +27,11 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
+const EXPORT_NAME = 'Root cause on FEI goals';
+
 export default function RootCauseFeiGoals({ data }) {
-  const exportName = useMemo(() => {
-    const TODAY = moment().format('YYYY-MM-DD');
-    return `${TODAY} Root cause on FEI goals`;
-  }, []);
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, exportName);
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
 
@@ -68,7 +64,7 @@ export default function RootCauseFeiGoals({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     FIRST_COLUMN,
-    exportName,
+    EXPORT_NAME,
   );
 
   // records is an array of objects
