@@ -102,7 +102,9 @@
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
     "updateCompletedEventReportPilots": "node ./build/server/src/tools/updateCompletedEventReportPilotsCLI.js",
     "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
-    "publish:common": "yarn --cwd ./packages/common publish"
+    "publish:common": "yarn --cwd ./packages/common publish",
+    "merge-coverage": "node ./src/tools/merge-coverage.js",
+    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true"
   },
   "repository": {
     "type": "git",
@@ -227,6 +229,12 @@
       "<rootDir>/src/tools/populateLegacyResourceTitlesCli.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "text",
+      "clover"
+    ],
     "coverageThreshold": {
       "global": {
         "statements": 75,
@@ -286,10 +294,15 @@
     "eslint-plugin-jest": "^25.3.4",
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.6",
+    "esm": "^3.2.25",
     "ioredis-mock": "^8.9.0",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
     "jest": "26.6.0",
     "jest-cli": "26.4.2",
     "jest-junit": "^12.0.0",
+    "markdown-table": "^3.0.4",
+    "mock-fs": "^5.4.1",
     "nodemon": "^2.0.4",
     "playwright": "^1.46.0",
     "puppeteer": "^13.1.1",
@@ -367,7 +380,7 @@
     "winston": "^3.3.3",
     "ws": "^8.17.1",
     "xml2js": "^0.6.2",
-    "yargs": "^17.3.1",
+    "yargs": "^17.7.2",
     "yayson": "^2.1.0"
   }
 }
