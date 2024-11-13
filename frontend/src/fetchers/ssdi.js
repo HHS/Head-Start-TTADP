@@ -1,7 +1,6 @@
 import join from 'url-join';
 import { get } from './index';
 import { filtersToQueryString } from '../utils';
-import { QA_DASHBOARD_FILTER_CONFIG } from '../pages/QADashboard/constants';
 
 const ssdiUrl = join('/', 'api', 'ssdi');
 
@@ -43,11 +42,26 @@ const allowedTopicsForQuery = {
     'domainInstructionalSupport',
     'createDate',
   ],
-  'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter.id),
+  'qa-dashboard': [
+    'endDate',
+    'startDate',
+    'activityReportGoalResponse',
+    'goalName',
+    'grantNumber',
+    'group',
+    'singleOrMultiRecipients',
+    'programType',
+    'reason',
+    'recipient',
     'region',
     'reportId',
-    'activityReportGoalResponse',
+    'reportText',
     'role',
+    'stateCode',
+    'targetPopulations',
+    'topic',
+    'ttaType',
+    'status',
   ],
 };
 
@@ -81,9 +95,11 @@ export const getSelfServiceData = async (filterName, filters, dataSetSelection =
   const url = getSelfServiceUrl(filterName, filters);
 
   const urlToUse = url + dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('');
-  const response = await get(urlToUse);
-  if (!response.ok) {
-    throw new Error('Error fetching self service data');
-  }
-  return response.json();
+
+  return get(urlToUse).then((response) => {
+    if (!response.ok) {
+      throw new Error('Error fetching self service data');
+    }
+    return response.json();
+  });
 };
