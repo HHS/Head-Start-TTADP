@@ -245,7 +245,9 @@ export default function GoalForm({
 
     const newErrors = [...errors];
 
-    if (!source) {
+    const validSource = Object.values(source).every((s) => Boolean(s));
+
+    if (!validSource) {
       error = <span className="usa-error-message">Select a goal source</span>;
     }
 
@@ -351,6 +353,7 @@ export default function GoalForm({
   // (different validations for not started and draft)
   const isValidNotStarted = () => (
     validateGrantNumbers()
+    && validateGoalSource()
     && validateEndDate()
     && validateObjectives()
     && validateAllPrompts()

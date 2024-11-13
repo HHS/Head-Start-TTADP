@@ -326,6 +326,18 @@ describe('create goal', () => {
     const save = await screen.findByRole('button', { name: /save/i });
     userEvent.click(save);
 
+    const sourceValidation = await screen.findByText('Select a goal source');
+    expect(sourceValidation).toBeVisible();
+
+    await act(async () => {
+      const source = await screen.findByRole('combobox', { name: /goal source/i });
+      userEvent.selectOptions(source, 'Federal monitoring issues, including CLASS and RANs');
+    });
+
+    act(() => {
+      userEvent.click(save);
+    });
+
     let alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
 
