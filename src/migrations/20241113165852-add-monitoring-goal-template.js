@@ -7,7 +7,14 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
       // Add monitor goal template.
       await queryInterface.sequelize.query(
-        `INSERT INTO "GoalTemplates" (
+        `DO $$
+        BEGIN
+          IF NOT EXISTS (
+        SELECT 1 FROM "GoalTemplates"
+        WHERE hash = MD5(TRIM('${goalText}'))
+        AND "creationMethod" = 'Curated'::"enum_GoalTemplates_creationMethod"
+          ) THEN
+        INSERT INTO "GoalTemplates" (
           hash,
           "templateName",
           "regionId",
@@ -16,7 +23,7 @@ module.exports = {
           "updatedAt",
           "lastUsed",
           "templateNameModifiedAt"
-        ) Values (
+        ) VALUES (
           MD5(TRIM('${goalText}')),
           '${goalText}',
           null,
@@ -25,7 +32,9 @@ module.exports = {
           current_timestamp,
           NULL,
           current_timestamp
-        );`,
+        );
+          END IF;
+        END $$;`,
         { transaction },
       );
     },
