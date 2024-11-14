@@ -14,12 +14,12 @@ function BuildInfo() {
 
   return (
     <footer style={
-        {
-            padding: '1em',
-            textAlign: 'center',
-            fontSize: '0.8em',
-            color: '#666'
-        }
+      {
+        padding: '1em',
+        textAlign: 'center',
+        fontSize: '0.8em',
+        color: '#666'
+      }
     }>
       <p>
         Branch:
