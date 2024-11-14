@@ -541,6 +541,7 @@ class Imports{
  * updatedAt : timestamp with time zone
  fileMask : text
  path : text
+!issue='column missing from model' <color:#d54309>postProcessingActions</color>: jsonb
 }
 
 class MailerLogs{
