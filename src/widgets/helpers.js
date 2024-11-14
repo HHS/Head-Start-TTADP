@@ -80,10 +80,7 @@ export async function getAllRecipientsFiltered(scopes) {
         as: 'grants',
         required: true,
         attributes: [],
-        where: {
-          ...scopes.grant.where,
-          deleted: { [Op.ne]: true },
-        },
+        where: scopes.grant.where,
         include: [
           {
             model: GrantReplacements,
