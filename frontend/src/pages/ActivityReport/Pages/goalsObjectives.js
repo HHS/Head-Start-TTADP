@@ -2,7 +2,7 @@
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in their examples
 import React, {
-  useState, useContext, useMemo,
+  useState, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -26,6 +26,8 @@ import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnly
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import { NOOP } from '../../../Constants';
+import useFormGrantData, { calculateFormGrantData } from '../../../hooks/useFormGrantData';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -105,20 +107,9 @@ const GoalsObjectives = ({
   const {
     isRecipientReport,
     grantIds,
-  } = useMemo(() => {
-    const isRecipient = activityRecipientType === 'recipient';
-    const grants = isRecipient ? activityRecipients.map((r) => {
-      if (r.grant) {
-        return r.grant.id;
-      }
-      return r.activityRecipientId;
-    }) : [];
-
-    return {
-      isRecipientReport: isRecipient,
-      grantIds: grants,
-    };
-  }, [activityRecipientType, activityRecipients]);
+    hasMultipleGrants,
+    hasGrant,
+  } = useFormGrantData(activityRecipientType, activityRecipients);
 
   const isOtherEntityReport = activityRecipientType === 'other-entity';
   const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
@@ -126,7 +117,6 @@ const GoalsObjectives = ({
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [goalTemplates, setGoalTemplates] = useState([]);
-  const hasGrants = grantIds.length > 0;
 
   const {
     field: {
@@ -145,7 +135,7 @@ const GoalsObjectives = ({
 
   useDeepCompareEffect(() => {
     const fetchGoalTemplates = async () => {
-      if (isRecipientReport && hasGrants) {
+      if (isRecipientReport && hasGrant) {
         try {
           const fetchedGoalTemplates = await getGoalTemplates(grantIds);
 
@@ -168,12 +158,12 @@ const GoalsObjectives = ({
     };
 
     fetchGoalTemplates();
-  }, [grantIds, hasGrants, isRecipientReport]);
+  }, [grantIds, hasGrant, isRecipientReport]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
       try {
-        if (isRecipientReport && hasGrants) {
+        if (isRecipientReport && hasGrant) {
           const fetchedGoals = await getGoals(grantIds);
           const formattedGoals = fetchedGoals.map((g) => {
             // if the goal is on an "old" grant, we should
@@ -196,9 +186,9 @@ const GoalsObjectives = ({
       }
     };
     fetch();
-  }, [grantIds, hasGrants, isRecipientReport]);
+  }, [grantIds, hasGrant, isRecipientReport]);
 
-  const showGoals = isRecipientReport && hasGrants;
+  const showGoals = isRecipientReport && hasGrant;
 
   const addNewGoal = () => {
     toggleGoalForm(false);
@@ -254,6 +244,7 @@ const GoalsObjectives = ({
           objectives: goalForEditingObjectives,
         }],
         setError,
+        hasMultipleGrants,
       );
 
       if (areGoalsValid !== true) {
@@ -454,7 +445,9 @@ export default {
   path: 'goals-objectives',
   review: false,
   isPageComplete: (formData) => {
-    const { activityRecipientType } = formData;
+    const { activityRecipientType, activityRecipients } = formData;
+
+    const { hasMultipleGrants } = calculateFormGrantData(activityRecipientType, activityRecipients);
 
     if (!activityRecipientType) {
       return false;
@@ -470,7 +463,7 @@ export default {
       return false;
     }
 
-    return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
+    return activityRecipientType === 'recipient' && validateGoals(formData.goals, NOOP, hasMultipleGrants) === true;
   },
   reviewSection: () => <ReviewSection />,
   render: (
