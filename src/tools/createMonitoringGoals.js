@@ -143,7 +143,7 @@ const createMonitoringGoals = async () => {
         GROUP BY 1
       )
     UPDATE "Goals"
-    SET "status" = 'In progress',
+    SET "status" = 'Not started',
       "updatedAt" = NOW()
     FROM grants_needing_goal_reopend
     WHERE "Goals".id = grants_needing_goal_reopend."goalId";
