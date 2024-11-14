@@ -184,7 +184,7 @@ describe('currentUser', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
     });
 
-    test('handles null Auth-Impersonation-Id header gracefully', async () => {
+    test('handles empty Auth-Impersonation-Id header gracefully', async () => {
       process.env.NODE_ENV = 'production';
       process.env.BYPASS_AUTH = 'false';
       const mockRequest = {
@@ -200,9 +200,9 @@ describe('currentUser', () => {
 
       const userId = await currentUserId(mockRequest, mockResponse);
 
-      expect(userId).toEqual(100);
-      expect(auditLogger.error).not.toHaveBeenCalledWith();
-      expect(httpContext.set).not.toHaveBeenCalled(); // `httpContext.set` should not be called
+      expect(userId).toBeNull();
+      expect(auditLogger.error).not.toHaveBeenCalled();
+      expect(httpContext.set).not.toHaveBeenCalled();
       expect(mockResponse.sendStatus).not.toHaveBeenCalled();
     });
 
@@ -212,7 +212,7 @@ describe('currentUser', () => {
         session: {},
       };
       const mockResponse = {
-        locals: {},
+        locals: { userId: 100 },
         status: jest.fn().mockReturnThis(),
         end: jest.fn(),
       };
