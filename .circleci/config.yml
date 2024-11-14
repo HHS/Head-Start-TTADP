@@ -263,7 +263,7 @@ commands:
       build_timestamp:
         description: "The number of the build being deployed"
         type: string
-        defalt: $(date +"%Y-%m-%d %H:%M:%S")
+        default: $(date +"%Y-%m-%d %H:%M:%S")
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
