@@ -59,7 +59,10 @@ module.exports = {
             GROUP BY "replacedGrantId", "replacingGrantId", "grantReplacementTypeId"
             HAVING COUNT(*) > 1
           ) subquery
-          WHERE gr."id" = subquery.id
+          WHERE gr."id" > subquery.id
+          AND gr. "replacedGrantId" = subquery."replacedGrantId"
+          AND gr. "replacingGrantId" = subquery."replacingGrantId"
+          AND gr. "grantReplacementTypeId" = subquery."grantReplacementTypeId"
         `,
         { transaction },
       );
