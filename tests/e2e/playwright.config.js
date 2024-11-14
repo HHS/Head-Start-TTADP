@@ -33,6 +33,7 @@ const config = {
         headless: true,
         ignoreHTTPSErrors: true,
         acceptDownloads: true,
+        viewport: { width: 1920, height: 1080 },
       },
     },
   ],
