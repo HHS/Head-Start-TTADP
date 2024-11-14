@@ -163,7 +163,7 @@ function ObjectiveCard({
             <ObjectiveStatusDropdown
               currentStatus={localStatus}
               goalStatus={goalStatus}
-              objectiveId={objective.id}
+              objectiveTitle={objective.title}
               regionId={regionId}
               className="line-height-sans-5"
               onUpdateObjectiveStatus={onUpdateObjectiveStatus}
@@ -192,7 +192,6 @@ function ObjectiveCard({
 }
 
 export const objectivePropTypes = PropTypes.shape({
-  id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),

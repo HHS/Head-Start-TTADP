@@ -21,13 +21,14 @@ import {
   trSessionCreated,
   trCollaboratorAdded,
   filterAndDeduplicateEmails,
+  onCompletedNotification,
 } from '.';
 import {
   EMAIL_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
 } from '../../constants';
-import { auditLogger as logger } from '../../logger';
+import { auditLogger, logger } from '../../logger';
 import { userById } from '../../services/users';
 import db, {
   ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
@@ -164,6 +165,96 @@ describe('mailer tests', () => {
     process.env = oldEnv;
     await db.sequelize.close();
     jest.clearAllMocks();
+  });
+
+  describe('onCompletedNotification', () => {
+    afterEach(() => {
+      logger.info.mockClear();
+    });
+
+    it('logs if result is null, single report', () => {
+      onCompletedNotification({
+        data: {
+          report: mockReport,
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, null);
+
+      expect(logger.info).toHaveBeenCalledWith(`Did not send ${EMAIL_ACTIONS.APPROVED} notification for ${mockReport.displayId} preferences are not set or marked as "no-send"`);
+    });
+
+    it('logs if result is null, single report, no display id', () => {
+      onCompletedNotification({
+        data: {
+          report: {
+            ...mockReport,
+            displayId: null,
+          },
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, null);
+
+      expect(logger.info).toHaveBeenCalledWith(`Did not send ${EMAIL_ACTIONS.APPROVED} notification for [object Object] preferences are not set or marked as "no-send"`);
+    });
+    it('logs if result is good, single report', () => {
+      onCompletedNotification({
+        data: {
+          report: mockReport,
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, { notNull: true });
+
+      expect(logger.info).toHaveBeenCalledWith('Successfully sent reportApproved notification for mockReport-1');
+    });
+
+    it('logs if result is good, single report, no display id', () => {
+      onCompletedNotification({
+        data: {
+          report: {
+            ...mockReport,
+            displayId: null,
+          },
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, { notNull: true });
+
+      expect(logger.info).toHaveBeenCalledWith('Successfully sent reportApproved notification for [object Object]');
+    });
+
+    it('logs if result is good, reports exists but is not array, no display id', () => {
+      onCompletedNotification({
+        data: {
+          report: {
+            ...mockReport,
+            displayId: null,
+          },
+          reports: 'Reports!',
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, { notNull: true });
+
+      expect(logger.info).toHaveBeenCalledWith('Successfully sent reportApproved notification for [object Object]');
+    });
+    it('logs if result is good, many reports', () => {
+      onCompletedNotification({
+        data: {
+          reports: [mockReport],
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, { notNull: true });
+
+      expect(logger.info).toHaveBeenCalledWith('Successfully sent reportApproved notification for mockReport-1');
+    });
+    it('log if result is null, many reports', () => {
+      onCompletedNotification({
+        data: {
+          reports: [mockReport],
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, null);
+
+      expect(logger.info).toHaveBeenCalledWith('Did not send reportApproved notification for mockReport-1 preferences are not set or marked as "no-send"');
+    });
   });
 
   describe('Changes requested by manager', () => {
@@ -990,7 +1081,7 @@ describe('mailer tests', () => {
         report,
         [mockCollaborator1, mockCollaborator2],
       );
-      expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
+      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
     });
 
     it('"approver assigned" on the notificationQueue', async () => {
@@ -1013,7 +1104,7 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       approverAssignedNotification(report, [mockApprover]);
-      expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
 
     it('"report approved" on the notificationQueue', async () => {
@@ -1033,7 +1124,7 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       reportApprovedNotification(report);
-      expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
 
     it('"changes requested" on the notificationQueue', async () => {
@@ -1053,7 +1144,7 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       changesRequestedNotification(report);
-      expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
+      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
     });
 
     it('"collaborator added" digest on the notificationDigestQueue', async () => {
@@ -1164,7 +1255,7 @@ describe('mailer tests', () => {
     });
     beforeEach(() => {
       notificationQueueMock.add.mockClear();
-      logger.error.mockClear();
+      auditLogger.error.mockClear();
       process.env.CI = '';
     });
     afterEach(() => {
@@ -1193,14 +1284,14 @@ describe('mailer tests', () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trSessionCreated();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(auditLogger.error).toHaveBeenCalledTimes(1);
     });
     it('trSessionCreated early return on CI', async () => {
       process.env.CI = 'true';
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trSessionCreated(mockEvent);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
+      expect(auditLogger.error).toHaveBeenCalledTimes(0);
     });
     it('trCollaboratorAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
@@ -1218,14 +1309,14 @@ describe('mailer tests', () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(auditLogger.error).toHaveBeenCalledTimes(1);
     });
     it('trCollaboratorAdded early return', async () => {
       process.env.CI = 'true';
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
+      expect(auditLogger.error).toHaveBeenCalledTimes(0);
     });
   });
 
