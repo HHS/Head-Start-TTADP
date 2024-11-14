@@ -23,6 +23,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     programType: DataTypes.STRING,
+    startYear: DataTypes.STRING,
     startDate: {
       type: DataTypes.DATEONLY,
       get: formatDate,
