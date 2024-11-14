@@ -1,6 +1,6 @@
 import httpCodes from 'http-codes';
-import { handleError } from '../../lib/apiErrorHandler';
 import simpleGit from 'simple-git';
+import { handleError } from '../../lib/apiErrorHandler';
 
 const namespace = 'ADMIN:BUILDINFO';
 const logContext = { namespace };
