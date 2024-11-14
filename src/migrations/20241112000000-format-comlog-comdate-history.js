@@ -27,6 +27,7 @@ module.exports = {
         SELECT
           id clid,
           data->>'communicationDate' orig,
+          -- replace [-. ] seperators (only - has been seen) with / so the subsequent logic always works
           regexp_replace(data->>'communicationDate','[-. ]','/','g') reseparated
         FROM "CommunicationLogs"
         WHERE data->>'communicationDate' !~ '^\\d{2}/\\d{2}/\\d{4}$'
@@ -38,6 +39,7 @@ module.exports = {
           orig,
           SPLIT_PART(reseparated,'/',1) month_part,
           SPLIT_PART(reseparated,'/',2) day_part,
+          -- check where the year part is because sometimes separators between day and year are doubled
           CASE
             WHEN LENGTH(SPLIT_PART(reseparated,'/',3)) > 1 THEN SPLIT_PART(reseparated,'/',3)
             ELSE SPLIT_PART(reseparated,'/',4)
@@ -50,6 +52,7 @@ module.exports = {
           orig,
           LPAD(month_part,2,'0') padded_month,
           LPAD(day_part,2,'0') padded_day,
+          -- pull out only the leftmost 4 characters, but pad them with the century if we only two chars
           LPAD(
             LEFT(year_part,4),
             4,
