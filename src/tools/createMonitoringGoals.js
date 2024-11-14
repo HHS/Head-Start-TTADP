@@ -148,7 +148,6 @@ const createMonitoringGoals = async () => {
     FROM grants_needing_goal_reopend
     WHERE "Goals".id = grants_needing_goal_reopend."goalId";
   `);
-
 };
 
 export default createMonitoringGoals;
