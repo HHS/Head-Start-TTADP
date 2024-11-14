@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import BuildInfo from './BuildInfo';
+import BuildInfo from '../BuildInfo';
 
 // Mock the fetch API
 global.fetch = jest.fn();
