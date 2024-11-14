@@ -3,7 +3,7 @@ set -e
 
 # Set USE_DOCKER based on whether both backend and frontend containers are running
 USE_DOCKER=false
-if [ "$(docker ps | grep -P "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
+if [ "$(docker ps | grep -E "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
   USE_DOCKER=true
 fi
 
