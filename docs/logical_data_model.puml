@@ -1115,7 +1115,6 @@ enum enum_Users_flags {
  anv_statistics
  closed_goal_merge_override
  manual_mark_goals_similar
- !issue='value missing from model enum: monitoring_integration'
  monitoring_integration
  quality_assurance_dashboard
  regional_goal_dashboard
