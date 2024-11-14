@@ -19,6 +19,9 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
+import useFormGrantData from '../../hooks/useFormGrantData';
+
+const GOALS_AND_OBJECTIVES_POSITION = 2;
 
 /**
    *
@@ -109,6 +112,8 @@ const ActivityReportNavigator = ({
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
+  // eslint-disable-next-line max-len
+  const goalsAndObjectivesPage = useMemo(() => pages.find((p) => p.position === GOALS_AND_OBJECTIVES_POSITION), [pages]);
 
   const hookForm = useForm({
     mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
@@ -166,24 +171,41 @@ const ActivityReportNavigator = ({
   const recipients = watch('activityRecipients');
   const isRecipientReport = activityRecipientType === 'recipient';
 
-  const grantIds = isRecipientReport ? recipients.map((r) => {
-    if (r.grant) {
-      return r.grant.id;
-    }
-
-    return r.activityRecipientId;
-  }) : [];
+  const {
+    grantIds,
+    hasMultipleGrants,
+  } = useFormGrantData(activityRecipientType, recipients);
 
   const { isDirty, isValid } = formState;
 
+  const recalculatePageState = () => {
+    const newPageState = { ...pageState };
+    const currentGoalsObjectivesPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
+    // eslint-disable-next-line max-len
+    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage.isPageComplete(getValues(), formState);
+    const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
+
+    if (isGoalsObjectivesPageComplete) {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
+    } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+    } else if (isCurrentPageGoalsObjectives) {
+      // eslint-disable-next-line max-len
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
+    }
+
+    return newPageState;
+  };
+
   const newNavigatorState = () => {
-    if (page.review) {
-      return pageState;
+    const newPageState = recalculatePageState();
+
+    if (page.review || page.position === GOALS_AND_OBJECTIVES_POSITION) {
+      return newPageState;
     }
 
     const currentPageState = pageState[page.position];
     const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
-    const newPageState = { ...pageState };
 
     if (isComplete) {
       newPageState[page.position] = COMPLETE;
@@ -195,6 +217,7 @@ const ActivityReportNavigator = ({
 
     return newPageState;
   };
+
   const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
     if (!editable) {
@@ -542,6 +565,7 @@ const ActivityReportNavigator = ({
     const areGoalsValid = validateGoals(
       [goal],
       setError,
+      hasMultipleGrants,
     );
 
     if (areGoalsValid !== true) {
