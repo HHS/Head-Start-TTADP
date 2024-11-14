@@ -14,6 +14,7 @@ import TrainingReports from './TrainingReports';
 import Courses from './Courses';
 import CourseEdit from './CourseEdit';
 import FeedPreview from './FeedPreview';
+import BuildInfo from '../../components/BuildInfo'; 
 
 function Admin() {
   return (
@@ -115,6 +116,7 @@ function Admin() {
           render={() => <FeedPreview />}
         />
       </Switch>
+      <BuildInfo />
     </>
   );
 }
