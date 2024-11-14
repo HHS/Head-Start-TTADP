@@ -54,10 +54,6 @@ module.exports = {
         ORDER BY 2,3
         WITH DATA;
 
-        ALTER TABLE IF EXISTS public."GrantRelationshipToActive"
-          OWNER TO postgres;
-
-
         CREATE INDEX "idx_GrantRelationshipToActive_grantId_activeGrantId"
           ON public."GrantRelationshipToActive" USING btree
           ("grantId", "activeGrantId");
