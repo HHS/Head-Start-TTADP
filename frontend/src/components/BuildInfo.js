@@ -18,9 +18,10 @@ function BuildInfo() {
         padding: '1em',
         textAlign: 'center',
         fontSize: '0.8em',
-        color: '#666'
+        color: '#666',
       }
-    }>
+    }
+    >
       <p>
         Branch:
         {buildInfo.branch}
