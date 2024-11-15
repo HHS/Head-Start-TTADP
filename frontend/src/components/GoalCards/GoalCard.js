@@ -27,6 +27,7 @@ import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
+import DataCard from '../DataCard';
 
 export const ObjectiveSwitch = ({
   objective,
@@ -199,7 +200,6 @@ export default function GoalCard({
   }
 
   const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
-  const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
   const getResponses = () => {
     const responses = goal.responses.length ? goal.responses[0].response : [];
@@ -207,10 +207,12 @@ export default function GoalCard({
   };
 
   return (
-    <article
-      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
-      data-testid="goalCard"
+    <DataCard
+      testId="goalCard"
+      className="ttahub-goal-card"
+      errorBorder={erroneouslySelected || deleteError}
     >
+
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
           { !hideCheckbox && (
@@ -340,8 +342,7 @@ export default function GoalCard({
           dispatchStatusChange={dispatchStatusChange}
         />
       ))}
-
-    </article>
+    </DataCard>
   );
 }
 
