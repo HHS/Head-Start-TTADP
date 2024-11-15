@@ -729,6 +729,7 @@ jobs:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               chmod +x ./tools/check-coverage.js
               node -r esm ./tools/check-coverage.js \
+                --directory-filter=src/,tools/ \
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
                 --output-format=json,html
             else
