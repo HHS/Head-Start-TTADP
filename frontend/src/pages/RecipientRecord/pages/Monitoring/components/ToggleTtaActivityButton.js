@@ -18,6 +18,7 @@ export default function ToggleTtaActivityButton({ count, expanded, setExpanded }
       type="TTA activity"
       showCount={false}
       pluralize={false}
+      ariaLabel="TTA activity"
     />
   );
 }
