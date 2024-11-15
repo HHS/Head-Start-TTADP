@@ -24,6 +24,7 @@ import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
 import GoalNameForm from '../../components/GoalNameForm';
 import Monitoring from './pages/Monitoring';
+import FeatureFlag from '../../components/FeatureFlag';
 
 export function PageWithHeading({
   children,
@@ -350,17 +351,19 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/monitoring/:currentPage([a-z\-]*)?"
           render={({ match: routerMatch }) => (
-            <PageWithHeading
-              regionId={regionId}
-              recipientId={recipientId}
-              recipientNameWithRegion={recipientNameWithRegion}
-              hasAlerts={hasAlerts}
-              backLink={<></>}
-            >
-              <Monitoring
-                match={routerMatch}
-              />
-            </PageWithHeading>
+            <FeatureFlag flag="monitoring_integration">
+              <PageWithHeading
+                regionId={regionId}
+                recipientId={recipientId}
+                recipientNameWithRegion={recipientNameWithRegion}
+                hasAlerts={hasAlerts}
+                backLink={<></>}
+              >
+                <Monitoring
+                  match={routerMatch}
+                />
+              </PageWithHeading>
+            </FeatureFlag>
           )}
         />
         <Route

@@ -7,15 +7,20 @@ import { getTtaByCitation, getTtaByReview } from '../../../../fetchers/monitorin
 import ReviewCards from './components/ReviewCards';
 import CitationCards from './components/CitationCards';
 
-const ALLOWED_PAGE_SLUGS = ['review', 'citation'];
+const MONITORING_PAGES = {
+  REVIEW: 'review',
+  CITATION: 'citation',
+};
+
+const ALLOWED_PAGE_SLUGS = [MONITORING_PAGES.REVIEW, MONITORING_PAGES.CITATION];
 const LINKS = [
   {
     key: 'View by review name',
-    value: 'review',
+    value: MONITORING_PAGES.REVIEW,
   },
   {
     key: 'View by citation number',
-    value: 'citation',
+    value: MONITORING_PAGES.CITATION,
   },
 ];
 
@@ -29,11 +34,11 @@ export default function Monitoring({
   const [byCitation, setByCitation] = useState([]);
 
   const lookup = useMemo(() => ({
-    review: {
+    [MONITORING_PAGES.REVIEW]: {
       fetcher: getTtaByReview,
       setter: setByReview,
     },
-    citation: {
+    [MONITORING_PAGES.CITATION]: {
       fetcher: getTtaByCitation,
       setter: setByCitation,
     },
@@ -43,7 +48,7 @@ export default function Monitoring({
 
   useEffect(() => {
     if (!currentPage || !ALLOWED_PAGE_SLUGS.includes(currentPage)) {
-      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/review`);
+      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/${MONITORING_PAGES.REVIEW}`);
     }
   }, [currentPage, history, recipientId, regionId]);
 
@@ -66,8 +71,12 @@ export default function Monitoring({
       </div>
       <Tabs tabs={LINKS} ariaLabel="Monitoring navigation" prefix={linkPrefix} />
       <div className="padding-x-3 padding-y-2">
-        {currentPage === 'review' && <ReviewCards data={byReview} regionId={Number(regionId)} />}
-        {currentPage === 'citation' && <CitationCards data={byCitation} regionId={Number(regionId)} />}
+        {currentPage === MONITORING_PAGES.REVIEW && (
+          <ReviewCards data={byReview} regionId={Number(regionId)} />
+        )}
+        {currentPage === MONITORING_PAGES.CITATION && (
+          <CitationCards data={byCitation} regionId={Number(regionId)} />
+        )}
       </div>
     </Container>
   );
