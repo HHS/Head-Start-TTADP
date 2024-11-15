@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import BuildInfo from '../BuildInfo';
 
-// Mock the fetch API
+// Mock the fetch API globally for tests
 global.fetch = jest.fn();
 
 const mockBuildInfo = {
@@ -42,7 +42,7 @@ describe('BuildInfo', () => {
 
     render(<BuildInfo />);
 
-    // Ensure no content is displayed
+    // Wait to confirm no content is displayed
     await waitFor(() => {
       expect(screen.queryByText(/Branch:/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Commit:/)).not.toBeInTheDocument();

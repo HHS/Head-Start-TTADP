@@ -1,39 +1,43 @@
-// frontend/src/components/BuildInfo.js
 import React, { useEffect, useState } from 'react';
 
 function BuildInfo() {
   const [buildInfo, setBuildInfo] = useState(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/buildInfo')
-      .then((response) => response.json())
-      .then((data) => setBuildInfo(data));
+      .then((response) => {
+        if (!response.ok) throw new Error('Build info not accessible');
+        return response.json();
+      })
+      .then((data) => {
+        setBuildInfo(data);
+        setError(false);
+      })
+      .catch(() => {
+        setError(true); // Set error state if fetch fails
+      });
   }, []);
 
-  if (!buildInfo) return null;
+  if (error || !buildInfo) return null; // Show nothing if there's an error or no build info
 
   return (
-    <footer style={
-      {
+    <footer
+      style={{
         padding: '1em',
         textAlign: 'center',
         fontSize: '0.8em',
         color: '#666',
-      }
-    }
+      }}
     >
       <p>
-        Branch:
-        {buildInfo.branch}
+        Branch: {buildInfo.branch}
         <br />
-        Commit:
-        {buildInfo.commit}
+        Commit: {buildInfo.commit}
         <br />
-        Build Number:
-        {buildInfo.buildNumber}
+        Build Number: {buildInfo.buildNumber}
         <br />
-        Deployed on:
-        {buildInfo.timestamp}
+        Deployed on: {buildInfo.timestamp}
         <br />
       </p>
     </footer>
