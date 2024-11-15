@@ -30,6 +30,7 @@ describe('buildInfo function', () => {
     delete process.env.BUILD_TIMESTAMP;
 
     jest.clearAllMocks();
+    simpleGit.mockReturnValue(mockGit); // Ensure the mock is applied in every test
   });
 
   it('returns all environment variables if they are all set', async () => {
@@ -125,13 +126,13 @@ describe('buildInfo function', () => {
 
   it('handles errors if Git command for commit fails', async () => {
     process.env.BUILD_BRANCH = 'main';
+    const error = new Error('Git commit error');
     mockGit.revparse
       .mockResolvedValueOnce('main') // First call for branch
-      .mockRejectedValueOnce(new Error('Git commit error')); // Second call for commit
+      .mockRejectedValueOnce(error); // Second call for commit
 
     await buildInfo(req, res);
 
-    const error = new Error('Git commit error');
     expect(handleError).toHaveBeenCalledWith(req, res, error, { namespace: 'ADMIN:BUILDINFO' });
   });
 });
