@@ -31,13 +31,17 @@ function BuildInfo() {
       }}
     >
       <p>
-        Branch: {buildInfo.branch}
+        Branch:
+        {buildInfo.branch}
         <br />
-        Commit: {buildInfo.commit}
+        Commit:
+        {buildInfo.commit}
         <br />
-        Build Number: {buildInfo.buildNumber}
+        Build Number:
+        {buildInfo.buildNumber}
         <br />
-        Deployed on: {buildInfo.timestamp}
+        Deployed on:
+        {buildInfo.timestamp}
         <br />
       </p>
     </footer>
