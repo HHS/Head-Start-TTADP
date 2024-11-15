@@ -4,7 +4,7 @@ const reviewData = [
     reviewType: 'Follow-up',
     reviewReceived: '01/01/2021',
     outcome: 'Compliant',
-    lastTTADate: null,
+    lastTTADate: '',
     specialists: [],
     grants: [
       '14CH123456',

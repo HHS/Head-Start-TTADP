@@ -47,6 +47,7 @@ export default function CitationCard({ citation, regionId }) {
         count={citation.reviews.length}
         expanded={expanded}
         type="TTA activity"
+        ariaLabel="TTA activity"
         showCount={false}
         pluralize={false}
       />
@@ -55,6 +56,7 @@ export default function CitationCard({ citation, regionId }) {
           <ReviewWithinCitation
             review={review}
             regionId={regionId}
+            key={uniqueId('review-within-citation-')}
           />
         ))
       )}
