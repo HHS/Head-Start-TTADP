@@ -58,9 +58,8 @@ describe('buildInfo function', () => {
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
 
     await buildInfo(req, res);
-    console.log(res.json);
 
-    //expect(mockGit.revparse).toHaveBeenCalledWith(['--abbrev-ref', 'HEAD']);
+    expect(mockGit.revparse).toHaveBeenCalledWith(['--abbrev-ref', 'HEAD']);
     expect(res.json).toHaveBeenCalledWith({
       branch: 'feature-branch',
       commit: 'abcdef1234567890',

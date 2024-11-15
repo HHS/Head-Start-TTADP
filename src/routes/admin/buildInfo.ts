@@ -11,9 +11,8 @@ export default async function buildInfo(req, res) {
     git = simpleGit();
   }
   try {
-    console.log(process.env.BUILD_BRANCH);
     // Check for existing environment variables, or fetch from Git if undefined
-    const branch = process.env.BUILD_BRANCH 
+    const branch = process.env.BUILD_BRANCH
       ? process.env.BUILD_BRANCH
       : (await git.revparse(['--abbrev-ref', 'HEAD'])).trim();
     const commit = process.env.BUILD_COMMIT
