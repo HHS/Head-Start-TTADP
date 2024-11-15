@@ -14,6 +14,8 @@ export default function ExpanderButton({
   expanded,
   type,
   ariaLabel,
+  pluralize,
+  showCount,
 }) {
   if (count < 1) {
     return null;
@@ -30,12 +32,14 @@ export default function ExpanderButton({
       {expanded ? 'Hide' : 'View'}
       {' '}
       {type}
-      {count > 1 ? 's' : ''}
+      {count > 1 && pluralize ? 's' : ''}
+      {showCount && (
       <strong className="margin-left-1">
         (
         {count}
         )
       </strong>
+      )}
       <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={expanded ? faAngleUp : faAngleDown} />
     </button>
   );
@@ -47,4 +51,11 @@ ExpanderButton.propTypes = {
   closeOrOpen: PropTypes.func.isRequired,
   count: PropTypes.number.isRequired,
   expanded: PropTypes.bool.isRequired,
+  pluralize: PropTypes.bool,
+  showCount: PropTypes.bool,
+};
+
+ExpanderButton.defaultProps = {
+  pluralize: true,
+  showCount: true,
 };
