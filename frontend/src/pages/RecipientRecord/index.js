@@ -23,6 +23,7 @@ import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
 import GoalNameForm from '../../components/GoalNameForm';
+import Monitoring from './pages/Monitoring';
 
 export function PageWithHeading({
   children,
@@ -346,7 +347,22 @@ export default function RecipientRecord({ match, hasAlerts }) {
             </PageWithHeading>
           )}
         />
-
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/monitoring/:currentPage([a-z\-]*)?"
+          render={({ match: routerMatch }) => (
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
+              backLink={<></>}
+            >
+              <Monitoring
+                match={routerMatch}
+              />
+            </PageWithHeading>
+          )}
+        />
         <Route
           render={() => (
             <PageWithHeading
