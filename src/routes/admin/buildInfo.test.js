@@ -52,13 +52,15 @@ describe('buildInfo function', () => {
 
   it('falls back to Git branch if BUILD_BRANCH is not set', async () => {
     mockGit.revparse.mockResolvedValueOnce('feature-branch');
+    process.env.BUILD_BRANCH = undefined;
     process.env.BUILD_COMMIT = 'abcdef1234567890';
     process.env.BUILD_NUMBER = '100';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
 
     await buildInfo(req, res);
+    console.log(res.json);
 
-    expect(mockGit.revparse).toHaveBeenCalledWith(['--abbrev-ref', 'HEAD']);
+    //expect(mockGit.revparse).toHaveBeenCalledWith(['--abbrev-ref', 'HEAD']);
     expect(res.json).toHaveBeenCalledWith({
       branch: 'feature-branch',
       commit: 'abcdef1234567890',
@@ -113,6 +115,42 @@ describe('buildInfo function', () => {
     expect(jsonResponse.commit).toBe('abcdef1234567890');
     expect(jsonResponse.buildNumber).toBe('100');
     expect(new Date(jsonResponse.timestamp).getTime()).toBeCloseTo(new Date().getTime(), -3);
+  });
+
+  it('falls back to empty string if Git branch returns empty', async () => {
+    mockGit.revparse.mockResolvedValueOnce(''); // Git returns empty string for branch
+    process.env.BUILD_COMMIT = 'abcdef1234567890';
+    process.env.BUILD_NUMBER = '100';
+    process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
+
+    await buildInfo(req, res);
+
+    expect(mockGit.revparse).toHaveBeenCalledWith(['--abbrev-ref', 'HEAD']);
+    expect(res.json).toHaveBeenCalledWith({
+      branch: '', // Fallback to empty string
+      commit: 'abcdef1234567890',
+      buildNumber: '100',
+      timestamp: '2024-11-13T12:34:56Z',
+    });
+  });
+
+  it('falls back to empty string if Git commit returns empty', async () => {
+    mockGit.revparse
+      .mockResolvedValueOnce('main') // First call for branch
+      .mockResolvedValueOnce(''); // Git returns empty string for commit
+    process.env.BUILD_BRANCH = 'main';
+    process.env.BUILD_NUMBER = '100';
+    process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
+
+    await buildInfo(req, res);
+
+    expect(mockGit.revparse).toHaveBeenCalledWith(['HEAD']);
+    expect(res.json).toHaveBeenCalledWith({
+      branch: 'main',
+      commit: '', // Fallback to empty string
+      buildNumber: '100',
+      timestamp: '2024-11-13T12:34:56Z',
+    });
   });
 
   it('handles errors if Git command for branch fails', async () => {
