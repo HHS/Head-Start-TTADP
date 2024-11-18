@@ -32,7 +32,7 @@ describe('ObjectiveStatusDropdown', () => {
           onUpdateObjectiveStatus={onUpdate}
           forceReadOnly={forceReadOnly}
           regionId={1}
-          objectiveId={345345}
+          objectiveTitle={345345}
           goalStatus="In Progress"
           className="test-class"
         />
