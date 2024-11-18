@@ -13,6 +13,14 @@ export default (sequelize, DataTypes) => {
        *  status: standardId -< MonitoringStandardLink.standardId
        */
 
+      MonitoringStandard.hasMany(models.ActivityReportObjectiveCitation, { foreignKey: 'citationId', as: 'activityReportObjectiveCitations' });
+      MonitoringStandard.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveCitation,
+        foreignKey: 'citationId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'activityReportObjectives',
+      });
+
       models.MonitoringStandardLink.hasMany(
         models.MonitoringStandard,
         {

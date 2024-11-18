@@ -1,23 +1,22 @@
 const { Model } = require('sequelize');
 
 /**
-   * ObjectiveTopic table. Junction table
-   * between Objectives and topics
+   * Junction table between ARO and Citations.
    * @param {} sequelize
    * @param {*} DataTypes
    */
 export default (sequelize, DataTypes) => {
-  class ActivityReportObjectiveTopic extends Model {
+  class ActivityReportObjectiveCitation extends Model {
     static associate(models) {
-      ActivityReportObjectiveTopic.belongsTo(models.ActivityReportObjective, {
+      ActivityReportObjectiveCitation.belongsTo(models.ActivityReportObjective, {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
         as: 'activityReportObjective',
       });
-      ActivityReportObjectiveTopic.belongsTo(models.Topic, { foreignKey: 'topicId', onDelete: 'cascade', as: 'topic' });
+      ActivityReportObjectiveCitation.belongsTo(models.MonitoringStandard, { foreignKey: 'citationId', onDelete: 'cascade', as: 'citation' });
     }
   }
-  ActivityReportObjectiveTopic.init({
+  ActivityReportObjectiveCitation.init({
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -25,16 +24,16 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     activityReportObjectiveId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
     },
-    topicId: {
-      type: DataTypes.INTEGER,
+    citationId: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
   }, {
     sequelize,
-    modelName: 'ActivityReportObjectiveTopic',
+    modelName: 'ActivityReportObjectiveCitation',
   });
-  return ActivityReportObjectiveTopic;
+  return ActivityReportObjectiveCitation;
 };
