@@ -144,6 +144,7 @@ JSON: {
   },
   "filters": [
     {
+      "group": "grant",
       "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
@@ -158,6 +159,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
@@ -171,7 +173,8 @@ JSON: {
         }
       }
     },
-        {
+    {
+      "group": "goal",
       "name": "status",
       "type": "string[]",
       "display": "Goal status",
@@ -186,6 +189,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "programType",
       "type": "string[]",
       "display": "Program Type",
@@ -199,6 +203,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "stateCode",
       "type": "string[]",
       "display": "State Code",
@@ -212,6 +217,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
@@ -221,6 +227,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "group",
       "type": "integer[]",
       "display": "Group",
@@ -228,6 +235,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "grant",
       "name": "currentUserId",
       "type": "integer[]",
       "display": "Current User",
@@ -235,6 +243,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "goal",
       "name": "activityReportGoalResponse",
       "type": "string[]",
       "display": "Activity Report Goal Response",
@@ -242,6 +251,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "startDate",
       "type": "date[]",
       "display": "Start Date",
@@ -249,6 +259,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "endDate",
       "type": "date[]",
       "display": "End Date",
@@ -256,6 +267,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "reportId",
       "type": "string[]",
       "display": "Report Ids",
@@ -264,6 +276,7 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
+      "group": "activity-report",
       "name": "targetPopulations",
       "type": "string[]",
       "display": "Target populations",
@@ -271,6 +284,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "topic",
       "type": "string[]",
       "display": "Topics",
@@ -278,6 +292,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "ttaType",
       "type": "string[]",
       "display": "TTA type",
@@ -285,6 +300,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "reportText",
       "type": "string[]",
       "display": "Report text",
@@ -293,6 +309,7 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
+      "group": "activity-report",
       "name": "role",
       "type": "string[]",
       "display": "Specialist role",
@@ -300,6 +317,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "reason",
       "type": "string[]",
       "display": "Reasons",
@@ -307,6 +325,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "goal",
       "name": "goalName",
       "type": "string[]",
       "display": "Goal Text",
@@ -315,6 +334,7 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
+      "group": "activity-report",
       "name": "singleOrMultiRecipients",
       "type": "string[]",
       "display": "Single or multiple recipients",

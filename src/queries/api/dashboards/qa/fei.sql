@@ -168,6 +168,7 @@ JSON: {
   },
   "filters": [
     {
+      "group": "grant",
       "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
@@ -176,6 +177,7 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
+      "group": "grant",
       "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
@@ -184,6 +186,7 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
+      "group": "grant",
       "name": "programType",
       "type": "string[]",
       "display": "Program Type",
@@ -197,6 +200,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "stateCode",
       "type": "string[]",
       "display": "State Code",
@@ -210,6 +214,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
@@ -219,6 +224,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "group",
       "type": "integer[]",
       "display": "Group",
@@ -226,6 +232,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "grant",
       "name": "currentUserId",
       "type": "integer[]",
       "display": "Current User",
@@ -233,6 +240,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "goal",
       "name": "createDate",
       "type": "date[]",
       "display": "Creation Date",
@@ -240,6 +248,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "goal",
       "name": "activityReportGoalResponse",
       "type": "string[]",
       "display": "Activity Report Goal Response",
@@ -247,6 +256,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "goal",
       "name": "status",
       "type": "string[]",
       "display": "Goal Status",
