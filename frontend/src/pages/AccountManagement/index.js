@@ -15,7 +15,6 @@ import {
 
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
-import Avatar from '../../components/Avatar';
 import UserContext from '../../UserContext';
 import {
   subscribe,
@@ -29,6 +28,7 @@ import EmailVerifier from './EmailVerifier';
 import Groups from './components/Groups';
 import WidgetCard from '../../components/WidgetCard';
 import WidgetHeader from '../../components/WidgetHeader';
+import AvatarGroup from '../../components/AvatarGroup';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -381,10 +381,7 @@ function AccountManagement({ updateUser }) {
       <WidgetCard header={<WidgetHeader>Profile</WidgetHeader>}>
         {/* Avatar w/ name */}
         <div className="margin-bottom-3">
-          <h4 className="margin-0 display-flex flex-align-center padding-bottom-3 border-bottom border-gray-20">
-            <Avatar name={user.name} />
-            <span className="margin-left-2">{user.name}</span>
-          </h4>
+          <AvatarGroup userName={user.name} className="padding-bottom-3" />
         </div>
 
         {/* Last login */}

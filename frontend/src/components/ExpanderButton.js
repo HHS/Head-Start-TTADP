@@ -25,6 +25,7 @@ export default function ExpanderButton({
       className={`usa-button--outline usa-button text-no-underline text-middle tta-smarthub--expander-row-${type}s tta-smarthub--expander-row-${type}s-enabled`}
       onClick={() => closeOrOpen()}
       aria-label={`${expanded ? 'Hide' : 'View'} ${ariaLabel}`}
+      data-testid="expander-button"
     >
       {expanded ? 'Hide' : 'View'}
       {' '}
