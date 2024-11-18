@@ -16,6 +16,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveCourses' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveCitation, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveCitations' });
 
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
@@ -29,6 +30,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'topicId',
         as: 'topics',
       });
+
+      ActivityReportObjective.belongsToMany(models.MonitoringStandard, {
+        through: models.ActivityReportObjectiveCitation,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'citationId',
+        as: 'citations',
+      });
+
       ActivityReportObjective.belongsToMany(models.Resource, {
         through: models.ActivityReportObjectiveResource,
         foreignKey: 'activityReportObjectiveId',
