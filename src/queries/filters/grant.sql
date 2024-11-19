@@ -170,7 +170,9 @@ BEGIN
   WITH seed_filtered_grants AS (
     INSERT INTO filtered_grants (id)
     SELECT 
-      id
+      id,
+      "regionId",
+      "recipientId"
     FROM "Grants"
     WHERE COALESCE(deleted, false) = false
     GROUP BY 1
