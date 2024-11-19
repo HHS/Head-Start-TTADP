@@ -4,7 +4,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
-      // Create GrantReplacementTypes table
+      // Create ActivityReportObjectiveCitations table
       await queryInterface.createTable('ActivityReportObjectiveCitations', {
         id: {
           type: Sequelize.INTEGER,
@@ -17,6 +17,24 @@ module.exports = {
           references: {
             model: {
               tableName: 'ActivityReportObjectives',
+            },
+          },
+        },
+        reviewId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviews',
+            },
+          },
+        },
+        findingId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringFindings',
             },
           },
         },

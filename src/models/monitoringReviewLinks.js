@@ -24,6 +24,7 @@ export default (sequelize, DataTypes) => {
        *  monitoringClassSummaries: MonitoringClassSummary.reviewId >- reviewId
        *  monitoringReviewLink: reviewId -< MonitoringClassSummary.reviewId
        */
+      MonitoringReviewLink.hasMany(models.ActivityReportObjectiveCitation, { foreignKey: 'reviewId', as: 'activityReportObjectiveCitationReview' });
     }
   }
   MonitoringReviewLink.init({
