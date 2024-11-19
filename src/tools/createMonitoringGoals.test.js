@@ -1770,12 +1770,12 @@ describe('createMonitoringGoals', () => {
 
   it('creates monitoring goals for grants that need them', async () => {
     // 1st Run of the CRON job.
-    await createMonitoringGoals();
-    await assertMonitoringGoals();
+    await createMonitoringGoals(goalTemplate.id);
+    await assertMonitoringGoals(goalTemplate.id);
 
     // 2nd Run of the CRON job.
     // Run the job again to make sure we don't duplicate goals.
-    await createMonitoringGoals();
-    await assertMonitoringGoals();
+    await createMonitoringGoals(goalTemplate.id);
+    await assertMonitoringGoals(goalTemplate.id);
   });
 });
