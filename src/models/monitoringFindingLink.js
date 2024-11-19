@@ -24,6 +24,7 @@ export default (sequelize, DataTypes) => {
        *  monitoringClassSummaries: MonitoringClassSummary.findingId >- findingId
        *  monitoringFindingLink: findingId -< MonitoringClassSummary.findingId
        */
+      MonitoringFindingLink.hasMany(models.ActivityReportObjectiveCitation, { foreignKey: 'findingId', as: 'activityReportObjectiveCitationFinding' });
     }
   }
   MonitoringFindingLink.init({
