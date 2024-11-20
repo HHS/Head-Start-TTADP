@@ -31,6 +31,7 @@ import db, {
 } from '../../models';
 import { GOAL_STATUS } from '../../constants';
 import { withoutStatus, withStatus } from './status';
+import { withoutTtaType, withTtaType } from './ttaType';
 
 const REGION_ID = 10;
 
@@ -549,6 +550,17 @@ describe('goal filtersToScopes', () => {
           },
         ],
       });
+    });
+  });
+
+  describe('ttaType', () => {
+    it('withTtaType, empty query returns empty object', () => {
+      const out = withTtaType([]);
+      expect(out).toMatchObject({});
+    });
+    it('withoutTtaType, empty query returns empty object', () => {
+      const out = withoutTtaType([]);
+      expect(out).toMatchObject({});
     });
   });
 
