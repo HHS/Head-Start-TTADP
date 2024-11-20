@@ -27,16 +27,16 @@ describe('BuildInfo', () => {
 
     render(<BuildInfo />);
 
-    // Wait for each piece of data to be displayed individually
+    // Wait for build info to be rendered
     await waitFor(() => {
-      expect(screen.getByText('Branch:&nbsp;')).toBeInTheDocument();
-      expect(screen.getByText('main')).toBeInTheDocument();
-      expect(screen.getByText('Commit:&nbsp;')).toBeInTheDocument();
-      expect(screen.getByText('abcdef12345')).toBeInTheDocument();
-      expect(screen.getByText('Build Number:&nbsp;')).toBeInTheDocument();
-      expect(screen.getByText('123')).toBeInTheDocument();
-      expect(screen.getByText('Deployed on:&nbsp;')).toBeInTheDocument();
-      expect(screen.getByText('2024-11-13 12:34:56')).toBeInTheDocument();
+      expect(screen.getByText(/Branch:/)).toBeInTheDocument();
+      expect(screen.getByText(/main/)).toBeInTheDocument();
+      expect(screen.getByText(/Commit:/)).toBeInTheDocument();
+      expect(screen.getByText(/abcdef12345/)).toBeInTheDocument();
+      expect(screen.getByText(/Build Number:/)).toBeInTheDocument();
+      expect(screen.getByText(/123/)).toBeInTheDocument();
+      expect(screen.getByText(/Deployed on:/)).toBeInTheDocument();
+      expect(screen.getByText(/2024-11-13 12:34:56/)).toBeInTheDocument();
     });
   });
 
@@ -48,10 +48,10 @@ describe('BuildInfo', () => {
 
     // Wait to confirm no content is displayed
     await waitFor(() => {
-      expect(screen.queryByText('Branch:')).not.toBeInTheDocument();
-      expect(screen.queryByText('Commit:')).not.toBeInTheDocument();
-      expect(screen.queryByText('Build Number:')).not.toBeInTheDocument();
-      expect(screen.queryByText('Deployed on:')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Branch:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Commit:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Build Number:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Deployed on:/)).not.toBeInTheDocument();
     });
   });
 
