@@ -4,14 +4,13 @@ import {
 } from '../models';
 import { auditLogger } from '../logger';
 
-const createMonitoringGoals = async (monitoringGoalTemplateId = null) => {
+const createMonitoringGoals = async () => {
   const cutOffDate = '2024-10-01'; // TODO: Set this before we deploy to prod.
-  const monitoringTemplateId = monitoringGoalTemplateId || 24872;
 
   // Verify that the monitoring goal template exists.
   const monitoringGoalTemplate = await GoalTemplate.findOne({
     where: {
-      id: monitoringTemplateId,
+      standard: 'Monitoring',
     },
   });
 

@@ -29,7 +29,6 @@ describe('createMonitoringGoals', () => {
   let recipientForMergeCase11;
   const startingReportDeliveryDate = new Date('2023-12-01');
 
-  // const goalTemplateId = 18172;
   const goalTemplateName = '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
   let goalTemplate;
 
@@ -1619,7 +1618,7 @@ describe('createMonitoringGoals', () => {
     ], { individualHooks: true });
 
     // Retrieve the goal template.
-    goalTemplate = await GoalTemplate.findOne({ where: { templateName: goalTemplateName } });
+    goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
 
     // Create a goal for grantThatAlreadyHasMonitoringGoal2.
     await Goal.create({
@@ -1770,12 +1769,12 @@ describe('createMonitoringGoals', () => {
 
   it('creates monitoring goals for grants that need them', async () => {
     // 1st Run of the CRON job.
-    await createMonitoringGoals(goalTemplate.id);
-    await assertMonitoringGoals(goalTemplate.id);
+    await createMonitoringGoals();
+    await assertMonitoringGoals();
 
     // 2nd Run of the CRON job.
     // Run the job again to make sure we don't duplicate goals.
-    await createMonitoringGoals(goalTemplate.id);
-    await assertMonitoringGoals(goalTemplate.id);
+    await createMonitoringGoals();
+    await assertMonitoringGoals();
   });
 });
