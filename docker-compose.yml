@@ -81,4 +81,3 @@ services:
     command: ${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001
 volumes:
   dbdata: {}
-  minio-data: {}
