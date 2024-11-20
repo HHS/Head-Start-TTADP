@@ -11,7 +11,6 @@ JSON: {
   ],
   "filters": [
     {
-      "group": "grant",
       "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
@@ -20,7 +19,6 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
-      "group": "grant",
       "name": "uei",
       "type": "string[]",
       "display": "Recipient UEI",
@@ -29,7 +27,6 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
-      "group": "grant",
       "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
@@ -38,7 +35,6 @@ JSON: {
       "supportsFuzzyMatch": true
     },
     {
-      "group": "grant",
       "name": "programType",
       "type": "string[]",
       "display": "Program Type",
@@ -52,7 +48,6 @@ JSON: {
       }
     },
     {
-      "group": "grant",
       "name": "stateCode",
       "type": "string[]",
       "display": "State Code",
@@ -66,7 +61,6 @@ JSON: {
       }
     },
     {
-      "group": "grant",
       "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
@@ -76,7 +70,6 @@ JSON: {
       }
     },
     {
-      "group": "grant",
       "name": "domainEmotionalSupport",
       "type": "string[]",
       "display": "Emotional Support Domain",
@@ -90,7 +83,6 @@ JSON: {
       }
     },
     {
-      "group": "grant",
       "name": "domainClassroomOrganization",
       "type": "string[]",
       "display": "Classroom Organization Domain",
@@ -104,7 +96,6 @@ JSON: {
       }
     },
     {
-      "group": "grant",
       "name": "domainInstructionalSupport",
       "type": "string[]",
       "display": "Instructional Support Domain",
@@ -118,7 +109,6 @@ JSON: {
       }
     },
     {
-      "group": "grant",
       "name": "group",
       "type": "integer[]",
       "display": "Group",
@@ -126,7 +116,6 @@ JSON: {
       "supportsExclusion": true
     },
     {
-      "group": "grant",
       "name": "currentUserId",
       "type": "integer[]",
       "display": "Current User",
@@ -241,22 +230,22 @@ BEGIN
         AND (
           recipient_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
-            WHERE r.name ~* value::text
-          ) != recipient_not_filter
+            EXISTS (
+                SELECT 1
+                FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
+                WHERE r.name ~* value::text
+            ) != recipient_not_filter
           )
         )
         -- Filter for uei if ssdi.uei is defined
         AND (
           uei_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
-            WHERE r.uei ~* value::text
-          ) != uei_not_filter
+            EXISTS (
+                SELECT 1
+                FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
+                WHERE r.uei ~* value::text
+            ) != uei_not_filter
           )
         )
         JOIN "Programs" p
@@ -273,11 +262,11 @@ BEGIN
         AND (
           grant_numbers_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(COALESCE(grant_numbers_filter, '[]')::json) AS value
-            WHERE gr.number ~* value::text
-          ) != grant_numbers_not_filter
+            EXISTS (
+                SELECT 1
+                FROM json_array_elements_text(COALESCE(grant_numbers_filter, '[]')::json) AS value
+                WHERE gr.number ~* value::text
+            ) != grant_numbers_not_filter
           )
         )
         -- Filter for stateCode if ssdi.stateCode is defined
@@ -312,12 +301,12 @@ BEGIN
         WHERE fgr.id = afogr.id
         RETURNING fgr.id
       )
-      INSERT INTO process_log (action, record_cnt)
-      SELECT
-        'Apply Grant Filters' AS action,
-        COUNT(*)
-      FROM delete_from_grant_filter
-      GROUP BY 1;
+    INSERT INTO process_log (action, record_cnt)
+    SELECT
+    'Apply Grant Filters' AS action,
+    COUNT(*)
+    FROM delete_from_grant_filter
+    GROUP BY 1;
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 1.3: If grant filters active, delete from filtered_grants any grarnts filtered grants
@@ -327,21 +316,21 @@ BEGIN
   THEN
     INSERT INTO active_filters (name)
     SELECT
-        UNNEST(
-            ARRAY_REMOVE(
-                ARRAY[
-                    CASE
-                        WHEN group_filter IS NOT NULL AND group_not_filter THEN 'group.not'
-                        WHEN group_filter IS NOT NULL THEN 'group'
-                    END,
-                    CASE
-                        WHEN current_user_id_filter IS NOT NULL AND current_user_id_not_filter THEN 'currentUserId.not'
-                        WHEN current_user_id_filter IS NOT NULL THEN 'currentUserId'
-                    END
-                ],
-                NULL
-            )
-        );
+      UNNEST(
+        ARRAY_REMOVE(
+          ARRAY[
+            CASE
+              WHEN group_filter IS NOT NULL AND group_not_filter THEN 'group.not'
+              WHEN group_filter IS NOT NULL THEN 'group'
+            END,
+            CASE
+              WHEN current_user_id_filter IS NOT NULL AND current_user_id_not_filter THEN 'currentUserId.not'
+              WHEN current_user_id_filter IS NOT NULL THEN 'currentUserId'
+            END
+          ],
+          NULL
+        )
+      );
     WITH
       applied_filtered_grants AS (
         SELECT
@@ -407,25 +396,25 @@ BEGIN
   THEN
     INSERT INTO active_filters (name)
     SELECT
-        UNNEST(
-            ARRAY_REMOVE(
-                ARRAY[
-                    CASE
-                        WHEN domain_emotional_support_filter IS NOT NULL AND domain_emotional_support_not_filter THEN 'domainEmotionalSupport.not'
-                        WHEN domain_emotional_support_filter IS NOT NULL THEN 'domainEmotionalSupport'
-                    END,
-                    CASE
-                        WHEN domain_classroom_organization_filter IS NOT NULL AND domain_classroom_organization_not_filter THEN 'domainClassroomOrganization.not'
-                        WHEN domain_classroom_organization_filter IS NOT NULL THEN 'domainClassroomOrganization'
-                    END,
-                    CASE
-                        WHEN domain_instructional_support_filter IS NOT NULL AND domain_instructional_support_not_filter THEN 'domainInstructionalSupport.not'
-                        WHEN domain_instructional_support_filter IS NOT NULL THEN 'domainInstructionalSupport'
-                    END,
-                ],
-                NULL
-            )
-        );
+      UNNEST(
+        ARRAY_REMOVE(
+          ARRAY[
+            CASE
+              WHEN domain_emotional_support_filter IS NOT NULL AND domain_emotional_support_not_filter THEN 'domainEmotionalSupport.not'
+              WHEN domain_emotional_support_filter IS NOT NULL THEN 'domainEmotionalSupport'
+            END,
+            CASE
+              WHEN domain_classroom_organization_filter IS NOT NULL AND domain_classroom_organization_not_filter THEN 'domainClassroomOrganization.not'
+              WHEN domain_classroom_organization_filter IS NOT NULL THEN 'domainClassroomOrganization'
+            END,
+            CASE
+              WHEN domain_instructional_support_filter IS NOT NULL AND domain_instructional_support_not_filter THEN 'domainInstructionalSupport.not'
+              WHEN domain_instructional_support_filter IS NOT NULL THEN 'domainInstructionalSupport'
+            END,
+          ],
+          NULL
+        )
+      );
     WITH
       applied_filtered_grants AS (
         SELECT
@@ -466,66 +455,63 @@ BEGIN
         AND (
           domain_emotional_support_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(
-            COALESCE(domain_emotional_support_filter, '[]')::json
-            ) AS json_values
-            WHERE json_values.value = (
-            CASE
-              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 6 THEN 'Above all thresholds'
-              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 5 THEN 'Below competitive'
-              ELSE 'Below quality'
-            END
-            )
-          )
-          != domain_emotional_support_not_filter
+            EXISTS (
+              SELECT 1
+              FROM json_array_elements_text(
+                COALESCE(domain_emotional_support_filter, '[]')::json
+              ) AS json_values
+              WHERE json_values.value = (
+                CASE
+                  WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 6 THEN 'Above all thresholds'
+                  WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 5 THEN 'Below competitive'
+                  ELSE 'Below quality'
+                END
+              )
+            ) != domain_emotional_support_not_filter
           )
         )
         -- Filter for domainClassroomOrganization if ssdi.domainClassroomOrganization is defined
         AND (
           domain_classroom_organization_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(
-            COALESCE(domain_classroom_organization_filter, '[]')::json
-            ) AS json_values
-            WHERE json_values.value = (
-            CASE
-              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 6 THEN 'Above all thresholds'
-              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 5 THEN 'Below competitive'
-              ELSE 'Below quality'
-            END
-            )
-          )
-          != domain_classroom_organization_not_filter
+            EXISTS (
+              SELECT 1
+              FROM json_array_elements_text(
+                COALESCE(domain_classroom_organization_filter, '[]')::json
+              ) AS json_values
+              WHERE json_values.value = (
+                CASE
+                  WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 6 THEN 'Above all thresholds'
+                  WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 5 THEN 'Below competitive'
+                  ELSE 'Below quality'
+                END
+              )
+            ) != domain_classroom_organization_not_filter
           )
         )
         -- Filter for domainInstructionalSupport if ssdi.domainInstructionalSupport is defined
         AND (
           domain_instructional_support_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(
-            COALESCE(domain_instructional_support_filter, '[]')::json
-            ) AS json_values
-            WHERE json_values.value = (
-            CASE
-              -- Get the max reportDeliveryDate for the instructionalSupport domain
-              WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 3 THEN 'Above all thresholds'
-              WHEN (MAX(mcs."reportDeliveryDate") >= '2025-08-01'
-              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.5)
-              THEN 'Below competitive'
-              WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2025-07-31'
-              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.3)
-              THEN 'Below competitive'
-              ELSE 'Below quality'
-            END
-            )
-          )
-          != domain_instructional_support_not_filter
+            EXISTS (
+              SELECT 1
+              FROM json_array_elements_text(
+                COALESCE(domain_instructional_support_filter, '[]')::json
+              ) AS json_values
+              WHERE json_values.value = (
+                CASE
+                  -- Get the max reportDeliveryDate for the instructionalSupport domain
+                  WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 3 THEN 'Above all thresholds'
+                  WHEN (MAX(mcs."reportDeliveryDate") >= '2025-08-01'
+                  AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.5)
+                  THEN 'Below competitive'
+                  WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2025-07-31'
+                  AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.3)
+                  THEN 'Below competitive'
+                  ELSE 'Below quality'
+                END
+              )
+            ) != domain_instructional_support_not_filter
           )
         )
         ORDER BY 1
