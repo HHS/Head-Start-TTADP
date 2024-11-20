@@ -567,7 +567,7 @@ test.describe('Activity Report', () => {
     await page.waitForTimeout(10000);
     // fill out the goals page
     await page.getByLabel(/Select recipient's goal/i).focus();
-    await page.keyboard.type('This is a goal for multiple grants');
+    await page.keyboard.type('This');
     await page.keyboard.press('Enter');
 
     await page.waitForTimeout(10000);
