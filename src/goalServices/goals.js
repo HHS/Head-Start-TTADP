@@ -784,7 +784,10 @@ export async function goalsForGrants(grantIds) {
       name: {
         [Op.ne]: '', // exclude "blank" goals
       },
-      '$grant.id$': ids,
+      [Op.or]: {
+        '$grant.grantRelationships.grantId$': ids,
+        '$grant.grantRelationships.activeGrantId$': ids,
+      },
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
       },
