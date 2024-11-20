@@ -762,6 +762,13 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  has_current_grant AS (
+    SELECT
+      "recipientId" rid,
+      BOOL_OR(status = 'Active') has_current_active_grant
+    FROM "Grants"
+    GROUP BY 1
+  ),
   with_class AS (
     SELECT
       r.id,
@@ -769,6 +776,8 @@ WITH
       COUNT(DISTINCT mcs.id) > 0 has_scores,
       COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172 AND fg.id IS NOT NULL AND mcs.id IS NOT NULL) grant_count
     FROM "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
     JOIN filtered_grants fgr
@@ -786,7 +795,7 @@ WITH
     ON mr."statusId" = mrs."statusId"
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
     AND g."mapsToParentGoalId" IS NULL
@@ -819,6 +828,8 @@ WITH
         (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator' AND fg.id IS NOT NULL)) "collaborators"
     FROM with_class wc
     JOIN "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     ON wc.id = r.id
     AND (has_class OR has_scores)
     JOIN "Grants" gr
@@ -862,7 +873,7 @@ WITH
     ON mr."statusId" = mrs."statusId"
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
