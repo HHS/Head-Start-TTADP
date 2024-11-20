@@ -76,6 +76,17 @@ export default class Users {
     return !_.isUndefined(permissions);
   }
 
+  canViewCitationsInRegion(region) {
+    const permissions = this.user.permissions.find(
+      (permission) => (
+        (permission.scopeId === SCOPES.READ_WRITE_REPORTS
+          || permission.scopeId === SCOPES.READ_REPORTS
+          || permission.scopeId === SCOPES.APPROVE_REPORTS)
+        && permission.regionId === region),
+    );
+    return !_.isUndefined(permissions);
+  }
+
   canWriteInAtLeastOneRegion() {
     const permissions = this.user.permissions.find(
       (permission) => (
