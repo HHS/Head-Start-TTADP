@@ -73,6 +73,10 @@ export default (sequelize, DataTypes) => {
         return this.source === null;
       },
     },
+    standard: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplate',
