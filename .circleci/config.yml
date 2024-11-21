@@ -1321,7 +1321,7 @@ jobs:
           cloudgov_space: CLOUDGOV_PROD_SPACE
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
-          backup_prefix: productionjobs
+          backup_prefix: production
   manage_env_apps:
     executor: docker-executor
     parameters:
