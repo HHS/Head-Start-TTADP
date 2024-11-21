@@ -61,7 +61,7 @@ for env in "${apps[@]}"; do
       -s "$space"
 
     # Get the current state of the app
-    current_state=$(cf app "$app_name" | grep "state:" | awk '{print $2}' || echo "unknown")
+    current_state=$(cf apps | grep "$app_name" | awk '{print $2}' || echo "unknown")
     echo "Current state of $app_name: $current_state"
 
     # Skip activity checks if already stopped and action is "stop"
