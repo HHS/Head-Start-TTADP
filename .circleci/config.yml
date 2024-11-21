@@ -1573,18 +1573,102 @@ workflows:
           env_list: "<< pipeline.parameters.env_list >>"
   monitor_and_shutdown_envs:
     triggers:
-      # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
+      # Every 15 minutes between 11 AM and 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
       - schedule:
-          cron: "*/15 11-23 * * 1-5"  
+          cron: "*/15 11 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 12 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 13 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 14 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 15 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 16 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 17 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 18 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 19 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 20 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 21 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 22 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+      - schedule:
+          cron: "*/15 23 * * 1-5"
           filters:
             branches:
               only:
                 - main
                 - TTAHUB-3071/shutdown-unutilized-envs
 
-      # Every 15 minutes from 12 AM to 12:45 AM UTC (7 PM to 8:45 PM EST, 4 PM to 5:45 PM PST), Monday to Friday
+      # Every 15 minutes between 12 AM and 12:45 AM UTC (7 PM to 8:45 PM EST, 4 PM to 5:45 PM PST), Monday to Friday
       - schedule:
-          cron: "*/15 0 * * 1-5"  
+          cron: "*/15 0 * * 1-5"
           filters:
             branches:
               only:
