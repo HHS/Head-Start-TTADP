@@ -89,9 +89,9 @@ class ActivityReportGoals{
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
  * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * citationId : integer : REFERENCES "MonitoringStandards".id
- * findingId : integer : REFERENCES "MonitoringFindings".id
- * reviewId : integer : REFERENCES "MonitoringReviews".id
+!issue='column reference does not match model: "MonitoringStandards".id !== "MonitoringStandardLinks"."standardId"' * citationId : integer : REFERENCES "MonitoringStandards".id
+!issue='column reference does not match model: "MonitoringFindings".id !== "MonitoringFindingLinks"."findingId"' * findingId : integer : REFERENCES "MonitoringFindings".id
+!issue='column reference does not match model: "MonitoringReviews".id !== "MonitoringReviewLinks"."reviewId"' * reviewId : integer : REFERENCES "MonitoringReviews".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
 }
@@ -2569,6 +2569,7 @@ Imports "1" --[#black,dashed,thickness=2]--{  "n" ImportFiles : import, importFi
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
 MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingStatusLink, monitoringFindingHistories
 MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistoryStatuses : monitoringFindingHistoryStatuses, statusLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : finding, activityReportObjectiveCitationFinding
 MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : findingLink, monitoringFindingGrants
 MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingLink, monitoringFindingHistories
 MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : monitoringFindingStandards, findingLink
@@ -2576,19 +2577,18 @@ MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindi
 MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : statusLink, monitoringFindingGrants
 MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStatuses : monitoringFindingStatuses, statusLink
 MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, statusLink
-MonitoringFindings "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : finding, activityReportObjectiveCitationFinding
 MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : granteeLink, monitoringFindingGrants
 MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, monitoringGranteeLink
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : review, activityReportObjectiveCitationReview
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReviewLink, monitoringClassSummaries
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReviewLink, monitoringFindingHistories
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewLink, monitoringReviewGrantees
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
-MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : review, activityReportObjectiveCitationReview
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citation, activityReportObjectiveCitations
 MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : statusLink, monitoringFindingStandards
 MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandardes, statusLink
-MonitoringStandards "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citation, activityReportObjectiveCitations
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
@@ -2649,7 +2649,10 @@ ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : ro
 ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportGoals
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Courses : courses, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
-ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringStandards : citations, activityReportObjectives
+!issue='associations need to be defined both directions'
+ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" MonitoringStandardLinks : activityReportObjectives
+!issue='associations need to be defined both directions'
+ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" MonitoringStandards : citations
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, activityReportObjectives
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports
@@ -2678,5 +2681,12 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+MonitoringFindings o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+MonitoringReviews o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+MonitoringStandards o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
 
 @enduml
