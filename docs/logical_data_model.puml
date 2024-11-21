@@ -403,7 +403,7 @@ class GoalTemplates{
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
-!issue='column type does not match model: text != varchar(255)' standard : <color:#d54309>text</color>
+ standard : text
 }
 
 class Goals{

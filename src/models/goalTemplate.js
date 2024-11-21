@@ -67,15 +67,15 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.STRING,
     },
+    standard: {
+      allowNull: true,
+      type: DataTypes.TEXT,
+    },
     isSourceEditable: {
       type: DataTypes.VIRTUAL,
       get() {
         return this.source === null;
       },
-    },
-    standard: {
-      allowNull: true,
-      type: DataTypes.STRING,
     },
   }, {
     sequelize,
