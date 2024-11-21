@@ -1322,6 +1322,10 @@ jobs:
         type: string
         description: "Action to perform on apps (start, stop, restart, restage)"
         default: "<< pipeline.parameters.env_state >>"
+      check_activity:
+        type: boolean
+        description: "If true, only stop apps if inactive for more than 15 minutes"
+        default: false
     steps:
       - run:
           name: Install Cloud Foundry CLI
@@ -1331,14 +1335,16 @@ jobs:
       - run:
           name: Manage Apps
           command: |
-            set -x
+            set -e
             env_list="<< parameters.env_list >>"
             env_state="<< parameters.env_state >>"
-            
-            # Split env_list manually
+            check_activity="<< parameters.check_activity >>"
+
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
-              # Map full environment name to variable prefixes
+              echo "Processing environment: $env"
+              
+              # Map environment name to variables
               if [[ "$env" == "tta-smarthub-sandbox" ]]; then
                 prefix="SANDBOX"
               elif [[ "$env" == "tta-smarthub-dev" ]]; then
@@ -1361,14 +1367,43 @@ jobs:
                 -p "$password" \
                 -o << pipeline.parameters.cg_org >> \
                 -s "$space"
+
               # Get the current state of the app
-              state=$(cf app "$env" | grep "state:" | awk '{print $2}')
-              
-              # Control app state based on env_state parameter
-              if [[ "$env_state" == "stop" && "$state" != "stopped" ]]; then
+              current_state=$(cf app "$env" | grep "state:" | awk '{print $2}')
+              echo "Current state of $env: $current_state"
+
+              # Skip activity checks if already stopped and action is "stop"
+              if [[ "$current_state" == "stopped" && "$env_state" == "stop" ]]; then
+                echo "$env is already stopped. No action needed."
+                continue
+              fi
+
+              # Check activity if required
+              if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
+                # Get the last activity timestamp for the app
+                last_activity=$(cf logs --recent "$env" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)
+
+                if [ -z "$last_activity" ]; then
+                  # Default to 12 hours if no activity found
+                  duration=43200
+                else
+                  # Calculate duration in seconds
+                  duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+                fi
+
+                echo "Last activity duration for $env: $duration seconds"
+
+                if [ "$duration" -le 900 ]; then
+                  echo "$env is active within the last 15 minutes. No action taken."
+                  continue
+                fi
+              fi
+
+              # Perform the desired action
+              if [[ "$env_state" == "stop" && "$current_state" != "stopped" ]]; then
                 echo "Stopping $env..."
                 cf stop "$env"
-              elif [[ "$env_state" == "start" && "$state" != "started" ]]; then
+              elif [[ "$env_state" == "start" && "$current_state" != "started" ]]; then
                 echo "Starting $env..."
                 cf start "$env"
               elif [[ "$env_state" == "restart" ]]; then
@@ -1378,7 +1413,7 @@ jobs:
                 echo "Restaging $env..."
                 cf restage "$env"
               else
-                echo "$env is already in the desired state: $state"
+                echo "$env is already in the desired state: $current_state"
               fi
             done
 workflows:
@@ -1527,3 +1562,25 @@ workflows:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
           env_list: "<< pipeline.parameters.env_list >>"
+  monitor_and_shutdown_envs:
+    triggers:
+      # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
+      - schedule:
+          cron: "*/15 11-23 * * 1-5"  
+          filters:
+            branches:
+              only:
+                - main
+
+      # Every 15 minutes from 12 AM to 12:45 AM UTC (7 PM to 8:45 PM EST, 4 PM to 5:45 PM PST), Monday to Friday
+      - schedule:
+          cron: "*/15 0 * * 1-5"  
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "stop"
+          env_list: "<< pipeline.parameters.env_list >>"
+          check_activity: true
