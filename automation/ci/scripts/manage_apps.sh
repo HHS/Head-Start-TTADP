@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -euo pipefail
+set -x
 
 # Usage: manage_apps.sh --env_list <env_list> --env_state <env_state> --check_activity <check_activity> --cg_api <cg_api> --cg_org <cg_org>
 
