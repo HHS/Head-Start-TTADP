@@ -341,6 +341,7 @@ commands:
       - run:
           name: Acquire Lock
           command: |
+            chmod +x ./automation/ci/scripts/acquire-lock.sh
             ./automation/ci/scripts/acquire-lock.sh "$(echo "<< parameters.app_name >>" | awk -F'-' '{print toupper($NF)}')"
       - run:
           name: Login with service account
@@ -381,6 +382,7 @@ commands:
       - run:
           name: Release Lock
           command: |
+            chmod +x ./automation/ci/scripts/release-lock.sh
             ./automation/ci/scripts/release-lock.sh "$(echo "<< parameters.app_name >>" | awk -F'-' '{print toupper($NF)}')"
           when: always
       # - run:
@@ -1345,6 +1347,7 @@ jobs:
       - run:
           name: Acquire Locks
           command: |
+            chmod +x ./automation/ci/scripts/acquire-lock.sh
             env_list="<< parameters.env_list >>"
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
@@ -1450,6 +1453,7 @@ jobs:
       - run:
           name: Release Lock
           command: |
+            chmod +x ./automation/ci/scripts/release-lock.sh
             env_list="<< parameters.env_list >>"
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
