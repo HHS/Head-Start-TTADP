@@ -2,37 +2,44 @@
 # Usage: ./acquire-lock.sh <env_name>
 set -e
 
+# Ensure jq is installed
+if ! command -v jq &> /dev/null; then
+  echo "jq is not installed. Installing..."
+  sudo apt-get update && sudo apt-get install -y jq
+fi
+
 env_name=$1
 lock_key="LOCK_${env_name^^}"
 current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 current_build_id=$CIRCLE_WORKFLOW_ID
 
-# Create lock payload
+# Create lock payload as a JSON string
 lock_payload=$(jq -n \
   --arg branch "$CIRCLE_BRANCH" \
   --arg build_id "$current_build_id" \
   --arg timestamp "$current_time" \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
 
-# Check the current lock value
-current_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
+# Escape the lock_payload string for JSON
+lock_payload_escaped=$(echo "$lock_payload" | jq -aRs .)
 
-if [ "$current_lock" != "null" ]; then
-  existing_build_id=$(echo "$current_lock" | jq -r '.build_id')
-  existing_timestamp=$(echo "$current_lock" | jq -r '.timestamp')
+# Construct the API request payload
+api_payload=$(jq -n \
+  --arg name "$lock_key" \
+  --arg value "$lock_payload" \
+  '{name: $name, value: $value}')
 
-  # Check if the lock is stale
-  lock_age=$(( $(date -u -d "$current_time" +%s) - $(date -u -d "$existing_timestamp" +%s) ))
-  if [ "$lock_age" -le 3600 ] && [ "$existing_build_id" != "$current_build_id" ]; then
-    echo "Environment $env_name is locked by another workflow (Build ID: $existing_build_id). Exiting."
-    exit 1
-  fi
-fi
-
-# Set the new lock
-curl -s -u "${CIRCLE_API_USER_TOKEN}:" \
+# Send the request to set the environment variable
+response=$(curl -s -u "${CIRCLECI_API_USER_TOKEN}:" \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"name\":\"$lock_key\",\"value\":\"$lock_payload\"}" \
-  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar"
+  -d "$api_payload" \
+  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar")
+
+# Check for errors in the response
+if echo "$response" | jq -e '.message' >/dev/null; then
+  echo "Failed to acquire lock: $(echo "$response" | jq -r '.message')"
+  exit 1
+fi
+
 echo "Lock acquired for environment: $env_name"

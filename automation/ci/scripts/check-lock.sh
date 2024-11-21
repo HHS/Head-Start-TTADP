@@ -2,16 +2,32 @@
 # Usage: ./check-lock.sh <env_name>
 set -e
 
+# Ensure jq is installed
+if ! command -v jq &> /dev/null; then
+  echo "jq is not installed. Installing..."
+  sudo apt-get update && sudo apt-get install -y jq
+fi
+
 env_name=$1
 lock_key="LOCK_${env_name^^}"
 
 # Fetch the lock value from CircleCI project environment variables
-lock_value=$(curl -s -u "${CIRCLE_API_USER_TOKEN}:" \
+response=$(curl -s -u "${CIRCLECI_API_USER_TOKEN}:" \
   -X GET \
-  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key" | jq -r '.value')
+  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key")
+
+# Check for errors in the response
+if echo "$response" | jq -e '.message' >/dev/null; then
+  echo "Error fetching lock: $(echo "$response" | jq -r '.message')"
+  exit 1
+fi
+
+lock_value=$(echo "$response" | jq -r '.value')
 
 if [ "$lock_value" == "null" ]; then
   echo "null"
 else
-  echo "$lock_value"
+  # Decode the JSON string back to JSON object
+  lock_value_decoded=$(echo "$lock_value" | jq -r)
+  echo "$lock_value_decoded"
 fi
