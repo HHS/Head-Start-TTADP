@@ -30,7 +30,7 @@ api_payload=$(jq -n \
   '{name: $name, value: $value}')
 
 # Send the request to set the environment variable
-response=$(curl -s -u "${CIRCLECI_API_USER_TOKEN}:" \
+response=$(curl -s -u "${AUTOMATION_USER_TOKEN}:" \
   -X POST \
   -H "Content-Type: application/json" \
   -d "$api_payload" \
