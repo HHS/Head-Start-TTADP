@@ -1310,13 +1310,13 @@ jobs:
           cloudgov_space: CLOUDGOV_PROD_SPACE
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
-          backup_prefix: production
+          backup_prefix: productionjobs
   manage_env_apps:
     executor: docker-executor
     parameters:
       env_list:
         type: string
-        description: "Comma-separated list of environments to manage"
+        description: "Comma-separated list of environments to manage (both smarthub and similarity-api)"
         default: "<< pipeline.parameters.env_list >>"
       env_state:
         type: string
@@ -1340,81 +1340,90 @@ jobs:
             env_state="<< parameters.env_state >>"
             check_activity="<< parameters.check_activity >>"
 
+            # Define prefixes for environments
+            app_prefixes=("tta-smarthub" "tta-similarity-api")
+            
+            # Loop through each environment in the provided list
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
-              echo "Processing environment: $env"
-              
-              # Map environment name to variables
-              if [[ "$env" == "tta-smarthub-sandbox" ]]; then
-                prefix="SANDBOX"
-              elif [[ "$env" == "tta-smarthub-dev" ]]; then
-                prefix="DEV"
-              else
-                echo "Unrecognized environment: $env"
-                exit 1
-              fi
-              # Retrieve the environment-specific variables
-              space_var="CLOUDGOV_${prefix}_SPACE"
-              username_var="CLOUDGOV_${prefix}_USERNAME"
-              password_var="CLOUDGOV_${prefix}_PASSWORD"
-              space="${!space_var}"
-              username="${!username_var}"
-              password="${!password_var}"
-              echo "Logging into space: $space for environment: $env"
-              cf login \
-                -a << pipeline.parameters.cg_api >> \
-                -u "$username" \
-                -p "$password" \
-                -o << pipeline.parameters.cg_org >> \
-                -s "$space"
+              echo "Processing environment group: $env"
 
-              # Get the current state of the app
-              current_state=$(cf app "$env" | grep "state:" | awk '{print $2}')
-              echo "Current state of $env: $current_state"
+              # Loop through each app prefix (smarthub and similarity-api)
+              for prefix in "${app_prefixes[@]}"; do
+                app_name="${prefix}-${env}"
+                echo "Processing app: $app_name"
+                
+                # Dynamically derive variable names for environment
+                space_var="CLOUDGOV_${env^^}_SPACE"
+                username_var="CLOUDGOV_${env^^}_USERNAME"
+                password_var="CLOUDGOV_${env^^}_PASSWORD"
 
-              # Skip activity checks if already stopped and action is "stop"
-              if [[ "$current_state" == "stopped" && "$env_state" == "stop" ]]; then
-                echo "$env is already stopped. No action needed."
-                continue
-              fi
+                # Resolve the actual values of the variables
+                space="${!space_var}"
+                username="${!username_var}"
+                password="${!password_var}"
 
-              # Check activity if required
-              if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
-                # Get the last activity timestamp for the app
-                last_activity=$(cf logs --recent "$env" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)
-
-                if [ -z "$last_activity" ]; then
-                  # Default to 12 hours if no activity found
-                  duration=43200
-                else
-                  # Calculate duration in seconds
-                  duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+                if [[ -z "$space" || -z "$username" || -z "$password" ]]; then
+                  echo "Error: Missing required environment variable(s) for $env"
+                  exit 1
                 fi
 
-                echo "Last activity duration for $env: $duration seconds"
+                # Log in to Cloud Foundry
+                cf login \
+                  -a << pipeline.parameters.cg_api >> \
+                  -u "$username" \
+                  -p "$password" \
+                  -o << pipeline.parameters.cg_org >> \
+                  -s "$space"
 
-                if [ "$duration" -le 900 ]; then
-                  echo "$env is active within the last 15 minutes. No action taken."
+                # Get the current state of the app
+                current_state=$(cf app "$app_name" | grep "state:" | awk '{print $2}' || echo "unknown")
+                echo "Current state of $app_name: $current_state"
+
+                # Skip activity checks if already stopped and action is "stop"
+                if [[ "$current_state" == "stopped" && "$env_state" == "stop" ]]; then
+                  echo "$app_name is already stopped. No action needed."
                   continue
                 fi
-              fi
 
-              # Perform the desired action
-              if [[ "$env_state" == "stop" && "$current_state" != "stopped" ]]; then
-                echo "Stopping $env..."
-                cf stop "$env"
-              elif [[ "$env_state" == "start" && "$current_state" != "started" ]]; then
-                echo "Starting $env..."
-                cf start "$env"
-              elif [[ "$env_state" == "restart" ]]; then
-                echo "Restarting $env..."
-                cf restart "$env"
-              elif [[ "$env_state" == "restage" ]]; then
-                echo "Restaging $env..."
-                cf restage "$env"
-              else
-                echo "$env is already in the desired state: $current_state"
-              fi
+                # Check activity if required
+                if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
+                  # Get the last activity timestamp for the app
+                  last_activity=$(cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)
+
+                  if [ -z "$last_activity" ]; then
+                    # Default to 12 hours if no activity found
+                    duration=43200
+                  else
+                    # Calculate duration in seconds
+                    duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+                  fi
+
+                  echo "Last activity duration for $app_name: $duration seconds"
+
+                  if [ "$duration" -le 900 ]; then
+                    echo "$app_name is active within the last 15 minutes. No action taken."
+                    continue
+                  fi
+                fi
+
+                # Perform the desired action
+                if [[ "$env_state" == "stop" && "$current_state" != "stopped" ]]; then
+                  echo "Stopping $app_name..."
+                  cf stop "$app_name"
+                elif [[ "$env_state" == "start" && "$current_state" != "started" ]]; then
+                  echo "Starting $app_name..."
+                  cf start "$app_name"
+                elif [[ "$env_state" == "restart" ]]; then
+                  echo "Restarting $app_name..."
+                  cf restart "$app_name"
+                elif [[ "$env_state" == "restage" ]]; then
+                  echo "Restaging $app_name..."
+                  cf restage "$app_name"
+                else
+                  echo "$app_name is already in the desired state: $current_state"
+                fi
+              done
             done
 workflows:
   build_test_deploy:
