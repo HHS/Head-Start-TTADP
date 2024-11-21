@@ -28,7 +28,7 @@ if [ "$existing_build_id" != "$CIRCLE_WORKFLOW_ID" ]; then
 fi
 
 # Delete the lock
-response=$(curl -s -u "${CIRCLECI_API_USER_TOKEN}:" \
+response=$(curl -s -u "${AUTOMATION_USER_TOKEN}:" \
   -X DELETE \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key")
 

@@ -12,7 +12,7 @@ env_name=$1
 lock_key="LOCK_${env_name^^}"
 
 # Fetch the lock value from CircleCI project environment variables
-response=$(curl -s -u "${CIRCLECI_API_USER_TOKEN}:" \
+response=$(curl -s -u "${AUTOMATION_USER_TOKEN}:" \
   -X GET \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key")
 
