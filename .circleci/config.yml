@@ -339,6 +339,10 @@ commands:
         type: env_var_name
     steps:
       - run:
+          name: Acquire Lock
+          command: |
+            ./automation/ci/scripts/acquire-lock.sh "<< parameters.app_name >>"
+      - run:
           name: Login with service account
           command: |
             cf login -a << pipeline.parameters.cg_api >> \
@@ -374,6 +378,11 @@ commands:
               --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
               --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
               --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>}
+      - run:
+          name: Release Lock
+          command: |
+            ./automation/ci/scripts/release-lock.sh "<< parameters.app_name >>"
+          when: always
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -1327,11 +1336,22 @@ jobs:
         description: "If true, only stop apps if inactive for more than 15 minutes"
         default: false
     steps:
+      # Sparse checkout the automation scripts
+      - sparse_checkout:
+          directories: "automation/ci/scripts"
+          branch: "<< pipeline.git.branch >>"
+
+      # Acquire lock for each environment
       - run:
-          name: Install Cloud Foundry CLI
+          name: Acquire Lock
           command: |
-            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
-            sudo dpkg -i cf-cli_amd64.deb
+            env_list="<< parameters.env_list >>"
+            apps=(${env_list//,/ })
+            for env in "${apps[@]}"; do
+              ./automation/ci/scripts/acquire-lock.sh "$env"
+            done
+
+      # Perform the desired action on environments
       - run:
           name: Manage Apps
           command: |
@@ -1342,8 +1362,8 @@ jobs:
 
             # Define prefixes for environments
             app_prefixes=("tta-smarthub" "tta-similarity-api")
-            
-            # Loop through each environment in the provided list
+
+            # Convert the comma-separated list into an array
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
               echo "Processing environment group: $env"
@@ -1352,7 +1372,7 @@ jobs:
               for prefix in "${app_prefixes[@]}"; do
                 app_name="${prefix}-${env}"
                 echo "Processing app: $app_name"
-                
+
                 # Dynamically derive variable names for environment
                 space_var="CLOUDGOV_${env^^}_SPACE"
                 username_var="CLOUDGOV_${env^^}_USERNAME"
@@ -1425,6 +1445,17 @@ jobs:
                 fi
               done
             done
+
+      # Release lock for each environment
+      - run:
+          name: Release Lock
+          command: |
+            env_list="<< parameters.env_list >>"
+            apps=(${env_list//,/ })
+            for env in "${apps[@]}"; do
+              ./automation/ci/scripts/release-lock.sh "$env"
+            done
+          when: always
 workflows:
   build_test_deploy:
     when:
