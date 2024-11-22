@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: ./acquire-lock.sh <env_name>
-set -e
+set -euo pipefail
 
 # Ensure jq is installed
 if ! command -v jq &> /dev/null; then
@@ -12,6 +12,14 @@ env_name=$1
 lock_key="LOCK_${env_name^^}"
 current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 current_build_id=$CIRCLE_WORKFLOW_ID
+
+# Check if a lock already exists and is valid
+existing_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
+
+if [[ "$existing_lock" != "{}" ]]; then
+  echo "Environment $env_name is already locked: $existing_lock" >&2
+  exit 1
+fi
 
 # Create lock payload as a JSON string
 lock_payload=$(jq -n \
@@ -36,10 +44,11 @@ response=$(curl -s -u "${AUTOMATION_USER_TOKEN}:" \
   -d "$api_payload" \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar")
 
-# Check for errors in the response
-if echo "$response" | jq -e '.message' >/dev/null; then
-  echo "Failed to acquire lock: $(echo "$response" | jq -r '.message')"
+# Validate the lock was successfully set
+final_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
+if [[ "$final_lock" == "{}" ]]; then
+  echo "Failed to acquire lock: Lock was not set properly." >&2
   exit 1
 fi
 
-echo "Lock acquired for environment: $env_name"
+echo "Lock acquired for environment: $env_name."
