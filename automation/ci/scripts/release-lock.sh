@@ -3,10 +3,10 @@
 set -euo pipefail
 set -x
 
-# Ensure jq is installed
-if ! command -v jq &> /dev/null; then
-  echo "jq is not installed. Installing..."
-  sudo apt-get update && sudo apt-get install -y jq
+# Ensure jq and base64 are installed
+if ! command -v jq &> /dev/null || ! command -v base64 &> /dev/null; then
+  echo "jq or base64 is not installed. Installing..."
+  sudo apt-get update && sudo apt-get install -y jq coreutils
 fi
 
 env_name=$1

@@ -3,10 +3,10 @@
 set -euo pipefail
 set -x
 
-# Ensure jq is installed
-if ! command -v jq &> /dev/null; then
-  echo "jq is not installed. Installing..."
-  sudo apt-get update && sudo apt-get install -y jq
+# Ensure jq and base64 are installed
+if ! command -v jq &> /dev/null || ! command -v base64 &> /dev/null; then
+  echo "jq or base64 is not installed. Installing..."
+  sudo apt-get update && sudo apt-get install -y jq coreutils
 fi
 
 env_name=$1
@@ -26,15 +26,15 @@ if echo "$response" | jq -e '.message' >/dev/null; then
   exit 0
 fi
 
-lock_value=$(echo "$response" | jq -r '.value')
+lock_value=$(echo "$response" | jq -r '.value // empty')
 
 if [ -z "$lock_value" ]; then
   echo "{}"
   exit 0
 fi
 
-# Decode the JSON string back to JSON object
-lock_value_decoded=$(echo "$lock_value" | jq -r)
+# Decode the Base64-encoded JSON string
+lock_value_decoded=$(echo "$lock_value" | base64 --decode | jq -rc)
 echo "Current lock value: $lock_value_decoded" >&2
 
 # Parse values from the lock
