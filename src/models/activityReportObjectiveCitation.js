@@ -15,42 +15,8 @@ export default (sequelize, DataTypes) => {
         as: 'activityReportObjective',
       });
 
-      // Note: We join these to the 'link' tables,
-      // that inturn join to the monitoring tables via a GUID.
-      // Review.
-      ActivityReportObjectiveCitation.belongsTo(models.MonitoringReviewLink, { foreignKey: 'reviewId', as: 'review' });
-
-      /*
-      ActivityReportObjectiveCitation.belongsToMany(models.MonitoringReview, {
-        through: models.MonitoringReviewLink,
-        foreignKey: 'reviewId',
-        otherKey: 'reviewId',
-        as: 'reviews',
-      });
-      */
-
-      // Finding.
-      ActivityReportObjectiveCitation.belongsTo(models.MonitoringFindingLink, { foreignKey: 'findingId', as: 'finding' });
-
-      /*
-      ActivityReportObjectiveCitation.belongsToMany(models.MonitoringFinding, {
-        through: models.MonitoringFindingLink,
-        foreignKey: 'findingId',
-        otherKey: 'findingId',
-        as: 'findings',
-      });
-      */
-
       // Citation (standard).
-      ActivityReportObjectiveCitation.belongsTo(models.MonitoringStandardLink, { foreignKey: 'citationId', as: 'citation' });
-      /*
-      ActivityReportObjectiveCitation.belongsToMany(models.MonitoringStandard, {
-        through: models.MonitoringStandardLink,
-        foreignKey: 'standardId',
-        otherKey: 'standardId',
-        as: 'citations',
-      });
-      */
+      ActivityReportObjectiveCitation.belongsTo(models.ActivityReportObjective, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveCitation' });
     }
   }
   ActivityReportObjectiveCitation.init({
@@ -60,21 +26,23 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    activityReportObjectiveId: {
-      type: DataTypes.INTEGER,
+    citation: {
+      type: DataTypes.TEXT,
       allowNull: false,
     },
-    reviewId: {
-      type: DataTypes.INTEGER,
+    monitoringReferences: {
+      type: DataTypes.JSONB,
       allowNull: false,
     },
-    findingId: {
-      type: DataTypes.INTEGER,
+    createdAt: {
+      type: DataTypes.DATE,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
-    citationId: {
-      type: DataTypes.INTEGER,
+    updatedAt: {
+      type: DataTypes.DATE,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   }, {
     sequelize,

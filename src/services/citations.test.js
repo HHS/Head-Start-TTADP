@@ -309,47 +309,42 @@ describe('citations service', () => {
 
     it('correctly retrieves citations per grant', async () => {
       // Call the service to get the citations by grant ids.
-      const citationsToAssert = await getCitationsByGrantIds([grant1.id, grant1a.id, grant2.id, grant3.id]);
-      // Get the first citation object for grant 1.
-      const grant1Citations = citationsToAssert.find((g) => g.grantId === grant1.id);
-      expect(grant1Citations).toBeDefined();
-      expect(grant1Citations.citations.length).toBe(2);
+      // get todays date in YYYY-MM-DD for the last possible hour of the day.
+      const reportStartDate = new Date().toISOString().split('T')[0];
+      const citationsToAssert = await getCitationsByGrantIds([grant1.id, grant1a.id, grant2.id, grant3.id], reportStartDate);
 
-      // Get the first citation ''Grant 1 - Citation 1 - Good'.
-      const citation1 = grant1Citations.citations.find((c) => c.citation === 'Grant 1 - Citation 1 - Good');
-      expect(citation1).toBeDefined();
-      expect(citation1.findingType).toBe('Citation 1 Monitoring Finding Type');
-      expect(citation1.findingSource).toBe('Internal Controls');
-      expect(citation1.grantNumber).toBe(grant1.number);
+      // Assert correct number of citations.
+      expect(citationsToAssert.length).toBe(3);
 
-      // Get the second citation ''Grant 1 - Citation 3 - Good 2'.
-      const citation2 = grant1Citations.citations.find((c) => c.citation === 'Grant 1 - Citation 3 - Good 2');
-      expect(citation2).toBeDefined();
-      expect(citation2.findingType).toBe('Citation 3 Monitoring Finding Type');
-      expect(citation2.findingSource).toBe('Internal Controls');
-      expect(citation2.grantNumber).toBe(grant1.number);
+      // Assert the citations.
+      expect(citationsToAssert[0].citation).toBe('Grant 1 - Citation 1 - Good');
+      expect(citationsToAssert[0].grants.length).toBe(1);
+      expect(citationsToAssert[0].grants[0].findingId).toBeDefined();
+      expect(citationsToAssert[0].grants[0].grantId).toBe(grant1.id);
+      expect(citationsToAssert[0].grants[0].grantNumber).toBe(grant1.number);
+      expect(citationsToAssert[0].grants[0].reviewName).toBeDefined();
+      expect(citationsToAssert[0].grants[0].reportDeliveryDate).toBeDefined();
+      expect(citationsToAssert[0].grants[0].findingType).toBe('Citation 1 Monitoring Finding Type');
+      expect(citationsToAssert[0].grants[0].findingSource).toBe('Internal Controls');
+      expect(citationsToAssert[0].grants[0].monitoringFindingStatusName).toBe('Active');
 
-      // Look for Grant1a.
-      const grant1aCitations = citationsToAssert.find((g) => g.grantId === grant1a.id);
-      expect(grant1aCitations).toBeDefined();
-      expect(grant1aCitations.citations.length).toBe(1);
+      expect(citationsToAssert[1].citation).toBe('Grant 1 - Citation 3 - Good 2');
+      expect(citationsToAssert[1].grants.length).toBe(1);
+      expect(citationsToAssert[1].grants[0].findingId).toBeDefined();
+      expect(citationsToAssert[1].grants[0].grantId).toBe(grant1.id);
+      expect(citationsToAssert[1].grants[0].grantNumber).toBe(grant1.number);
+      expect(citationsToAssert[1].grants[0].reviewName).toBeDefined();
+      expect(citationsToAssert[1].grants[0].reportDeliveryDate).toBeDefined();
+      expect(citationsToAssert[1].grants[0].findingType).toBe('Citation 3 Monitoring Finding Type');
 
-      // Get the first citation ''Grant 1a - Citation 1 - Good'.
-      const citation1a = grant1aCitations.citations.find((c) => c.citation === 'Grant 1a - Citation 1 - Good');
-      expect(citation1a).toBeDefined();
-      expect(citation1a.findingType).toBe('Citation 4 Monitoring Finding Type');
-      expect(citation1a.findingSource).toBe('Internal Controls');
-      expect(citation1a.grantNumber).toBe(grant1a.number);
-
-      // Looks for Grant2.
-      const grant2Citations = citationsToAssert.find((g) => g.grantId === grant2.id);
-      // Assert we don\'t have any citations for grant 2.
-      expect(grant2Citations).toBeUndefined();
-
-      // Looks for Grant3.
-      const grant3Citations = citationsToAssert.find((g) => g.grantId === grant3.id);
-      // Assert we don\'t have any citations for grant 3.
-      expect(grant3Citations).toBeUndefined();
+      expect(citationsToAssert[2].citation).toBe('Grant 1a - Citation 1 - Good');
+      expect(citationsToAssert[2].grants.length).toBe(1);
+      expect(citationsToAssert[2].grants[0].findingId).toBeDefined();
+      expect(citationsToAssert[2].grants[0].grantId).toBe(grant1a.id);
+      expect(citationsToAssert[2].grants[0].grantNumber).toBe(grant1a.number);
+      expect(citationsToAssert[2].grants[0].reviewName).toBeDefined();
+      expect(citationsToAssert[2].grants[0].reportDeliveryDate).toBeDefined();
+      expect(citationsToAssert[2].grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
     });
   });
 });

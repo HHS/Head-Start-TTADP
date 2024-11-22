@@ -12,6 +12,7 @@ export default (sequelize, DataTypes) => {
        *  monitoringFindingLink: MonitoringFindingLink.statusId >- statusId
        *  status: statusId -< MonitoringFindingLink.statusId
        */
+
       models.MonitoringFindingLink.hasMany(
         models.MonitoringFinding,
         {

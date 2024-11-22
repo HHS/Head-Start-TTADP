@@ -24,8 +24,6 @@ export default (sequelize, DataTypes) => {
        *  monitoringClassSummaries: MonitoringClassSummary.findingId >- findingId
        *  monitoringFindingLink: findingId -< MonitoringClassSummary.findingId
        */
-      // eslint-disable-next-line max-len
-      // MonitoringFindingLink.hasMany(models.ActivityReportObjectiveCitation, { foreignKey: 'findingId', as: 'activityReportObjectiveCitationFinding' });
     }
   }
   MonitoringFindingLink.init({

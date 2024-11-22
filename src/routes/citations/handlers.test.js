@@ -30,6 +30,7 @@ describe('Citation handlers', () => {
       },
       params: {
         regionId: 1,
+        reportStartDate: '2024-10-01',
       },
     };
 
@@ -64,7 +65,7 @@ describe('Citation handlers', () => {
 
     expect(currentUserId).toHaveBeenCalledWith(req, res);
     expect(userById).toHaveBeenCalledWith(user.id);
-    expect(getCitationsByGrantIds).toHaveBeenCalledWith(req.query.grantIds);
+    expect(getCitationsByGrantIds).toHaveBeenCalledWith(req.query.grantIds, '2024-10-01');
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith(citations);
   });
@@ -77,6 +78,7 @@ describe('Citation handlers', () => {
       },
       params: {
         regionId: 1,
+        reportStartDate: '2024-10-01',
       },
     };
 
@@ -109,7 +111,7 @@ describe('Citation handlers', () => {
 
     expect(currentUserId).toHaveBeenCalledWith(req, res);
     expect(userById).toHaveBeenCalledWith(user.id);
-    expect(getCitationsByGrantIds).toHaveBeenCalledWith(req.query.grantIds);
+    expect(getCitationsByGrantIds).toHaveBeenCalledWith(req.query.grantIds, '2024-10-01');
     expect(res.sendStatus).toHaveBeenCalledWith(500);
   });
 
@@ -121,6 +123,7 @@ describe('Citation handlers', () => {
       },
       params: {
         regionId: 1,
+        reportStartDate: '2024-10-01',
       },
     };
 

@@ -12,11 +12,12 @@ export default (sequelize, DataTypes) => {
        *  monitoringStandardLink: MonitoringStandardLink.standardId >- standardId
        *  status: standardId -< MonitoringStandardLink.standardId
        */
+
       models.MonitoringStandardLink.hasMany(
         models.MonitoringStandard,
         {
           foreignKey: 'standardId',
-          as: 'monitoringStandardes',
+          as: 'monitoringStandards',
         },
       );
 

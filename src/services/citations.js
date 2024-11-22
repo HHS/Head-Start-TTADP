@@ -7,13 +7,12 @@ import { sequelize } from '../models';
   We then need to format the response for how it needs to be
   displayed on the FE for selection on objectives.
 */
-export async function getCitationsByGrantIds(grantIds) {
+export async function getCitationsByGrantIds(grantIds, reportStartDate) {
   /*
    Questions:
    - Do we need to take into account the grant replacements table? (what if a grant was replaced?)
    - Is it enough to join on grant number? Or do we need to use links table?
    */
-
   const cutOffStartDate = '2024-10-01'; // TODO: Set this before we deploy to prod.
 
   // Query to get the citations by grant id.
@@ -69,7 +68,7 @@ export async function getCitationsByGrantIds(grantIds) {
         AND mrg."granteeId" = mfg."granteeId"
       WHERE 1 = 1
         AND gr.id IN (${grantIds.join(',')}) -- :grantIds
-        AND mfh."reportDeliveryDate" BETWEEN '${cutOffStartDate}' AND NOW() -- Between is inclusive.
+          AND mfh."reportDeliveryDate"::date BETWEEN '${cutOffStartDate}' AND '${reportStartDate}'
         AND gr.status = 'Active'
         AND mfs.name = 'Active'
       GROUP BY 1,2
@@ -77,41 +76,5 @@ export async function getCitationsByGrantIds(grantIds) {
     `,
   );
 
-  // From the response we need to get a list of citations for each grant.
-  const citationsByGrant = Object.values(grantsByCitations[0].reduce(
-    (acc, citation) => {
-      const { grants } = citation;
-      // Create a for loop to iterate over every object in the grants array.
-      for (let i = 0; i < grants.length; i++) {
-        const grant = grants[i];
-        // Check if the grant number is already in the accumulator.
-        if (!acc[grant.grantId]) {
-          acc[grant.grantId] = {
-            grantId: grant.grantId,
-            citations: [],
-          };
-        }
-
-        // Build a citation object to push into the array.
-        const citationObject = {
-          findingType: grant.findingType,
-          findingSource: grant.findingSource,
-          grantId: grant.grantId,
-          standardId: citation.standardId,
-          citation: citation.citation,
-          findingId: grant.findingId,
-          reviewName: grant.reviewName,
-          grantNumber: grant.grantNumber,
-          reportDeliveryDate: grant.reportDeliveryDate,
-          monitoringFindingStatusName: grant.monitoringFindingStatusName,
-        };
-        // Push the citation into the array for the grant number.
-        acc[grant.grantId].citations.push(citationObject);
-      }
-      return acc;
-    },
-    {},
-  ));
-
-  return citationsByGrant;
+  return grantsByCitations[0];
 }
