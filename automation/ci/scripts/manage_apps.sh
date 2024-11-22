@@ -65,7 +65,7 @@ for env in "${apps[@]}"; do
     app_name="${primary_prefix}-${env_suffix}"
     
     current_state=$(cf apps | grep "${app_name}" | awk '{print $2}' || echo "unknown")
-    if [ "$current_state" != "stopped" ]; then
+    if [ "$current_state" == "stopped" ]; then
           echo "$app_name is already stopped."
       continue
     fi
