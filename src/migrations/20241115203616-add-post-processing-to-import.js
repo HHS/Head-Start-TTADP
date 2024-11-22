@@ -26,7 +26,7 @@ module.exports = {
       // Update Imports set the postProcessingActions column to the object.
       await queryInterface.sequelize.query(/* sql */`
             UPDATE "Imports"
-            SET "postProcessingActions" = '{"name": "Monitoring Goal CRON job", "function": "createMonitoringGoals"}'
+            SET "postProcessingActions" = '[{"name": "Monitoring Goal CRON job", "function": "createMonitoringGoals"}]'
             WHERE "name" = 'ITAMS Monitoring Data';
         `, { transaction });
     });
