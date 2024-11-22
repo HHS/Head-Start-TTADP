@@ -73,7 +73,7 @@ for env in "${apps[@]}"; do
     # Check activity if required
     if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
       # Get the last activity timestamp for the app
-      last_activity=$(cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)
+      last_activity="$(cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)"
 
       if [ -z "$last_activity" ]; then
         # Default to 12 hours if no activity found
