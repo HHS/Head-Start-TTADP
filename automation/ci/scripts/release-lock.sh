@@ -1,6 +1,7 @@
 #!/bin/bash
 # Usage: ./release-lock.sh <env_name>
 set -euo pipefail
+set -x
 
 # Ensure jq is installed
 if ! command -v jq &> /dev/null; then
