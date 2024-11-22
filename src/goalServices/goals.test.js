@@ -1446,6 +1446,7 @@ describe('Goals DB service', () => {
 
       const { where } = Goal.findAll.mock.calls[0][0];
       expect(where[Op.or]).toMatchObject({
+        '$grant.id$': [505, 506],
         '$grant.grantRelationships.grantId$': [505, 506],
         '$grant.grantRelationships.activeGrantId$': [505, 506],
       });
