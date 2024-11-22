@@ -3,10 +3,10 @@
 set -euo pipefail
 set -x
 
-# Ensure jq is installed
-if ! command -v jq &> /dev/null; then
-  echo "jq is not installed. Installing..."
-  sudo apt-get update && sudo apt-get install -y jq
+# Ensure jq and base64 are installed
+if ! command -v jq &> /dev/null || ! command -v base64 &> /dev/null; then
+  echo "jq or base64 is not installed. Installing..."
+  sudo apt-get update && sudo apt-get install -y jq coreutils
 fi
 
 env_name=$1
@@ -29,13 +29,13 @@ lock_payload=$(jq -n \
   --arg timestamp "$current_time" \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
 
-# Escape the lock_payload string for JSON
-lock_payload_escaped=$(echo "$lock_payload" | jq -aRs .)
+# Encode the JSON payload as Base64
+lock_payload_base64=$(echo "$lock_payload" | base64)
 
 # Construct the API request payload
 api_payload=$(jq -n \
   --arg name "$lock_key" \
-  --arg value "$lock_payload" \
+  --arg value "$lock_payload_base64" \
   '{name: $name, value: $value}')
 
 # Send the request to set the environment variable
