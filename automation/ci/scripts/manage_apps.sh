@@ -24,73 +24,73 @@ if [[ -z "${env_list:-}" || -z "${env_state:-}" || -z "${check_activity:-}" || -
 fi
 
 # Define prefixes for environments
-app_prefixes=("tta-smarthub" "tta-similarity-api")
+primary_prefix="tta-smarthub"
+secondary_prefixes=("tta-similarity-api")
 
-# Convert the comma-separated list into an array
-IFS=',' read -r -a apps <<< "$env_list"
+# Convert the comma-separated list into an array using substitution
+apps=(${env_list//,/ })
 
 for env in "${apps[@]}"; do
   echo "Processing environment group: $env"
 
-  # Loop through each app prefix (smarthub and similarity-api)
-  for prefix in "${app_prefixes[@]}"; do
-    app_name="${prefix}-$(echo "${env}" | tr '[:upper:]' '[:lower:]')"
-    echo "Processing app: $app_name"
+  # Normalize environment name to lowercase for suffix
+  env_suffix=$(echo "${env}" | tr '[:upper:]' '[:lower:]')
 
-    # Dynamically derive variable names for environment
-    space_var="CLOUDGOV_${env^^}_SPACE"
-    username_var="CLOUDGOV_${env^^}_USERNAME"
-    password_var="CLOUDGOV_${env^^}_PASSWORD"
+  # Dynamically derive variable names for environment
+  space_var="CLOUDGOV_${env^^}_SPACE"
+  username_var="CLOUDGOV_${env^^}_USERNAME"
+  password_var="CLOUDGOV_${env^^}_PASSWORD"
 
-    # Resolve the actual values of the variables
-    space="${!space_var:-}"
-    username="${!username_var:-}"
-    password="${!password_var:-}"
+  # Resolve the actual values of the variables
+  space="${!space_var:-}"
+  username="${!username_var:-}"
+  password="${!password_var:-}"
 
-    if [[ -z "$space" || -z "$username" || -z "$password" ]]; then
-      echo "Error: Missing required environment variable(s) for $env"
-      exit 1
+  if [[ -z "$space" || -z "$username" || -z "$password" ]]; then
+    echo "Error: Missing required environment variable(s) for $env"
+    exit 1
+  fi
+
+  # Log in to Cloud Foundry
+  cf login \
+    -a "$cg_api" \
+    -u "$username" \
+    -p "$password" \
+    -o "$cg_org" \
+    -s "$space"
+
+  # Perform activity check only for the primary prefix (tta-smarthub)
+  if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
+    app_name="${primary_prefix}-${env_suffix}"
+    echo "Checking activity for $app_name..."
+
+    # Get the last activity timestamp for the app
+    last_activity=$(cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)
+
+    if [ -z "$last_activity" ]; then
+      # Default to 12 hours if no activity found
+      duration=43200
+    else
+      # Calculate duration in seconds
+      duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
     fi
 
-    # Log in to Cloud Foundry
-    cf login \
-      -a "$cg_api" \
-      -u "$username" \
-      -p "$password" \
-      -o "$cg_org" \
-      -s "$space"
+    echo "Last activity duration for $app_name: $duration seconds"
+
+    if [ "$duration" -le 900 ]; then
+      echo "$app_name is active within the last 15 minutes. No action taken."
+      continue
+    fi
+  fi
+
+  # Perform the desired action on all apps in the environment group
+  for prefix in "$primary_prefix" "${secondary_prefixes[@]}"; do
+    app_name="${prefix}-${env_suffix}"
+    echo "Processing app: $app_name"
 
     # Get the current state of the app
     current_state=$(cf apps | grep "$app_name" | awk '{print $2}' || echo "unknown")
     echo "Current state of $app_name: $current_state"
-
-    # Skip activity checks if already stopped and action is "stop"
-    if [[ "$current_state" == "stopped" && "$env_state" == "stop" ]]; then
-      echo "$app_name is already stopped. No action needed."
-      continue
-    fi
-
-    # Check activity if required
-    if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
-      # Get the last activity timestamp for the app
-      cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api"
-      last_activity="$(cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)"
-
-      if [ -z "$last_activity" ]; then
-        # Default to 12 hours if no activity found
-        duration=43200
-      else
-        # Calculate duration in seconds
-        duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
-      fi
-
-      echo "Last activity duration for $app_name: $duration seconds"
-
-      if [ "$duration" -le 900 ]; then
-        echo "$app_name is active within the last 15 minutes. No action taken."
-        continue
-      fi
-    fi
 
     # Perform the desired action
     case "$env_state" in
