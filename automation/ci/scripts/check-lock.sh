@@ -16,7 +16,7 @@ response=$(curl -s -u "${AUTOMATION_USER_TOKEN}:" \
   -X GET \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key")
 
-echo $response
+echo "$response" | jq -r '.value'
 # Check for errors in the response
 if echo "$response" | jq -e '.message' >/dev/null; then
   echo "Error fetching lock: $(echo "$response" | jq -r '.message')"
