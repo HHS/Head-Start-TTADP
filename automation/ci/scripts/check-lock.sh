@@ -1,6 +1,7 @@
 #!/bin/bash
 # Usage: ./check-lock.sh <env_name>
 set -euo pipefail
+sex -x
 
 # Ensure jq is installed
 if ! command -v jq &> /dev/null; then
