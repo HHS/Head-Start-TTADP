@@ -399,7 +399,7 @@ export async function processFiles(hashSumHex) {
           && grantIds.includes(parseInt(g.replacement_grant_award_id, 10)),
       );
 
-      const grantReplacementPromises = grantsToUpdate.map(async (g) => {
+      for (const g of grantsToUpdate) {
         let grantReplacementType = await GrantReplacementTypes.findOne({
           where: {
             name: g.grant_replacement_type,
@@ -436,9 +436,7 @@ export async function processFiles(hashSumHex) {
             replacementDate: new Date(g.replacement_date),
           });
         }
-      });
-
-      await Promise.all(grantReplacementPromises);
+      }
 
       // ---
       // Update GroupGrants
