@@ -11,6 +11,7 @@ while [[ "$#" -gt 0 ]]; do
     --env_list) env_list="$2"; shift ;;
     --env_state) env_state="$2"; shift ;;
     --check_activity) check_activity="$2"; shift ;;
+    --activity_timeout) activity_timeout=$2; shift ;;
     --cg_api) cg_api="$2"; shift ;;
     --cg_org) cg_org="$2"; shift ;;
     *) echo "Unknown parameter: $1"; exit 1 ;;
@@ -69,16 +70,29 @@ for env in "${apps[@]}"; do
 
     if [ -z "$last_activity" ]; then
       # Default to 12 hours if no activity found
-      duration=43200
+      activity_duration=43200
     else
       # Calculate duration in seconds
-      duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+      activity_duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
     fi
 
-    echo "Last activity duration for $app_name: $duration seconds"
+    echo "Last activity duration for $app_name: $activity_duration seconds"
+    
+    # Get the last power-on timestamp for the app
+    last_power_on=$(cf events "$app_name" | grep "audit.app.start" | awk '{print $1, $2}' | tail -n 1)
 
-    if [ "$duration" -le 900 ]; then
-      echo "$app_name is active within the last 15 minutes. No action taken."
+    if [ -z "$last_power_on" ]; then
+      # Default to an arbitrarily long time ago if no power-on event found
+      power_on_duration=43200
+    else
+      # Calculate power-on duration in seconds
+      power_on_duration=$(( $(date +%s) - $(date -ud "${last_power_on}" +%s) ))
+    fi
+
+    echo "Last power-on duration for $app_name: $power_on_duration seconds"
+
+    if [ "$activity_duration" -le $(($activity_timeout * 60)) ] || [ "$power_on_duration" -le $(($activity_timeout * 60)) ]; then
+      echo "$app_name has been active or powered on within the last $activity_timeout minutes. No action taken."
       continue
     fi
   fi

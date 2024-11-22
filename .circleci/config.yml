@@ -1348,8 +1348,12 @@ jobs:
         default: "<< pipeline.parameters.env_state >>"
       check_activity:
         type: boolean
-        description: "If true, only stop apps if inactive for more than 15 minutes"
+        description: "If true, only stop apps if inactive for more than activity_timeout minutes"
         default: false
+      activity_timeout:
+        type: string
+        description: "number of minutes considered for inactivity"
+        default: "60"
     steps:
       - install_cf_tools
       # Sparse checkout the automation scripts
@@ -1377,6 +1381,7 @@ jobs:
               --env_list "<< parameters.env_list >>" \
               --env_state "<< parameters.env_state >>" \
               --check_activity "<< parameters.check_activity >>" \
+              --activity_timeout << parameters.activity_timeout >> \
               --cg_api "<< pipeline.parameters.cg_api >>" \
               --cg_org "<< pipeline.parameters.cg_org >>"
 
