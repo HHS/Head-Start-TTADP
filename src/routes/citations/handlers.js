@@ -16,7 +16,8 @@ const logContext = { namespace };
 export const getCitationsByGrants = async (req, res) => {
   try {
     // Get the grant we need citations for.
-    const { regionId } = req.params;
+    const { regionId, reportStartDate } = req.params;
+
     const { grantIds } = req.query;
 
     const userId = await currentUserId(req, res);
@@ -28,8 +29,11 @@ export const getCitationsByGrants = async (req, res) => {
       return;
     }
 
+    // Convert reportStartDate to the format 'YYYY-MM-DD'.
+    const formattedStartDate = new Date(reportStartDate).toISOString().split('T')[0];
+
     // Get the citations for the grant.
-    const citations = await getCitationsByGrantIds(grantIds);
+    const citations = await getCitationsByGrantIds(grantIds, formattedStartDate);
 
     // Return the citations.
     res.status(httpCodes.OK).send(citations);

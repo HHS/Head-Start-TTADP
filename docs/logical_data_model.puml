@@ -88,11 +88,9 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
- * citationId : integer : REFERENCES "MonitoringStandards".id
-!issue='column reference does not match model: "MonitoringFindings".id !== "MonitoringFindingLinks"."findingId"' * findingId : integer : REFERENCES "MonitoringFindings".id
-!issue='column reference does not match model: "MonitoringReviews".id !== "MonitoringReviewLinks"."reviewId"' * reviewId : integer : REFERENCES "MonitoringReviews".id
+ * citation : text
  * createdAt : timestamp with time zone : now()
+ * monitoringReferences : jsonb
  * updatedAt : timestamp with time zone : now()
 }
 
@@ -2503,17 +2501,11 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
-!issue='associations need to be defined both directions'
-MonitoringFindingLinks "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveCitations : finding
-!issue='associations need to be defined both directions'
-MonitoringReviewLinks "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveCitations : review
-!issue='associations need to be defined both directions'
-MonitoringStandardLinks "1" --[#d54309,plain,thickness=2]-- "1" ActivityReportObjectiveCitations : citation
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
-ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : activityReportObjective, activityReportObjectiveCitations
+ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : activityReportObjective, activityReportObjectiveCitation, activityReportObjectiveCitations
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : activityReportObjective, activityReportObjectiveCourses
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : activityReportObjective, activityReportObjectiveFiles
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : activityReportObjective, activityReportObjectiveResources
@@ -2591,7 +2583,7 @@ MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReview
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
 MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : statusLink, monitoringFindingStandards
-MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandardes, statusLink
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandards, statusLink
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
@@ -2682,12 +2674,5 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
-
-!issue='association missing from models'!issue='associations need to be defined both directions'
-MonitoringFindings o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-MonitoringReviews o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-MonitoringStandards o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
 
 @enduml
