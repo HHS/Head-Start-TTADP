@@ -1,6 +1,8 @@
 services:
   api-docs:
     image: redocly/redoc
+    profiles:
+      - full_stack
     ports:
       - "5003:80"
     volumes:
@@ -20,6 +22,8 @@ services:
     shm_size: 1g
   minio:
     image: minio/minio:RELEASE.2024-01-01T16-36-33Z
+    profiles:
+      - full_stack
     env_file: .env
     ports:
       - "9000:9000"
@@ -29,12 +33,16 @@ services:
     command: server /data --console-address ":9001"
   aws-cli:
     image: amazon/aws-cli
+    profiles:
+      - full_stack
     env_file: .env
     command: ["--endpoint-url", "http://minio:9000", "s3api", "create-bucket", "--bucket", "$S3_BUCKET"]
     depends_on:
       - minio
   clamav-rest:
     image: ajilaag/clamav-rest
+    profiles:
+      - full_stack
     ports:
       - "9443:9443"
     environment:
@@ -61,12 +69,16 @@ services:
       - "6379:6379"
   mailcatcher:
     image: schickling/mailcatcher
+    profiles:
+      - full_stack
     ports:
       - "1025:1025"
       - "1080:1080"
   testingonly:
     build:
       context: .
+    profiles:
+      - full_stack
     ports:
       - "9999:9999"
     depends_on:
@@ -79,6 +91,8 @@ services:
       - NODE_ENV=development
   sftp:
     image: jmcombs/sftp:alpine
+    profiles:
+      - full_stack
     volumes:
         - ./test-sftp:/home/tta_ro/ProdTTAHome
         - ./test-sftp/sshd_config:/etc/ssh/sshd_config
@@ -87,3 +101,7 @@ services:
     command: ${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001
 volumes:
   dbdata: {}
+  minio-data: {}
+  yarn-cache: {}
+  node_modules-backend: {}
+  node_modules-frontend: {}
