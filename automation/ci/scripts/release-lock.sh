@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: ./release-lock.sh <env_name>
-set -e
+set -euo pipefail
 
 # Ensure jq is installed
 if ! command -v jq &> /dev/null; then
@@ -12,12 +12,12 @@ env_name=$1
 lock_key="LOCK_${env_name^^}"
 
 # Check the current lock value
-current_lock=$(./automation/ci/scripts/check-lock.sh "$env_name" || echo "null")
+current_lock=$(./automation/ci/scripts/check-lock.sh "$env_name" || echo "{}")
 
 # Log the lock value for debugging
 echo "Current lock value: $current_lock"
 
-# Validate JSON format
+# Validate JSON format and check if the lock exists
 if ! echo "$current_lock" | jq -e . >/dev/null 2>&1; then
   echo "Invalid lock data for environment: $env_name. Assuming no lock exists."
   exit 0
