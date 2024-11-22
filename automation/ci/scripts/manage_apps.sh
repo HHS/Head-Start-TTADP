@@ -63,6 +63,13 @@ for env in "${apps[@]}"; do
   # Perform activity check only for the primary prefix (tta-smarthub)
   if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
     app_name="${primary_prefix}-${env_suffix}"
+    
+    current_state=$(cf apps | grep "${app_name}" | awk '{print $2}' || echo "unknown")
+    if [ "$current_state" != "stopped" ]; then
+          echo "$app_name is already stopped."
+      continue
+    fi
+
     echo "Checking activity for $app_name..."
 
     # Get the last activity timestamp for the app
