@@ -34,7 +34,7 @@ if [ -z "$lock_value" ]; then
 fi
 
 # Decode the Base64-encoded JSON string
-echo "$lock_value" | base64 --decode
+echo "|||$(echo "$lock_value" | base64 --decode)|||"
 lock_value_decoded=$(echo "$lock_value" | base64 --decode | jq -rc)
 echo "Current lock value: $lock_value_decoded" >&2
 
