@@ -12,7 +12,7 @@ fi
 env_name=$1
 lock_key="LOCK_${env_name^^}"
 current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-current_build_id=$CIRCLE_WORKFLOW_ID
+current_build_id=${CIRCLE_WORKFLOW_ID:-"UNKNOWN_WORKFLOW_ID"}
 
 # Check if a lock already exists and is valid
 existing_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
@@ -30,7 +30,10 @@ lock_payload=$(jq -n \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
 
 # Encode the JSON payload as Base64
-lock_payload_base64=$(echo "$lock_payload" | base64)
+if ! lock_payload_base64=$(echo "$lock_payload" | base64 2>/dev/null); then
+  echo "Error encoding lock payload to Base64." >&2
+  exit 1
+fi
 
 # Construct the API request payload
 api_payload=$(jq -n \
@@ -39,11 +42,18 @@ api_payload=$(jq -n \
   '{name: $name, value: $value}')
 
 # Send the request to set the environment variable
-response=$(curl -s -u "${AUTOMATION_USER_TOKEN}:" \
+response=$(curl -s \
+  -H "Circle-Token: ${AUTOMATION_USER_TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   -d "$api_payload" \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar")
+
+# Check if the response contains an error
+if echo "$response" | jq -e '.message' >/dev/null; then
+  echo "Error setting lock: $(echo "$response" | jq -r '.message')" >&2
+  exit 1
+fi
 
 # Validate the lock was successfully set
 final_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
