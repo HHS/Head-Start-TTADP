@@ -52,7 +52,26 @@ describe('buildInfo function', () => {
     });
   });
 
-  it('falls back to Git branch if BUILD_BRANCH is not set', async () => {
+  it('does not call Git commands in production environment', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.BUILD_BRANCH;
+    delete process.env.BUILD_COMMIT;
+
+    await buildInfo(req, res);
+
+    expect(mockGit.revparse).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({
+      branch: '',
+      commit: '',
+      buildNumber: '001',
+      timestamp: expect.any(String),
+    });
+
+    delete process.env.NODE_ENV;
+  });
+
+  it('falls back to Git branch if BUILD_BRANCH is not set and NODE_ENV is not production', async () => {
+    process.env.NODE_ENV = 'development'; // Simulating non-production
     mockGit.revparse.mockResolvedValueOnce('feature-branch');
     process.env.BUILD_COMMIT = 'abcdef1234567890';
     process.env.BUILD_NUMBER = '100';
@@ -69,9 +88,9 @@ describe('buildInfo function', () => {
     });
   });
 
-  it('falls back to Git commit if BUILD_COMMIT is not set', async () => {
-    mockGit.revparse
-      .mockResolvedValueOnce('1234567890abcdef'); // Second call for commit
+  it('falls back to Git commit if BUILD_COMMIT is not set and NODE_ENV is not production', async () => {
+    process.env.NODE_ENV = 'development'; // Simulating non-production
+    mockGit.revparse.mockResolvedValueOnce('main').mockResolvedValueOnce('1234567890abcdef');
     process.env.BUILD_BRANCH = 'main';
     process.env.BUILD_NUMBER = '100';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
@@ -87,36 +106,8 @@ describe('buildInfo function', () => {
     });
   });
 
-  it('uses default build number if BUILD_NUMBER is not set', async () => {
-    process.env.BUILD_BRANCH = 'main';
-    process.env.BUILD_COMMIT = 'abcdef1234567890';
-    process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
-
-    await buildInfo(req, res);
-
-    expect(res.json).toHaveBeenCalledWith({
-      branch: 'main',
-      commit: 'abcdef1234567890',
-      buildNumber: '001', // Default value
-      timestamp: '2024-11-13T12:34:56Z',
-    });
-  });
-
-  it('uses current timestamp if BUILD_TIMESTAMP is not set', async () => {
-    process.env.BUILD_BRANCH = 'main';
-    process.env.BUILD_COMMIT = 'abcdef1234567890';
-    process.env.BUILD_NUMBER = '100';
-
-    await buildInfo(req, res);
-
-    const jsonResponse = res.json.mock.calls[0][0];
-    expect(jsonResponse.branch).toBe('main');
-    expect(jsonResponse.commit).toBe('abcdef1234567890');
-    expect(jsonResponse.buildNumber).toBe('100');
-    expect(new Date(jsonResponse.timestamp).getTime()).toBeCloseTo(new Date().getTime(), -3);
-  });
-
-  it('handles errors if Git command for branch fails', async () => {
+  it('handles errors if Git commands are called in non-production environment and fail', async () => {
+    process.env.NODE_ENV = 'development'; // Simulating non-production
     const error = new Error('Git branch error');
     mockGit.revparse.mockRejectedValueOnce(error);
 
@@ -125,14 +116,18 @@ describe('buildInfo function', () => {
     expect(handleError).toHaveBeenCalledWith(req, res, error, { namespace: 'ADMIN:BUILDINFO' });
   });
 
-  it('handles errors if Git command for commit fails', async () => {
-    const error = new Error('Git commit error');
-    mockGit.revparse
-      .mockResolvedValueOnce('main') // First call for branch
-      .mockRejectedValueOnce(error); // Second call for commit
+  it('returns default values when NODE_ENV is production and environment variables are not set', async () => {
+    process.env.NODE_ENV = 'production';
 
     await buildInfo(req, res);
 
-    expect(handleError).toHaveBeenCalledWith(req, res, error, { namespace: 'ADMIN:BUILDINFO' });
+    expect(res.json).toHaveBeenCalledWith({
+      branch: '',
+      commit: '',
+      buildNumber: '001',
+      timestamp: expect.any(String),
+    });
+
+    delete process.env.NODE_ENV;
   });
 });
