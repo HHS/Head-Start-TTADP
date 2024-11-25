@@ -96,12 +96,18 @@ describe('buildInfo function', () => {
       .mockResolvedValueOnce('main') // First call for branch
       .mockResolvedValueOnce('1234567890abcdef'); // Second call for commit
 
-    process.env.BUILD_BRANCH = 'main';
+    delete process.env.BUILD_COMMIT; // Ensure BUILD_COMMIT is not set
+    delete process.env.BUILD_BRANCH;
     process.env.BUILD_NUMBER = '100';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
 
+    // Call the function
     await buildInfo(req, res);
 
+    // Debugging: Check the mock calls
+    console.log('revparse calls:', mockGit.revparse.mock.calls);
+
+    // Assertions
     expect(mockGit.revparse).toHaveBeenCalledWith(['HEAD']); // Verify commit call
     expect(res.json).toHaveBeenCalledWith({
       branch: 'main',
