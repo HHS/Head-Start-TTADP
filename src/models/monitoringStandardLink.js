@@ -10,16 +10,6 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class MonitoringStandardLink extends Model {
     static associate(models) {
-      // eslint-disable-next-line max-len
-      // MonitoringStandardLink.hasMany(models.ActivityReportObjectiveCitation, { foreignKey: 'citationId', as: 'activityReportObjectiveCitations' });
-      /*
-      MonitoringStandardLink.belongsToMany(models.ActivityReportObjective, {
-        through: models.ActivityReportObjectiveCitation,
-        foreignKey: 'citationId',
-        otherKey: 'activityReportObjectiveId',
-        as: 'activityReportObjectives',
-      });
-      */
     }
   }
   MonitoringStandardLink.init({
