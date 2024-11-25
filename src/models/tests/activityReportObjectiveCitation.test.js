@@ -2,7 +2,6 @@
 /* eslint-disable prefer-destructuring */
 import { REPORT_STATUSES } from '@ttahub/common';
 import { faker } from '@faker-js/faker';
-import { v4 as uuidv4 } from 'uuid';
 import db, {
   User,
   Recipient,
@@ -13,13 +12,6 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
-  MonitoringReviewGrantee,
-  MonitoringReview,
-  MonitoringReviewStatus,
-  MonitoringFindingHistory,
-  MonitoringFinding,
-  MonitoringFindingGrant,
-  MonitoringStandard,
 } from '..';
 import { captureSnapshot, rollbackToSnapshot } from '../../lib/programmaticTransaction';
 
@@ -97,15 +89,6 @@ describe('activityReportObjectiveCitation', () => {
   let objective;
   let activityReportObjective;
 
-  // Create Citations.
-  let citation1;
-  let citation2;
-  let citation3;
-
-  // To assign to citations.
-  const monitoringReviewId = uuidv4();
-  const monitoringFindingId = uuidv4();
-
   beforeAll(async () => {
     // Create a snapshot of the database.
     snapShot = await captureSnapshot();
@@ -153,7 +136,7 @@ describe('activityReportObjectiveCitation', () => {
     report = await ActivityReport.create(sampleReport);
 
     // Create activity report goal.
-    const activityReportGoal = await ActivityReportGoal.create({
+    await ActivityReportGoal.create({
       activityReportId: report.id,
       goalId: goal.id,
       isActivelyEdited: false,
@@ -166,128 +149,6 @@ describe('activityReportObjectiveCitation', () => {
       ttaProvided: 'ipd aro Goal',
       status: objective.status,
     });
-
-    // Create monitoring data.
-    const monitoringGranteeId = uuidv4();
-
-    await MonitoringReviewGrantee.create({
-      id: faker.datatype.number({ min: 9999 }),
-      grantNumber: grantNumberToUse,
-      reviewId: monitoringReviewId,
-      granteeId: monitoringGranteeId,
-      createTime: new Date(),
-      updateTime: new Date(),
-      updateBy: 'Support Team',
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
-
-    const monitoringStatusId = 1;
-    const monitoringContentId = uuidv4();
-
-    await MonitoringReview.create({
-      reviewId: monitoringReviewId,
-      contentId: monitoringContentId,
-      statusId: monitoringStatusId,
-      name: faker.random.words(3),
-      startDate: new Date(),
-      endDate: new Date(),
-      reviewType: 'AIAN-DEF',
-      reportDeliveryDate: new Date(),
-      reportAttachmentId: faker.datatype.uuid(),
-      outcome: faker.random.words(5),
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
-
-    await MonitoringReviewStatus.create({
-      statusId: monitoringStatusId,
-      name: 'Complete',
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
-
-    await MonitoringFindingHistory.create({
-      reviewId: monitoringReviewId,
-      findingHistoryId: uuidv4(),
-      findingId: monitoringFindingId,
-      statusId: monitoringStatusId,
-      narrative: faker.random.words(10),
-      ordinal: faker.datatype.number({ min: 1, max: 10 }),
-      determination: faker.random.words(5),
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      sourceDeletedAt: null,
-    }, { individualHooks: true });
-
-    await MonitoringFinding.create({
-      findingId: monitoringFindingId,
-      statusId: monitoringStatusId,
-      findingType: faker.random.word(),
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
-
-    await MonitoringFindingGrant.create({
-      // 1
-      findingId: monitoringFindingId,
-      granteeId: monitoringGranteeId,
-      statusId: monitoringStatusId,
-      findingType: faker.random.word(),
-      source: faker.random.word(),
-      correctionDeadLine: new Date(),
-      reportedDate: new Date(),
-      closedDate: null,
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      sourceDeletedAt: null,
-    }, { individualHooks: true });
-
-    // These are the actual citations.
-    const citations = await MonitoringStandard.bulkCreate([
-      {
-        standardId: faker.datatype.number({ min: 1 }),
-        contentId: monitoringContentId,
-        citation: 'citation 1',
-        text: 'This is the text for citation 1',
-        guidance: faker.lorem.paragraph(),
-        citable: faker.datatype.number({ min: 1, max: 10 }),
-        hash: faker.datatype.uuid(),
-        sourceCreatedAt: new Date(),
-        sourceUpdatedAt: new Date(),
-      },
-      {
-        standardId: faker.datatype.number({ min: 1 }),
-        contentId: monitoringContentId,
-        citation: 'citation 2',
-        text: 'This is the text for citation 2',
-        guidance: faker.lorem.paragraph(),
-        citable: faker.datatype.number({ min: 1, max: 10 }),
-        hash: faker.datatype.uuid(),
-        sourceCreatedAt: new Date(),
-        sourceUpdatedAt: new Date(),
-      },
-      {
-        standardId: faker.datatype.number({ min: 1 }),
-        contentId: monitoringContentId,
-        citation: 'citation 3',
-        text: 'This is the text for citation 3',
-        guidance: faker.lorem.paragraph(),
-        citable: faker.datatype.number({ min: 1, max: 10 }),
-        hash: faker.datatype.uuid(),
-        sourceCreatedAt: new Date(),
-        sourceUpdatedAt: new Date(),
-      },
-    ], { individualHooks: true });
-
-    // populate citations from citations into the citations.
-    citation1 = citations[0];
-    citation2 = citations[1];
-    citation3 = citations[2];
   });
 
   afterAll(async () => {
@@ -298,39 +159,18 @@ describe('activityReportObjectiveCitation', () => {
     await db.sequelize.close();
   });
 
-  it('aro citation', async () => {
-    // Get the monitoring  review object where the citation will be assigned.
-    const monitoringReviewForLink = await MonitoringReview.findOne({
-      where: {
-        reviewId: monitoringReviewId,
-      },
-    });
-
-    // Get the monitoring finding object where the citation will be assigned.
-    const monitoringFindingForLink = await MonitoringFinding.findOne({
-      where: {
-        findingId: monitoringFindingId,
-      },
-    });
-
-    // Get the monitoring standard object where the citation will be assigned.
-    const monitoringStandardForLink = await MonitoringStandard.findOne({
-      where: {
-        citation: 'citation 1',
-      },
-    });
-
+  it('create aro citation', async () => {
     // Create aro citations.
     const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
       citation: 'Sample Citation 1',
-      monitoringReferences: { standardId: monitoringStandardForLink.standardId },
+      monitoringReferences: { grantId: grant.id, findingId: 1, reviewName: 'Review Name 1' },
     }, { individualHooks: true });
 
     const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
       citation: 'Sample Citation 2',
-      monitoringReferences: { standardId: monitoringStandardForLink.standardId },
+      monitoringReferences: { grantId: grant.id, findingId: 2, reviewName: 'Review Name 2' },
     }, { individualHooks: true });
 
     // Assert citations.
@@ -348,12 +188,16 @@ describe('activityReportObjectiveCitation', () => {
     const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 1');
     expect(citation1LookUp).toBeDefined();
     expect(citation1LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
-    expect(citation1LookUp.monitoringReferences.standardId).toBe(monitoringStandardForLink.standardId);
+    expect(citation1LookUp.monitoringReferences.grantId).toBe(grant.id);
+    expect(citation1LookUp.monitoringReferences.findingId).toBe(1);
+    expect(citation1LookUp.monitoringReferences.reviewName).toBe('Review Name 1');
 
     // Citation 2.
     const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 2');
     expect(citation2LookUp).toBeDefined();
     expect(citation2LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
-    expect(citation2LookUp.monitoringReferences.standardId).toBe(monitoringStandardForLink.standardId);
+    expect(citation2LookUp.monitoringReferences.grantId).toBe(grant.id);
+    expect(citation2LookUp.monitoringReferences.findingId).toBe(2);
+    expect(citation2LookUp.monitoringReferences.reviewName).toBe('Review Name 2');
   });
 });
