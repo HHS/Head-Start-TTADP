@@ -34,7 +34,7 @@ jq -n \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}' > "$temp_lock_payload"
 
 # Encode the JSON payload as Base64 and save to a temp file
-base64 -i "$temp_lock_payload" -o "$temp_encoded_payload"
+base64 < "$temp_lock_payload" > "$temp_encoded_payload"
 
 # Construct the API request payload
 jq -n \
