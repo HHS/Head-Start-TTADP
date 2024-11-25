@@ -50,7 +50,6 @@ import {
 import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
-import getGoalsForReport from './getGoalsForReport';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
@@ -601,6 +600,78 @@ describe('Goals DB service', () => {
         name: 'name',
         status: 'Closed',
       }), { individualHooks: true });
+    });
+
+    it('creates a monitoring goal only when the grant has an existing monitoring goal', async () => {
+      const mockMonitoringGoal = {
+        id: 1,
+        grantId: mockGrantId,
+        name: 'Monitoring Goal',
+        status: 'In Progress',
+        objectives: [],
+      };
+
+      Goal.findAll = jest.fn().mockResolvedValue([{ ...mockMonitoringGoal }]);
+
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'In progress', objectives: [],
+        },
+      ], { id: mockActivityReportId });
+
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
+        createdVia: 'activityReport',
+        grantId: mockGrantId,
+        name: 'name',
+        status: 'In progress',
+      }), { individualHooks: true });
+    });
+
+    it('does not create a monitoring goal when the grant does not have an existing monitoring goal', async () => {
+      Goal.findAll = jest.fn().mockResolvedValue([]);
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'In progress', objectives: [],
+        },
+      ], { id: mockActivityReportId });
+
+      expect(Goal.create).not.toHaveBeenCalledWith();
+    });
+
+    it('creates a monitoring goal for only the grants that has an existing monitoring goal', async () => {
+      const mockMonitoringGoal = {
+        id: 2,
+        grantId: 2,
+        name: 'Monitoring Goal',
+        status: 'In Progress',
+        objectives: [],
+      };
+
+      Goal.findAll = jest.fn().mockResolvedValue([
+        { ...mockMonitoringGoal, grantId: 2 },
+        { ...mockMonitoringGoal, grantId: 3 },
+      ]);
+
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [1, 2, 3], name: 'name', status: 'In progress', objectives: [],
+        },
+      ], { id: mockActivityReportId });
+
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining(
+        {
+          createdVia: 'activityReport',
+          grantId: 2,
+          name: 'name',
+          status: 'In progress',
+        },
+        {
+          createdVia: 'activityReport',
+          grantId: 3,
+          name: 'name',
+          status: 'In progress',
+        },
+      ), { individualHooks: true });
     });
 
     it('can use existing goals', async () => {
