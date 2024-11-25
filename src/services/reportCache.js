@@ -12,6 +12,7 @@ const {
   ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCitation,
   Goal,
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
@@ -130,6 +131,74 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
         where: {
           activityReportObjectiveId,
           topicId: { [Op.in]: removedTopicIds },
+        },
+        individualHooks: true,
+        hookMetadata: { objectiveId },
+      })
+      : Promise.resolve(),
+  ]);
+};
+
+/*
+  - ActivityReportObjectiveCitation -
+  Each row in this table is per grant.
+  Each row has a json column called 'monitoringReferences', this is an array of objects.
+  Each object is unique by a combination of grantId, findingId, and reviewName (for the same grant).
+  To avoid complex lookups, we will simply UPDATE (by id) existing and CREATE new citations.
+  Citations to remove will be determined by id.
+*/
+export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
+  // Get current report citation ids for the activity report objective.
+  const currentReportCitationIds = citations.map((citation) => citation.id);
+
+  // Get all existing citations for the activity report objective from DB.
+  const existingDBCitations = await ActivityReportObjectiveCitation.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+
+  // Get all existing citation ids from DB.
+  const existingDBCitationIds = existingDBCitations.map((citation) => citation.id) || [];
+
+  // Get citations to remove.
+  const removedCitationIds = existingDBCitationIds.filter(
+    (citationId) => !currentReportCitationIds.includes(citationId),
+  );
+
+  // Get all citations that have an DB id.
+  const citationsToUpdate = citations.filter((citation) => citation.id);
+
+  // Get all citations that do not have a DB id defined.
+  const newCitations = citations.filter((citation) => !citation.id);
+
+  // Do all sql operations in a promise.
+  return Promise.all([
+    // Update existing citations.
+    citationsToUpdate.length > 0
+      ? Promise.all(
+        citationsToUpdate.map(async (citation) => ActivityReportObjectiveCitation.update({
+          citation: citation.citation,
+          monitoringReferences: citation.monitoringReferences,
+        }, {
+          where: { id: citation.id },
+        })),
+      )
+      : Promise.resolve(),
+    // Create new citations.
+    newCitations.length > 0
+      ? Promise.all(
+        newCitations.map(async (citation) => ActivityReportObjectiveCitation.create({
+          activityReportObjectiveId,
+          citation: citation.citation,
+          monitoringReferences: citation.monitoringReferences,
+        })),
+      )
+      : Promise.resolve(),
+    removedCitationIds.length > 0
+      ? ActivityReportObjectiveCitation.destroy({
+        where: {
+          activityReportObjectiveId,
+          id: { [Op.in]: removedCitationIds },
         },
         individualHooks: true,
         hookMetadata: { objectiveId },
