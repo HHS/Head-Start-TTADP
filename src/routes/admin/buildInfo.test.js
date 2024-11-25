@@ -90,21 +90,29 @@ describe('buildInfo function', () => {
 
   it('falls back to Git commit if BUILD_COMMIT is not set and NODE_ENV is not production', async () => {
     process.env.NODE_ENV = 'development'; // Simulating non-production
-    mockGit.revparse.mockResolvedValueOnce('main').mockResolvedValueOnce('1234567890abcdef');
+  
+    // Mock sequential calls for branch and commit
+    mockGit.revparse
+      .mockResolvedValueOnce('main') // First call for branch
+      .mockResolvedValueOnce('1234567890abcdef'); // Second call for commit
+  
     process.env.BUILD_BRANCH = 'main';
     process.env.BUILD_NUMBER = '100';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
-
+  
     await buildInfo(req, res);
-
-    expect(mockGit.revparse).toHaveBeenCalledWith(['HEAD']);
+  
+    expect(mockGit.revparse).toHaveBeenCalledWith(['HEAD']); // Verify commit call
     expect(res.json).toHaveBeenCalledWith({
       branch: 'main',
-      commit: '1234567890abcdef',
+      commit: '1234567890abcdef', // Ensure correct commit hash
       buildNumber: '100',
       timestamp: '2024-11-13T12:34:56Z',
     });
+  
+    delete process.env.NODE_ENV; // Clean up after test
   });
+  
 
   it('handles errors if Git commands are called in non-production environment and fail', async () => {
     process.env.NODE_ENV = 'development'; // Simulating non-production
