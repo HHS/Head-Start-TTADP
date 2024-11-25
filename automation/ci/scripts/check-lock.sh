@@ -30,9 +30,17 @@ curl -s \
 # Check for errors in the response
 if jq -e '.message' < "$temp_response_file" >/dev/null; then
   error_message=$(jq -r '.message' < "$temp_response_file")
-  echo "Error fetching lock: $error_message" >&2
-  rm -f "$temp_response_file" "$temp_value_file" "$temp_decoded_file"
-  exit 1
+  if [[ "$error_message" == "Environment variable not found." ]]; then
+    # No active lock; return false
+    echo "false"
+    rm -f "$temp_response_file" "$temp_value_file" "$temp_decoded_file"
+    exit 0
+  else
+    # Handle other errors
+    echo "Error fetching lock: $error_message" >&2
+    rm -f "$temp_response_file" "$temp_value_file" "$temp_decoded_file"
+    exit 1
+  fi
 fi
 
 # Extract the Base64-encoded value and save it to a temp file
