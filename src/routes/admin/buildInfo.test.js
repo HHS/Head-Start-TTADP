@@ -113,7 +113,6 @@ describe('buildInfo function', () => {
     delete process.env.NODE_ENV; // Clean up after test
   });
 
-
   it('handles errors if Git commands are called in non-production environment and fail', async () => {
     process.env.NODE_ENV = 'development'; // Simulating non-production
     const error = new Error('Git branch error');
