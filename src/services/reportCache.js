@@ -212,6 +212,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     files,
     resources,
     topics,
+    citations,
     ttaProvided,
     status,
     courses,
@@ -265,6 +266,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
     cacheCourses(objectiveId, activityReportObjectiveId, courses),
+    cacheCitations(objectiveId, activityReportObjectiveId, citations),
   ]);
 };
 
