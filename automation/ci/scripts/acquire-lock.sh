@@ -15,56 +15,48 @@ current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 current_build_id=${CIRCLE_WORKFLOW_ID:-"UNKNOWN_WORKFLOW_ID"}
 
 # Check if a lock already exists and is valid
-existing_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
-
-if [[ "$existing_lock" != "{}" ]]; then
-  echo "Environment $env_name is already locked: $existing_lock" >&2
+lock_status=$(./automation/ci/scripts/check-lock.sh "$env_name")
+if [[ "$lock_status" != "false" ]]; then
+  echo "Environment $env_name is already locked." >&2
   exit 1
 fi
 
-# Create lock payload as a JSON string
-lock_payload=$(jq -n \
+# Temp files for payloads
+temp_lock_payload=$(mktemp)
+temp_encoded_payload=$(mktemp)
+temp_api_payload=$(mktemp)
+
+# Create lock payload as JSON and write to a temp file
+jq -n \
   --arg branch "$CIRCLE_BRANCH" \
   --arg build_id "$current_build_id" \
   --arg timestamp "$current_time" \
-  '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
+  '{branch: $branch, build_id: $build_id, timestamp: $timestamp}' > "$temp_lock_payload"
 
-# Encode the JSON payload as Base64
-lock_payload_base64=$(echo "$lock_payload" | base64 2>/dev/null)
-
-# Write the payload to a temp file
-temp_payload_file=$(mktemp)
-echo "$lock_payload_base64" > "$temp_payload_file"
+# Encode the JSON payload as Base64 and save to a temp file
+base64 -i "$temp_lock_payload" -o "$temp_encoded_payload"
 
 # Construct the API request payload
-lock_value=$(cat "$temp_payload_file")
-
-api_payload=$(jq -n \
+jq -n \
   --arg name "$lock_key" \
-  --arg value "$lock_value" \
-  '{name: $name, value: $value}')
-
+  --arg value "$(cat "$temp_encoded_payload")" \
+  '{name: $name, value: $value}' > "$temp_api_payload"
 
 # Send the request to set the environment variable
-response=$(curl -s \
+curl -s \
   -H "Circle-Token: ${AUTOMATION_USER_TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "$api_payload" \
-  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar")
+  -d @"$temp_api_payload" \
+  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar"
 
-rm -f "$temp_payload_file"
-
-# Check if the response contains an error
-if echo "$response" | jq -e '.message' >/dev/null; then
-  echo "Error setting lock: $(echo "$response" | jq -r '.message')" >&2
-  exit 1
-fi
+# Cleanup temp files
+rm -f "$temp_lock_payload" "$temp_encoded_payload" "$temp_api_payload"
 
 # Validate the lock was successfully set
-final_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
-if [[ "$final_lock" == "{}" ]]; then
-  echo "Failed to acquire lock: Lock was not set properly." >&2
+lock_status=$(./automation/ci/scripts/check-lock.sh "$env_name")
+if [[ "$lock_status" != "true" ]]; then
+  echo "Failed to acquire lock for environment: $env_name." >&2
   exit 1
 fi
 
