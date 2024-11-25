@@ -37,10 +37,13 @@ temp_payload_file=$(mktemp)
 echo "$lock_payload_base64" > "$temp_payload_file"
 
 # Construct the API request payload
+lock_value=$(cat "$temp_payload_file")
+
 api_payload=$(jq -n \
   --arg name "$lock_key" \
-  --argfile value "$temp_payload_file" \
+  --arg value "$lock_value" \
   '{name: $name, value: $value}')
+
 
 # Send the request to set the environment variable
 response=$(curl -s \
