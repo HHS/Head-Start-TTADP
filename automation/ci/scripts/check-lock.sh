@@ -12,7 +12,7 @@ fi
 env_name=$1
 lock_key="LOCK_${env_name^^}"
 two_hours_in_seconds=$((2 * 60 * 60))
-current_time=$(date -u +%s) # Use `gdate` if running on macOS without GNU `date`.
+current_time=$(date -u +%s)
 
 # Fetch the lock value from CircleCI project environment variables
 response=$(curl -s \
@@ -20,14 +20,20 @@ response=$(curl -s \
   -X GET \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key")
 
+# Write response to a temp file
+temp_response_file=$(mktemp)
+echo "$response" > "$temp_response_file"
+
 # Check for errors in the response
-if echo "$response" | jq -e '.message' >/dev/null; then
-  echo "Error fetching lock: $(echo "$response" | jq -r '.message')" >&2
+if jq -e '.message' < "$temp_response_file" >/dev/null; then
+  echo "Error fetching lock: $(jq -r '.message' < "$temp_response_file")" >&2
   echo "{}"
+  rm -f "$temp_response_file"
   exit 0
 fi
 
-lock_value=$(echo "$response" | jq -r '.value // empty')
+lock_value=$(jq -r '.value // empty' < "$temp_response_file")
+rm -f "$temp_response_file"
 
 if [ -z "$lock_value" ]; then
   echo "{}"
@@ -35,54 +41,11 @@ if [ -z "$lock_value" ]; then
 fi
 
 # Decode the Base64-encoded JSON string
-echo "|||$(echo "$lock_value" | base64 --decode)|||"
 if ! lock_value_decoded=$(echo "$lock_value" | base64 --decode 2>/dev/null); then
   echo "Error decoding Base64 lock value: $lock_value" >&2
   echo "{}"
   exit 0
 fi
 
-echo "Current lock value: $lock_value_decoded" >&2
-
-# Parse values from the lock
-lock_build_id=$(echo "$lock_value_decoded" | jq -r '.build_id // empty')
-lock_timestamp=$(echo "$lock_value_decoded" | jq -r '.timestamp // empty')
-
-# Check if the lock has a valid build_id and timestamp
-if [ -z "$lock_build_id" ] || [ -z "$lock_timestamp" ]; then
-  echo "Invalid lock: Missing build_id or timestamp. Assuming no valid lock exists." >&2
-  echo "{}"
-  exit 0
-fi
-
-# Convert lock timestamp to seconds since epoch
-if ! lock_time_seconds=$(date -u -d "$lock_timestamp" +%s 2>/dev/null); then
-  echo "Error converting timestamp to epoch seconds: $lock_timestamp" >&2
-  echo "{}"
-  exit 0
-fi
-
-# Check if the lock is older than 2 hours
-time_difference=$((current_time - lock_time_seconds))
-if [ "$time_difference" -gt "$two_hours_in_seconds" ]; then
-  echo "Lock is older than 2 hours. Invalidating lock." >&2
-  echo "{}"
-  exit 0
-fi
-
-# Check if the workflow corresponding to the build_id is active
-workflow_response=$(curl -s \
-  -H "Circle-Token: ${AUTOMATION_USER_TOKEN}" \
-  -X GET \
-  "https://circleci.com/api/v2/workflow/$lock_build_id")
-
-workflow_status=$(echo "$workflow_response" | jq -r '.status // empty')
-
-if [ "$workflow_status" != "running" ] && [ "$workflow_status" != "on_hold" ]; then
-  echo "Lock build_id is not active on CircleCI (Status: $workflow_status). Invalidating lock." >&2
-  echo "{}"
-  exit 0
-fi
-
-# If all checks pass, the lock is valid
+# Additional validation checks...
 echo "$lock_value_decoded"

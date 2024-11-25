@@ -15,9 +15,6 @@ lock_key="LOCK_${env_name^^}"
 # Check the current lock value and validate its status
 current_lock=$(./automation/ci/scripts/check-lock.sh "$env_name")
 
-# Log the lock value for debugging
-echo "Current lock value: $current_lock" >&2
-
 # If no valid lock exists, exit gracefully
 if [[ "$current_lock" == "{}" ]]; then
   echo "No valid lock exists for environment: $env_name. Nothing to release."
@@ -25,7 +22,10 @@ if [[ "$current_lock" == "{}" ]]; then
 fi
 
 # Parse the existing lock to verify ownership
-existing_build_id=$(echo "$current_lock" | jq -r '.build_id // empty')
+temp_lock_file=$(mktemp)
+echo "$current_lock" > "$temp_lock_file"
+existing_build_id=$(jq -r '.build_id // empty' < "$temp_lock_file")
+rm -f "$temp_lock_file"
 
 # Ensure the lock is held by the current workflow
 if [ "$existing_build_id" != "${CIRCLE_WORKFLOW_ID:-UNKNOWN_WORKFLOW_ID}" ]; then
