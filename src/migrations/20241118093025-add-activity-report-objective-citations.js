@@ -11,6 +11,10 @@ module.exports = {
           autoIncrement: true,
           primaryKey: true,
         },
+        activityReportObjectiveId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
         citation: {
           type: Sequelize.TEXT,
           allowNull: false,

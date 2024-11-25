@@ -26,6 +26,10 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
+    activityReportObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     citation: {
       type: DataTypes.TEXT,
       allowNull: false,

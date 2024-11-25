@@ -31,13 +31,6 @@ export default (sequelize, DataTypes) => {
         as: 'topics',
       });
 
-      ActivityReportObjective.belongsToMany(models.MonitoringStandard, {
-        through: models.ActivityReportObjectiveCitation,
-        foreignKey: 'activityReportObjectiveId',
-        otherKey: 'citationId',
-        as: 'citations',
-      });
-
       ActivityReportObjective.belongsToMany(models.Resource, {
         through: models.ActivityReportObjectiveResource,
         foreignKey: 'activityReportObjectiveId',

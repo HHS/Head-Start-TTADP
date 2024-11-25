@@ -88,6 +88,7 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
+ * activityReportObjectiveId : integer
  * citation : text
  * createdAt : timestamp with time zone : now()
  * monitoringReferences : jsonb
@@ -2644,8 +2645,6 @@ ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : ro
 ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportGoals
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Courses : courses, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
-!issue='associations need to be defined both directions'
-ActivityReportObjectives "n" }--[#d54309,dotted,thickness=2]--{ "n" MonitoringStandards : citations
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, activityReportObjectives
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports

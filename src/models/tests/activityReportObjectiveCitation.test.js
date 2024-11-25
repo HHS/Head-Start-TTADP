@@ -323,16 +323,14 @@ describe('activityReportObjectiveCitation', () => {
     // Create aro citations.
     const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
-      reviewId: monitoringReviewForLink.id,
-      findingId: monitoringFindingForLink.id,
-      citationId: monitoringStandardForLink.id,
+      citation: 'Sample Citation 1',
+      monitoringReferences: { standardId: monitoringStandardForLink.standardId },
     }, { individualHooks: true });
 
     const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
-      reviewId: monitoringReviewForLink.id,
-      findingId: monitoringFindingForLink.id,
-      citationId: citation2.id,
+      citation: 'Sample Citation 2',
+      monitoringReferences: { standardId: monitoringStandardForLink.standardId },
     }, { individualHooks: true });
 
     // Assert citations.
@@ -347,15 +345,15 @@ describe('activityReportObjectiveCitation', () => {
     activityReportObjectiveCitationLookUp = activityReportObjectiveCitationLookUp.map((c) => c.get({ plain: true }));
 
     // Citation 1.
-    const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citationId === citation1.id);
+    const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 1');
     expect(citation1LookUp).toBeDefined();
-    expect(citation1LookUp.reviewId).toBe(monitoringReviewForLink.id);
-    expect(citation1LookUp.findingId).toBe(monitoringFindingForLink.id);
+    expect(citation1LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
+    expect(citation1LookUp.monitoringReferences.standardId).toBe(monitoringStandardForLink.standardId);
 
     // Citation 2.
-    const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citationId === citation2.id);
+    const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 2');
     expect(citation2LookUp).toBeDefined();
-    expect(citation2LookUp.reviewId).toBe(monitoringReviewForLink.id);
-    expect(citation2LookUp.findingId).toBe(monitoringFindingForLink.id);
+    expect(citation2LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
+    expect(citation2LookUp.monitoringReferences.standardId).toBe(monitoringStandardForLink.standardId);
   });
 });
