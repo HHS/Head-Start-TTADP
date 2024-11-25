@@ -30,15 +30,16 @@ lock_payload=$(jq -n \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
 
 # Encode the JSON payload as Base64
-if ! lock_payload_base64=$(echo "$lock_payload" | base64 2>/dev/null); then
-  echo "Error encoding lock payload to Base64." >&2
-  exit 1
-fi
+lock_payload_base64=$(echo "$lock_payload" | base64 2>/dev/null)
+
+# Write the payload to a temp file
+temp_payload_file=$(mktemp)
+echo "$lock_payload_base64" > "$temp_payload_file"
 
 # Construct the API request payload
 api_payload=$(jq -n \
   --arg name "$lock_key" \
-  --arg value "$lock_payload_base64" \
+  --argfile value "$temp_payload_file" \
   '{name: $name, value: $value}')
 
 # Send the request to set the environment variable
@@ -48,6 +49,8 @@ response=$(curl -s \
   -H "Content-Type: application/json" \
   -d "$api_payload" \
   "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar")
+
+rm -f "$temp_payload_file"
 
 # Check if the response contains an error
 if echo "$response" | jq -e '.message' >/dev/null; then
