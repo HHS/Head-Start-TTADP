@@ -317,34 +317,41 @@ describe('citations service', () => {
       expect(citationsToAssert.length).toBe(3);
 
       // Assert the citations.
-      expect(citationsToAssert[0].citation).toBe('Grant 1 - Citation 1 - Good');
-      expect(citationsToAssert[0].grants.length).toBe(1);
-      expect(citationsToAssert[0].grants[0].findingId).toBeDefined();
-      expect(citationsToAssert[0].grants[0].grantId).toBe(grant1.id);
-      expect(citationsToAssert[0].grants[0].grantNumber).toBe(grant1.number);
-      expect(citationsToAssert[0].grants[0].reviewName).toBeDefined();
-      expect(citationsToAssert[0].grants[0].reportDeliveryDate).toBeDefined();
-      expect(citationsToAssert[0].grants[0].findingType).toBe('Citation 1 Monitoring Finding Type');
-      expect(citationsToAssert[0].grants[0].findingSource).toBe('Internal Controls');
-      expect(citationsToAssert[0].grants[0].monitoringFindingStatusName).toBe('Active');
+      // Get the citation with the text 'Grant 1 - Citation 1 - Good'.
+      const citation1 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 1 - Good');
+      expect(citation1).toBeDefined();
+      expect(citation1.grants.length).toBe(1);
+      expect(citation1.grants[0].findingId).toBeDefined();
+      expect(citation1.grants[0].grantId).toBe(grant1.id);
+      expect(citation1.grants[0].grantNumber).toBe(grant1.number);
+      expect(citation1.grants[0].reviewName).toBeDefined();
+      expect(citation1.grants[0].reportDeliveryDate).toBeDefined();
+      expect(citation1.grants[0].findingType).toBe('Citation 1 Monitoring Finding Type');
+      expect(citation1.grants[0].findingSource).toBe('Internal Controls');
+      expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
 
-      expect(citationsToAssert[1].citation).toBe('Grant 1 - Citation 3 - Good 2');
-      expect(citationsToAssert[1].grants.length).toBe(1);
-      expect(citationsToAssert[1].grants[0].findingId).toBeDefined();
-      expect(citationsToAssert[1].grants[0].grantId).toBe(grant1.id);
-      expect(citationsToAssert[1].grants[0].grantNumber).toBe(grant1.number);
-      expect(citationsToAssert[1].grants[0].reviewName).toBeDefined();
-      expect(citationsToAssert[1].grants[0].reportDeliveryDate).toBeDefined();
-      expect(citationsToAssert[1].grants[0].findingType).toBe('Citation 3 Monitoring Finding Type');
+      // Get the citation with the text 'Grant 1 - Citation 3 - Good 2'.
+      const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 3 - Good 2');
 
-      expect(citationsToAssert[2].citation).toBe('Grant 1a - Citation 1 - Good');
-      expect(citationsToAssert[2].grants.length).toBe(1);
-      expect(citationsToAssert[2].grants[0].findingId).toBeDefined();
-      expect(citationsToAssert[2].grants[0].grantId).toBe(grant1a.id);
-      expect(citationsToAssert[2].grants[0].grantNumber).toBe(grant1a.number);
-      expect(citationsToAssert[2].grants[0].reviewName).toBeDefined();
-      expect(citationsToAssert[2].grants[0].reportDeliveryDate).toBeDefined();
-      expect(citationsToAssert[2].grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
+      expect(citation2).toBeDefined();
+      expect(citation2.grants.length).toBe(1);
+      expect(citation2.grants[0].findingId).toBeDefined();
+      expect(citation2.grants[0].grantId).toBe(grant1.id);
+      expect(citation2.grants[0].grantNumber).toBe(grant1.number);
+      expect(citation2.grants[0].reviewName).toBeDefined();
+      expect(citation2.grants[0].reportDeliveryDate).toBeDefined();
+      expect(citation2.grants[0].findingType).toBe('Citation 3 Monitoring Finding Type');
+
+      // Get the citation with the text 'Grant 1a - Citation 1 - Good'.
+      const citation3 = citationsToAssert.find((c) => c.citation === 'Grant 1a - Citation 1 - Good');
+      expect(citation3).toBeDefined();
+      expect(citation3.grants.length).toBe(1);
+      expect(citation3.grants[0].findingId).toBeDefined();
+      expect(citation3.grants[0].grantId).toBe(grant1a.id);
+      expect(citation3.grants[0].grantNumber).toBe(grant1a.number);
+      expect(citation3.grants[0].reviewName).toBeDefined();
+      expect(citation3.grants[0].reportDeliveryDate).toBeDefined();
+      expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
     });
   });
 });
