@@ -28,15 +28,15 @@ curl -s \
   -o "$temp_response_file"
 
 # Check for errors in the response
-if jq -e '.message' -f "$temp_response_file" >/dev/null; then
-  error_message=$(jq -r '.message' -f "$temp_response_file")
+if jq -e '.message' < "$temp_response_file" >/dev/null; then
+  error_message=$(jq -r '.message' < "$temp_response_file")
   echo "Error fetching lock: $error_message" >&2
   rm -f "$temp_response_file" "$temp_value_file" "$temp_decoded_file"
   exit 1
 fi
 
 # Extract the Base64-encoded value and save it to a temp file
-jq -r '.value // empty' -f "$temp_response_file" > "$temp_value_file"
+jq -r '.value // empty' < "$temp_response_file" > "$temp_value_file"
 rm -f "$temp_response_file"
 
 # If the lock value is empty, there is no active lock
