@@ -221,9 +221,9 @@ function cleanup() {
 
 # Main function to control workflow
 function main() {
-    local deb_url="https://security.debian.org/debian-security/pool/updates/main/p/postgresql-15/postgresql-client-15_15.8-0+deb12u1_amd64.deb"
+    local deb_url="https://security.debian.org/debian-security/pool/updates/main/p/postgresql-15/postgresql-client-15_15.10-0+deb12u1_amd64.deb"
     local deb_file="/tmp/postgresql.deb"
-    local deb_sha256="e88cfe7aa8548f8461dcbd56f69a1bb365affcd380469f705aca697fc2146994"
+    local deb_sha256="cb193447c404d85eed93cb0f61d2f189dd1c94c3f1af4d74afe861e06f8b34db"
     local bin_dir="/tmp/local/bin"
     local tools=("pg_dump" "pg_isready" "pg_restore" "psql" "reindexdb" "vacuumdb")
 
