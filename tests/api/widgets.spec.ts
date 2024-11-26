@@ -57,6 +57,8 @@ test.describe('widgets', () => {
     const schema = Joi.array().items(
       Joi.object({
         name: Joi.string().required(),
+        id: Joi.string().required(),
+        trace: Joi.string().required(),
         x: Joi.array().items(Joi.string()).required(),
         y: Joi.array().items(Joi.number()).required(),
         month: Joi.array().items(Joi.boolean()).required()

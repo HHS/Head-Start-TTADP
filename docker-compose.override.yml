@@ -3,7 +3,7 @@ services:
     build:
       context: .
     profiles:
-      - minimal_required
+      - minimal_required_node
     command: yarn server
     user: ${CURRENT_USER:-root}
     ports:
@@ -35,7 +35,7 @@ services:
     build:
       context: .
     profiles:
-      - minimal_required
+      - minimal_required_node
     command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true
@@ -54,7 +54,7 @@ services:
     build:
       context: .
     profiles:
-      - minimal_required
+      - minimal_required_node
     command: yarn worker
     env_file: .env
     depends_on:
@@ -71,7 +71,7 @@ services:
   owasp_zap_backend:
     image: softwaresecurityproject/zap-stable:latest
     profiles:
-      - full_stack
+      - full_stack_zap
     platform: linux/arm64
     user: zap
     command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report_.html
@@ -83,7 +83,7 @@ services:
   owasp_zap_similarity:
     image: softwaresecurityproject/zap-stable:latest
     profiles:
-      - full_stack
+      - full_stack_zap
     platform: linux/arm64
     user: zap
     command: zap-api-scan.py -t http://similarity:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
