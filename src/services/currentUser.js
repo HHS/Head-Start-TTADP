@@ -9,6 +9,12 @@ import findOrCreateUser from './findOrCreateUser';
 import handleErrors from '../lib/apiErrorHandler';
 import { validateUserAuthForAdmin } from './accessValidation';
 
+const namespace = 'MIDDLEWARE:CURRENT USER';
+
+const logContext = {
+  namespace,
+};
+
 /**
  * Get Current User ID
  *
@@ -34,7 +40,6 @@ export async function currentUserId(req, res) {
       httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
-
     // bypass authorization, used for cucumber UAT and axe accessibility testing
     if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
       const userId = process.env.CURRENT_USER_ID;
@@ -58,6 +63,12 @@ export async function currentUserId(req, res) {
         // Verify admin access.
         try {
           const userId = idFromSessionOrLocals();
+
+          if (userId === null) {
+            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.');
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
+
           if (!(await validateUserAuthForAdmin(Number(userId)))) {
             auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
             return res.sendStatus(httpCodes.UNAUTHORIZED);
@@ -68,7 +79,7 @@ export async function currentUserId(req, res) {
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
         } catch (e) {
-          return handleErrors(req, res, e);
+          return handleErrors(req, res, e, logContext);
         }
 
         httpContext.set('impersonationUserId', Number(impersonatedUserId));
@@ -76,7 +87,7 @@ export async function currentUserId(req, res) {
       }
     } catch (e) {
       auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
-      return handleErrors(req, res, e);
+      return handleErrors(req, res, e, logContext);
     }
   }
 
@@ -100,7 +111,7 @@ export async function currentUserId(req, res) {
 /**
  * Retrieve User Details
  *
- * This method retrives the current user details from HSES and finds or creates the TTA Hub user
+ * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
 export async function retrieveUserDetails(accessToken) {
   const requestObj = accessToken.sign({

@@ -6,7 +6,7 @@ import { Label, Button, Checkbox } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
-import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
+import { getGoalTemplatePrompts, getGoalTemplateSource } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -131,13 +131,30 @@ const GoalPicker = ({
   ];
 
   const onChangeGoal = async (goal) => {
-    onChange(goal);
-    if (goal.isCurated) {
-      const prompts = await getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds);
-      if (prompts) {
-        setTemplatePrompts(prompts);
+    try {
+      if (goal.isCurated) {
+        const [prompts, source] = await Promise.all([
+          getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds),
+          // eslint-disable-next-line max-len
+          getGoalTemplateSource(goal.goalTemplateId, activityRecipients.map((ar) => ar.activityRecipientId)),
+        ]);
+
+        onChange({
+          ...goal,
+          source: source.source,
+        });
+
+        if (prompts) {
+          setTemplatePrompts(prompts);
+        }
+      } else {
+        onChange(goal);
+        setTemplatePrompts(false);
       }
-    } else {
+
+      setSelectedGoal(null);
+    } catch (err) {
+      onChange(goal);
       setTemplatePrompts(false);
     }
 
@@ -147,8 +164,6 @@ const GoalPicker = ({
     if (goal.goalIds) {
       setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
     }
-
-    setSelectedGoal(null);
   };
 
   const onKeep = async () => {
@@ -182,7 +197,6 @@ const GoalPicker = ({
     onChangeGoal(goal);
   };
 
-  const pickerLabel = useOhsStandardGoal ? 'Select OHS standard goal' : 'Select recipient\'s goal';
   const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
 
   return (
@@ -204,7 +218,7 @@ const GoalPicker = ({
       </Modal>
       <div className="margin-top-3 position-relative">
         <Label>
-          {pickerLabel}
+          Select recipient&apos;s goal
           <Req />
           <Select
             name="goalForEditing"

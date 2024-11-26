@@ -56,6 +56,12 @@ JSON: {
             "type": "number",
             "nullable": false,
             "description": "Total number of recipients."
+          },
+          {
+            "columnName": "grants with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of grants with a FEI goal."
           }
         ]
       },
@@ -81,6 +87,12 @@ JSON: {
             "type": "string",
             "nullable": true,
             "description": "Grant number associated with the recipient."
+          },
+          {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
           },
           {
             "columnName": "goalId",
@@ -208,7 +220,7 @@ JSON: {
     },
     {
       "name": "group",
-      "type": "string[]",
+      "type": "integer[]",
       "display": "Group",
       "description": "Filter based on group membership",
       "supportsExclusion": true
@@ -233,6 +245,13 @@ JSON: {
       "display": "Activity Report Goal Response",
       "description": "Filter based on goal field responses in activity reports",
       "supportsExclusion": true
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "Filter based on goal status",
+      "supportsExclusion": true
     }
   ]
 }
@@ -249,6 +268,7 @@ DECLARE
     current_user_id_filter TEXT := NULLIF(current_setting('ssdi.currentUserId', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
+    goal_status_filter TEXT := NULLIF(current_setting('ssdi.status', true), '');
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
@@ -260,11 +280,12 @@ DECLARE
     current_user_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.currentUserId.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
     activity_report_goal_response_not_filter BOOLEAN := COALESCE(current_setting('ssdi.activityReportGoalResponse.not', true), 'false') = 'true';
+    goal_status_not_filter BOOLEAN := COALESCE(current_setting('ssdi.status.not', true), 'false') = 'true';
 
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  -- DROP TABLE IF EXISTS process_log;
+  DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -272,14 +293,16 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  -- DROP TABLE IF EXISTS filtered_grants;
+  DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
       INSERT INTO filtered_grants (id)
-      SELECT DISTINCT id
+      SELECT
+        id
       FROM "Grants"
       WHERE COALESCE(deleted, false) = false
+      GROUP BY 1
       ORDER BY 1
       RETURNING id
   )
@@ -354,15 +377,16 @@ BEGIN
             COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId")::jsonb
           )
         )
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
@@ -399,7 +423,7 @@ BEGIN
         AND (
           group_filter IS NULL
           OR (
-            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.name) != group_not_filter
+            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.id) != group_not_filter
           )
         )
         LEFT JOIN "GroupCollaborators" gc
@@ -414,16 +438,17 @@ BEGIN
         )
         WHERE 1 = 1
         -- Continued Filter for group if ssdi.group is defined from left joined table above
-        AND (group_filter IS NULL OR (g.id IS NOT NULL AND gc.id IS NOT NULL))
+        AND (group_filter IS NULL OR (g.id IS NOT NULL AND (gc.id IS NOT NULL OR g."sharedWith" = 'Everyone')))
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
@@ -446,13 +471,15 @@ BEGIN
 
   WITH seed_filtered_goals AS (
       INSERT INTO filtered_goals (id)
-      SELECT DISTINCT g.id
+      SELECT
+        g.id
       FROM "Goals" g
       JOIN filtered_grants fgr
       ON g."grantId" = fgr.id
       WHERE g."deletedAt" IS NULL
       AND g."mapsToParentGoalId" IS NULL
-      ORDER BY g.id  -- Add ORDER BY here
+      GROUP BY 1
+      ORDER BY 1
       RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
@@ -465,11 +492,12 @@ BEGIN
 -- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
     IF
         create_date_filter IS NOT NULL OR
+        goal_status_filter IS NOT NULL OR
         activity_report_goal_response_filter IS NOT NULL
     THEN
     WITH
       applied_filtered_goals AS (
-        SELECT DISTINCT
+        SELECT
           g.id
         FROM filtered_goals fg
         JOIN "Goals" g
@@ -486,6 +514,16 @@ BEGIN
             )::daterange AS my_array
             FROM json_array_elements_text(COALESCE(create_date_filter, '[]')::json) AS value
           ) != create_date_not_filter
+          )
+        )
+        -- Filter for status if ssdi.status is defined
+        AND (
+          goal_status_filter IS NULL
+          OR (
+            g.status IN (
+              SELECT value
+              FROM json_array_elements_text(COALESCE(goal_status_filter, '[]')::json) AS value
+            ) != goal_status_not_filter
           )
         )
         LEFT JOIN "GoalFieldResponses" gfr
@@ -506,12 +544,16 @@ BEGIN
         WHERE 1 = 1
         -- Continued Filter for activityReportGoalResponse if ssdi.activityReportGoalResponse is defined, for array columns
         AND (activity_report_goal_response_filter IS NULL OR gfr.id IS NOT NULL)
+        GROUP BY 1
+        ORDER BY 1
       ),
         applied_filtered_out_goals AS (
-            SELECT fg.id
+            SELECT
+              fg.id
             FROM filtered_goals fg
             LEFT JOIN applied_filtered_goals afg ON fg.id = afg.id
-            WHERE afg.id IS NULL
+            GROUP BY 1
+            HAVING COUNT(afg.id) = 0
             ORDER BY 1
         ),
         delete_from_goal_filter AS (
@@ -521,11 +563,13 @@ BEGIN
             RETURNING fg.id
         ),
         applied_filtered_out_grants AS (
-            SELECT fgr.id
+            SELECT
+              fgr.id
             FROM filtered_grants fgr
             LEFT JOIN "Goals" g ON fgr.id = g."grantId"
             LEFT JOIN filtered_goals fg ON g.id = fg.id
-            WHERE fg.id IS NULL
+            GROUP BY 1
+            HAVING COUNT(fg.id) = 0
             ORDER BY 1
         ),
         delete_from_grant_filter AS (
@@ -551,11 +595,21 @@ END $$;
 ---------------------------------------------------------------------------------------------------
 
 WITH
+  has_current_grant AS (
+    SELECT
+      "recipientId" rid,
+      BOOL_OR(status = 'Active') has_current_active_grant
+    FROM "Grants"
+    GROUP BY 1
+  ),
   with_fei AS (
     SELECT
       r.id,
-      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei
+      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei,
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017 AND fg.id IS NOT NULL) grant_count
     FROM "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
     JOIN filtered_grants fgr
@@ -564,15 +618,18 @@ WITH
     ON gr.id = g."grantId"
     LEFT JOIN filtered_goals fg
     ON g.id = fg.id
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1
   ),
   with_fei_widget AS (
     SELECT
-      (((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
-      COUNT(DISTINCT wf.id)))*100)::decimal(5,2) "% recipients with fei",
+      (COALESCE((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
+      NULLIF(COUNT(DISTINCT wf.id),0)),0)*100)::decimal(5,2) "% recipients with fei",
       COUNT(DISTINCT wf.id) FILTER (WHERE wf.has_fei) "recipients with fei",
-      COUNT(DISTINCT wf.id) total
+      COUNT(DISTINCT wf.id) total,
+      COALESCE(SUM(grant_count),0) "grants with fei"
     FROM with_fei wf
   ),
   
@@ -596,6 +653,7 @@ WITH
       r.id "recipientId",
       r.name "recipientName",
       gr.number "grantNumber",
+      gr."regionId",
       g.id "goalId",
       g."createdAt",
       g.status "goalStatus",
@@ -615,12 +673,15 @@ WITH
     ON g.id = fg.id
     LEFT JOIN "GoalFieldResponses" gfr
     ON g.id = gfr."goalId"
+    WHERE 1 = 1
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
   ),
   with_fei_graph AS (
     SELECT
         wfpr.response,
         COUNT(*) AS response_count,
-        ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 0)::decimal(5,2) AS percentage
+        ROUND(COALESCE(COUNT(*) * 100.0 / NULLIF(SUM(COUNT(*)) OVER (),0),0), 0)::decimal(5,2) AS percentage
     FROM with_fei_page wfp
     CROSS JOIN UNNEST(wfp."rootCause") wfpr(response)
     GROUP BY 1
@@ -632,7 +693,8 @@ WITH
     JSONB_AGG(JSONB_BUILD_OBJECT(
       '% recipients with fei', "% recipients with fei",
       'recipients with fei', "recipients with fei",
-      'total', total
+      'total', total,
+      'grants with fei', "grants with fei"
     )) AS data,
     af.active_filters
     FROM with_fei_widget
@@ -648,6 +710,7 @@ WITH
         'recipientId', "recipientId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
+        'region id', "regionId",
         'goalId', "goalId",
         'createdAt', "createdAt",
         'goalStatus', "goalStatus",
@@ -656,6 +719,16 @@ WITH
       af.active_filters
     FROM with_fei_page
     CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
+    UNION
+
+    SELECT
+      'with_fei_page' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
     GROUP BY af.active_filters
     
     UNION
@@ -674,6 +747,16 @@ WITH
     GROUP BY af.active_filters
     
     UNION
+
+    SELECT
+      'with_fei_graph' data_set,
+      0 records,
+     '[]'::JSONB,
+      af.active_filters  -- Use precomputed active_filters
+    FROM active_filters_array af
+    GROUP BY af.active_filters
+    
+    UNION
     
     SELECT
       'process_log' data_set,
@@ -688,7 +771,11 @@ WITH
     GROUP BY af.active_filters
   )
   
-SELECT *
+SELECT
+  data_set,
+  MAX(records) records,
+  JSONB_AGG(data ORDER BY records DESC) -> 0 data,
+  active_filters
 FROM datasets
 -- Filter for datasets if ssdi.dataSetSelection is defined
 WHERE 1 = 1
@@ -697,4 +784,5 @@ AND (
   OR (
     COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
   )
-);
+)
+GROUP BY 1,4;

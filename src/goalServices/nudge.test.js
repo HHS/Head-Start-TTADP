@@ -3,8 +3,11 @@ import nudge, { determineSimilarityAlpha } from './nudge';
 import { GOAL_STATUS } from '../constants';
 import { similarGoalsForRecipient } from '../services/similarity';
 import { createGoal, createGrant, createRecipient } from '../testUtils';
+import changeGoalStatus from './changeGoalStatus';
 
-const { Goal, Grant, Recipient } = db;
+const {
+  Goal, Grant, Recipient, GoalStatusChange,
+} = db;
 
 jest.mock('../services/similarity', () => ({
   similarGoalsForRecipient: jest.fn(),
@@ -18,18 +21,105 @@ describe('nudge', () => {
   let recipient;
   let grant;
   let goal;
+  let suspendedGoal;
+  let closedGoal;
 
   beforeAll(async () => {
     recipient = await createRecipient();
     grant = await createGrant({ recipientId: recipient.id });
-    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.NOT_STARTED });
+    goal = await createGoal({
+      grantId: grant.id,
+      status: GOAL_STATUS.NOT_STARTED,
+    });
+    suspendedGoal = await createGoal({
+      grantId: grant.id,
+      status: GOAL_STATUS.NOT_STARTED,
+    });
+    closedGoal = await createGoal({
+      grantId: grant.id,
+      status: GOAL_STATUS.NOT_STARTED,
+    });
+
+    await changeGoalStatus({
+      goalId: suspendedGoal.id,
+      newStatus: GOAL_STATUS.SUSPENDED,
+      reason: 'test',
+      context: 'test',
+      oldStatus: GOAL_STATUS.NOT_STARTED,
+    });
+
+    await changeGoalStatus({
+      goalId: closedGoal.id,
+      newStatus: GOAL_STATUS.CLOSED,
+      reason: 'test',
+      context: 'test',
+      oldStatus: GOAL_STATUS.NOT_STARTED,
+    });
   });
 
   afterAll(async () => {
-    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await GoalStatusChange.destroy({
+      where: { goalId: [goal.id, suspendedGoal.id, closedGoal.id] },
+      force: true,
+    });
+    await Goal.destroy({
+      where: { id: [goal.id, suspendedGoal.id, closedGoal.id] },
+      force: true,
+    });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await db.sequelize.close();
+  });
+
+  it('should not unshift a template goal if it is already in the goals', async () => {
+    const recipientId = 1;
+    const text = 'Some goal text';
+    const grantNumbers = ['GRANT-1234567'];
+
+    const matchingId = 1;
+    const templateName = 'Template Goal';
+    const templateSource = 'Some source';
+
+    const newGrant = await createGrant({ number: grantNumbers[0], recipientId });
+
+    similarGoalsForRecipient.mockReturnValueOnce({
+      result: [
+        {
+          goal: {
+            id: matchingId,
+            name: templateName,
+            isTemplate: true,
+            source: templateSource,
+            endDate: '',
+          },
+          similarity: 0.7,
+        },
+      ],
+    });
+
+    // Create a goal with a matching template ID and valid grantId
+    await Goal.create({
+      id: 999111,
+      grantId: newGrant.id,
+      name: 'Existing Goal',
+      status: GOAL_STATUS.NOT_STARTED,
+      goalTemplateId: matchingId,
+    });
+
+    const results = await nudge(recipientId, text, grantNumbers);
+
+    expect(results).not.toContainEqual([{
+      ids: [matchingId],
+      name: templateName,
+      status: GOAL_STATUS.NOT_STARTED,
+      goalTemplateId: matchingId,
+      isCuratedTemplate: true,
+      endDate: '',
+      source: templateSource,
+    }]);
+
+    await Goal.destroy({ where: { id: 999111 }, force: true });
+    await Grant.destroy({ where: { id: newGrant.id }, force: true, individualHooks: true });
   });
 
   it('should return a nudge', async () => {
@@ -68,7 +158,11 @@ describe('nudge', () => {
       ],
     });
 
-    const results = await nudge(recipientId, 'It does not matter what this is', [grantNumber]);
+    const results = await nudge(
+      recipientId,
+      'It does not matter what this is',
+      [grantNumber],
+    );
 
     // sort results by name
     results.sort((a, b) => {
@@ -90,6 +184,7 @@ describe('nudge', () => {
         isCuratedTemplate: true,
         endDate: '',
         source: 'Regional office priority',
+        reason: '',
       },
       {
         ids: [goalId],
@@ -97,8 +192,119 @@ describe('nudge', () => {
         status: GOAL_STATUS.NOT_STARTED,
         isCuratedTemplate: false,
         goalTemplateId,
+        reason: '',
+        source: null,
       },
     ]);
+  });
+
+  it('should return reasons for closed and suspended goals', async () => {
+    const goalName = goal.name;
+    const goalId = goal.id;
+    const { goalTemplateId } = goal;
+
+    const suspendedGoalName = suspendedGoal.name;
+    const suspendedGoalId = suspendedGoal.id;
+    const suspendedGoalTemplateId = suspendedGoal.goalTemplateId;
+
+    const closedGoalName = closedGoal.name;
+    const closedGoalId = closedGoal.id;
+    const closedGoalTemplateId = closedGoal.goalTemplateId;
+
+    const grantNumber = grant.number;
+    const recipientId = recipient.id;
+    const grantId = grant.id;
+
+    similarGoalsForRecipient.mockReturnValueOnce({
+      result: [
+        {
+          goal: {
+            grantId,
+            id: goalId,
+            name: goalName,
+            isTemplate: false,
+          },
+          similarity: 0.8,
+        },
+        {
+          goal: {
+            grantId,
+            id: closedGoalId,
+            name: closedGoalName,
+            isTemplate: false,
+          },
+          similarity: 0.8,
+        },
+        {
+          goal: {
+            grantId,
+            id: suspendedGoalId,
+            name: suspendedGoalName,
+            isTemplate: false,
+          },
+          similarity: 0.7,
+        },
+      ],
+    });
+
+    const results = await nudge(
+      recipientId,
+      'It does not matter what this is',
+      [grantNumber],
+    );
+
+    // sort results by name
+    results.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
+
+    const expected = [
+      {
+        ids: [goalId],
+        name: goalName,
+        status: GOAL_STATUS.NOT_STARTED,
+        isCuratedTemplate: false,
+        goalTemplateId,
+        reason: '',
+        source: null,
+      },
+      {
+        ids: [closedGoalId],
+        name: closedGoalName,
+        status: GOAL_STATUS.CLOSED,
+        isCuratedTemplate: false,
+        goalTemplateId: closedGoalTemplateId,
+        reason: 'test',
+        source: null,
+      },
+      {
+        ids: [suspendedGoalId],
+        name: suspendedGoalName,
+        status: GOAL_STATUS.SUSPENDED,
+        isCuratedTemplate: false,
+        goalTemplateId: suspendedGoalTemplateId,
+        reason: 'test',
+        source: null,
+      },
+    ];
+
+    expected.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
+
+    expect(results).toEqual(expected);
   });
 
   describe('determineSimilarityAlpha', () => {

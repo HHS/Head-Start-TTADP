@@ -48,16 +48,18 @@ export default function TrainingReports({ match }) {
   const {
     regions,
     defaultRegion,
-    hasMultipleRegions,
     allRegionsFilters,
     filters,
     setFilters,
     onApplyFilters,
     onRemoveFilter,
+    filterConfig,
   } = useFilters(
     user,
     FILTER_KEY,
     true, // manage regions
+    [],
+    TRAINING_REPORT_FILTER_CONFIG,
   );
 
   useEffect(() => {
@@ -89,8 +91,6 @@ export default function TrainingReports({ match }) {
     }
     return '';
   };
-
-  const filterConfig = TRAINING_REPORT_FILTER_CONFIG(hasMultipleRegions);
 
   const onRemoveSession = async (session) => {
     try {

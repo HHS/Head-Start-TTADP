@@ -180,6 +180,7 @@ const runQuery = async (req: Request, res: Response) => {
       filters,
       filterValues,
     );
+
     if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
       res.status(400).json({ errors });
       return;

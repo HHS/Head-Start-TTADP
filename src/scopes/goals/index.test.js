@@ -24,10 +24,14 @@ import db, {
   NextStepResource,
   ActivityReportFile,
   ActivityReportObjectiveFile,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
   GroupCollaborator,
   File,
 } from '../../models';
 import { GOAL_STATUS } from '../../constants';
+import { withoutStatus, withStatus } from './status';
+import { withoutTtaType, withTtaType } from './ttaType';
 
 const REGION_ID = 10;
 
@@ -525,6 +529,38 @@ describe('goal filtersToScopes', () => {
       expect(found.map((g) => g.name)).toContain('Goal 2');
       expect(found.map((g) => g.name)).toContain('Goal 3');
       expect(found.map((g) => g.name)).toContain('Goal 4');
+    });
+
+    it('withStatus, when statuses does not include Needs status', () => {
+      const out = withStatus([]);
+      expect(out).toMatchObject({
+        [Op.or]: [],
+      });
+    });
+
+    it('withoutStatus, when status includes Needs status', () => {
+      const out = withoutStatus(['Needs status']);
+      expect(out).toMatchObject({
+        [Op.or]: [
+          { status: { [Op.eq]: null } },
+          {
+            [Op.and]: [{
+              status: { [Op.notILike]: '%sNeeds status%s' },
+            }],
+          },
+        ],
+      });
+    });
+  });
+
+  describe('ttaType', () => {
+    it('withTtaType, empty query returns empty object', () => {
+      const out = withTtaType([]);
+      expect(out).toMatchObject({});
+    });
+    it('withoutTtaType, empty query returns empty object', () => {
+      const out = withoutTtaType([]);
+      expect(out).toMatchObject({});
     });
   });
 
@@ -1410,6 +1446,107 @@ describe('goal filtersToScopes', () => {
       expect(found.length).toEqual(1);
       expect(found[0].id).not.toEqual(includedGoal.id);
       expect(found[0].id).toEqual(excludedGoal.id);
+    });
+  });
+
+  describe('goalFieldResponse', () => {
+    let prompt;
+    let goal1;
+    let goal2;
+    let goal3;
+    let response1;
+    let response2;
+    let response3;
+
+    beforeAll(async () => {
+      prompt = await GoalTemplateFieldPrompt.findOne({
+        where: { title: 'FEI root cause' },
+      });
+
+      goal1 = await Goal.create({
+        name: 'Goal 6',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: goalGrant.id,
+        createdVia: 'rtr',
+      });
+
+      goal2 = await Goal.create({
+        name: 'Goal 7',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: goalGrant.id,
+        createdVia: 'rtr',
+      });
+
+      goal3 = await Goal.create({
+        name: 'Goal 8',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: goalGrant.id,
+        createdVia: 'rtr',
+      });
+
+      response1 = await GoalFieldResponse.create({
+        goalId: goal1.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Community Partnerships'],
+      });
+
+      response2 = await GoalFieldResponse.create({
+        goalId: goal2.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Workforce', 'Family circumstances'],
+      });
+
+      response2 = await GoalFieldResponse.create({
+        goalId: goal3.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Facilities'],
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({
+        where: {
+          id: [response1.id, response2.id, response3.id],
+        },
+      });
+
+      await Goal.destroy({
+        where: {
+          id: [goal1.id, goal2.id, goal3.id],
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('finds goals with responses', async () => {
+      const filters = { 'goalResponse.in': ['Workforce'] };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: { [Op.and]: [scope, { id: [goal1.id, goal2.id, goal3.id] }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([goal2.id]));
+    });
+
+    it('finds goals without responses', async () => {
+      const filters = { 'goalResponse.nin': ['Workforce'] };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: { [Op.and]: [scope, { id: [goal1.id, goal2.id, goal3.id] }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([goal1.id, goal3.id]));
     });
   });
 

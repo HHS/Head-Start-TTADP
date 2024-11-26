@@ -13,3 +13,12 @@
 .ttahub-feed-article-content .feed div:last-child{
     display: none;
 }
+
+
+
+.ttahub-feed-article-content .feed a[href^="http"]:after {
+    content: "\f35d";
+    display: inline-block;
+    font: normal normal normal 16px/1 FontAwesome;
+    margin: 0 8px;
+}

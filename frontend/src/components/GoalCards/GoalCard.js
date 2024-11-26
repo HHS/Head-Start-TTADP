@@ -110,7 +110,7 @@ export default function GoalCard({
 
   const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
 
-  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`;
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join('&id[]=')}`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?${ids.map((d) => `id[]=${d}`).join('&')}`;
 
   const onUpdateGoalStatus = (newStatus) => {
