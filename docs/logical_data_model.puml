@@ -88,17 +88,10 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
- * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
-!issue='column should not allow null'
-!issue='column missing from model'
-!issue='column reference missing' * <color:#d54309>citationId</color>: integer : REFERENCES "MonitoringStandards".id
-!issue='column should not allow null'
-!issue='column missing from model'
-!issue='column reference missing' * <color:#d54309>findingId</color>: integer : REFERENCES "MonitoringFindings".id
-!issue='column should not allow null'
-!issue='column missing from model'
-!issue='column reference missing' * <color:#d54309>reviewId</color>: integer : REFERENCES "MonitoringReviews".id
+ * activityReportObjectiveId : integer
+ * citation : text
  * createdAt : timestamp with time zone : now()
+ * monitoringReferences : jsonb
  * updatedAt : timestamp with time zone : now()
 }
 
@@ -419,7 +412,6 @@ class GoalTemplates{
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
-!issue='column missing from model' <color:#d54309>standard</color>: text
 }
 
 class Goals{
@@ -558,7 +550,6 @@ class Imports{
  * updatedAt : timestamp with time zone
  fileMask : text
  path : text
-!issue='column missing from model' <color:#d54309>postProcessingActions</color>: jsonb
 }
 
 class MailerLogs{
@@ -2682,12 +2673,5 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
-
-!issue='association missing from models'!issue='associations need to be defined both directions'
-MonitoringFindings o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-MonitoringReviews o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-MonitoringStandards o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
 
 @enduml
