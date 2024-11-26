@@ -248,6 +248,22 @@ commands:
         description: "Name of Cloud Foundry cloud.gov application; must match
           application name specified in manifest"
         type: string
+      build_branch:
+        description: "The branch of the build being deployed"
+        type: string
+        default: ${CIRCLE_BRANCH}
+      build_commit:
+        description: "The commit of the build being deployed"
+        type: string
+        default: ${CIRCLE_SHA1}
+      build_number:
+        description: "The number of the build being deployed"
+        type: string
+        default: ${CIRCLE_BUILD_NUM}
+      build_timestamp:
+        description: "The number of the build being deployed"
+        type: string
+        default: $(date +"%Y-%m-%d %H:%M:%S")
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -373,7 +389,11 @@ commands:
               --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
               --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
               --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
-              --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>}
+              --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>} \
+              --var BUILD_BRANCH=${<< parameters.build_branch >>} \
+              --var BUILD_COMMIT=${<< parameters.build_commit >>} \
+              --var BUILD_NUMBER=${<< parameters.build_number >>} \
+              --var BUILD_TIMESTAMP=${<< parameters.build_timestamp >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -709,6 +729,7 @@ jobs:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               chmod +x ./tools/check-coverage.js
               node -r esm ./tools/check-coverage.js \
+                --directory-filter=src/,tools/ \
                 --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
                 --output-format=json,html
             else
