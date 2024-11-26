@@ -1,4 +1,3 @@
-const { GOAL_CREATED_VIA } = require('../constants');
 const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
