@@ -1,4 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
 import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS as TRACE_IDS } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
@@ -7,9 +11,11 @@ import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
 import { arrayExistsAndHasLength, NOOP } from '../Constants';
 
+const EXPORT_NAME = 'Total TTA hours';
+
 export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'Total TTA hours');
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
 
   const [columnHeadings, setColumnHeadings] = useState([]);

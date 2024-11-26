@@ -33,6 +33,7 @@ const DEFAULT_SORT_CONFIG = {
 };
 
 const KEY_COLUMNS = ['Months'];
+const EXPORT_NAME = 'Delivery Method';
 
 const TRACE_IDS = {
   IN_PERSON: 'in-person',
@@ -42,7 +43,7 @@ const TRACE_IDS = {
 
 export default function DeliveryMethodGraph({ data }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'Total TTA hours');
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
@@ -80,7 +81,7 @@ export default function DeliveryMethodGraph({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     'Months',
-    'DeliveryMethod',
+    EXPORT_NAME,
   );
 
   // records is an array of objects
