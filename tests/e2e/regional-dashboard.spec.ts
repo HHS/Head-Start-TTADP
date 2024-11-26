@@ -29,8 +29,10 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'This button removes the filter: State or territory contains RI' }).click();
 
   // switch the total training graph's display type back and forth
-  await page.getByRole('button', { name: 'display total training and technical assistance hours as table' }).click();
-  await page.getByRole('button', { name: 'display total training and technical assistance hours as graph' }).click();
+  await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
+  await page.getByRole('button', { name: 'Display table' }).click();
+  await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
+  await page.getByRole('button', { name: 'Display graph' }).click();
 
   // toggle all the legend items off
   await page.locator('label').filter({ hasText: 'Training' }).click();
@@ -38,6 +40,8 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByText('Technical Assistance').click();
 
   // print a screenshot of the TTA hours graph
+  await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
+  
   await Promise.all([
     page.waitForEvent('download'),
     page.locator('#rd-save-screenshot').click()

@@ -150,6 +150,7 @@ export default function GoalForm({
 
   const prompts = combinePrompts(templatePrompts, goal.prompts);
   const isCurated = goal.isCurated || false;
+  const { isSourceEditable } = goal;
 
   return (
     <>
@@ -180,10 +181,10 @@ export default function GoalForm({
       />
 
       <FormFieldThatIsSometimesReadOnly
-        permissions={[
-          !isCurated,
-          !goal.onApprovedAR,
-        ]}
+        permissions={isCurated ? [
+          isSourceEditable,
+          !goal.onApprovedAR || !goal.source,
+        ] : [!goal.onApprovedAR || !goal.source]}
         label="Goal source"
         value={goalSource}
       >
@@ -195,8 +196,6 @@ export default function GoalForm({
           inputName={goalSourceInputName}
           goalStatus={status}
           isLoading={isAppLoading}
-          userCanEdit={!isCurated}
-          isOnReport={false}
           isMultiRecipientGoal={isMultiRecipientReport}
         />
       </FormFieldThatIsSometimesReadOnly>
@@ -238,6 +237,7 @@ GoalForm.propTypes = {
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
     isCurated: PropTypes.bool,
+    isSourceEditable: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
     source: PropTypes.string,

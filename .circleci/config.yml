@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.19
+      - image: cimg/python:3.9.20
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -649,7 +649,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-3329-fix-event-view"
+    default: "kw-unsafe-inline"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
     default: "mb/TTAHUB-3483/checkbox-to-activity-reports"
@@ -679,6 +679,9 @@ parameters:
     type: boolean
     default: false
   manual-full-process:
+    type: boolean
+    default: false
+  fail-on-modified-lines:
     type: boolean
     default: false
 jobs:
@@ -782,6 +785,9 @@ jobs:
       - setup_remote_docker:
           version: default
       - run:
+          name: Add GitHub to known_hosts
+          command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
       - run:
@@ -797,6 +803,19 @@ jobs:
           command: |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
+      # Run coverage check script
+      - run:
+          name: Check coverage for modified lines
+          command: |
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              chmod +x ./tools/check-coverage.js
+              node -r esm ./tools/check-coverage.js \
+                --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
+                --output-format=json,html
+            else
+              echo "Not a PR build. Skipping coverage check."
+            fi
+          when: always
       - run:
           name: Compress coverage artifacts
           command: tar -cvzf backend-coverage-artifacts.tar coverage/
@@ -806,6 +825,10 @@ jobs:
           path: backend-coverage-artifacts.tar
       - store_test_results:
           path: reports/
+      # Store uncovered lines artifact if exists
+      - store_artifacts:
+          path: coverage-artifacts/
+          destination: uncovered-lines
     resource_class: large
   test_similarity_api:
     executor: docker-python-executor
@@ -862,12 +885,36 @@ jobs:
             chmod 744 ./checkcolorhash.sh
             ./checkcolorhash.sh;
       - run:
+          name: Add GitHub to known_hosts
+          command: |
+            mkdir -p /home/circleci/.ssh
+            ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
+
+      - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
+      - run:
+          name: Check coverage for modified lines
+          command: |
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+              chmod +x ./tools/check-coverage.js
+              node -r esm ./tools/check-coverage.js \
+                --coverage-file=../frontend/coverage/coverage-final.json \
+                --artifact-dir=../frontend/coverage-artifacts \
+                --directory-filter=frontend/ \
+                --fail-on-uncovered=<< pipeline.parameters.fail-on-modified-lines >> \
+                --output-format=json,html
+            else
+              echo "Not a PR build. Skipping coverage check."
+            fi
+          when: always
       - store_test_results:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+      - store_artifacts:
+          path: frontend/coverage-artifacts/
+          destination: uncovered-lines
     resource_class: large
   test_e2e:
     executor: docker-postgres-executor

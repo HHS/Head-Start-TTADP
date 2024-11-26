@@ -5,10 +5,19 @@ import {
   similarity,
   similiarGoalsByText,
   missingDataForActivityReport,
+  createGoalsFromTemplate,
 } from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
+
+  it('createGoalsFromTemplate', async () => {
+    fetchMock.post('/api/goals/template/1', { res: 'ok' });
+
+    const res = await createGoalsFromTemplate(1, { data: 'data' });
+
+    expect(res).toEqual({ res: 'ok' });
+  });
 
   it('merges goals', async () => {
     fetchMock.post('/api/goals/recipient/1/region/2/merge', { res: 'ok' });

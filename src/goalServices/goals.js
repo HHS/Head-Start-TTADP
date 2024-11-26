@@ -25,6 +25,7 @@ import {
   GoalTemplateFieldPrompt,
   ActivityReportGoalFieldResponse,
   File,
+  Program,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -124,14 +125,29 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       ['name', 'label'],
       'id',
       'name',
+      'isSourceEditable',
+      'onApprovedAR',
+      'source',
     ],
     where: {
       id,
     },
     include: [
       {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+      },
+      {
         model: Grant,
         as: 'grant',
+        include: [
+          {
+            model: Program,
+            as: 'programs',
+            attributes: [],
+          },
+        ],
       },
       {
         model: Objective,
@@ -264,7 +280,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
 
   const reformattedGoals = goals.map((goal) => ({
     ...goal,
+    isSourceEditable: goal.isSourceEditable,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
+    onApprovedAR: goal.onApprovedAR,
     objectives: goal.objectives
       .map((objective) => ({
         ...objective.toJSON(),
@@ -507,6 +525,7 @@ export async function createOrUpdateGoals(goals) {
       isCurated,
       source,
       goalTemplateId,
+      skipObjectiveCleanup,
       ...options
     } = goalData;
 
@@ -549,7 +568,7 @@ export async function createOrUpdateGoals(goals) {
         ...(options && options.name && { name: options.name.trim() }),
       });
 
-      if (newGoal.status !== status) {
+      if (status && newGoal.status !== status) {
         newGoal.set({ status });
       }
     }
@@ -649,7 +668,11 @@ export async function createOrUpdateGoals(goals) {
     );
 
     // this function deletes unused objectives
-    await cleanupObjectivesForGoal(newGoal.id, newObjectives);
+    // we can pass a flag to skip this if we are updating the goal without changing objectives
+    if (!skipObjectiveCleanup) {
+      await cleanupObjectivesForGoal(newGoal.id, newObjectives);
+    }
+
     return newGoal.id;
   }));
 
@@ -683,6 +706,13 @@ export async function goalsForGrants(grantIds) {
       attributes: [],
     }],
     group: ['"Grant".id'],
+  });
+
+  const curatedTemplates = await GoalTemplate.findAll({
+    attributes: ['id'],
+    where: {
+      creationMethod: CREATION_METHOD.CURATED,
+    },
   });
 
   /**
@@ -741,7 +771,15 @@ export async function goalsForGrants(grantIds) {
       'source',
       'createdVia',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"', '"Goal".id'],
+    group: [
+      '"Goal"."name"',
+      '"Goal"."status"',
+      '"Goal"."endDate"',
+      '"Goal"."onApprovedAR"',
+      '"Goal"."source"',
+      '"Goal"."createdVia"',
+      '"Goal".id',
+    ],
     where: {
       name: {
         [Op.ne]: '', // exclude "blank" goals
@@ -749,6 +787,16 @@ export async function goalsForGrants(grantIds) {
       '$grant.id$': ids,
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
+      },
+      goalTemplateId: {
+        [Op.or]: [
+          {
+            [Op.notIn]: curatedTemplates.map((ct) => ct.id),
+          },
+          {
+            [Op.is]: null,
+          },
+        ],
       },
     },
     include: [
@@ -769,7 +817,13 @@ export async function goalsForGrants(grantIds) {
         required: false,
       },
     ],
-    order: [['name', 'asc']],
+    order: [[sequelize.fn(
+      'MAX',
+      sequelize.fn(
+        'DISTINCT',
+        sequelize.col('"Goal"."createdAt"'),
+      ),
+    ), 'desc']],
   });
 }
 
@@ -1277,6 +1331,7 @@ export async function saveGoalsForReport(goals, report) {
           if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
             newOrUpdatedGoal = await Goal.create({
               goalTemplateId,
+              createdVia: 'activityReport',
               name: goal.name ? goal.name.trim() : '',
               grantId,
               status,
@@ -1620,6 +1675,28 @@ const fieldMappingForDeduplication = {
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
   .some((grants) => Object.values(grants).some((c) => c > 1));
 
+export function groupSimilarGoalsByGrant(result) {
+  const completeGroupsByGrant = (result || []).reduce((acc, matchedGoals) => {
+    const { id, matches } = matchedGoals;
+    const grantIdGroups = matches.reduce((innerAcc, match) => {
+      if (!innerAcc[match.grantId]) {
+        return { ...innerAcc, [match.grantId]: [match.id] };
+      }
+      innerAcc[match.grantId].push(match.id);
+      return innerAcc;
+    }, {});
+
+    acc.push({ id, grantIdGroups });
+    return acc;
+  }, []);
+
+  // Return groups by grant id.
+  const goalIdGroups = completeGroupsByGrant.map(
+    (matchedGoalsByGrant) => uniq(Object.values(matchedGoalsByGrant.grantIdGroups)),
+  ).flat().filter((group) => group.length > 1);
+  return goalIdGroups;
+}
+
 /**
 * @param {Number} recipientId
 * @returns {
@@ -1652,7 +1729,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     regionId,
   );
 
-  if (existingRecipientGroups.length) {
+  if (existingRecipientGroups && existingRecipientGroups.length) {
     return existingRecipientGroups;
   }
 
@@ -1664,11 +1741,8 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     result = similarity.result;
   }
 
-  // convert the response to a group of IDs
-  const goalIdGroups = (result || []).map((matchedGoals) => {
-    const { id, matches } = matchedGoals;
-    return uniq([id, ...matches.map((match) => match.id)]);
-  });
+  // Group goal matches by grantId.
+  const goalIdGroups = groupSimilarGoalsByGrant(result);
 
   const invalidStatusesForReportGoals = [
     REPORT_STATUSES.SUBMITTED,

@@ -12,7 +12,7 @@
     "@react-hook/resize-observer": "^1.2.6",
     "@silevis/reactgrid": "3.1",
     "@trussworks/react-uswds": "4.1.1",
-    "@ttahub/common": "^2.1.5",
+    "@ttahub/common": "^2.1.7",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
@@ -74,6 +74,7 @@
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
+    "lint:fix:single": "eslint --fix",
     "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "resolutions": {
@@ -209,13 +210,15 @@
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
       "<rootDir>/src/pages/makecolors.js",
       "<rootDir>/src/NetworkContext.js",
-      "<rootDir>/src/hooks/helpers.js"
+      "<rootDir>/src/hooks/helpers.js",
+      "<rootDir>/src/testHelpers.js",
+      "<rootDir>/src/pages/activityReports/testHelpers.js"
     ],
     "coverageThreshold": {
       "global": {
         "statements": 90,
-        "functions": 89,
-        "branches": 89,
+        "functions": 90,
+        "branches": 90,
         "lines": 90
       }
     }

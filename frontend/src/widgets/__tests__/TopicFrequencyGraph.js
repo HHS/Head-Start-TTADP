@@ -152,11 +152,6 @@ describe('Topic & Frequency Graph Widget', () => {
     expect(await screen.findByText('Number of Activity Reports by Topic')).toBeInTheDocument();
   });
 
-  it('handles loading', async () => {
-    renderArGraphOverview({ loading: true });
-    expect(await screen.findByText('Loading')).toBeInTheDocument();
-  });
-
   it('the sort control works', async () => {
     renderArGraphOverview({ data: [...TEST_DATA] });
     const button = screen.getByRole('button', { name: /change topic graph order/i });
@@ -180,25 +175,5 @@ describe('Topic & Frequency Graph Widget', () => {
     const point2 = Array.from(document.querySelectorAll('g.ytick')).pop();
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe('CLASS: Instructional Support');
-  });
-
-  it('handles switching display contexts', async () => {
-    renderArGraphOverview({ data: [...TEST_DATA] });
-    const button = await screen.findByRole('button', { name: /display Number of Activity Reports by Topic as table/i });
-    act(() => userEvent.click(button));
-
-    const firstRowHeader = await screen.findByRole('cell', {
-      name: /community and self-assessment/i,
-    });
-    expect(firstRowHeader).toBeInTheDocument();
-
-    const firstTableCell = await screen.findByRole('cell', { name: /155/i });
-    expect(firstTableCell).toBeInTheDocument();
-
-    const viewGraph = await screen.findByRole('button', { name: /display Number of Activity Reports by Topic as graph/i });
-    act(() => userEvent.click(viewGraph));
-
-    expect(firstRowHeader).not.toBeInTheDocument();
-    expect(firstTableCell).not.toBeInTheDocument();
   });
 });
