@@ -4,54 +4,71 @@ import { auditLogger } from '../logger';
 
 const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
-    const {
-      'aws-elasticache-redis': [{
+    const services = JSON.parse(process.env.VCAP_SERVICES);
+
+    // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
+    if (services['aws-elasticache-redis'] && services['aws-elasticache-redis'].length > 0) {
+      const {
         credentials: {
           host,
           port,
           password,
           uri,
         },
-      }],
-    } = JSON.parse(process.env.VCAP_SERVICES);
+      } = services['aws-elasticache-redis'][0];
 
-    let redisSettings = {
-      uri,
-      host,
-      port,
-      tlsEnabled: true,
-      // TLS needs to be set to an empty object for redis on cloud.gov
-      // eslint-disable-next-line no-empty-pattern
-      redisOpts: {
-        redis: { password, tls: {} },
-      },
-    };
-
-    // Explicitly set the rate limiter settings.
-    if (enableRateLimiter) {
-      redisSettings = {
-        ...redisSettings,
+      let redisSettings = {
+        uri,
+        host,
+        port,
+        tlsEnabled: true,
+        // TLS needs to be set to an empty object for redis on cloud.gov
+        // eslint-disable-next-line no-empty-pattern
         redisOpts: {
-          ...redisSettings.redisOpts,
-          limiter: {
-            max: process.env.REDIS_LIMITER_MAX || 1000,
-            duration: process.env.REDIS_LIMITER_DURATION || 300000,
-          },
+          redis: { password, tls: {} },
         },
       };
-    }
 
-    return redisSettings;
+      // Explicitly set the rate limiter settings.
+      if (enableRateLimiter) {
+        redisSettings = {
+          ...redisSettings,
+          redisOpts: {
+            ...redisSettings.redisOpts,
+            limiter: {
+              max: process.env.REDIS_LIMITER_MAX || 1000,
+              duration: process.env.REDIS_LIMITER_DURATION || 300000,
+            },
+          },
+        };
+      }
+
+      return redisSettings;
+    }
   }
-  const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
+
+  // Check for the presence of Redis-related environment variables
+  const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
+
+  if (REDIS_HOST && REDIS_PASS) {
+    return {
+      host: REDIS_HOST,
+      uri: `redis://:${REDIS_PASS}@${REDIS_HOST}:${REDIS_PORT || 6379}`,
+      port: REDIS_PORT || 6379,
+      tlsEnabled: false,
+      redisOpts: {
+        redis: { password: REDIS_PASS },
+      },
+    };
+  }
+
+  // Return a minimal configuration if Redis is not configured
   return {
-    host,
-    uri: `redis://:${password}@${host}:${process.env.REDIS_PORT || 6379}`,
-    port: (process.env.REDIS_PORT || 6379),
+    host: null,
+    uri: null,
+    port: null,
     tlsEnabled: false,
-    redisOpts: {
-      redis: { password },
-    },
+    redisOpts: {},
   };
 };
 
