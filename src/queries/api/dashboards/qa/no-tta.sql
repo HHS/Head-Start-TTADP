@@ -418,7 +418,7 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.3: Update filtered_grants based on the reduced filtered_activity_reports dataset
 WITH reduced_grants AS (
-    SELECT
+    SELECT DISTINCT 
       ar."grantId"
     FROM filtered_activity_reports fa
     JOIN "ActivityRecipients" ar ON fa.id = ar."activityReportId"
@@ -449,16 +449,25 @@ END $$;
 
 ---------------------------------------------------------------------------------------------------
 -- Final CTEs for dataset generation
-WITH active_filters_array AS (
-  SELECT array_remove(ARRAY[
-    CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
-    CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
-    CASE WHEN NULLIF(current_setting('ssdi.grantNumber', true), '') IS NOT NULL THEN 'grantNumber' END,
-    CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
-    CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
-    CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
-    CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
-  ], NULL) AS active_filters
+WITH
+has_current_grant AS (
+  SELECT
+    "recipientId" rid,
+    BOOL_OR(status = 'Active') has_current_active_grant
+  FROM "Grants"
+  GROUP BY 1
+),
+active_filters_array AS (
+    SELECT array_remove(ARRAY[
+      CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
+      CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantNumber', true), '') IS NOT NULL THEN 'grantNumber' END,
+      CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
+      CASE WHEN NULLIF(current_setting('ssdi.region', true), '') IS NOT NULL THEN 'region' END,
+      CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
+    ], NULL) AS active_filters
+
 ),
 
 no_tta AS (
@@ -466,7 +475,9 @@ no_tta AS (
       r.id,
       COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
     FROM "Recipients" r
+    JOIN has_current_grant hcg ON r.id = hcg.rid
     JOIN "Grants" gr ON r.id = gr."recipientId"
+    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
     JOIN filtered_grants fgr ON gr.id = fgr.id
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN filtered_activity_reports far ON ar."activityReportId" = far.id
@@ -480,7 +491,7 @@ no_tta AS (
     )
     AND srp.data ->> 'status' = 'Complete'
     AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     GROUP BY 1
     ORDER BY 1
 ),
@@ -496,16 +507,17 @@ no_tta_page AS (
       r.id,
       r.name,
       gr."regionId",
-      ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::timestamp last_tta,
-      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
+      ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::timestamp last_tta,
+      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
     AND NOT nt.has_tta
+    JOIN has_current_grant hcg ON r.id = hcg.rid
     JOIN "Grants" gr ON r.id = gr."recipientId"
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN "ActivityReports" a ON ar."activityReportId" = a.id
     AND a."calculatedStatus" = 'approved'
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     GROUP BY 1,2,3
     ORDER BY 1
 ),
