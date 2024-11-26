@@ -14,7 +14,7 @@ services:
     container_name: postgres_docker
     env_file: .env
     profiles:
-      - minimal_required
+      - minimal_required_postgres
     ports:
       - "5432:5432"
     volumes:
@@ -51,7 +51,7 @@ services:
     build:
       context: ./similarity_api
     profiles:
-      - minimal_required
+      - minimal_required_python
     ports:
       - "9100:8080"
     env_file: .env
@@ -62,7 +62,7 @@ services:
   redis:
     image: redis:5.0.6-alpine
     profiles:
-      - minimal_required
+      - minimal_required_redis
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
     env_file: .env
     ports:

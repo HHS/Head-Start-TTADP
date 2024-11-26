@@ -1,5 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
@@ -40,6 +46,11 @@ export function TopicFrequencyGraphWidget({
   loading,
   title,
 }) {
+  const exportName = useMemo(() => {
+    const TODAY = moment().format('YYYY-MM-DD');
+    return `${TODAY} ${title}`;
+  }, [title]);
+
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
 
@@ -191,7 +202,7 @@ export function TopicFrequencyGraphWidget({
                 buttonText="Save screenshot"
                 id="rd-save-screenshot-topic-frequency"
                 className="margin-x-2"
-                title={title}
+                title={exportName}
               />
             )
             : null}

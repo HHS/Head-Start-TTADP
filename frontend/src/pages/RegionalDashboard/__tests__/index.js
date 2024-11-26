@@ -24,11 +24,23 @@ const reasonListUrl = join('api', 'widgets', 'reasonList');
 const reasonListResponse = [{ name: 'Ongoing Quality Improvement', count: 3 }];
 const totalHrsAndRecipientGraphUrl = join('api', 'widgets', 'totalHrsAndRecipientGraph');
 const totalHoursResponse = [{
-  name: 'Hours of Training', x: ['17', '18', '23', '2', '3'], y: [1.5, 0, 0, 0, 0], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  name: 'Hours of Training',
+  x: ['17', '18', '23', '2', '3'],
+  y: [1.5, 0, 0, 0, 0],
+  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  trace: 'circle',
 }, {
-  name: 'Hours of Technical Assistance', x: ['17', '18', '23', '2', '3'], y: [0, 0, 2.5, 2.5, 0], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  name: 'Hours of Technical Assistance',
+  x: ['17', '18', '23', '2', '3'],
+  y: [0, 0, 2.5, 2.5, 0],
+  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  trace: 'square',
 }, {
-  name: 'Hours of Both', x: ['17', '18', '23', '2', '3'], y: [1.5, 1.5, 0, 0, 3.5], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  name: 'Hours of Both',
+  x: ['17', '18', '23', '2', '3'],
+  y: [1.5, 1.5, 0, 0, 3.5],
+  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+  trace: 'triangle',
 }];
 const topicFrequencyGraphUrl = join('api', 'widgets', 'topicFrequencyGraph');
 const topicFrequencyResponse = [{ topic: 'Behavioral / Mental Health / Trauma', count: 0 }, { topic: 'Child Screening and Assessment', count: 0 }];

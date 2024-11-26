@@ -30,6 +30,8 @@ import db, {
   File,
 } from '../../models';
 import { GOAL_STATUS } from '../../constants';
+import { withoutStatus, withStatus } from './status';
+import { withoutTtaType, withTtaType } from './ttaType';
 
 const REGION_ID = 10;
 
@@ -527,6 +529,38 @@ describe('goal filtersToScopes', () => {
       expect(found.map((g) => g.name)).toContain('Goal 2');
       expect(found.map((g) => g.name)).toContain('Goal 3');
       expect(found.map((g) => g.name)).toContain('Goal 4');
+    });
+
+    it('withStatus, when statuses does not include Needs status', () => {
+      const out = withStatus([]);
+      expect(out).toMatchObject({
+        [Op.or]: [],
+      });
+    });
+
+    it('withoutStatus, when status includes Needs status', () => {
+      const out = withoutStatus(['Needs status']);
+      expect(out).toMatchObject({
+        [Op.or]: [
+          { status: { [Op.eq]: null } },
+          {
+            [Op.and]: [{
+              status: { [Op.notILike]: '%sNeeds status%s' },
+            }],
+          },
+        ],
+      });
+    });
+  });
+
+  describe('ttaType', () => {
+    it('withTtaType, empty query returns empty object', () => {
+      const out = withTtaType([]);
+      expect(out).toMatchObject({});
+    });
+    it('withoutTtaType, empty query returns empty object', () => {
+      const out = withoutTtaType([]);
+      expect(out).toMatchObject({});
     });
   });
 
