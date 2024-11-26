@@ -961,8 +961,8 @@ describe('Activity report service', () => {
           programType: 'EHS',
           startYear: 'Aeons ago',
           status: 'active',
-          startDate: 'today',
-          endDate: 'tomorrow',
+          startDate: new Date('2023-01-01'),
+          endDate: new Date('2025-01-01'),
         });
 
         await Program.create({
@@ -972,8 +972,8 @@ describe('Activity report service', () => {
           programType: 'HS',
           startYear: 'The murky depths of time',
           status: 'active',
-          startDate: 'today',
-          endDate: 'tomorrow',
+          startDate: new Date('2023-01-01'),
+          endDate: new Date('2025-01-01'),
         });
 
         expect(recipientWithProgram.name).toBe('recipient with program');
@@ -1289,8 +1289,8 @@ describe('Activity report service', () => {
           programType: 'DWN',
           startYear: 'Aeons ago',
           status: 'active',
-          startDate: 'today',
-          endDate: 'tomorrow',
+          startDate: new Date('2023-01-01'),
+          endDate: new Date('2025-01-01'),
         });
 
         // create one approved legacy

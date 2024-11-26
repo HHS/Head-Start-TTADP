@@ -928,10 +928,10 @@ class Programs{
  * grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
- endDate : varchar(255)
+ endDate : date
  name : varchar(255)
  programType : varchar(255)
- startDate : varchar(255)
+ startDate : date
  startYear : varchar(255)
  status : varchar(255)
 }
