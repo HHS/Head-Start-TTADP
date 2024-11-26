@@ -321,7 +321,7 @@
     "@babel/runtime": "^7.12.1",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "^2.1.6",
+    "@ttahub/common": "^2.1.7",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",
