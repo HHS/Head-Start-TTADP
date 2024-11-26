@@ -67,9 +67,19 @@ interface ICourse {
   name: string;
 }
 
+interface ICitation {
+  citation: string;
+  monitoringReferences: JSON;
+}
+
 interface ICourseModelInstance extends ICourse {
   dataValues?: ICourse;
   toJSON?: () => ICourse;
+}
+
+interface ICitationModelInstance extends ICourse {
+  dataValues?: ICitation;
+  toJSON?: () => ICitation;
 }
 
 interface IActivityReportObjective {
@@ -101,6 +111,9 @@ interface IActivityReportObjective {
   }[];
   activityReportObjectiveCourses: {
     course: ICourse;
+  }[];
+  activityReportObjectiveCitations: {
+    citation: ICitation;
   }[];
 }
 
@@ -339,6 +352,7 @@ export {
   IActivityReportObjective,
   IObjective,
   IGoal,
+  ICitation,
   // -- model version of the above -- //
   IGoalModelInstance,
   IGrantModelInstance,
@@ -348,6 +362,7 @@ export {
   IFileModelInstance,
   IObjectiveModelInstance,
   IActivityReportObjectivesModelInstance,
+  ICitationModelInstance,
   // -- after going through reduceGoals -- //
   IReducedObjective,
   IReducedGoal,

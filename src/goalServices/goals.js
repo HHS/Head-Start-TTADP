@@ -201,11 +201,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               },
               {
                 model: ActivityReportObjectiveCitation,
-                as: 'citations',
+                as: 'activityReportObjectiveCitations',
                 attributes: ['citation', 'monitoringReferences'],
-                through: {
-                  attributes: [],
-                },
               },
               {
                 model: Resource,
@@ -310,6 +307,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         files: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,
           'files',
+        ),
+        citations: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'activityReportObjectiveCitations',
         ),
       })),
   }));
