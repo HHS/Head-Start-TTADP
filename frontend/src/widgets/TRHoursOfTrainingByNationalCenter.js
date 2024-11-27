@@ -10,12 +10,14 @@ import { NOOP } from '../Constants';
 const FIRST_HEADING = 'National Center';
 const HEADINGS = ['Hours'];
 
+const TITLE = 'Hours of training by National Center';
+
 const TRHoursWidget = ({
   data,
 }) => {
   const widgetRef = useRef(null);
   const [showTabularData, setShowTabularData] = useState(false);
-  const capture = useMediaCapture(widgetRef, 'Total TTA hours');
+  const capture = useMediaCapture(widgetRef, TITLE);
 
   const menuItems = [{
     label: showTabularData ? 'Display graph' : 'Display table',

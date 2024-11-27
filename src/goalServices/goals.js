@@ -26,6 +26,7 @@ import {
   ActivityReportGoalFieldResponse,
   File,
   Program,
+  ActivityReportObjectiveCitation,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -39,6 +40,7 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
+import { getMonitoringGoals } from '../services/citations';
 import { auditLogger } from '../logger';
 import {
   mergeCollaborators,
@@ -199,6 +201,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 },
               },
               {
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                attributes: ['citation', 'monitoringReferences'],
+              },
+              {
                 model: Resource,
                 as: 'resources',
                 attributes: ['url', 'title'],
@@ -301,6 +308,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         files: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,
           'files',
+        ),
+        citations: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'activityReportObjectiveCitations',
         ),
       })),
   }));
@@ -681,7 +692,7 @@ export async function createOrUpdateGoals(goals) {
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
-export async function goalsForGrants(grantIds) {
+export async function goalsForGrants(grantIds, reportStartDate, user = null) {
   /**
    * get all the matching grants
    */
@@ -724,10 +735,10 @@ export async function goalsForGrants(grantIds) {
     .filter((g) => g)));
 
   /*
-  * finally, return all matching goals
+  * Get all matching goals
   */
 
-  return Goal.findAll({
+  const regularGoals = Goal.findAll({
     attributes: [
       [sequelize.fn(
         'ARRAY_AGG',
@@ -825,6 +836,22 @@ export async function goalsForGrants(grantIds) {
       ),
     ), 'desc']],
   });
+
+  /*
+  * Get all monitoring goals
+  */
+  let goalsToReturn = [regularGoals];
+  const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
+  if (hasGoalMonitoringOverride) {
+    const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
+
+    // Combine goalsToReturn with monitoringGoals.
+    const allGoals = await Promise.all([regularGoals, monitoringGoals]);
+
+    // Flatten the array of arrays.
+    goalsToReturn = allGoals.flat();
+  }
+  return goalsToReturn;
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
@@ -1277,7 +1304,34 @@ export async function saveGoalsForReport(goals, report) {
     },
   });
 
-  const currentGoals = await Promise.all(goals.map(async (goal) => {
+  // Loop and Create or Update goals.
+  const currentGoals = await Promise.all(goals.map(async (goal, index) => {
+    // We need to skip creation of monitoring goals for non monitoring grants.
+    if (goal.standard === 'Monitoring') {
+      // Find the corresponding monitoring goals.
+      const monitoringGoals = await Goal.findAll({
+        attribute: ['grantId'],
+        raw: true,
+        where: {
+          grantId: goal.grantIds,
+          standard: 'Monitoring',
+          status: { [Op.not]: GOAL_STATUS.CLOSED },
+        },
+      });
+      if (monitoringGoals.length > 0) {
+        // Replace the goal granIds only with the grants that should have monitoring goals created.
+        // eslint-disable-next-line no-param-reassign
+        goals[index].grantIds = monitoringGoals;
+      } else {
+        // Do not create monitoring goals for any of these recipients.
+        // eslint-disable-next-line no-param-reassign
+        // delete goals[index];
+        // eslint-disable-next-line no-param-reassign
+        goals[index].grantIds = [];
+        return [];
+      }
+    }
+
     const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
@@ -1414,6 +1468,7 @@ export async function saveGoalsForReport(goals, report) {
       supportType,
       courses,
       objectiveCreatedHere,
+      citations,
     } = savedObjective;
 
     // this will link our objective to the activity report through
@@ -1425,6 +1480,7 @@ export async function saveGoalsForReport(goals, report) {
       {
         resources,
         topics,
+        citations,
         files,
         courses,
         status,
