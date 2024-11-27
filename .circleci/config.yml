@@ -250,19 +250,11 @@ commands:
       build_branch:
         description: "The branch of the build being deployed"
         type: string
-        default: ${CIRCLE_BRANCH}
+        default: << pipeline.git.branch >>
       build_commit:
         description: "The commit of the build being deployed"
         type: string
-        default: ${CIRCLE_SHA1}
-      build_number:
-        description: "The number of the build being deployed"
-        type: string
-        default: ${CIRCLE_BUILD_NUM}
-      build_timestamp:
-        description: "The number of the build being deployed"
-        type: string
-        default: $(date +"%Y-%m-%d %H:%M:%S")
+        default: << pipeline.git.revision >>
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -364,6 +356,7 @@ commands:
       - run:
           name: Push application with deployment vars
           command: |
+            set -x
             cf push \
               --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
@@ -389,10 +382,10 @@ commands:
               --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
               --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
               --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>} \
-              --var BUILD_BRANCH=${<< parameters.build_branch >>} \
-              --var BUILD_COMMIT=${<< parameters.build_commit >>} \
-              --var BUILD_NUMBER=${<< parameters.build_number >>} \
-              --var BUILD_TIMESTAMP=${<< parameters.build_timestamp >>}
+              --var BUILD_BRANCH=<< parameters.build_branch >> \
+              --var BUILD_COMMIT=<< parameters.build_commit >> \
+              --var BUILD_NUMBER=<< pipeline.number >> \
+              --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -672,7 +665,7 @@ parameters:
     default: "kw-unsafe-inline"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "mb/TTAHUB-3483/checkbox-to-activity-reports"
+    default: "TTAHUB-3613/admin-build-info2"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
