@@ -250,15 +250,15 @@ commands:
       build_branch:
         description: "The branch of the build being deployed"
         type: string
-        default: ${CIRCLE_BRANCH}
+        default: << pipeline.git.branch >>
       build_commit:
         description: "The commit of the build being deployed"
         type: string
-        default: ${CIRCLE_SHA1}
+        default: << pipeline.git.revision >>
       build_number:
         description: "The number of the build being deployed"
         type: string
-        default: ${CIRCLE_BUILD_NUM}
+        default: << pipeline.number >>
       build_timestamp:
         description: "The number of the build being deployed"
         type: string
