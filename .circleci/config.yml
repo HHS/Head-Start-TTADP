@@ -385,7 +385,7 @@ commands:
               --var BUILD_BRANCH=<< parameters.build_branch >> \
               --var BUILD_COMMIT=<< parameters.build_commit >> \
               --var BUILD_NUMBER=<< pipeline.number >> \
-              --var BUILD_TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+              --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
       # - run:
       #     name: Push maintenance application
       #     command: |
