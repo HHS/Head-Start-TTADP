@@ -356,6 +356,7 @@ commands:
       - run:
           name: Push application with deployment vars
           command: |
+            set -x
             cf push \
               --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
@@ -381,8 +382,8 @@ commands:
               --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
               --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
               --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>} \
-              --var BUILD_BRANCH=${<< parameters.build_branch >>} \
-              --var BUILD_COMMIT=${<< parameters.build_commit >>} \
+              --var BUILD_BRANCH=<< parameters.build_branch >> \
+              --var BUILD_COMMIT=<< parameters.build_commit >> \
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var BUILD_TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
       # - run:
