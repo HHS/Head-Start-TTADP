@@ -692,7 +692,7 @@ export async function createOrUpdateGoals(goals) {
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
-export async function goalsForGrants(grantIds, reportStartDate, user = null) {
+export async function goalsForGrants(grantIds, reportStartDate, user) {
   /**
    * get all the matching grants
    */
