@@ -255,14 +255,6 @@ commands:
         description: "The commit of the build being deployed"
         type: string
         default: << pipeline.git.revision >>
-      build_number:
-        description: "The number of the build being deployed"
-        type: integer
-        default: << pipeline.number >>
-      build_timestamp:
-        description: "The number of the build being deployed"
-        type: string
-        default: $(date +"%Y-%m-%d %H:%M:%S")
       auth_client_id:
         description: "Name of CircleCi project environment variable that
           holds authentication client id, a required application variable"
@@ -391,8 +383,8 @@ commands:
               --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>} \
               --var BUILD_BRANCH=${<< parameters.build_branch >>} \
               --var BUILD_COMMIT=${<< parameters.build_commit >>} \
-              --var BUILD_NUMBER=${<< parameters.build_number >>} \
-              --var BUILD_TIMESTAMP=${<< parameters.build_timestamp >>}
+              --var BUILD_NUMBER=<< pipeline.number >> \
+              --var BUILD_TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
       # - run:
       #     name: Push maintenance application
       #     command: |
