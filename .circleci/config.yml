@@ -258,7 +258,7 @@ commands:
       build_number:
         description: "The number of the build being deployed"
         type: string
-        default: "<< pipeline.number >>"
+        default: << to_string(pipeline.number) >>
       build_timestamp:
         description: "The number of the build being deployed"
         type: string
