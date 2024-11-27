@@ -6,6 +6,7 @@ import {
   act,
   screen,
 } from '@testing-library/react';
+import { TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
 import LineGraph from '../LineGraph';
 
 const traces = [
@@ -40,6 +41,8 @@ const traces = [
     ],
     name: 'In person',
     traceOrder: 1,
+    trace: 'circle',
+    id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.IN_PERSON,
   },
   {
     x: [
@@ -72,6 +75,8 @@ const traces = [
     ],
     name: 'Virtual',
     traceOrder: 2,
+    trace: 'square',
+    id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.VIRTUAL,
   },
   {
     x: [
@@ -104,6 +109,8 @@ const traces = [
     ],
     name: 'Hybrid',
     traceOrder: 3,
+    trace: 'triangle',
+    id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.HYBRID,
   },
 ];
 

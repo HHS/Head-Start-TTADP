@@ -50,12 +50,15 @@ import {
 import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
-import getGoalsForReport from './getGoalsForReport';
+import { getMonitoringGoals } from '../services/citations';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
+
+jest.mock('../services/citations');
+
 jest.mock('./wasGoalPreviouslyClosed');
 jest.mock('./extractObjectiveAssociationsFromActivityReportObjectives');
 jest.mock('./reduceGoals');
@@ -601,6 +604,78 @@ describe('Goals DB service', () => {
         name: 'name',
         status: 'Closed',
       }), { individualHooks: true });
+    });
+
+    it('creates a monitoring goal only when the grant has an existing monitoring goal', async () => {
+      const mockMonitoringGoal = {
+        id: 1,
+        grantId: mockGrantId,
+        name: 'Monitoring Goal',
+        status: 'In Progress',
+        objectives: [],
+      };
+
+      Goal.findAll = jest.fn().mockResolvedValue([{ ...mockMonitoringGoal }]);
+
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'In progress', objectives: [],
+        },
+      ], { id: mockActivityReportId });
+
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
+        createdVia: 'activityReport',
+        grantId: mockGrantId,
+        name: 'name',
+        status: 'In progress',
+      }), { individualHooks: true });
+    });
+
+    it('does not create a monitoring goal when the grant does not have an existing monitoring goal', async () => {
+      Goal.findAll = jest.fn().mockResolvedValue([]);
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'In progress', objectives: [],
+        },
+      ], { id: mockActivityReportId });
+
+      expect(Goal.create).not.toHaveBeenCalledWith();
+    });
+
+    it('creates a monitoring goal for only the grants that has an existing monitoring goal', async () => {
+      const mockMonitoringGoal = {
+        id: 2,
+        grantId: 2,
+        name: 'Monitoring Goal',
+        status: 'In Progress',
+        objectives: [],
+      };
+
+      Goal.findAll = jest.fn().mockResolvedValue([
+        { ...mockMonitoringGoal, grantId: 2 },
+        { ...mockMonitoringGoal, grantId: 3 },
+      ]);
+
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [1, 2, 3], name: 'name', status: 'In progress', objectives: [],
+        },
+      ], { id: mockActivityReportId });
+
+      expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining(
+        {
+          createdVia: 'activityReport',
+          grantId: 2,
+          name: 'name',
+          status: 'In progress',
+        },
+        {
+          createdVia: 'activityReport',
+          grantId: 3,
+          name: 'name',
+          status: 'In progress',
+        },
+      ), { individualHooks: true });
     });
 
     it('can use existing goals', async () => {
@@ -1448,6 +1523,43 @@ describe('Goals DB service', () => {
       expect(where['$grant.id$']).toStrictEqual([
         505,
         506,
+      ]);
+    });
+
+    it('does not return monitoring goals if the user is missing the feature flag', async () => {
+      Grant.findAll = jest.fn();
+      Grant.findAll.mockResolvedValue([{ id: 505, oldGrantId: 506 }]);
+      Goal.findAll = jest.fn();
+      Goal.findAll.mockResolvedValue([{ id: 505 }, { id: 506 }]);
+
+      await goalsForGrants([506]);
+
+      const { where } = Goal.findAll.mock.calls[0][0];
+      expect(where['$grant.id$']).toStrictEqual([
+        505,
+        506,
+      ]);
+    });
+
+    it('returns monitoring goals if the user has the feature flag', async () => {
+      Grant.findAll = jest.fn();
+      Grant.findAll.mockResolvedValue([{ id: 505, oldGrantId: 506 }]);
+      Goal.findAll = jest.fn();
+      Goal.findAll.mockResolvedValue([{ id: 505 }, { id: 506 }]);
+
+      // Mock getMonitoringGoals to return a list of monitoring goals.
+      getMonitoringGoals.mockResolvedValue([{ id: 507 }]);
+
+      // Mock the feature flag function canSeeBehindFeatureFlag in user to return true.
+      const result = await goalsForGrants([506], '2024-11-27', {
+        flags: ['monitoring_integration'],
+      });
+
+      // Assert result contains the goals we expect including the monitoring goal.
+      expect(result).toEqual([
+        { id: 505 },
+        { id: 506 },
+        { id: 507 },
       ]);
     });
   });

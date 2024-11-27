@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringStandard,
         {
           foreignKey: 'standardId',
-          as: 'monitoringStandardes',
+          as: 'monitoringStandards',
         },
       );
 
