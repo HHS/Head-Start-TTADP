@@ -50,11 +50,15 @@ import {
 import {
   mergeCollaborators,
 } from '../models/helpers/genericCollaborator';
+import { getMonitoringGoals } from '../services/citations';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
+
+jest.mock('../services/citations');
+
 jest.mock('./wasGoalPreviouslyClosed');
 jest.mock('./extractObjectiveAssociationsFromActivityReportObjectives');
 jest.mock('./reduceGoals');
@@ -1519,6 +1523,43 @@ describe('Goals DB service', () => {
       expect(where['$grant.id$']).toStrictEqual([
         505,
         506,
+      ]);
+    });
+
+    it('does not return monitoring goals if the user is missing the feature flag', async () => {
+      Grant.findAll = jest.fn();
+      Grant.findAll.mockResolvedValue([{ id: 505, oldGrantId: 506 }]);
+      Goal.findAll = jest.fn();
+      Goal.findAll.mockResolvedValue([{ id: 505 }, { id: 506 }]);
+
+      await goalsForGrants([506]);
+
+      const { where } = Goal.findAll.mock.calls[0][0];
+      expect(where['$grant.id$']).toStrictEqual([
+        505,
+        506,
+      ]);
+    });
+
+    it('returns monitoring goals if the user has the feature flag', async () => {
+      Grant.findAll = jest.fn();
+      Grant.findAll.mockResolvedValue([{ id: 505, oldGrantId: 506 }]);
+      Goal.findAll = jest.fn();
+      Goal.findAll.mockResolvedValue([{ id: 505 }, { id: 506 }]);
+
+      // Mock getMonitoringGoals to return a list of monitoring goals.
+      getMonitoringGoals.mockResolvedValue([{ id: 507 }]);
+
+      // Mock the feature flag function canSeeBehindFeatureFlag in user to return true.
+      const result = await goalsForGrants([506], '2024-11-27', {
+        flags: ['monitoring_integration'],
+      });
+
+      // Assert result contains the goals we expect including the monitoring goal.
+      expect(result).toEqual([
+        { id: 505 },
+        { id: 506 },
+        { id: 507 },
       ]);
     });
   });

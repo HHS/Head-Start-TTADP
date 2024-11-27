@@ -40,6 +40,7 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
+import { getMonitoringGoals } from '../services/citations';
 import { auditLogger } from '../logger';
 import {
   mergeCollaborators,
@@ -691,7 +692,7 @@ export async function createOrUpdateGoals(goals) {
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
-export async function goalsForGrants(grantIds) {
+export async function goalsForGrants(grantIds, reportStartDate, user = null) {
   /**
    * get all the matching grants
    */
@@ -734,10 +735,10 @@ export async function goalsForGrants(grantIds) {
     .filter((g) => g)));
 
   /*
-  * finally, return all matching goals
+  * Get all matching goals
   */
 
-  return Goal.findAll({
+  const regularGoals = Goal.findAll({
     attributes: [
       [sequelize.fn(
         'ARRAY_AGG',
@@ -835,6 +836,22 @@ export async function goalsForGrants(grantIds) {
       ),
     ), 'desc']],
   });
+
+  /*
+  * Get all monitoring goals
+  */
+  let goalsToReturn = [regularGoals];
+  const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
+  if (hasGoalMonitoringOverride) {
+    const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
+
+    // Combine goalsToReturn with monitoringGoals.
+    const allGoals = await Promise.all([regularGoals, monitoringGoals]);
+
+    // Flatten the array of arrays.
+    goalsToReturn = allGoals.flat();
+  }
+  return goalsToReturn;
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
