@@ -257,8 +257,8 @@ commands:
         default: << pipeline.git.revision >>
       build_number:
         description: "The number of the build being deployed"
-        type: string
-        default: << to_string(pipeline.number) >>
+        type: number
+        default: << pipeline.number >>
       build_timestamp:
         description: "The number of the build being deployed"
         type: string
