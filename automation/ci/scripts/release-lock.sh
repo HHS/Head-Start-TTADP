@@ -1,50 +1,45 @@
 #!/bin/bash
 # Usage: ./release-lock.sh <env_name>
 set -euo pipefail
-set -x
-
-# Ensure jq and base64 are installed
-if ! command -v jq &> /dev/null || ! command -v base64 &> /dev/null; then
-  echo "jq or base64 is not installed. Installing..."
-  sudo apt-get update && sudo apt-get install -y jq coreutils
-fi
 
 env_name=$1
-lock_key="LOCK_${env_name^^}"
+lock_branch="deployment-locks"
+lock_path="automation/locks"
+lock_file="${lock_path}/${env_name}.lock"
+current_epoch=$(date -u +"%s")
+lock_ttl=$((4 * 60 * 60)) # 4 hours in seconds
+current_build_id=${CIRCLE_WORKFLOW_ID:-"UNKNOWN_WORKFLOW_ID"}
 
-# Check the current lock value and validate its status
-lock_status=$(./automation/ci/scripts/check-lock.sh "$env_name")
+# Configure sparse checkout for the lock branch
+git init locks
+cd locks
+git remote add origin <your-repo-url>
+git fetch origin "$lock_branch"
+git sparse-checkout init --cone
+git sparse-checkout set "$lock_file"
+git checkout "$lock_branch"
 
-# If no valid lock exists, exit gracefully
-if [[ "$lock_status" == "false" ]]; then
-  echo "No valid lock exists for environment: $env_name. Nothing to release."
+# Check if the lock file exists
+if [ ! -f "$lock_file" ]; then
+  echo "No lock exists for $env_name. Nothing to release."
   exit 0
 fi
 
-# Parse the existing lock to verify ownership
-temp_lock_file=$(mktemp)
-./automation/ci/scripts/check-lock.sh "$env_name" > "$temp_lock_file"
+lock_timestamp=$(jq -r '.timestamp' "$lock_file" || echo "")
+lock_epoch=$(date -u -d "$lock_timestamp" +"%s" 2>/dev/null || echo "0")
+lock_build_id=$(jq -r '.build_id' "$lock_file" || echo "")
 
-lock_build_id=$(grep -oP '(?<="build_id": ")[^"]*' "$temp_lock_file")
-rm -f "$temp_lock_file"
-
-# Ensure the lock is held by the current workflow
-if [ "$lock_build_id" != "${CIRCLE_WORKFLOW_ID:-UNKNOWN_WORKFLOW_ID}" ]; then
-  echo "Cannot release lock. It is held by another workflow (Build ID: $lock_build_id)." >&2
+# Remove the lock if it's invalid or belongs to the current build
+if [ $((current_epoch - lock_epoch)) -ge $lock_ttl ] || [ "$lock_build_id" == "$current_build_id" ]; then
+  rm "$lock_file"
+  git add "$lock_file"
+  git commit -m "Lock $env_name released"
+  if ! git push origin "$lock_branch"; then
+    echo "Failed to push lock removal due to a race condition. Retrying..."
+    exec "$0" "$env_name" # Retry the script
+  fi
+  echo "Lock released for $env_name."
+else
+  echo "Cannot release lock. It is either valid or belongs to another build."
   exit 1
 fi
-
-# Delete the lock
-curl -s \
-  -H "Circle-Token: ${AUTOMATION_USER_TOKEN}" \
-  -X DELETE \
-  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar/$lock_key"
-
-# Validate the lock was successfully cleared
-lock_status=$(./automation/ci/scripts/check-lock.sh "$env_name")
-if [[ "$lock_status" != "false" ]]; then
-  echo "Lock release validation failed for environment: $env_name." >&2
-  exit 1
-fi
-
-echo "Lock released for environment: $env_name."

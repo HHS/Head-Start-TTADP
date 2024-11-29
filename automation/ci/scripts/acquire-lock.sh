@@ -1,63 +1,60 @@
 #!/bin/bash
 # Usage: ./acquire-lock.sh <env_name>
 set -euo pipefail
-set -x
-
-# Ensure jq and base64 are installed
-if ! command -v jq &> /dev/null || ! command -v base64 &> /dev/null; then
-  echo "jq or base64 is not installed. Installing..."
-  sudo apt-get update && sudo apt-get install -y jq coreutils
-fi
 
 env_name=$1
-lock_key="LOCK_${env_name^^}"
+lock_branch="deployment-locks"
+lock_path="automation/locks"
+lock_file="${lock_path}/${env_name}.lock"
 current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+current_epoch=$(date -u +"%s")
 current_build_id=${CIRCLE_WORKFLOW_ID:-"UNKNOWN_WORKFLOW_ID"}
+current_branch=${CIRCLE_BRANCH:-"UNKNOWN_BRANCH"}
+current_commit=${CIRCLE_SHA1:-"UNKNOWN_COMMIT"}
+lock_ttl=$((4 * 60 * 60)) # 4 hours in seconds
 
-# Check if a lock already exists and is valid
-lock_status=$(./automation/ci/scripts/check-lock.sh "$env_name")
-if [[ "$lock_status" != "false" ]]; then
-  echo "Environment $env_name is already locked." >&2
-  exit 1
+# Configure sparse checkout for the lock branch
+git init locks
+cd locks
+git remote add origin <your-repo-url>
+git fetch origin "$lock_branch"
+git sparse-checkout init --cone
+git sparse-checkout set "$lock_file"
+git checkout "$lock_branch"
+
+# Check if the lock file exists and is valid
+if [ -f "$lock_file" ]; then
+  lock_timestamp=$(jq -r '.timestamp' "$lock_file" || echo "")
+  lock_epoch=$(date -u -d "$lock_timestamp" +"%s" 2>/dev/null || echo "0")
+  lock_build_id=$(jq -r '.build_id' "$lock_file" || echo "")
+
+  # Check if the lock is still valid
+  if [ $((current_epoch - lock_epoch)) -lt $lock_ttl ]; then
+    echo "Lock already exists for $env_name. Lock details:"
+    cat "$lock_file"
+    exit 1
+  else
+    echo "Existing lock for $env_name is invalid. Overwriting..."
+  fi
 fi
 
-# Temp files for payloads
-temp_lock_payload=$(mktemp)
-temp_encoded_payload=$(mktemp)
-temp_api_payload=$(mktemp)
+# Create the lock file
+mkdir -p "$lock_path"  # Ensure the directory exists
+cat > "$lock_file" <<EOF
+{
+  "branch": "$current_branch",
+  "commit": "$current_commit",
+  "build_id": "$current_build_id",
+  "timestamp": "$current_time"
+}
+EOF
 
-# Create lock payload as JSON and write to a temp file
-jq -n \
-  --arg branch "$CIRCLE_BRANCH" \
-  --arg build_id "$current_build_id" \
-  --arg timestamp "$current_time" \
-  '{branch: $branch, build_id: $build_id, timestamp: $timestamp}' > "$temp_lock_payload"
-
-# Encode the JSON payload as Base64 and save to a temp file
-base64 < "$temp_lock_payload" > "$temp_encoded_payload"
-
-# Construct the API request payload
-jq -n \
-  --arg name "$lock_key" \
-  --arg value "$(cat "$temp_encoded_payload")" \
-  '{name: $name, value: $value}' > "$temp_api_payload"
-
-# Send the request to set the environment variable
-curl -s \
-  -H "Circle-Token: ${AUTOMATION_USER_TOKEN}" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d @"$temp_api_payload" \
-  "https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/envvar"
-
-# Cleanup temp files
-rm -f "$temp_lock_payload" "$temp_encoded_payload" "$temp_api_payload"
-
-# Validate the lock was successfully set
-lock_status=$(./automation/ci/scripts/check-lock.sh "$env_name")
-if [[ "$lock_status" != "true" ]]; then
-  echo "Failed to acquire lock for environment: $env_name." >&2
-  exit 1
+# Commit and push the lock file
+git add "$lock_file"
+git commit -m "Lock $env_name acquired by build $current_build_id"
+if ! git push origin "$lock_branch"; then
+  echo "Failed to push lock due to a race condition. Retrying..."
+  exec "$0" "$env_name" # Retry the script
 fi
 
-echo "Lock acquired for environment: $env_name."
+echo "Lock acquired for $env_name."
