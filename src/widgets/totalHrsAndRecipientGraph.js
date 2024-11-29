@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
 import { ActivityReport } from '../models';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
@@ -41,13 +41,28 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     {
-      name: 'Hours of Training', x: [], y: [], month: [],
+      name: 'Hours of Technical Assistance',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TECHNICAL_ASSISTANCE,
+      trace: 'circle',
     },
     {
-      name: 'Hours of Technical Assistance', x: [], y: [], month: [],
+      name: 'Hours of Both',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.BOTH,
+      trace: 'triangle',
     },
     {
-      name: 'Hours of Both', x: [], y: [], month: [],
+      name: 'Hours of Training',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TRAINING,
+      trace: 'square',
     },
   ];
 

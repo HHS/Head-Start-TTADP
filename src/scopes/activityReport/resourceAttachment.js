@@ -9,7 +9,7 @@ const selectDistinctActivityReports = (join, having) => `
   GROUP BY "ActivityReports"."id"
   HAVING ${having}`;
 
-const activityReportFilesIncludeExclude = (include = true) => {
+const activityReportFilesIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Files"."originalFileName" IS NULL) OR';
 
   return selectDistinctActivityReports(
@@ -18,7 +18,7 @@ const activityReportFilesIncludeExclude = (include = true) => {
   );
 };
 
-const activityReportObjectiveFilesIncludeExclude = (include = true) => {
+const activityReportObjectiveFilesIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("Files"."originalFileName" IS NULL) OR';
 
   return selectDistinctActivityReports(
