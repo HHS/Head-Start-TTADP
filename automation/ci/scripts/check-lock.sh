@@ -12,7 +12,7 @@ lock_ttl=$((4 * 60 * 60)) # 4 hours in seconds
 # Configure sparse checkout for the lock branch
 git init locks
 cd locks
-git remote add origin <your-repo-url>
+git remote add origin "https://github.com/HHS/Head-Start-TTADP/"
 git fetch origin "$lock_branch"
 git sparse-checkout init --cone
 git sparse-checkout set "$lock_file"

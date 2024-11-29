@@ -16,7 +16,7 @@ if [ ! -d "./locks/.git" ]; then
   mkdir -p locks
   cd locks
   git init
-  git remote add origin "<your-repo-url>"
+  git remote add origin "https://github.com/HHS/Head-Start-TTADP/"
   git fetch origin "$lock_branch"
   git checkout -b "$lock_branch" || git checkout "$lock_branch"
   cd ..
