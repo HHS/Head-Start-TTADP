@@ -104,7 +104,7 @@ const renderGoals = (
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   const fetchResponse = throwFetchError ? 500 : goals;
 
-  fetchMock.get(join(goalUrl, `?${query}&reportStartDate=2021-01-01`), fetchResponse);
+  fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
     <UserContext.Provider value={{ user: { flags: [] } }}>
       <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
