@@ -117,4 +117,67 @@ describe('reduceGoals', () => {
     expect(result.length).toEqual(1);
     expect(result[0].objectives[0].recipientIds).toEqual([123]);
   });
+
+  it('should add otherEntityId to existing recipientIds', () => {
+    const goalsWithExistingObjectives = [
+      {
+        id: 4,
+        name: 'Goal with Existing Objectives',
+        status: 'Draft',
+        isCurated: false,
+        objectives: [
+          {
+            id: 1,
+            otherEntityId: 123,
+            title: 'Objective 1',
+            status: 'Not Started',
+            topics: [],
+            resources: [],
+            files: [],
+            courses: [],
+            goalId: 4,
+            onApprovedAR: false,
+            onAR: false,
+            rtrOrder: 1,
+          },
+          {
+            id: 2,
+            otherEntityId: 456,
+            title: 'Objective 1',
+            status: 'Not Started',
+            topics: [],
+            resources: [],
+            files: [],
+            courses: [],
+            goalId: 4,
+            onApprovedAR: false,
+            onAR: false,
+            rtrOrder: 1,
+          },
+        ],
+        grant: {
+          recipientId: 1,
+          numberWithProgramTypes: 1,
+          recipient: {
+            dataValues: {},
+          },
+        },
+        dataValues: {
+          endDate: '2023-12-31',
+          grant: {
+            recipientId: 1,
+            numberWithProgramTypes: 1,
+          },
+        },
+        endDate: '2023-12-31',
+        grantId: 1,
+        createdVia: 'rtr',
+        source: 'Source',
+      },
+    ];
+
+    const result = reduceGoals(goalsWithExistingObjectives as any);
+    expect(result.length).toEqual(1);
+    expect(result[0].objectives[0].recipientIds).toEqual([123, 456]);
+  });
 });
