@@ -692,7 +692,7 @@ export async function createOrUpdateGoals(goals) {
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
-export async function goalsForGrants(grantIds, reportStartDate, user = null) {
+export async function goalsForGrants(grantIds, reportStartDate, user) {
   /**
    * get all the matching grants
    */
@@ -738,7 +738,7 @@ export async function goalsForGrants(grantIds, reportStartDate, user = null) {
   * Get all matching goals
   */
 
-  const regularGoals = Goal.findAll({
+  const regularGoals = await Goal.findAll({
     attributes: [
       [sequelize.fn(
         'ARRAY_AGG',
@@ -840,8 +840,9 @@ export async function goalsForGrants(grantIds, reportStartDate, user = null) {
   /*
   * Get all monitoring goals
   */
-  let goalsToReturn = [regularGoals];
+  let goalsToReturn = regularGoals;
   const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
+
   if (hasGoalMonitoringOverride) {
     const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
 

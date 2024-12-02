@@ -412,6 +412,7 @@ class GoalTemplates{
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
+ standard : text
 }
 
 class Goals{
@@ -550,6 +551,7 @@ class Imports{
  * updatedAt : timestamp with time zone
  fileMask : text
  path : text
+ postProcessingActions : jsonb
 }
 
 class MailerLogs{
