@@ -82,7 +82,7 @@ describe('Close', () => {
       userEvent.selectOptions(region, '1');
     });
 
-    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4&reportStartDate=2021-01-01`, []);
+    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, []);
 
     expect(fetchMock.called(getGroupsByRegionUrl)).toBe(true);
 
@@ -130,7 +130,7 @@ describe('Close', () => {
       userEvent.selectOptions(region, '1');
     });
 
-    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4&reportStartDate=2021-01-01`, 500);
+    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, 500);
 
     expect(fetchMock.called(getGroupsByRegionUrl)).toBe(true);
 
@@ -178,7 +178,7 @@ describe('Close', () => {
       userEvent.selectOptions(region, '1');
     });
 
-    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4&reportStartDate=2021-01-01`, [{
+    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [{
       status: 'In Progress',
       name: 'Hey hey hey hey hey',
       goalIds: [1],
@@ -272,7 +272,7 @@ describe('Close', () => {
       userEvent.selectOptions(region, '1');
     });
 
-    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4&reportStartDate=2021-01-01`, [{
+    fetchMock.get(`${goalsForGrantsUrl}?grantIds=2&grantIds=4`, [{
       status: 'In Progress',
       name: 'Hey hey hey hey hey',
       goalIds: [1],

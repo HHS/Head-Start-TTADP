@@ -843,7 +843,7 @@ export async function goalsForGrants(grantIds, reportStartDate, user) {
   let goalsToReturn = regularGoals;
   const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
 
-  if (hasGoalMonitoringOverride) {
+  if (hasGoalMonitoringOverride && reportStartDate) {
     const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
 
     // Combine goalsToReturn with monitoringGoals.
