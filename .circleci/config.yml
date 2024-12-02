@@ -694,6 +694,15 @@ parameters:
   manual-full-process:
     type: boolean
     default: false
+  manual-restore-staging:
+    type: boolean
+    default: false
+  manual-restore-sandbox:
+    type: boolean
+    default: false
+  manual-restore-dev:
+    type: boolean
+    default: false
   fail-on-modified-lines:
     type: boolean
     default: false
@@ -1461,6 +1470,51 @@ jobs:
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
+  restore_processed_to_staging:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-staging
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+  restore_processed_to_sandbox:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-sandbox
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+  restore_processed_to_dev:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-dev
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
 workflows:
   build_test_deploy:
     when:
@@ -1470,6 +1524,9 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-process >>]
         - equal: [false, << pipeline.parameters.manual-backup >>]
         - equal: [false, << pipeline.parameters.manual-full-process >>]
+        - equal: [false, << pipeline.parameters.manual-restore-staging >>]
+        - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1581,6 +1638,15 @@ workflows:
       - process_backup:
           requires:
             - process_production
+      - restore_processed_to_staging:
+          requires:
+            - process_backup
+      - restore_processed_to_sandbox:
+          requires:
+            - restore_processed_to_staging
+      - restore_processed_to_dev:
+          requires:
+            - restore_processed_to_sandbox
   manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
@@ -1615,3 +1681,18 @@ workflows:
       - process_backup:
           requires:
             - process_production
+  manual_restore_staging:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-staging >>]
+    jobs:
+      - restore_processed_to_staging
+  manual_restore_sandbox:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-sandbox >>]
+    jobs:
+      - restore_processed_to_sandbox
+  manual_restore_dev:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev >>]
+    jobs:
+      - restore_processed_to_dev
