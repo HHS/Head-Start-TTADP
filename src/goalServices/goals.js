@@ -738,7 +738,7 @@ export async function goalsForGrants(grantIds, reportStartDate, user) {
   * Get all matching goals
   */
 
-  const regularGoals = Goal.findAll({
+  const regularGoals = await Goal.findAll({
     attributes: [
       [sequelize.fn(
         'ARRAY_AGG',
@@ -840,8 +840,9 @@ export async function goalsForGrants(grantIds, reportStartDate, user) {
   /*
   * Get all monitoring goals
   */
-  let goalsToReturn = [regularGoals];
+  let goalsToReturn = regularGoals;
   const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
+
   if (hasGoalMonitoringOverride) {
     const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
 
