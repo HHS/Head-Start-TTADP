@@ -34,6 +34,7 @@ export default function findOrCreateUser(data) {
         });
       });
     }
+    // eslint-disable-next-line
     console.log('findOrCreateUser:', userFoundByHsesUserId, data);
     return userFoundByHsesUserId.update({
       hsesUsername: data.hsesUsername,
