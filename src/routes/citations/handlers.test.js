@@ -5,7 +5,6 @@ import { getCitationsByGrantIds } from '../../services/citations';
 import User from '../../policies/user';
 import handleErrors from '../../lib/apiErrorHandler';
 
-// Mock these files.
 jest.mock('../../models');
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
