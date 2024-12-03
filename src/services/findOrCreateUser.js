@@ -34,6 +34,7 @@ export default function findOrCreateUser(data) {
         });
       });
     }
+    console.log('findOrCreateUser:', userFoundByHsesUserId, data);
     return userFoundByHsesUserId.update({
       hsesUsername: data.hsesUsername,
       hsesAuthorities: data.hsesAuthorities,
