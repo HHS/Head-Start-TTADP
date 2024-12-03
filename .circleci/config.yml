@@ -390,6 +390,39 @@ commands:
       #     name: Push maintenance application
       #     command: |
       #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
+  cf_migrate:
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+    steps:
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Migrate database
+          command: |
+            cf run-task << parameters.app_name >> \
+              --command "yarn db:migrate:prod" \
+              --name "Reset DB"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
@@ -1485,6 +1518,13 @@ jobs:
           rds_service_name: ttahub-staging
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
+    - cf_migrate:
+          app_name: tta-smarthub-staging
+          auth_client_id: STAGING_AUTH_CLIENT_ID
+          auth_client_secret: STAGING_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_STAGING_USERNAME
+          cloudgov_password: CLOUDGOV_STAGING_PASSWORD
+          cloudgov_space: CLOUDGOV_STAGING_SPACE
   restore_processed_to_sandbox:
     docker:
       - image: cimg/base:2024.05
@@ -1500,6 +1540,13 @@ jobs:
           rds_service_name: ttahub-sandbox
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
+    - cf_migrate:
+          app_name: tta-smarthub-sandbox
+          auth_client_id: SANDBOX_AUTH_CLIENT_ID
+          auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
+          cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
+          cloudgov_space: CLOUDGOV_SANDBOX_SPACE
   restore_processed_to_dev:
     docker:
       - image: cimg/base:2024.05
@@ -1515,6 +1562,13 @@ jobs:
           rds_service_name: ttahub-dev
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
+    - cf_migrate:
+          app_name: tta-smarthub-dev
+          auth_client_id: DEV_AUTH_CLIENT_ID
+          auth_client_secret: DEV_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_DEV_USERNAME
+          cloudgov_password: CLOUDGOV_DEV_PASSWORD
+          cloudgov_space: CLOUDGOV_DEV_SPACE
 workflows:
   build_test_deploy:
     when:
