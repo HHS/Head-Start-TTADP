@@ -1,5 +1,12 @@
 import moment from 'moment';
 import db from '../models';
+import {
+  ITTAByReviewResponse,
+  ITTAByCitationResponse,
+  IMonitoringResponse,
+  IMonitoringReviewGrantee,
+  IMonitoringReview,
+} from './types/monitoring';
 
 const {
   Grant,
@@ -11,89 +18,6 @@ const {
   MonitoringReviewStatusLink,
   MonitoringClassSummary,
 } = db;
-
-interface IMonitoringReview {
-  reportDeliveryDate: Date;
-  id: number;
-  reviewType: string;
-  statusLink: {
-    status: {
-      name: string;
-    }
-  };
-}
-
-interface IMonitoringReviewGrantee {
-  id: number;
-  grantId: number;
-  reviewId: number;
-  monitoringReviewLink: {
-    monitoringReviews: IMonitoringReview[];
-  }
-}
-
-interface IMonitoringResponse {
-  recipientId: number;
-  regionId: number;
-  reviewStatus: string;
-  reviewDate: string;
-  reviewType: string;
-  grant: string;
-}
-
-interface ITTAByReviewObjective {
-  title: string;
-  activityReportIds: string[];
-  endDate: string;
-  topics: string[];
-  status: string;
-}
-
-interface ITTAByCitationReview {
-  name: string;
-  reviewType: string;
-  reviewReceived: string;
-  outcome: string;
-  findingStatus: string;
-  specialists: {
-    name: string;
-    roles: string[];
-  }[];
-  objectives: ITTAByReviewObjective[];
-}
-
-interface ITTAByReviewFinding {
-  citation: string;
-  status: string;
-  type: string;
-  category: string;
-  correctionDeadline: string;
-  objectives: ITTAByReviewObjective[];
-}
-
-interface ITTAByReviewResponse {
-  name: string;
-  reviewType: string;
-  reviewReceived: string;
-  findings: ITTAByReviewFinding[];
-  grants: string[];
-  outcome: string;
-  lastTTADate: string | null;
-  specialists: {
-    name: string;
-    roles: string[];
-  }[];
-}
-
-interface ITTAByCitationResponse {
-  citationNumber: string;
-  findingType: string;
-  status: string;
-  category: string;
-  grantNumbers: string[];
-  lastTTADate: string | null;
-  reviews: ITTAByCitationReview[];
-}
 
 export async function ttaByReviews(
   _recipientId: number,
@@ -534,13 +458,6 @@ export async function monitoringData({
     }
     return b;
   }, monitoringReviews[0]);
-
-  // from the most recent review, get the status via the statusLink
-  const { monitoringReviewStatuses } = monitoringReview.statusLink;
-
-  // I am presuming there can only be one status linked to a review
-  // as that was the structure before tables were refactored
-  const [status] = monitoringReviewStatuses;
 
   return {
     recipientId: grant.recipientId,
