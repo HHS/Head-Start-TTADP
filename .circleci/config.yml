@@ -391,6 +391,7 @@ commands:
       #     command: |
       #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
   cf_migrate:
+    description: "Login to Cloud Foundry space, run migration"
     parameters:
       app_name:
         description: "Name of Cloud Foundry cloud.gov application; must match
