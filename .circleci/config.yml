@@ -423,7 +423,7 @@ commands:
           command: |
             cf run-task << parameters.app_name >> \
               --command "yarn db:migrate:prod" \
-              --name "Reset DB"
+              --name "migrate"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
