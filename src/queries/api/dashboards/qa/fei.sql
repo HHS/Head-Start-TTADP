@@ -595,12 +595,21 @@ END $$;
 ---------------------------------------------------------------------------------------------------
 
 WITH
+  has_current_grant AS (
+    SELECT
+      "recipientId" rid,
+      BOOL_OR(status = 'Active') has_current_active_grant
+    FROM "Grants"
+    GROUP BY 1
+  ),
   with_fei AS (
     SELECT
       r.id,
       COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei,
       COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017 AND fg.id IS NOT NULL) grant_count
     FROM "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
     JOIN filtered_grants fgr
@@ -609,7 +618,7 @@ WITH
     ON gr.id = g."grantId"
     LEFT JOIN filtered_goals fg
     ON g.id = fg.id
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1

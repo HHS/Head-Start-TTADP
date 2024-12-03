@@ -381,3 +381,9 @@ exports.DISALLOWED_URLS = DISALLOWED_URLS;
 const VALID_URL_REGEX = /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._\+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[\/](?<path>[-a-zA-Z0-9'@:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_\+.~#&\/=()]*))*)/ig;
 exports.VALID_URL_REGEX = VALID_URL_REGEX;
 
+const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
+  TRAINING: 'training',
+  TECHNICAL_ASSISTANCE: 'technical-assistance',
+  BOTH: 'both',
+};
+ exports.TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS;

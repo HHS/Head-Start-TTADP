@@ -24,9 +24,11 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
+const EXPORT_NAME = 'Percentage of Activity Reports by Role';
+
 export default function PercentageActivityReportByRole({ data }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'Percentage of activity reports by role');
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
   const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
@@ -61,7 +63,7 @@ export default function PercentageActivityReportByRole({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     FIRST_COLUMN,
-    'PercentageARSByRole',
+    EXPORT_NAME,
   );
 
   // records is an array of objects
