@@ -1331,6 +1331,7 @@ export async function saveGoalsForReport(goals, report) {
           if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
             newOrUpdatedGoal = await Goal.create({
               goalTemplateId,
+              createdVia: 'activityReport',
               name: goal.name ? goal.name.trim() : '',
               grantId,
               status,
@@ -1674,6 +1675,28 @@ const fieldMappingForDeduplication = {
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
   .some((grants) => Object.values(grants).some((c) => c > 1));
 
+export function groupSimilarGoalsByGrant(result) {
+  const completeGroupsByGrant = (result || []).reduce((acc, matchedGoals) => {
+    const { id, matches } = matchedGoals;
+    const grantIdGroups = matches.reduce((innerAcc, match) => {
+      if (!innerAcc[match.grantId]) {
+        return { ...innerAcc, [match.grantId]: [match.id] };
+      }
+      innerAcc[match.grantId].push(match.id);
+      return innerAcc;
+    }, {});
+
+    acc.push({ id, grantIdGroups });
+    return acc;
+  }, []);
+
+  // Return groups by grant id.
+  const goalIdGroups = completeGroupsByGrant.map(
+    (matchedGoalsByGrant) => uniq(Object.values(matchedGoalsByGrant.grantIdGroups)),
+  ).flat().filter((group) => group.length > 1);
+  return goalIdGroups;
+}
+
 /**
 * @param {Number} recipientId
 * @returns {
@@ -1706,7 +1729,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     regionId,
   );
 
-  if (existingRecipientGroups.length) {
+  if (existingRecipientGroups && existingRecipientGroups.length) {
     return existingRecipientGroups;
   }
 
@@ -1718,11 +1741,8 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     result = similarity.result;
   }
 
-  // convert the response to a group of IDs
-  const goalIdGroups = (result || []).map((matchedGoals) => {
-    const { id, matches } = matchedGoals;
-    return uniq([id, ...matches.map((match) => match.id)]);
-  });
+  // Group goal matches by grantId.
+  const goalIdGroups = groupSimilarGoalsByGrant(result);
 
   const invalidStatusesForReportGoals = [
     REPORT_STATUSES.SUBMITTED,

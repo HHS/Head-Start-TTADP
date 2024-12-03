@@ -1009,6 +1009,7 @@ describe('ActivityReport', () => {
         status: 'Draft',
         isRttapa: null,
         isCurated: false,
+        source: 'Source',
       }],
     });
 
