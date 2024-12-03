@@ -1315,7 +1315,7 @@ export async function saveGoalsForReport(goals, report) {
         raw: true,
         where: {
           grantId: goal.grantIds,
-          standard: 'Monitoring',
+          createdVia: 'monitoring',
           status: { [Op.not]: GOAL_STATUS.CLOSED },
         },
       });
