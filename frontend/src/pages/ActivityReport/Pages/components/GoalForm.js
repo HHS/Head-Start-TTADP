@@ -28,6 +28,7 @@ export default function GoalForm({
   datePickerKey,
   templatePrompts,
   isMultiRecipientReport,
+  citationOptions,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -219,6 +220,7 @@ export default function GoalForm({
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         reportId={parseInt(reportId, DECIMAL_BASE)}
+        citationOptions={citationOptions}
       />
     </>
   );
@@ -253,6 +255,10 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
   templatePrompts: PropTypes.oneOfType([
@@ -269,4 +275,5 @@ GoalForm.propTypes = {
 
 GoalForm.defaultProps = {
   isMultiRecipientReport: false,
+  citationOptions: [],
 };

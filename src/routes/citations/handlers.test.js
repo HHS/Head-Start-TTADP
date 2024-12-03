@@ -27,10 +27,10 @@ describe('Citation handlers', () => {
     const req = {
       query: {
         grantIds: [1],
+        reportStartDate: '2024-10-01',
       },
       params: {
         regionId: 1,
-        reportStartDate: '2024-10-01',
       },
     };
 
@@ -75,10 +75,10 @@ describe('Citation handlers', () => {
     const req = {
       query: {
         grantIds: [1],
+        reportStartDate: '2024-10-01',
       },
       params: {
         regionId: 1,
-        reportStartDate: '2024-10-01',
       },
     };
 
@@ -120,10 +120,10 @@ describe('Citation handlers', () => {
     const req = {
       query: {
         grantIds: [1],
+        reportStartDate: '2024-10-01',
       },
       params: {
         regionId: 1,
-        reportStartDate: '2024-10-01',
       },
     };
 

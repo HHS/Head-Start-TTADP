@@ -842,15 +842,21 @@ export async function goalsForGrants(grantIds, reportStartDate, user) {
   */
   let goalsToReturn = regularGoals;
   const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
-
   if (hasGoalMonitoringOverride && reportStartDate) {
     const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
-
     // Combine goalsToReturn with monitoringGoals.
     const allGoals = await Promise.all([regularGoals, monitoringGoals]);
 
     // Flatten the array of arrays.
     goalsToReturn = allGoals.flat();
+
+    // Sort goals by created date desc.
+    goalsToReturn.sort((a, b) => {
+      if (a.created < b.created) {
+        return 1;
+      }
+      return -1;
+    });
   }
   return goalsToReturn;
 }

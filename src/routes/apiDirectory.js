@@ -34,6 +34,7 @@ import coursesRouter from './courses';
 import { currentUserId } from '../services/currentUser';
 import objectiveRouter from './objectives';
 import ssdiRouter from './ssdi';
+import citationsRouter from './citations';
 
 export const loginPath = '/login';
 
@@ -81,6 +82,7 @@ router.use('/national-center', nationalCenterRouter);
 router.use('/communication-logs', communicationLogRouter);
 router.use('/monitoring', monitoringRouter);
 router.use('/courses', coursesRouter);
+router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 
 const getUser = async (req, res) => {

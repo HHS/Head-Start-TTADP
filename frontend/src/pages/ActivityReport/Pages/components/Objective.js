@@ -7,7 +7,7 @@ import {
   useController, useFormContext,
 } from 'react-hook-form';
 import ObjectiveTitle from './ObjectiveTitle';
-import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
+import GenericSelectWithDrawer from '../../../../components/GoalForm/GenericSelectWithDrawer';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
@@ -20,6 +20,7 @@ import {
   OBJECTIVE_TITLE,
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
+  OBJECTIVE_CITATIONS,
 } from './goalValidator';
 import { validateListOfResources, noDisallowedUrls } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -40,6 +41,7 @@ export default function Objective({
   parentGoal,
   initialObjectiveStatus,
   reportId,
+  citationOptions,
 }) {
   const modalRef = useRef();
 
@@ -98,6 +100,23 @@ export default function Objective({
       },
     },
     defaultValue: objective.topics,
+  });
+
+  const {
+    field: {
+      onChange: onChangeCitations,
+      onBlur: onBlurCitations,
+      value: objectiveCitations,
+      name: objectiveCitationsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].citations`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
+      },
+    },
+    defaultValue: objective.citations,
   });
 
   const {
@@ -358,14 +377,31 @@ export default function Objective({
           initialObjectiveStatus={statusForCalculations}
         />
       </FormFieldThatIsSometimesReadOnly>
-      <ObjectiveTopics
+      {
+        citationOptions.length > 0 && (
+          <GenericSelectWithDrawer
+            error={errors.citations
+              ? ERROR_FORMAT(errors.citations.message)
+              : NO_ERROR}
+            name="Citation"
+            options={citationOptions}
+            validateValues={onBlurCitations}
+            values={objectiveCitations}
+            onChangeValues={onChangeCitations}
+            inputName={objectiveCitationsInputName}
+          />
+        )
+            }
+
+      <GenericSelectWithDrawer
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
           : NO_ERROR}
-        topicOptions={topicOptions}
-        validateObjectiveTopics={onBlurTopics}
-        topics={objectiveTopics}
-        onChangeTopics={onChangeTopics}
+        name="Topic"
+        options={topicOptions}
+        validateValues={onBlurTopics}
+        values={objectiveTopics}
+        onChangeValues={onChangeTopics}
         inputName={objectiveTopicsInputName}
       />
 
@@ -483,6 +519,9 @@ Objective.propTypes = {
     topics: PropTypes.shape({
       message: PropTypes.string,
     }),
+    citations: PropTypes.shape({
+      message: PropTypes.string,
+    }),
     closeSuspendReason: PropTypes.shape({
       message: PropTypes.string,
     }),
@@ -491,6 +530,10 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
@@ -503,4 +546,8 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
+};
+
+Objective.defaultProps = {
+  citationOptions: [],
 };
