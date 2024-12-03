@@ -109,7 +109,7 @@ export const getRecipientsForExistingAR = async (reportId) => {
 };
 
 export const getGoals = async (grantIds, reportStartDate = null) => {
-  const reportStartDateParam = reportStartDate ? `&reportStartDate=${reportStartDate}` : '';
+  const reportStartDateParam = reportStartDate ? `&reportStartDate=${new Date(reportStartDate).toISOString().split('T')[0]}` : '';
   const params = grantIds.map((grantId) => `grantIds=${grantId}${reportStartDateParam}`);
   const url = join(activityReportUrl, 'goals', `?${params.join('&')}`);
   const goals = await get(url);

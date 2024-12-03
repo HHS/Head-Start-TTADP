@@ -11,6 +11,7 @@ export default function Objectives({
   topicOptions,
   noObjectiveError,
   reportId,
+  citationOptions,
 }) {
   const { errors, getValues, setValue } = useFormContext();
 
@@ -137,6 +138,7 @@ export default function Objectives({
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
               reportId={reportId}
+              citationOptions={citationOptions}
             />
           );
         })}
@@ -150,9 +152,17 @@ Objectives.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
   objectiveOptions: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
+};
+
+Objectives.defaultProps = {
+  citationOptions: [],
 };

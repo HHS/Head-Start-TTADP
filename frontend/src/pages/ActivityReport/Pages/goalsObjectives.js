@@ -165,7 +165,7 @@ const GoalsObjectives = ({
     const fetch = async () => {
       try {
         if (isRecipientReport && hasGrant) {
-          const fetchedGoals = await getGoals(grantIds);
+          const fetchedGoals = await getGoals(grantIds, startDate);
           const formattedGoals = fetchedGoals.map((g) => {
             // if the goal is on an "old" grant, we should
             // treat it like a new goal for now

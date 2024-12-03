@@ -2,7 +2,7 @@
 /* eslint-disable import/prefer-default-export */
 import { sequelize } from '../models';
 
-const cutOffStartDate = '2024-10-01'; // TODO: Set this before we deploy to prod.
+const cutOffStartDate = '2024-01-01'; // TODO: Set this before we deploy to prod.
 /*
   The purpose of this function is to get citations by grant id.
   We then need to format the response for how it needs to be
@@ -30,7 +30,19 @@ export async function getCitationsByGrantIds(grantIds, reportStartDate) {
             'reportDeliveryDate', mfh."reportDeliveryDate",
             'findingType', mf."findingType",
             'findingSource', mf."source",
-            'monitoringFindingStatusName', mfs."name"
+            'monitoringFindingStatusName', mfs."name",
+            'reportDeliveryDate', mfh."reportDeliveryDate",
+            'citation', ms.citation,
+            'severity', CASE
+                    WHEN mf."findingType" = 'Deficiency' THEN 1
+                    WHEN mf."findingType" = 'Noncompliance' THEN 2
+                    ELSE 3
+                  END,
+            'acro', CASE
+                    WHEN mf."findingType" = 'Deficiency' THEN 'DEF'
+                    WHEN mf."findingType" = 'Noncompliance' THEN 'ANC'
+                    ELSE 'AOC'
+                  END
           )
         ) grants
       FROM "Grants" gr
