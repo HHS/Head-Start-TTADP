@@ -12,9 +12,9 @@ export default function ObjectiveStatusDropdown({
   onUpdateObjectiveStatus,
   regionId,
   className,
-  objectiveId,
   goalStatus,
   forceReadOnly,
+  objectiveTitle,
 }) {
   const { user } = useContext(UserContext);
   const [statusOptions, isReadOnly] = useValidObjectiveStatuses(
@@ -44,7 +44,7 @@ export default function ObjectiveStatusDropdown({
 
   return (
     <StatusDropdown
-      label={`Change status for objective ${objectiveId}`}
+      label={`Change status for objective ${objectiveTitle}`}
       options={options}
       className={className}
       icon={icon}
@@ -57,15 +57,16 @@ ObjectiveStatusDropdown.propTypes = {
   onUpdateObjectiveStatus: PropTypes.func.isRequired,
   goalStatus: PropTypes.string,
   currentStatus: PropTypes.string,
-  objectiveId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   className: PropTypes.string,
   forceReadOnly: PropTypes.bool,
+  objectiveTitle: PropTypes.string,
 };
 
 ObjectiveStatusDropdown.defaultProps = {
   goalStatus: '',
   currentStatus: '',
+  objectiveTitle: '',
   className: '',
   forceReadOnly: false,
 };

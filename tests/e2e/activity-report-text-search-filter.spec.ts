@@ -114,6 +114,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.keyboard.type('Learn how to cook.');
     await blur(page);
 
+    // goal source
+    await page.getByLabel(/Goal source/i).selectOption('Recipient request');
+
     // Objective.
     await page.getByText('Select TTA objective *- Select -').click();
     await page.keyboard.press('ArrowDown');

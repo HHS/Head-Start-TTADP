@@ -15,6 +15,73 @@ import NoResultsFound from '../components/NoResultsFound';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
+const TRACE_CONFIG = {
+  circle: (data) => ({
+    id: data.id,
+    // Technical Assistance
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: data.x,
+    y: data.y,
+    hovertemplate: HOVER_TEMPLATE,
+    line: {
+      dash: 'solid',
+      width: 3,
+      color: colors.ttahubBlue,
+    },
+    marker: {
+      size: 12,
+    },
+    hoverlabel: {
+      font: { color: '#ffffff', size: '16' },
+      bgcolor: colors.textInk,
+    },
+  }),
+  square: (data) => ({
+    id: data.id,
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: data.x,
+    y: data.y,
+    hovertemplate: HOVER_TEMPLATE,
+    line: {
+      dash: 'longdash',
+      width: 3,
+      color: colors.ttahubMediumDeepTeal,
+    },
+    marker: {
+      symbol: 'square',
+      size: 12,
+    },
+    hoverlabel: {
+      font: { color: '#ffffff', size: '16' },
+      bgcolor: colors.textInk,
+    },
+  }),
+  triangle: (data) => ({
+    // Training
+    id: data.id,
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: data.x,
+    y: data.y,
+    hovertemplate: HOVER_TEMPLATE,
+    line: {
+      dash: 'dash',
+      width: 3,
+      color: colors.ttahubOrange,
+    },
+    marker: {
+      size: 14,
+      symbol: 'triangle-up',
+    },
+    hoverlabel: {
+      font: { color: '#ffffff', size: '16' },
+      bgcolor: colors.textInk,
+    },
+  }),
+};
+
 export default function LineGraph({
   data,
   hideYAxis,
@@ -125,74 +192,12 @@ export default function LineGraph({
       };
     }
 
-    // these are ordered from left to right how they appear in the checkboxes/legend
-    const traces = [
-      {
-        // Technical Assistance
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[1].x,
-        y: data[1].y,
-        hovertemplate: HOVER_TEMPLATE,
-        line: {
-          dash: 'solid',
-          width: 3,
-          color: colors.ttahubBlue,
-        },
-        marker: {
-          size: 12,
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.textInk,
-        },
-      },
-      // Both
-      {
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[2].x,
-        y: data[2].y,
-        hovertemplate: HOVER_TEMPLATE,
-        line: {
-          dash: 'longdash',
-          width: 3,
-          color: colors.ttahubMediumDeepTeal,
-        },
-        marker: {
-          symbol: 'square',
-          size: 12,
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.textInk,
-        },
-      },
-      {
-        // Training
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: data[0].x,
-        y: data[0].y,
-        hovertemplate: HOVER_TEMPLATE,
-        line: {
-          dash: 'dash',
-          width: 3,
-          color: colors.ttahubOrange,
-        },
-        marker: {
-          size: 14,
-          symbol: 'triangle-up',
-        },
-        hoverlabel: {
-          font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.textInk,
-        },
-      },
-    ];
+    const traces = data.map((d) => TRACE_CONFIG[d.trace](d));
 
-    const tracesToDraw = legends.map((legend, index) => (legend.selected ? traces[index] : null))
+    const tracesToDraw = legends
+      .map((legend) => (legend.selected ? traces.find(({ id }) => id === legend.traceId) : null))
       .filter((trace) => Boolean(trace));
+
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
   }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData]);
@@ -257,6 +262,7 @@ LineGraph.propTypes = {
       x: PropTypes.arrayOf(PropTypes.string),
       y: PropTypes.arrayOf(PropTypes.number),
       month: PropTypes.string,
+      id: PropTypes.string,
     }),
   ),
   hideYAxis: PropTypes.bool,

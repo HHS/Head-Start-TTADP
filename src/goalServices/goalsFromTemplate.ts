@@ -61,7 +61,7 @@ export default async function goalsFromTemplate(
   const unsuspends = suspendedGoals.map((goal) => changeGoalStatus({
     goalId: goal.id,
     userId,
-    newStatus: 'In Progress',
+    newStatus: GOAL_STATUS.IN_PROGRESS,
     reason: '',
     context: '',
   }));
@@ -75,6 +75,7 @@ export default async function goalsFromTemplate(
     status: GOAL_STATUS.IN_PROGRESS,
     source: template.source,
     name: template.templateName,
+    createdVia: 'rtr',
   }, {
     individualHooks: true,
     returning: ['id'],

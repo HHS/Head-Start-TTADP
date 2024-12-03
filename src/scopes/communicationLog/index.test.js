@@ -8,6 +8,7 @@ import db from '../../models';
 import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { communicationLogFiltersToScopes } from './index';
+import { withinCommunicationDate } from './communicationDate';
 
 describe('communicationLog filtersToScopes', () => {
   const userName = faker.name.findName();
@@ -207,5 +208,10 @@ describe('communicationLog filtersToScopes', () => {
     });
     const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', false, scopes);
     expect(count).toBe(1);
+  });
+
+  it('returns empty when the dates split at "-" is less than 2', () => {
+    const out = withinCommunicationDate(['2022/10/01']);
+    expect(out).toMatchObject({});
   });
 });
