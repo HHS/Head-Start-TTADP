@@ -10,7 +10,7 @@
     flex-wrap: no-wrap;
   }
   .ttahub-data-card-description-list > div {
-    min-width: calc(210px - 2rem);
+    min-width: var(--data-card-column-width);
   }
 }
 
@@ -25,6 +25,6 @@
     > div
     dt {
     flex: 1;
-    min-width: calc(210px - 2rem);
+    min-width: var(--data-card-column-width);
   }
 }

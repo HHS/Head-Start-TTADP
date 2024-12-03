@@ -1,6 +1,6 @@
 @media (min-width: 64em) {
   .ttahub-review-card--finding-within-review
     .ttahub-review-card--finding-within-review-category {
-    min-width: 420px;
+    min-width: var(--data-card-double-column-width);
   }
 }
