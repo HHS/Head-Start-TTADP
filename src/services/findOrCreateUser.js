@@ -1,3 +1,4 @@
+import { Sequelize } from 'sequelize'; 
 import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
 
@@ -46,7 +47,7 @@ export default function findOrCreateUser(data) {
     const errorDetails = {};
 
     // Check if the error is a Sequelize error
-    if (error instanceof sequelize.Error) {
+    if (error.name && error.name.startsWith('Sequelize')) {
       errorDetails.name = error.name || 'Unknown Sequelize Error';
       errorDetails.message = error.message || 'No message available';
       errorDetails.errors = error.errors || [];
