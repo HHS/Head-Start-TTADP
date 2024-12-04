@@ -129,8 +129,8 @@ describe('filtersToScopes', () => {
 
     it('uses default comparator when none is provided', async () => {
       const out = filterAssociation('asdf', ['1', '2'], false);
-      expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal(`"EventReportPilot"."id" IN (asdf ~* '1')`));
-      expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal(`"EventReportPilot"."id" IN (asdf ~* '2')`));
+      expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'1\')'));
+      expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'2\')'));
     });
   });
 
