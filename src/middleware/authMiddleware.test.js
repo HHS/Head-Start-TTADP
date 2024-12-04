@@ -217,4 +217,23 @@ describe('authMiddleware', () => {
 
     await destroyUser(mockUser);
   });
+
+  it('should return immediately if headers are already sent', async () => {
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      headersSent: true,
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockResponse.sendStatus).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+  });
 });
