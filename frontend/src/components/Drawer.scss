@@ -1,17 +1,7 @@
 @use '../colors.scss' as *;
 
-body:has(.smart-hub-drawer--open) {
-  overflow: hidden;
-}
-
 .smart-hub-drawer {
-  width: 100%;
-}
-
-.smart-hub-drawer > div {
-  flex-direction: column;
-  flex: 1;
-  width: 33%;
+  max-width: 33%;
 }
 
 .smart-hub-drawer-header {
@@ -24,13 +14,15 @@ body:has(.smart-hub-drawer--open) {
 
 // on small devices, set max-width of smart-hub-drawer to 100%;
 @media (max-width: 768px) {
-  .smart-hub-drawer > div  {
+  .smart-hub-drawer {
+    left: 0;
+    width: 100%;
     max-width: 100%;
   }
 }
 
 .slide-in-right {
-  animation: slide-in-right 0.16s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+  animation: slide-in-right 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
 }
 
 @keyframes slide-in-right {
