@@ -1,6 +1,4 @@
 import { Op } from 'sequelize';
-import { uniq } from 'lodash';
-import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import {
   goalsByIdsAndActivityReport,
   goalByIdAndActivityReport,
@@ -20,6 +18,7 @@ import {
   getGoalIdsBySimilarity,
   destroyGoal,
   mapGrantsWithReplacements,
+  groupSimilarGoalsByGrant,
 } from './goals';
 import {
   sequelize,
@@ -1446,10 +1445,11 @@ describe('Goals DB service', () => {
       await goalsForGrants([506]);
 
       const { where } = Goal.findAll.mock.calls[0][0];
-      expect(where['$grant.id$']).toStrictEqual([
-        505,
-        506,
-      ]);
+      expect(where[Op.or]).toMatchObject({
+        '$grant.id$': [505, 506],
+        '$grant.grantRelationships.grantId$': [505, 506],
+        '$grant.grantRelationships.activeGrantId$': [505, 506],
+      });
     });
   });
 
@@ -2188,11 +2188,96 @@ describe('Goals DB service', () => {
       expect(goalIdGroups).toEqual(expect.any(Array));
       expect(goalIdGroups[0].goals).toContain(3);
     });
+
+    it('groupSimilarGoalsByGrant works when undefined is passed to the function', async () => {
+      const resultToTest = undefined;
+
+      const groupedResult = groupSimilarGoalsByGrant(resultToTest);
+
+      expect(groupedResult).toEqual([]);
+    });
+
+    it('groupSimilarGoalsByGrant works as expected given a result that contains multiple grants for the same goal', async () => {
+      const resultToTest = [
+        {
+          id: 1,
+          matches: [
+            {
+              grantId: 1,
+              id: 1,
+              name: 'Similar Goal 1',
+              similarity: 0.9449410438537598,
+            },
+            {
+              grantId: 2,
+              id: 2,
+              name: 'Similar Goal 1, but not quite',
+              similarity: 0.9449410438537598,
+            },
+            {
+              grantId: 1,
+              id: 3,
+              name: 'Similar Goal 1, but not quite, there is a diff',
+              similarity: 0.9449410438537598,
+            },
+            {
+              grantId: 3,
+              id: 4,
+              name: 'Similar Goal 1, but not quite, there is a diff, at all',
+              similarity: 0.9449410438537598,
+            },
+          ],
+          name: 'Similar Goal 1',
+        },
+        {
+          id: 1,
+          matches: [
+            {
+              grantId: 2,
+              id: 5,
+              name: 'Similar Goal 2',
+              similarity: 0.9449410438537598,
+            },
+            {
+              grantId: 2,
+              id: 6,
+              name: 'Similar Goal 2, but not quite',
+              similarity: 0.9449410438537598,
+            },
+            {
+              grantId: 1,
+              id: 7,
+              name: 'Similar Goal 2, but not quite, there is a diff',
+              similarity: 0.9449410438537598,
+            },
+          ],
+          name: 'Similar Goal 2',
+        },
+      ];
+
+      const groupedResult = groupSimilarGoalsByGrant(resultToTest);
+
+      // Assert that the result is grouped by grantId.
+      // Ensure groups that had only one goal are excluded.
+      expect(groupedResult.length).toBe(2);
+      expect(groupedResult).toEqual(expect.arrayContaining([
+        expect.arrayContaining([1, 3]),
+        expect.arrayContaining([5, 6]),
+      ]));
+    });
   });
 
   describe('destroyGoal', () => {
     beforeEach(() => {
       jest.clearAllMocks();
+    });
+
+    it('should return 0 when goalIds is not a valid array of numbers', async () => {
+      const singleResult = await destroyGoal('notAnArray');
+      const arrayResult = await destroyGoal([]);
+
+      expect(singleResult).toEqual(0);
+      expect(arrayResult).toEqual({ goalsDestroyed: undefined, objectivesDestroyed: undefined });
     });
 
     it('should delete objectives and goals if goalIds are provided', async () => {

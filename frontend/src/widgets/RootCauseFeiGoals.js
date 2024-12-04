@@ -27,9 +27,11 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
+const EXPORT_NAME = 'Root cause on FEI goals';
+
 export default function RootCauseFeiGoals({ data }) {
   const widgetRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'RootCauseOnFeiGoals');
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
 
@@ -62,7 +64,7 @@ export default function RootCauseFeiGoals({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     FIRST_COLUMN,
-    'PercentageARSByRole',
+    EXPORT_NAME,
   );
 
   // records is an array of objects

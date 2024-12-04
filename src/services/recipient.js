@@ -37,7 +37,6 @@ import filtersToScopes, { mergeIncludes } from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import {
-  findOrFailExistingGoal,
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
@@ -796,47 +795,17 @@ export async function getGoalsByActivityRecipient(
     ];
   }
 
-  sorted = sorted.map((goal) => {
-    if (goal.goalCollaborators.length === 0) return goal;
-
-    // eslint-disable-next-line no-param-reassign
-    goal.collaborators = createCollaborators(goal);
-
-    return goal;
-  });
-
-  const r = sorted.reduce((previous, current) => {
-    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
-
+  // map the goals to the format we need
+  const r = sorted.map((current) => {
     allGoalIds.push(current.id);
+
+    if (current.goalCollaborators.length > 0) {
+      // eslint-disable-next-line no-param-reassign
+      current.collaborators = createCollaborators(current);
+    }
 
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
-
-    if (existingGoal) {
-      existingGoal.ids = [...existingGoal.ids, current.id];
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
-      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
-      existingGoal.objectives = reduceObjectivesForRecipientRecord(
-        current,
-        existingGoal,
-        existingGoal.grantNumbers,
-      );
-      existingGoal.objectiveCount = existingGoal.objectives.length;
-      existingGoal.isCurated = isCurated || existingGoal.isCurated;
-      existingGoal.collaborators = existingGoal.collaborators || [];
-      existingGoal.collaborators = uniqBy([
-        ...existingGoal.collaborators,
-        ...createCollaborators(current),
-      ], 'goalCreatorName');
-
-      existingGoal.onAR = existingGoal.onAR || current.onAR;
-      existingGoal.isReopenedGoal = existingGoal.isReopenedGoal || wasGoalPreviouslyClosed(current);
-
-      return {
-        goalRows: previous.goalRows,
-      };
-    }
 
     const goalToAdd = {
       id: current.id,
@@ -873,11 +842,7 @@ export async function getGoalsByActivityRecipient(
 
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
-    return {
-      goalRows: [...previous.goalRows, goalToAdd],
-    };
-  }, {
-    goalRows: [],
+    return goalToAdd;
   });
 
   const statuses = await goalStatusByGoalName({
@@ -887,7 +852,7 @@ export async function getGoalsByActivityRecipient(
   });
 
   // For checkbox selection we only need the primary goal id.
-  const rolledUpGoalIds = r.goalRows.map((goal) => {
+  const rolledUpGoalIds = r.map((goal) => {
     const bucket = {
       id: goal.id,
       goalIds: goal.ids,
@@ -897,16 +862,16 @@ export async function getGoalsByActivityRecipient(
 
   if (limitNum) {
     return {
-      count: r.goalRows.length,
-      goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+      count: r.length,
+      goalRows: r.slice(offSetNum, offSetNum + limitNum),
       statuses,
       allGoalIds: rolledUpGoalIds,
     };
   }
 
   return {
-    count: r.goalRows.length,
-    goalRows: r.goalRows.slice(offSetNum),
+    count: r.length,
+    goalRows: r.slice(offSetNum),
     statuses,
     allGoalIds: rolledUpGoalIds,
   };

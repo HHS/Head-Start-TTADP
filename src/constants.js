@@ -38,9 +38,11 @@ const SEARCH_RESULTS_PER_PAGE = 23;
 
 const AUTOMATIC_CREATION = 'Automatic';
 const CURATED_CREATION = 'Curated';
+const SYSTEM_GENERATED = 'System Generated';
 const CREATION_METHOD = {
   AUTOMATIC: AUTOMATIC_CREATION,
   CURATED: CURATED_CREATION,
+  SYSTEM_GENERATED,
 };
 
 const GOAL_STATUS = {
@@ -238,6 +240,7 @@ const FEATURE_FLAGS = [
   'training_reports_dashboard',
   'quality_assurance_dashboard',
   'manual_mark_goals_similar',
+  'monitoring_integration',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -248,7 +251,7 @@ const MAINTENANCE_CATEGORY = {
 
 const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
-const CURRENT_GOAL_SIMILARITY_VERSION = 4;
+const CURRENT_GOAL_SIMILARITY_VERSION = 5;
 
 const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
 const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;

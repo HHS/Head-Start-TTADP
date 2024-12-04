@@ -90,6 +90,7 @@ const defaultPages = [
     path: 'second',
     label: 'second page',
     review: false,
+    isPageComplete: () => false,
     render: (
       _additionalData,
       _formData,
@@ -169,7 +170,7 @@ const initialData = {
   'test-prompt': ['test'],
 };
 
-describe('Navigator', () => {
+describe('ActivityReportNavigator', () => {
   beforeAll(async () => {
     jest.useFakeTimers();
   });

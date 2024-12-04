@@ -15,6 +15,7 @@ import {
 } from '../goalValidator';
 import {
   GOAL_NAME_ERROR,
+  GOAL_SOURCE_ERROR,
 } from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
@@ -48,6 +49,7 @@ const goalUnfinishedObjective = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
+  source: 'source',
   objectives: [
     { ...validObjective },
     { ...missingTTAProvided },
@@ -58,10 +60,22 @@ const goalNoObjectives = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
+  source: 'source',
   objectives: [],
 };
 
 const goalValid = {
+  name: 'Test goal',
+  endDate: '2021-01-01',
+  isRttapa: 'No',
+  source: 'Source',
+  objectives: [
+    { ...validObjective },
+    { ...validObjective },
+  ],
+};
+
+const goalNoSource = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
@@ -261,6 +275,16 @@ describe('validateGoals', () => {
 
         const result = validateGoals(goals);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
+      });
+
+      it('if no source', () => {
+        const goals = [
+          { ...goalValid },
+          { ...goalNoSource },
+        ];
+
+        const result = validateGoals(goals);
+        expect(result).toEqual(GOAL_SOURCE_ERROR);
       });
     });
 

@@ -19,7 +19,7 @@ import {
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import logEmailNotification from './logNotifications';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 import transactionQueueWrapper from '../../workers/transactionWrapper';
 import referenceData from '../../workers/referenceData';
 import safeParse from '../../models/helpers/safeParse';
@@ -96,16 +96,32 @@ export const filterAndDeduplicateEmails = (emails) => {
 };
 
 export const onFailedNotification = (job, error) => {
-  auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
-  logEmailNotification(job, false, error);
+  if (job.data.reports && Array.isArray(job.data.reports)) {
+    job.data.reports.forEach((report) => {
+      auditLogger.error(`job ${job.name} failed for report ${report.displayId} with error ${error}`);
+    });
+    logDigestEmailNotification(job, false, error);
+  } else {
+    auditLogger.error(`job ${job.name} failed for report ${(job.data.report?.displayId) || 'unknown'} with error ${error}`);
+    logEmailNotification(job, false, error);
+  }
 };
 
 export const onCompletedNotification = (job, result) => {
-  if (result != null) {
-    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data.report.id}`);
+  if (job.data.reports && Array.isArray(job.data.reports)) {
+    job.data.reports.forEach((report) => {
+      if (result != null) {
+        logger.info(`Successfully sent ${job.name} notification for ${report.displayId}`);
+        logDigestEmailNotification(job, true, result);
+      } else {
+        logger.info(`Did not send ${job.name} notification for ${report.displayId} preferences are not set or marked as "no-send"`);
+      }
+    });
+  } else if (result != null) {
+    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data}`);
     logEmailNotification(job, true, result);
   } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data} preferences are not set or marked as "no-send"`);
   }
 };
 
@@ -872,13 +888,13 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
       const data = {
         user,
         reports,
-        type: EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST,
+        type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
         freq,
         subjectFreq,
         ...referenceData(),
       };
 
-      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
+      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, data);
       return data;
     });
 

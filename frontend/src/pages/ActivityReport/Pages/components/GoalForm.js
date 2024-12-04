@@ -183,8 +183,8 @@ export default function GoalForm({
       <FormFieldThatIsSometimesReadOnly
         permissions={isCurated ? [
           isSourceEditable,
-          !goal.onApprovedAR,
-        ] : [!goal.onApprovedAR]}
+          !goal.onApprovedAR || !goal.source,
+        ] : [!goal.onApprovedAR || !goal.source]}
         label="Goal source"
         value={goalSource}
       >

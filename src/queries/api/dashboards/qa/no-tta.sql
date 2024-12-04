@@ -221,7 +221,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  -- DROP TABLE IF EXISTS process_log;
+  DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -230,14 +230,16 @@ BEGIN
 
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  -- DROP TABLE IF EXISTS filtered_grants;
+  DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
       INSERT INTO filtered_grants (id)
-      SELECT DISTINCT id
+      SELECT
+        id
       FROM "Grants"
       WHERE COALESCE(deleted, false) = false
+      GROUP BY 1
       ORDER BY 1
       RETURNING id
   )
@@ -299,13 +301,16 @@ BEGIN
           region_ids_filter IS NULL
           OR COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId") != region_ids_not_filter
         )
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
-        SELECT fgr.id
+        SELECT
+          fgr.id
         FROM filtered_grants fgr
         LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
-        WHERE afgr.id IS NULL
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
@@ -322,19 +327,21 @@ BEGIN
 
 ---------------------------------------------------------------------------------------------------
 -- Step 3.1: Seed filtered_activity_reports
-  -- DROP TABLE IF EXISTS filtered_activity_reports;
+  DROP TABLE IF EXISTS filtered_activity_reports;
   CREATE TEMP TABLE IF NOT EXISTS filtered_activity_reports (id INT);
 
   WITH seed_filtered_activity_reports AS (
       INSERT INTO filtered_activity_reports (id)
-      SELECT DISTINCT a.id
+      SELECT
+        a.id
       FROM "ActivityReports" a
       JOIN "ActivityRecipients" ar ON a.id = ar."activityReportId"
       JOIN filtered_grants fgr ON ar."grantId" = fgr.id
       JOIN "ActivityReportGoals" arg ON a.id = arg."activityReportId"
       --JOIN filtered_goals fg ON arg."goalId" = fg.id
       WHERE a."calculatedStatus" = 'approved'
-      ORDER BY a.id
+      GROUP BY 1
+      ORDER BY 1
       RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
@@ -350,7 +357,8 @@ BEGIN
     THEN
     WITH
       applied_filtered_activity_reports AS (
-        SELECT a.id
+        SELECT
+          a.id
         FROM filtered_activity_reports fa
         JOIN "ActivityReports" a ON fa.id = a.id
         WHERE a."calculatedStatus" = 'approved'
@@ -376,12 +384,16 @@ BEGIN
             FROM json_array_elements_text(COALESCE(end_date_filter, '[]')::json) AS value
           ) != end_date_not_filter
         )
+        GROUP BY 1
+        ORDER BY 1
       ),
       applied_filtered_out_activity_reports AS (
-        SELECT fa.id
+        SELECT 
+          fa.id
         FROM filtered_activity_reports fa
         LEFT JOIN applied_filtered_activity_reports afa ON fa.id = afa.id
-        WHERE afa.id IS NULL
+        GROUP BY 1
+        HAVING COUNT(afa.id) = 0
         ORDER BY 1
       ),
       delete_from_activity_report_filter AS (
@@ -399,15 +411,20 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.3: Update filtered_grants based on the reduced filtered_activity_reports dataset
 WITH reduced_grants AS (
-    SELECT DISTINCT ar."grantId"
+    SELECT DISTINCT 
+      ar."grantId"
     FROM filtered_activity_reports fa
     JOIN "ActivityRecipients" ar ON fa.id = ar."activityReportId"
+    GROUP BY 1
+    ORDER BY 1
 ),
 applied_filtered_out_grants AS (
-    SELECT fgr.id
+    SELECT
+      fgr.id
     FROM filtered_grants fgr
     LEFT JOIN reduced_grants rg ON fgr.id = rg."grantId"
-    WHERE rg."grantId" IS NULL
+    GROUP BY 1
+    HAVING COUNT(rg."grantId") = 0
     ORDER BY 1
 ),
 delete_from_grant_filter AS (
@@ -425,7 +442,15 @@ END $$;
 
 ---------------------------------------------------------------------------------------------------
 -- Final CTEs for dataset generation
-WITH active_filters_array AS (
+WITH
+has_current_grant AS (
+  SELECT
+    "recipientId" rid,
+    BOOL_OR(status = 'Active') has_current_active_grant
+  FROM "Grants"
+  GROUP BY 1
+),
+active_filters_array AS (
     SELECT array_remove(ARRAY[
       CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
       CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
@@ -435,13 +460,17 @@ WITH active_filters_array AS (
       CASE WHEN NULLIF(current_setting('ssdi.startDate', true), '') IS NOT NULL THEN 'startDate' END,
       CASE WHEN NULLIF(current_setting('ssdi.endDate', true), '') IS NOT NULL THEN 'endDate' END
     ], NULL) AS active_filters
+
 ),
 
 no_tta AS (
-    SELECT DISTINCT r.id, 
-        COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
+    SELECT
+      r.id,
+      COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
     FROM "Recipients" r
+    JOIN has_current_grant hcg ON r.id = hcg.rid
     JOIN "Grants" gr ON r.id = gr."recipientId"
+    JOIN "GrantRelationshipToActive" grta ON gr.id = grta."grantId"
     JOIN filtered_grants fgr ON gr.id = fgr.id
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN filtered_activity_reports far ON ar."activityReportId" = far.id
@@ -455,8 +484,9 @@ no_tta AS (
     )
     AND srp.data ->> 'status' = 'Complete'
     AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     GROUP BY 1
+    ORDER BY 1
 ),
 no_tta_widget AS (
     SELECT
@@ -470,17 +500,19 @@ no_tta_page AS (
       r.id,
       r.name,
       gr."regionId",
-      ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::timestamp last_tta,
-      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
+      ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::timestamp last_tta,
+      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC NULLS LAST))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
     AND NOT nt.has_tta
+    JOIN has_current_grant hcg ON r.id = hcg.rid
     JOIN "Grants" gr ON r.id = gr."recipientId"
     LEFT JOIN "ActivityRecipients" ar ON gr.id = ar."grantId"
     LEFT JOIN "ActivityReports" a ON ar."activityReportId" = a.id
     AND a."calculatedStatus" = 'approved'
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     GROUP BY 1,2,3
+    ORDER BY 1
 ),
 datasets AS (
     SELECT 'no_tta_widget' data_set, COUNT(*) records,
