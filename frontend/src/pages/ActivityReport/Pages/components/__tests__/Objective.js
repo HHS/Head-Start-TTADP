@@ -54,7 +54,7 @@ let getValues;
 
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  objective = defaultObjective, onRemove = () => {},
+  objective = defaultObjective, onRemove = () => {}, citationOptions = [], rawCitations = [],
 }) => {
   const hookForm = useForm({
     mode: 'onBlur',
@@ -89,6 +89,8 @@ const RenderObjective = ({
           <Objective
             objective={defaultObjective}
             topicOptions={[]}
+            citationOptions={citationOptions}
+            rawCitations={rawCitations}
             options={[
               {
                 label: 'Create a new objective',
@@ -153,6 +155,14 @@ describe('Objective', () => {
   it('renders an objective that doesn\'t have a status', async () => {
     render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+  });
+
+  it('renders the citations dropdown when there are citations available', async () => {
+    render(<RenderObjective citationOptions={[{ id: 1, name: 'Citation 1' }]} rawCitations={[{ citation: 'Citation 1', standardId: 1 }]} />);
+    const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
+    expect(helpButton).toBeVisible();
+    const citationsButton = screen.getByRole('button', { name: /Citation/i });
+    expect(citationsButton).toBeVisible();
   });
 
   it('uploads a file', async () => {

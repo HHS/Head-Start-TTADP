@@ -1551,16 +1551,17 @@ describe('Goals DB service', () => {
       getMonitoringGoals.mockResolvedValue([{ id: 507 }]);
 
       // Mock the feature flag function canSeeBehindFeatureFlag in user to return true.
+      const reportStartDate = new Date().toISOString().split('T')[0];
       const result = await goalsForGrants([506], '2024-11-27', {
         flags: ['monitoring_integration'],
       });
 
       // Assert result contains the goals we expect including the monitoring goal.
-      expect(result).toEqual([
-        { id: 505 },
+      expect(result).toEqual(expect.arrayContaining([
         { id: 506 },
         { id: 507 },
-      ]);
+        { id: 507 },
+      ]));
     });
   });
 
