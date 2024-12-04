@@ -132,6 +132,26 @@ describe('Session Report policies', () => {
       const policy = new SessionReport(authorRegion2, reportRegion1);
       expect(policy.canWriteInRegion()).toBe(false);
     });
+
+    it('is false if the user has no permissions', () => {
+      const reportRegion1 = createReport({ author: noPerms, regionId: 1 });
+      const policy = new SessionReport(noPerms, reportRegion1);
+      expect(policy.canWriteInRegion()).toBe(false);
+    });
+
+    it('is false if the user has read permissions but not write permissions in the region', () => {
+      const readOnlyUser = createUser({ read: true, regionId: 1 });
+      const reportRegion1 = createReport({ author: readOnlyUser, regionId: 1 });
+      const policy = new SessionReport(readOnlyUser, reportRegion1);
+      expect(policy.canWriteInRegion()).toBe(false);
+    });
+
+    it('is true if the user is not an admin, and provided regionId is not null', () => {
+      const writeUser = createUser({ write: true, regionId: 1 });
+      const reportRegion1 = createReport({ author: writeUser, regionId: 1 });
+      const policy = new SessionReport(writeUser, reportRegion1);
+      expect(policy.canWriteInRegion(1)).toBe(true);
+    });
   });
 
   describe('permissions default', () => {
