@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import filtersToScopes, { filterAssociation } from './';
+import filtersToScopes from './';
 
 import {
   User,
@@ -9,6 +9,7 @@ import {
   NationalCenter,
   sequelize,
 } from '../../models';
+import { filterAssociation } from './utils';
 
 const mockUser = {
   id: faker.datatype.number(),
