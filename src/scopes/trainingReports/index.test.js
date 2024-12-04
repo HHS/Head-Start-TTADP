@@ -119,6 +119,12 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(1);
       expect(found[0].id).toBe(gteEventReportPilot.id);
     });
+
+    it('returns an empty object when date range is invalid', async () => {
+      const filters = { 'startDate.win': '2021/06/07' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      expect(scope).toEqual([{}]);
+    });
   });
 
   describe('region', () => {
