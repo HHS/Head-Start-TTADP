@@ -9,6 +9,7 @@ import {
   NationalCenter,
   sequelize,
 } from '../../models';
+import { filterAssociation } from './utils';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -118,6 +119,18 @@ describe('filtersToScopes', () => {
       });
       expect(found.length).toBe(1);
       expect(found[0].id).toBe(gteEventReportPilot.id);
+    });
+
+    it('returns an empty object when date range is invalid', async () => {
+      const filters = { 'startDate.win': '2021/06/07' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      expect(scope).toEqual([{}]);
+    });
+
+    it('uses default comparator when none is provided', async () => {
+      const out = filterAssociation('asdf', ['1', '2'], false);
+      expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'1\')'));
+      expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'2\')'));
     });
   });
 
