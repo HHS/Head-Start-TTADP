@@ -28,11 +28,8 @@ export const getCitationsByGrants = async (req, res) => {
       return;
     }
 
-    // Convert reportStartDate to the format 'YYYY-MM-DD'.
-    const formattedStartDate = new Date(reportStartDate).toISOString().split('T')[0];
-
     // Get the citations for the grant.
-    const citations = await getCitationsByGrantIds([grantIds].flat(), formattedStartDate);
+    const citations = await getCitationsByGrantIds([grantIds].flat(), reportStartDate);
 
     // Return the citations.
     res.status(httpCodes.OK).send(citations);
