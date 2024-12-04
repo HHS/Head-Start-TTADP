@@ -613,24 +613,19 @@ function perform_restore() {
     set -o pipefail
 
     log "INFO" "Reset database before restore"
-    reset_sql_file=$(mktemp /tmp/reset_sql.XXXXXX)
 
-    if [[ ! -w "${reset_sql_file}" ]]; then
-        log "ERROR" "Temporary file ${reset_sql_file} is not writable"
-        exit 1
-    fi
-
-    cat <<EOF > "${reset_sql_file}"
+    psql -d postgres <<EOF
 select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
 DROP DATABASE IF EXISTS "${PGDATABASE}";
 CREATE DATABASE "${PGDATABASE}";
 EOF
 
-    psql -d postgres -f "${reset_sql_file}" || {
+    if [[ $? -ne 0 ]]; then
         log "ERROR" "Failed to reset database"
         exit 1
-    }
-    rm -f "${reset_sql_file}"
+    fi
+
+    log "INFO" "Database reset successfully"
 
     log "INFO" "Restoring the database from the backup file"
     aws s3 cp "s3://${backup_file_path}" - |\
