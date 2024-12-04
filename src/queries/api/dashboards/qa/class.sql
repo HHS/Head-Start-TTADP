@@ -332,7 +332,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  -- DROP TABLE IF EXISTS process_log;
+  DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -340,21 +340,23 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  -- DROP TABLE IF EXISTS filtered_grants;
+  DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
-      INSERT INTO filtered_grants (id)
-      SELECT DISTINCT id
-      FROM "Grants"
-      WHERE COALESCE(deleted, false) = false
-      ORDER BY 1
-      RETURNING id
+    INSERT INTO filtered_grants (id)
+    SELECT 
+      id
+    FROM "Grants"
+    WHERE COALESCE(deleted, false) = false
+    GROUP BY 1
+    ORDER BY 1
+    RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
   SELECT
-      'Seed filtered_grants' AS action,
-      COUNT(*)
+    'Seed filtered_grants' AS action,
+    COUNT(*)
   FROM seed_filtered_grants
   GROUP BY 1;
 ---------------------------------------------------------------------------------------------------
@@ -422,22 +424,23 @@ BEGIN
             COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId")::jsonb
           )
         )
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afogr
-            WHERE fgr.id = afogr.id
-            RETURNING fgr.id
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afogr
+        WHERE fgr.id = afogr.id
+        RETURNING fgr.id
       )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -483,22 +486,23 @@ BEGIN
         WHERE 1 = 1
         -- Continued Filter for group if ssdi.group is defined from left joined table above
         AND (group_filter IS NULL OR (g.id IS NOT NULL AND (gc.id IS NOT NULL OR g."sharedWith" = 'Everyone')))
+        GROUP BY 1
         ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afogr
-            WHERE fgr.id = afogr.id
-            RETURNING fgr.id
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afogr
+        WHERE fgr.id = afogr.id
+        RETURNING fgr.id
       )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -617,21 +621,22 @@ BEGIN
           != domain_instructional_support_not_filter
           )
         )
+        ORDER BY 1
       ),
       applied_filtered_out_grants AS (
         SELECT
           fgr.id
         FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
+        LEFT JOIN applied_filtered_grants afgr ON fgr.id = afgr.id
+        GROUP BY 1
+        HAVING COUNT(afgr.id) = 0
         ORDER BY 1
       ),
       delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afogr
-            WHERE fgr.id = afogr.id
-            RETURNING fgr.id
+        DELETE FROM filtered_grants fgr
+        USING applied_filtered_out_grants afogr
+        WHERE fgr.id = afogr.id
+        RETURNING fgr.id
       )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -642,18 +647,20 @@ BEGIN
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 2.1: Seed filtered_goals using filtered_grants
-  -- DROP TABLE IF EXISTS filtered_goals;
+  DROP TABLE IF EXISTS filtered_goals;
   CREATE TEMP TABLE IF NOT EXISTS filtered_goals (id INT);
 
   WITH seed_filtered_goals AS (
       INSERT INTO filtered_goals (id)
-      SELECT DISTINCT g.id
+      SELECT
+        g.id
       FROM "Goals" g
       JOIN filtered_grants fgr
       ON g."grantId" = fgr.id
       WHERE g."deletedAt" IS NULL
       AND g."mapsToParentGoalId" IS NULL
-      ORDER BY g.id  -- Add ORDER BY here
+      GROUP BY 1
+      ORDER BY 1
       RETURNING id
   )
   INSERT INTO process_log (action, record_cnt)
@@ -671,7 +678,7 @@ BEGIN
     THEN
     WITH
       applied_filtered_goals AS (
-        SELECT DISTINCT
+        SELECT
           g.id
         FROM filtered_goals fg
         JOIN "Goals" g
@@ -705,38 +712,39 @@ BEGIN
             ) != goal_status_not_filter
           )
         )
+        GROUP BY 1
+        ORDER BY 1
       ),
         applied_filtered_out_goals AS (
-            SELECT
-                fg.id
-            FROM filtered_goals fg
-            LEFT JOIN applied_filtered_goals afg
-            ON fg.id = afg.id
-            WHERE afg.id IS NULL
-            ORDER BY 1
+          SELECT
+            fg.id
+          FROM filtered_goals fg
+          LEFT JOIN applied_filtered_goals afg ON fg.id = afg.id
+          GROUP BY 1
+          HAVING COUNT(afg.id) = 0
+          ORDER BY 1
         ),
         delete_from_goal_filter AS (
-            DELETE FROM filtered_goals fg
-            USING applied_filtered_out_goals afog
-            WHERE fg.id = afog.id
-            RETURNING fg.id
+          DELETE FROM filtered_goals fg
+          USING applied_filtered_out_goals afog
+          WHERE fg.id = afog.id
+          RETURNING fg.id
         ),
         applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
-            FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
-            WHERE fg.id IS NULL
-            ORDER BY 1
+          SELECT
+            fgr.id
+          FROM filtered_grants fgr
+          LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+          LEFT JOIN filtered_goals fg ON g.id = fg.id
+          GROUP BY 1
+          HAVING COUNT(fg.id) = 0
+          ORDER BY 1
         ),
         delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afog
-            WHERE fgr.id = afog.id
-            RETURNING fgr.id
+          DELETE FROM filtered_grants fgr
+          USING applied_filtered_out_grants afog
+          WHERE fgr.id = afog.id
+          RETURNING fgr.id
         )
       INSERT INTO process_log (action, record_cnt)
       SELECT
@@ -754,6 +762,13 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  has_current_grant AS (
+    SELECT
+      "recipientId" rid,
+      BOOL_OR(status = 'Active') has_current_active_grant
+    FROM "Grants"
+    GROUP BY 1
+  ),
   with_class AS (
     SELECT
       r.id,
@@ -761,6 +776,8 @@ WITH
       COUNT(DISTINCT mcs.id) > 0 has_scores,
       COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172 AND fg.id IS NOT NULL AND mcs.id IS NOT NULL) grant_count
     FROM "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
     JOIN filtered_grants fgr
@@ -778,7 +795,7 @@ WITH
     ON mr."statusId" = mrs."statusId"
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
     AND g."mapsToParentGoalId" IS NULL
@@ -811,6 +828,8 @@ WITH
         (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator' AND fg.id IS NOT NULL)) "collaborators"
     FROM with_class wc
     JOIN "Recipients" r
+    JOIN has_current_grant hcg
+    ON r.id = hcg.rid
     ON wc.id = r.id
     AND (has_class OR has_scores)
     JOIN "Grants" gr
@@ -854,7 +873,7 @@ WITH
     ON mr."statusId" = mrs."statusId"
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
+    WHERE hcg.has_current_active_grant
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')

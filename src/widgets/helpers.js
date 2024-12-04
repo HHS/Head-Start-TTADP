@@ -9,7 +9,6 @@ import {
   Topic,
   sequelize,
 } from '../models';
-import { mergeIncludes } from '../scopes';
 
 export const getAllTopicsForWidget = async () => Topic.findAll({
   attributes: ['id', 'name', 'deletedAt'],
@@ -82,13 +81,13 @@ export async function getAllRecipientsFiltered(scopes) {
         required: true,
         attributes: [],
         where: scopes.grant.where,
-        include: mergeIncludes(scopes.grant.include, [
+        include: [
           {
             model: GrantReplacements,
             as: 'replacedGrantReplacements',
             attributes: [],
           },
-        ]),
+        ],
       },
     ],
   });

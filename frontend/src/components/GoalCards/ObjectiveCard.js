@@ -101,98 +101,95 @@ function ObjectiveCard({
   const modalIdentifier = uniqueId('objective-suspend-identifier-');
 
   return (
-    <>
-      <ul data-testid="objectiveList" className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
-        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 desktop:text-normal text-bold">Objective </span>
-          <div>{title}</div>
-        </li>
-        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 desktop:text-normal text-bold">Activity reports </span>
-          <ul className="usa-list usa-list--unstyled">
-            {activityReports.map((report) => {
-              const viewOrEditLink = `/activity-reports/view/${report.id}`;
-              const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
-              return (
-                <li key={`AR-${report.id}`}>
-                  <Link
-                    to={linkToAr}
-                  >
-                    {report.displayId}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-        {supportType && (
+    <ul data-testid="objectiveList" className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Objective </span>
+        <div>{title}</div>
+      </li>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Activity reports </span>
+        <ul className="usa-list usa-list--unstyled">
+          {activityReports.map((report) => {
+            const viewOrEditLink = `/activity-reports/view/${report.id}`;
+            const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
+            return (
+              <li key={`AR-${report.id}`}>
+                <Link
+                  to={linkToAr}
+                >
+                  {report.displayId}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </li>
+      {supportType && (
         <li className="display-flex padding-bottom-05 flex-align-start">
           <span className="margin-right-3 minw-15">Support type </span>
           {supportType}
         </li>
-        )}
-        <li className="display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 minw-15">Grant numbers </span>
-          {grantNumbers.join(', ')}
-        </li>
-        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 desktop:text-normal text-bold">End date </span>
-          {endDate}
-        </li>
+      )}
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Grant numbers </span>
+        {grantNumbers.join(', ')}
+      </li>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">End date </span>
+        {endDate}
+      </li>
 
-        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 desktop:text-normal text-bold">Topics</span>
-          {topics.join(', ')}
-        </li>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Topics</span>
+        {topics.join(', ')}
+      </li>
 
-        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 desktop:text-normal text-bold">Reasons</span>
-          {reasons && displayReasonsList(reasons)}
-        </li>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Reasons</span>
+        {reasons && displayReasonsList(reasons)}
+      </li>
 
-        <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-          <span className="margin-right-3 desktop:text-normal text-bold">Objective status </span>
-          <div>
-            {(statusChangeError && (
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Objective status </span>
+        <div>
+          {(statusChangeError && (
             <Alert type="error" className="margin-top-1">
               There was an error updating the status of this objective.
               {' '}
               For more assistance, please contact support.
             </Alert>
-            ))}
-            <ObjectiveStatusDropdown
-              currentStatus={localStatus}
-              goalStatus={goalStatus}
-              objectiveId={objective.id}
-              regionId={regionId}
-              className="line-height-sans-5"
-              onUpdateObjectiveStatus={onUpdateObjectiveStatus}
-              forceReadOnly={forceReadOnly}
+          ))}
+          <ObjectiveStatusDropdown
+            currentStatus={localStatus}
+            goalStatus={goalStatus}
+            objectiveTitle={objective.title}
+            regionId={regionId}
+            className="line-height-sans-5"
+            onUpdateObjectiveStatus={onUpdateObjectiveStatus}
+            forceReadOnly={forceReadOnly}
+          />
+          {!(forceReadOnly) && (
+            <ObjectiveSuspendModal
+              objectiveId={modalIdentifier}
+              modalRef={modalRef}
+              objectiveSuspendReason={localCloseSuspendReason}
+              onChangeSuspendReason={(e) => setLocalCloseSuspendReason(e.target.value)}
+              objectiveSuspendInputName={`suspend-objective-${modalIdentifier}-reason`}
+              objectiveSuspendContextInputName={`suspend-objective-${modalIdentifier}-context`}
+              objectiveSuspendContext={localCloseSuspendContext}
+              onChangeSuspendContext={(e) => setLocalCloseSuspendContext(e.target.value)}
+              onChangeStatus={onChangeStatus}
+              setError={setSuspendReasonError}
+              error={suspendReasonError}
             />
-          </div>
-        </li>
-      </ul>
-      {!(forceReadOnly) && (
-      <ObjectiveSuspendModal
-        objectiveId={modalIdentifier}
-        modalRef={modalRef}
-        objectiveSuspendReason={localCloseSuspendReason}
-        onChangeSuspendReason={(e) => setLocalCloseSuspendReason(e.target.value)}
-        objectiveSuspendInputName={`suspend-objective-${modalIdentifier}-reason`}
-        objectiveSuspendContextInputName={`suspend-objective-${modalIdentifier}-context`}
-        objectiveSuspendContext={localCloseSuspendContext}
-        onChangeSuspendContext={(e) => setLocalCloseSuspendContext(e.target.value)}
-        onChangeStatus={onChangeStatus}
-        setError={setSuspendReasonError}
-        error={suspendReasonError}
-      />
-      )}
-    </>
+          )}
+        </div>
+      </li>
+    </ul>
   );
 }
 
 export const objectivePropTypes = PropTypes.shape({
-  id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),

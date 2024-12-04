@@ -95,9 +95,11 @@ export const getSelfServiceData = async (filterName, filters, dataSetSelection =
   const url = getSelfServiceUrl(filterName, filters);
 
   const urlToUse = url + dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('');
-  const response = await get(urlToUse);
-  if (!response.ok) {
-    throw new Error('Error fetching self service data');
-  }
-  return response.json();
+
+  return get(urlToUse).then((response) => {
+    if (!response.ok) {
+      throw new Error('Error fetching self service data');
+    }
+    return response.json();
+  });
 };
