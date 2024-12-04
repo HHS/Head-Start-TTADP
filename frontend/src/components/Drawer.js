@@ -33,6 +33,7 @@ export default function Drawer({
 
   useEffect(() => {
     const triggerElement = triggerRef.current;
+
     if (triggerElement) triggerElement.addEventListener('click', () => setIsOpen(true));
     return () => {
       if (triggerElement) triggerElement.removeEventListener('click', () => setIsOpen(true));
@@ -97,40 +98,42 @@ export default function Drawer({
     >
       <Trap>
         <div>
-          {title && (
-          <div
-            className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
-          >
-            <span className="text-bold font-serif-lg">{title}</span>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="usa-button usa-button--outline smart-hub-button--no-margin"
+          <div>
+            {title && (
+            <div
+              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
             >
-              Close
-            </button>
-          </div>
-          )}
+              <span className="text-bold font-serif-lg">{title}</span>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="usa-button usa-button--outline smart-hub-button--no-margin"
+              >
+                Close
+              </button>
+            </div>
+            )}
 
-          <div
-            className="overflow-y-auto padding-1 margin-1"
+            <div
+              className="overflow-y-auto padding-1 margin-1"
           // eslint-disable-next-line
           tabIndex="0"
-          >
-            {children}
+            >
+              {children}
+            </div>
           </div>
-        </div>
 
-        {footer && (
-        <div
-          className={`bg-base-lightest padding-105 ${
-            stickyFooter ? 'position-sticky pin-bottom' : ''
-          }`}
-        >
-          {footer}
+          {footer && (
+          <div
+            className={`bg-base-lightest padding-105 ${
+              stickyFooter ? 'position-sticky pin-bottom' : ''
+            }`}
+          >
+            {footer}
+          </div>
+          )}
         </div>
-        )}
       </Trap>
     </div>
   );
