@@ -1,13 +1,14 @@
 import React, {
   useCallback,
   useEffect,
-  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import FocusTrap from 'focus-trap-react';
 import PropTypes from 'prop-types';
+import FocusTrap from 'focus-trap-react';
 import './Drawer.scss';
+import useOnClickOutside from '../hooks/useOnOutsideClick';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -20,15 +21,15 @@ export default function Drawer({
   triggerRef,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0);
   const elementRef = useRef(null);
   const closeButtonRef = useRef(null);
 
-  useLayoutEffect(() => {
-    if (!isOpen) return;
+  const headerHeight = useMemo(() => {
     const header = document.querySelector('.smart-hub-header');
-    setHeaderHeight(header ? header.offsetHeight : 0);
-  }, [isOpen]);
+    return header ? header.offsetHeight : 0;
+  }, []);
+
+  useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
 
   useEffect(() => {
     const triggerElement = triggerRef.current;
@@ -53,12 +54,9 @@ export default function Drawer({
     return undefined;
   }, [isOpen]);
 
-  const onEscape = useCallback(
-    (event) => {
-      if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-    },
-    [setIsOpen],
-  );
+  const onEscape = useCallback((event) => {
+    if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
+  }, [setIsOpen]);
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -70,18 +68,18 @@ export default function Drawer({
 
   const classNames = [
     'smart-hub-drawer',
-    'bg-transparent',
+    'bg-white',
     'position-fixed',
     'pin-right',
     'pin-bottom',
     'z-100',
     'overflow-y-auto',
+    'shadow-3',
     'flex-column',
-    'flex-align-end',
+    'flex-justify',
   ];
 
   if (isOpen) {
-    classNames.push('smart-hub-drawer--open');
     classNames.push('display-flex');
     classNames.push('slide-in-right');
   }
@@ -98,32 +96,33 @@ export default function Drawer({
       }}
     >
       <Trap>
-        <div className="bg-white shadow-3 display-flex">
+        <div>
           {title && (
-            <div
-              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${
-                stickyHeader ? 'position-sticky pin-top' : ''
-              }`}
+          <div
+            className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
+          >
+            <span className="text-bold font-serif-lg">{title}</span>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="usa-button usa-button--outline smart-hub-button--no-margin"
             >
-              <span className="text-bold font-serif-lg">{title}</span>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="usa-button usa-button--outline smart-hub-button--no-margin"
-              >
-                Close
-              </button>
-            </div>
+              Close
+            </button>
+          </div>
           )}
 
-          <div className="overflow-y-auto padding-1 margin-1">
+          <div
+            className="overflow-y-auto padding-1 margin-1"
+          // eslint-disable-next-line
+          tabIndex="0"
+          >
             {children}
           </div>
         </div>
-      </Trap>
 
-      {footer && (
+        {footer && (
         <div
           className={`bg-base-lightest padding-105 ${
             stickyFooter ? 'position-sticky pin-bottom' : ''
@@ -131,7 +130,8 @@ export default function Drawer({
         >
           {footer}
         </div>
-      )}
+        )}
+      </Trap>
     </div>
   );
 }
