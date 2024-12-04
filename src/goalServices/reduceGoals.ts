@@ -182,7 +182,11 @@ export function reduceObjectivesForActivityReport(
       exists.citations = uniq(objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
-          (c) => c.citation,
+          (c) => ({
+            ...c.dataValues,
+            id: c.monitoringReferences[0].standardId,
+            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType123}`,
+          }),
         )
         : []);
 
@@ -265,7 +269,12 @@ export function reduceObjectivesForActivityReport(
         objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
-            (c) => c.citation,
+            (c) => (
+              {
+                ...c.dataValues,
+                id: c.monitoringReferences[0].standardId,
+                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}456`,
+              }),
           )
           : [],
       ),

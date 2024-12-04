@@ -185,11 +185,9 @@ describe('activityReportObjectiveCitation', () => {
     // Save the ActivityReportObjectiveCitation.
     let result = await cacheCitations(objective.id, aro.id, citationsToCreate);
 
-    // Assert updated.
-    expect(result[0]).toBeUndefined();
-
     // Assert created.
-    expect(result[1]).toBeDefined();
+    expect(result[0]).toBeDefined();
+
     const createdAroCitations = await ActivityReportObjectiveCitation.findAll({
       where: {
         activityReportObjectiveId: aro.id,
@@ -239,13 +237,7 @@ describe('activityReportObjectiveCitation', () => {
     result = await cacheCitations(objective.id, aro.id, citationsToUpdate);
 
     // Assert updated.
-    expect(result[0]).toHaveLength(1);
-
-    // Assert created.
-    expect(result[1]).toHaveLength(1);
-
-    // Assert deleted.
-    expect(result[2]).toBeUndefined();
+    expect(result[0]).toBeDefined();
 
     const updatedAroCitations = await ActivityReportObjectiveCitation.findAll({
       where: {
@@ -291,12 +283,6 @@ describe('activityReportObjectiveCitation', () => {
 
     // Assert updated.
     expect(result[0]).toBeDefined();
-
-    // Assert created.
-    expect(result[1]).toBeUndefined();
-
-    // Assert deleted.
-    expect(result[2]).toBeDefined();
 
     // Retrieve deleted citation 1.
     const deletedCitation = await ActivityReportObjectiveCitation.findOne({

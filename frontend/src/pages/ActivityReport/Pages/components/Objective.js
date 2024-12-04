@@ -42,6 +42,7 @@ export default function Objective({
   initialObjectiveStatus,
   reportId,
   citationOptions,
+  rawCitations,
 }) {
   const modalRef = useRef();
 
@@ -66,7 +67,6 @@ export default function Objective({
    * but we want to keep the logic in one place for the AR/RTR
    * if at all possible
    */
-
   const {
     field: {
       onChange: onChangeTitle,
@@ -349,6 +349,25 @@ export default function Objective({
     }
   };
 
+  // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
+  const selectedCitationsChanged = (newCitations) => {
+    const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
+
+    // From rawCitations get all the raw citations with the same standardId as the newCitations.
+    const newCitationsObjects = rawCitations.filter(
+      (rawCitation) => newCitationStandardIds.includes(rawCitation.standardId),
+    ).map((rawCitation) => (
+      {
+        ...rawCitation,
+        id: rawCitation.standardId,
+        name: newCitations.find(
+          (newCitation) => newCitation.id === rawCitation.standardId,
+        ).name,
+        monitoringReferences: rawCitation.grants,
+      }));
+    onChangeCitations([...newCitationsObjects]);
+  };
+
   return (
     <>
       <ObjectiveSelect
@@ -387,7 +406,7 @@ export default function Objective({
             options={citationOptions}
             validateValues={onBlurCitations}
             values={objectiveCitations}
-            onChangeValues={onChangeCitations}
+            onChangeValues={selectedCitationsChanged}
             inputName={objectiveCitationsInputName}
           />
         )
@@ -530,6 +549,18 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   citationOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
@@ -550,4 +581,5 @@ Objective.propTypes = {
 
 Objective.defaultProps = {
   citationOptions: [],
+  rawCitations: [],
 };
