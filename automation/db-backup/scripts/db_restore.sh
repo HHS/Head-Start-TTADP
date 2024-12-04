@@ -613,10 +613,18 @@ function perform_restore() {
     set -o pipefail
 
     log "INFO" "Reset database before restore"
-    psql -d postgres <<EOF
+    reset_sql_file=$(mktemp)
+    cat <<EOF > "${reset_sql_file}"
+select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
 DROP DATABASE IF EXISTS "${PGDATABASE}";
 CREATE DATABASE "${PGDATABASE}";
 EOF
+
+    psql -d postgres -f "${reset_sql_file}" || {
+        log "ERROR" "Failed to reset database"
+        exit 1
+    }
+    rm -f "${reset_sql_file}"
 
     log "INFO" "Restoring the database from the backup file"
     aws s3 cp "s3://${backup_file_path}" - |\
