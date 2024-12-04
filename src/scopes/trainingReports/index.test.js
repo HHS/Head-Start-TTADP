@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import filtersToScopes from '.';
+import filtersToScopes from '../index';
 
 import {
   User,
@@ -28,14 +28,6 @@ const mockCollaboratorUser = {
   hsesUserId: 'collabUser13874748',
   lastLogin: new Date(),
 };
-
-jest.mock('../index', () => {
-  const originalModule = jest.requireActual('../index');
-  return {
-    ...originalModule,
-    filterAssociation: jest.fn(originalModule.filterAssociation),
-  };
-});
 
 describe('filtersToScopes', () => {
   afterAll(async () => {
@@ -136,8 +128,9 @@ describe('filtersToScopes', () => {
     });
 
     it('uses default comparator when none is provided', async () => {
-      filtersToScopes.filterAssociation({}, ['1', '2'], false);
-      expect(filterAssociation).toHaveBeenCalledTimes(1);
+      const out = filterAssociation('asdf', ['1', '2'], false);
+      expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal(`"EventReportPilot"."id" IN (asdf ~* '1')`));
+      expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal(`"EventReportPilot"."id" IN (asdf ~* '2')`));
     });
   });
 
