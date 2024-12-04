@@ -613,7 +613,13 @@ function perform_restore() {
     set -o pipefail
 
     log "INFO" "Reset database before restore"
-    reset_sql_file=$(mktemp)
+    reset_sql_file=$(mktemp /tmp/reset_sql.XXXXXX)
+
+    if [[ ! -w "${reset_sql_file}" ]]; then
+        log "ERROR" "Temporary file ${reset_sql_file} is not writable"
+        exit 1
+    fi
+
     cat <<EOF > "${reset_sql_file}"
 select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
 DROP DATABASE IF EXISTS "${PGDATABASE}";
