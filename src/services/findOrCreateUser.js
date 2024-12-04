@@ -1,4 +1,4 @@
-import { Sequelize } from 'sequelize'; 
+import { Sequelize } from 'sequelize';
 import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
 
