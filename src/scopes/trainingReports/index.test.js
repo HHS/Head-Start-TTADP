@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import filtersToScopes, { filterAssociation } from '../index';
+import filtersToScopes, { filterAssociation } from './';
 
 import {
   User,
