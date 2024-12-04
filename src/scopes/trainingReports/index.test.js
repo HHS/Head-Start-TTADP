@@ -125,6 +125,11 @@ describe('filtersToScopes', () => {
       const { trainingReport: scope } = await filtersToScopes(filters);
       expect(scope).toEqual([{}]);
     });
+
+    it('uses default comparator when none is provided', async () => {
+      filtersToScopes.filterAssociation({}, ['1', '2'], false);
+      expect(filterAssociation).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('region', () => {
