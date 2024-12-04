@@ -752,7 +752,7 @@ describe('ActivityReport', () => {
     });
 
     fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-    fetchMock.get('/api/activity-reports/goals?grantIds=10431&reportStartDate=2012-03-20', [{
+    fetchMock.get('/api/activity-reports/goals?grantIds=10431&reportStartDate=2012-04-20', [{
       endDate: null,
       grantIds: [10431],
       goalIds: [37502],

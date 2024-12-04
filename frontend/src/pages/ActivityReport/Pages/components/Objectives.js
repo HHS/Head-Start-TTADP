@@ -12,6 +12,7 @@ export default function Objectives({
   noObjectiveError,
   reportId,
   citationOptions,
+  rawCitations,
 }) {
   const { errors, getValues, setValue } = useFormContext();
 
@@ -139,6 +140,7 @@ export default function Objectives({
               initialObjectiveStatus={objective.status}
               reportId={reportId}
               citationOptions={citationOptions}
+              rawCitations={rawCitations}
             />
           );
         })}
@@ -156,6 +158,18 @@ Objectives.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })),
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   objectiveOptions: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
@@ -165,4 +179,5 @@ Objectives.propTypes = {
 
 Objectives.defaultProps = {
   citationOptions: [],
+  rawCitations: [],
 };

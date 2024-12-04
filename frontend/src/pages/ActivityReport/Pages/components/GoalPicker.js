@@ -59,6 +59,7 @@ const GoalPicker = ({
   const activityRecipientType = watch('activityRecipientType');
 
   const [citationOptions, setCitationOptions] = useState([]);
+  const [rawCitations, setRawCitations] = useState([]);
 
   const selectedGoals = useWatch({ name: 'goals' });
   const activityRecipients = watch('activityRecipients');
@@ -146,6 +147,7 @@ const GoalPicker = ({
             }, {},
           ));
           setCitationOptions(uniqueCitationOptions);
+          setRawCitations(retrievedCitationOptions);
         }
       }
     }
@@ -303,6 +305,7 @@ const GoalPicker = ({
               templatePrompts={templatePrompts}
               isMultiRecipientReport={isMultiRecipientReport}
               citationOptions={citationOptions}
+              rawCitations={rawCitations}
             />
           </div>
         ) : null}
