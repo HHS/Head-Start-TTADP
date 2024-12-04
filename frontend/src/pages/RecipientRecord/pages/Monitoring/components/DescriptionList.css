@@ -1,9 +1,6 @@
 .ttahub-data-card-description-list {
   flex-wrap: wrap;
 }
-.ttahub-data-card-description-list > div {
-  flex: 1;
-}
 
 @media (min-width: 1560px) {
   .ttahub-data-card-description-list {

@@ -1,11 +1,13 @@
+/* eslint-disable max-len */
 import moment from 'moment';
 import db from '../models';
 import {
   ITTAByReviewResponse,
-  ITTAByCitationResponse,
-  IMonitoringResponse,
-  IMonitoringReviewGrantee,
   IMonitoringReview,
+  IMonitoringReviewGrantee,
+  IMonitoringResponse,
+  ITTAByReviewsSequelizeQueryResponse,
+  ITTAByCitationResponse,
 } from './types/monitoring';
 
 const {
@@ -17,158 +19,262 @@ const {
   MonitoringReviewLink,
   MonitoringReviewStatusLink,
   MonitoringClassSummary,
+  MonitoringFindingLink,
+  MonitoringFindingHistory,
+  MonitoringFinding,
+  MonitoringFindingStatusLink,
+  MonitoringFindingStatus,
 } = db;
 
+export async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
+  const grants = await Grant.findAll({
+    attributes: ['number'],
+    where: {
+      recipientId,
+      regionId,
+    },
+  }) as { number: string }[];
+
+  return grants.map((grant) => grant.number);
+}
+
 export async function ttaByReviews(
-  _recipientId: number,
-  _regionId: number,
+  recipientId: number,
+  regionId: number,
 ): Promise<ITTAByReviewResponse[]> {
-  return [
-    {
-      name: '241234FU',
-      reviewType: 'Follow-up',
-      reviewReceived: '01/01/2021',
-      outcome: 'Compliant',
+  const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId) as string[];
+  const reviews = await MonitoringReview.findAll({
+    include: [
+      {
+        model: MonitoringReviewLink,
+        as: 'monitoringReviewLink',
+        required: true,
+        include: [
+          {
+            model: MonitoringReviewGrantee,
+            as: 'monitoringReviewGrantees',
+            required: true,
+            where: {
+              grantNumber: grantNumbers,
+            },
+          },
+          {
+            model: MonitoringFindingHistory,
+            as: 'monitoringFindingHistories',
+            include: [
+              {
+                model: MonitoringFindingLink,
+                as: 'monitoringFindingLink',
+                include: [
+                  {
+                    model: MonitoringFinding,
+                    as: 'monitoringFindings',
+                    include: [
+                      {
+                        model: MonitoringFindingStatusLink,
+                        as: 'statusLink',
+                        include: [
+                          {
+                            model: MonitoringFindingStatus,
+                            as: 'monitoringFindingStatuses',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }) as ITTAByReviewsSequelizeQueryResponse[];
+
+  const response = reviews.map((review) => {
+    const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
+
+    const findings = [];
+
+    monitoringFindingHistories.forEach((history) => {
+      if (!history.monitoringFindingLink) {
+        return;
+      }
+
+      history.monitoringFindingLink.monitoringFindings.forEach((finding) => {
+        const status = finding.statusLink.monitoringFindingStatuses[0].name;
+        findings.push({
+          citation: '',
+          status,
+          findingType: finding.findingType,
+          correctionDeadline: moment(finding.correctionDeadLine).format('MM/DD/YYYY'),
+          category: finding.source,
+          objectives: [],
+        });
+      });
+    });
+
+    return {
+      name: review.name,
+      id: review.id,
       lastTTADate: null,
+      outcome: review.outcome,
+      reviewType: review.reviewType,
+      reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
+      grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
       specialists: [],
-      grants: [
-        '14CH123456',
-        '14HP141234',
-      ],
-      findings: [
-        {
-          citation: '1392.47(b)(5)(i)',
-          status: 'Corrected',
-          type: 'Noncompliance',
-          category: 'Monitoring and Implementing Quality Health Services',
-          correctionDeadline: '09/18/2024',
-          objectives: [],
-        },
-        {
-          citation: '1302.91(a)',
-          status: 'Corrected',
-          type: 'Noncompliance',
-          category: 'Program Management and Quality Improvement',
-          correctionDeadline: '09/18/2024',
-          objectives: [],
-        },
-        {
-          citation: '1302.12(m)',
-          status: 'Corrected',
-          type: 'Noncompliance',
-          category: 'Program Management and Quality Improvement',
-          correctionDeadline: '09/18/2024',
-          objectives: [],
-        },
-      ],
-    },
-    {
-      name: '241234RAN',
-      reviewType: 'RAN',
-      reviewReceived: '06/21/2024',
-      outcome: 'Deficiency',
-      lastTTADate: '07/12/2024',
-      grants: [
-        '14CH123456',
-        '14HP141234',
-      ],
-      specialists: [
-        {
-          name: 'Specialist 1',
-          roles: ['GS'],
-        },
-      ],
-      findings: [
-        {
-          citation: '1302.47(b)(5)(iv)',
-          status: 'Active',
-          type: 'Deficiency',
-          category: 'Inappropriate Release',
-          correctionDeadline: '07/25/2024',
-          objectives: [
-            {
-              title: 'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
-              activityReportIds: ['14AR29888'],
-              endDate: '07/12/2024',
-              topics: ['Communication', 'Quality Improvement Plan/QIP', 'Safety Practices', 'Transportation'],
-              status: 'In Progress',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: '241234F2',
-      reviewType: 'FA-2',
-      reviewReceived: '05/20/2024',
-      outcome: 'Noncompliant',
-      lastTTADate: '03/27/2024',
-      grants: [
-        '14CH123456',
-        '14HP141234',
-      ],
-      specialists: [
-        {
-          name: 'Specialist 1',
-          roles: ['GS'],
-        },
-        {
-          name: 'Specialist 1',
-          roles: ['ECS'],
-        },
-      ],
-      findings: [
-        {
-          citation: '1302.47(b)(5)(v)',
-          status: 'Active',
-          type: 'Noncompliance',
-          category: 'Monitoring and Implementing Quality Health Services',
-          correctionDeadline: '09/18/2024',
-          objectives: [
-            {
-              title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-              activityReportIds: ['14AR12345'],
-              endDate: '06/24/2024',
-              topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-              status: 'Complete',
-            },
-          ],
-        },
-        {
-          citation: '1302.91(a)',
-          status: 'Active',
-          type: 'Noncompliance',
-          category: 'Program Management and Quality Improvement',
-          correctionDeadline: '09/18/2024',
-          objectives: [
-            {
-              title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-              activityReportIds: ['14AR12345'],
-              endDate: '06/24/2024',
-              topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-              status: 'Complete',
-            },
-          ],
-        },
-        {
-          citation: '1302.12(m)',
-          status: 'Active',
-          type: 'Noncompliance',
-          category: 'Program Management and Quality Improvement',
-          correctionDeadline: '09/18/2024',
-          objectives: [
-            {
-              title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-              activityReportIds: ['14AR12345'],
-              endDate: '06/24/2024',
-              topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-              status: 'Complete',
-            },
-          ],
-        },
-      ],
-    },
-  ];
+      findings,
+    };
+  });
+
+  return response;
+
+  // return [
+  //   {
+  //     name: '241234FU',
+  //     reviewType: 'Follow-up',
+  //     reviewReceived: '01/01/2021',
+  //     outcome: 'Compliant',
+  //     lastTTADate: null,
+  //     specialists: [],
+  //     grants: [
+  //       '14CH123456',
+  //       '14HP141234',
+  //     ],
+  //     findings: [
+  //       {
+  //         citation: '1392.47(b)(5)(i)',
+  //         status: 'Corrected',
+  //         type: 'Noncompliance',
+  //         category: 'Monitoring and Implementing Quality Health Services',
+  //         correctionDeadline: '09/18/2024',
+  //         objectives: [],
+  //       },
+  //       {
+  //         citation: '1302.91(a)',
+  //         status: 'Corrected',
+  //         type: 'Noncompliance',
+  //         category: 'Program Management and Quality Improvement',
+  //         correctionDeadline: '09/18/2024',
+  //         objectives: [],
+  //       },
+  //       {
+  //         citation: '1302.12(m)',
+  //         status: 'Corrected',
+  //         type: 'Noncompliance',
+  //         category: 'Program Management and Quality Improvement',
+  //         correctionDeadline: '09/18/2024',
+  //         objectives: [],
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     name: '241234RAN',
+  //     reviewType: 'RAN',
+  //     reviewReceived: '06/21/2024',
+  //     outcome: 'Deficiency',
+  //     lastTTADate: '07/12/2024',
+  //     grants: [
+  //       '14CH123456',
+  //       '14HP141234',
+  //     ],
+  //     specialists: [
+  //       {
+  //         name: 'Specialist 1',
+  //         roles: ['GS'],
+  //       },
+  //     ],
+  //     findings: [
+  //       {
+  //         citation: '1302.47(b)(5)(iv)',
+  //         status: 'Active',
+  //         type: 'Deficiency',
+  //         category: 'Inappropriate Release',
+  //         correctionDeadline: '07/25/2024',
+  //         objectives: [
+  //           {
+  //             title: 'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
+  //             activityReportIds: ['14AR29888'],
+  //             endDate: '07/12/2024',
+  //             topics: ['Communication', 'Quality Improvement Plan/QIP', 'Safety Practices', 'Transportation'],
+  //             status: 'In Progress',
+  //           },
+  //         ],
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     name: '241234F2',
+  //     reviewType: 'FA-2',
+  //     reviewReceived: '05/20/2024',
+  //     outcome: 'Noncompliant',
+  //     lastTTADate: '03/27/2024',
+  //     grants: [
+  //       '14CH123456',
+  //       '14HP141234',
+  //     ],
+  //     specialists: [
+  //       {
+  //         name: 'Specialist 1',
+  //         roles: ['GS'],
+  //       },
+  //       {
+  //         name: 'Specialist 1',
+  //         roles: ['ECS'],
+  //       },
+  //     ],
+  //     findings: [
+  //       {
+  //         citation: '1302.47(b)(5)(v)',
+  //         status: 'Active',
+  //         type: 'Noncompliance',
+  //         category: 'Monitoring and Implementing Quality Health Services',
+  //         correctionDeadline: '09/18/2024',
+  //         objectives: [
+  //           {
+  //             title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+  //             activityReportIds: ['14AR12345'],
+  //             endDate: '06/24/2024',
+  //             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
+  //             status: 'Complete',
+  //           },
+  //         ],
+  //       },
+  //       {
+  //         citation: '1302.91(a)',
+  //         status: 'Active',
+  //         type: 'Noncompliance',
+  //         category: 'Program Management and Quality Improvement',
+  //         correctionDeadline: '09/18/2024',
+  //         objectives: [
+  //           {
+  //             title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+  //             activityReportIds: ['14AR12345'],
+  //             endDate: '06/24/2024',
+  //             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
+  //             status: 'Complete',
+  //           },
+  //         ],
+  //       },
+  //       {
+  //         citation: '1302.12(m)',
+  //         status: 'Active',
+  //         type: 'Noncompliance',
+  //         category: 'Program Management and Quality Improvement',
+  //         correctionDeadline: '09/18/2024',
+  //         objectives: [
+  //           {
+  //             title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
+  //             activityReportIds: ['14AR12345'],
+  //             endDate: '06/24/2024',
+  //             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
+  //             status: 'Complete',
+  //           },
+  //         ],
+  //       },
+  //     ],
+  //   },
+  // ];
 }
 
 export async function ttaByCitations(
@@ -458,6 +564,13 @@ export async function monitoringData({
     }
     return b;
   }, monitoringReviews[0]);
+
+  // from the most recent review, get the status via the statusLink
+  const { monitoringReviewStatuses } = monitoringReview.statusLink;
+
+  // I am presuming there can only be one status linked to a review
+  // as that was the structure before tables were refactored
+  const [status] = monitoringReviewStatuses;
 
   return {
     recipientId: grant.recipientId,
