@@ -43,7 +43,7 @@ export default function findOrCreateUser(data) {
       lastLogin: sequelize.fn('NOW'),
     });
   }).catch((error) => {
-    let errorDetails = {};
+    const errorDetails = {};
 
     // Check if the error is a Sequelize error
     if (error instanceof sequelize.Error) {
