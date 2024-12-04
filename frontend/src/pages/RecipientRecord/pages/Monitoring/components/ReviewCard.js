@@ -86,7 +86,7 @@ ReviewCard.propTypes = {
     findings: PropTypes.arrayOf(PropTypes.shape({
       citation: PropTypes.string.isRequired,
       status: PropTypes.string.isRequired,
-      type: PropTypes.string.isRequired,
+      findingType: PropTypes.string.isRequired,
       category: PropTypes.string.isRequired,
       correctionDeadline: PropTypes.string.isRequired,
       objectives: PropTypes.arrayOf(PropTypes.shape({

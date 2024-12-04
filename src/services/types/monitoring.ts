@@ -49,22 +49,23 @@ interface ITTAByCitationReview {
 }
 
 interface ITTAByReviewFinding {
-  citation: string;
-  status: string;
-  type: string;
-  category: string;
-  correctionDeadline: string;
+  citation: string; // ??
+  status: string; // check
+  findingType: string; // check
+  category: string; // check
+  correctionDeadline: string; // check
   objectives: ITTAByReviewObjective[];
 }
 
 interface ITTAByReviewResponse {
-  name: string;
-  reviewType: string;
+  id: number; // check
+  name: string; // check
+  reviewType: string; // check
   reviewReceived: string;
   findings: ITTAByReviewFinding[];
-  grants: string[];
-  outcome: string;
-  lastTTADate: string | null;
+  grants: string[]; // check
+  outcome: string; // check
+  lastTTADate: string | null; // need ars
   specialists: {
     name: string;
     roles: string[];
@@ -81,6 +82,41 @@ interface ITTAByCitationResponse {
   reviews: ITTAByCitationReview[];
 }
 
+interface ITTAByReviewsSequelizeQueryResponse {
+  id: number;
+  reviewId: string;
+  reportDeliveryDate: string;
+  contentId: string;
+  name: string;
+  outcome: string;
+  reviewType: string;
+  monitoringReviewLink: {
+    monitoringFindingHistories: {
+      narrative: string;
+      ordinal: number;
+      determination: string;
+      monitoringFindingLink?: {
+        monitoringFindings: {
+          citationNumber: string;
+          findingType: string;
+          source: string;
+          correctionDeadLine: string;
+          statusLink: {
+            monitoringFindingStatuses: {
+              name: string;
+            }[];
+          };
+        }[];
+      };
+    }[];
+    monitoringReviewGrantees: {
+      grantNumber: string;
+    }[];
+  };
+
+  toJSON: () => Omit<ITTAByReviewsSequelizeQueryResponse, 'toJSON'>;
+}
+
 export {
   IMonitoringReview,
   IMonitoringReviewGrantee,
@@ -89,5 +125,6 @@ export {
   ITTAByCitationReview,
   ITTAByReviewFinding,
   ITTAByReviewResponse,
+  ITTAByReviewsSequelizeQueryResponse,
   ITTAByCitationResponse,
 };
