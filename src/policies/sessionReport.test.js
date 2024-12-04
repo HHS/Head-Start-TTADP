@@ -106,5 +106,40 @@ describe('Session Report policies', () => {
       const policy = new SessionReport(authorRegion2, reportRegion1);
       expect(policy.canRead()).toBe(false);
     });
+
+    it('is true if the user is an admin', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new SessionReport(admin, reportRegion1);
+      expect(policy.canRead()).toBe(true);
+    });
+  });
+
+  describe('canWriteInRegion', () => {
+    it('is true if the user is an admin', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new SessionReport(admin, reportRegion1);
+      expect(policy.canWriteInRegion()).toBe(true);
+    });
+
+    it('is true if the user has write permissions in the region', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new SessionReport(authorRegion1, reportRegion1);
+      expect(policy.canWriteInRegion()).toBe(true);
+    });
+
+    it('is false if the user does not have write permissions in the region', () => {
+      const reportRegion1 = createReport({ author: authorRegion1, regionId: 1 });
+      const policy = new SessionReport(authorRegion2, reportRegion1);
+      expect(policy.canWriteInRegion()).toBe(false);
+    });
+  });
+
+  describe('permissions default', () => {
+    it('defaults to an empty array if user has no permissions', () => {
+      const userWithoutPermissions = { id: 999 };
+      const reportRegion1 = createReport({ author: userWithoutPermissions, regionId: 1 });
+      const policy = new SessionReport(userWithoutPermissions, reportRegion1);
+      expect(policy.permissions).toEqual([]);
+    });
   });
 });
