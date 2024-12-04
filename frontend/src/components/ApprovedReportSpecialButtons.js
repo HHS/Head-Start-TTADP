@@ -69,8 +69,8 @@ export default function ApprovedReportSpecialButtons({
         {showUnlockReports && user && user.permissions && canUnlockReports(user)
           ? <ModalToggleButton type="button" className="usa-button usa-button--outline no-print" modalRef={modalRef} opener>Unlock report</ModalToggleButton>
           : null}
+        {showUnlockReports && <UnlockModal /> }
       </Grid>
-      {showUnlockReports && <UnlockModal /> }
     </>
   );
 }
