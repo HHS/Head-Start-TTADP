@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import filtersToScopes from './';
+import filtersToScopes from '.';
 
 import {
   User,
