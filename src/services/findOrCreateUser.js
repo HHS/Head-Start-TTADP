@@ -1,4 +1,3 @@
-import { Sequelize } from 'sequelize';
 import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
 
@@ -35,8 +34,6 @@ export default function findOrCreateUser(data) {
         });
       });
     }
-    // eslint-disable-next-line
-    console.log('findOrCreateUser:', userFoundByHsesUserId, data);
     return userFoundByHsesUserId.update({
       hsesUsername: data.hsesUsername,
       hsesAuthorities: data.hsesAuthorities,
@@ -44,34 +41,8 @@ export default function findOrCreateUser(data) {
       lastLogin: sequelize.fn('NOW'),
     });
   }).catch((error) => {
-    const errorDetails = {};
-
-    // Check if the error is a Sequelize error
-    if (error.name && error.name.startsWith('Sequelize')) {
-      errorDetails.name = error.name || 'Unknown Sequelize Error';
-      errorDetails.message = error.message || 'No message available';
-      errorDetails.errors = error.errors || [];
-      errorDetails.stack = error.stack || 'No stack trace available';
-      errorDetails.sql = error.sql || 'No SQL information available';
-    } else {
-      // Handle other types of errors (e.g., generic JavaScript errors)
-      errorDetails.name = error.name || 'Unknown Error';
-      errorDetails.message = error.message || 'No message available';
-      errorDetails.stack = error.stack || 'No stack trace available';
-      errorDetails.errors = [];
-      errorDetails.sql = 'Not applicable';
-    }
-
-    const detailedMessage = `
-      Error finding or creating user in database:
-      - Name: ${errorDetails.name}
-      - Message: ${errorDetails.message}
-      - SQL: ${errorDetails.sql}
-      - Stack: ${errorDetails.stack}
-      - Errors: ${JSON.stringify(errorDetails.errors, null, 2)}
-    `;
-
-    auditLogger.error(`SERVICE:FIND_OR_CREATE_USER - ${detailedMessage}`);
-    throw new Error(detailedMessage);
+    const msg = `Error finding or creating user in database - ${error}`;
+    auditLogger.error(`SERVICE:FIND_OR_CREATE_USER - ${msg}`);
+    throw new Error(msg);
   });
 }
