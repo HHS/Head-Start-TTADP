@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import filtersToScopes from '../index';
+import filtersToScopes, { filterAssociation } from '../index';
 
 import {
   User,
@@ -27,6 +27,14 @@ const mockCollaboratorUser = {
   hsesUserId: 'collabUser13874748',
   lastLogin: new Date(),
 };
+
+jest.mock('../index', () => {
+  const originalModule = jest.requireActual('../index');
+  return {
+    ...originalModule,
+    filterAssociation: jest.fn(originalModule.filterAssociation),
+  };
+});
 
 describe('filtersToScopes', () => {
   afterAll(async () => {
