@@ -1,4 +1,4 @@
-import { reduceGoals } from './reduceGoals';
+import { reduceGoals, reduceObjectivesForActivityReport } from './reduceGoals';
 
 describe('reduceGoals', () => {
   const goals = [
@@ -182,62 +182,52 @@ describe('reduceGoals', () => {
   });
 
   it('should set objectiveCreatedHere to true if objectiveCreatedHere is true and exists.objectiveCreatedHere is false', () => {
-    const goalsWithObjectivesCreatedHere = [
+    const newObjectives = [
       {
-        id: 5,
-        name: 'Goal with Objectives Created Here',
-        status: 'Draft',
-        isCurated: false,
-        objectives: [
+        id: 1,
+        otherEntityId: 123,
+        title: 'Objective 1',
+        status: 'Not Started',
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        goalId: 5,
+        onApprovedAR: false,
+        onAR: false,
+        rtrOrder: 1,
+        activityReportObjectives: [
           {
-            id: 1,
-            otherEntityId: 123,
-            title: 'Objective 1',
             status: 'Not Started',
-            topics: [],
-            resources: [],
-            files: [],
-            courses: [],
-            goalId: 5,
-            onApprovedAR: false,
-            onAR: false,
-            rtrOrder: 1,
-            activityReportObjectives: [
-              {
-                status: 'Not Started',
-                objectiveCreatedHere: true,
-                activityReportObjectiveResources: [],
-                activityReportObjectiveTopics: [],
-                activityReportObjectiveCourses: [],
-                activityReportObjectiveFiles: [],
-              },
-            ],
+            objectiveCreatedHere: true,
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveFiles: [],
           },
         ],
-        grant: {
-          recipientId: 1,
-          numberWithProgramTypes: 1,
-          recipient: {
-            dataValues: {},
-          },
-        },
-        dataValues: {
-          endDate: '2023-12-31',
-          grant: {
-            recipientId: 1,
-            numberWithProgramTypes: 1,
-          },
-        },
-        endDate: '2023-12-31',
-        grantId: 1,
-        createdVia: 'rtr',
-        source: 'Source',
       },
     ];
 
-    const result = reduceGoals(goalsWithObjectivesCreatedHere as any, true);
-    expect(result.length).toEqual(1);
+    const currentObjectives = [
+      {
+        status: 'Not Started',
+        title: 'Objective 1',
+        objectiveCreatedHere: false,
+        ids: [],
+        recipientIds: [],
+        activityReports: [],
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+      },
+    ];
+
     // @ts-ignore
-    expect(result[0].objectives[0].objectiveCreatedHere).toEqual(true);
+    const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives);
+    expect(result.length).toEqual(1);
+    expect(result[0].objectiveCreatedHere).toEqual(true);
   });
+
 });
