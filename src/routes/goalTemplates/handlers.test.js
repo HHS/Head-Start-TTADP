@@ -1,8 +1,18 @@
 import {
   INTERNAL_SERVER_ERROR,
 } from 'http-codes';
-import { getGoalTemplates, getSource, getPrompts, getOptionsByPromptName } from './handlers';
-import { getCuratedTemplates, getSourceFromTemplate, getFieldPromptsForCuratedTemplate, getOptionsByGoalTemplateFieldPromptName } from '../../services/goalTemplates';
+import {
+  getGoalTemplates,
+  getSource,
+  getPrompts,
+  getOptionsByPromptName,
+} from './handlers';
+import {
+  getCuratedTemplates,
+  getSourceFromTemplate,
+  getFieldPromptsForCuratedTemplate,
+  getOptionsByGoalTemplateFieldPromptName,
+} from '../../services/goalTemplates';
 
 jest.mock('../../services/goalTemplates');
 
