@@ -113,6 +113,7 @@ describe('reduceGoals', () => {
       },
     ];
 
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const result = reduceGoals(goalsWithObjectives as any);
     expect(result.length).toEqual(1);
     expect(result[0].objectives[0].recipientIds).toEqual([123]);
@@ -176,6 +177,7 @@ describe('reduceGoals', () => {
       },
     ];
 
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const result = reduceGoals(goalsWithExistingObjectives as any);
     expect(result.length).toEqual(1);
     expect(result[0].objectives[0].recipientIds).toEqual([123, 456]);
@@ -229,5 +231,4 @@ describe('reduceGoals', () => {
     expect(result.length).toEqual(1);
     expect(result[0].objectiveCreatedHere).toEqual(true);
   });
-
 });
