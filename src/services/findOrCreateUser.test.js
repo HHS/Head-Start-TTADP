@@ -163,6 +163,8 @@ describe('findOrCreateUser', () => {
     };
     await User.destroy({ where: { hsesUserId: '33' } });
     await expect(findOrCreateUser(user)).rejects.toThrow();
-    expect(auditLogger.error).toHaveBeenCalled();//With('SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid');
+    expect(auditLogger.error).toHaveBeenCalled();
+    // With('SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database
+    // - SequelizeValidationError: Validation error: email is invalid');
   });
 });
