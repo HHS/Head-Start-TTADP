@@ -130,4 +130,24 @@ describe('Group', () => {
       expect(g.isPublic()).toBe(false);
     });
   });
+
+  describe('constructor', () => {
+    it('should use group grants if grants are not provided', () => {
+      const user = { id: 1, permissions: [] };
+      const group = { grants: [{ regionId: 1 }] };
+
+      const g = new Group(user, undefined, group);
+
+      expect(g.grants).toEqual(group.grants);
+    });
+
+    it('should use an empty array if neither grants nor group grants are provided', () => {
+      const user = { id: 1, permissions: [] };
+      const group = {};
+
+      const g = new Group(user, undefined, group);
+
+      expect(g.grants).toEqual([]);
+    });
+  });
 });
