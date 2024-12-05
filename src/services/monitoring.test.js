@@ -256,12 +256,16 @@ describe('monitoring services', () => {
     });
   });
   describe('ttaByReviews', () => {
+    // ttaByReviews is a stub function that returns some sample data currently,
+    // so this test just ensures it returns an array for coverage purposes.
     it('returns an array', async () => {
       const data = await ttaByReviews(RECIPIENT_ID, REGION_ID);
       expect(Array.isArray(data)).toBe(true);
     });
   });
   describe('ttaByCitations', () => {
+    // ttaByCitations is a stub function that returns some sample data currently,
+    // so this test just ensures it returns an array for coverage purposes.
     it('returns an array', async () => {
       const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
       expect(Array.isArray(data)).toBe(true);
