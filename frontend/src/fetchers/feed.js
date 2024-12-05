@@ -9,9 +9,9 @@ const getNotifications = async () => {
   return response.text();
 };
 
-const getSingleFeedItemByTag = async (tag) => {
+const getSingleFeedItemByTag = async (tag, signal = null) => {
   const url = join(feedUrl, 'item', `?tag=${tag}`);
-  const response = await get(url);
+  const response = await get(url, signal);
   return response.text();
 };
 

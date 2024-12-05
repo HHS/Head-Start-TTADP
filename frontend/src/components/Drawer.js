@@ -85,8 +85,6 @@ export default function Drawer({
     classNames.push('slide-in-right');
   }
 
-  const Trap = isOpen ? FocusTrap : React.Fragment;
-
   return (
     <div
       hidden={!isOpen}
@@ -96,7 +94,7 @@ export default function Drawer({
         top: headerHeight,
       }}
     >
-      <Trap>
+      <FocusTrap active={isOpen}>
         <div>
           <div>
             {title && (
@@ -134,7 +132,7 @@ export default function Drawer({
           </div>
           )}
         </div>
-      </Trap>
+      </FocusTrap>
     </div>
   );
 }
