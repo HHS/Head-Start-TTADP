@@ -1,5 +1,10 @@
 import sequelize from 'sequelize';
-import { classScore, monitoringData } from './monitoring';
+import {
+  classScore,
+  monitoringData,
+  ttaByReviews,
+  ttaByCitations,
+} from './monitoring';
 import db from '../models';
 
 const {
@@ -171,10 +176,6 @@ describe('monitoring services', () => {
     });
 
     it('returns data in the correct format', async () => {
-      const recipientId = RECIPIENT_ID;
-      const regionId = REGION_ID;
-      const grantNumber = GRANT_NUMBER;
-
       const grant = await Grant.findOne({
         where: { id: GRANT_ID },
       });
@@ -188,19 +189,33 @@ describe('monitoring services', () => {
       expect(grantNumberLink).not.toBeNull();
 
       const data = await monitoringData({
-        recipientId,
-        regionId,
-        grantNumber,
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
       });
 
       expect(data).toEqual({
-        recipientId,
-        regionId,
-        grant: grantNumber,
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grant: GRANT_NUMBER,
         reviewStatus: 'Complete',
         reviewDate: '02/22/2023',
         reviewType: 'FA-1',
       });
+    });
+
+    it('returns the most recent review', async () => {
+      const data = await monitoringData({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).not.toBeNull();
+      expect(data.reviewDate).toEqual('02/22/2023');
+
+      await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C809' }, force: true });
+      await MonitoringReview.destroy({ where: { reviewId: 'D58FBB78-91CA-4236-8DB6-0022E7E8D909' }, force: true });
     });
   });
   describe('Grant afterCreate', () => {
@@ -238,6 +253,18 @@ describe('monitoring services', () => {
       expect(createdGrantNumberLink).not.toBeNull();
       expect(createdGrantNumberLink.grantNumber).toEqual('14CH123');
       expect(createdGrantNumberLink.grantId).toEqual(GRANT_ID + 2);
+    });
+  });
+  describe('ttaByReviews', () => {
+    it('returns an array', async () => {
+      const data = await ttaByReviews(RECIPIENT_ID, REGION_ID);
+      expect(Array.isArray(data)).toBe(true);
+    });
+  });
+  describe('ttaByCitations', () => {
+    it('returns an array', async () => {
+      const data = await ttaByCitations(RECIPIENT_ID, REGION_ID);
+      expect(Array.isArray(data)).toBe(true);
     });
   });
 });
