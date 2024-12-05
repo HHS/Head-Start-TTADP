@@ -117,7 +117,7 @@ export default function Objective({
       },
     },
     // If citations are not available, set citations to null
-    defaultValue: citationOptions && citationOptions.length ? objective.citations : null,
+    defaultValue: objective.citations,
   });
 
   const {

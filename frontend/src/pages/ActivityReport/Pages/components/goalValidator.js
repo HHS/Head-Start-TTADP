@@ -61,7 +61,7 @@ export const unfinishedObjectives = (
       }
 
       // We only validate citations if they exist (they are not always required).
-      if (objective.citations && (!objective.citations || !objective.citations.length)) {
+      if (objective.citations && !objective.citations.length) {
         setError(`${fieldArrayName}[${index}].citations`, { message: OBJECTIVE_CITATIONS });
         incomplete = true;
       }
