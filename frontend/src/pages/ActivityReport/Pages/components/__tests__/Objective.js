@@ -158,19 +158,34 @@ describe('Objective', () => {
   });
 
   it('renders the citations dropdown when there are citations available', async () => {
-    render(<RenderObjective citationOptions={[{ id: 1, name: 'Citation 1' }]} rawCitations={[{ citation: 'Citation 1', standardId: 1 }]} />);
+    const citationOptions = [{
+      label: 'Label 1',
+      options: [
+        { name: 'Citation 1', id: 1 },
+      ],
+    }];
+
+    const rawCitations = [{
+      citation: 'Citation 1',
+      standardId: 1,
+      grants: [{
+        acro: 'DEF',
+        citation: 'Citation 1',
+        grantId: 1,
+        grantNumber: '12345',
+      }],
+    }];
+
+    render(<RenderObjective citationOptions={citationOptions} rawCitations={rawCitations} />);
     const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
     expect(helpButton).toBeVisible();
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
     expect(citationsButton).toBeVisible();
 
-    // Select the option 'Citation 1' from the react-select dropdown
-    userEvent.click(citationsButton);
-    userEvent.click(screen.getByText('Citation 1'));
-    expect(await screen.findByText('Citation 1')).toBeVisible();
+    const citationSelect = await screen.findByLabelText(/citation/i);
+    await selectEvent.select(citationSelect, [/Citation 1/i]);
 
-
-
+    expect(await screen.findByText(/Citation 1/i)).toBeVisible();
   });
 
   it('uploads a file', async () => {
