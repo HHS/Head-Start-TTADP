@@ -1,30 +1,39 @@
 .ttahub-data-card-description-list {
-  flex-wrap: wrap;
-}
-.ttahub-data-card-description-list > div {
-  flex: 1;
+  display: grid;
+  row-gap: 1em;
+  grid-template-columns: repeat(2, 50%);
 }
 
-@media (min-width: 1560px) {
+.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical {
+  display: block;
+}
+.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
+  dd {
+  margin-bottom: 1em;
+}
+
+@media (min-width: 800px) {
   .ttahub-data-card-description-list {
-    flex-wrap: no-wrap;
+    grid-template-columns: repeat(3, 33%);
   }
-  .ttahub-data-card-description-list > div {
-    min-width: var(--data-card-column-width);
+  .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical {
+    display: grid;
+    row-gap: 0;
+    grid-template-columns: var(--data-card-column-width) 1fr;
+  }
+  .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
+    dd {
+    margin-bottom: 0.5em;
   }
 }
 
-@media (min-width: 64em) {
-  .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
-    > div {
-    display: flex;
-    flex-direction: row;
+@media (min-width: 1445px) {
+  .ttahub-data-card-description-list {
+    grid-template-columns: repeat(6, var(--data-card-column-width));
   }
+}
 
-  .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
-    > div
-    dt {
-    flex: 1;
-    min-width: var(--data-card-column-width);
-  }
+.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
+  > div {
+  display: contents;
 }
