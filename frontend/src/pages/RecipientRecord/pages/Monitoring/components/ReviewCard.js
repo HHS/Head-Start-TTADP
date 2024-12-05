@@ -62,7 +62,11 @@ export default function ReviewCard({ review, regionId }) {
           <SpecialistTags specialists={review.specialists} />
         </DescriptionItem>
       </DescriptionList>
-      <ToggleTtaActivityButton expanded={expanded} setExpanded={setExpanded} />
+      <ToggleTtaActivityButton
+        count={review.findings.length}
+        expanded={expanded}
+        setExpanded={setExpanded}
+      />
       {expanded && (review.findings.map((finding) => (
         <FindingWithinReview
           key={uniqueId('review-card-finding-')}
