@@ -104,9 +104,6 @@ describe('buildInfo function', () => {
     // Call the function
     await buildInfo(req, res);
 
-    // Debugging: Check the mock calls
-    console.log('revparse calls:', mockGit.revparse.mock.calls);
-
     // Assertions
     expect(mockGit.revparse).toHaveBeenCalledWith(['HEAD']); // Verify commit call
     expect(res.json).toHaveBeenCalledWith({

@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.20.3-browsers
+      - image: cimg/node:18.20.4-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.20.3-browsers
+      - image: cimg/node:18.20.4-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: cimg/postgres:15.6
@@ -390,6 +390,40 @@ commands:
       #     name: Push maintenance application
       #     command: |
       #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
+  cf_migrate:
+    description: "Login to Cloud Foundry space, run migration"
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+    steps:
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Migrate database
+          command: |
+            cf run-task << parameters.app_name >> \
+              --command "yarn db:migrate:prod" \
+              --name "migrate"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
@@ -662,10 +696,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-unsafe-inline"
+    default: "main"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "TTAHUB-3613/admin-build-info2"
+    default: "TTAHUB-3678/login"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -692,6 +726,15 @@ parameters:
     type: boolean
     default: false
   manual-full-process:
+    type: boolean
+    default: false
+  manual-restore-staging:
+    type: boolean
+    default: false
+  manual-restore-sandbox:
+    type: boolean
+    default: false
+  manual-restore-dev:
     type: boolean
     default: false
   fail-on-modified-lines:
@@ -1125,8 +1168,14 @@ jobs:
       - run:
           name: Install Cloud Foundry
           command: |
-            curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
-            sudo dpkg -i cf-cli_amd64.deb
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
       - when: # sandbox: for short-term feature development, see README.md
           condition:
             and:
@@ -1461,6 +1510,66 @@ jobs:
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
+  restore_processed_to_staging:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-staging
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+    - cf_migrate:
+          app_name: tta-smarthub-staging
+          cloudgov_username: CLOUDGOV_STAGING_USERNAME
+          cloudgov_password: CLOUDGOV_STAGING_PASSWORD
+          cloudgov_space: CLOUDGOV_STAGING_SPACE
+  restore_processed_to_sandbox:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-sandbox
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+    - cf_migrate:
+          app_name: tta-smarthub-sandbox
+          cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
+          cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
+          cloudgov_space: CLOUDGOV_SANDBOX_SPACE
+  restore_processed_to_dev:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-dev
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+    - cf_migrate:
+          app_name: tta-smarthub-dev
+          cloudgov_username: CLOUDGOV_DEV_USERNAME
+          cloudgov_password: CLOUDGOV_DEV_PASSWORD
+          cloudgov_space: CLOUDGOV_DEV_SPACE
 workflows:
   build_test_deploy:
     when:
@@ -1470,6 +1579,9 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-process >>]
         - equal: [false, << pipeline.parameters.manual-backup >>]
         - equal: [false, << pipeline.parameters.manual-full-process >>]
+        - equal: [false, << pipeline.parameters.manual-restore-staging >>]
+        - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1581,6 +1693,15 @@ workflows:
       - process_backup:
           requires:
             - process_production
+      - restore_processed_to_staging:
+          requires:
+            - process_backup
+      - restore_processed_to_sandbox:
+          requires:
+            - restore_processed_to_staging
+      - restore_processed_to_dev:
+          requires:
+            - restore_processed_to_sandbox
   manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
@@ -1615,3 +1736,18 @@ workflows:
       - process_backup:
           requires:
             - process_production
+  manual_restore_staging:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-staging >>]
+    jobs:
+      - restore_processed_to_staging
+  manual_restore_sandbox:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-sandbox >>]
+    jobs:
+      - restore_processed_to_sandbox
+  manual_restore_dev:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev >>]
+    jobs:
+      - restore_processed_to_dev
