@@ -6,13 +6,14 @@ import {
 
 export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
   const formattedDate = new Date(reportStartDate).toISOString().split('T')[0];
-  const citations = await get(join(
+  const url = join(
     '/',
     'api',
     'citations',
     'region',
     String(region),
     `?grantIds=${grantIds.join('&')}&reportStartDate=${formattedDate}`,
-  ));
+  );
+  const citations = await get(url);
   return citations.json();
 }

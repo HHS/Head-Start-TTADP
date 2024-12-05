@@ -2,7 +2,7 @@
 /* eslint-disable prefer-destructuring */
 import { v4 as uuidv4 } from 'uuid';
 import faker from '@faker-js/faker';
-import { getCitationsByGrantIds, getMonitoringGoals } from './citations';
+import { getCitationsByGrantIds } from './citations';
 import db, {
   Recipient,
   Grant,
@@ -419,33 +419,5 @@ describe('citations service', () => {
     expect(citation3.grants[0].reviewName).toBeDefined();
     expect(citation3.grants[0].reportDeliveryDate).toBeDefined();
     expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
-  });
-
-  it('getMonitoringGoals', async () => {
-    const goalsToAssert = await getMonitoringGoals([grant1.id, grant1a.id], new Date().toISOString().split('T')[0]);
-    expect(goalsToAssert.length).toBe(2);
-
-    // Assert the goals.
-    // Assert the monitoring goal.
-    const monitoringGoalToAssert = goalsToAssert.find((g) => g.id === monitoringGoal.id);
-    expect(monitoringGoalToAssert).toBeDefined();
-    expect(monitoringGoalToAssert.name).toBe('Monitoring Goal 1');
-    expect(monitoringGoalToAssert.status).toBe('Not started');
-    expect(monitoringGoalToAssert.grantIds).toStrictEqual([grant1.id]);
-    expect(monitoringGoalToAssert.created).toBeDefined();
-    expect(monitoringGoalToAssert.onApprovedAR).toBe(true);
-    expect(monitoringGoalToAssert.createdVia).toBe('monitoring');
-    expect(monitoringGoalToAssert.goalTemplateId).toBe(monitoringGoal.goalTemplateId);
-
-    // Assert the grant1a monitoring goal.
-    const monitoringGoalToAssert1a = goalsToAssert.find((g) => g.id === grant1aMonitoringGoal.id);
-    expect(monitoringGoalToAssert1a).toBeDefined();
-    expect(monitoringGoalToAssert1a.name).toBe('Monitoring Goal 3');
-    expect(monitoringGoalToAssert1a.status).toBe('Not started');
-    expect(monitoringGoalToAssert1a.grantIds).toStrictEqual([grant1a.id]);
-    expect(monitoringGoalToAssert1a.created).toBeDefined();
-    expect(monitoringGoalToAssert1a.onApprovedAR).toBe(true);
-    expect(monitoringGoalToAssert1a.createdVia).toBe('monitoring');
-    expect(monitoringGoalToAssert1a.goalTemplateId).toBe(monitoringGoal.goalTemplateId);
   });
 });

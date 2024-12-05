@@ -148,6 +148,7 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   Citations to remove will be determined by id.
 */
 export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
+  let newCitations = [];
   // Delete all existing citations for this activity report objective.
   await ActivityReportObjectiveCitation.destroy({
     where: { activityReportObjectiveId },
@@ -156,13 +157,12 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   });
 
   // Create citations to save.
-  let newCitations = [];
   if (citations && citations.length > 0) {
     newCitations = citations.map((citation) => (
       {
-        ...citation,
         activityReportObjectiveId,
         citation: citation.citation,
+        monitoringReferences: citation.monitoringReferences,
       }));
 
     // If we have citations to save, create them.
@@ -170,7 +170,6 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
       return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });
     }
   }
-
   return newCitations;
 };
 
