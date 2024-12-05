@@ -6,8 +6,9 @@ import {
   IMonitoringReview,
   IMonitoringReviewGrantee,
   IMonitoringResponse,
-  ITTAByReviewsSequelizeQueryResponse,
   ITTAByCitationResponse,
+  MonitoringStandard as MonitoringStandardType,
+  MonitoringReview as MonitoringReviewType,
 } from './types/monitoring';
 
 const {
@@ -24,6 +25,9 @@ const {
   MonitoringFinding,
   MonitoringFindingStatusLink,
   MonitoringFindingStatus,
+  MonitoringFindingStandard,
+  MonitoringStandardLink,
+  MonitoringStandard,
 } = db;
 
 export async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
@@ -67,6 +71,22 @@ export async function ttaByReviews(
                 as: 'monitoringFindingLink',
                 include: [
                   {
+                    model: MonitoringFindingStandard,
+                    as: 'monitoringFindingStandards',
+                    include: [
+                      {
+                        model: MonitoringStandardLink,
+                        as: 'standardLink',
+                        include: [
+                          {
+                            model: MonitoringStandard,
+                            as: 'monitoringStandards',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
                     model: MonitoringFinding,
                     as: 'monitoringFindings',
                     include: [
@@ -89,7 +109,7 @@ export async function ttaByReviews(
         ],
       },
     ],
-  }) as ITTAByReviewsSequelizeQueryResponse[];
+  }) as MonitoringReviewType[];
 
   const response = reviews.map((review) => {
     const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
@@ -101,10 +121,17 @@ export async function ttaByReviews(
         return;
       }
 
+      let citation = '';
+      const [findingStandards] = history.monitoringFindingLink.monitoringFindingStandards;
+      if (findingStandards) {
+        const [standard] = findingStandards.standardLink.monitoringStandards;
+        citation = standard.citation;
+      }
+
       history.monitoringFindingLink.monitoringFindings.forEach((finding) => {
         const status = finding.statusLink.monitoringFindingStatuses[0].name;
         findings.push({
-          citation: '',
+          citation,
           status,
           findingType: finding.findingType,
           correctionDeadline: moment(finding.correctionDeadLine).format('MM/DD/YYYY'),
@@ -128,159 +155,101 @@ export async function ttaByReviews(
   });
 
   return response;
-
-  // return [
-  //   {
-  //     name: '241234FU',
-  //     reviewType: 'Follow-up',
-  //     reviewReceived: '01/01/2021',
-  //     outcome: 'Compliant',
-  //     lastTTADate: null,
-  //     specialists: [],
-  //     grants: [
-  //       '14CH123456',
-  //       '14HP141234',
-  //     ],
-  //     findings: [
-  //       {
-  //         citation: '1392.47(b)(5)(i)',
-  //         status: 'Corrected',
-  //         type: 'Noncompliance',
-  //         category: 'Monitoring and Implementing Quality Health Services',
-  //         correctionDeadline: '09/18/2024',
-  //         objectives: [],
-  //       },
-  //       {
-  //         citation: '1302.91(a)',
-  //         status: 'Corrected',
-  //         type: 'Noncompliance',
-  //         category: 'Program Management and Quality Improvement',
-  //         correctionDeadline: '09/18/2024',
-  //         objectives: [],
-  //       },
-  //       {
-  //         citation: '1302.12(m)',
-  //         status: 'Corrected',
-  //         type: 'Noncompliance',
-  //         category: 'Program Management and Quality Improvement',
-  //         correctionDeadline: '09/18/2024',
-  //         objectives: [],
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     name: '241234RAN',
-  //     reviewType: 'RAN',
-  //     reviewReceived: '06/21/2024',
-  //     outcome: 'Deficiency',
-  //     lastTTADate: '07/12/2024',
-  //     grants: [
-  //       '14CH123456',
-  //       '14HP141234',
-  //     ],
-  //     specialists: [
-  //       {
-  //         name: 'Specialist 1',
-  //         roles: ['GS'],
-  //       },
-  //     ],
-  //     findings: [
-  //       {
-  //         citation: '1302.47(b)(5)(iv)',
-  //         status: 'Active',
-  //         type: 'Deficiency',
-  //         category: 'Inappropriate Release',
-  //         correctionDeadline: '07/25/2024',
-  //         objectives: [
-  //           {
-  //             title: 'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
-  //             activityReportIds: ['14AR29888'],
-  //             endDate: '07/12/2024',
-  //             topics: ['Communication', 'Quality Improvement Plan/QIP', 'Safety Practices', 'Transportation'],
-  //             status: 'In Progress',
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     name: '241234F2',
-  //     reviewType: 'FA-2',
-  //     reviewReceived: '05/20/2024',
-  //     outcome: 'Noncompliant',
-  //     lastTTADate: '03/27/2024',
-  //     grants: [
-  //       '14CH123456',
-  //       '14HP141234',
-  //     ],
-  //     specialists: [
-  //       {
-  //         name: 'Specialist 1',
-  //         roles: ['GS'],
-  //       },
-  //       {
-  //         name: 'Specialist 1',
-  //         roles: ['ECS'],
-  //       },
-  //     ],
-  //     findings: [
-  //       {
-  //         citation: '1302.47(b)(5)(v)',
-  //         status: 'Active',
-  //         type: 'Noncompliance',
-  //         category: 'Monitoring and Implementing Quality Health Services',
-  //         correctionDeadline: '09/18/2024',
-  //         objectives: [
-  //           {
-  //             title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-  //             activityReportIds: ['14AR12345'],
-  //             endDate: '06/24/2024',
-  //             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-  //             status: 'Complete',
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         citation: '1302.91(a)',
-  //         status: 'Active',
-  //         type: 'Noncompliance',
-  //         category: 'Program Management and Quality Improvement',
-  //         correctionDeadline: '09/18/2024',
-  //         objectives: [
-  //           {
-  //             title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-  //             activityReportIds: ['14AR12345'],
-  //             endDate: '06/24/2024',
-  //             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-  //             status: 'Complete',
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         citation: '1302.12(m)',
-  //         status: 'Active',
-  //         type: 'Noncompliance',
-  //         category: 'Program Management and Quality Improvement',
-  //         correctionDeadline: '09/18/2024',
-  //         objectives: [
-  //           {
-  //             title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-  //             activityReportIds: ['14AR12345'],
-  //             endDate: '06/24/2024',
-  //             topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-  //             status: 'Complete',
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   },
-  // ];
 }
 
 export async function ttaByCitations(
-  _recipientId: number,
-  _regionId: number,
+  recipientId: number,
+  regionId: number,
 ): Promise<ITTAByCitationResponse[]> {
+  const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId) as string[];
+
+  const citations = await MonitoringStandard.findAll({
+    include: [
+      {
+        model: MonitoringStandardLink,
+        as: 'standardLink',
+        required: true,
+        include: [
+          {
+            model: MonitoringFindingStandard,
+            as: 'monitoringFindingStandards',
+            required: true,
+            include: [
+              {
+                model: MonitoringFindingLink,
+                as: 'findingLink',
+                required: true,
+                include: [
+                  {
+                    model: MonitoringFindingHistory,
+                    as: 'monitoringFindingHistories',
+                    required: true,
+                    include: [
+                      {
+                        model: MonitoringReviewLink,
+                        as: 'monitoringReviewLink',
+                        required: true,
+                        include: [
+                          {
+                            model: MonitoringReview,
+                            as: 'monitoringReviews',
+                            required: true,
+                          },
+                          {
+                            model: MonitoringReviewGrantee,
+                            as: 'monitoringReviewGrantees',
+                            required: true,
+                            where: {
+                              grantNumber: grantNumbers,
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    model: MonitoringFinding,
+                    as: 'monitoringFindings',
+                    required: true,
+                    include: [
+                      {
+                        model: MonitoringFindingStatusLink,
+                        as: 'statusLink',
+                        required: true,
+                        include: [
+                          {
+                            model: MonitoringFindingStatus,
+                            as: 'monitoringFindingStatuses',
+                            required: true,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }) as MonitoringStandardType[];
+
+  return citations.map((citation) => {
+    // this is a comment
+    console.log(citation);
+
+    return {
+      citationNumber: citation.citation,
+      status: '',
+      findingType: '',
+      category: '',
+      grantNumbers,
+      lastTTADate: null,
+      reviews: [],
+    };
+  });
+
   return [
     {
       citationNumber: '1302.12(m)',

@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect, useState, useMemo, useContext,
+} from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory } from 'react-router';
 import Container from '../../../../components/Container';
@@ -7,6 +9,7 @@ import { getTtaByCitation, getTtaByReview } from '../../../../fetchers/monitorin
 import ReviewCards from './components/ReviewCards';
 import CitationCards from './components/CitationCards';
 import { ROUTES } from '../../../../Constants';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const MONITORING_PAGES = {
   REVIEW: 'review',
@@ -29,7 +32,7 @@ export default function Monitoring({
   match,
 }) {
   const { params: { currentPage, recipientId, regionId } } = match;
-
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
   const [byReview, setByReview] = useState([]);
   const [byCitation, setByCitation] = useState([]);
@@ -60,15 +63,18 @@ export default function Monitoring({
     }
 
     if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
+      setIsAppLoading(true);
       try {
         fetchMonitoringData(currentPage);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
         history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
+      } finally {
+        setIsAppLoading(false);
       }
     }
-  }, [currentPage, history, lookup, recipientId, regionId]);
+  }, [currentPage, history, lookup, recipientId, regionId, setIsAppLoading]);
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
