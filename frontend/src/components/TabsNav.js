@@ -18,7 +18,7 @@ export default function TabsNav({ backLink, links, ariaLabel }) {
         <ul className="display-flex margin-0 margin-bottom-5 padding-0">
           {links.map((link) => (
             link.featureFlag ? (
-              <FeatureFlag key={uniqueId('tabsnav-link_')} feature={link.featureFlag}>
+              <FeatureFlag key={uniqueId('tabsnav-link_')} flag={link.featureFlag}>
                 <li className={liClass}>
                   <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={link.to}>{link.label}</NavLink>
                 </li>
