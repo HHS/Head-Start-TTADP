@@ -119,9 +119,10 @@ const GoalPicker = ({
     async function fetchCitations() {
       // If its a monitoring goal and the source is CLASS or RANs, fetch the citations.
       if (goalForEditing && goalForEditing.source === 'Federal monitoring issues, including CLASS and RANs') {
+        const monitoringGrantIds = goalForEditing.goals.map((g) => g.grantId);
         const retrievedCitationOptions = await fetchCitationsByGrant(
           regionId,
-          goalForEditing.grantIds,
+          monitoringGrantIds,
           startDate,
         );
         if (retrievedCitationOptions) {
