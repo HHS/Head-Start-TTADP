@@ -1,3 +1,7 @@
+.ttahub-data-card-description-list {
+  line-height: 1.5em;
+}
+
 .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical {
   display: block;
 }
@@ -31,7 +35,7 @@
 
 @media (min-width: 1445px) {
   .ttahub-data-card-description-list {
-    grid-template-columns: repeat(6, var(--data-card-column-width));
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
