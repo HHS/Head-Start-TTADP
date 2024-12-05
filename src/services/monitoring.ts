@@ -236,14 +236,16 @@ export async function ttaByCitations(
   }) as MonitoringStandardType[];
 
   return citations.map((citation) => {
-    // this is a comment
-    console.log(citation);
+    const [findingStandard] = citation.standardLink.monitoringFindingStandards;
+    const { findingLink } = findingStandard;
+    const { monitoringFindings } = findingLink;
+    const [finding] = monitoringFindings;
 
     return {
       citationNumber: citation.citation,
       status: '',
       findingType: '',
-      category: '',
+      category: finding.source,
       grantNumbers,
       lastTTADate: null,
       reviews: [],
