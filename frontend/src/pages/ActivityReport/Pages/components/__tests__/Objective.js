@@ -163,6 +163,14 @@ describe('Objective', () => {
     expect(helpButton).toBeVisible();
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
     expect(citationsButton).toBeVisible();
+
+    // Select the option 'Citation 1' from the react-select dropdown
+    userEvent.click(citationsButton);
+    userEvent.click(screen.getByText('Citation 1'));
+    expect(await screen.findByText('Citation 1')).toBeVisible();
+
+
+
   });
 
   it('uploads a file', async () => {

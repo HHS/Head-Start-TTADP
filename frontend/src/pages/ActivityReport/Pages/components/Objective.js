@@ -46,6 +46,13 @@ export default function Objective({
 }) {
   const modalRef = useRef();
 
+  console.log('citationOptions', citationOptions);
+  console.log('rawCitations', rawCitations);
+
+  if(citationOptions.length > 0) {
+    console.log('\n\n\n----------- has value');
+  }
+
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
   const initialObjective = (() => ({
