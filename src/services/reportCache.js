@@ -157,7 +157,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
   // Create citations to save.
   let newCitations = [];
-  if (citations.length > 0) {
+  if (citations && citations.length > 0) {
     newCitations = citations.map((citation) => (
       {
         ...citation,
