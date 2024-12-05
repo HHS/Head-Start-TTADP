@@ -17,6 +17,7 @@ export const NEW_OBJECTIVE = () => ({
   roles: [],
   status: 'Not Started',
   isNew: true,
+  citations: null, // Only required for monitoring goals.
   closeSuspendReason: null,
   closeSuspendContext: null,
   objectiveCreatedHere: true,
