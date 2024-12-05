@@ -21,6 +21,7 @@ import {
   resourceUse,
   resourceDashboard,
   resourceTopicUse,
+  reduceRecipients,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -549,5 +550,20 @@ describe('Resources dashboard', () => {
         },
       ],
     });
+  });
+});
+
+describe('reduceRecipients', () => {
+  it('should handle recipients with otherEntityId correctly', () => {
+    const source = [
+      { recipientId: null, grantIds: [1], otherEntityId: 100 },
+    ];
+    const adding = [
+      { recipientId: null, grantId: 2, otherEntityId: 100 },
+    ];
+    const result = reduceRecipients(source, adding);
+    expect(result).toEqual([
+      { recipientId: null, grantIds: [1, 2], otherEntityId: 100 },
+    ]);
   });
 });

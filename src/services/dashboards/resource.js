@@ -38,7 +38,7 @@ import { RESOURCE_DOMAIN } from '../../constants';
  * @param {RecipientPrimitive[]|Recipient[]} adding
  * @returns {Recipient[]}
  */
-const reduceRecipients = (source, adding) => adding.reduce((recipients, recipient) => {
+export const reduceRecipients = (source, adding) => adding.reduce((recipients, recipient) => {
   const exists = recipients.find((r) => (
     (r.recipientId === recipient.recipientId && recipient.recipientId)
     || (r.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
