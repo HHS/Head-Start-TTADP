@@ -420,6 +420,21 @@ describe('goalTemplates services', () => {
       await expect(setFieldPromptForCuratedTemplate([goal.id], promptWithNoMaxSelections.id, response))
         .resolves.not.toThrow();
     });
+
+    it('returns Promise.resolve() when there are no updates or records to create', async () => {
+      const newPrompt = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 3,
+        title: faker.datatype.string(255),
+        prompt: faker.datatype.string(255),
+        hint: '',
+        options: ['option 7', 'option 8', 'option 9'],
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      });
+      const result = await setFieldPromptForCuratedTemplate([], newPrompt.id, null);
+      expect(result).toBeUndefined();
+    });
   });
 
   describe('getFieldPromptsForCuratedTemplate', () => {
