@@ -2,7 +2,13 @@ import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import crypto from 'crypto';
 import db from '../models';
-import { setFieldPromptsForCuratedTemplate, getSourceFromTemplate } from './goalTemplates';
+import {
+  setFieldPromptsForCuratedTemplate,
+  getSourceFromTemplate,
+  getCuratedTemplates,
+  getFieldPromptsForCuratedTemplate,
+  getOptionsByGoalTemplateFieldPromptName,
+} from './goalTemplates';
 import { AUTOMATIC_CREATION } from '../constants';
 
 const {
@@ -157,6 +163,43 @@ describe('goalTemplates services', () => {
     });
   });
 
+  describe('getCuratedTemplates', () => {
+    let grant;
+    let recipient;
+
+    beforeAll(async () => {
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 56000 }),
+        name: faker.datatype.string(20),
+      });
+
+      grant = await Grant.create({
+        regionId: 2,
+        status: 'Active',
+        id: faker.datatype.number({ min: 56000 }),
+        number: faker.datatype.string(255),
+        recipientId: recipient.id,
+      });
+
+      await GoalTemplate.create({
+        templateName: faker.lorem.sentence(5),
+        creationMethod: AUTOMATIC_CREATION,
+      });
+    });
+
+    afterAll(async () => {
+      await GoalTemplate.destroy({ where: {}, individualHooks: true });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+    });
+
+    it('retrieves curated templates', async () => {
+      const templates = await getCuratedTemplates([grant.id]);
+      expect(templates).toBeDefined();
+      expect(Array.isArray(templates)).toBe(true);
+    });
+  });
+
   describe('setFieldPromptsForCuratedTemplate', () => {
     let promptResponses;
     let template;
@@ -286,6 +329,127 @@ describe('goalTemplates services', () => {
       await expect(setFieldPromptsForCuratedTemplate(goalIds, [
         { promptId: fictionalId, response: ['option 1'] },
       ])).rejects.toThrow(`No prompt found with ID ${fictionalId}`);
+    });
+  });
+
+  describe('getFieldPromptsForCuratedTemplate', () => {
+    let template;
+    let goal;
+    let grant;
+    let recipient;
+    let prompt;
+
+    beforeAll(async () => {
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 56000 }),
+        name: faker.datatype.string(20),
+      });
+
+      grant = await Grant.create({
+        regionId: 2,
+        status: 'Active',
+        id: faker.datatype.number({ min: 56000 }),
+        number: faker.datatype.string(255),
+        recipientId: recipient.id,
+      });
+
+      const n = faker.lorem.sentence(5);
+
+      const secret = 'secret';
+      const hash = crypto
+        .createHmac('md5', secret)
+        .update(n)
+        .digest('hex');
+
+      template = await GoalTemplate.create({
+        hash,
+        templateName: n,
+        creationMethod: AUTOMATIC_CREATION,
+      });
+
+      prompt = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 1,
+        title: faker.datatype.string(255),
+        prompt: faker.datatype.string(255),
+        hint: '',
+        options: ['option 1', 'option 2', 'option 3'],
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      });
+
+      goal = await Goal.create({
+        grantId: grant.id,
+        goalTemplateId: template.id,
+        name: n,
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({ where: { goalId: goal.id }, individualHooks: true });
+      // eslint-disable-next-line max-len
+      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      // eslint-disable-next-line max-len, object-curly-newline
+      await Goal.destroy({ where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true });
+      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+    });
+
+    it('retrieves field prompts for a curated template', async () => {
+      const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
+      expect(prompts).toBeDefined();
+      expect(Array.isArray(prompts)).toBe(true);
+      expect(prompts.length).toBeGreaterThan(0);
+      expect(prompts[0].promptId).toBe(prompt.id);
+    });
+  });
+
+  describe('getOptionsByGoalTemplateFieldPromptName', () => {
+    let template;
+    let promptTitle;
+    let options;
+
+    beforeAll(async () => {
+      const n = faker.lorem.sentence(5);
+
+      const secret = 'secret';
+      const hash = crypto
+        .createHmac('md5', secret)
+        .update(n)
+        .digest('hex');
+
+      template = await GoalTemplate.create({
+        hash,
+        templateName: n,
+        creationMethod: AUTOMATIC_CREATION,
+      });
+
+      promptTitle = faker.datatype.string(255);
+      options = ['option 1', 'option 2', 'option 3'];
+
+      await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 1,
+        title: promptTitle,
+        prompt: promptTitle,
+        hint: '',
+        options,
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      });
+    });
+
+    afterAll(async () => {
+      // eslint-disable-next-line max-len
+      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
+    });
+
+    it('retrieves options by goal template field prompt name', async () => {
+      const result = await getOptionsByGoalTemplateFieldPromptName(promptTitle);
+      expect(result).toBeDefined();
+      expect(result.options).toEqual(options);
     });
   });
 });
