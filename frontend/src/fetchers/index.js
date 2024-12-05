@@ -24,7 +24,7 @@ const impersonationHeader = () => {
   };
 };
 
-export const get = async (url) => {
+export const get = async (url, signal = null) => {
   const res = await fetch(url, {
     credentials: 'same-origin',
     headers: {
@@ -32,6 +32,7 @@ export const get = async (url) => {
       Pragma: 'no-cache',
       ...impersonationHeader(),
     },
+    ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new HTTPError(res.status, res.statusText);
