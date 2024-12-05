@@ -101,7 +101,7 @@ export const reduceRecipients = (source, adding) => adding.reduce((recipients, r
  * @param {ReportDBData[]} additionalData
  * @returns {ReportData[]}
  */
-const mergeInResources = (currentData, additionalData) => additionalData
+export const mergeInResources = (currentData, additionalData) => additionalData
   .reduce((
     clusteredReports,
     report,
