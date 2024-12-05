@@ -402,6 +402,24 @@ describe('goalTemplates services', () => {
       await expect(setFieldPromptForCuratedTemplate([goal.id], prompt.id, invalidResponse))
         .rejects.toThrow(`Response for '${prompt.title}' contains invalid values. Invalid values: 'invalid option'.`);
     });
+
+    it('handles missing maxSelections rule gracefully', async () => {
+      const response = ['option 1'];
+      const promptWithNoMaxSelections = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 2,
+        title: faker.datatype.string(255),
+        prompt: faker.datatype.string(255),
+        hint: '',
+        options: ['option 1', 'option 2', 'option 3'],
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'minSelections', value: 1, message: 'You must select at least 1 option' }] },
+      });
+
+      // eslint-disable-next-line max-len
+      await expect(setFieldPromptForCuratedTemplate([goal.id], promptWithNoMaxSelections.id, response))
+        .resolves.not.toThrow();
+    });
   });
 
   describe('getFieldPromptsForCuratedTemplate', () => {
