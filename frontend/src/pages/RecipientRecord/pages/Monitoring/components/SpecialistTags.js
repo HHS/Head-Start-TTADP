@@ -1,4 +1,5 @@
 import React from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import Tooltip from '../../../../../components/Tooltip';
 
@@ -7,7 +8,7 @@ export default function SpecialistTags({ specialists }) {
     if (!specialist.name) return null;
 
     return (
-      <p className="usa-prose margin-top-0 margin-bottom-1 margin-right-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
+      <p key={uniqueId('specialist-tag-')} className="usa-prose margin-top-0 margin-bottom-1 margin-right-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
         <Tooltip
           displayText={specialist.roles.join(', ')}
           screenReadDisplayText={false}
