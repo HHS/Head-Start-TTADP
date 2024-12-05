@@ -116,7 +116,8 @@ export default function Objective({
         notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
       },
     },
-    defaultValue: objective.citations,
+    // If citations are not available, set citations to null
+    defaultValue: citationOptions && citationOptions.length ? objective.citations : null,
   });
 
   const {
