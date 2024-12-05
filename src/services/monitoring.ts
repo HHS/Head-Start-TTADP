@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import moment from 'moment';
+import { uniq } from 'lodash';
 import db from '../models';
 import {
   ITTAByReviewResponse,
@@ -186,6 +187,32 @@ export async function ttaByCitations(
                     required: true,
                     include: [
                       {
+                        model: MonitoringFindingLink,
+                        as: 'monitoringFindingLink',
+                        required: true,
+                        include: [
+                          {
+                            model: MonitoringFinding,
+                            as: 'monitoringFindings',
+                            required: true,
+                            include: [
+                              {
+                                model: MonitoringFindingStatusLink,
+                                as: 'statusLink',
+                                required: true,
+                                include: [
+                                  {
+                                    model: MonitoringFindingStatus,
+                                    as: 'monitoringFindingStatuses',
+                                    required: true,
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                      {
                         model: MonitoringReviewLink,
                         as: 'monitoringReviewLink',
                         required: true,
@@ -239,194 +266,49 @@ export async function ttaByCitations(
     const [findingStandard] = citation.standardLink.monitoringFindingStandards;
     const { findingLink } = findingStandard;
     const { monitoringFindings } = findingLink;
+
+    const grants = [];
+    const reviews = [];
+
     const [finding] = monitoringFindings;
+    const [status] = finding.statusLink.monitoringFindingStatuses;
+
+    findingLink.monitoringFindingHistories.forEach((history) => {
+      const { monitoringReviewLink, monitoringFindingLink } = history;
+      const { monitoringReviews } = monitoringReviewLink;
+
+      const { monitoringFindings: historicalFindings } = monitoringFindingLink;
+      const [reviewFinding] = historicalFindings;
+      const [findingStatus] = reviewFinding.statusLink.monitoringFindingStatuses;
+
+      monitoringReviews.forEach((review) => {
+        const { monitoringReviewGrantees } = monitoringReviewLink;
+        const gr = monitoringReviewGrantees.map((grantee) => grantee.grantNumber);
+
+        grants.push(gr);
+
+        reviews.push({
+          name: review.name,
+          reviewType: review.reviewType,
+          reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
+          outcome: review.outcome,
+          findingStatus: findingStatus.name,
+          specialists: [],
+          objectives: [],
+        });
+      });
+    });
 
     return {
       citationNumber: citation.citation,
-      status: '',
-      findingType: '',
+      status: status.name,
+      findingType: finding.findingType,
       category: finding.source,
-      grantNumbers,
+      grantNumbers: uniq(grants.flat()),
       lastTTADate: null,
-      reviews: [],
+      reviews,
     };
   });
-
-  return [
-    {
-      citationNumber: '1302.12(m)',
-      status: 'Corrected',
-      findingType: 'Noncompliance',
-      category: 'Program Management and Quality Improvement',
-      grantNumbers: [
-        '14CH123456',
-        '14HP141234',
-      ],
-      lastTTADate: '06/24/2024',
-      reviews: [
-        {
-          name: '241234FU',
-          reviewType: 'Follow-up',
-          reviewReceived: '10/17/2024',
-          outcome: 'Compliant',
-          findingStatus: 'Corrected',
-          specialists: [],
-          objectives: [],
-        },
-        {
-          name: '241234F2',
-          reviewType: 'FA-2',
-          reviewReceived: '05/20/2024',
-          outcome: 'Noncompliant',
-          findingStatus: 'Active',
-          specialists: [
-            {
-              name: 'Specialist 1',
-              roles: ['GS'],
-            },
-            {
-              name: 'Specialist 1',
-              roles: ['ECS'],
-            },
-          ],
-          objectives: [
-            {
-              title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-              activityReportIds: ['14AR12345'],
-              endDate: '06/24/2024',
-              topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-              status: 'Complete',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      citationNumber: '1302.47(b)(5)(i)',
-      findingType: 'Noncompliance',
-      status: 'Corrected',
-      category: 'Monitoring and Implementing Quality Health Services',
-      grantNumbers: [
-        '14CH123456',
-        '14HP141234',
-      ],
-      lastTTADate: '05/22/2022',
-      reviews: [
-        {
-          name: '241234FU',
-          reviewType: 'Follow-up',
-          reviewReceived: '10/17/2024',
-          outcome: 'Noncompliant',
-          findingStatus: 'Corrected',
-          specialists: [],
-          objectives: [],
-        },
-        {
-          name: '241234F2',
-          reviewType: 'FA-2',
-          reviewReceived: '05/22/2024',
-          outcome: 'Noncompliant',
-          findingStatus: 'Active',
-          specialists: [
-            {
-              name: 'Specialist 1',
-              roles: ['GS'],
-            },
-            {
-              name: 'Specialist 1',
-              roles: ['ECS'],
-            },
-          ],
-          objectives: [
-            {
-              title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-              activityReportIds: ['14AR12345'],
-              endDate: '06/24/2024',
-              topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-              status: 'Complete',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      citationNumber: '1302.47(b)(5)(iv)',
-      status: 'Active',
-      findingType: 'Deficiency',
-      category: 'Inappropriate Release',
-      grantNumbers: ['14CH123456'],
-      lastTTADate: '07/25/2024',
-      reviews: [
-        {
-          name: '241234RAN',
-          reviewType: 'RAN',
-          reviewReceived: '06/21/2024',
-          outcome: 'Deficient',
-          findingStatus: 'Active',
-          specialists: [
-            {
-              name: 'Specialist 1',
-              roles: ['GS'],
-            },
-          ],
-          objectives: [
-            {
-              title: 'The TTA Specialist will assist the recipient with developing a QIP and/or corrective action plan to address the finding with correction strategies, timeframes, and evidence of the correction.',
-              activityReportIds: ['14AR29888'],
-              endDate: '07/12/2024',
-              topics: ['Communication', 'Quality Improvement Plan/QIP', 'Safety Practices', 'Transportation'],
-              status: 'In Progress',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      citationNumber: '1302.91(a)',
-      status: 'Corrected',
-      findingType: 'Noncompliance',
-      category: 'Program Management and Quality Improvement',
-      grantNumbers: ['14CH123456', '14HP141234'],
-      lastTTADate: '06/24/2024',
-      reviews: [
-        {
-          name: '241234FU',
-          reviewType: 'Follow-up',
-          reviewReceived: '10/17/2024',
-          outcome: 'Compliant',
-          findingStatus: 'Corrected',
-          specialists: [],
-          objectives: [],
-        },
-        {
-          name: '241234F2',
-          reviewType: 'FA-2',
-          reviewReceived: '05/22/2024',
-          outcome: 'Noncompliant',
-          findingStatus: 'Active',
-          specialists: [
-            {
-              name: 'Specialist 1',
-              roles: ['GS'],
-            },
-            {
-              name: 'Specialist 1',
-              roles: ['ECS'],
-            },
-          ],
-          objectives: [
-            {
-              title: 'The TTA Specialist will support the recipient by developing a plan to ensure all staff implement health and safety practices to always keep children safe',
-              activityReportIds: ['14AR12345'],
-              endDate: '06/24/2024',
-              topics: ['Human Resources', 'Ongoing Monitoring Management System', 'Safety Practices', 'Training and Profressional Development'],
-              status: 'Complete',
-            },
-          ],
-        },
-      ],
-    },
-  ];
 }
 
 export async function monitoringData({
@@ -535,13 +417,6 @@ export async function monitoringData({
     }
     return b;
   }, monitoringReviews[0]);
-
-  // from the most recent review, get the status via the statusLink
-  const { monitoringReviewStatuses } = monitoringReview.statusLink;
-
-  // I am presuming there can only be one status linked to a review
-  // as that was the structure before tables were refactored
-  const [status] = monitoringReviewStatuses;
 
   return {
     recipientId: grant.recipientId,
