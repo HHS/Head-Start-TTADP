@@ -3,7 +3,7 @@
 import { sequelize } from '../models';
 
 // TODO: Update this to the day we deploy to PROD.
-const cutOffStartDate = new Date().toISOString().split('T')[0];
+const cutOffStartDate = '2021-10-01';
 /*
   The purpose of this function is to get citations by grant id.
   We then need to format the response for how it needs to be

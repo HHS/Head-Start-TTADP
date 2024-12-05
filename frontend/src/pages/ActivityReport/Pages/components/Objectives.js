@@ -15,7 +15,7 @@ export default function Objectives({
   rawCitations,
 }) {
   const { errors, getValues, setValue } = useFormContext();
-
+  const isMonitoring = citationOptions && citationOptions.length > 0;
   const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
   const defaultValues = objectivesForGoal || [];
@@ -41,7 +41,7 @@ export default function Objectives({
   );
 
   const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE() });
+    append({ ...NEW_OBJECTIVE(isMonitoring) });
   };
 
   const setUpdatedUsedObjectiveIds = () => {
@@ -81,7 +81,7 @@ export default function Objectives({
   };
 
   const options = [
-    NEW_OBJECTIVE(),
+    NEW_OBJECTIVE(isMonitoring),
     // filter out used objectives and return them in them in a format that react-select understands
     ...objectiveOptions.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
       (objective) => ({

@@ -178,17 +178,19 @@ export function reduceObjectivesForActivityReport(
         'course',
         exists,
       );
-
-      exists.citations = uniq(objective.activityReportObjectives
+      // Citations should return null if they are not applicable.
+      exists.citations = objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations.length > 0
+        ? uniq(objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
           (c) => ({
             ...c.dataValues,
             id: c.monitoringReferences[0].standardId,
             name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType123}`,
           }),
-        )
-        : []);
+        ))
+        : null;
 
       exists.files = uniqBy([
         ...exists.files,
@@ -265,19 +267,22 @@ export function reduceObjectivesForActivityReport(
         'activityReportObjectiveCourses',
         'course',
       ),
-      citations: uniq(
-        objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
+      // Citations should return null if they are not applicable.
+      citations: objective.activityReportObjectives
+      && objective.activityReportObjectives.length > 0
+      && objective.activityReportObjectives[0].activityReportObjectiveCitations
+      && objective.activityReportObjectives[0].activityReportObjectiveCitations.length > 0
+        ? uniq(
+          objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
             (c) => (
               {
                 ...c.dataValues,
                 id: c.monitoringReferences[0].standardId,
                 name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}456`,
               }),
-          )
-          : [],
-      ),
+          ),
+        )
+        : null,
     }];
   }, currentObjectives);
 
