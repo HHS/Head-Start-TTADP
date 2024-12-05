@@ -533,6 +533,33 @@ describe('goalTemplates services', () => {
       expect(promptWithoutResponse).toBeDefined();
       expect(promptWithoutResponse.response).toEqual(['option 4']);
     });
+
+    it('returns prompts with existing responses', async () => {
+      const existingResponse = ['existing response'];
+      const promptWithExistingResponse = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 3,
+        title: faker.datatype.string(255),
+        prompt: faker.datatype.string(255),
+        hint: '',
+        options: ['option 7', 'option 8', 'option 9'],
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal.id,
+        goalTemplateFieldPromptId: promptWithExistingResponse.id,
+        response: existingResponse,
+      });
+
+      const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
+      // eslint-disable-next-line @typescript-eslint/no-shadow
+      const prompt = prompts.find((p) => p.promptId === promptWithExistingResponse.id);
+
+      expect(prompt).toBeDefined();
+      expect(prompt.response).toEqual(existingResponse);
+    });
   });
 
   describe('getOptionsByGoalTemplateFieldPromptName', () => {
