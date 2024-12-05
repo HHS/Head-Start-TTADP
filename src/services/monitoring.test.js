@@ -1,5 +1,10 @@
 import sequelize from 'sequelize';
-import { classScore, monitoringData } from './monitoring';
+import {
+  classScore,
+  monitoringData,
+  ttaByCitations,
+  ttaByReviews,
+} from './monitoring';
 import db from '../models';
 
 const {
@@ -91,12 +96,67 @@ async function createMonitoringData(grantNumber) {
 }
 
 async function destroyMonitoringData(grantNumber) {
-  await MonitoringReviewGrantee.destroy({ where: { grantNumber }, force: true });
-  await MonitoringClassSummary.destroy({ where: { grantNumber }, force: true });
-  await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-  await MonitoringReviewLink.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
-  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+  const grantees = await MonitoringReviewGrantee.findAll({
+    attribtes: ['id'],
+    where: { grantNumber },
+    include: [{
+      model: MonitoringReview,
+      attributes: ['id'],
+      include: [{
+        model: MonitoringReviewLink,
+        attributes: ['id'],
+      }],
+    }],
+  });
+
+  const granteeIds = grantees.map((grantee) => grantee.id);
+  const reviewIds = grantees.map((grantee) => grantee.monitoringReview.id);
+  const reviewLinkIds = grantees.map((grantee) => grantee.monitoringReview.monitoringReviewLink.id);
+
+  await MonitoringReviewGrantee.destroy({
+    where: { id: granteeIds },
+    force: true,
+    individualHooks: true,
+  });
+
+  await MonitoringReview.destroy({
+    where: { id: reviewIds },
+    force: true,
+    individualHooks: true,
+  });
+
+  await MonitoringReviewLink.destroy({
+    where: { id: reviewLinkIds },
+    force: true,
+    individualHooks: true,
+  });
+
+  await MonitoringReviewGrantee.destroy(
+    { where: { grantNumber }, force: true, individualHooks: true },
+  );
+  await MonitoringClassSummary.destroy({
+    where: { grantNumber }, force: true, individualHooks: true,
+  });
+  await MonitoringReview.destroy({
+    where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' },
+    force: true,
+    individualHooks: true,
+  });
+  await MonitoringReviewLink.destroy({
+    where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' },
+    force: true,
+    individualHooks: true,
+  });
+  await MonitoringReviewStatus.destroy({
+    where: { statusId: 6006 },
+    force: true,
+    individualHooks: true,
+  });
+  await MonitoringReviewStatusLink.destroy({
+    where: { statusId: 6006 },
+    force: true,
+    individualHooks: true,
+  });
 }
 
 describe('monitoring services', () => {
@@ -119,6 +179,44 @@ describe('monitoring services', () => {
   afterAll(async () => {
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
     await sequelize.close();
+  });
+
+  describe('ttaByCitations', () => {
+    beforeAll(async () => {
+      await createMonitoringData(GRANT_NUMBER);
+    });
+    afterAll(async () => {
+      await destroyMonitoringData(GRANT_NUMBER);
+      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+    });
+
+    it('fetches TTA, ordered by Citations', async () => {
+      const data = await ttaByCitations(
+        RECIPIENT_ID,
+        REGION_ID,
+      );
+
+      expect(data).toBe([]);
+    });
+  });
+
+  describe('ttaByReview', () => {
+    beforeAll(async () => {
+      await createMonitoringData(GRANT_NUMBER);
+    });
+    afterAll(async () => {
+      await destroyMonitoringData(GRANT_NUMBER);
+      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+    });
+
+    it('fetches TTA, ordered by review', async () => {
+      const data = await ttaByReviews(
+        RECIPIENT_ID,
+        REGION_ID,
+      );
+
+      expect(data).toBe([]);
+    });
   });
 
   describe('classScore', () => {
