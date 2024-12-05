@@ -446,8 +446,6 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
 
-  // console.log('\n\n\n---- Flat sql: ', flatResourceSql, '\n\n\n');
-
   // Execute the flat table sql.
   await sequelize.query(
     flatResourceSql,
@@ -789,17 +787,11 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
-    // viaReport: null,
-    // viaSpecialistNextSteps: null,
-    // viaRecipientNextSteps: null,
     viaObjectives: null,
     viaGoals: null,
   };
   [
     dbData.allReports,
-    // dbData.viaReport,
-    // dbData.viaSpecialistNextSteps,
-    // dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
     dbData.viaGoals,
   ] = await Promise.all([
@@ -860,300 +852,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
-    /*
-    await ActivityReport.findAll({
-      attributes: [
-        'id',
-        'numberOfParticipants',
-        'topics',
-        [sequelize.fn('COALESCE', 'startDate', 'createdAt'), 'startDate'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
-          ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
-                SELECT jsonb_agg( DISTINCT jsonb_build_object(
-                  'sourceField', "sourceField",
-                  'tableType', 'report'
-                  ))
-              FROM UNNEST("resources->ActivityReportResource"."sourceFields") SF("sourceField")
-                GROUP BY 1=1
-              )`),
-            ),
-          ),
-        ),
-        'resourceObjects'],
-      ],
-      group: [
-        '"ActivityReport"."id"',
-        '"ActivityReport"."numberOfParticipants"',
-        '"ActivityReport"."topics"',
-        '"ActivityReport"."startDate"',
-      ],
-      where: {
-        [Op.and]: [
-          scopes.activityReport,
-          {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
-            startDate: { [Op.ne]: null },
-          },
-        ],
-      },
-      include: [
-        {
-          model: ActivityRecipient.scope(),
-          as: 'activityRecipients',
-          attributes: [],
-          required: true,
-          include: [
-            {
-              model: Grant.scope(),
-              as: 'grant',
-              attributes: [],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: Resource,
-          as: 'resources',
-          attributes: [],
-          through: {
-            attributes: [],
-          },
-          required: true,
-        },
-      ],
-      raw: true,
-    }),
-    */
-    /*
-    await ActivityReport.findAll({
-      attributes: [
-        'id',
-        'numberOfParticipants',
-        'topics',
-        'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
-          ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"specialistNextSteps->resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"specialistNextSteps->resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"specialistNextSteps->resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"specialistNextSteps->resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
-                SELECT jsonb_agg( DISTINCT jsonb_build_object(
-                  'sourceField', "sourceField",
-                  'tableType', 'specialistNextStep'
-                  ))
-              FROM UNNEST("specialistNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY 1=1
-              )`),
-            ),
-          ),
-        ),
-        'resourceObjects'],
-      ],
-      group: [
-        '"ActivityReport"."id"',
-        '"ActivityReport"."numberOfParticipants"',
-        '"ActivityReport"."topics"',
-        '"ActivityReport"."startDate"',
-      ],
-      where: {
-        [Op.and]: [
-          scopes.activityReport,
-          {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
-            startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: reportCreatedAtDate },
-          },
-        ],
-      },
-      include: [
-        {
-          model: ActivityRecipient.scope(),
-          as: 'activityRecipients',
-          attributes: [],
-          required: true,
-          include: [
-            {
-              model: Grant.scope(),
-              as: 'grant',
-              attributes: [],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: NextStep,
-          as: 'specialistNextSteps',
-          attributes: [],
-          include: [{
-            model: Resource,
-            as: 'resources',
-            attributes: [],
-            through: {
-              attributes: [],
-            },
-            required: true,
-          }],
-          required: true,
-        },
-      ],
-      raw: true,
-    }),
-    await ActivityReport.findAll({
-      attributes: [
-        'id',
-        'numberOfParticipants',
-        'topics',
-        'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
-          ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"recipientNextSteps->resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"recipientNextSteps->resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"recipientNextSteps->resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"recipientNextSteps->resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
-                SELECT jsonb_agg( DISTINCT jsonb_build_object(
-                  'sourceField', "sourceField",
-                  'tableType', 'recipientNextStep'
-                  ))
-              FROM UNNEST("recipientNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY 1=1
-              )`),
-            ),
-          ),
-        ),
-        'resourceObjects'],
-      ],
-      group: [
-        '"ActivityReport"."id"',
-        '"ActivityReport"."numberOfParticipants"',
-        '"ActivityReport"."topics"',
-        '"ActivityReport"."startDate"',
-      ],
-      where: {
-        [Op.and]: [
-          scopes.activityReport,
-          {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
-            startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: reportCreatedAtDate },
-          },
-        ],
-      },
-      include: [
-        {
-          model: ActivityRecipient.scope(),
-          as: 'activityRecipients',
-          attributes: [],
-          required: true,
-          include: [
-            {
-              model: Grant.scope(),
-              as: 'grant',
-              attributes: [],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: NextStep,
-          as: 'recipientNextSteps',
-          attributes: [],
-          include: [{
-            model: Resource,
-            as: 'resources',
-            attributes: [],
-            through: {
-              attributes: [],
-            },
-            required: true,
-          }],
-          required: true,
-        },
-      ],
-      raw: true,
-    }),
-    */
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -1430,16 +1128,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   const reportIds = Array.from(reportsMap.keys());
 
   delete dbData.allReports;
-  /*
-  let reportsMap = mergeInResources(new Map(), dbData.viaReport);
-  delete dbData.viaReport;
-  */
-  /*
-  reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
-  delete dbData.viaSpecialistNextSteps;
-  reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
-  delete dbData.viaRecipientNextSteps;
-  */
   reportsMap = mergeInResources(reportsMap, dbData.viaObjectives);
   delete dbData.viaObjectives;
   reportsMap = mergeInResources(reportsMap, dbData.viaGoals);
@@ -1622,16 +1310,6 @@ const generateResourcesDashboardOverview = (allData) => {
   data.reportIntermediate = {};
   data.reportIntermediate
     .reportsWithResources = new Set(resources.flatMap((r) => r.reports).map((r) => r.id));
-  // data.reportIntermediate
-  //   .allRecipientIdsWithEclkcResources = new Set(resources
-  //     .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-  //     .flatMap((r) => r.reports)
-  //     .map((r) => r.id));
-  // data.reportIntermediate
-  //   .allRecipientIdsWithNonEclkcResources = new Set(resources
-  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-  //     .flatMap((r) => r.reports)
-  //     .map((r) => r.id));
 
   // report based stats
   data.report = {};
@@ -1642,12 +1320,6 @@ const generateResourcesDashboardOverview = (allData) => {
   data.report.numNoResources = data.report.num - data.report.numResources;
   data.report.percentNoResources = (data.report.numNoResources / data.report.num) * 100.0;
 
-  // data.report.numEclkc = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
-  // data.report.percentEclkc = (data.report.numEclkc / data.report.num) * 100.0;
-
-  // data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  // data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
-
   delete data.reportIntermediate;
   // recipient based intermediate data
   data.recipientIntermediate = {};
@@ -1655,42 +1327,6 @@ const generateResourcesDashboardOverview = (allData) => {
     .allRecipientIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
   data.recipientIntermediate
     .allRecipientIdsWithResources = reduceRecipients([], resources.flatMap((r) => r.recipients));
-  // data.recipientIntermediate.allRecipientIdsWithEclkcResources = resources
-  //   // filter to ECLKC
-  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
-  //   // Collect recipients
-  //   .flatMap((r) => r.recipients)
-  //   // collect distinct recipients ( or other entities)
-  //   .reduce((currentRecipients, recipient) => {
-  //     const exists = currentRecipients.find((cr) => (
-  //       (cr.recipientId === recipient.recipientId && recipient.recipientId)
-  //       || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-  //     if (exists) {
-  //       return currentRecipients;
-  //     }
-  //     return [
-  //       ...currentRecipients,
-  //       recipient,
-  //     ];
-  //   }, []);
-  // data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = resources
-  //   // filter to Non-ECLKC
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
-  //   // Collect recipients
-  //   .flatMap((r) => r.recipients)
-  //   // collect distinct recipients ( or other entities)
-  //   .reduce((currentRecipients, recipient) => {
-  //     const exists = currentRecipients.find((cr) => (
-  //       (cr.recipientId === recipient.recipientId && recipient.recipientId)
-  //       || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-  //     if (exists) {
-  //       return currentRecipients;
-  //     }
-  //     return [
-  //       ...currentRecipients,
-  //       recipient,
-  //     ];
-  //   }, []);
 
   // recipient based stats
   data.recipient = {};
@@ -1702,13 +1338,6 @@ const generateResourcesDashboardOverview = (allData) => {
   data.recipient.numNoResources = data.recipient.num - data.recipient.numResources;
   data.recipient.percentNoResources = (data.recipient.numNoResources / data.recipient.num) * 100.0;
 
-  // data.recipient.numEclkc = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
-  // data.recipient.percentEclkc = (data.recipient.numEclkc / data.recipient.num) * 100.0;
-
-  // data.recipient.numNonEclkc = data
-  //   .recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  // data.recipient.percentNonEclkc = (data.recipient.numNonEclkc / data.recipient.num) * 100.0;
-
   delete data.recipientIntermediate;
   // resource based intermediate data
   data.resourceIntermediate = {};
@@ -1716,8 +1345,6 @@ const generateResourcesDashboardOverview = (allData) => {
     .allResources = resources;
   data.resourceIntermediate.allEclkcResources = resources
     .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC);
-  // data.resourceIntermediate.allNonEclkcResources = resources
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC);
 
   // resource based stats
   data.resource = {};
@@ -1726,8 +1353,6 @@ const generateResourcesDashboardOverview = (allData) => {
   data.resource.numEclkc = data.resourceIntermediate.allEclkcResources.length;
   data.resource.percentEclkc = (data.resource.numEclkc / data.resource.num) * 100.0;
 
-  // data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.length;
-  // data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
   delete data.resourceIntermediate;
 
   data.participant = {};
@@ -1737,58 +1362,22 @@ const generateResourcesDashboardOverview = (allData) => {
       participants: r.numberOfParticipants,
     }))
     .reduce((partialSum, r) => partialSum + r.participants, 0);
-  // data.participant.numEclkc = resources
-  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
-  //   .flatMap((r) => r.reports)
-  //   .reduce((rs, report) => {
-  //     const exists = rs.find((r) => r.id === report.id);
-  //     if (exists) {
-  //       return rs;
-  //     }
-  //     return [...rs, report];
-  //   }, [])
-  //   .reduce((partialSum, r) => partialSum + r.participants, 0);
-  // data.participant.numEclkc = resources
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
-  //   .flatMap((r) => r.reports)
-  //   .reduce((rs, report) => {
-  //     const exists = rs.find((r) => r.id === report.id);
-  //     if (exists) {
-  //       return rs;
-  //     }
-  //     return [...rs, report];
-  //   }, [])
-  //   .reduce((partialSum, r) => partialSum + r.participants, 0);
 
   return {
     report: {
       num: formatNumber(data.report.num),
       numResources: formatNumber(data.report.numResources),
       percentResources: `${formatNumber(data.report.percentResources, 2)}%`,
-      // numNoResources: formatNumber(data.report.numNoResources),
-      // percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
-      // numEclkc: formatNumber(data.report.numEclkc),
-      // percentEclkc: `${formatNumber(data.report.percentEclkc, 2)}%`,
-      // numNonEclkc: formatNumber(data.report.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
     },
     resource: {
       num: formatNumber(data.resource.num),
       numEclkc: formatNumber(data.resource.numEclkc),
       percentEclkc: `${formatNumber(data.resource.percentEclkc, 2)}%`,
-      // numNonEclkc: formatNumber(data.resource.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
     },
     recipient: {
       num: formatNumber(data.recipient.num),
       numResources: formatNumber(data.recipient.numResources),
       percentResources: `${formatNumber(data.recipient.percentResources, 2)}%`,
-      // numNoResources: formatNumber(data.recipient.numNoResources),
-      // percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
-      // numEclkc: formatNumber(data.recipient.numEclkc),
-      // percentEclkc: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
-      // numNonEclkc: formatNumber(data.recipient.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
     },
     participant: {
       numParticipants: formatNumber(data.participant.num),
