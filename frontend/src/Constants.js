@@ -200,3 +200,7 @@ export const arrayExistsAndHasLength = (array) => array && Array.isArray(array) 
 
 export const NOOP = () => {};
 export const EMPTY_ARRAY = [];
+
+export const ROUTES = {
+  SOMETHING_WENT_WRONG: '/something-went-wrong',
+};
