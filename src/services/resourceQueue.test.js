@@ -29,7 +29,13 @@ describe('Resource queue manager tests', () => {
   });
 
   beforeEach(() => {
-    Queue.mockImplementation(() => resourceQueue);
+    Queue.mockImplementation(() => {
+      const queue = {
+        add: jest.fn(),
+        on: jest.fn(),
+      };
+      return queue;
+    });
   });
 
   afterEach(() => {
@@ -90,5 +96,31 @@ describe('Resource queue manager tests', () => {
     const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
     onCompletedResourceQueue(job, result);
     expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}');
+  });
+
+  it('resourceQueue on failed event triggers onFailedResourceQueue', () => {
+    const job = { data: { key: 'test-key' } };
+    const error = new Error('Test error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    resourceQueue.on.mockImplementation((event, callback) => {
+      if (event === 'failed') {
+        callback(job, error);
+      }
+    });
+    resourceQueue.on('failed', onFailedResourceQueue);
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+  });
+
+  it('resourceQueue on completed event triggers onCompletedResourceQueue', () => {
+    const job = { data: { key: 'test-key' } };
+    const result = { status: 200, data: { message: 'Success' } };
+    const loggerSpy = jest.spyOn(logger, 'info');
+    resourceQueue.on.mockImplementation((event, callback) => {
+      if (event === 'completed') {
+        callback(job, result);
+      }
+    });
+    resourceQueue.on('completed', onCompletedResourceQueue);
+    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
   });
 });
