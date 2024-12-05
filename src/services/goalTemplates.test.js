@@ -8,6 +8,7 @@ import {
   getCuratedTemplates,
   getFieldPromptsForCuratedTemplate,
   getOptionsByGoalTemplateFieldPromptName,
+  setFieldPromptForCuratedTemplate,
 } from './goalTemplates';
 import { AUTOMATIC_CREATION } from '../constants';
 
@@ -332,7 +333,7 @@ describe('goalTemplates services', () => {
     });
   });
 
-  describe('getFieldPromptsForCuratedTemplate', () => {
+  describe('setFieldPromptForCuratedTemplate', () => {
     let template;
     let goal;
     let grant;
@@ -396,12 +397,123 @@ describe('goalTemplates services', () => {
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
     });
 
+    it('rejects invalid response values', async () => {
+      const invalidResponse = ['invalid option'];
+      await expect(setFieldPromptForCuratedTemplate([goal.id], prompt.id, invalidResponse))
+        .rejects.toThrow(`Response for '${prompt.title}' contains invalid values. Invalid values: 'invalid option'.`);
+    });
+  });
+
+  describe('getFieldPromptsForCuratedTemplate', () => {
+    let template;
+    let goal;
+    let grant;
+    let recipient;
+    let prompt;
+    let promptTwo;
+
+    beforeAll(async () => {
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 56000 }),
+        name: faker.datatype.string(20),
+      });
+
+      grant = await Grant.create({
+        regionId: 2,
+        status: 'Active',
+        id: faker.datatype.number({ min: 56000 }),
+        number: faker.datatype.string(255),
+        recipientId: recipient.id,
+      });
+
+      const n = faker.lorem.sentence(5);
+
+      const secret = 'secret';
+      const hash = crypto
+        .createHmac('md5', secret)
+        .update(n)
+        .digest('hex');
+
+      template = await GoalTemplate.create({
+        hash,
+        templateName: n,
+        creationMethod: AUTOMATIC_CREATION,
+      });
+
+      prompt = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 1,
+        title: faker.datatype.string(255),
+        prompt: faker.datatype.string(255),
+        hint: '',
+        options: ['option 1', 'option 2', 'option 3'],
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      });
+
+      promptTwo = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: template.id,
+        ordinal: 2,
+        title: faker.datatype.string(255),
+        prompt: faker.datatype.string(255),
+        hint: '',
+        options: ['option 4', 'option 5', 'option 6'],
+        fieldType: 'multiselect',
+        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      });
+
+      goal = await Goal.create({
+        grantId: grant.id,
+        goalTemplateId: template.id,
+        name: n,
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['option 1'],
+      });
+
+      await GoalFieldResponse.create({
+        goalId: goal.id,
+        goalTemplateFieldPromptId: promptTwo.id,
+        response: ['option 4'],
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({ where: { goalId: goal.id }, individualHooks: true });
+      // eslint-disable-next-line max-len
+      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      // eslint-disable-next-line max-len, object-curly-newline
+      await Goal.destroy({ where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true });
+      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+    });
+
     it('retrieves field prompts for a curated template', async () => {
       const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
       expect(prompts).toBeDefined();
       expect(Array.isArray(prompts)).toBe(true);
       expect(prompts.length).toBeGreaterThan(0);
       expect(prompts[0].promptId).toBe(prompt.id);
+    });
+
+    it('restructures prompts with responses', async () => {
+      const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
+      expect(prompts).toBeDefined();
+      expect(Array.isArray(prompts)).toBe(true);
+      expect(prompts.length).toBeGreaterThan(0);
+
+      const promptWithResponse = prompts.find((p) => p.promptId === prompt.id);
+      const promptWithoutResponse = prompts.find((p) => p.promptId === promptTwo.id);
+
+      expect(promptWithResponse).toBeDefined();
+      expect(promptWithResponse.response).toEqual(['option 1']);
+
+      expect(promptWithoutResponse).toBeDefined();
+      expect(promptWithoutResponse.response).toEqual(['option 4']);
     });
   });
 
