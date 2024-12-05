@@ -5,15 +5,11 @@ import './DescriptionList.css';
 export default function DescriptionList({ children, className, vertical }) {
   const classNames = [
     'ttahub-data-card-description-list',
-    'desktop:display-flex',
-    'flex-align-start',
-    'flex-row',
     className,
   ];
 
   if (vertical) {
     classNames.push('ttahub-data-card-description-list__vertical');
-    classNames.push('flex-column');
   }
 
   return (
