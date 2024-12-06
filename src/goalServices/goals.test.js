@@ -1520,10 +1520,11 @@ describe('Goals DB service', () => {
       await goalsForGrants([506]);
 
       const { where } = Goal.findAll.mock.calls[0][0];
-      expect(where['$grant.id$']).toStrictEqual([
-        505,
-        506,
-      ]);
+      expect(where[Op.or]).toMatchObject({
+        '$grant.id$': [505, 506],
+        '$grant.grantRelationships.grantId$': [505, 506],
+        '$grant.grantRelationships.activeGrantId$': [505, 506],
+      });
     });
 
     it('does not return monitoring goals if the user is missing the feature flag', async () => {
