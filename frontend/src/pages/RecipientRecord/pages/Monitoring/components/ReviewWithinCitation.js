@@ -29,7 +29,7 @@ export default function ReviewWithinCitation({
         <DescriptionItem title="Finding status">
           {review.findingStatus}
         </DescriptionItem>
-        <DescriptionItem title="Specialists">
+        <DescriptionItem title="TTA specialists">
           <SpecialistTags specialists={review.specialists} />
         </DescriptionItem>
       </DescriptionList>
