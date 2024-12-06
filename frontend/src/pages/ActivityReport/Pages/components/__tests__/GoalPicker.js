@@ -384,6 +384,7 @@ describe('GoalPicker', () => {
         isCurated: true,
         goalTemplateId: 1,
         source: 'Federal monitoring issues, including CLASS and RANs',
+        standard: 'Monitoring',
         goals: [
           {
             grantId: 1,

@@ -68,6 +68,7 @@ export async function getCuratedTemplates(
       'id',
       'source',
       'isSourceEditable',
+      'standard',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
