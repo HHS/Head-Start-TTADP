@@ -229,15 +229,10 @@ export async function getFieldPromptsForCuratedTemplate(
       }
       return promptsWithResponses;
     },
-    // the inital set of prompts, including the
-    // response key if not already present
-    prompts.map((p: FieldPrompts) => {
-      if (p.response) {
-        return p;
-      }
-
-      return { ...p, response: [] };
-    }),
+    // the inital set of prompts, which can't have a response yet
+    // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
+    // doesn't include a response and doesn't join with GoalFieldResponseModel.
+    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
   );
   return restructuredPrompts;
 }
