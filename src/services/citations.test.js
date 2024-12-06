@@ -2,7 +2,7 @@
 /* eslint-disable prefer-destructuring */
 import { v4 as uuidv4 } from 'uuid';
 import faker from '@faker-js/faker';
-import { getCitationsByGrantIds } from './citations';
+import { getCitationsByGrantIds, textByCitation } from './citations';
 import db, {
   Recipient,
   Grant,
@@ -143,6 +143,7 @@ const createMonitoringData = async (
       sourceUpdatedAt: new Date(),
       contentId: uuidv4(),
       hash: uuidv4(),
+      text: faker.random.words(10),
       citable,
     }, { individualHooks: true });
   }));
@@ -164,10 +165,6 @@ describe('citations service', () => {
   let grant1a; // Recipient 1
   let grant2; // Recipient 2
   let grant3; // Recipient 2 (Inactive)
-
-  // Goals.
-  let monitoringGoal;
-  let grant1aMonitoringGoal;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -249,7 +246,7 @@ describe('citations service', () => {
     grant3 = grants[3];
 
     // Create Goals and Link them to Grants.
-    monitoringGoal = await Goal.create({
+    await Goal.create({
       name: 'Monitoring Goal 1',
       status: 'Not started',
       timeframe: '12 months',
@@ -287,7 +284,7 @@ describe('citations service', () => {
     });
 
     // Create monitoring goal for grant 2.
-    grant1aMonitoringGoal = await Goal.create({
+    await Goal.create({
       name: 'Monitoring Goal 3',
       status: 'Not started',
       timeframe: '12 months',
@@ -419,5 +416,22 @@ describe('citations service', () => {
     expect(citation3.grants[0].reviewName).toBeDefined();
     expect(citation3.grants[0].reportDeliveryDate).toBeDefined();
     expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
+  });
+
+  describe('textByCitation', () => {
+    it('gets text by citation', async () => {
+      const response = await textByCitation(['Grant 2 - Citation 1 - Good']);
+
+      expect(response.map((citation) => citation.toJSON())).toStrictEqual([
+        {
+          citation: 'Grant 2 - Citation 1 - Good',
+          text: expect.any(String),
+        },
+        {
+          citation: 'Grant 2 - Citation 1 - Good',
+          text: expect.any(String),
+        },
+      ]);
+    });
   });
 });
