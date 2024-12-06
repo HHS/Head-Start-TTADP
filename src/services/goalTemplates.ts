@@ -61,13 +61,16 @@ specified region.
 export async function getCuratedTemplates(
   grantIds: number[] | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user: any,
+  user: any = null,
 ): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
 
   // Check if the user has the monitoring feature flag.
-  const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
+  let hasGoalMonitoringOverride = false;
+  if (user) {
+    hasGoalMonitoringOverride = !!(new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
+  }
   // If they have the monitoring flag include monitoring goals.
   let monitoringGoalIds = [];
   if (hasGoalMonitoringOverride) {
