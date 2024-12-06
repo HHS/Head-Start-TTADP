@@ -118,43 +118,41 @@ describe('RequestErrors DB service', () => {
     });
 
     it('applies filter, range, and sort correctly', async () => {
-      const uri = 'http://filter-test.com';
-    
       await createRequestError({
         operation: 'OPERATION_1',
         uri,
         method: 'GET',
         requestBody: { test: true },
       });
-    
+
       await createRequestError({
         operation: 'OPERATION_2',
         uri,
         method: 'POST',
         requestBody: { test: false },
       });
-    
+
       await createRequestError({
         operation: 'OPERATION_3',
         uri,
         method: 'PUT',
         requestBody: { test: null },
       });
-    
+
       const result = await requestErrors({
         filter: JSON.stringify({ uri }),
         range: '[0,5]',
         sort: '["createdAt","ASC"]',
       });
-    
+
       expect(result).toBeDefined();
       expect(result.rows.length).toBe(3);
       expect(result.rows[0].uri).toBe(uri);
       expect(result.rows[1].uri).toBe(uri);
       expect(result.rows[2].uri).toBe(uri);
-    
+
       await RequestErrors.destroy({ where: { uri } });
-    });        
+    });
   });
 
   describe('requestErrors', () => {
@@ -258,10 +256,25 @@ describe('RequestErrors DB service', () => {
     });
 
     it('deletes all records when no filter is provided', async () => {
+      await createRequestError({
+        operation: 'DELETE_DEFAULT_TEST_1',
+        uri: 'http://delete-default-1.com',
+        method: 'POST',
+        requestBody: { test: true },
+      });
+
+      await createRequestError({
+        operation: 'DELETE_DEFAULT_TEST_2',
+        uri: 'http://delete-default-2.com',
+        method: 'GET',
+        requestBody: { test: true },
+      });
+
       const deleteCount = await delRequestErrors();
 
       expect(deleteCount).toBeGreaterThanOrEqual(2);
 
+      // Verify records are deleted
       const remainingRecords = await RequestErrors.findAll();
       expect(remainingRecords.length).toBe(0);
     });
