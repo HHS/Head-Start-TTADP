@@ -129,6 +129,22 @@ describe('authMiddleware', () => {
     expect(mockResponse.redirect).not.toHaveBeenCalledWith(process.env.TTA_SMART_HUB_URI);
   });
 
+  it('login should set referrerPath to empty string if referrer is undefined', () => {
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/login',
+      session: mockSession,
+      headers: {},
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    login(mockRequest, mockResponse);
+    expect(mockRequest.session.referrerPath).toBe('');
+  });
+
   it('bypass authorization if variables are set for UAT or accessibility testing', async () => {
     // auth is bypassed if non-prod NODE_ENV and BYPASS_AUTH = 'true', needed for cucumber and axe
     const user = {
@@ -200,5 +216,24 @@ describe('authMiddleware', () => {
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(FORBIDDEN);
 
     await destroyUser(mockUser);
+  });
+
+  it('should return immediately if headers are already sent', async () => {
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      headersSent: true,
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockResponse.sendStatus).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
   });
 });
