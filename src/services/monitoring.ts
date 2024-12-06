@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniq } from 'lodash';
 import db from '../models';
@@ -43,13 +44,35 @@ export async function grantNumbersByRecipientAndRegion(recipientId: number, regi
   return grants.map((grant) => grant.number);
 }
 
+const MIN_DELIVERY_DATE = '2023-01-01';
+const REVIEW_STATUS_COMPLETE = 'Complete';
+
 export async function ttaByReviews(
   recipientId: number,
   regionId: number,
 ): Promise<ITTAByReviewResponse[]> {
   const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId) as string[];
   const reviews = await MonitoringReview.findAll({
+    where: {
+      reportDeliveryDate: {
+        [Op.gte]: MIN_DELIVERY_DATE,
+      },
+    },
     include: [
+      {
+        model: MonitoringReviewStatusLink,
+        as: 'statusLink',
+        include: [
+          {
+            model: MonitoringReviewStatus,
+            as: 'monitoringReviewStatuses',
+            required: true,
+            where: {
+              name: REVIEW_STATUS_COMPLETE,
+            },
+          },
+        ],
+      },
       {
         model: MonitoringReviewLink,
         as: 'monitoringReviewLink',
@@ -221,6 +244,27 @@ export async function ttaByCitations(
                             model: MonitoringReview,
                             as: 'monitoringReviews',
                             required: true,
+                            where: {
+                              reportDeliveryDate: {
+                                [Op.gte]: MIN_DELIVERY_DATE,
+                              },
+                            },
+                            include: [
+                              {
+                                model: MonitoringReviewStatusLink,
+                                as: 'statusLink',
+                                include: [
+                                  {
+                                    model: MonitoringReviewStatus,
+                                    as: 'monitoringReviewStatuses',
+                                    required: true,
+                                    where: {
+                                      name: REVIEW_STATUS_COMPLETE,
+                                    },
+                                  },
+                                ],
+                              },
+                            ],
                           },
                           {
                             model: MonitoringReviewGrantee,
