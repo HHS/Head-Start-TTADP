@@ -5,6 +5,7 @@ import {
   resourceQueue,
   onFailedResourceQueue,
   onCompletedResourceQueue,
+  processResourceQueue,
 } from './resourceQueue';
 import db, { Resource } from '../models';
 import { auditLogger, logger } from '../logger';
@@ -29,13 +30,11 @@ describe('Resource queue manager tests', () => {
   });
 
   beforeEach(() => {
-    Queue.mockImplementation(() => {
-      const queue = {
-        add: jest.fn(),
-        on: jest.fn(),
-      };
-      return queue;
-    });
+    Queue.mockImplementation(() => ({
+      add: jest.fn(),
+      on: jest.fn(),
+      process: jest.fn(),
+    }));
   });
 
   afterEach(() => {
@@ -122,5 +121,11 @@ describe('Resource queue manager tests', () => {
     });
     resourceQueue.on('completed', onCompletedResourceQueue);
     expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+  });
+
+  it('processResourceQueue sets up listeners and processes the queue', () => {
+    processResourceQueue();
+    expect(resourceQueue.on).toHaveBeenCalled();
+    expect(resourceQueue.process).toHaveBeenCalled();
   });
 });
