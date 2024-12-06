@@ -82,7 +82,7 @@ commands:
     description: "Notify new relic of a deploy"
     parameters:
       env_name:
-        description: "Name of the environment. Ex. sandbox, dev, staging, prod"
+        description: "Name of the environment. Ex. prod, staging, and dev-*"
         type: string
       new_relic_app_id:
         description: "App ID used in New Relic"
@@ -185,11 +185,26 @@ commands:
           command: |
             # Determine the environment URL
             case "<< parameters.environment_name >>" in
-                sandbox)
-                    ENV_URL="https://tta-smarthub-sandbox.app.cloud.gov/"
+                dev-nimbus)
+                    ENV_URL="https://tta-smarthub-dev-nimbus.app.cloud.gov/"
                     ;;
-                dev)
-                    ENV_URL="https://tta-smarthub-dev.app.cloud.gov/"
+                dev-cirrus)
+                    ENV_URL="https://tta-smarthub-dev-cirrus.app.cloud.gov/"
+                    ;;
+                dev-stratus)
+                    ENV_URL="https://tta-smarthub-dev-stratus.app.cloud.gov/"
+                    ;;
+                dev-cumulus)
+                    ENV_URL="https://tta-smarthub-dev-cumulus.app.cloud.gov/"
+                    ;;
+                dev-lenticular)
+                    ENV_URL="https://tta-smarthub-dev-lenticular.app.cloud.gov/"
+                    ;;
+                dev-fog)
+                    ENV_URL="https://tta-smarthub-dev-fog.app.cloud.gov/"
+                    ;;
+                dev-clear)
+                    ENV_URL="https://tta-smarthub-dev-clear.app.cloud.gov/"
                     ;;
                 staging)
                     ENV_URL="https://tta-smarthub-staging.app.cloud.gov/"
@@ -222,16 +237,17 @@ commands:
             else
                 COMMIT_MESSAGE=$(git log -1 --pretty=%B)
                 if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
-                  PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                  PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
-                  MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
-                  if [ ! -z "${JIRA_URLS}" ]; then
-                      MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                  fi
+                    PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
+                    PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
+                    if [ ! -z "${JIRA_URLS}" ]; then
+                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                    fi
                 else
                     MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
                 fi
             fi
+
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
 
       - notify_slack:
@@ -670,20 +686,8 @@ parameters:
     description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
     default: "https://api.fr.cloud.gov"
     type: string
-  prod_git_url:
-    description: "URL of github repo that will deploy to prod"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  staging_git_url:
-    description: "URL of github repo that will deploy to staging"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  dev_git_url:
-    description: "URL of github repo that will deploy to dev"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  sandbox_git_url:
-    description: "URL of github repo that will deploy to sandbox"
+  git_url:
+    description: "URL of github repo"
     default: "https://github.com/HHS/Head-Start-TTADP"
     type: string
   prod_git_branch:
@@ -698,9 +702,7 @@ parameters:
     description: "Name of github branch that will deploy to dev"
     default: "main"
     type: string
-  sandbox_git_branch: # change to feature branch to test deployment
-    default: "TTAHUB-3678/login"
-    type: string
+  # TODO: need to figure out how to make/get more new relic ids
   prod_new_relic_app_id:
     default: "877570491"
     type: string
@@ -731,10 +733,25 @@ parameters:
   manual-restore-staging:
     type: boolean
     default: false
-  manual-restore-sandbox:
+  manual-restore-dev-nimbus:
     type: boolean
     default: false
-  manual-restore-dev:
+  manual-restore-dev-cirrus:
+    type: boolean
+    default: false
+  manual-restore-dev-stratus:
+    type: boolean
+    default: false
+  manual-restore-dev-cumulus:
+    type: boolean
+    default: false
+  manual-restore-dev-lenticular:
+    type: boolean
+    default: false
+  manual-restore-dev-fog:
+    type: boolean
+    default: false
+  manual-restore-dev-clear:
     type: boolean
     default: false
   fail-on-modified-lines:
@@ -1154,7 +1171,7 @@ jobs:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.prod_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1176,81 +1193,13 @@ jobs:
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
 
-      - when: # sandbox: for short-term feature development, see README.md
-          condition:
-            and:
-              - equal:
-                  [
-                    << pipeline.project.git_url >>,
-                    << pipeline.parameters.sandbox_git_url >>,
-                  ]
-              - equal:
-                  [
-                    << pipeline.git.branch >>,
-                    << pipeline.parameters.sandbox_git_branch >>,
-                  ]
-          steps:
-            - run:
-                name: Build frontend assets
-                command: yarn --cwd frontend run build
-                environment:
-                  REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-                  REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
-                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
-            - cf_deploy:
-                app_name: tta-smarthub-sandbox
-                auth_client_id: SANDBOX_AUTH_CLIENT_ID
-                auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
-                cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
-                cloudgov_space: CLOUDGOV_SANDBOX_SPACE
-                deploy_config_file: deployment_config/sandbox_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: SANDBOX_SESSION_SECRET
-                jwt_secret: SANDBOX_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                smtp_password: SMTP_PASSWORD
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
-            - run:
-                name: Migrate database
-                command: |
-                  cf run-task tta-smarthub-sandbox \
-                    --command "yarn db:migrate:prod" \
-                    --name "Reset DB"
-            - notify_new_relic:
-                env_name: sandbox
-                new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
-                new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack_deploy:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-head-start-github"
-                environment_name: "sandbox"
-
       - when: # dev
           condition:
             and:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.dev_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1318,7 +1267,7 @@ jobs:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.staging_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1384,7 +1333,7 @@ jobs:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.prod_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1580,8 +1529,13 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-backup >>]
         - equal: [false, << pipeline.parameters.manual-full-process >>]
         - equal: [false, << pipeline.parameters.manual-restore-staging >>]
-        - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
-        - equal: [false, << pipeline.parameters.manual-restore-dev >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-nimbus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-cirrus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-stratus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-cumulus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-lenticular >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-fog >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-clear >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1636,7 +1590,6 @@ workflows:
           filters:
             branches:
               only:
-                - << pipeline.parameters.sandbox_git_branch >>
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
@@ -1696,12 +1649,27 @@ workflows:
       - restore_processed_to_staging:
           requires:
             - process_backup
-      - restore_processed_to_sandbox:
+      - restore_processed_to_dev_nimbus:
           requires:
             - restore_processed_to_staging
-      - restore_processed_to_dev:
+      - restore_processed_to_dev_cirrus:
           requires:
-            - restore_processed_to_sandbox
+            - restore_processed_to_dev_nimbus
+      - restore_processed_to_dev_stratus:
+          requires:
+            - restore_processed_to_dev_cirrus
+      - restore_processed_to_dev_cumulus:
+          requires:
+            - restore_processed_to_dev_stratus
+      - restore_processed_to_dev_lenticular:
+          requires:
+            - restore_processed_to_dev_cumulus
+      - restore_processed_to_dev_fog:
+          requires:
+            - restore_processed_to_dev_lenticular
+      - restore_processed_to_dev_clear:
+          requires:
+            - restore_processed_to_dev_fog
   manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
@@ -1741,13 +1709,38 @@ workflows:
       equal: [true, << pipeline.parameters.manual-restore-staging >>]
     jobs:
       - restore_processed_to_staging
-  manual_restore_sandbox:
+  manual_restore_dev_nimbus:
     when:
-      equal: [true, << pipeline.parameters.manual-restore-sandbox >>]
+      equal: [true, << pipeline.parameters.manual-restore-dev-nimbus >>]
     jobs:
-      - restore_processed_to_sandbox
-  manual_restore_dev:
+      - restore_processed_to_dev_nimbus
+  manual_restore_dev_cirrus:
     when:
-      equal: [true, << pipeline.parameters.manual-restore-dev >>]
+      equal: [true, << pipeline.parameters.manual-restore-dev-cirrus >>]
     jobs:
-      - restore_processed_to_dev
+      - restore_processed_to_dev_cirrus
+  manual_restore_dev_stratus:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-stratus >>]
+    jobs:
+      - restore_processed_to_dev_stratus
+  manual_restore_dev_cumulus:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-cumulus >>]
+    jobs:
+      - restore_processed_to_dev_cumulus
+  manual_restore_dev_lenticular:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-lenticular >>]
+    jobs:
+      - restore_processed_to_dev_lenticular
+  manual_restore_dev_fog:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-fog >>]
+    jobs:
+      - restore_processed_to_dev_fog
+  manual_restore_dev_clear:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-clear >>]
+    jobs:
+      - restore_processed_to_dev_clear
