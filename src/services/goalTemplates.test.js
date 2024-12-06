@@ -2,8 +2,9 @@ import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import crypto from 'crypto';
 import db from '../models';
-import { setFieldPromptsForCuratedTemplate, getSourceFromTemplate } from './goalTemplates';
+import { setFieldPromptsForCuratedTemplate, getSourceFromTemplate, getCuratedTemplates } from './goalTemplates';
 import { AUTOMATIC_CREATION } from '../constants';
+import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 
 const {
   Goal,
@@ -20,272 +21,374 @@ describe('goalTemplates services', () => {
     await sequelize.close();
   });
 
-  describe('getSourceFromTemplate', () => {
-    let template;
-    let templateTwo;
-    let grant;
-    let grantTwo;
-    let grantThree;
-    let recipient;
+  describe('getCuratedTemplates', () => {
+    // Recipients.
+    let monitoringRecipient;
+    let regularRecipient;
+    // Grants.
+    let monitoringGrant;
+    let regularGrant;
+
+    // Templates.
+    let monitoringTemplate;
+    let regularTemplate;
+
+    // Db snapshot.
+    let snapShot;
 
     beforeAll(async () => {
-      recipient = await Recipient.create({
+      snapShot = await captureSnapshot();
+      // Create recipient.
+      monitoringRecipient = await Recipient.create({
         id: faker.datatype.number({ min: 56000 }),
         name: faker.datatype.string(20),
       });
 
-      grant = await Grant.create({
-        regionId: 2,
+      regularRecipient = await Recipient.create({
+        id: faker.datatype.number({ min: 56000 }),
+        name: faker.datatype.string(20),
+      });
+
+      // Create grants.
+      monitoringGrant = await Grant.create({
+        regionId: 1,
         status: 'Active',
         id: faker.datatype.number({ min: 56000 }),
         number: faker.datatype.string(255),
-        recipientId: recipient.id,
+        recipientId: monitoringRecipient.id,
       });
 
-      grantTwo = await Grant.create({
-        regionId: 2,
+      regularGrant = await Grant.create({
+        regionId: 1,
         status: 'Active',
         id: faker.datatype.number({ min: 56000 }),
         number: faker.datatype.string(255),
-        recipientId: recipient.id,
+        recipientId: regularRecipient.id,
       });
 
-      grantThree = await Grant.create({
-        regionId: 2,
-        status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
-        recipientId: recipient.id,
-      });
+      // Get the monitoring template.
+      monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
 
-      const n = faker.lorem.sentence(5);
+      // Get the regular template.
+      regularTemplate = await GoalTemplate.findOne({ where: { standard: 'FEI' } });
 
-      const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
-
-      template = await GoalTemplate.create({
-        hash,
-        templateName: n,
-        creationMethod: AUTOMATIC_CREATION,
-        source: GOAL_SOURCES[1],
+      // Create goals.
+      await Goal.create({
+        grantId: monitoringGrant.id,
+        goalTemplateId: monitoringTemplate.id,
+        createdVia: 'monitoring',
+        name: 'Monitoring goal for template test',
+        status: 'In Progress',
       });
 
       await Goal.create({
-        grantId: grant.id,
-        goalTemplateId: template.id,
-        name: n,
-        source: GOAL_SOURCES[0],
-      });
-
-      await Goal.create({
-        grantId: grantTwo.id,
-        goalTemplateId: template.id,
-        name: n,
-      });
-
-      const n2 = faker.lorem.sentence(5);
-
-      const hash2 = crypto
-        .createHmac('md5', secret)
-        .update(n2)
-        .digest('hex');
-
-      templateTwo = await GoalTemplate.create({
-        hash: hash2,
-        templateName: n2,
-        creationMethod: AUTOMATIC_CREATION,
-      });
-
-      await Goal.create({
-        grantId: grantThree.id,
-        goalTemplateId: templateTwo.id,
-        name: n2,
+        grantId: regularGrant.id,
+        goalTemplateId: regularTemplate.id,
+        createdVia: 'activityReport',
+        name: 'Regular goal for template test',
+        status: 'In Progress',
       });
     });
 
     afterAll(async () => {
-      await Goal.destroy({
-        where: {
-          goalTemplateId: [
-            template.id,
-            templateTwo.id,
-          ],
-        },
-        force: true,
-        paranoid: true,
-        individualHooks: true,
-      });
-      await GoalTemplate.destroy({
-        where: {
-          id: [
-            template.id,
-            templateTwo.id],
-        },
-        individualHooks: true,
-      });
-      await Grant.destroy({
-        where: {
-          id: [
-            grant.id,
-            grantTwo.id,
-            grantThree.id,
-          ],
-        },
-        individualHooks: true,
-      });
-      await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+      await rollbackToSnapshot(snapShot);
     });
 
-    it('returns source from the goal', async () => {
-      const source = await getSourceFromTemplate(template.id, [grant.id]);
+    it('returns only non-monitoring templates', async () => {
+      const templates = await getCuratedTemplates(
+        [monitoringGrant.id, regularGrant.id],
+        { id: 1, name: 'regular user', flags: [] },
+      );
 
-      expect(source).toBe(GOAL_SOURCES[0]);
+      // Make sure the results contain the regular template and NOT the monitoring template.
+      const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
+      expect(regularTemplateToAssert).toBeTruthy();
+
+      const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
+      expect(monitoringTemplateToAssert).toBeFalsy();
     });
-    it('returns source from the template', async () => {
-      const source = await getSourceFromTemplate(template.id, [grantTwo.id]);
 
-      expect(source).toBe(GOAL_SOURCES[1]);
+    it('returns both regular and only monitoring templates', async () => {
+      const templates = await getCuratedTemplates(
+        [monitoringGrant.id, regularGrant.id],
+        { id: 1, name: 'regular user', flags: ['monitoring_integration'] },
+      );
+
+      // Make sure the results contain the regular template and NOT the monitoring template.
+      const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
+      expect(regularTemplateToAssert).toBeTruthy();
+
+      const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
+      expect(monitoringTemplateToAssert).toBeTruthy();
+    });
+  });
+});
+
+describe('getSourceFromTemplate', () => {
+  let template;
+  let templateTwo;
+  let grant;
+  let grantTwo;
+  let grantThree;
+  let recipient;
+
+  beforeAll(async () => {
+    recipient = await Recipient.create({
+      id: faker.datatype.number({ min: 56000 }),
+      name: faker.datatype.string(20),
     });
 
-    it('returns null source', async () => {
-      const source = await getSourceFromTemplate(template.id, [grantThree.id]);
+    grant = await Grant.create({
+      regionId: 2,
+      status: 'Active',
+      id: faker.datatype.number({ min: 56000 }),
+      number: faker.datatype.string(255),
+      recipientId: recipient.id,
+    });
 
-      expect(source).toBeFalsy();
+    grantTwo = await Grant.create({
+      regionId: 2,
+      status: 'Active',
+      id: faker.datatype.number({ min: 56000 }),
+      number: faker.datatype.string(255),
+      recipientId: recipient.id,
+    });
+
+    grantThree = await Grant.create({
+      regionId: 2,
+      status: 'Active',
+      id: faker.datatype.number({ min: 56000 }),
+      number: faker.datatype.string(255),
+      recipientId: recipient.id,
+    });
+
+    const n = faker.lorem.sentence(5);
+
+    const secret = 'secret';
+    const hash = crypto
+      .createHmac('md5', secret)
+      .update(n)
+      .digest('hex');
+
+    template = await GoalTemplate.create({
+      hash,
+      templateName: n,
+      creationMethod: AUTOMATIC_CREATION,
+      source: GOAL_SOURCES[1],
+    });
+
+    await Goal.create({
+      grantId: grant.id,
+      goalTemplateId: template.id,
+      name: n,
+      source: GOAL_SOURCES[0],
+    });
+
+    await Goal.create({
+      grantId: grantTwo.id,
+      goalTemplateId: template.id,
+      name: n,
+    });
+
+    const n2 = faker.lorem.sentence(5);
+
+    const hash2 = crypto
+      .createHmac('md5', secret)
+      .update(n2)
+      .digest('hex');
+
+    templateTwo = await GoalTemplate.create({
+      hash: hash2,
+      templateName: n2,
+      creationMethod: AUTOMATIC_CREATION,
+    });
+
+    await Goal.create({
+      grantId: grantThree.id,
+      goalTemplateId: templateTwo.id,
+      name: n2,
     });
   });
 
-  describe('setFieldPromptsForCuratedTemplate', () => {
-    let promptResponses;
-    let template;
-    let goalIds;
-    let grant;
-    let recipient;
-    let promptId;
-    let promptTitle;
+  afterAll(async () => {
+    await Goal.destroy({
+      where: {
+        goalTemplateId: [
+          template.id,
+          templateTwo.id,
+        ],
+      },
+      force: true,
+      paranoid: true,
+      individualHooks: true,
+    });
+    await GoalTemplate.destroy({
+      where: {
+        id: [
+          template.id,
+          templateTwo.id],
+      },
+      individualHooks: true,
+    });
+    await Grant.destroy({
+      where: {
+        id: [
+          grant.id,
+          grantTwo.id,
+          grantThree.id,
+        ],
+      },
+      individualHooks: true,
+    });
+    await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+  });
 
-    beforeAll(async () => {
-      recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 56000 }),
-        name: faker.datatype.string(20),
-      });
+  it('returns source from the goal', async () => {
+    const source = await getSourceFromTemplate(template.id, [grant.id]);
 
-      grant = await Grant.create({
-        regionId: 2,
-        status: 'Active',
-        id: faker.datatype.number({ min: 56000 }),
-        number: faker.datatype.string(255),
-        recipientId: recipient.id,
-      });
+    expect(source).toBe(GOAL_SOURCES[0]);
+  });
+  it('returns source from the template', async () => {
+    const source = await getSourceFromTemplate(template.id, [grantTwo.id]);
 
-      const n = faker.lorem.sentence(5);
+    expect(source).toBe(GOAL_SOURCES[1]);
+  });
 
-      const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+  it('returns null source', async () => {
+    const source = await getSourceFromTemplate(template.id, [grantThree.id]);
 
-      template = await GoalTemplate.create({
-        hash,
-        templateName: n,
-        creationMethod: AUTOMATIC_CREATION,
-      });
+    expect(source).toBeFalsy();
+  });
+});
 
-      promptTitle = faker.datatype.string(255);
+describe('setFieldPromptsForCuratedTemplate', () => {
+  let promptResponses;
+  let template;
+  let goalIds;
+  let grant;
+  let recipient;
+  let promptId;
+  let promptTitle;
 
-      const prompt = await GoalTemplateFieldPrompt.create({
-        goalTemplateId: template.id,
-        ordinal: 1,
-        title: promptTitle,
-        prompt: promptTitle,
-        hint: '',
-        options: ['option 1', 'option 2', 'option 3'],
-        fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
-      });
-
-      promptId = prompt.id;
-
-      promptResponses = [
-        { promptId: prompt.id, response: ['option 1', 'option 2'] },
-      ];
-
-      const goal = await Goal.create({
-        grantId: grant.id,
-        goalTemplateId: template.id,
-        name: n,
-      });
-
-      goalIds = [goal.id];
+  beforeAll(async () => {
+    recipient = await Recipient.create({
+      id: faker.datatype.number({ min: 56000 }),
+      name: faker.datatype.string(20),
     });
 
-    afterAll(async () => {
-      await GoalFieldResponse.destroy({ where: { goalId: goalIds }, individualHooks: true });
-      // eslint-disable-next-line max-len
-      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
-      await Goal.destroy({
-        where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true,
-      });
-      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
-      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
-      await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+    grant = await Grant.create({
+      regionId: 2,
+      status: 'Active',
+      id: faker.datatype.number({ min: 56000 }),
+      number: faker.datatype.string(255),
+      recipientId: recipient.id,
     });
 
-    it('should call setFieldPromptForCuratedTemplate for each prompt response', async () => {
+    const n = faker.lorem.sentence(5);
+
+    const secret = 'secret';
+    const hash = crypto
+      .createHmac('md5', secret)
+      .update(n)
+      .digest('hex');
+
+    template = await GoalTemplate.create({
+      hash,
+      templateName: n,
+      creationMethod: AUTOMATIC_CREATION,
+    });
+
+    promptTitle = faker.datatype.string(255);
+
+    const prompt = await GoalTemplateFieldPrompt.create({
+      goalTemplateId: template.id,
+      ordinal: 1,
+      title: promptTitle,
+      prompt: promptTitle,
+      hint: '',
+      options: ['option 1', 'option 2', 'option 3'],
+      fieldType: 'multiselect',
+      validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+    });
+
+    promptId = prompt.id;
+
+    promptResponses = [
+      { promptId: prompt.id, response: ['option 1', 'option 2'] },
+    ];
+
+    const goal = await Goal.create({
+      grantId: grant.id,
+      goalTemplateId: template.id,
+      name: n,
+    });
+
+    goalIds = [goal.id];
+  });
+
+  afterAll(async () => {
+    await GoalFieldResponse.destroy({ where: { goalId: goalIds }, individualHooks: true });
+    // eslint-disable-next-line max-len
+    await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+    await Goal.destroy({
+      where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true,
+    });
+    await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+    await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
+  });
+
+  it('should call setFieldPromptForCuratedTemplate for each prompt response', async () => {
     // save initial field responses
-      await setFieldPromptsForCuratedTemplate(goalIds, promptResponses);
+    await setFieldPromptsForCuratedTemplate(goalIds, promptResponses);
 
-      // check that the field responses were saved
-      const fieldResponses = await GoalFieldResponse.findAll({
-        where: { goalId: goalIds },
-      });
-
-      expect(fieldResponses.length).toBe(promptResponses.length);
-      expect(fieldResponses[0].response).toEqual(promptResponses[0].response);
-
-      // update field responses
-      await setFieldPromptsForCuratedTemplate(goalIds, [
-        { promptId, response: ['option 1'] },
-      ]);
-
-      // check that the field responses were updated
-      const updatedFieldResponses = await GoalFieldResponse.findAll({
-        where: { goalId: goalIds },
-      });
-
-      expect(updatedFieldResponses.length).toBe(promptResponses.length);
-      expect(updatedFieldResponses[0].response).toEqual(['option 1']);
+    // check that the field responses were saved
+    const fieldResponses = await GoalFieldResponse.findAll({
+      where: { goalId: goalIds },
     });
 
-    it('should use the provided validations', async () => {
-      const fieldResponses = await GoalFieldResponse.findAll({
-        where: { goalId: goalIds },
-        raw: true,
-      });
+    expect(fieldResponses.length).toBe(promptResponses.length);
+    expect(fieldResponses[0].response).toEqual(promptResponses[0].response);
 
-      // test validation error (no more than 2 options can be selected)
-      await expect(setFieldPromptsForCuratedTemplate(goalIds, [
-        { promptId, response: ['option 1', 'option 2', 'option 3'] },
-      ])).rejects.toThrow();
+    // update field responses
+    await setFieldPromptsForCuratedTemplate(goalIds, [
+      { promptId, response: ['option 1'] },
+    ]);
 
-      // check that the field responses were not updated
-      const notUpdatedFieldResponses = await GoalFieldResponse.findAll({
-        where: { goalId: goalIds },
-        raw: true,
-      });
-
-      expect(notUpdatedFieldResponses.length).toBe(fieldResponses.length);
-      expect(notUpdatedFieldResponses[0].response).toStrictEqual(fieldResponses[0].response);
+    // check that the field responses were updated
+    const updatedFieldResponses = await GoalFieldResponse.findAll({
+      where: { goalId: goalIds },
     });
 
-    it('does nothing if the prompt doesn\'t exist', async () => {
-      const fictionalId = 123454345345;
-      await expect(setFieldPromptsForCuratedTemplate(goalIds, [
-        { promptId: fictionalId, response: ['option 1'] },
-      ])).rejects.toThrow(`No prompt found with ID ${fictionalId}`);
+    expect(updatedFieldResponses.length).toBe(promptResponses.length);
+    expect(updatedFieldResponses[0].response).toEqual(['option 1']);
+  });
+
+  it('should use the provided validations', async () => {
+    const fieldResponses = await GoalFieldResponse.findAll({
+      where: { goalId: goalIds },
+      raw: true,
     });
+
+    // test validation error (no more than 2 options can be selected)
+    await expect(setFieldPromptsForCuratedTemplate(goalIds, [
+      { promptId, response: ['option 1', 'option 2', 'option 3'] },
+    ])).rejects.toThrow();
+
+    // check that the field responses were not updated
+    const notUpdatedFieldResponses = await GoalFieldResponse.findAll({
+      where: { goalId: goalIds },
+      raw: true,
+    });
+
+    expect(notUpdatedFieldResponses.length).toBe(fieldResponses.length);
+    expect(notUpdatedFieldResponses[0].response).toStrictEqual(fieldResponses[0].response);
+  });
+
+  it('does nothing if the prompt doesn\'t exist', async () => {
+    const fictionalId = 123454345345;
+    await expect(setFieldPromptsForCuratedTemplate(goalIds, [
+      { promptId: fictionalId, response: ['option 1'] },
+    ])).rejects.toThrow(`No prompt found with ID ${fictionalId}`);
   });
 });
