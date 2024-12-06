@@ -1,0 +1,9 @@
+:root {
+  --data-card-column-width: calc(210px - 2rem);
+  --data-card-double-column-width: calc(var(--data-card-column-width) * 2);
+}
+
+.ttahub-data-card .usa-tag {
+  text-transform: none;
+}
+
