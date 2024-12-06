@@ -672,5 +672,30 @@ describe('goalTemplates services', () => {
 
       expect(() => validatePromptResponse(response, promptRequirements)).not.toThrow();
     });
+
+    it('does not throw an error when the fieldType is anything other than multiselect', () => {
+      const response = 'option 1';
+      const promptRequirements = {
+        fieldType: 'text',
+        title: 'Test Prompt',
+        options: ['option 1', 'option 2', 'option 3'],
+        validations: {
+          rules: [{ name: 'maxSelections', value: 2 }],
+        },
+      };
+
+      expect(() => validatePromptResponse(response, promptRequirements)).not.toThrow();
+    });
+
+    it('does not throw an error when the prompt has no validations', () => {
+      const response = ['option 1', 'option 2', 'option 3'];
+      const promptRequirements = {
+        fieldType: 'multiselect',
+        title: 'Test Prompt',
+        options: ['option 1', 'option 2', 'option 3'],
+      };
+
+      expect(() => validatePromptResponse(response, promptRequirements)).not.toThrow();
+    });
   });
 });
