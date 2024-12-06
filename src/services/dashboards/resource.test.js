@@ -21,6 +21,8 @@ import {
   resourceUse,
   resourceDashboard,
   resourceTopicUse,
+  reduceRecipients,
+  mergeInResources,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -549,5 +551,78 @@ describe('Resources dashboard', () => {
         },
       ],
     });
+  });
+});
+
+describe('reduceRecipients', () => {
+  it('should handle recipients with otherEntityId correctly', () => {
+    const source = [
+      { recipientId: null, grantIds: [1], otherEntityId: 100 },
+    ];
+    const adding = [
+      { recipientId: null, grantId: 2, otherEntityId: 100 },
+    ];
+    const result = reduceRecipients(source, adding);
+    expect(result).toEqual([
+      { recipientId: null, grantIds: [1, 2], otherEntityId: 100 },
+    ]);
+  });
+});
+
+describe('mergeInResources', () => {
+  it('should handle new resources correctly', () => {
+    const currentData = new Map();
+
+    const additionalData = [
+      {
+        id: 1,
+        resourceObjects: [
+          {
+            resourceId: 101,
+            sourceFields: ['field1'],
+            tableType: 'objective',
+          },
+        ],
+      },
+    ];
+
+    const result = mergeInResources(currentData, additionalData);
+    const mergedData = Array.from(result.values());
+
+    expect(mergedData.length).toBe(1);
+    expect(mergedData[0].resourceObjects.length).toBe(1);
+    expect(mergedData[0].resourceObjects[0].sourceFields).toEqual([
+      'field1',
+    ]);
+  });
+
+  it('should handle empty resourceObjects correctly', () => {
+    const currentData = new Map([
+      [1, {
+        id: 1,
+        resources: [
+          {
+            resourceId: 101,
+            sourceFields: [{ tableType: 'objective', sourceField: 'field1' }],
+          },
+        ],
+      }],
+    ]);
+
+    const additionalData = [
+      {
+        id: 1,
+        resourceObjects: [],
+      },
+    ];
+
+    const result = mergeInResources(currentData, additionalData);
+    const mergedData = Array.from(result.values());
+
+    expect(mergedData.length).toBe(1);
+    expect(mergedData[0].resources.length).toBe(1);
+    expect(mergedData[0].resources[0].sourceFields).toEqual([
+      { tableType: 'objective', sourceField: 'field1' },
+    ]);
   });
 });
