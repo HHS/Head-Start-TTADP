@@ -9,6 +9,7 @@ import {
   getFieldPromptsForCuratedTemplate,
   getOptionsByGoalTemplateFieldPromptName,
   setFieldPromptForCuratedTemplate,
+  validatePromptResponse,
 } from './goalTemplates';
 import { AUTOMATIC_CREATION } from '../constants';
 
@@ -622,6 +623,54 @@ describe('goalTemplates services', () => {
       const result = await getOptionsByGoalTemplateFieldPromptName(promptTitle);
       expect(result).toBeDefined();
       expect(result.options).toEqual(options);
+    });
+  });
+
+  describe('validatePromptResponse', () => {
+    it('throws an error for invalid response values', () => {
+      const response = ['invalid option'];
+      const promptRequirements = {
+        fieldType: 'multiselect',
+        title: 'Test Prompt',
+        options: ['option 1', 'option 2'],
+        validations: {
+          rules: [{ name: 'maxSelections', value: 2 }],
+        },
+      };
+
+      expect(() => validatePromptResponse(response, promptRequirements)).toThrow(
+        "Response for 'Test Prompt' contains invalid values. Invalid values: 'invalid option'.",
+      );
+    });
+
+    it('throws an error for exceeding max selections', () => {
+      const response = ['option 1', 'option 2', 'option 3'];
+      const promptRequirements = {
+        fieldType: 'multiselect',
+        title: 'Test Prompt',
+        options: ['option 1', 'option 2', 'option 3'],
+        validations: {
+          rules: [{ name: 'maxSelections', value: 2 }],
+        },
+      };
+
+      expect(() => validatePromptResponse(response, promptRequirements)).toThrow(
+        "Response for 'Test Prompt' contains more than max allowed selections. 3 found, 2 or less expected.",
+      );
+    });
+
+    it('does not throw an error for valid response values', () => {
+      const response = ['option 1', 'option 2'];
+      const promptRequirements = {
+        fieldType: 'multiselect',
+        title: 'Test Prompt',
+        options: ['option 1', 'option 2', 'option 3'],
+        validations: {
+          rules: [{ name: 'maxSelections', value: 2 }],
+        },
+      };
+
+      expect(() => validatePromptResponse(response, promptRequirements)).not.toThrow();
     });
   });
 });
