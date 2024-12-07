@@ -12,6 +12,7 @@ export const OBJECTIVE_ROLE = 'Select a specialist role';
 export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invalid resources will not be saved.';
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
+export const OBJECTIVE_CITATIONS = 'Select at least one citation';
 
 /**
  * Function to validate a single value based on a user's flags
@@ -56,6 +57,12 @@ export const unfinishedObjectives = (
 
       if (!objective.topics || !objective.topics.length) {
         setError(`${fieldArrayName}[${index}].topics`, { message: OBJECTIVE_TOPICS });
+        incomplete = true;
+      }
+
+      // We only validate citations if they exist (they are not always required).
+      if (objective.citations && !objective.citations.length) {
+        setError(`${fieldArrayName}[${index}].citations`, { message: OBJECTIVE_CITATIONS });
         incomplete = true;
       }
 

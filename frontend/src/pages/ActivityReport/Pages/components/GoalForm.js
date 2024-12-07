@@ -28,6 +28,8 @@ export default function GoalForm({
   datePickerKey,
   templatePrompts,
   isMultiRecipientReport,
+  citationOptions,
+  rawCitations,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -219,6 +221,8 @@ export default function GoalForm({
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         reportId={parseInt(reportId, DECIMAL_BASE)}
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
       />
     </>
   );
@@ -253,6 +257,22 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
   templatePrompts: PropTypes.oneOfType([
@@ -269,4 +289,6 @@ GoalForm.propTypes = {
 
 GoalForm.defaultProps = {
   isMultiRecipientReport: false,
+  citationOptions: [],
+  rawCitations: [],
 };

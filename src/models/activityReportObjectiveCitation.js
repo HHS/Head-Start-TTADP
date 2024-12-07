@@ -14,7 +14,6 @@ export default (sequelize, DataTypes) => {
         onDelete: 'cascade',
         as: 'activityReportObjective',
       });
-
       // ARO Citations.
       models.ActivityReportObjective.hasMany(models.ActivityReportObjectiveCitation, {
         foreignKey: 'activityReportObjectiveId',

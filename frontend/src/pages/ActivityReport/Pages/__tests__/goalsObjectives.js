@@ -22,12 +22,12 @@ const goalUrl = join('api', 'activity-reports', 'goals');
 const spy = jest.fn();
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, connectionActive = true,
+  grantIds, activityRecipientType, connectionActive = true, startDate = null,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
   }));
-  const data = { activityRecipientType, activityRecipients };
+  const data = { activityRecipientType, activityRecipients, startDate };
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -100,6 +100,7 @@ const renderGoals = (
   isGoalFormClosed = false,
   throwFetchError = false,
   toggleGoalForm = jest.fn(),
+  startDate = null,
 ) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   const fetchResponse = throwFetchError ? 500 : goals;
@@ -112,6 +113,7 @@ const renderGoals = (
           grantIds={grantIds}
           activityRecipientType={activityRecipientType}
           connectionActive={!throwFetchError}
+          startDate={startDate}
         />
       </GoalFormContext.Provider>
     </UserContext.Provider>,
@@ -145,14 +147,14 @@ describe('goals objectives', () => {
       const isGoalFormClosed = false;
       const throwFetchError = true;
 
-      renderGoals([1], 'recipient', goals, isGoalFormClosed, throwFetchError);
+      renderGoals([1], 'recipient', goals, isGoalFormClosed, throwFetchError, jest.fn(), '2021-01-01');
       expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
-      renderGoals([1], 'recipient');
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), '2021-01-01');
       expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
       expect(screen.queryByText(/indicates required field/i)).toBeTruthy();
     });
@@ -279,17 +281,40 @@ describe('goals objectives', () => {
       const grants = [1];
       const isGoalFormClosed = false;
       const throwFetchError = true;
-      renderGoals(grants, recipientType, goals, isGoalFormClosed, throwFetchError);
+      renderGoals(grants, recipientType, goals, isGoalFormClosed, throwFetchError, jest.fn(), '2021-01-01');
       expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
   describe('when activity recipient type is not "recipient" or "other-entity"', () => {
-    it('a warning is displayed', async () => {
+    it('both warnings are displayed when the report type and start date are missing', async () => {
       renderGoals([1], null);
-      expect(await screen.findByText(
-        /To add goals and objectives, indicate who the activity was for in/i,
-      )).toBeVisible();
+      expect(await screen.findByText('To add goals and objectives, indicate in the')).toBeVisible();
+      expect(await screen.findByText('who the activity was for')).toBeVisible();
+      expect(await screen.findByText('the start date of the activity')).toBeVisible();
+    });
+
+    it('shows the report type warning when the report type is missing', async () => {
+      renderGoals([1], null, [], false, false, jest.fn(), '2021-01-01');
+      expect(await screen.findByText('To add goals and objectives, indicate in the')).toBeVisible();
+      expect(await screen.findByText('who the activity was for')).toBeVisible();
+      expect(screen.queryByText('the start date of the activity')).toBeNull();
+    });
+
+    it('shows the start date warning when the start date is missing', async () => {
+      renderGoals([1], 'recipient', [], false, false, jest.fn());
+      expect(await screen.findByText('To add goals and objectives, indicate in the')).toBeVisible();
+      expect(screen.queryByText('who the activity was for')).toBeNull();
+      expect(await screen.findByText('the start date of the activity')).toBeVisible();
+    });
+
+    it('hides the warnings when the report type and start date are present', async () => {
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), '2021-01-01');
+      expect(screen.queryByText('To add goals and objectives, indicate in the')).toBeNull();
+      expect(screen.queryByText('who the activity was for')).toBeNull();
+      expect(screen.queryByText('the start date of the activity')).toBeNull();
+      // Expect to find an h3 with the text "Goal summary".
+      expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
     });
   });
 
