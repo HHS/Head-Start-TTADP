@@ -63,7 +63,7 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing, goalTemplates }) =>
           <GoalPicker
             availableGoals={availableGoals}
             goalTemplates={goalTemplates}
-            grantIds={[]}
+            grantIds={[1]}
             reportId={1}
           />
         </FormProvider>
