@@ -119,12 +119,12 @@ const GoalPicker = ({
     async function fetchCitations() {
       // If its a monitoring goal and the source is CLASS or RANs, fetch the citations.
       if (goalForEditing && goalForEditing.standard && goalForEditing.standard === 'Monitoring') {
-        const monitoringGrantIds = goalForEditing.goals.map((g) => g.grantId);
         const retrievedCitationOptions = await fetchCitationsByGrant(
           regionId,
-          monitoringGrantIds,
+          grantIds,
           startDate,
         );
+
         if (retrievedCitationOptions) {
           // Reduce the citation options to only unique values.
           const uniqueCitationOptions = Object.values(retrievedCitationOptions.reduce(
@@ -147,13 +147,17 @@ const GoalPicker = ({
               return acc;
             }, {},
           ));
+
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
         }
+      } else {
+        setCitationOptions([]);
+        setRawCitations([]);
       }
     }
     fetchCitations();
-  }, [goalForEditing, regionId, startDate]);
+  }, [goalForEditing, regionId, startDate, grantIds]);
 
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
 
