@@ -181,6 +181,7 @@ export function reduceObjectivesForActivityReport(
 
       exists.citations = uniq(objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations
         ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
           (c) => c.citation,
         )
@@ -264,6 +265,7 @@ export function reduceObjectivesForActivityReport(
       citations: uniq(
         objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations
           ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
             (c) => c.citation,
           )
