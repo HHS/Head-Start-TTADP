@@ -692,7 +692,7 @@ export async function createOrUpdateGoals(goals) {
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
-export async function goalsForGrants(grantIds, reportStartDate, user) {
+export async function goalsForGrants(grantIds) {
   /**
    * get all the matching grants
    */
@@ -735,10 +735,10 @@ export async function goalsForGrants(grantIds, reportStartDate, user) {
     .filter((g) => g)));
 
   /*
-  * Get all matching goals
+  * finally, return all matching goals
   */
 
-  const regularGoals = await Goal.findAll({
+  return Goal.findAll({
     attributes: [
       [sequelize.fn(
         'ARRAY_AGG',
@@ -840,23 +840,6 @@ export async function goalsForGrants(grantIds, reportStartDate, user) {
       ),
     ), 'desc']],
   });
-
-  /*
-  * Get all monitoring goals
-  */
-  let goalsToReturn = regularGoals;
-  const hasGoalMonitoringOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
-
-  if (hasGoalMonitoringOverride && reportStartDate) {
-    const monitoringGoals = await getMonitoringGoals(ids, reportStartDate);
-
-    // Combine goalsToReturn with monitoringGoals.
-    const allGoals = await Promise.all([regularGoals, monitoringGoals]);
-
-    // Flatten the array of arrays.
-    goalsToReturn = allGoals.flat();
-  }
-  return goalsToReturn;
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
