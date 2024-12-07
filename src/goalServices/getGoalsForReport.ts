@@ -20,6 +20,7 @@ const {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveCourse,
+  ActivityReportObjectiveCitation,
   sequelize,
   Resource,
   ActivityReportGoal,
@@ -129,6 +130,12 @@ export default async function getGoalsForReport(reportId: number) {
                     as: 'topic',
                   },
                 ],
+              },
+              {
+                separate: true,
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                required: false,
               },
               {
                 separate: true,
