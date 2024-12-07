@@ -17,7 +17,10 @@ const {
 } = db;
 
 describe('goalTemplates services', () => {
+  // Db snapshot.
+  let snapShot;
   afterAll(async () => {
+    await rollbackToSnapshot(snapShot);
     await sequelize.close();
   });
 
@@ -32,9 +35,6 @@ describe('goalTemplates services', () => {
     // Templates.
     let monitoringTemplate;
     let regularTemplate;
-
-    // Db snapshot.
-    let snapShot;
 
     beforeAll(async () => {
       snapShot = await captureSnapshot();
@@ -91,7 +91,7 @@ describe('goalTemplates services', () => {
     });
 
     afterAll(async () => {
-      await rollbackToSnapshot(snapShot);
+      // await rollbackToSnapshot(snapShot);
     });
 
     it('returns only non-monitoring templates', async () => {
