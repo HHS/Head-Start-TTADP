@@ -12,7 +12,7 @@ export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
     'citations',
     'region',
     String(region),
-    `?grantIds=${grantIds.join('&')}&reportStartDate=${formattedDate}`,
+    `?grantIds=${grantIds.join('&grantIds=')}&reportStartDate=${formattedDate}`,
   );
   const citations = await get(url);
   return citations.json();
