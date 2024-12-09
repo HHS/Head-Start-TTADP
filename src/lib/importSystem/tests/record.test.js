@@ -142,6 +142,36 @@ describe('record', () => {
 
       await expect(getPriorFile(importId, status)).rejects.toThrow('Database error');
     });
+
+    it('should use the default status value when no status is provided', async () => {
+      const mockName = 'default-status-file.txt';
+      ImportFile.findOne.mockResolvedValue({ name: mockName });
+
+      const importId = 1;
+      const result = await getPriorFile(importId);
+
+      expect(ImportFile.findOne).toHaveBeenCalledWith({
+        attributes: [
+          // eslint-disable-next-line @typescript-eslint/quotes
+          [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
+        ],
+        where: {
+          importId,
+          [Op.or]: [
+            { status: IMPORT_STATUSES.COLLECTED },
+            {
+              status: IMPORT_STATUSES.COLLECTION_FAILED,
+              downloadAttempts: { [Op.gt]: 5 },
+            },
+          ],
+        },
+        // eslint-disable-next-line @typescript-eslint/quotes
+        order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
+        raw: true,
+        lock: true,
+      });
+      expect(result).toBe(mockName);
+    });
   });
 
   describe('importHasMoreToDownload', () => {
