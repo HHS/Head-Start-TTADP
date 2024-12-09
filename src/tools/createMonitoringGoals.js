@@ -5,7 +5,7 @@ import {
 import { auditLogger } from '../logger';
 
 const createMonitoringGoals = async () => {
-  const cutOffDate = '2024-11-26'; // TODO: Set this before we deploy to prod.
+  const cutOffDate = '2024-10-01'; // TODO: Set this before we deploy to prod.
 
   // Verify that the monitoring goal template exists.
   const monitoringGoalTemplate = await GoalTemplate.findOne({
@@ -71,7 +71,7 @@ const createMonitoringGoals = async () => {
       new_goals AS (
         SELECT
           gt."templateName" "name",
-          'Not started' "status",
+          'Not Started' "status",
           NULL "timeframe",
           FALSE "isFromSmartsheetTtaPlan",
           NOW() "createdAt",
