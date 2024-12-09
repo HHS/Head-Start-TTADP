@@ -1,5 +1,4 @@
 import {
-  getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
 
@@ -158,11 +157,41 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
   // Create citations to save.
   if (citations && citations.length > 0) {
-    newCitations = citations.map((citation) => (
+    // Get the grant id from the goal.
+    const goal = await Goal.findOne({
+      attributes: ['grantId'],
+      include: [
+        {
+          model: Objective,
+          as: 'objectives',
+          where: { id: objectiveId },
+          required: true,
+        },
+      ],
+    });
+
+    const grantForThisCitation = goal.grantId;
+
+    // Get all the citations for the grant.
+    const citationsToSave = citations.reduce((acc, citation) => {
+      const { monitoringReferences } = citation;
+      monitoringReferences.forEach((ref) => {
+        const { grantId } = ref;
+        if (grantId === grantForThisCitation) {
+          acc.push(citation);
+        }
+      });
+      return acc;
+    }, []);
+
+    newCitations = citationsToSave.map((citation) => (
       {
         activityReportObjectiveId,
         citation: citation.citation,
-        monitoringReferences: citation.monitoringReferences,
+        // Only save the monitoring references for the grant we are working with.
+        monitoringReferences: citation.monitoringReferences.filter(
+          (ref) => ref.grantId === grantForThisCitation,
+        ),
       }));
 
     // If we have citations to save, create them.

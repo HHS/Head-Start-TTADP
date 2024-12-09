@@ -130,6 +130,7 @@ describe('activityReportObjectiveCitation', () => {
 
   beforeAll(async () => {
     recipient = await createRecipient({});
+
     grant = await createGrant({ recipientId: recipient.id });
 
     activityReport = await createReport({
@@ -249,6 +250,61 @@ describe('activityReportObjectiveCitation', () => {
     });
 
     expect(deletedAroCitations).toHaveLength(0);
+  });
+
+  it('correctly saves aro citations per grant', async () => {
+    const multiGrantCitations = [
+      {
+        citation: 'Citation 1',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1',
+        }],
+      },
+      {
+        citation: 'Citation 2',
+        monitoringReferences: [{
+          grantId: 2,
+          findingId: 1,
+          reviewName: 'Review 2',
+        }],
+      },
+      {
+        citation: 'Citation 3',
+        monitoringReferences: [
+          {
+            grantId: 3,
+            findingId: 1,
+            reviewName: 'Review 3',
+          },
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 4',
+          }],
+      },
+    ];
+
+    const result = await cacheCitations(objective.id, aro.id, multiGrantCitations);
+
+    // Retrieve all citations for the aro.
+    const aroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(aroCitations).toHaveLength(2);
+
+    // Assert citations are saved correctly.
+    expect(aroCitations[0].citation).toEqual('Citation 1');
+    expect(aroCitations[0].monitoringReferences.length).toEqual(1);
+    expect(aroCitations[0].monitoringReferences[0].grantId).toBe(grant.id);
+
+    expect(aroCitations[1].citation).toEqual('Citation 3');
+    expect(aroCitations[1].monitoringReferences.length).toEqual(1);
+    expect(aroCitations[1].monitoringReferences[0].grantId).toBe(grant.id);
   });
 });
 
