@@ -1,6 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import { Request, Response } from 'express';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
+import User from '../../policies/user';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
@@ -17,7 +20,10 @@ export async function getGoalTemplates(req: Request, res: Response) {
     const parsedGrantIds = [grantIds].flat().map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const templates = await getCuratedTemplates(parsedGrantIds);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    const templates = await getCuratedTemplates(parsedGrantIds, user);
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');

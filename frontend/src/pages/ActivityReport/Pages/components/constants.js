@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const NO_ERROR = <></>;
 export const ERROR_FORMAT = (message) => <span className="usa-error-message">{message}</span>;
 
-export const NEW_OBJECTIVE = () => ({
+export const NEW_OBJECTIVE = (isMonitoring = false) => ({
   value: uuidv4(),
   label: 'Create a new objective',
   title: '',
@@ -17,6 +17,7 @@ export const NEW_OBJECTIVE = () => ({
   roles: [],
   status: 'Not Started',
   isNew: true,
+  citations: isMonitoring ? [] : null, // Only required for monitoring goals.
   closeSuspendReason: null,
   closeSuspendContext: null,
   objectiveCreatedHere: true,

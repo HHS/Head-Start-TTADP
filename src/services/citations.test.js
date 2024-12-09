@@ -2,7 +2,7 @@
 /* eslint-disable prefer-destructuring */
 import { v4 as uuidv4 } from 'uuid';
 import faker from '@faker-js/faker';
-import { getCitationsByGrantIds, getMonitoringGoals } from './citations';
+import { getCitationsByGrantIds, textByCitation } from './citations';
 import db, {
   Recipient,
   Grant,
@@ -143,6 +143,7 @@ const createMonitoringData = async (
       sourceUpdatedAt: new Date(),
       contentId: uuidv4(),
       hash: uuidv4(),
+      text: faker.random.words(10),
       citable,
     }, { individualHooks: true });
   }));
@@ -164,10 +165,6 @@ describe('citations service', () => {
   let grant1a; // Recipient 1
   let grant2; // Recipient 2
   let grant3; // Recipient 2 (Inactive)
-
-  // Goals.
-  let monitoringGoal;
-  let grant1aMonitoringGoal;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -249,7 +246,7 @@ describe('citations service', () => {
     grant3 = grants[3];
 
     // Create Goals and Link them to Grants.
-    monitoringGoal = await Goal.create({
+    await Goal.create({
       name: 'Monitoring Goal 1',
       status: 'Not started',
       timeframe: '12 months',
@@ -287,7 +284,7 @@ describe('citations service', () => {
     });
 
     // Create monitoring goal for grant 2.
-    grant1aMonitoringGoal = await Goal.create({
+    await Goal.create({
       name: 'Monitoring Goal 3',
       status: 'Not started',
       timeframe: '12 months',
@@ -421,31 +418,20 @@ describe('citations service', () => {
     expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
   });
 
-  it('getMonitoringGoals', async () => {
-    const goalsToAssert = await getMonitoringGoals([grant1.id, grant1a.id], new Date().toISOString().split('T')[0]);
-    expect(goalsToAssert.length).toBe(2);
+  describe('textByCitation', () => {
+    it('gets text by citation', async () => {
+      const response = await textByCitation(['Grant 2 - Citation 1 - Good']);
 
-    // Assert the goals.
-    // Assert the monitoring goal.
-    const monitoringGoalToAssert = goalsToAssert.find((g) => g.id === monitoringGoal.id);
-    expect(monitoringGoalToAssert).toBeDefined();
-    expect(monitoringGoalToAssert.name).toBe('Monitoring Goal 1');
-    expect(monitoringGoalToAssert.status).toBe('Not started');
-    expect(monitoringGoalToAssert.grantIds).toStrictEqual([grant1.id]);
-    expect(monitoringGoalToAssert.created).toBeDefined();
-    expect(monitoringGoalToAssert.onApprovedAR).toBe(true);
-    expect(monitoringGoalToAssert.createdVia).toBe('monitoring');
-    expect(monitoringGoalToAssert.goalTemplateId).toBe(monitoringGoal.goalTemplateId);
-
-    // Assert the grant1a monitoring goal.
-    const monitoringGoalToAssert1a = goalsToAssert.find((g) => g.id === grant1aMonitoringGoal.id);
-    expect(monitoringGoalToAssert1a).toBeDefined();
-    expect(monitoringGoalToAssert1a.name).toBe('Monitoring Goal 3');
-    expect(monitoringGoalToAssert1a.status).toBe('Not started');
-    expect(monitoringGoalToAssert1a.grantIds).toStrictEqual([grant1a.id]);
-    expect(monitoringGoalToAssert1a.created).toBeDefined();
-    expect(monitoringGoalToAssert1a.onApprovedAR).toBe(true);
-    expect(monitoringGoalToAssert1a.createdVia).toBe('monitoring');
-    expect(monitoringGoalToAssert1a.goalTemplateId).toBe(monitoringGoal.goalTemplateId);
+      expect(response.map((citation) => citation.toJSON())).toStrictEqual([
+        {
+          citation: 'Grant 2 - Citation 1 - Good',
+          text: expect.any(String),
+        },
+        {
+          citation: 'Grant 2 - Citation 1 - Good',
+          text: expect.any(String),
+        },
+      ]);
+    });
   });
 });
