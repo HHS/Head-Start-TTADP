@@ -33,7 +33,7 @@ export default class Users {
    * @returns {bool} whether the user can view the feature flag
    */
   canSeeBehindFeatureFlag(flag) {
-    return this.isAdmin() || this.user.flags.find((f) => f === flag);
+    return this.isAdmin() || !!(this.user.flags.find((f) => f === flag));
   }
 
   getAllAccessibleRegions() {
