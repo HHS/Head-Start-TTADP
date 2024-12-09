@@ -17,7 +17,6 @@ const selectOptionsReset = {
   groupHeading: (provided) => ({
     ...provided,
     fontWeight: 'bold',
-    fontFamily: 'SourceSansPro',
     textTransform: 'capitalize',
     fontSize: '14px',
     color: colors.smartHubTextInk,

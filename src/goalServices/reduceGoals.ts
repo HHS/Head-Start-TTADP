@@ -187,7 +187,7 @@ export function reduceObjectivesForActivityReport(
           (c) => ({
             ...c.dataValues,
             id: c.monitoringReferences[0].standardId,
-            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType123}`,
+            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}`,
           }),
         ))
         : null;
@@ -278,7 +278,7 @@ export function reduceObjectivesForActivityReport(
               {
                 ...c.dataValues,
                 id: c.monitoringReferences[0].standardId,
-                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}456`,
+                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}`,
               }),
           ),
         )
