@@ -1,6 +1,18 @@
 /* eslint-disable no-plusplus */
-/* eslint-disable import/prefer-default-export */
-import { sequelize } from '../models';
+import db, { sequelize } from '../models';
+
+const { MonitoringStandard } = db;
+
+export async function textByCitation(
+  citationIds: string[],
+): Promise<{ text: string, citation: string }[]> {
+  return MonitoringStandard.findAll({
+    attributes: ['text', 'citation'],
+    where: {
+      citation: citationIds,
+    },
+  });
+}
 
 // TODO: Update this to the day we deploy to PROD.
 const cutOffStartDate = new Date().toISOString().split('T')[0];
@@ -10,7 +22,29 @@ const cutOffStartDate = new Date().toISOString().split('T')[0];
   We then need to format the response for how it needs to be
   displayed on the FE for selection on objectives.
 */
-export async function getCitationsByGrantIds(grantIds, reportStartDate) {
+
+export interface CitationsByGrantId {
+  standardId: number;
+  citation: string;
+  grants: {
+    acro: string;
+    grantId: number;
+    citation: string;
+    severity: number;
+    findingId: string;
+    reviewName: string;
+    findingType: string;
+    grantNumber: string;
+    findingSource: string;
+    reportDeliveryDate: Date;
+    monitoringFindingStatusName: string;
+  }[];
+}
+
+export async function getCitationsByGrantIds(
+  grantIds: number[],
+  reportStartDate: string,
+): Promise<CitationsByGrantId[]> {
   // Query to get the citations by grant id.
   const grantsByCitations = await sequelize.query(
     /* sql */
