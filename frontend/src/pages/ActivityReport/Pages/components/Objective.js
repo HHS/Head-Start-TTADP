@@ -353,7 +353,6 @@ export default function Objective({
   // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
   const selectedCitationsChanged = (newCitations) => {
     const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
-
     // From rawCitations get all the raw citations with the same standardId as the newCitations.
     const newCitationsObjects = rawCitations.filter(
       (rawCitation) => newCitationStandardIds.includes(rawCitation.standardId),
@@ -364,7 +363,16 @@ export default function Objective({
         name: newCitations.find(
           (newCitation) => newCitation.id === rawCitation.standardId,
         ).name,
-        monitoringReferences: rawCitation.grants,
+        monitoringReferences:
+        [
+          ...rawCitation.grants.map((grant) => ({
+            ...grant,
+            standardId: rawCitation.standardId,
+            name: newCitations.find(
+              (newCitation) => newCitation.id === rawCitation.standardId,
+            ).name,
+          })),
+        ],
       }));
     onChangeCitations([...newCitationsObjects]);
   };
