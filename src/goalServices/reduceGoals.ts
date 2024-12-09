@@ -178,6 +178,19 @@ export function reduceObjectivesForActivityReport(
         'course',
         exists,
       );
+      // Citations should return null if they are not applicable.
+      exists.citations = objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations.length > 0
+        ? uniq(objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
+          (c) => ({
+            ...c.dataValues,
+            id: c.monitoringReferences[0].standardId,
+            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}`,
+          }),
+        ))
+        : null;
 
       exists.files = uniqBy([
         ...exists.files,
@@ -187,6 +200,7 @@ export function reduceObjectivesForActivityReport(
             .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
           : []),
       ], (e: IFile) => e.key);
+
       return objectives;
     }
 
@@ -253,6 +267,22 @@ export function reduceObjectivesForActivityReport(
         'activityReportObjectiveCourses',
         'course',
       ),
+      // Citations should return null if they are not applicable.
+      citations: objective.activityReportObjectives
+      && objective.activityReportObjectives.length > 0
+      && objective.activityReportObjectives[0].activityReportObjectiveCitations
+      && objective.activityReportObjectives[0].activityReportObjectiveCitations.length > 0
+        ? uniq(
+          objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
+            (c) => (
+              {
+                ...c.dataValues,
+                id: c.monitoringReferences[0].standardId,
+                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingType}`,
+              }),
+          ),
+        )
+        : null,
     }];
   }, currentObjectives);
 

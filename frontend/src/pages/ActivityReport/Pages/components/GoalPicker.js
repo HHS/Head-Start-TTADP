@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
@@ -15,6 +16,7 @@ import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
 import GoalForm from './GoalForm';
 import Modal from '../../../../components/VanillaModal';
+import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -57,8 +59,13 @@ const GoalPicker = ({
   const [useOhsStandardGoal, setOhsStandardGoal] = useState(false);
   const activityRecipientType = watch('activityRecipientType');
 
+  const [citationOptions, setCitationOptions] = useState([]);
+  const [rawCitations, setRawCitations] = useState([]);
+
   const selectedGoals = useWatch({ name: 'goals' });
   const activityRecipients = watch('activityRecipients');
+  const regionId = watch('regionId');
+  const startDate = watch('startDate');
   const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
   const modalRef = useRef();
@@ -105,9 +112,53 @@ const GoalPicker = ({
       const topics = await getTopics();
       setTopicOptions(topics);
     }
-
     fetchTopics();
   }, []);
+
+  // Fetch citations for the goal if the source is CLASS or RANs.
+  useDeepCompareEffect(() => {
+    async function fetchCitations() {
+      // If its a monitoring goal and the source is CLASS or RANs, fetch the citations.
+      if (goalForEditing && goalForEditing.standard && goalForEditing.standard === 'Monitoring') {
+        const retrievedCitationOptions = await fetchCitationsByGrant(
+          regionId,
+          grantIds,
+          startDate,
+        );
+
+        if (retrievedCitationOptions) {
+          // Reduce the citation options to only unique values.
+          const uniqueCitationOptions = Object.values(retrievedCitationOptions.reduce(
+            (acc, current) => {
+              current.grants.forEach((currentGrant) => {
+                const { findingType } = currentGrant;
+                if (!acc[findingType]) {
+                  acc[findingType] = { label: findingType, options: [] };
+                }
+
+                const findingKey = `${currentGrant.acro} - ${currentGrant.citation} - ${currentGrant.findingType}`;
+                if (!acc[findingType].options.find((option) => option.name === findingKey)) {
+                  acc[findingType].options.push({
+                    name: findingKey,
+                    id: current.standardId,
+                  });
+                }
+              });
+
+              return acc;
+            }, {},
+          ));
+
+          setCitationOptions(uniqueCitationOptions);
+          setRawCitations(retrievedCitationOptions);
+        }
+      } else {
+        setCitationOptions([]);
+        setRawCitations([]);
+      }
+    }
+    fetchCitations();
+  }, [goalForEditing, regionId, startDate, grantIds]);
 
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
 
@@ -259,6 +310,8 @@ const GoalPicker = ({
               datePickerKey={datePickerKey}
               templatePrompts={templatePrompts}
               isMultiRecipientReport={isMultiRecipientReport}
+              citationOptions={citationOptions}
+              rawCitations={rawCitations}
             />
           </div>
         ) : null}
