@@ -24,6 +24,7 @@
 - [ ] Logical Data Model updated
 - [ ] [Architectural Decision Records](https://adr.github.io/) written for major infrastructure decisions
 - [ ] UI review complete
+- [ ] QA review complete
 
 ### Before merge to main
 
