@@ -4,7 +4,6 @@ import crypto from 'crypto';
 import db from '../models';
 import { setFieldPromptsForCuratedTemplate, getSourceFromTemplate, getCuratedTemplates } from './goalTemplates';
 import { AUTOMATIC_CREATION } from '../constants';
-import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 
 const {
   Goal,
@@ -17,10 +16,7 @@ const {
 } = db;
 
 describe('goalTemplates services', () => {
-  // Db snapshot.
-  let snapShot;
   afterAll(async () => {
-    await rollbackToSnapshot(snapShot);
     await sequelize.close();
   });
 
@@ -37,7 +33,6 @@ describe('goalTemplates services', () => {
     let regularTemplate;
 
     beforeAll(async () => {
-      snapShot = await captureSnapshot();
       // Create recipient.
       monitoringRecipient = await Recipient.create({
         id: faker.datatype.number({ min: 56000 }),
@@ -91,7 +86,31 @@ describe('goalTemplates services', () => {
     });
 
     afterAll(async () => {
-      // await rollbackToSnapshot(snapShot);
+      // Delete the goals.
+      await Goal.destroy({
+        where: {
+          goalTemplateId: [monitoringTemplate.id, regularTemplate.id],
+        },
+        force: true,
+        paranoid: true,
+        individualHooks: true,
+      });
+
+      // Delete the grants.
+      await Grant.destroy({
+        where: {
+          id: [monitoringGrant.id, regularGrant.id],
+        },
+        individualHooks: true,
+      });
+
+      // Delete the recipients.
+      await Recipient.destroy({
+        where: {
+          id: [monitoringRecipient.id, regularRecipient.id],
+        },
+        individualHooks: true,
+      });
     });
 
     it('returns only non-monitoring templates', async () => {
