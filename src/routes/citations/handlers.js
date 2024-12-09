@@ -7,11 +7,27 @@ import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { getCitationsByGrantIds } from '../../services/citations';
+import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 
 const namespace = 'SERVICE:CITATIONS';
 
 const logContext = { namespace };
+
+export const getTextByCitation = async (req, res) => {
+  try {
+    // citations are available with a site access permission
+    const { citationIds } = req.query;
+
+    // Get the citations for the grant.
+    const citations = await textByCitation([citationIds].flat());
+
+    // Return the text
+    res.status(httpCodes.OK).send(citations);
+  } catch (error) {
+    // Handle any errors that occur.
+    await handleErrors(req, res, error, logContext);
+  }
+};
 
 export const getCitationsByGrants = async (req, res) => {
   try {
