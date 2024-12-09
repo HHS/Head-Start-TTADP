@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
