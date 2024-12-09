@@ -20,7 +20,7 @@ export default function FindingWithinReview({ finding, regionId }) {
           {finding.status}
         </DescriptionItem>
         <DescriptionItem title="Finding type">
-          {finding.type}
+          {finding.findingType}
         </DescriptionItem>
         <DescriptionItem title="Category" className="ttahub-review-card--finding-within-review-category">
           {finding.category}
@@ -46,7 +46,7 @@ FindingWithinReview.propTypes = {
   finding: PropTypes.shape({
     citation: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
+    findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     correctionDeadline: PropTypes.string.isRequired,
     objectives: PropTypes.arrayOf(PropTypes.shape({

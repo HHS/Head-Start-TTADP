@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringStandardLink,
         {
           foreignKey: 'standardId',
-          as: 'statusLink',
+          as: 'standardLink',
         },
       );
 

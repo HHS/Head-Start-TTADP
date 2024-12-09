@@ -57,7 +57,7 @@ const reviewData = [
       {
         citation: '1302.47(b)(5)(iv)',
         status: 'Active',
-        type: 'Deficiency',
+        findingType: 'Deficiency',
         category: 'Inappropriate Release',
         correctionDeadline: '07/25/2024',
         objectives: [
@@ -96,7 +96,7 @@ const reviewData = [
       {
         citation: '1302.47(b)(5)(v)',
         status: 'Active',
-        type: 'Noncompliance',
+        findingType: 'Noncompliance',
         category: 'Monitoring and Implementing Quality Health Services',
         correctionDeadline: '09/18/2024',
         objectives: [
@@ -112,7 +112,7 @@ const reviewData = [
       {
         citation: '1302.91(a)',
         status: 'Active',
-        type: 'Noncompliance',
+        findingType: 'Noncompliance',
         category: 'Program Management and Quality Improvement',
         correctionDeadline: '09/18/2024',
         objectives: [
@@ -128,7 +128,7 @@ const reviewData = [
       {
         citation: '1302.12(m)',
         status: 'Active',
-        type: 'Noncompliance',
+        findingType: 'Noncompliance',
         category: 'Program Management and Quality Improvement',
         correctionDeadline: '09/18/2024',
         objectives: [
