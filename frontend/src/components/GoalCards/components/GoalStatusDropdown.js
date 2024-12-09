@@ -17,7 +17,7 @@ export default function GoalStatusDropdown({
 }) {
   const { user } = useContext(UserContext);
   const key = status || 'Needs Status';
-  const { icon, display } = STATUSES[key];
+  const { icon, display } = STATUSES[key] || STATUSES['Needs Status'];
 
   const isReadOnly = useMemo(() => ((
     status === 'Draft'
