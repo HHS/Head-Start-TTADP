@@ -1635,7 +1635,7 @@ describe('createMonitoringGoals', () => {
       name: goalTemplateName,
       grantId: grantBeingMonitoredSplit10A.id,
       goalTemplateId: goalTemplate.id,
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     // Create a existing monitoring goal for Case 11 on Grant A and B.
@@ -1644,7 +1644,7 @@ describe('createMonitoringGoals', () => {
       name: goalTemplateName,
       grantId: grantBeingMerged11A.id,
       goalTemplateId: goalTemplate.id,
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     await Goal.create({
@@ -1652,7 +1652,7 @@ describe('createMonitoringGoals', () => {
       name: goalTemplateName,
       grantId: grantBeingMerged11B.id,
       goalTemplateId: goalTemplate.id,
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     // Create a monitoring goal for grantReopenMonitoringGoalNumberReviewId12 in case 12 thats closed and should be set to Not started.
@@ -1695,7 +1695,7 @@ describe('createMonitoringGoals', () => {
     // Assert that the goal that was created was the monitoring goal and is using the correct template.
     expect(grant1Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant1Goals[0].name).toBe(goalTemplateName);
-    expect(grant1Goals[0].status).toBe('Not started');
+    expect(grant1Goals[0].status).toBe('Not Started');
 
     // CASE 2: Does not create a monitoring goal for a grant that already has one.
     const grant2Goals = await Goal.findAll({ where: { grantId: grantThatAlreadyHasMonitoringGoal2.id } });
@@ -1733,7 +1733,7 @@ describe('createMonitoringGoals', () => {
     expect(grant9Goals.length).toBe(1);
     expect(grant9Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant9Goals[0].name).toBe(goalTemplateName);
-    expect(grant9Goals[0].status).toBe('Not started');
+    expect(grant9Goals[0].status).toBe('Not Started');
 
     // CASE 10: Creates a monitoring goal ONLY for the grant that initially had the monitoring goal and does NOT create one for the split grant..
     const grant10AGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10A.id } });
@@ -1764,7 +1764,7 @@ describe('createMonitoringGoals', () => {
     const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
     expect(grant12Goals.length).toBe(1);
     expect(grant12Goals[0].goalTemplateId).toBe(goalTemplate.id);
-    expect(grant12Goals[0].status).toBe('Not started');
+    expect(grant12Goals[0].status).toBe('Not Started');
   };
 
   it('creates monitoring goals for grants that need them', async () => {
