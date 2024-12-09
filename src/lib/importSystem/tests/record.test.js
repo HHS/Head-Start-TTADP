@@ -478,7 +478,7 @@ describe('record', () => {
         ],
       };
       const mockResults = [{
-        avg: { seconds: 100, milliseconds: 0 },
+        avg: { seconds: undefined, milliseconds: 0 },
         stddev: { seconds: 10, milliseconds: 0 },
       }];
       ZALImportFile.findAll.mockResolvedValue(mockResults);
