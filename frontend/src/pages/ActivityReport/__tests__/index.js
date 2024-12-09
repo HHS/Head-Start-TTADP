@@ -765,7 +765,7 @@ describe('ActivityReport', () => {
       source: null,
       isCurated: false,
     }]);
-    fetchMock.get('/api/goal-templates?grantIds=10431', []);
+    fetchMock.get('/api/goal-templates?grantIds=10431&reportStartDate=2012-05-20', []);
     fetchMock.get('/api/activity-reports/1', {
       ...formData(),
       activityRecipientType: 'recipient',
@@ -956,7 +956,7 @@ describe('ActivityReport', () => {
     const data = formData();
     fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
     fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-    fetchMock.get('/api/goal-templates?grantIds=12539', []);
+    fetchMock.get('/api/goal-templates?grantIds=12539&reportStartDate=2012-05-20', []);
     fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=37504', {});
     fetchMock.get('/api/activity-reports/1', {
       ...data,

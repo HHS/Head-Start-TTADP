@@ -7,7 +7,7 @@ import {
   useController, useFormContext,
 } from 'react-hook-form';
 import ObjectiveTitle from './ObjectiveTitle';
-import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
+import GenericSelectWithDrawer from '../../../../components/GoalForm/GenericSelectWithDrawer';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
@@ -20,6 +20,7 @@ import {
   OBJECTIVE_TITLE,
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
+  OBJECTIVE_CITATIONS,
 } from './goalValidator';
 import { validateListOfResources, noDisallowedUrls } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -40,6 +41,8 @@ export default function Objective({
   parentGoal,
   initialObjectiveStatus,
   reportId,
+  citationOptions,
+  rawCitations,
 }) {
   const modalRef = useRef();
 
@@ -64,7 +67,6 @@ export default function Objective({
    * but we want to keep the logic in one place for the AR/RTR
    * if at all possible
    */
-
   const {
     field: {
       onChange: onChangeTitle,
@@ -98,6 +100,24 @@ export default function Objective({
       },
     },
     defaultValue: objective.topics,
+  });
+
+  const {
+    field: {
+      onChange: onChangeCitations,
+      onBlur: onBlurCitations,
+      value: objectiveCitations,
+      name: objectiveCitationsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].citations`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
+      },
+    },
+    // If citations are not available, set citations to null
+    defaultValue: objective.citations,
   });
 
   const {
@@ -330,6 +350,33 @@ export default function Objective({
     }
   };
 
+  // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
+  const selectedCitationsChanged = (newCitations) => {
+    const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
+    // From rawCitations get all the raw citations with the same standardId as the newCitations.
+    const newCitationsObjects = rawCitations.filter(
+      (rawCitation) => newCitationStandardIds.includes(rawCitation.standardId),
+    ).map((rawCitation) => (
+      {
+        ...rawCitation,
+        id: rawCitation.standardId,
+        name: newCitations.find(
+          (newCitation) => newCitation.id === rawCitation.standardId,
+        ).name,
+        monitoringReferences:
+        [
+          ...rawCitation.grants.map((grant) => ({
+            ...grant,
+            standardId: rawCitation.standardId,
+            name: newCitations.find(
+              (newCitation) => newCitation.id === rawCitation.standardId,
+            ).name,
+          })),
+        ],
+      }));
+    onChangeCitations([...newCitationsObjects]);
+  };
+
   return (
     <>
       <ObjectiveSelect
@@ -358,14 +405,31 @@ export default function Objective({
           initialObjectiveStatus={statusForCalculations}
         />
       </FormFieldThatIsSometimesReadOnly>
-      <ObjectiveTopics
+      {
+        citationOptions.length > 0 && (
+          <GenericSelectWithDrawer
+            error={errors.citations
+              ? ERROR_FORMAT(errors.citations.message)
+              : NO_ERROR}
+            name="Citation"
+            options={citationOptions}
+            validateValues={onBlurCitations}
+            values={objectiveCitations}
+            onChangeValues={selectedCitationsChanged}
+            inputName={objectiveCitationsInputName}
+          />
+        )
+            }
+
+      <GenericSelectWithDrawer
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
           : NO_ERROR}
-        topicOptions={topicOptions}
-        validateObjectiveTopics={onBlurTopics}
-        topics={objectiveTopics}
-        onChangeTopics={onChangeTopics}
+        name="Topic"
+        options={topicOptions}
+        validateValues={onBlurTopics}
+        values={objectiveTopics}
+        onChangeValues={onChangeTopics}
         inputName={objectiveTopicsInputName}
       />
 
@@ -483,6 +547,9 @@ Objective.propTypes = {
     topics: PropTypes.shape({
       message: PropTypes.string,
     }),
+    citations: PropTypes.shape({
+      message: PropTypes.string,
+    }),
     closeSuspendReason: PropTypes.shape({
       message: PropTypes.string,
     }),
@@ -491,6 +558,22 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
@@ -503,4 +586,9 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
+};
+
+Objective.defaultProps = {
+  citationOptions: [],
+  rawCitations: [],
 };

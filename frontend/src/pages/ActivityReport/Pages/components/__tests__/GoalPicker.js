@@ -34,6 +34,8 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing, goalTemplates }) =>
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
+      startDate: '2024-12-03',
+      regionId: 1,
       goals: selectedGoals,
       goalForEditing,
       author: {
@@ -61,7 +63,7 @@ const GP = ({ availableGoals, selectedGoals, goalForEditing, goalTemplates }) =>
           <GoalPicker
             availableGoals={availableGoals}
             goalTemplates={goalTemplates}
-            grantIds={[]}
+            grantIds={[1]}
             reportId={1}
           />
         </FormProvider>
@@ -344,6 +346,77 @@ describe('GoalPicker', () => {
 
       const input = document.querySelector('[name="goalForEditing"]');
       expect(input.value).toBe(availableGoal.value.toString());
+    });
+  });
+  describe('monitoring goals', () => {
+    it('correctly retrieves citations for monitoring goals', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', []);
+      fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
+        source: 'Federal monitoring issues, including CLASS and RANs',
+      });
+
+      fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
+        {
+          citation: 'test citation 1',
+          grants: [
+            {
+              acro: 'DEF',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: 'source',
+              findingType: 'Deficiency',
+              grantId: 1,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      const availableGoals = [{
+        label: 'Monitoring Goal',
+        value: 1,
+        goalIds: [1],
+        isCurated: true,
+        goalTemplateId: 1,
+        source: 'Federal monitoring issues, including CLASS and RANs',
+        standard: 'Monitoring',
+        goals: [
+          {
+            grantId: 1,
+          },
+        ],
+      }];
+
+      act(() => {
+        renderGoalPicker(availableGoals, null);
+      });
+
+      const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+      const [availableGoal] = availableGoals;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const input = document.querySelector('[name="goalForEditing"]');
+      expect(input.value).toBe(availableGoal.value.toString());
+
+      // Select 'Create a new objective' from the dropdown.
+      const objectiveSelector = await screen.findByLabelText(/Select TTA objective/i);
+      await selectEvent.select(objectiveSelector, 'Create a new objective');
+
+      // Open the citations dropdown.
+      const citationSelector = await screen.findByLabelText(/citation/i);
+      await selectEvent.select(citationSelector, /test citation 1/i);
+
+      // Check that the citation is displayed.
+      const citation = await screen.findByText(/test citation 1/i);
+      expect(citation).toBeVisible();
     });
   });
 });
