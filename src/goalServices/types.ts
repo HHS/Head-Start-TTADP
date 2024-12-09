@@ -69,7 +69,6 @@ interface ICourse {
 
 interface ICitation {
   citation: string;
-  monitoringReferences: JSON;
 }
 
 interface ICourseModelInstance extends ICourse {
@@ -113,7 +112,10 @@ interface IActivityReportObjective {
     course: ICourse;
   }[];
   activityReportObjectiveCitations: {
-    citation: ICitation;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dataValues: any;
+    citation: string;
+    monitoringReferences: JSON;
   }[];
 }
 
