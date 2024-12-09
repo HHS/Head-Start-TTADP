@@ -890,6 +890,12 @@ describe('record', () => {
         attempts: 2,
       });
     });
+
+    it('should throw when ImportFile record is not found', async () => {
+      ImportFile.findOne.mockResolvedValue(null);
+
+      await expect(logFileToBeCollected(importId, availableFile)).rejects.toThrow();
+    });
   });
 
   describe('setImportFileHash', () => {
