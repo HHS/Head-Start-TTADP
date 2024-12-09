@@ -137,7 +137,7 @@ const GoalPicker = ({
                 }
 
                 const findingKey = `${currentGrant.acro} - ${currentGrant.citation} - ${currentGrant.findingType}`;
-                if (!acc[findingType].options.find((option) => option.label === findingKey)) {
+                if (!acc[findingType].options.find((option) => option.name === findingKey)) {
                   acc[findingType].options.push({
                     name: findingKey,
                     id: current.standardId,
