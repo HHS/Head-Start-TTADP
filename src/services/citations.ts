@@ -11,6 +11,7 @@ export async function textByCitation(
     where: {
       citation: citationIds,
     },
+    group: ['text', 'citation'],
   });
 }
 
