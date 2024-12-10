@@ -1,49 +1,60 @@
 #!/bin/bash
-# Usage: ./release-lock.sh <env_name>
-set -euo pipefail
 
-env_name=$1
-lock_branch="deployment-locks"
-lock_path="automation/locks"
-lock_file="${lock_path}/${env_name}.lock"
-current_build_id=${CIRCLE_WORKFLOW_ID:-"UNKNOWN_WORKFLOW_ID"}
+# Convert environment to app name if necessary
+APP_NAME=$( [ "$1" == "DEV" ] && echo "tta-smarthub-dev" || ([ "$1" == "SANDBOX" ] && echo "tta-smarthub-sandbox") || echo "$1" )
+BRANCH=$2
+BUILD_ID=$3
 
-# Initialize the repository if not already initialized
-if [ ! -d "./locks/.git" ]; then
-  mkdir -p locks
-  cd locks
-  git init
-  git remote add origin "https://github.com/HHS/Head-Start-TTADP/"
-  git fetch origin "$lock_branch"
-  git checkout -b "$lock_branch" || git checkout "$lock_branch"
-  cd ..
-else
-  cd locks
-  git reset --hard
-  git fetch origin "$lock_branch"
-  git checkout "$lock_branch"
-  cd ..
-fi
+# Function to wait for restaging to complete
+wait_for_restaging() {
+  echo "Waiting for app $APP_NAME to finish restaging..."
+  while true; do
+    APP_STATE=$(cf app "$APP_NAME" | grep "state" | awk '{print $2}')
+    if [ "$APP_STATE" == "STARTED" ]; then
+      echo "App $APP_NAME is running."
+      break
+    else
+      echo "App $APP_NAME is still restaging..."
+      sleep 5
+    fi
+  done
+}
 
-# Check if the lock file exists and remove it if valid
-if [ ! -f "locks/$lock_file" ]; then
-  echo "No lock exists for $env_name. Nothing to release."
+# Fetch environment variables
+CF_ENV=$(cf env "$APP_NAME")
+LOCK_DATA=$(echo "$CF_ENV" | grep 'LOCK_APP' | awk '{print $2}' | tr -d '"')
+
+# Check if lock exists
+if [ -z "$LOCK_DATA" ]; then
+  echo "App $APP_NAME is not locked."
   exit 0
 fi
 
-lock_build_id=$(jq -r '.build_id' "locks/$lock_file" || echo "")
+# Extract lock metadata
+LOCK_BRANCH=$(echo "$LOCK_DATA" | jq -r '.branch')
+LOCK_BUILD_ID=$(echo "$LOCK_DATA" | jq -r '.build_id')
 
-if [ "$lock_build_id" == "$current_build_id" ]; then
-  rm "locks/$lock_file"
-  cd locks
-  git add "$lock_file"
-  git commit -m "Lock $env_name released by build $current_build_id"
-  if ! git push origin "$lock_branch"; then
-    echo "Failed to push lock removal due to a race condition. Retrying..."
-    exec "$0" "$env_name"
-  fi
-  echo "Lock released for $env_name."
+# Validate ownership
+if [ "$LOCK_BRANCH" != "$BRANCH" ] || [ "$LOCK_BUILD_ID" != "$BUILD_ID" ]; then
+  echo "Cannot release lock: the app is locked by branch $LOCK_BRANCH with build ID $LOCK_BUILD_ID."
+  exit 1
+fi
+
+# Release lock
+cf unset-env "$APP_NAME" LOCK_APP
+cf restage "$APP_NAME"
+
+# Wait for restaging to complete
+wait_for_restaging
+
+# Validate lock release
+CF_ENV=$(cf env "$APP_NAME")
+LOCK_DATA=$(echo "$CF_ENV" | grep 'LOCK_APP' | awk '{print $2}' | tr -d '"')
+
+if [ -z "$LOCK_DATA" ]; then
+  echo "Lock successfully released for app $APP_NAME."
+  exit 0
 else
-  echo "Cannot release lock. It is held by another build."
+  echo "Failed to release lock for app $APP_NAME."
   exit 1
 fi
