@@ -130,6 +130,7 @@ describe('activityReportObjectiveCitation', () => {
 
   beforeAll(async () => {
     recipient = await createRecipient({});
+
     grant = await createGrant({ recipientId: recipient.id });
 
     activityReport = await createReport({
@@ -185,11 +186,9 @@ describe('activityReportObjectiveCitation', () => {
     // Save the ActivityReportObjectiveCitation.
     let result = await cacheCitations(objective.id, aro.id, citationsToCreate);
 
-    // Assert updated.
-    expect(result[0]).toBeUndefined();
-
     // Assert created.
-    expect(result[1]).toBeDefined();
+    expect(result[0]).toBeDefined();
+
     const createdAroCitations = await ActivityReportObjectiveCitation.findAll({
       where: {
         activityReportObjectiveId: aro.id,
@@ -206,46 +205,23 @@ describe('activityReportObjectiveCitation', () => {
       reviewName: 'Review 1',
     }]);
 
-    // Assert deleted.
-    expect(result[2]).toBeUndefined();
-
     // Update the ActivityReportObjectiveCitation.
     const citationsToUpdate = [
       {
-        id: createdAroCitations[0].id,
-        citation: 'Citation 1 UPDATED',
+        id: citation1Id,
+        citation: 'Citation 1 Updated',
         monitoringReferences: [{
           grantId: 1,
           findingId: 1,
-          reviewName: 'Review 1',
-        },
-        {
-          grantId: 2,
-          findingId: 2,
-          reviewName: 'Review 2',
-        }],
-      },
-      {
-        citation: 'Citation 2',
-        monitoringReferences: [{
-          grantId: 3,
-          findingId: 3,
-          reviewName: 'Review 3',
+          reviewName: 'Review 1 Updated',
         }],
       },
     ];
 
-    // Save updated ActivityReportObjectiveCitation.
     result = await cacheCitations(objective.id, aro.id, citationsToUpdate);
 
     // Assert updated.
-    expect(result[0]).toHaveLength(1);
-
-    // Assert created.
-    expect(result[1]).toHaveLength(1);
-
-    // Assert deleted.
-    expect(result[2]).toBeUndefined();
+    expect(result[0]).toBeDefined();
 
     const updatedAroCitations = await ActivityReportObjectiveCitation.findAll({
       where: {
@@ -253,74 +229,82 @@ describe('activityReportObjectiveCitation', () => {
       },
     });
 
-    expect(updatedAroCitations).toHaveLength(2);
-    expect(updatedAroCitations[0].citation).toEqual('Citation 1 UPDATED');
+    expect(updatedAroCitations).toHaveLength(1);
+    expect(updatedAroCitations[0].citation).toEqual('Citation 1 Updated');
     expect(updatedAroCitations[0].monitoringReferences).toEqual([{
       grantId: 1,
       findingId: 1,
-      reviewName: 'Review 1',
-    },
-    {
-      grantId: 2,
-      findingId: 2,
-      reviewName: 'Review 2',
-    }]);
-    const secondCitationId = updatedAroCitations[1].id;
-    expect(updatedAroCitations[1].citation).toEqual('Citation 2');
-    expect(updatedAroCitations[1].monitoringReferences).toEqual([{
-      grantId: 3,
-      findingId: 3,
-      reviewName: 'Review 3',
+      reviewName: 'Review 1 Updated',
     }]);
 
     // Delete the ActivityReportObjectiveCitation.
-    const citationsToDelete = [
+    result = await cacheCitations(objective.id, aro.id, []);
+
+    // Assert deleted.
+    expect(result).toHaveLength(0);
+
+    const deletedAroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(deletedAroCitations).toHaveLength(0);
+  });
+
+  it('correctly saves aro citations per grant', async () => {
+    const multiGrantCitations = [
       {
-        id: secondCitationId,
+        citation: 'Citation 1',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1',
+        }],
+      },
+      {
         citation: 'Citation 2',
         monitoringReferences: [{
-          grantId: 4,
-          findingId: 4,
-          reviewName: 'Review 4',
+          grantId: 2,
+          findingId: 1,
+          reviewName: 'Review 2',
         }],
+      },
+      {
+        citation: 'Citation 3',
+        monitoringReferences: [
+          {
+            grantId: 3,
+            findingId: 1,
+            reviewName: 'Review 3',
+          },
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 4',
+          }],
       },
     ];
 
-    // Save deleted ActivityReportObjectiveCitation.
-    result = await cacheCitations(objective.id, aro.id, citationsToDelete);
+    const result = await cacheCitations(objective.id, aro.id, multiGrantCitations);
 
-    // Assert updated.
-    expect(result[0]).toBeDefined();
-
-    // Assert created.
-    expect(result[1]).toBeUndefined();
-
-    // Assert deleted.
-    expect(result[2]).toBeDefined();
-
-    // Retrieve deleted citation 1.
-    const deletedCitation = await ActivityReportObjectiveCitation.findOne({
+    // Retrieve all citations for the aro.
+    const aroCitations = await ActivityReportObjectiveCitation.findAll({
       where: {
-        id: citation1Id,
+        activityReportObjectiveId: aro.id,
       },
     });
 
-    expect(deletedCitation).toBeNull();
+    expect(aroCitations).toHaveLength(2);
 
-    // Retrieve citation 2.
-    const remainingCitation = await ActivityReportObjectiveCitation.findOne({
-      where: {
-        id: secondCitationId,
-      },
-    });
+    // Assert citations are saved correctly.
+    expect(aroCitations[0].citation).toEqual('Citation 1');
+    expect(aroCitations[0].monitoringReferences.length).toEqual(1);
+    expect(aroCitations[0].monitoringReferences[0].grantId).toBe(grant.id);
 
-    expect(remainingCitation).toBeDefined();
-    expect(remainingCitation.citation).toEqual('Citation 2');
-    expect(remainingCitation.monitoringReferences).toEqual([{
-      grantId: 4,
-      findingId: 4,
-      reviewName: 'Review 4',
-    }]);
+    expect(aroCitations[1].citation).toEqual('Citation 3');
+    expect(aroCitations[1].monitoringReferences.length).toEqual(1);
+    expect(aroCitations[1].monitoringReferences[0].grantId).toBe(grant.id);
   });
 });
 
