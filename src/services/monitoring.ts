@@ -28,9 +28,11 @@ const {
   MonitoringClassSummary,
   MonitoringFindingLink,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatusLink,
   MonitoringFinding,
   MonitoringFindingStatusLink,
   MonitoringFindingStatus,
+  MonitoringFindingHistoryStatus,
   MonitoringFindingStandard,
   MonitoringStandardLink,
   MonitoringStandard,
@@ -63,12 +65,6 @@ export async function grantNumbersByRecipientAndRegion(recipientId: number, regi
 
 export async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<ActivityReportObjectiveCitationResponse[]> {
   const citations = await ActivityReportObjectiveCitation.findAll({
-    attributes: {
-      include: [
-        'findingId',
-        'grantNumber',
-      ],
-    },
     where: {
       [Op.or]: grantNumbers.map((grantNumber) => ({
         monitoringReferences: {
@@ -156,9 +152,9 @@ export async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promis
     const { activityReportObjectiveTopics } = activityReportObjective;
 
     return {
-      findingId: citation.findingId,
+      findingIds: citation.findingIds,
       grantNumber: citation.grantNumber,
-      reviewName: citation.reviewName,
+      reviewNames: citation.reviewNames,
       title: activityReportObjective.title,
       activityReports: [
         {
@@ -283,7 +279,7 @@ export async function ttaByReviews(
       history.monitoringFindingLink.monitoringFindings.forEach((finding) => {
         const { findingId } = finding;
         const status = finding.statusLink.monitoringFindingStatuses[0].name;
-        const objectives = citationsOnActivityReports.filter((c) => c.findingId === findingId);
+        const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId));
 
         objectives.forEach(({ endDate }) => {
           if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
@@ -347,27 +343,12 @@ export async function ttaByCitations(
                     required: true,
                     include: [
                       {
-                        model: MonitoringFindingLink,
-                        as: 'monitoringFindingLink',
-                        required: true,
+                        model: MonitoringFindingHistoryStatusLink,
+                        as: 'monitoringFindingStatusLink',
                         include: [
                           {
-                            model: MonitoringFinding,
-                            as: 'monitoringFindings',
-                            required: true,
-                            include: [
-                              {
-                                model: MonitoringFindingStatusLink,
-                                as: 'statusLink',
-                                required: true,
-                                include: [
-                                  {
-                                    model: MonitoringFindingStatus,
-                                    as: 'monitoringFindingStatuses',
-                                  },
-                                ],
-                              },
-                            ],
+                            model: MonitoringFindingHistoryStatus,
+                            as: 'monitoringFindingHistoryStatuses',
                           },
                         ],
                       },
@@ -389,6 +370,7 @@ export async function ttaByCitations(
                               {
                                 model: MonitoringReviewStatusLink,
                                 as: 'statusLink',
+                                required: true,
                                 include: [
                                   {
                                     model: MonitoringReviewStatus,
@@ -414,25 +396,6 @@ export async function ttaByCitations(
                       },
                     ],
                   },
-                  {
-                    model: MonitoringFinding,
-                    as: 'monitoringFindings',
-                    required: true,
-                    include: [
-                      {
-                        model: MonitoringFindingStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        include: [
-                          {
-                            model: MonitoringFindingStatus,
-                            as: 'monitoringFindingStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  },
                 ],
               },
             ],
@@ -442,10 +405,14 @@ export async function ttaByCitations(
     ],
   }) as MonitoringStandardType[];
 
+  return citations;
+
   return citations.map((citation) => {
     const [findingStandard] = citation.standardLink.monitoringFindingStandards;
     const { findingLink } = findingStandard;
     const { monitoringFindings } = findingLink;
+
+    let lastTTADate = null;
 
     const grants = [];
     const reviews = [];
@@ -454,13 +421,18 @@ export async function ttaByCitations(
     const [status] = finding.statusLink.monitoringFindingStatuses;
 
     findingLink.monitoringFindingHistories.forEach((history) => {
-      const { monitoringReviewLink, monitoringFindingLink } = history;
+      const { monitoringReviewLink } = history;
       const { monitoringReviews } = monitoringReviewLink;
 
       const { monitoringFindings: historicalFindings } = monitoringFindingLink;
       const [reviewFinding] = historicalFindings;
       const [findingStatus] = reviewFinding.statusLink.monitoringFindingStatuses;
-      const objectives = citationsOnActivityReports.filter((c) => c.findingId === reviewFinding.findingId);
+      const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
+      objectives.forEach(({ endDate }) => {
+        if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
+          lastTTADate = moment(endDate, 'MM/DD/YYYY');
+        }
+      });
 
       monitoringReviews.forEach((review) => {
         const { monitoringReviewGrantees } = monitoringReviewLink;
@@ -475,7 +447,7 @@ export async function ttaByCitations(
           outcome: review.outcome,
           findingStatus: findingStatus.name,
           specialists: [],
-          objectives: objectives.filter((o) => o.reviewName === review.name),
+          objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
         });
       });
     });
@@ -486,7 +458,7 @@ export async function ttaByCitations(
       findingType: finding.findingType,
       category: finding.source,
       grantNumbers: uniq(grants.flat()),
-      lastTTADate: null,
+      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : null,
       reviews,
     };
   });
