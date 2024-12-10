@@ -29,7 +29,10 @@ interface IMonitoringResponse {
 
 interface ITTAByReviewObjective {
   title: string;
-  activityReportIds: string[];
+  activityReports: {
+    id: number;
+    displayId: string;
+  }[];
   endDate: string;
   topics: string[];
   status: string;
