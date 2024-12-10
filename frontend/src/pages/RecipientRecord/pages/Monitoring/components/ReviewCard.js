@@ -24,7 +24,7 @@ export default function ReviewCard({ review, regionId }) {
           {' '}
           {review.name}
         </h3>
-        <Tag className="margin-left-1 text-ink text-normal border" background={colors.baseLightest}>
+        <Tag className="margin-left-1 text-ink text-normal border radius-sm" background={colors.baseLightest}>
           {review.reviewType}
         </Tag>
       </div>
