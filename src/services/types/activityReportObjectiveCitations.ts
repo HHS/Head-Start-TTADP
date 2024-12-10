@@ -1,15 +1,15 @@
 import { ITTAByReviewObjective } from './monitoring';
 
 export interface ActivityReportObjectiveCitationResponse extends ITTAByReviewObjective {
-  findingId: string;
+  findingIds: string[];
+  reviewNames: string[];
   grantNumber: string;
-  reviewName: string;
 }
 
 export interface ActivityReportObjectiveCitation {
-  findingId: string;
+  findingIds: string[];
   grantNumber: string;
-  reviewName: string;
+  reviewNames: string[];
   id: number;
   activityReportObjectiveId: number;
   citation: string;

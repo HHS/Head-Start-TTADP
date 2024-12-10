@@ -51,12 +51,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
-    findingId: {
+    findingIds: {
       type: DataTypes.VIRTUAL,
       get() {
-        const [reference] = this.monitoringReferences;
-        if (!reference) return null;
-        return reference.findingId;
+        return this.monitoringReferences.map((reference) => reference.findingId);
       },
     },
     grantNumber: {
@@ -67,12 +65,10 @@ export default (sequelize, DataTypes) => {
         return reference.grantNumber;
       },
     },
-    reviewName: {
+    reviewNames: {
       type: DataTypes.VIRTUAL,
       get() {
-        const [reference] = this.monitoringReferences;
-        if (!reference) return null;
-        return reference.reviewName;
+        return this.monitoringReferences.map((reference) => reference.reviewName);
       },
     },
   }, {

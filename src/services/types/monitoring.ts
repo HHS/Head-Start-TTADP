@@ -154,7 +154,7 @@ export interface MonitoringFindingHistory {
   updatedAt: Date;
   deletedAt: null;
   monitoringReviewLink: MonitoringReviewLink;
-  monitoringFindingLink: MonitoringFindingLink;
+  // monitoringFindingLink: MonitoringFindingLink;
 }
 
 export interface MonitoringReviewLink {
