@@ -46,14 +46,11 @@ export interface ActivityReport {
   submittedDate: null;
   lastSaved: string;
   creatorNameWithRole: string;
-  sortedTopics: any[];
   creatorName: string;
   id: number;
   legacyId: null;
   userId: number;
   lastUpdatedById: number;
-  ECLKCResourcesUsed: any[];
-  nonECLKCResourcesUsed: any[];
   additionalNotes: null;
   numberOfParticipants: number;
   deliveryMethod: string;
@@ -66,7 +63,6 @@ export interface ActivityReport {
   virtualDeliveryType: null;
   reason: string[];
   participants: string[];
-  topics: any[];
   programTypes: null;
   context: string;
   pageState: { [key: string]: string };
