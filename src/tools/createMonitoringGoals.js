@@ -71,7 +71,7 @@ const createMonitoringGoals = async () => {
       new_goals AS (
         SELECT
           gt."templateName" "name",
-          'Not started' "status",
+          'Not Started' "status",
           NULL "timeframe",
           FALSE "isFromSmartsheetTtaPlan",
           NOW() "createdAt",
@@ -142,7 +142,7 @@ const createMonitoringGoals = async () => {
           GROUP BY 1
         )
       UPDATE "Goals"
-      SET "status" = 'Not started',
+      SET "status" = 'Not Started',
         "updatedAt" = NOW()
       FROM grants_needing_goal_reopend
       WHERE "Goals".id = grants_needing_goal_reopend."goalId";
