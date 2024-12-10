@@ -141,7 +141,15 @@ describe('activityReportObjectiveCitation', () => {
       ],
     });
 
-    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+    goal = await Goal.create({
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.NOT_STARTED,
+      endDate: null,
+      isFromSmartsheetTtaPlan: false,
+      onApprovedAR: false,
+      grantId: grant.id,
+      createdVia: 'monitoring',
+    });
 
     objective = await Objective.create({
       goalId: goal.id,
