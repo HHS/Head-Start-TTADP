@@ -179,6 +179,14 @@ export function reduceObjectivesForActivityReport(
         exists,
       );
 
+      exists.citations = uniq(objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations
+        ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
+          (c) => c.citation,
+        )
+        : []);
+
       exists.files = uniqBy([
         ...exists.files,
         ...(objective.activityReportObjectives
@@ -187,6 +195,7 @@ export function reduceObjectivesForActivityReport(
             .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
           : []),
       ], (e: IFile) => e.key);
+
       return objectives;
     }
 
@@ -252,6 +261,15 @@ export function reduceObjectivesForActivityReport(
         objective,
         'activityReportObjectiveCourses',
         'course',
+      ),
+      citations: uniq(
+        objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        && objective.activityReportObjectives[0].activityReportObjectiveCitations
+          ? objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
+            (c) => c.citation,
+          )
+          : [],
       ),
     }];
   }, currentObjectives);
