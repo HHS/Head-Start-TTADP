@@ -59,7 +59,7 @@ export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
       const {
-        topics, files, resources, courses, objectiveCreatedHere,
+        topics, files, resources, courses, objectiveCreatedHere, citations,
       } = objective;
 
       // Determine if this objective already exists.
@@ -119,6 +119,7 @@ export async function saveObjectivesForReport(objectives, report) {
         resources,
         topics,
         files,
+        citations,
         courses,
         ttaProvided: objective.ttaProvided,
         supportType: objective.supportType,

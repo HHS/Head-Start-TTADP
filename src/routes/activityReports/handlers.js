@@ -293,8 +293,10 @@ export async function getLegacyReport(req, res) {
  */
 export async function getGoals(req, res) {
   try {
-    const { grantIds } = req.query;
-    const goals = await goalsForGrants(grantIds);
+    const { grantIds, reportStartDate } = req.query;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const goals = await goalsForGrants(grantIds, reportStartDate, user);
     res.json(goals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
