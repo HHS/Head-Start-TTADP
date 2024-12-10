@@ -18,7 +18,7 @@ export default function FindingWithinReview({ finding, regionId }) {
           {finding.status}
         </DescriptionItem>
         <DescriptionItem title="Finding type">
-          {finding.type}
+          {finding.findingType}
         </DescriptionItem>
         <DescriptionItem title="Due date (as of review)">
           {finding.correctionDeadline}
@@ -39,7 +39,7 @@ FindingWithinReview.propTypes = {
   finding: PropTypes.shape({
     citation: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
+    findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     correctionDeadline: PropTypes.string.isRequired,
     objectives: PropTypes.arrayOf(PropTypes.shape({
