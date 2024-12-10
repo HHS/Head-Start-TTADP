@@ -90,7 +90,10 @@ ReviewCard.propTypes = {
       category: PropTypes.string.isRequired,
       correctionDeadline: PropTypes.string.isRequired,
       objectives: PropTypes.arrayOf(PropTypes.shape({
-        activityReportIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+        activityReports: PropTypes.arrayOf(PropTypes.shape({
+          id: PropTypes.number.isRequired,
+          displayId: PropTypes.string.isRequired,
+        })).isRequired,
         endDate: PropTypes.string.isRequired,
         status: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,

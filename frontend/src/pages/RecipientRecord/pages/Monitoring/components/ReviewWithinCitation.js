@@ -54,7 +54,7 @@ ReviewWithinCitation.propTypes = {
     })).isRequired,
     objectives: PropTypes.arrayOf(PropTypes.shape({
       title: PropTypes.string.isRequired,
-      activityReportIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+      activityReports: PropTypes.arrayOf(PropTypes.string).isRequired,
       endDate: PropTypes.string.isRequired,
       topics: PropTypes.arrayOf(PropTypes.string).isRequired,
       status: PropTypes.string.isRequired,
