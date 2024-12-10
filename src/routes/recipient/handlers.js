@@ -123,11 +123,16 @@ export async function getGoalsByRecipient(req, res) {
 
     const { recipientId, regionId } = req.params;
 
+    const policy = new Users(await userById(await currentUserId(req, res)));
+
     // Get goals for recipient.
     const recipientGoals = await getGoalsByActivityRecipient(
       recipientId,
       regionId,
-      req.query,
+      {
+        ...req.query,
+        excludeMonitoringGoals: !(policy.canSeeBehindFeatureFlag('monitoring_integration')),
+      },
     );
     res.json(recipientGoals);
   } catch (error) {
