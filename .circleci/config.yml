@@ -26,6 +26,19 @@ executors:
     docker:
       - image: cimg/aws:2024.03
 commands:
+  install_cf_tools:
+    description: "Install Cloud Foundry CLI"
+    steps:
+      - run:
+          name: Install Git
+          command: |
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
     parameters:
@@ -346,6 +359,11 @@ commands:
         type: env_var_name
     steps:
       - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh "$(echo "<< parameters.app_name >>" | awk -F'-' '{print toupper($NF)}')"
+      - run:
           name: Login with service account
           command: |
             cf login -a << pipeline.parameters.cg_api >> \
@@ -386,6 +404,12 @@ commands:
               --var BUILD_COMMIT=<< parameters.build_commit >> \
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh "$(echo "<< parameters.app_name >>" | awk -F'-' '{print toupper($NF)}')"
+          when: always
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -714,6 +738,21 @@ parameters:
     default: "867346799"
     type: string
   manual-trigger:
+    type: boolean
+    default: false
+  env_list:
+    description: "List of environments to manage (start/stop)"
+    type: string
+    default: "DEV,SANDBOX"
+  space_list:
+    description: "List of Cloud Foundry spaces corresponding to each environment"
+    type: string
+    default: ""
+  env_state:
+    description: "State of the environment to change (start, stop, restart, restage)"
+    type: string
+    default: "none"
+  manual-manage-env:
     type: boolean
     default: false
   manual-restore:
@@ -1460,6 +1499,67 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
+  manage_env_apps:
+    executor: docker-executor
+    parameters:
+      env_list:
+        type: string
+        description: "Comma-separated list of environments to manage (both smarthub and similarity-api)"
+        default: "<< pipeline.parameters.env_list >>"
+      env_state:
+        type: string
+        description: "Action to perform on apps (start, stop, restart, restage)"
+        default: "<< pipeline.parameters.env_state >>"
+      check_activity:
+        type: boolean
+        description: "If true, only stop apps if inactive for more than activity_timeout minutes"
+        default: false
+      activity_timeout:
+        type: string
+        description: "number of minutes considered for inactivity"
+        default: "60"
+    steps:
+      - install_cf_tools
+      # Sparse checkout the automation scripts
+      - sparse_checkout:
+          directories: "automation/ci/scripts"
+          branch: "<< pipeline.git.branch >>"
+
+      # Acquire lock for each environment
+      - run:
+          name: Acquire Locks
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            env_list="<< parameters.env_list >>"
+            apps=(${env_list//,/ })
+            for env in "${apps[@]}"; do
+              ./automation/ci/scripts/acquire-lock.sh "$env"
+            done
+
+      # Perform the desired action on environments
+      - run:
+          name: Manage Apps
+          command: |
+            chmod +x ./automation/ci/scripts/manage_apps.sh
+            ./automation/ci/scripts/manage_apps.sh \
+              --env_list "<< parameters.env_list >>" \
+              --env_state "<< parameters.env_state >>" \
+              --check_activity "<< parameters.check_activity >>" \
+              --activity_timeout << parameters.activity_timeout >> \
+              --cg_api "<< pipeline.parameters.cg_api >>" \
+              --cg_org "<< pipeline.parameters.cg_org >>"
+
+      # Release lock for each environment
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            env_list="<< parameters.env_list >>"
+            apps=(${env_list//,/ })
+            for env in "${apps[@]}"; do
+              ./automation/ci/scripts/release-lock.sh "$env"
+            done
+          when: always
   restore_production_for_processing:
     docker:
       - image: cimg/base:2024.05
@@ -1574,11 +1674,14 @@ workflows:
   build_test_deploy:
     when:
       and:
+        # Ensure the workflow is only triggered when `manual-trigger` is false
+        # and `env_state` is empty (i.e., it's not for starting/stopping environments)
         - equal: [false, << pipeline.parameters.manual-trigger >>]
         - equal: [false, << pipeline.parameters.manual-restore >>]
         - equal: [false, << pipeline.parameters.manual-process >>]
         - equal: [false, << pipeline.parameters.manual-backup >>]
         - equal: [false, << pipeline.parameters.manual-full-process >>]
+        - equal: [false, << pipeline.parameters.manual-manage-env >>]
         - equal: [false, << pipeline.parameters.manual-restore-staging >>]
         - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev >>]
@@ -1707,6 +1810,61 @@ workflows:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload_production
+  stop_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 2-6"  # Runs at 6 PM PST M-F (1 AM UTC next day)
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "stop"
+          env_list: "<< pipeline.parameters.env_list >>"
+  start_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 11 * * 1-5"  # Runs at 6 AM EST M-F(11 AM UTC)
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "start"
+          env_list: "<< pipeline.parameters.env_list >>"
+  manual_manage_env_workflow:
+    when:
+      equal: [true, << pipeline.parameters.manual-manage-env >>]
+    jobs:
+      - manage_env_apps:
+          env_state: "<< pipeline.parameters.env_state >>"
+          env_list: "<< pipeline.parameters.env_list >>"
+  monitor_and_shutdown_envs:
+    triggers:
+      # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
+      - schedule:
+          cron: "0,15,30,45 11-23 * * 1-5"  
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+
+      # Every 15 minutes from 12 AM to 12:45 AM UTC (7 PM to 8:45 PM EST, 4 PM to 5:45 PM PST), Monday to Friday
+      - schedule:
+          cron: "0,15,30,45 0-3 * * 2-6"  
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+    jobs:
+      - manage_env_apps:
+          env_state: "stop"
+          env_list: "<< pipeline.parameters.env_list >>"
+          check_activity: true
   manual_restore_production:
     when:
       equal: [true, << pipeline.parameters.manual-restore >>]
