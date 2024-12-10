@@ -102,6 +102,7 @@ const GoalsObjectives = ({
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
+  const startDate = watch('startDate');
   const pageState = getValues('pageState');
 
   const {
@@ -314,6 +315,36 @@ const GoalsObjectives = ({
     isOtherEntityReport && !isObjectivesFormClosed
   );
 
+  const determineReportTypeAlert = () => {
+    const messages = [];
+
+    // Check that the report type is set.
+    if (!isOtherEntityReport && !isRecipientReport) {
+      messages.push('who the activity was for');
+    }
+    // Check the startDate is set.
+    if (!startDate) {
+      messages.push('the start date of the activity');
+    }
+
+    if (messages.length > 0) {
+      return (
+        <Alert className="maxw-mobile-lg" type="info">
+          To add goals and objectives, indicate in the
+          {' '}
+          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
+          {' '}
+          <ul>
+            {messages.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       <Helmet>
@@ -323,14 +354,9 @@ const GoalsObjectives = ({
       <IndicatesRequiredField />
       ) }
 
-      {(!isOtherEntityReport && !isRecipientReport) && (
-        <Alert noIcon type="info">
-          To add goals and objectives, indicate who the activity was for in
-          {' '}
-          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
-          .
-        </Alert>
-      )}
+      {
+        determineReportTypeAlert()
+      }
 
       {/**
         * on non-recipient reports, only objectives are shown
@@ -378,7 +404,7 @@ const GoalsObjectives = ({
         * conditionally show the goal picker
       */}
 
-      {showGoals && !isGoalFormClosed
+      {showGoals && !isGoalFormClosed && startDate
         ? (
           <>
             <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>

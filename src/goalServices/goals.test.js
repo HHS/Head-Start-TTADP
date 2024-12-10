@@ -614,27 +614,29 @@ describe('Goals DB service', () => {
         objectives: [],
       };
 
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       Goal.findAll = jest.fn().mockResolvedValue([{ ...mockMonitoringGoal }]);
 
       await saveGoalsForReport([
         {
-          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'In progress', objectives: [],
+          isNew: true, grantIds: [mockGrantId], name: 'Create Monitoring Goal', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
       ], { id: mockActivityReportId });
 
       expect(Goal.create).toHaveBeenCalledWith(expect.objectContaining({
         createdVia: 'activityReport',
         grantId: mockGrantId,
-        name: 'name',
+        name: 'Create Monitoring Goal',
         status: 'In progress',
       }), { individualHooks: true });
     });
 
     it('does not create a monitoring goal when the grant does not have an existing monitoring goal', async () => {
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       Goal.findAll = jest.fn().mockResolvedValue([]);
       await saveGoalsForReport([
         {
-          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'In progress', objectives: [],
+          isNew: true, grantIds: [mockGrantId], name: 'Dont create a monitoring goal', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
       ], { id: mockActivityReportId });
 
@@ -642,6 +644,7 @@ describe('Goals DB service', () => {
     });
 
     it('creates a monitoring goal for only the grants that has an existing monitoring goal', async () => {
+      GoalTemplate.findByPk = jest.fn().mockResolvedValue({ standard: 'Monitoring' });
       const mockMonitoringGoal = {
         id: 2,
         grantId: 2,
@@ -657,7 +660,7 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([
         {
-          isNew: true, grantIds: [1, 2, 3], name: 'name', status: 'In progress', objectives: [],
+          isNew: true, grantIds: [1, 2, 3], name: 'Create some monitoring goals', status: 'In progress', objectives: [], goalTemplateId: 1,
         },
       ], { id: mockActivityReportId });
 
@@ -665,13 +668,13 @@ describe('Goals DB service', () => {
         {
           createdVia: 'activityReport',
           grantId: 2,
-          name: 'name',
+          name: 'Create some monitoring goals',
           status: 'In progress',
         },
         {
           createdVia: 'activityReport',
           grantId: 3,
-          name: 'name',
+          name: 'Create some monitoring goals',
           status: 'In progress',
         },
       ), { individualHooks: true });
