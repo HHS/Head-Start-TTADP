@@ -316,6 +316,13 @@ describe('goals objectives', () => {
       // Expect to find an h3 with the text "Goal summary".
       expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
     });
+
+    it('shows the start date warning if the start date has the value of "Invalid date"', async () => {
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), 'Invalid date');
+      expect(await screen.findByText('To add goals and objectives, indicate in the')).toBeVisible();
+      expect(screen.queryByText('who the activity was for')).toBeNull();
+      expect(await screen.findByText('the start date of the activity')).toBeVisible();
+    });
   });
 
   describe('when activity recipient type is other entity"', () => {
