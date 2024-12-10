@@ -359,11 +359,6 @@ commands:
         type: env_var_name
     steps:
       - run:
-          name: Acquire Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/acquire-lock.sh "$(echo "<< parameters.app_name >>" | awk -F'-' '{print toupper($NF)}')"
-      - run:
           name: Login with service account
           command: |
             cf login -a << pipeline.parameters.cg_api >> \
@@ -371,6 +366,14 @@ commands:
               -p ${<< parameters.cloudgov_password >>} \
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>"
       - run:
           name: Push application with deployment vars
           command: |
@@ -408,7 +411,10 @@ commands:
           name: Release Lock
           command: |
             chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/release-lock.sh "$(echo "<< parameters.app_name >>" | awk -F'-' '{print toupper($NF)}')"
+            ./automation/ci/scripts/release-lock.sh
+              "<< parameters.app_name >>" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>"
           when: always
       # - run:
       #     name: Push maintenance application
@@ -443,11 +449,27 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "tta-automation" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>"
+      - run:
           name: Migrate database
           command: |
             cf run-task << parameters.app_name >> \
               --command "yarn db:migrate:prod" \
               --name "migrate"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "tta-automation" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
@@ -533,6 +555,14 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "tta-automation" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>"
+      - run:
           name: Start Log Monitoring
           command: |
             #!/bin/bash
@@ -603,6 +633,14 @@ commands:
           slack_bot_token: $SLACK_BOT_TOKEN
           slack_channel: "acf-head-start-eng"
           message_text_file: "/tmp/message_file"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "tta-automation" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>"
       - run:
           name: Logout of service account
           command: |
@@ -1533,7 +1571,10 @@ jobs:
             env_list="<< parameters.env_list >>"
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
-              ./automation/ci/scripts/acquire-lock.sh "$env"
+              ./automation/ci/scripts/acquire-lock.sh \
+                "$env" \
+                "<< parameters.build_branch >>" \
+                "<< pipeline.number >>"
             done
 
       # Perform the desired action on environments
@@ -1557,7 +1598,10 @@ jobs:
             env_list="<< parameters.env_list >>"
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
-              ./automation/ci/scripts/release-lock.sh "$env"
+              ./automation/ci/scripts/release-lock.sh \
+                "$env" \
+                "<< parameters.build_branch >>" \
+                "<< pipeline.number >>"
             done
           when: always
   restore_production_for_processing:
