@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
-import ToggleTtaActivityButton from './ToggleTtaActivityButton';
 import ReviewObjective from './ReviewObjective';
+import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 import './FindingWithinReview.css';
 
 export default function FindingWithinReview({ finding, regionId }) {
-  const [expanded, setExpanded] = useState(false);
-
   return (
     <div className="ttahub-review-card--finding-within-review margin-y-4" key={uniqueId('review-card-finding-')}>
       <DescriptionList>
@@ -22,23 +20,18 @@ export default function FindingWithinReview({ finding, regionId }) {
         <DescriptionItem title="Finding type">
           {finding.findingType}
         </DescriptionItem>
+        <DescriptionItem title="Due date (as of review)">
+          {finding.correctionDeadline}
+        </DescriptionItem>
         <DescriptionItem title="Category" className="ttahub-review-card--finding-within-review-category">
           {finding.category}
         </DescriptionItem>
-        <DescriptionItem title="Due date">
-          {finding.correctionDeadline}
-        </DescriptionItem>
       </DescriptionList>
-      <ToggleTtaActivityButton
-        count={finding.objectives.length}
-        expanded={expanded}
-        setExpanded={setExpanded}
-      />
-      {expanded && (
-        finding.objectives.map((objective) => (
-          <ReviewObjective key={uniqueId('review-objective')} objective={objective} regionId={regionId} />
-        )))}
+      {finding.objectives.length > 0 ? finding.objectives.map((objective) => (
+        <ReviewObjective key={uniqueId('review-objective')} objective={objective} regionId={regionId} />
+      )) : <NoTtaProvidedAgainst />}
     </div>
+
   );
 }
 
