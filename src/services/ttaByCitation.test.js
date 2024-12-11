@@ -2,14 +2,18 @@ import { ttaByCitations } from './monitoring';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
+  createReportAndCitationData,
   destroyAdditionalMonitoringData,
   destroyMonitoringData,
+  destroyReportAndCitationData,
 } from './monitoring.testHelpers';
 import db from '../models';
+import { OBJECTIVE_STATUS } from '../constants';
 
 const {
   Grant,
   GrantNumberLink,
+  Recipient,
 } = db;
 
 const RECIPIENT_ID = 9;
@@ -20,7 +24,22 @@ const GRANT_ID = 665;
 describe('ttaByCitations', () => {
   let findingId;
   let reviewId;
+
+  let goal;
+  let objective;
+  let report;
+  let topic;
+  let citation;
+
   beforeAll(async () => {
+    await Recipient.findOrCreate({
+      where: { id: RECIPIENT_ID },
+      defaults: {
+        id: RECIPIENT_ID,
+        name: 'RECIPIENT',
+      },
+    });
+
     await Grant.findOrCreate({
       where: { number: GRANT_NUMBER },
       defaults: {
@@ -38,18 +57,43 @@ describe('ttaByCitations', () => {
     const {
       reviewId: createdReviewId,
       findingId: createdFindingId,
+      granteeId,
     } = await createMonitoringData(GRANT_NUMBER);
 
-    const result = await createAdditionalMonitoringData(createdFindingId, createdReviewId);
+    const result = await createAdditionalMonitoringData(
+      createdFindingId,
+      createdReviewId,
+      granteeId,
+    );
     findingId = result.findingId;
     reviewId = result.reviewId;
+
+    const arocResult = await createReportAndCitationData(
+      GRANT_NUMBER,
+      findingId,
+    );
+
+    goal = arocResult.goal;
+    objective = arocResult.objective;
+    report = arocResult.report;
+    topic = arocResult.topic;
+    citation = arocResult.citation;
   });
 
   afterAll(async () => {
     await destroyMonitoringData(GRANT_NUMBER);
     await destroyAdditionalMonitoringData(findingId, reviewId);
+    await destroyReportAndCitationData(
+      goal,
+      objective,
+      report,
+      topic,
+      citation,
+    );
+
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
+
     await db.sequelize.close();
   });
 
@@ -67,16 +111,53 @@ describe('ttaByCitations', () => {
         grantNumbers: [
           '01HP044446',
         ],
-        lastTTADate: null,
+        lastTTADate: '01/01/2021',
         reviews: [
           {
             findingStatus: 'Complete',
             name: 'REVIEW!!!',
-            objectives: [],
-            outcome: 'Complete',
-            reviewReceived: '02/22/2023',
-            reviewType: 'FA-1',
-            specialists: [],
+            objectives: [
+              {
+                activityReports: [
+                  {
+                    displayId: expect.any(String),
+                    id: expect.any(Number),
+                  },
+                ],
+                endDate: '01/01/2021',
+                findingIds: [
+                  findingId,
+                ],
+                grantNumber: GRANT_NUMBER,
+                reviewNames: [
+                  'REVIEW!!!',
+                ],
+                specialists: [
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: ['SS'],
+                  },
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: ['SS'],
+                  },
+                ],
+                status: OBJECTIVE_STATUS.IN_PROGRESS,
+                title: 'Objective Title',
+                topics: [
+                  'Spleunking',
+                ],
+              },
+            ],
+            outcome: 'Deficient',
+            reviewReceived: '01/12/2023',
+            reviewType: 'RAN',
+            specialists: [
+              {
+                name: 'Hermione Granger, SS',
+                roles: ['SS'],
+              },
+            ],
           },
         ],
         status: 'Complete',

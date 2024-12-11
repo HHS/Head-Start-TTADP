@@ -36,6 +36,7 @@ const reviews = [
     createdAt: new Date('2022/12/09'),
     updatedAt: new Date('2023/01/15'),
     deletedAt: null,
+    name: 'REVIEW!!!',
   },
 ];
 

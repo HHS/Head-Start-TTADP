@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { uniq } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 import db from '../models';
 import {
   ITTAByReviewResponse,
@@ -353,7 +353,6 @@ export async function ttaByReviews(
           if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
             lastTTADate = moment(endDate, 'MM/DD/YYYY');
           }
-
           specialists = specialists.concat(objectives.map((o) => o.specialists).flat());
         });
 
@@ -361,7 +360,7 @@ export async function ttaByReviews(
           citation,
           status,
           findingType: finding.findingType,
-          correctionDeadline: finding.correctionDeadLine,
+          correctionDeadline: finding.correctionDeadLine || '',
           category: finding.source,
           objectives,
         });
@@ -371,12 +370,12 @@ export async function ttaByReviews(
     return {
       name: review.name,
       id: review.id,
-      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : null,
+      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
       outcome: review.outcome,
       reviewType: review.reviewType,
       reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
       grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
-      specialists,
+      specialists: uniqBy(specialists, 'name'),
       findings,
     };
   });
@@ -531,7 +530,7 @@ export async function ttaByCitations(
           reviewType: review.reviewType,
           reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
           outcome: review.outcome,
-          specialists: objectives.map((o) => o.specialists).flat(),
+          specialists: uniqBy(objectives.map((o) => o.specialists).flat(), 'name'),
           objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
           findingStatus: reviewStatus.name, // todo: is this the correct status to access?
         });
@@ -544,7 +543,7 @@ export async function ttaByCitations(
       findingType: finding.findingType,
       category: finding.source,
       grantNumbers: uniq(grants.flat()),
-      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : null,
+      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
       reviews,
     };
   });

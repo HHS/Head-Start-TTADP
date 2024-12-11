@@ -1,5 +1,9 @@
 import { v4 as uuid } from 'uuid';
 import db from '../models';
+import {
+  createGoal, createReport, destroyGoal, destroyReport,
+} from '../testUtils';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 
 const {
   MonitoringReviewGrantee,
@@ -11,16 +15,29 @@ const {
   MonitoringFindingHistory,
   MonitoringFindingLink,
   MonitoringFinding,
+  MonitoringFindingGrant,
   MonitoringFindingStandard,
   MonitoringStandard,
   MonitoringStandardLink,
   MonitoringFindingStatusLink,
   MonitoringFindingStatus,
+  Objective,
+  Grant,
+  ActivityReportObjective,
+  Goal,
+  ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCitation,
+  Topic,
+  ActivityReport,
+  ActivityReportCollaborator,
+  User,
+  Role,
 } = db;
 
 async function createAdditionalMonitoringData(
   findingId: string,
   reviewId: string,
+  granteeId: string,
 ) {
   const timestamps = {
     sourceCreatedAt: new Date(),
@@ -41,6 +58,15 @@ async function createAdditionalMonitoringData(
     ...timestamps,
   });
 
+  await MonitoringFindingGrant.create({
+    findingId,
+    granteeId,
+    statusId: 6006,
+    findingType: 'Finding Type',
+    hash: 'hash',
+    ...timestamps,
+  });
+
   await MonitoringFindingLink.findOrCreate({
     where: { findingId },
   });
@@ -53,6 +79,7 @@ async function createAdditionalMonitoringData(
     narrative: 'narrative',
     ordinal: 1,
     determination: 'determination',
+    name: 'Review Name',
     ...timestamps,
   });
 
@@ -94,13 +121,13 @@ async function createAdditionalMonitoringData(
   return {
     findingId,
     reviewId,
-
   };
 }
 
 async function destroyAdditionalMonitoringData(findingId: string, reviewId: string) {
   await MonitoringFindingStandard.destroy({ where: { findingId }, force: true });
   await MonitoringFindingStatus.destroy({ where: { statusId: 6006 }, force: true });
+  await MonitoringFindingGrant.destroy({ where: { findingId }, force: true });
   await MonitoringFindingHistory.destroy({ where: { reviewId }, force: true });
   await MonitoringStandard.destroy({ where: { standardId: 99_999 }, force: true });
   await MonitoringFinding.destroy({ where: { findingId }, force: true });
@@ -261,9 +288,117 @@ async function destroyMonitoringData(
   });
 }
 
+async function createReportAndCitationData(grantNumber: string, findingId: string) {
+  const grant = await Grant.findOne({
+    where: { number: grantNumber },
+    defaults: {
+      number: grantNumber,
+    },
+  });
+
+  const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+  const objective = await Objective.create({
+    goalId: goal.id,
+    title: 'Objective Title',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
+  });
+
+  const report = await createReport({
+    activityRecipients: [{ grantId: grant.id }],
+    regionId: grant.regionId,
+    userId: 1,
+  });
+
+  const aro = await ActivityReportObjective.create({
+    activityReportId: report.id,
+    objectiveId: objective.id,
+  });
+
+  await ActivityReportCollaborator.create({
+    activityReportId: report.id,
+    userId: 1,
+  });
+
+  const topic = await Topic.create({
+    name: 'Spleunking',
+  });
+
+  await ActivityReportObjectiveTopic.create({
+    activityReportObjectiveId: aro.id,
+    topicId: topic.id,
+  });
+
+  const citation = await ActivityReportObjectiveCitation.create({
+    activityReportObjectiveId: aro.id,
+    citation: 'Citation',
+    monitoringReferences: [{
+      findingId,
+      grantNumber,
+      reviewName: 'REVIEW!!!',
+    }],
+  });
+
+  return {
+    goal,
+    objective,
+    report,
+    topic,
+    citation,
+  };
+}
+
+async function destroyReportAndCitationData(
+  goal:{ id: number },
+  objective: { id: number },
+  report: { id: number },
+  topic: { id: number },
+  citation: { id: number },
+) {
+  await ActivityReportObjectiveCitation.destroy({
+    where: { id: citation.id },
+    force: true,
+    individualHooks: true,
+  });
+
+  await ActivityReportObjectiveTopic.destroy({
+    where: { topicId: topic.id },
+    force: true,
+    individualHooks: true,
+  });
+
+  await Topic.destroy({
+    where: { id: topic.id },
+    force: true,
+    individualHooks: true,
+  });
+
+  await ActivityReportCollaborator.destroy({
+    where: { activityReportId: report.id },
+    force: true,
+    individualHooks: true,
+  });
+
+  await ActivityReportObjective.destroy({
+    where: { objectiveId: objective.id },
+    force: true,
+    individualHooks: true,
+  });
+
+  await destroyReport(report);
+  await Objective.destroy({
+    where: { id: objective.id },
+    force: true,
+    individualHooks: true,
+  });
+
+  await destroyGoal(goal);
+}
+
 export {
   createMonitoringData,
   destroyMonitoringData,
   createAdditionalMonitoringData,
   destroyAdditionalMonitoringData,
+  createReportAndCitationData,
+  destroyReportAndCitationData,
 };
