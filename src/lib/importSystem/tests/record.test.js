@@ -8,6 +8,7 @@ import {
   ImportDataFile,
   File,
   Import,
+  ZALImportFile,
 } from '../../../models'; // Adjust the import path as necessary
 import {
   getPriorFile,
@@ -141,6 +142,36 @@ describe('record', () => {
       const status = IMPORT_STATUSES.COLLECTED;
 
       await expect(getPriorFile(importId, status)).rejects.toThrow('Database error');
+    });
+
+    it('should use the default status value when no status is provided', async () => {
+      const mockName = 'default-status-file.txt';
+      ImportFile.findOne.mockResolvedValue({ name: mockName });
+
+      const importId = 1;
+      const result = await getPriorFile(importId);
+
+      expect(ImportFile.findOne).toHaveBeenCalledWith({
+        attributes: [
+          // eslint-disable-next-line @typescript-eslint/quotes
+          [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
+        ],
+        where: {
+          importId,
+          [Op.or]: [
+            { status: IMPORT_STATUSES.COLLECTED },
+            {
+              status: IMPORT_STATUSES.COLLECTION_FAILED,
+              downloadAttempts: { [Op.gt]: 5 },
+            },
+          ],
+        },
+        // eslint-disable-next-line @typescript-eslint/quotes
+        order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
+        raw: true,
+        lock: true,
+      });
+      expect(result).toBe(mockName);
     });
   });
 
@@ -411,6 +442,101 @@ describe('record', () => {
         limit: 1,
         lock: true,
         raw: true,
+      });
+    });
+
+    it('should use avg and stddev from results when provided', async () => {
+      const importId = 1;
+      const maxAttempts = 3;
+      const mockImportFile = {
+        id: 123,
+        fileId: 1,
+        importId: 1,
+        status: 'collected',
+        processAttempts: 1,
+      };
+      const mockFile = {
+        id: mockImportFile.fileId,
+        key: '/import/1/cc74c8a9-9fe7-4bf4-bde7-1ba1962e9e2d.zip',
+      };
+      const mockImport = {
+        id: mockImportFile.fileId,
+        definitions: [
+          {
+            keys: [
+              'statusId',
+            ],
+            path: '.',
+            encoding: 'utf16le',
+            fileName: 'AMS_ReviewStatus.xml',
+            remapDef: {
+              Name: 'name',
+              StatusId: 'statusId',
+            },
+            tableName: 'MonitoringReviewStatuses',
+          },
+        ],
+      };
+      const mockResults = [{
+        avg: { seconds: undefined, milliseconds: 0 },
+        stddev: { seconds: 10, milliseconds: 0 },
+      }];
+      ZALImportFile.findAll.mockResolvedValue(mockResults);
+      ImportFile.findOne.mockResolvedValue(mockImportFile);
+      File.findOne.mockResolvedValue(mockFile);
+      Import.findOne.mockResolvedValue(mockImport);
+
+      const result = await getNextFileToProcess(importId, maxAttempts);
+
+      expect(ZALImportFile.findAll).toHaveBeenCalled();
+      expect(ImportFile.findOne).toHaveBeenCalledWith({
+        attributes: [
+          'id',
+          'fileId',
+          'status',
+          'processAttempts',
+          'importId',
+        ],
+        where: {
+          importId,
+          fileId: { [Op.ne]: null },
+          [Op.or]: [
+            { status: IMPORT_STATUSES.COLLECTED },
+            {
+              status: IMPORT_STATUSES.PROCESSING_FAILED,
+              processAttempts: { [Op.lt]: maxAttempts },
+            },
+          ],
+        },
+        order: [['createdAt', 'ASC']],
+        limit: 1,
+        lock: true,
+        raw: true,
+      });
+
+      expect(File.findOne).toHaveBeenCalledWith({
+        attributes: ['key'],
+        where: {
+          id: mockImportFile.fileId,
+        },
+        raw: true,
+      });
+
+      expect(Import.findOne).toHaveBeenCalledWith({
+        attributes: ['definitions'],
+        where: {
+          id: mockImportFile.importId,
+        },
+        raw: true,
+      });
+
+      expect(result).toEqual({
+        importFileId: mockImportFile.id,
+        fileId: mockImportFile.fileId,
+        status: mockImportFile.status,
+        processAttempts: mockImportFile.processAttempts,
+        fileKey: mockFile?.key,
+        importDefinitions: mockImport?.definitions,
       });
     });
   });
@@ -763,6 +889,12 @@ describe('record', () => {
         key: '/import/123/uuid-mock.txt',
         attempts: 2,
       });
+    });
+
+    it('should throw when ImportFile record is not found', async () => {
+      ImportFile.findOne.mockResolvedValue(null);
+
+      await expect(logFileToBeCollected(importId, availableFile)).rejects.toThrow();
     });
   });
 
