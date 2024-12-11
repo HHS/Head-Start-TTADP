@@ -153,9 +153,9 @@ describe('ttaByReviews', () => {
         id: expect.any(Number),
         lastTTADate: '01/01/2021',
         name: 'REVIEW!!!',
-        outcome: 'Deficient',
-        reviewReceived: '01/12/2023',
-        reviewType: 'RAN',
+        outcome: 'Complete',
+        reviewReceived: '02/22/2023',
+        reviewType: 'FA-1',
         specialists: [
           {
             name: 'Hermione Granger, SS',
