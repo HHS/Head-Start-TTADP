@@ -2,6 +2,7 @@
 /* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
+import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import {
   screen,
@@ -1027,6 +1028,8 @@ describe('ActivityReport', () => {
     fetchMock.put('/api/activity-reports/1', {
       id: 23786,
       userId: 355,
+      startDate: moment().format('MM/DD/YYYY'),
+      endDate: null,
       lastUpdatedById: 355,
       ECLKCResourcesUsed: [],
       nonECLKCResourcesUsed: [],
@@ -1035,8 +1038,6 @@ describe('ActivityReport', () => {
       deliveryMethod: null,
       version: 2,
       duration: null,
-      endDate: null,
-      startDate: null,
       activityRecipientType: 'recipient',
       activityRecipients: [
         {
@@ -1194,7 +1195,7 @@ describe('ActivityReport', () => {
     });
 
     fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
-      endDate: '',
+      startDate: moment().format('MM/DD/YYYY'),
       status: 'Draft',
       value: 37504,
       label: 'dfghgh',

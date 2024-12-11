@@ -315,24 +315,30 @@ const GoalsObjectives = ({
     isOtherEntityReport && !isObjectivesFormClosed
   );
 
+  const startDateHasValue = startDate && startDate !== 'Invalid date';
+  const alertIsDisplayed = (!isOtherEntityReport && !isRecipientReport)
+    || !startDateHasValue
+    || (isRecipientReport && !showGoals);
   const determineReportTypeAlert = () => {
     const messages = [];
 
     // Check that the report type is set.
-    if (!isOtherEntityReport && !isRecipientReport) {
-      messages.push('who the activity was for');
+    if ((!isOtherEntityReport && !isRecipientReport)
+    || (isRecipientReport && !showGoals)) {
+      messages.push('Who the activity was for');
     }
     // Check the startDate is set.
-    if (!startDate) {
-      messages.push('the start date of the activity');
+    if (!startDateHasValue) {
+      messages.push('Start date of the activity');
     }
 
     if (messages.length > 0) {
       return (
-        <Alert className="maxw-mobile-lg" type="info">
+        <Alert className="maxw-desktop" type="info">
           To add goals and objectives, indicate in the
           {' '}
           <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
+          :
           {' '}
           <ul>
             {messages.map((message) => (
@@ -350,7 +356,7 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and Objectives</title>
       </Helmet>
-      { isFormOpen && (
+      { isFormOpen && !alertIsDisplayed && (
       <IndicatesRequiredField />
       ) }
 
@@ -383,12 +389,6 @@ const GoalsObjectives = ({
         )
         : null}
 
-      {(isRecipientReport && !showGoals) && (
-      <Alert type="info" noIcon>
-        <p className="usa-prose">To create goals, first select a recipient.</p>
-      </Alert>
-      )}
-
       {/**
         * all goals for review
       */}
@@ -404,7 +404,7 @@ const GoalsObjectives = ({
         * conditionally show the goal picker
       */}
 
-      {showGoals && !isGoalFormClosed && startDate
+      {showGoals && !isGoalFormClosed && startDateHasValue
         ? (
           <>
             <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>
