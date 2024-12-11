@@ -217,6 +217,27 @@ export default function GoalCard({
     return responses.map((r) => r).join(', ');
   };
 
+  const renderEnteredBy = () => {
+    if (isMonitoringGoal) {
+      return (
+        <SpecialistTags
+          specialists={[{
+            name: 'System-generated',
+            roles: ['OHS'],
+          }]}
+        />
+      );
+    }
+    return (
+      <SpecialistTags
+        specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
+          name: c.goalCreatorName,
+          roles: [c.goalCreatorRoles].flat(),
+        }))}
+      />
+    );
+  };
+
   return (
     <DataCard
       testId="goalCard"
@@ -309,12 +330,9 @@ export default function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          <SpecialistTags
-            specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
-              name: c.goalCreatorName,
-              roles: [c.goalCreatorRoles].flat(),
-            }))}
-          />
+          {
+            renderEnteredBy()
+          }
         </div>
       </div>
 
