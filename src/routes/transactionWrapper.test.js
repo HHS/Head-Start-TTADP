@@ -1,5 +1,5 @@
-import newrelic from 'newrelic';
 import httpContext from 'express-http-context';
+import newrelic from 'newrelic';
 import transactionWrapper, { readOnlyTransactionWrapper, logRequestDuration, calculateStats } from './transactionWrapper';
 import { auditLogger } from '../logger';
 import db from '../models';
@@ -36,7 +36,7 @@ describe('transactionWrapper', () => {
 
     await wrapper();
 
-    expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('execution time'));
+    expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('Request for mockConstructor took'));
   });
 
   it('should accept and log the context, if specified', async () => {
@@ -85,7 +85,7 @@ describe('transactionWrapper', () => {
 });
 
 describe('logRequestDuration', () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
