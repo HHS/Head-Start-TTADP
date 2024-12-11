@@ -69,7 +69,16 @@ const hsesUsers = [
     name: 'Jon Pyers', hsesUsername: 'test.tta.jon', hsesUserId: '52829', email: 'jon.pyers@adhocteam.us',
   },
   {
-    name: 'Patrick Deutsch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
+    name: 'Heather Smith', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',
+  },
+  {
+    name: 'Tammy Smith', hsesUsername: 'test.tta.tammy', hsesUserId: '53719', email: 'no-send_smith93@yahoo.com',
+  },
+  {
+    name: 'Dana Smith', hsesUsername: 'test.tta.dana', hsesUserId: '54970', email: 'no-send_smith94@yahoo.com',
+  },
+  {
+    name: 'Fletcher Smith', hsesUsername: 'test.tta.fletcher', hsesUserId: '55815', email: 'no-send_smith95@yahoo.com',
   },
   {
     name: 'Does Notexist', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
