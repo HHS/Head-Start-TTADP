@@ -1635,7 +1635,7 @@ describe('createMonitoringGoals', () => {
       name: goalTemplateName,
       grantId: grantBeingMonitoredSplit10A.id,
       goalTemplateId: goalTemplate.id,
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     // Create a existing monitoring goal for Case 11 on Grant A and B.
@@ -1644,7 +1644,7 @@ describe('createMonitoringGoals', () => {
       name: goalTemplateName,
       grantId: grantBeingMerged11A.id,
       goalTemplateId: goalTemplate.id,
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     await Goal.create({
@@ -1652,7 +1652,7 @@ describe('createMonitoringGoals', () => {
       name: goalTemplateName,
       grantId: grantBeingMerged11B.id,
       goalTemplateId: goalTemplate.id,
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     // Create a monitoring goal for grantReopenMonitoringGoalNumberReviewId12 in case 12 thats closed and should be set to Not started.
@@ -1764,7 +1764,7 @@ describe('createMonitoringGoals', () => {
     const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
     expect(grant12Goals.length).toBe(1);
     expect(grant12Goals[0].goalTemplateId).toBe(goalTemplate.id);
-    expect(grant12Goals[0].status).toBe('Not started');
+    expect(grant12Goals[0].status).toBe('Not Started');
   };
 
   it('creates monitoring goals for grants that need them', async () => {
