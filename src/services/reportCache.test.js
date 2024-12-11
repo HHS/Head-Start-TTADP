@@ -141,7 +141,15 @@ describe('activityReportObjectiveCitation', () => {
       ],
     });
 
-    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+    goal = await Goal.create({
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.NOT_STARTED,
+      endDate: null,
+      isFromSmartsheetTtaPlan: false,
+      onApprovedAR: false,
+      grantId: grant.id,
+      createdVia: 'monitoring',
+    });
 
     objective = await Objective.create({
       goalId: goal.id,
@@ -176,7 +184,7 @@ describe('activityReportObjectiveCitation', () => {
       {
         citation: 'Citation 1',
         monitoringReferences: [{
-          grantId: 1,
+          grantId: grant.id,
           findingId: 1,
           reviewName: 'Review 1',
         }],
@@ -200,7 +208,7 @@ describe('activityReportObjectiveCitation', () => {
     expect(createdAroCitations).toHaveLength(1);
     expect(createdAroCitations[0].citation).toEqual('Citation 1');
     expect(createdAroCitations[0].monitoringReferences).toEqual([{
-      grantId: 1,
+      grantId: grant.id,
       findingId: 1,
       reviewName: 'Review 1',
     }]);
@@ -211,7 +219,7 @@ describe('activityReportObjectiveCitation', () => {
         id: citation1Id,
         citation: 'Citation 1 Updated',
         monitoringReferences: [{
-          grantId: 1,
+          grantId: grant.id,
           findingId: 1,
           reviewName: 'Review 1 Updated',
         }],
@@ -232,7 +240,7 @@ describe('activityReportObjectiveCitation', () => {
     expect(updatedAroCitations).toHaveLength(1);
     expect(updatedAroCitations[0].citation).toEqual('Citation 1 Updated');
     expect(updatedAroCitations[0].monitoringReferences).toEqual([{
-      grantId: 1,
+      grantId: grant.id,
       findingId: 1,
       reviewName: 'Review 1 Updated',
     }]);

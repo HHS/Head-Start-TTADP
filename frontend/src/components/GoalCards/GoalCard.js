@@ -35,6 +35,7 @@ export const ObjectiveSwitch = ({
   regionId,
   goalStatus,
   dispatchStatusChange,
+  isMonitoringGoal,
 }) => (
   <ObjectiveCard
     objective={objective}
@@ -42,6 +43,7 @@ export const ObjectiveSwitch = ({
     goalStatus={goalStatus}
     regionId={regionId}
     dispatchStatusChange={dispatchStatusChange}
+    isMonitoringGoal={isMonitoringGoal}
   />
 );
 
@@ -54,6 +56,7 @@ ObjectiveSwitch.propTypes = {
   regionId: PropTypes.number.isRequired,
   goalStatus: PropTypes.string.isRequired,
   dispatchStatusChange: PropTypes.func.isRequired,
+  isMonitoringGoal: PropTypes.bool.isRequired,
 };
 
 export default function GoalCard({
@@ -85,6 +88,14 @@ export default function GoalCard({
     onAR,
     isReopenedGoal,
   } = goal;
+
+  // Check for monitoring goal.
+  const reasonsToMonitor = [...reasons];
+  let isMonitoringGoal = false;
+  if (goal.createdVia === 'monitoring') {
+    reasonsToMonitor.push('Monitoring Goal');
+    isMonitoringGoal = true;
+  }
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -265,7 +276,7 @@ export default function GoalCard({
             {goalText}
             {' '}
             <FlagStatus
-              reasons={reasons}
+              reasons={reasonsToMonitor}
               goalNumbers={goalNumbers}
             />
           </p>
@@ -324,6 +335,7 @@ export default function GoalCard({
           goalStatus={goalStatus}
           regionId={parseInt(regionId, DECIMAL_BASE)}
           dispatchStatusChange={dispatchStatusChange}
+          isMonitoringGoal={isMonitoringGoal}
         />
       ))}
     </DataCard>

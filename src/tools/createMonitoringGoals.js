@@ -71,7 +71,7 @@ const createMonitoringGoals = async () => {
       new_goals AS (
         SELECT
           gt."templateName" "name",
-          'Not started' "status",
+          'Not Started' "status",
           NULL "timeframe",
           FALSE "isFromSmartsheetTtaPlan",
           NOW() "createdAt",
