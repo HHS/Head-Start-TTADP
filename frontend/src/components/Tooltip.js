@@ -13,6 +13,7 @@ export default function Tooltip({
   svgLineTo,
   className,
   position,
+  buttonClassName,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -28,7 +29,7 @@ export default function Tooltip({
   return (
     <span className={cssClasses} data-testid="tooltip">
       <div aria-hidden="true" className={`usa-tooltip__body usa-tooltip__body--${position} maxw-card-lg`}>{tooltipText}</div>
-      <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
+      <button type="button" className={`usa-button usa-button--unstyled ${buttonClassName}`} onClick={onClick}>
         <span className="smart-hub--ellipsis">
           <span aria-hidden={!screenReadDisplayText}>
             {displayText}
@@ -78,6 +79,7 @@ Tooltip.propTypes = {
   className: PropTypes.string,
   position: PropTypes.string,
   underlineStyle: PropTypes.oneOf(['solid', 'dashed']),
+  buttonClassName: PropTypes.string,
 };
 
 Tooltip.defaultProps = {
@@ -87,4 +89,5 @@ Tooltip.defaultProps = {
   className: '',
   position: 'top',
   underlineStyle: 'dashed',
+  buttonClassName: '',
 };
