@@ -57,7 +57,6 @@ $max-width-date-column: 50%;
 @media(min-width: 1475px) {
 
   .ttahub-goal-card__goal-column__goal-source p {
-    white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 220px;
