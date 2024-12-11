@@ -149,9 +149,9 @@ describe('ttaByCitations', () => {
                 ],
               },
             ],
-            outcome: 'Deficient',
-            reviewReceived: '01/12/2023',
-            reviewType: 'RAN',
+            outcome: 'Complete',
+            reviewReceived: '02/22/2023',
+            reviewType: 'FA-1',
             specialists: [
               {
                 name: 'Hermione Granger, SS',
