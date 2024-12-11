@@ -1,8 +1,10 @@
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
+  createReportAndCitationData,
   destroyAdditionalMonitoringData,
   destroyMonitoringData,
+  destroyReportAndCitationData,
 } from './monitoring.testHelpers';
 import { ttaByReviews } from './monitoring';
 import db from '../models';
@@ -10,6 +12,7 @@ import db from '../models';
 const {
   Grant,
   GrantNumberLink,
+  Recipient,
 } = db;
 
 const RECIPIENT_ID = 9;
@@ -20,7 +23,21 @@ const GRANT_ID = 665;
 describe('ttaByReviews', () => {
   let findingId;
   let reviewId;
+
+  let goal;
+  let objective;
+  let report;
+  let topic;
+  let citation;
+
   beforeAll(async () => {
+    await Recipient.findOrCreate({
+      where: { id: RECIPIENT_ID },
+      defaults: {
+        id: RECIPIENT_ID,
+        name: 'RECIPIENT',
+      },
+    });
     await Grant.findOrCreate({
       where: { number: GRANT_NUMBER },
       defaults: {
@@ -38,16 +55,40 @@ describe('ttaByReviews', () => {
     const {
       reviewId: createdReviewId,
       findingId: createdFindingId,
+      granteeId,
     } = await createMonitoringData(GRANT_NUMBER);
 
-    const result = await createAdditionalMonitoringData(createdFindingId, createdReviewId);
-    findingId = result.findingId;
+    const result = await createAdditionalMonitoringData(
+      createdFindingId,
+      createdReviewId,
+      granteeId,
+    ); findingId = result.findingId;
     reviewId = result.reviewId;
+
+    const arocResult = await createReportAndCitationData(
+      GRANT_NUMBER,
+      findingId,
+    );
+
+    goal = arocResult.goal;
+    objective = arocResult.objective;
+    report = arocResult.report;
+    topic = arocResult.topic;
+    citation = arocResult.citation;
   });
 
   afterAll(async () => {
     await destroyMonitoringData(GRANT_NUMBER);
     await destroyAdditionalMonitoringData(findingId, reviewId);
+
+    await destroyReportAndCitationData(
+      goal,
+      objective,
+      report,
+      topic,
+      citation,
+    );
+
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
     await db.sequelize.close();
@@ -64,9 +105,45 @@ describe('ttaByReviews', () => {
           {
             category: 'source',
             citation: '1234',
-            correctionDeadline: 'Invalid date',
+            correctionDeadline: expect.any(String),
             findingType: 'Finding Type',
-            objectives: [],
+            objectives: [
+              {
+                activityReports: [
+                  {
+                    displayId: expect.any(String),
+                    id: expect.any(Number),
+                  },
+                ],
+                endDate: '01/01/2021',
+                findingIds: [
+                  findingId,
+                ],
+                grantNumber: '01HP044446',
+                reviewNames: [
+                  'REVIEW!!!',
+                ],
+                specialists: [
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: [
+                      'SS',
+                    ],
+                  },
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: [
+                      'SS',
+                    ],
+                  },
+                ],
+                status: 'In Progress',
+                title: 'Objective Title',
+                topics: [
+                  'Spleunking',
+                ],
+              },
+            ],
             status: 'Complete',
           },
         ],
@@ -74,12 +151,17 @@ describe('ttaByReviews', () => {
           '01HP044446',
         ],
         id: expect.any(Number),
-        lastTTADate: null,
+        lastTTADate: '01/01/2021',
         name: 'REVIEW!!!',
-        outcome: 'Complete',
-        reviewReceived: '02/22/2023',
-        reviewType: 'FA-1',
-        specialists: [],
+        outcome: 'Deficient',
+        reviewReceived: '01/12/2023',
+        reviewType: 'RAN',
+        specialists: [
+          {
+            name: 'Hermione Granger, SS',
+            roles: ['SS'],
+          },
+        ],
       },
     ]);
   });
