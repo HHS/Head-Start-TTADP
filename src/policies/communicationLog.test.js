@@ -132,4 +132,12 @@ describe('Communication Log policies', () => {
       expect(policy.canUploadFileToLog()).toBe(false);
     });
   });
+
+  describe('constructor', () => {
+    it('assigns default value to log', () => {
+      const user = createUser({});
+      const policy = new CommunicationLog(user, 1);
+      expect(policy.log).toEqual({ recipientId: 0, userId: 0 });
+    });
+  });
 });
