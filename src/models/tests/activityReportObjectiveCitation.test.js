@@ -160,17 +160,16 @@ describe('activityReportObjectiveCitation', () => {
   });
 
   it('create aro citation', async () => {
-    // Create aro citations.
     const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
       citation: 'Sample Citation 1',
-      monitoringReferences: { grantId: grant.id, findingId: 1, reviewName: 'Review Name 1' },
+      monitoringReferences: [{ grantId: grant.id, findingId: 1, reviewName: 'Review Name 1' }],
     }, { individualHooks: true });
 
     const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
       citation: 'Sample Citation 2',
-      monitoringReferences: { grantId: grant.id, findingId: 2, reviewName: 'Review Name 2' },
+      monitoringReferences: [{ grantId: grant.id, findingId: 2, reviewName: 'Review Name 2' }],
     }, { individualHooks: true });
 
     // Assert citations.
@@ -188,16 +187,18 @@ describe('activityReportObjectiveCitation', () => {
     const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 1');
     expect(citation1LookUp).toBeDefined();
     expect(citation1LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
-    expect(citation1LookUp.monitoringReferences.grantId).toBe(grant.id);
-    expect(citation1LookUp.monitoringReferences.findingId).toBe(1);
-    expect(citation1LookUp.monitoringReferences.reviewName).toBe('Review Name 1');
+    const [reference] = citation1LookUp.monitoringReferences;
+    expect(reference.grantId).toBe(grant.id);
+    expect(reference.findingId).toBe(1);
+    expect(reference.reviewName).toBe('Review Name 1');
 
     // Citation 2.
     const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 2');
     expect(citation2LookUp).toBeDefined();
     expect(citation2LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
-    expect(citation2LookUp.monitoringReferences.grantId).toBe(grant.id);
-    expect(citation2LookUp.monitoringReferences.findingId).toBe(2);
-    expect(citation2LookUp.monitoringReferences.reviewName).toBe('Review Name 2');
+    const [secondReference] = citation2LookUp.monitoringReferences;
+    expect(secondReference.grantId).toBe(grant.id);
+    expect(secondReference.findingId).toBe(2);
+    expect(secondReference.reviewName).toBe('Review Name 2');
   });
 });
