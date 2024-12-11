@@ -1,15 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ExpanderButton from '../../../../../components/ExpanderButton';
-import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 
 export default function ToggleTtaActivityButton({ count, expanded, setExpanded }) {
-  if (count === 0) {
-    return (
-      <NoTtaProvidedAgainst />
-    );
-  }
-
   return (
     <ExpanderButton
       closeOrOpen={() => setExpanded(!expanded)}
