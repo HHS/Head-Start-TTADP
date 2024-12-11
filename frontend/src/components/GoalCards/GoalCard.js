@@ -27,7 +27,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import DataCard from '../DataCard';
-import EnteredBy from './EnteredBy';
+import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 
 export const ObjectiveSwitch = ({
   objective,
@@ -217,31 +217,25 @@ export default function GoalCard({
     return responses.map((r) => r).join(', ');
   };
 
-  // console.log('goalText', goalText);
-
   const renderEnteredBy = () => {
     if (isMonitoringGoal) {
-      const goalNumber = `G-${id}`;
       return (
-        <EnteredBy
-          goalNumber={goalNumber}
-          creatorRole="OHS"
-          creatorName="System-generated"
-          moreThanOne={false}
+        <SpecialistTags
+          specialists={[{
+            name: 'System-generated',
+            roles: ['OHS'],
+          }]}
         />
       );
     }
-    return collaborators.map((c) => {
-      if (!c.goalCreatorName) return null;
-      return (
-        <EnteredBy
-          goalNumber={c.goalNumber}
-          creatorRole={c.goalCreatorRoles}
-          creatorName={c.goalCreatorName}
-          moreThanOne={collaborators.length > 1}
-        />
-      );
-    });
+    return (
+      <SpecialistTags
+        specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
+          name: c.goalCreatorName,
+          roles: [c.goalCreatorRoles].flat(),
+        }))}
+      />
+    );
   };
 
   return (
@@ -294,7 +288,7 @@ export default function GoalCard({
             {' '}
             {goalNumbers}
             {isMerged && (
-              <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
+              <Tag className="usa-tag--merged-goal border margin-left-1 text-ink text-normal radius-sm" background={colors.baseLightest}>
                 Merged
               </Tag>
             )}
