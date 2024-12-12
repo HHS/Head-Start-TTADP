@@ -1,5 +1,5 @@
 import httpContext from 'express-http-context';
-import transactionWrapper, { readOnlyTransactionWrapper, logRequestDuration, calculateStats } from './transactionWrapper';
+import transactionWrapper, { readOnlyTransactionWrapper, calculateStats } from './transactionWrapper';
 import { auditLogger } from '../logger';
 import db from '../models';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
@@ -96,7 +96,9 @@ describe('logRequestDuration', () => {
   });
 
   it('should log durations and not alert if below thresholds', () => {
+    jest.resetModules();
     const mockAuditLogger = jest.spyOn(auditLogger, 'info');
+    const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 150, 'success');
     expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('testFunction'));
     expect(newrelic.noticeError).not.toHaveBeenCalled();
@@ -104,33 +106,37 @@ describe('logRequestDuration', () => {
 
   it('should alert if duration exceeds max threshold in production', () => {
     process.env.NODE_ENV = 'production';
-  
+
     // Mock `newrelic` dynamically after resetting modules
     jest.resetModules();
     jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
-  
+
     const { logRequestDuration } = require('./transactionWrapper');
-    const newrelic = require('newrelic');
-  
+    newrelic = require('newrelic');
+
     logRequestDuration('testFunction', 15000, 'success');
-  
+
     expect(newrelic.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({ duration: 15000, functionName: 'testFunction' })
     );
-  
+
     // Restore environment
     process.env.NODE_ENV = 'test';
   });
-  
+
 
   it('should not alert if duration exceeds max threshold outside production', () => {
     process.env.NODE_ENV = 'test';
+    jest.resetModules();
+    const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 15000, 'success');
     expect(newrelic.noticeError).not.toHaveBeenCalled();
   });
 
   it('should not alert if duration is below the minimum threshold', () => {
+    jest.resetModules();
+    const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 50, 'success');
     expect(newrelic.noticeError).not.toHaveBeenCalled();
   });
@@ -138,7 +144,7 @@ describe('logRequestDuration', () => {
   it('should alert if duration exceeds mean + delta after enough requests in production', () => {
     process.env.NODE_ENV = 'production';
     jest.resetModules(); // Reload to simulate production environment
-    
+
     jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
 
     const { logRequestDuration } = require('./transactionWrapper');
