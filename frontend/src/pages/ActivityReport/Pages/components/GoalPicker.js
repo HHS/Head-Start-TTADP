@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Label, Button, Checkbox } from '@trussworks/react-uswds';
+import {
+  Label, Button, Checkbox, Alert,
+} from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
@@ -61,6 +64,7 @@ const GoalPicker = ({
 
   const [citationOptions, setCitationOptions] = useState([]);
   const [rawCitations, setRawCitations] = useState([]);
+  const [grantsWithoutMonitoring, setGrantsWithoutMonitoring] = useState([]);
 
   const selectedGoals = useWatch({ name: 'goals' });
   const activityRecipients = watch('activityRecipients');
@@ -149,12 +153,31 @@ const GoalPicker = ({
             }, {},
           ));
 
+          // Get a list of grants with monitoring goals.
+          const grantIdsFromCitations = retrievedCitationOptions.flatMap(
+            (citation) => citation.grants.map((grant) => grant.grantId),
+          );
+          const distinctGrantIds = [...new Set(grantIdsFromCitations)];
+
+          // Determine if any grant selected is missing a monitoring goal.
+          let grantsIdsMissingMonitoring = [];
+          grantsIdsMissingMonitoring = grantIds.filter(
+            (grantId) => !distinctGrantIds.includes(grantId),
+          );
+
+          // Get the full grant names from the grantsIdsMissingMonitoring.
+          const grantsIdsMissingMonitoringFullNames = activityRecipients.filter(
+            (ar) => grantsIdsMissingMonitoring.includes(ar.activityRecipientId),
+          ).map((grant) => grant.name);
+
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
+          setGrantsWithoutMonitoring(grantsIdsMissingMonitoringFullNames);
         }
       } else {
         setCitationOptions([]);
         setRawCitations([]);
+        setGrantsWithoutMonitoring([]);
       }
     }
     fetchCitations();
@@ -268,6 +291,37 @@ const GoalPicker = ({
         <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
       </Modal>
       <div className="margin-top-3 position-relative">
+        {
+          grantsWithoutMonitoring.length > 0 && (
+            <Alert type="warning" className="margin-bottom-2">
+              <span>
+                <span className="margin-top-0">
+                  {grantsWithoutMonitoring.length > 1
+                    ? 'These grants do not have the standard monitoring goal:'
+                    : 'This grant does not have the standard monitoring goal:'}
+                  <ul className="margin-top-2">
+                    {grantsWithoutMonitoring.map((grant) => (
+                      <li key={grant}>{grant}</li>
+                    ))}
+                  </ul>
+                </span>
+                <span className="margin-top-2 margin-bottom-0">
+                  To avoid errors when submitting the report, you can either:
+                  <ul className="margin-top-2 margin-bottom-0">
+                    <li>
+                      Add a different goal to the report
+                    </li>
+                    <li>
+                      Remove the grant from the
+                      {' '}
+                      <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                    </li>
+                  </ul>
+                </span>
+              </span>
+            </Alert>
+          )
+       }
         <Label>
           Select recipient&apos;s goal
           <Req />
