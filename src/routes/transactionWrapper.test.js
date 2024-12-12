@@ -98,6 +98,7 @@ describe('logRequestDuration', () => {
   it('should log durations and not alert if below thresholds', () => {
     jest.resetModules();
     const mockAuditLogger = jest.spyOn(auditLogger, 'info');
+    // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 150, 'success');
     expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('testFunction'));
@@ -111,24 +112,26 @@ describe('logRequestDuration', () => {
     jest.resetModules();
     jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
 
+  // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
+    // eslint-disable-next-line global-require
     newrelic = require('newrelic');
 
     logRequestDuration('testFunction', 15000, 'success');
 
     expect(newrelic.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({ duration: 15000, functionName: 'testFunction' })
+      expect.objectContaining({ duration: 15000, functionName: 'testFunction' }),
     );
 
     // Restore environment
     process.env.NODE_ENV = 'test';
   });
 
-
   it('should not alert if duration exceeds max threshold outside production', () => {
     process.env.NODE_ENV = 'test';
     jest.resetModules();
+    // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 15000, 'success');
     expect(newrelic.noticeError).not.toHaveBeenCalled();
@@ -136,6 +139,7 @@ describe('logRequestDuration', () => {
 
   it('should not alert if duration is below the minimum threshold', () => {
     jest.resetModules();
+    // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 50, 'success');
     expect(newrelic.noticeError).not.toHaveBeenCalled();
@@ -147,6 +151,7 @@ describe('logRequestDuration', () => {
 
     jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
 
+  // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
 
     // eslint-disable-next-line no-plusplus
