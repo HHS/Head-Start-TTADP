@@ -112,7 +112,7 @@ describe('logRequestDuration', () => {
     jest.resetModules();
     jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
 
-  // eslint-disable-next-line global-require
+    // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
     // eslint-disable-next-line global-require
     newrelic = require('newrelic');
@@ -151,7 +151,7 @@ describe('logRequestDuration', () => {
 
     jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
 
-  // eslint-disable-next-line global-require
+    // eslint-disable-next-line global-require
     const { logRequestDuration } = require('./transactionWrapper');
 
     // eslint-disable-next-line no-plusplus
