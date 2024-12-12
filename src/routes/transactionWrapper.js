@@ -1,10 +1,15 @@
-import newrelic from 'newrelic';
 import httpContext from 'express-http-context';
 import { sequelize } from '../models';
 import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import handleErrors from '../lib/apiErrorHandler';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
+
+let newrelic = { noticeError: () => {} };
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  newrelic = require('newrelic');
+}
 
 const namespace = 'SERVICE:WRAPPER';
 

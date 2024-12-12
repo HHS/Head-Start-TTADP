@@ -1,17 +1,21 @@
 import httpContext from 'express-http-context';
-import newrelic from 'newrelic';
 import transactionWrapper, { readOnlyTransactionWrapper, logRequestDuration, calculateStats } from './transactionWrapper';
 import { auditLogger } from '../logger';
 import db from '../models';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import handleErrors from '../lib/apiErrorHandler';
 
+let newrelic = { noticeError: jest.fn() }; // Default mock for testing
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  newrelic = require('newrelic');
+}
+
 jest.mock('../lib/apiErrorHandler', () => jest.fn((req, res, err, context) => context));
 jest.mock('../lib/programmaticTransaction', () => ({
   captureSnapshot: jest.fn(),
   hasModifiedData: jest.fn(),
 }));
-jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
 
 describe('transactionWrapper', () => {
   let originalFunction = jest.fn().mockResolvedValue('result');
@@ -100,13 +104,25 @@ describe('logRequestDuration', () => {
 
   it('should alert if duration exceeds max threshold in production', () => {
     process.env.NODE_ENV = 'production';
+  
+    // Mock `newrelic` dynamically after resetting modules
+    jest.resetModules();
+    jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
+  
+    const { logRequestDuration } = require('./transactionWrapper');
+    const newrelic = require('newrelic');
+  
     logRequestDuration('testFunction', 15000, 'success');
+  
     expect(newrelic.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({ duration: 15000, functionName: 'testFunction' }),
+      expect.objectContaining({ duration: 15000, functionName: 'testFunction' })
     );
+  
+    // Restore environment
     process.env.NODE_ENV = 'test';
   });
+  
 
   it('should not alert if duration exceeds max threshold outside production', () => {
     process.env.NODE_ENV = 'test';
@@ -121,6 +137,12 @@ describe('logRequestDuration', () => {
 
   it('should alert if duration exceeds mean + delta after enough requests in production', () => {
     process.env.NODE_ENV = 'production';
+    jest.resetModules(); // Reload to simulate production environment
+    
+    jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
+
+    const { logRequestDuration } = require('./transactionWrapper');
+
     // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 25; i++) {
       logRequestDuration('testFunction', 200, 'success');
