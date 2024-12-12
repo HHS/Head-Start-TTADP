@@ -7,6 +7,7 @@ import { reportIsEditable } from '../../../../utils';
 import Section from '../Review/ReviewSection';
 import './RecipientReviewSection.scss';
 import ReviewItem from '../Review/ReviewItem';
+import ReviewObjectiveCitation from '../Review/ReviewObjectiveCitation';
 
 const RecipientReviewSection = () => {
   const { watch } = useFormContext();
@@ -41,6 +42,9 @@ const RecipientReviewSection = () => {
       anchor: 'objectives-summary',
       items: [
         { label: 'TTA objective', name: 'title' },
+        {
+          label: 'Citations addressed', name: 'citations', path: 'name', sort: true, component: ReviewObjectiveCitation,
+        },
         {
           label: 'Topics', name: 'topics', path: 'name', sort: true,
         },
@@ -126,19 +130,32 @@ const RecipientReviewSection = () => {
           canEdit={canEdit}
           isLastSection={isLastGoal && objectives.length - 1 === index}
         >
-          {objectiveSections.map((section) => section.items.map((item) => (
-            <ReviewItem
-              key={uuidv4()}
-              label={item.label}
-              path={item.path}
-              name={item.name}
-              sortValues={item.sort}
-              customValue={objective}
-              linkNamePath={item.linkNamePath}
-              isFile={item.isFile}
-              isRichText={item.isRichText}
-            />
-          )))}
+          {objectiveSections.map((section) => section.items.map((item) => {
+            if (item.component) {
+              return (
+                <item.component
+                  key={uuidv4()}
+                  label={item.label}
+                  name={item.name}
+                  customValue={objective}
+                />
+              );
+            }
+
+            return (
+              <ReviewItem
+                key={uuidv4()}
+                label={item.label}
+                path={item.path}
+                name={item.name}
+                sortValues={item.sort}
+                customValue={objective}
+                linkNamePath={item.linkNamePath}
+                isFile={item.isFile}
+                isRichText={item.isRichText}
+              />
+            );
+          }))}
         </Section>
       ),
     );
