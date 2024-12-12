@@ -24,10 +24,10 @@ export default function RenderReviewCitations({ citations, activityRecipients, c
 
   return Object.keys(formattedCitations).map((recipient) => (
     <div key={uniqueId('citation-review-')} className={className}>
-      <p className="margin-top-0 margin-bottom-1">{recipient}</p>
-      <ul className="usa-list margin-top-0">
+      <p data-testid="review-citation-label" className="margin-top-0 margin-bottom-1">{recipient}</p>
+      <ul data-testid="review-citation-list" className="usa-list margin-top-0">
         {uniq(formattedCitations[recipient]).map((citation) => (
-          <li key={uniqueId('ar-citation-review-citation-name-')}>{citation}</li>
+          <li data-testid="review-citation-listitem" key={uniqueId('ar-citation-review-citation-name-')}>{citation}</li>
         ))}
       </ul>
     </div>
