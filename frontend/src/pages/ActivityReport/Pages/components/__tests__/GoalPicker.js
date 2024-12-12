@@ -20,8 +20,6 @@ import GoalPicker from '../GoalPicker';
 import UserContext from '../../../../../UserContext';
 import { mockRSSData } from '../../../../../testHelpers';
 
-const history = createMemoryHistory();
-
 const defaultSelectedGoals = [
   {
     label: '123',
@@ -40,7 +38,7 @@ const GP = ({
   selectedGoals,
   goalForEditing,
   goalTemplates,
-  additionalGrantRecipients = [],
+  additionalRecipients = [],
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -53,10 +51,10 @@ const GP = ({
         role: 'central office',
       },
       collaborators: [],
-      activityRecipients: [...additionalGrantRecipients, { activityRecipientId: 1, name: 'Grant 1 Name' }],
+      activityRecipients: [...additionalRecipients, { activityRecipientId: 1, name: 'Grant 1 Name' }],
     },
   });
-
+  const history = createMemoryHistory();
   return (
     <AppLoadingContext.Provider value={{
       setIsAppLoading: jest.fn(),
@@ -70,16 +68,16 @@ const GP = ({
         },
       }}
       >
-        <Router history={history}>
-          <FormProvider {...hookForm}>
+        <FormProvider {...hookForm}>
+          <Router history={history}>
             <GoalPicker
               availableGoals={availableGoals}
               goalTemplates={goalTemplates}
               grantIds={[1]}
               reportId={1}
             />
-          </FormProvider>
-        </Router>
+          </Router>
+        </FormProvider>
       </UserContext.Provider>
     </AppLoadingContext.Provider>
   );
@@ -90,7 +88,6 @@ const renderGoalPicker = (
   selectedGoals = defaultSelectedGoals,
   goalForEditing = defaultGoalForEditing,
   goalTemplates = [],
-  additionalGrantRecipients = [],
 ) => {
   render(
     <GP
@@ -98,7 +95,6 @@ const renderGoalPicker = (
       selectedGoals={selectedGoals}
       goalForEditing={goalForEditing}
       goalTemplates={goalTemplates}
-      additionalGrantRecipients={additionalGrantRecipients}
     />,
   );
 };
@@ -112,84 +108,34 @@ describe('GoalPicker', () => {
 
   afterEach(() => fetchMock.restore());
 
-  it('correctly displays the monitoring warning if non monitoring recipients are selected', async () => {
-    fetchMock.get('/api/goal-templates/1/prompts?goalIds=1&goalIds=2', []);
-    fetchMock.get('/api/goal-templates/1/source?grantIds=2&grantIds=1', {
-      source: 'Federal monitoring issues, including CLASS and RANs',
-    });
-
-    // api/citations/region/1?grantIds=1&reportStartDate=2024-12-03
-    fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
-      {
-        citation: 'Not your citation',
-        grants: [
-          {
-            acro: 'DEF',
-            citation: 'test citation 1',
-            findingId: 1,
-            findingSource: 'source',
-            findingType: 'Not your citation type',
-            grantId: 2,
-            grantNumber: '123',
-            monitoringFindingStatusName: 'Active',
-            reportDeliveryDate: '2024-12-03',
-            reviewName: 'review name',
-            severity: 1,
-          },
-        ],
-        standardId: 1,
-      },
-    ]);
-
-    fetchMock.get('/api/citations/region/1?grantIds=1&grantIds=2&reportStartDate=2024-12-03', [
-      {
-        citation: 'Not your citation',
-        grants: [
-          {
-            acro: 'DEF',
-            citation: 'test citation 1',
-            findingId: 1,
-            findingSource: 'source',
-            findingType: 'Not your citation type',
-            grantId: 2,
-            grantNumber: '123',
-            monitoringFindingStatusName: 'Active',
-            reportDeliveryDate: '2024-12-03',
-            reviewName: 'review name',
-            severity: 1,
-          },
-        ],
-        standardId: 1,
-      },
-    ]);
-
+  it('you can select a goal', async () => {
     const availableGoals = [{
       label: 'Goal 1',
       value: 1,
-      goalIds: [1, 2],
+      goalIds: [1],
       name: 'Goal 1',
-      objectives: [],
     }];
-    const availableTemplates = [{
-      label: 'Monitoring Template Goal',
+
+    renderGoalPicker(availableGoals);
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+  });
+
+  it('you can select a goal that has objectives, keeping the objectives', async () => {
+    const availableGoals = [{
+      label: 'Goal 1',
       value: 1,
-      goalIds: [1, 2],
-      isCurated: true,
-      goalTemplateId: 1,
-      source: 'Federal monitoring issues, including CLASS and RANs',
-      standard: 'Monitoring',
-      objectives: [],
-      goals: [
-        {
-          grantId: 1,
-        },
-        {
-          grantId: 2,
-        },
-      ],
+      goalIds: [1],
+      name: 'Goal 1',
     }];
+
     const goalForEditing = {
-      standard: 'Monitoring',
       objectives: [{
         topics: [],
         id: 1,
@@ -200,49 +146,422 @@ describe('GoalPicker', () => {
       }],
       goalIds: [],
     };
-    act(() => {
-      renderGoalPicker(availableGoals, null, goalForEditing, availableTemplates, [{ activityRecipientId: 2, name: 'Grant 2 Name' }]);
-    });
-    let selector = screen.queryByLabelText(/Select recipient's goal*/i);
+
+    renderGoalPicker(
+      availableGoals,
+      defaultSelectedGoals,
+      goalForEditing,
+    );
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    expect(await screen.findByText('You have selected a different goal.')).toBeVisible();
+
+    const button = await screen.findByRole('button', { name: /keep objective/i });
+    userEvent.click(button);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+
+    const objective = await screen.findByText('Objective 1', { selector: 'textarea' });
+    expect(objective).toBeVisible();
+    expect(objective).toHaveAttribute('name', 'goalForEditing.objectives[0].title');
+  });
+
+  it('you can select a goal that has objectives, losing the objectives', async () => {
+    const availableGoals = [{
+      label: 'Goal 1',
+      value: 1,
+      goalIds: [1],
+      name: 'Goal 1',
+    }];
+
+    const goalForEditing = {
+      objectives: [{
+        topics: [],
+        id: 1,
+        title: 'Objective 1',
+        resources: [],
+        ttaProvided: '',
+        objectiveCreatedHere: true,
+      }],
+      goalIds: [],
+    };
+
+    renderGoalPicker(
+      availableGoals,
+      defaultSelectedGoals,
+      goalForEditing,
+    );
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    expect(await screen.findByText('You have selected a different goal.')).toBeVisible();
+
+    const button = await screen.findByRole('button', { name: /remove objective/i });
+    userEvent.click(button);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+
+    const objective = document.querySelector('[name="goalForEditing.objectives[0].title"]');
+    expect(objective).toBeNull();
+  });
+
+  it('you can select a goal with no selected goals', async () => {
+    const availableGoals = [{
+      label: 'Goal 1',
+      value: 1,
+      goalIds: [1],
+    }];
+
+    renderGoalPicker(availableGoals, null);
+
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+    const [availableGoal] = availableGoals;
+
+    await selectEvent.select(selector, [availableGoal.label]);
+
+    const input = document.querySelector('[name="goalForEditing"');
+    expect(input.value).toBe(availableGoal.value.toString());
+  });
+
+  it('properly renders when there is no goal for editing selected', async () => {
+    renderGoalPicker([], null);
+    const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+
     expect(selector).toBeVisible();
+  });
 
-    // Check box to use curated goals.
-    const checkbox = await screen.findByRole('checkbox', { name: /use ohs standard goal/i });
-    await act(async () => {
-      // use selectEvent to check the checkbox.
-      await userEvent.click(checkbox);
-      await waitFor(async () => {
-        // wait for check box to be checked.
-        expect(checkbox).toBeChecked();
+  describe('with checkbox', () => {
+    it('you can toggle the list of curated goals', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', []);
+      fetchMock.get('/api/goal-templates/1/prompts', []);
+      const availableGoals = [];
+
+      renderGoalPicker(availableGoals, null, null, [
+        {
+          id: 1,
+          goalTemplateId: 1,
+          name: 'Goal Template 1',
+          label: 'Goal Template 1',
+          goals: [],
+          isCurated: true,
+          objectives: [],
+          value: 1,
+          source: '',
+        },
+      ]);
+
+      let selector = screen.queryByLabelText(/Select recipient's goal*/i);
+      expect(selector).toBeVisible();
+
+      const checkbox = await screen.findByLabelText(/use ohs standard goal/i);
+      act(() => {
+        userEvent.click(checkbox);
       });
-    });
 
-    selector = await screen.findByLabelText(/Select recipient's goal*/i);
+      selector = screen.queryByLabelText(/Select recipient's goal*/i);
 
-    await act(async () => {
-      await selectEvent.select(selector, ['Monitoring Template Goal']);
-    });
-
-    // Select first template goal.
-
-    fireEvent.focus(selector);
-    await act(async () => {
-      // arrow down to the first option and select it.
+      fireEvent.focus(selector);
       fireEvent.keyDown(selector, {
         key: 'ArrowDown',
         keyCode: 40,
         code: 40,
       });
+
+      const option = await screen.findByText('Goal Template 1');
+      expect(option).toBeVisible();
+    });
+  });
+
+  describe('curated goals', () => {
+    it('with no prompts', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [
+        {
+          type: 'multiselect',
+          title: 'prompt-1',
+          options: [
+            'Option 1',
+            'Option 2',
+          ],
+          prompt: 'WHYYYYYYYY?',
+        },
+      ]);
+      fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
+        source: 'source',
+      });
+
+      const availableGoals = [{
+        label: 'Goal 1',
+        value: 1,
+        goalIds: [1],
+        isCurated: true,
+        goalTemplateId: 1,
+      }];
+
+      act(() => {
+        renderGoalPicker(availableGoals, null);
+      });
+
+      const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+      const [availableGoal] = availableGoals;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const input = document.querySelector('[name="goalForEditing"]');
+      expect(input.value).toBe(availableGoal.value.toString());
+    });
+    it('with prompts', async () => {
+      fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
+        source: 'source',
+      });
+
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [
+        {
+          type: 'multiselect',
+          title: 'prompt-1',
+          options: [
+            'Option 1',
+            'Option 2',
+          ],
+          prompt: 'WHYYYYYYYY?',
+        },
+      ]);
+      const availableGoals = [{
+        label: 'Goal 1',
+        value: 1,
+        goalIds: [1],
+        isCurated: true,
+        goalTemplateId: 1,
+      }];
+
+      act(() => {
+        renderGoalPicker(availableGoals, null);
+      });
+
+      const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+      const [availableGoal] = availableGoals;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const input = document.querySelector('[name="goalForEditing"]');
+      expect(input.value).toBe(availableGoal.value.toString());
+    });
+  });
+  describe('monitoring goals', () => {
+    it('correctly retrieves citations for monitoring goals', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', []);
+      fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
+        source: 'Federal monitoring issues, including CLASS and RANs',
+      });
+
+      fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
+        {
+          citation: 'test citation 1',
+          grants: [
+            {
+              acro: 'DEF',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: 'source',
+              findingType: 'Deficiency',
+              grantId: 1,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      const availableGoals = [{
+        label: 'Monitoring Goal',
+        value: 1,
+        goalIds: [1],
+        isCurated: true,
+        goalTemplateId: 1,
+        source: 'Federal monitoring issues, including CLASS and RANs',
+        standard: 'Monitoring',
+        goals: [
+          {
+            grantId: 1,
+          },
+        ],
+      }];
+
+      act(() => {
+        renderGoalPicker(availableGoals, null);
+      });
+
+      const selector = await screen.findByLabelText(/Select recipient's goal*/i);
+      const [availableGoal] = availableGoals;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const input = document.querySelector('[name="goalForEditing"]');
+      expect(input.value).toBe(availableGoal.value.toString());
+
+      // Select 'Create a new objective' from the dropdown.
+      const objectiveSelector = await screen.findByLabelText(/Select TTA objective/i);
+      await selectEvent.select(objectiveSelector, 'Create a new objective');
+
+      // Open the citations dropdown.
+      const citationSelector = await screen.findByLabelText(/citation/i);
+      await selectEvent.select(citationSelector, /test citation 1/i);
+
+      // Check that the citation is displayed.
+      const citation = await screen.findByText(/test citation 1/i);
+      expect(citation).toBeVisible();
     });
 
-    await act(async () => {
-      await waitFor(async () => {
-        const option = await screen.findByText('Monitoring Template Goal');
-        expect(option).toBeVisible();
+    it('correctly displays the monitoring warning if non monitoring recipients are selected', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1&goalIds=2', []);
+      fetchMock.get('/api/goal-templates/1/source?grantIds=2&grantIds=1', {
+        source: 'Federal monitoring issues, including CLASS and RANs',
       });
+
+      // api/citations/region/1?grantIds=1&reportStartDate=2024-12-03
+      fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
+        {
+          citation: 'Not your citation',
+          grants: [
+            {
+              acro: 'DEF',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: 'source',
+              findingType: 'Not your citation type',
+              grantId: 2,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      fetchMock.get('/api/citations/region/1?grantIds=1&grantIds=2&reportStartDate=2024-12-03', [
+        {
+          citation: 'Not your citation',
+          grants: [
+            {
+              acro: 'DEF',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: 'source',
+              findingType: 'Not your citation type',
+              grantId: 2,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      const availableGoals = [{
+        label: 'Goal 1',
+        value: 1,
+        goalIds: [1, 2],
+        name: 'Goal 1',
+        objectives: [],
+      }];
+      const availableTemplates = [{
+        label: 'Monitoring Template Goal',
+        value: 1,
+        goalIds: [1, 2],
+        isCurated: true,
+        goalTemplateId: 1,
+        source: 'Federal monitoring issues, including CLASS and RANs',
+        standard: 'Monitoring',
+        objectives: [],
+        goals: [
+          {
+            grantId: 1,
+          },
+          {
+            grantId: 2,
+          },
+        ],
+      }];
+      const goalForEditing = {
+        standard: 'Monitoring',
+        objectives: [{
+          topics: [],
+          id: 1,
+          title: 'Objective 1',
+          resources: [],
+          ttaProvided: '',
+          objectiveCreatedHere: true,
+        }],
+        goalIds: [],
+      };
+      act(() => {
+        renderGoalPicker(availableGoals, null, goalForEditing, availableTemplates, [{ activityRecipientId: 2, name: 'Grant 2 Name' }]);
+      });
+      let selector = screen.queryByLabelText(/Select recipient's goal*/i);
+      expect(selector).toBeVisible();
+
+      // Check box to use curated goals.
+      const checkbox = await screen.findByRole('checkbox', { name: /use ohs standard goal/i });
+      await act(async () => {
+        // use selectEvent to check the checkbox.
+        await userEvent.click(checkbox);
+        await waitFor(async () => {
+          // wait for check box to be checked.
+          expect(checkbox).toBeChecked();
+        });
+      });
+
+      selector = await screen.findByLabelText(/Select recipient's goal*/i);
+
+      await act(async () => {
+        await selectEvent.select(selector, ['Monitoring Template Goal']);
+      });
+
+      // Select first template goal.
+
+      fireEvent.focus(selector);
+      await act(async () => {
+        // arrow down to the first option and select it.
+        fireEvent.keyDown(selector, {
+          key: 'ArrowDown',
+          keyCode: 40,
+          code: 40,
+        });
+      });
+
+      await act(async () => {
+        await waitFor(async () => {
+          const option = await screen.findByText('Monitoring Template Goal');
+          expect(option).toBeVisible();
+        });
+      });
+      expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
+      expect(await screen.findByText(/grant 1 name/i)).toBeVisible();
+      expect(await screen.findByText(/to avoid errors when submitting the report, you can either/i)).toBeVisible();
     });
-    expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
-    expect(await screen.findByText(/grant 1 name/i)).toBeVisible();
-    expect(await screen.findByText(/to avoid errors when submitting the report, you can either/i)).toBeVisible();
   });
 });
