@@ -46,7 +46,9 @@ describe('transactionWrapper', () => {
 
     await wrapper();
 
-    expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('testContext'));
+    expect(mockAuditLogger).toHaveBeenCalledWith(
+      expect.stringContaining('Request for mockConstructor took'),
+    );
   });
 
   it('should handle errors in the original function', async () => {
