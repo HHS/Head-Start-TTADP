@@ -2,8 +2,7 @@ import React from 'react';
 import { uniqueId, uniq } from 'lodash';
 import PropTypes from 'prop-types';
 
-// eslint-disable-next-line max-len
-export const formatCitations = (citations, activityRecipients) => citations.reduce((acc, citation) => {
+const formatCitations = (citations, activityRecipients) => citations.reduce((acc, citation) => {
   const { monitoringReferences } = citation;
   monitoringReferences.forEach((reference) => {
     // eslint-disable-next-line max-len
@@ -35,8 +34,27 @@ export default function RenderReviewCitations({ citations, activityRecipients, c
 }
 
 RenderReviewCitations.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
-  citations: PropTypes.object.isRequired, // we don't know the keys of this object
+  citations: PropTypes.arrayOf(
+    PropTypes.shape({
+      monitoringReferences: PropTypes.arrayOf(
+        PropTypes.shape({
+          acro: PropTypes.string,
+          name: PropTypes.string,
+          grantId: PropTypes.number,
+          citation: PropTypes.string,
+          severity: PropTypes.number,
+          findingId: PropTypes.string,
+          reviewName: PropTypes.string,
+          standardId: PropTypes.string,
+          findingType: PropTypes.string,
+          grantNumber: PropTypes.string,
+          findingSource: PropTypes.string,
+          reportDeliveryDate: PropTypes.string,
+          monitoringFindingStatusName: PropTypes.string,
+        }),
+      ),
+    }),
+  ).isRequired,
   className: PropTypes.string,
   activityRecipients: PropTypes.arrayOf(
     PropTypes.shape({
