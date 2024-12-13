@@ -7,6 +7,7 @@ import DescriptionList from './DescriptionList';
 import ExpanderButton from '../../../../../components/ExpanderButton';
 import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
+import CitationDrawer from './CitationDrawer';
 
 export default function CitationCard({ citation, regionId }) {
   const [expanded, setExpanded] = useState(false);
@@ -17,8 +18,8 @@ export default function CitationCard({ citation, regionId }) {
       className="ttahub-monitoring-citation-card"
     >
       <div className="display-flex flex-align-center flex-row">
-        <h3 className="font-sans-xs margin-0">
-          {citation.citationNumber}
+        <h3 className="text-normal font-sans-xs margin-0">
+          <CitationDrawer bolded citationNumber={citation.citationNumber} />
         </h3>
       </div>
       <DescriptionList>
