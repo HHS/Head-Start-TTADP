@@ -69,6 +69,7 @@ const renderReview = (
   user = defaultUser,
   creatorRole = null,
   hasIncompleteGoalPrompts = false,
+  hasGrantsMissingMonitoring = false,
 ) => {
   const formData = {
     approvers,
@@ -86,6 +87,42 @@ const renderReview = (
         allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
+      goalIds: [1, 2],
+    }];
+  }
+
+  if (hasGrantsMissingMonitoring) {
+    formData.activityRecipients = [{
+      activityRecipientId: 1,
+      name: 'recipient missing monitoring',
+    },
+    {
+      activityRecipientId: 2,
+      name: 'recipient with monitoring 2',
+    },
+    ];
+
+    formData.goalsAndObjectives = [{
+      isCurated: true,
+      prompts: [{
+        allGoalsHavePromptResponse: false,
+        title: 'FEI Goal',
+      }],
+      standard: 'Monitoring',
+      objectives: [
+        {
+          id: 1,
+          citations: [
+            {
+              id: 1,
+              text: 'citation 1',
+              monitoringReferences: [{
+                grantId: 2,
+              }],
+            },
+          ],
+        },
+      ],
       goalIds: [1, 2],
     }];
   }
@@ -136,6 +173,23 @@ describe('Submitter review page', () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
+    });
+
+    it('shows an error that some grants don\'t have monitoring', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+      );
+      expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
+      expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
     });
 
     it('shows an error if goals are missing prompts', async () => {

@@ -27,6 +27,8 @@ const Submitter = ({
     calculatedStatus,
     approvers,
     creatorRole,
+    goalsAndObjectives,
+    activityRecipients,
   } = formData;
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
@@ -92,6 +94,37 @@ const Submitter = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
 
+  const grantsMissingMonitoring = () => {
+    // First determine if we have a monitoring goal selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+
+    if (hasMonitoringGoalSelected) {
+      // Then get the grantIds from activityRecipients
+      // Then compare the two lists and return the difference
+      const grantsWithCitations = hasMonitoringGoalSelected.objectives.reduce(
+        (acc, objective) => objective.citations.reduce((acc2, citation) => {
+          const { monitoringReferences } = citation;
+          if (monitoringReferences) {
+            const grantIds = monitoringReferences.map((ref) => ref.grantId);
+            return [...acc2, ...grantIds];
+          }
+          return acc2;
+        }, acc), [],
+      );
+
+      const distinctGrants = [...new Set(grantsWithCitations)];
+
+      // From activityRecipients get the name of the grants that matcht the activityRecipientId.
+      const grantNames = activityRecipients.filter(
+        (recipient) => !distinctGrants.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      return grantNames;
+    }
+    return [];
+  };
+
   return (
     <>
       {renderTopAlert()}
@@ -116,6 +149,7 @@ const Submitter = ({
               approverStatusList={approverStatusList}
               lastSaveTime={lastSaveTime}
               creatorRole={creatorRole}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
             />
           )}
         {submitted
@@ -179,6 +213,13 @@ Submitter.propTypes = {
         status: PropTypes.string,
       }),
     ),
+    goalsAndObjectives: PropTypes.arrayOf(PropTypes.shape({
+      standard: PropTypes.string,
+    })),
+    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
+      activityRecipientId: PropTypes.number,
+      name: PropTypes.string,
+    })),
   }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
 
