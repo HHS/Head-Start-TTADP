@@ -1,7 +1,5 @@
 .ttahub-data-card-description-list {
-  display: grid;
-  row-gap: 1em;
-  grid-template-columns: repeat(2, 50%);
+  line-height: 1.5em;
 }
 
 .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical {
@@ -10,6 +8,14 @@
 .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
   dd {
   margin-bottom: 1em;
+}
+
+@media (min-width: 460px) {
+  .ttahub-data-card-description-list {
+    display: grid;
+    row-gap: 1em;
+    grid-template-columns: repeat(2, 50%);
+  }
 }
 
 @media (min-width: 800px) {
@@ -29,7 +35,7 @@
 
 @media (min-width: 1445px) {
   .ttahub-data-card-description-list {
-    grid-template-columns: repeat(6, var(--data-card-column-width));
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 

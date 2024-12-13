@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.20
+      - image: cimg/python:3.9.21
   machine-executor:
     machine:
       image: ubuntu-2204:current
