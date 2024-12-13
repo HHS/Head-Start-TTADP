@@ -5,12 +5,6 @@ import db from '../models';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import handleErrors from '../lib/apiErrorHandler';
 
-let newrelic = { noticeError: jest.fn() }; // Default mock for testing
-if (process.env.NODE_ENV === 'production') {
-  // eslint-disable-next-line global-require
-  newrelic = require('newrelic');
-}
-
 jest.mock('../lib/apiErrorHandler', () => jest.fn((req, res, err, context) => context));
 jest.mock('../lib/programmaticTransaction', () => ({
   captureSnapshot: jest.fn(),
@@ -91,77 +85,58 @@ describe('transactionWrapper', () => {
 });
 
 describe('logRequestDuration', () => {
+  let logRequestDuration;
+  let newrelicMock;
+
   beforeEach(() => {
+    jest.resetModules();
+    newrelicMock = { noticeError: jest.fn() };
+    jest.mock('newrelic', () => newrelicMock);
+    ({ logRequestDuration } = require('./transactionWrapper'));
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
   it('should log durations and not alert if below thresholds', () => {
-    jest.resetModules();
     const mockAuditLogger = jest.spyOn(auditLogger, 'info');
-    // eslint-disable-next-line global-require
-    const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 150, 'success');
     expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('testFunction'));
-    expect(newrelic.noticeError).not.toHaveBeenCalled();
+    expect(newrelicMock.noticeError).not.toHaveBeenCalled();
   });
 
   it('should alert if duration exceeds max threshold in production', () => {
     process.env.NODE_ENV = 'production';
-
-    // Mock `newrelic` dynamically after resetting modules
-    jest.resetModules();
-    jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
-
-    // eslint-disable-next-line global-require
-    const { logRequestDuration } = require('./transactionWrapper');
-    // eslint-disable-next-line global-require
-    newrelic = require('newrelic');
-
     logRequestDuration('testFunction', 15000, 'success');
-
-    expect(newrelic.noticeError).toHaveBeenCalledWith(
+    expect(newrelicMock.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({ duration: 15000, functionName: 'testFunction' }),
+      expect.objectContaining({ duration: 15000, functionName: 'testFunction' })
     );
-
-    // Restore environment
     process.env.NODE_ENV = 'test';
   });
 
   it('should not alert if duration exceeds max threshold outside production', () => {
     process.env.NODE_ENV = 'test';
-    jest.resetModules();
-    // eslint-disable-next-line global-require
-    const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 15000, 'success');
-    expect(newrelic.noticeError).not.toHaveBeenCalled();
+    expect(newrelicMock.noticeError).not.toHaveBeenCalled();
   });
 
   it('should not alert if duration is below the minimum threshold', () => {
-    jest.resetModules();
-    // eslint-disable-next-line global-require
-    const { logRequestDuration } = require('./transactionWrapper');
     logRequestDuration('testFunction', 50, 'success');
-    expect(newrelic.noticeError).not.toHaveBeenCalled();
+    expect(newrelicMock.noticeError).not.toHaveBeenCalled();
   });
 
   it('should alert if duration exceeds mean + delta after enough requests in production', () => {
     process.env.NODE_ENV = 'production';
-    jest.resetModules(); // Reload to simulate production environment
 
-    jest.mock('newrelic', () => ({ noticeError: jest.fn() }));
-
-    // eslint-disable-next-line global-require
-    const { logRequestDuration } = require('./transactionWrapper');
-
-    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 25; i++) {
       logRequestDuration('testFunction', 200, 'success');
     }
     logRequestDuration('testFunction', 500, 'success');
-    expect(newrelic.noticeError).toHaveBeenCalledWith(
+    expect(newrelicMock.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({ duration: 500, functionName: 'testFunction' }),
+      expect.objectContaining({ duration: 500, functionName: 'testFunction' })
     );
     process.env.NODE_ENV = 'test';
   });
