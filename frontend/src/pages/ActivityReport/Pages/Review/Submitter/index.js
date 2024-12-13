@@ -97,8 +97,8 @@ const Submitter = ({
   const grantsMissingMonitoring = () => {
     // First determine if we have a monitoring goal selected.
     const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
-
-    if (hasMonitoringGoalSelected) {
+    // If we only have a monitoring goal.
+    if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
       // Then get the grantIds from activityRecipients
       // Then compare the two lists and return the difference
       const grantsWithCitations = hasMonitoringGoalSelected.objectives.reduce(
