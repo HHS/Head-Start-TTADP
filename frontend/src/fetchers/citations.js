@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import join from 'url-join';
 import {
   get,
@@ -13,6 +12,28 @@ export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
     'region',
     String(region),
     `?grantIds=${grantIds.join('&grantIds=')}&reportStartDate=${formattedDate}`,
+  );
+  const citations = await get(url);
+  return citations.json();
+}
+
+/**
+ * Fetch citation text by citation name.
+ * @param {String[]} citationIds
+ * @returns {Promise<{ text: String; citation: String; }[]>}
+ */
+export async function fetchCitationTextByName(citationIds) {
+  const params = new URLSearchParams();
+  citationIds.forEach((name) => {
+    params.append('citationIds', encodeURIComponent(name));
+  });
+
+  const url = join(
+    '/',
+    'api',
+    'citations',
+    'text',
+    `?${params.toString()}`,
   );
   const citations = await get(url);
   return citations.json();
