@@ -122,8 +122,12 @@ const GoalPicker = ({
   // Fetch citations for the goal if the source is CLASS or RANs.
   useDeepCompareEffect(() => {
     async function fetchCitations() {
-      // If its a monitoring goal and the source is CLASS or RANs, fetch the citations.
-      if (goalForEditing && goalForEditing.standard && goalForEditing.standard === 'Monitoring') {
+      // If we have no other goals except a monitoring goal
+      //  and the source is CLASS or RANs, fetch the citations.
+      if ((!selectedGoals || selectedGoals.length === 0)
+            && goalForEditing
+            && goalForEditing.standard
+            && goalForEditing.standard === 'Monitoring') {
         const retrievedCitationOptions = await fetchCitationsByGrant(
           regionId,
           grantIds,

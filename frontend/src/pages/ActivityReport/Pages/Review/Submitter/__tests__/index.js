@@ -70,6 +70,7 @@ const renderReview = (
   creatorRole = null,
   hasIncompleteGoalPrompts = false,
   hasGrantsMissingMonitoring = false,
+  goalsAndObjectives = [],
 ) => {
   const formData = {
     approvers,
@@ -102,29 +103,31 @@ const renderReview = (
     },
     ];
 
-    formData.goalsAndObjectives = [{
-      isCurated: true,
-      prompts: [{
-        allGoalsHavePromptResponse: false,
-        title: 'FEI Goal',
-      }],
-      standard: 'Monitoring',
-      objectives: [
-        {
-          id: 1,
-          citations: [
-            {
-              id: 1,
-              text: 'citation 1',
-              monitoringReferences: [{
-                grantId: 2,
-              }],
-            },
-          ],
-        },
-      ],
-      goalIds: [1, 2],
-    }];
+    formData.goalsAndObjectives = [
+      ...goalsAndObjectives,
+      {
+        isCurated: true,
+        prompts: [{
+          allGoalsHavePromptResponse: false,
+          title: 'FEI Goal',
+        }],
+        standard: 'Monitoring',
+        objectives: [
+          {
+            id: 1,
+            citations: [
+              {
+                id: 1,
+                text: 'citation 1',
+                monitoringReferences: [{
+                  grantId: 2,
+                }],
+              },
+            ],
+          },
+        ],
+        goalIds: [1, 2],
+      }];
   }
 
   const history = createMemoryHistory();
@@ -190,6 +193,37 @@ describe('Submitter review page', () => {
       );
       expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
       expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
+    });
+
+    it('hides error that some grants don\'t have monitoring if we have more than one goal', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [{
+          isCurated: false,
+          prompts: [{
+            allGoalsHavePromptResponse: false,
+            title: 'A regular goal',
+          }],
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [1],
+        }],
+      );
+      expect(screen.queryAllByText(/this grant does not have the standard monitoring goal/i).length).toBe(0);
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(0);
     });
 
     it('shows an error if goals are missing prompts', async () => {
