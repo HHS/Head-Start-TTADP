@@ -31,7 +31,7 @@ export default function CitationCard({ citation, regionId }) {
         <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-category">
           {citation.category}
         </DescriptionItem>
-        <DescriptionItem title="Grants">
+        <DescriptionItem title="Grants cited">
           <ul className="add-list-reset">
             {citation.grantNumbers.map((grant) => (
               <li key={uniqueId('grant-')}>{grant}</li>
