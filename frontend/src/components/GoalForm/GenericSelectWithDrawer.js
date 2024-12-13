@@ -7,7 +7,6 @@ import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import Drawer from '../Drawer';
 import Req from '../Req';
-import ContentFromFeedByTag from '../ContentFromFeedByTag';
 import DrawerTriggerButton from '../DrawerTriggerButton';
 
 export default function GenericSelectWithDrawer({
@@ -19,12 +18,15 @@ export default function GenericSelectWithDrawer({
   onChangeValues,
   inputName,
   isLoading,
+
+  // drawer props
+  drawerContent,
+  drawerTitle,
 }) {
   const drawerTriggerRef = useRef(null);
   if (options && options.length > 0) {
     options.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
-  const nameToLower = name ? name.toLowerCase() : '';
 
   return (
     <>
@@ -32,9 +34,9 @@ export default function GenericSelectWithDrawer({
         triggerRef={drawerTriggerRef}
         stickyHeader
         stickyFooter
-        title={`${name} guidance`}
+        title={drawerTitle}
       >
-        <ContentFromFeedByTag className={`ttahub-drawer--objective-${nameToLower}s-guidance`} tagName={`ttahub-${nameToLower}`} contentSelector="table" />
+        {drawerContent}
       </Drawer>
       <FormGroup error={error.props.children}>
         <div className="display-flex">
@@ -94,6 +96,8 @@ GenericSelectWithDrawer.propTypes = {
   onChangeValues: PropTypes.func.isRequired,
   inputName: PropTypes.string.isRequired,
   isLoading: PropTypes.bool,
+  drawerContent: PropTypes.node.isRequired,
+  drawerTitle: PropTypes.string.isRequired,
 };
 
 GenericSelectWithDrawer.defaultProps = {
