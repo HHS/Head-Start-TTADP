@@ -51,7 +51,7 @@ export default function GenericSelectWithDrawer({
           <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
             Get help choosing
             {' '}
-            {name}
+            {name.toLowerCase()}
             s
           </DrawerTriggerButton>
         </div>
