@@ -1562,7 +1562,6 @@ jobs:
       - sparse_checkout:
           directories: "automation/ci/scripts"
           branch: "<< pipeline.git.branch >>"
-
       # Acquire lock for each environment
       - run:
           name: Acquire Locks
@@ -1571,6 +1570,11 @@ jobs:
             env_list="<< parameters.env_list >>"
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
+              cf login -a << pipeline.parameters.cg_api >> \
+                -u ${<< parameters.cloudgov_username >>} \
+                -p ${<< parameters.cloudgov_password >>} \
+                -o << pipeline.parameters.cg_org >> \
+                -s "$(echo "ttahub-$env" | tr '[:upper:]' '[:lower:]')"
               ./automation/ci/scripts/acquire-lock.sh \
                 "$env" \
                 "<< pipeline.git.branch >>" \
@@ -1598,6 +1602,11 @@ jobs:
             env_list="<< parameters.env_list >>"
             apps=(${env_list//,/ })
             for env in "${apps[@]}"; do
+              cf login -a << pipeline.parameters.cg_api >> \
+                -u ${<< parameters.cloudgov_username >>} \
+                -p ${<< parameters.cloudgov_password >>} \
+                -o << pipeline.parameters.cg_org >> \
+                -s "$(echo "ttahub-$env" | tr '[:upper:]' '[:lower:]')"
               ./automation/ci/scripts/release-lock.sh \
                 "$env" \
                 "<< pipeline.git.branch >>" \
