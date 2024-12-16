@@ -101,22 +101,13 @@ const Submitter = ({
     if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
       // Then get the grantIds from activityRecipients
       // Then compare the two lists and return the difference
-      const grantsWithCitations = hasMonitoringGoalSelected.objectives.reduce(
-        (acc, objective) => objective.citations.reduce((acc2, citation) => {
-          const { monitoringReferences } = citation;
-          if (monitoringReferences) {
-            const grantIds = monitoringReferences.map((ref) => ref.grantId);
-            return [...acc2, ...grantIds];
-          }
-          return acc2;
-        }, acc), [],
-      );
-
-      const distinctGrants = [...new Set(grantsWithCitations)];
+      const missingGrants = activityRecipients.filter(
+        (recipient) => !goalsAndObjectives[0].grantIds.includes(recipient.activityRecipientId),
+      ).map((recipient) => recipient.activityRecipientId);
 
       // From activityRecipients get the name of the grants that matcht the activityRecipientId.
       const grantNames = activityRecipients.filter(
-        (recipient) => !distinctGrants.includes(recipient.activityRecipientId),
+        (recipient) => missingGrants.includes(recipient.activityRecipientId),
       ).map(
         (recipient) => recipient.name,
       );
@@ -215,6 +206,7 @@ Submitter.propTypes = {
     ),
     goalsAndObjectives: PropTypes.arrayOf(PropTypes.shape({
       standard: PropTypes.string,
+      grantIds: PropTypes.arrayOf(PropTypes.number),
     })),
     activityRecipients: PropTypes.arrayOf(PropTypes.shape({
       activityRecipientId: PropTypes.number,
