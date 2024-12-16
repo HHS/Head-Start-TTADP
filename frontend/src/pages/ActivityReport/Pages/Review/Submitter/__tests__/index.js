@@ -127,6 +127,7 @@ const renderReview = (
           },
         ],
         goalIds: [1, 2],
+        grantIds: [2],
       }];
   }
 

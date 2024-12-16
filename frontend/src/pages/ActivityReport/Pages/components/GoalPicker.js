@@ -110,6 +110,10 @@ const GoalPicker = ({
     defaultValue: '',
   });
 
+  const isMonitoringGoal = goalForEditing
+  && goalForEditing.standard
+  && goalForEditing.standard === 'Monitoring';
+
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
@@ -124,10 +128,7 @@ const GoalPicker = ({
     async function fetchCitations() {
       // If we have no other goals except a monitoring goal
       //  and the source is CLASS or RANs, fetch the citations.
-      if ((!selectedGoals || selectedGoals.length === 0)
-            && goalForEditing
-            && goalForEditing.standard
-            && goalForEditing.standard === 'Monitoring') {
+      if (isMonitoringGoal) {
         const retrievedCitationOptions = await fetchCitationsByGrant(
           regionId,
           grantIds,
@@ -156,36 +157,16 @@ const GoalPicker = ({
               return acc;
             }, {},
           ));
-
-          // Get a list of grants with monitoring goals.
-          const grantIdsFromCitations = retrievedCitationOptions.flatMap(
-            (citation) => citation.grants.map((grant) => grant.grantId),
-          );
-          const distinctGrantIds = [...new Set(grantIdsFromCitations)];
-
-          // Determine if any grant selected is missing a monitoring goal.
-          let grantsIdsMissingMonitoring = [];
-          grantsIdsMissingMonitoring = grantIds.filter(
-            (grantId) => !distinctGrantIds.includes(grantId),
-          );
-
-          // Get the full grant names from the grantsIdsMissingMonitoring.
-          const grantsIdsMissingMonitoringFullNames = activityRecipients.filter(
-            (ar) => grantsIdsMissingMonitoring.includes(ar.activityRecipientId),
-          ).map((grant) => grant.name);
-
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
-          setGrantsWithoutMonitoring(grantsIdsMissingMonitoringFullNames);
         }
       } else {
         setCitationOptions([]);
         setRawCitations([]);
-        setGrantsWithoutMonitoring([]);
       }
     }
     fetchCitations();
-  }, [goalForEditing, regionId, startDate, grantIds]);
+  }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
 
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
 
@@ -274,6 +255,37 @@ const GoalPicker = ({
     setValue('goalForEditing.objectives', []);
     onChangeGoal(goal);
   };
+
+  useDeepCompareEffect(() => {
+    // We have only a single monitoring goal selected.
+    if (isMonitoringGoal && (!selectedGoals || selectedGoals.length === 0)) {
+      // Get the monitoring goal from the templates.
+      const monitoringGoal = goalTemplates.find((goal) => goal.standard === 'Monitoring');
+      if (monitoringGoal) {
+        // Find any grants that are missing from the monitoring goal.
+        const missingGrants = grantIds.filter(
+          (grantId) => !monitoringGoal.goals.find((g) => g.grantId === grantId),
+        );
+
+        if (missingGrants.length > 0) {
+        // get the names of the grants that are missing from goalForEditing.grants
+          const grantsIdsMissingMonitoringFullNames = activityRecipients.filter(
+            (ar) => missingGrants.includes(ar.activityRecipientId),
+          ).map((grant) => grant.name);
+          setGrantsWithoutMonitoring(grantsIdsMissingMonitoringFullNames);
+        } else {
+          setGrantsWithoutMonitoring([]);
+        }
+      }
+    } else {
+      setGrantsWithoutMonitoring([]);
+    }
+  }, [goalForEditing,
+    grantIds,
+    selectedGoals,
+    activityRecipients,
+    isMonitoringGoal,
+    goalTemplates]);
 
   const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
 

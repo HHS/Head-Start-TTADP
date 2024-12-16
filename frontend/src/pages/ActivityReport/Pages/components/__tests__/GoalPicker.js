@@ -499,9 +499,6 @@ describe('GoalPicker', () => {
         objectives: [],
         goals: [
           {
-            grantId: 1,
-          },
-          {
             grantId: 2,
           },
         ],
