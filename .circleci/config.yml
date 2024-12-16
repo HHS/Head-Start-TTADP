@@ -1573,7 +1573,7 @@ jobs:
             for env in "${apps[@]}"; do
               ./automation/ci/scripts/acquire-lock.sh \
                 "$env" \
-                "<< parameters.build_branch >>" \
+                "<< pipeline.git.branch >>" \
                 "<< pipeline.number >>"
             done
 
@@ -1600,7 +1600,7 @@ jobs:
             for env in "${apps[@]}"; do
               ./automation/ci/scripts/release-lock.sh \
                 "$env" \
-                "<< parameters.build_branch >>" \
+                "<< pipeline.git.branch >>" \
                 "<< pipeline.number >>"
             done
           when: always
