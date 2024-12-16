@@ -454,7 +454,7 @@ commands:
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/acquire-lock.sh \
               "tta-automation" \
-              "<< parameters.build_branch >>" \
+              "<< pipeline.git.branch >>" \
               "<< pipeline.number >>"
       - run:
           name: Migrate database
@@ -468,7 +468,7 @@ commands:
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/release-lock.sh \
               "tta-automation" \
-              "<< parameters.build_branch >>" \
+              "<< pipeline.git.branch >>" \
               "<< pipeline.number >>"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
@@ -560,7 +560,7 @@ commands:
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/acquire-lock.sh \
               "tta-automation" \
-              "<< parameters.build_branch >>" \
+              "<< pipeline.git.branch >>" \
               "<< pipeline.number >>"
       - run:
           name: Start Log Monitoring
@@ -639,7 +639,7 @@ commands:
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/release-lock.sh \
               "tta-automation" \
-              "<< parameters.build_branch >>" \
+              "<< pipeline.git.branch >>" \
               "<< pipeline.number >>"
       - run:
           name: Logout of service account
