@@ -25,6 +25,7 @@ const ReviewObjectiveCitation = ({
         <RenderReviewCitations
           citations={objectiveCitations}
           activityRecipients={activityRecipients}
+          className="margin-bottom-2"
         />
       </div>
     </div>
