@@ -1227,6 +1227,26 @@ export const generateResourceList = (
   return resourceCounts;
 };
 
+export function sortDomainCounts(domainCounts) {
+  return domainCounts.sort((r1, r2) => {
+    if (r2.reportCount - r1.reportCount === 0) {
+      if (r2.recipientCount - r1.recipientCount === 0) {
+        // Break tie on url
+        const domain1 = r1.domain.toUpperCase().replace(' ', ''); // ignore upper and lowercase
+        const domain2 = r2.domain.toUpperCase().replace(' ', ''); // ignore upper and lowercase
+        if (domain1 < domain2) {
+          return -1;
+        }
+        if (domain1 > domain2) {
+          return 1;
+        }
+      }
+      return r2.recipientCount - r1.recipientCount;
+    }
+    return r2.reportCount - r1.reportCount;
+  });
+}
+
 export function generateResourceDomainList(
   precalculatedData, // data generated from calling resourceData
   removeLists, // exclude list of report ids and recipient ids from result
@@ -1280,25 +1300,7 @@ export function generateResourceDomainList(
   }
 
   // Sort By Count largest to smallest.
-  domainCounts.sort((r1, r2) => {
-    if (r2.reportCount - r1.reportCount === 0) {
-      if (r2.recipientCount - r1.recipientCount === 0) {
-        // Break tie on url
-        const domain1 = r1.domain.toUpperCase().replace(' ', ''); // ignore upper and lowercase
-        const domain2 = r2.domain.toUpperCase().replace(' ', ''); // ignore upper and lowercase
-        if (domain1 < domain2) {
-          return -1;
-        }
-        if (domain1 > domain2) {
-          return 1;
-        }
-      }
-      return r2.recipientCount - r1.recipientCount;
-    }
-    return r2.reportCount - r1.reportCount;
-  });
-
-  return domainCounts;
+  return sortDomainCounts(domainCounts);
 }
 
 const generateResourcesDashboardOverview = (allData) => {

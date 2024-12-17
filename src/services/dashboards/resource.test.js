@@ -28,6 +28,7 @@ import {
   mergeInResources,
   generateResourceDomainList,
   generateResourceList,
+  sortDomainCounts,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -670,6 +671,40 @@ describe('mergeInResources', () => {
     expect(mergedData[0].resources.length).toBe(1);
     expect(mergedData[0].resources[0].sourceFields).toEqual([
       { tableType: 'objective', sourceField: 'field1' },
+    ]);
+  });
+});
+
+describe('sortDomainCounts', () => {
+  it('should sort domains by reportCount, recipientCount, and domain name', () => {
+    const domainCounts = [
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'another.com', reportCount: 3, recipientCount: 2 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 2 },
+      { domain: 'another.com', reportCount: 3, recipientCount: 1 },
+    ];
+
+    const sorted = sortDomainCounts(domainCounts);
+
+    expect(sorted).toEqual([
+      { domain: 'another.com', reportCount: 3, recipientCount: 2 },
+      { domain: 'another.com', reportCount: 3, recipientCount: 1 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 2 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+    ]);
+  });
+
+  it('should handle ties in reportCount and recipientCount by sorting by domain name', () => {
+    const domainCounts = [
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'another.com', reportCount: 2, recipientCount: 1 },
+    ];
+
+    const sorted = sortDomainCounts(domainCounts);
+
+    expect(sorted).toEqual([
+      { domain: 'another.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
     ]);
   });
 });
