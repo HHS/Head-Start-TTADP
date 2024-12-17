@@ -370,4 +370,146 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Fourth Step/i)).toBeInTheDocument();
     expect(screen.queryAllByRole('heading', { name: /recipient's next steps/i }).length).toBe(0);
   });
+
+  it('correctly objective with citationss', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      activityRecipients: [
+        {
+          id: 11074,
+          activityRecipientId: 11074,
+          name: 'R1 - GRANT1 - HS',
+        },
+        {
+          id: 11966,
+          activityRecipientId: 11966,
+          name: 'R1 - GRANT2 - EHS',
+        },
+      ],
+      goalsAndObjectives: [
+        {
+          id: 90740,
+          name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
+          status: 'In Progress',
+          endDate: '',
+          isCurated: true,
+          grantId: 11597,
+          goalTemplateId: 24696,
+          onAR: true,
+          onApprovedAR: true,
+          rtrOrder: 1,
+          source: 'Federal monitoring issues, including CLASS and RANs',
+          regionId: 1,
+          recipientId: 1442,
+          standard: 'Monitoring',
+          prompts: [],
+          statusChanges: [
+            {
+              oldStatus: 'Not Started',
+            },
+          ],
+          activityReportGoals: [
+            {
+              endDate: null,
+              id: 155612,
+              activityReportId: 48418,
+              goalId: 90740,
+              isRttapa: null,
+              name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
+              status: 'In Progress',
+              timeframe: null,
+              closeSuspendReason: null,
+              closeSuspendContext: null,
+              source: 'Federal monitoring issues, including CLASS and RANs',
+              isActivelyEdited: false,
+              originalGoalId: null,
+            },
+          ],
+          objectives: [
+            {
+              id: 231994,
+              otherEntityId: null,
+              goalId: 90740,
+              title: 'test',
+              status: 'In Progress',
+              objectiveTemplateId: 565,
+              onAR: true,
+              onApprovedAR: true,
+              createdVia: 'activityReport',
+              rtrOrder: 1,
+              value: 231994,
+              ids: [
+                231994,
+                231995,
+                231996,
+              ],
+              ttaProvided: '<p>tta</p>\n',
+              supportType: 'Planning',
+              isNew: false,
+              arOrder: 1,
+              objectiveCreatedHere: true,
+              topics: [],
+              resources: [],
+              files: [],
+              courses: [],
+              citations: [
+                {
+                  id: 200205,
+                  activityReportObjectiveId: 241644,
+                  citation: '1302.12(k)',
+                  monitoringReferences: [
+                    {
+                      acro: 'AOC',
+                      name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                      grantId: 11966,
+                      citation: '1302.12(k)',
+                      severity: 3,
+                      findingId: '8D18F077-CD6F-4869-AB21-E76EB682433B',
+                      reviewName: '230706F2',
+                      standardId: 200205,
+                      findingType: 'Area of Concern',
+                      grantNumber: '01CH011566',
+                      findingSource: 'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                      reportDeliveryDate: '2023-06-26T04:00:00+00:00',
+                      monitoringFindingStatusName: 'Active',
+                    },
+                  ],
+                  name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                },
+              ],
+            },
+          ],
+          isSourceEditable: true,
+          goalNumber: 'G-90740',
+          promptsForReview: [],
+          isNew: false,
+          goalNumbers: [
+            'G-90740',
+            'G-90683',
+            'G-90846',
+          ],
+          goalIds: [
+            90740,
+            90683,
+            90846,
+          ],
+          grantIds: [
+            11597,
+            11074,
+            11966,
+          ],
+          collaborators: [
+            {
+              goalNumber: 'G-90683',
+            },
+          ],
+          isReopenedGoal: false,
+        },
+      ],
+    }}
+    />);
+
+    expect(await screen.findByTestId('review-citation-label')).toHaveTextContent('R1 - GRANT2 - EHS');
+    expect(await screen.findByTestId('review-citation-listitem')).toHaveTextContent('AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance');
+  });
 });
