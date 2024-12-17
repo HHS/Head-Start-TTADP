@@ -44,7 +44,7 @@ export const reduceRecipients = (source, adding) => adding.reduce((recipients, r
     || (r.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
   if (exists) {
     exists.grantIds = [...new Set([
-      ...exists.grantIds,
+      ...(exists.grantIds || []),
       ...(recipient.grantIds || []),
       recipient.grantId,
     ])].filter((g) => g);
