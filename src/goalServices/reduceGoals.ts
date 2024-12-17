@@ -186,7 +186,7 @@ export function reduceObjectivesForActivityReport(
           ? [
             ...exists.citations || [],
             ...objective.activityReportObjectives.flatMap(
-              (aro) => aro.activityReportObjectiveCitations.map((c) => ({
+              (aro) => (aro.activityReportObjectiveCitations || []).map((c) => ({
                 ...c.dataValues,
                 id: c.monitoringReferences[0].standardId,
                 name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
