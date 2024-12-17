@@ -2,7 +2,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniq, uniqBy } from 'lodash';
-import db from '../models';
+import db, { sequelize } from '../models';
 import {
   ITTAByReviewResponse,
   IMonitoringReview,
@@ -58,7 +58,7 @@ async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: n
     },
   }) as { number: string }[];
 
-  return grants.map((grant) => grant.number);
+  return grants.map((gr) => gr.number);
 }
 
 async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<ActivityReportObjectiveCitationResponse[]> {
@@ -208,24 +208,20 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
   });
 }
 
-async function extractExternalData(recipientId: number, regionId: number, calculateGranteeIds = false) {
+async function extractExternalData(recipientId: number, regionId: number) {
   const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId) as string[];
   const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
 
-  let granteeIds = [];
+  const monitoringReviewGrantees = await MonitoringReviewGrantee.findAll({
+    attributes: [
+      'granteeId',
+    ],
+    where: {
+      grantNumber: grantNumbers,
+    },
+  }) as { granteeId: string }[];
 
-  if (calculateGranteeIds) {
-    const monitoringReviewGrantees = await MonitoringReviewGrantee.findAll({
-      attributes: [
-        'granteeId',
-      ],
-      where: {
-        grantNumber: grantNumbers,
-      },
-    }) as { granteeId: string }[];
-
-    granteeIds = monitoringReviewGrantees.map(({ granteeId }) => granteeId);
-  }
+  const granteeIds = monitoringReviewGrantees.map(({ granteeId }) => granteeId);
 
   return {
     grantNumbers,
@@ -241,7 +237,8 @@ export async function ttaByReviews(
   const {
     grantNumbers,
     citationsOnActivityReports,
-  } = await extractExternalData(recipientId, regionId, false);
+    granteeIds,
+  } = await extractExternalData(recipientId, regionId);
 
   const reviews = await MonitoringReview.findAll({
     where: {
@@ -280,11 +277,21 @@ export async function ttaByReviews(
           {
             model: MonitoringFindingHistory,
             as: 'monitoringFindingHistories',
+            required: true,
             include: [
               {
                 model: MonitoringFindingLink,
                 as: 'monitoringFindingLink',
+                required: true,
                 include: [
+                  {
+                    model: MonitoringFindingGrant,
+                    as: 'monitoringFindingGrants',
+                    where: {
+                      granteeId: granteeIds,
+                    },
+                    required: true,
+                  },
                   {
                     model: MonitoringFindingStandard,
                     as: 'monitoringFindingStandards',
@@ -333,10 +340,6 @@ export async function ttaByReviews(
     let specialists = [];
 
     monitoringFindingHistories.forEach((history) => {
-      if (!history.monitoringFindingLink) {
-        return;
-      }
-
       let citation = '';
       const [findingStandards] = history.monitoringFindingLink.monitoringFindingStandards;
       if (findingStandards) {
@@ -389,7 +392,7 @@ export async function ttaByCitations(
     grantNumbers,
     citationsOnActivityReports,
     granteeIds,
-  } = await extractExternalData(recipientId, regionId, true);
+  } = await extractExternalData(recipientId, regionId);
 
   const citations = await MonitoringStandard.findAll({
     include: [
