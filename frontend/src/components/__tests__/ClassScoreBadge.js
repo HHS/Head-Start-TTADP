@@ -89,7 +89,7 @@ describe('ClassScoreBadge', () => {
     render(
       <>
         {
-        getScoreBadge('IS', 2.4, '08-02-2025')
+        getScoreBadge('IS', 2.4, '08-02-2027')
       }
       </>,
     );
@@ -100,7 +100,7 @@ describe('ClassScoreBadge', () => {
     render(
       <>
         {
-        getScoreBadge('IS', 2.5, '08-02-2025')
+        getScoreBadge('IS', 2.5, '08-02-2027')
       }
       </>,
     );
