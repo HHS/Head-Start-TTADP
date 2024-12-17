@@ -16,6 +16,7 @@ import {
   findEventsByStatus,
   csvImport,
   validateFields,
+  findEventHelper,
 } from './event';
 
 describe('event service', () => {
@@ -748,6 +749,45 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
   describe('validateFields', () => {
     it('throws an error when fields are invalid', async () => {
       expect(() => validateFields({ pig: 1 }, ['man'])).toThrow();
+    });
+  });
+
+  describe('findEventHelper', () => {
+    it('should set owner when ownerUser exists', async () => {
+      const eventId = 12345;
+      const ownerId = 67890;
+
+      const mockUser = {
+        toJSON: jest.fn().mockReturnValue({
+          id: ownerId,
+          name: 'Test Owner',
+          email: 'owner@test.com',
+        }),
+      };
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(mockUser);
+
+      const createdEvent = await db.EventReportPilot.create({
+        ownerId,
+        pocIds: [ownerId],
+        collaboratorIds: [ownerId],
+        regionId: 1,
+        data: {
+          eventId: 'E123',
+          eventName: 'Test Event',
+        },
+      });
+
+      const foundEvent = await findEventHelper({ id: createdEvent.id });
+
+      expect(foundEvent).toHaveProperty('owner');
+      expect(foundEvent.owner).toEqual({
+        id: ownerId,
+        name: 'Test Owner',
+        email: 'owner@test.com',
+      });
+
+      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+      jest.restoreAllMocks();
     });
   });
 });
