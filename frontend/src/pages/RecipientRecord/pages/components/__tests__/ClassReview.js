@@ -6,6 +6,7 @@ import fetchMock from 'fetch-mock';
 
 import ClassReview from '../ClassReview';
 import { GrantDataProvider } from '../../GrantDataContext';
+import { mockRSSData } from '../../../../../testHelpers';
 
 const grantNumber = '1';
 const regionId = 1;
@@ -45,6 +46,9 @@ describe('ClassReview', () => {
   });
 
   describe('emotional support', () => {
+    beforeEach(() => {
+      fetchMock.get('/api/feeds/item?tag=ttahub-class-thresholds', mockRSSData());
+    });
     afterEach(() => {
       fetchMock.restore();
     });
@@ -65,7 +69,7 @@ describe('ClassReview', () => {
       it('above all thresholds', () => testThreshold('IS', 3.1, 'Above all thresholds'));
       it('below quality - after 2025-08-01', () => testThreshold('IS', 2.5, 'Below quality'));
       it('below quality - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.4, 'Below quality'));
-      it('below competitive - after 2025-08-01', () => testThreshold('IS', 2.4, 'Below competitive', '08/02/2025'));
+      it('below competitive - after 2027-08-01', () => testThreshold('IS', 2.4, 'Below competitive', '08/02/2027'));
       it('below competitive - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.2, 'Below competitive'));
     });
   });
