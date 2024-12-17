@@ -1,6 +1,5 @@
 import React, {
   useState, useContext, useRef,
-  // useEffect,
 } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
