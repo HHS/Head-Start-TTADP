@@ -1027,6 +1027,12 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(filteredEvents).toHaveLength(1);
       expect(filteredEvents[0].sessionReports).toHaveLength(2);
     });
+
+    it('should return an empty array for an unknown status', async () => {
+      const events = [event];
+      const filteredEvents = await filterEventsByStatus(events, 'UNKNOWN_STATUS', userId);
+      expect(filteredEvents).toHaveLength(0);
+    });
   });
 
   describe('findAllEvents', () => {
