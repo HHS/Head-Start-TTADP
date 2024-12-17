@@ -199,7 +199,7 @@ interface FindEventHelperBlobOptions {
   scopes: SequelizeWhereOptions[];
 }
 
-async function findEventHelperBlob({
+export async function findEventHelperBlob({
   key,
   value,
   regions,
