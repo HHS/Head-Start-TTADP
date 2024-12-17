@@ -20,6 +20,8 @@ import {
   filterEventsByStatus,
   findAllEvents,
   findEventHelperBlob,
+  mapLineToData,
+  checkUserExists,
 } from './event';
 import { auditLogger } from '../logger';
 import * as mailer from '../lib/mailer';
@@ -1074,6 +1076,77 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
         scopes: [],
       });
       expect(result).toBeNull();
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('mapLineToData', () => {
+    it('should map CSV line to data object correctly', () => {
+      const line = {
+        Audience: 'Recipients',
+        'IST/Creator': 'creator@example.com',
+        'Event Title': 'Event Title Example',
+        'Event Duration': '2 days',
+        'Event Duration/#NC Days of Support': '3 days',
+        'Event ID': 'R01-TR-1234',
+        'Overall Vision/Goal for the PD Event': 'Overall Vision',
+        'Vision/Goal/Outcomes for the PD Event': 'Vision Outcome',
+        'Reason for Activity': 'Complaint',
+        'Reason(s) for PD': 'Planning/Coordination',
+        'Target Population(s)': 'Program Staff\nAffected by Disaster',
+        'Event Organizer - Type of Event': 'Regional office/TTA',
+        'IST Name:': 'IST Name Example',
+        'IST Name': 'IST Name Example 2',
+        'Extra Column': 'Extra Value',
+      };
+
+      const expectedData = {
+        eventIntendedAudience: 'Recipients',
+        creator: 'creator@example.com',
+        eventName: 'Event Title Example',
+        trainingType: '3 days',
+        eventId: 'R01-TR-1234',
+        vision: 'Vision Outcome',
+        reasons: ['Planning/Coordination'],
+        targetPopulations: ['Program Staff', 'Affected by Disaster'],
+        eventOrganizer: 'Regional office/TTA',
+        istName: 'IST Name Example 2',
+      };
+
+      const result = mapLineToData(line);
+      expect(result).toEqual(expectedData);
+    });
+  });
+
+  describe('checkUserExists', () => {
+    it('should return the user if they exist', async () => {
+      const mockUser = {
+        id: 1,
+        name: 'Test User',
+        email: 'test@example.com',
+      };
+
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(mockUser);
+
+      const result = await checkUserExists('email', 'test@example.com');
+      expect(result).toEqual(mockUser);
+
+      jest.restoreAllMocks();
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
+
+      await expect(checkUserExists('email', 'nonexistent@example.com')).rejects.toThrow('User with email: nonexistent@example.com does not exist');
+
+      jest.restoreAllMocks();
+    });
+
+    it('should throw an error if the user does not exist by name', async () => {
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
+
+      await expect(checkUserExists('name', 'Nonexistent User')).rejects.toThrow('User with name: Nonexistent User does not exist');
+
       jest.restoreAllMocks();
     });
   });
