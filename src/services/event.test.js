@@ -18,6 +18,7 @@ import {
   validateFields,
   findEventHelper,
 } from './event';
+import { auditLogger } from '../logger';
 
 describe('event service', () => {
   afterAll(async () => {
@@ -787,6 +788,36 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       });
 
       await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('destroyEvent', () => {
+    it('logs an error when deleting session reports fails', async () => {
+      const eventId = 12345;
+
+      // Mock the SessionReportPilot.destroy method to throw an error
+      jest.spyOn(db.SessionReportPilot, 'destroy').mockRejectedValue(new Error('Session report deletion error'));
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+
+      await destroyEvent(eventId);
+
+      expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting session reports for event ${eventId}:`, expect.any(Error));
+
+      jest.restoreAllMocks();
+    });
+
+    it('logs an error when deleting event report fails', async () => {
+      const eventId = 12345;
+
+      // Mock the EventReportPilot.destroy method to throw an error
+      jest.spyOn(db.EventReportPilot, 'destroy').mockRejectedValue(new Error('Event report deletion error'));
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+
+      await destroyEvent(eventId);
+
+      expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting event report for event ${eventId}:`, expect.any(Error));
+
       jest.restoreAllMocks();
     });
   });
