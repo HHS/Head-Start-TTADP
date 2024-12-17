@@ -15,4 +15,4 @@ A clear alternative lies in the [Vite](https://vite.dev/) project, which operate
 
 ## Consequences
 
-While this change would not be pain-free, there are numerous guides available online to make this transition simple. With some configuration and adaquate testing, the app would deliver an identical experience to the end user, while also increasing local development performance. 
+While this change would not be pain-free, there are numerous guides available online to make this transition simple. With some configuration and adequate testing, the app would deliver an identical experience to the end user, while also increasing local development performance. 
