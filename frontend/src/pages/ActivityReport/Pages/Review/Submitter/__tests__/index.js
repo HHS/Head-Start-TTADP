@@ -71,6 +71,7 @@ const renderReview = (
   hasIncompleteGoalPrompts = false,
   hasGrantsMissingMonitoring = false,
   goalsAndObjectives = [],
+  additionalCitations = [],
 ) => {
   const formData = {
     approvers,
@@ -116,6 +117,7 @@ const renderReview = (
           {
             id: 1,
             citations: [
+              ...additionalCitations,
               {
                 id: 1,
                 text: 'citation 1',
@@ -191,9 +193,75 @@ describe('Submitter review page', () => {
         null,
         false,
         true,
+        [],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
       );
       expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
       expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
+    });
+
+    it('shows an error if some of the grants are missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(2);
+    });
+
+    it('hides an error if some of the grants are missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [{
+          isCurated: false,
+          prompts: [{
+            allGoalsHavePromptResponse: false,
+            title: 'A regular goal',
+          }],
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [1],
+        }],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+      );
+      expect(screen.queryAllByText(/This grant does not have any of the citations selected/i).length).toBe(0);
     });
 
     it('hides error that some grants don\'t have monitoring if we have more than one goal', async () => {
@@ -222,6 +290,15 @@ describe('Submitter review page', () => {
           ],
           goalIds: [1],
         }],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
       );
       expect(screen.queryAllByText(/this grant does not have the standard monitoring goal/i).length).toBe(0);
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(0);
