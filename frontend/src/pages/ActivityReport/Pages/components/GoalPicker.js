@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Label, Button, Checkbox } from '@trussworks/react-uswds';
+import {
+  Label, Button, Checkbox, Alert,
+} from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
@@ -61,6 +64,7 @@ const GoalPicker = ({
 
   const [citationOptions, setCitationOptions] = useState([]);
   const [rawCitations, setRawCitations] = useState([]);
+  const [grantsWithoutMonitoring, setGrantsWithoutMonitoring] = useState([]);
 
   const selectedGoals = useWatch({ name: 'goals' });
   const activityRecipients = watch('activityRecipients');
@@ -106,6 +110,10 @@ const GoalPicker = ({
     defaultValue: '',
   });
 
+  const isMonitoringGoal = goalForEditing
+  && goalForEditing.standard
+  && goalForEditing.standard === 'Monitoring';
+
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
@@ -118,8 +126,9 @@ const GoalPicker = ({
   // Fetch citations for the goal if the source is CLASS or RANs.
   useDeepCompareEffect(() => {
     async function fetchCitations() {
-      // If its a monitoring goal and the source is CLASS or RANs, fetch the citations.
-      if (goalForEditing && goalForEditing.standard && goalForEditing.standard === 'Monitoring') {
+      // If we have no other goals except a monitoring goal
+      //  and the source is CLASS or RANs, fetch the citations.
+      if (isMonitoringGoal) {
         const retrievedCitationOptions = await fetchCitationsByGrant(
           regionId,
           grantIds,
@@ -148,7 +157,6 @@ const GoalPicker = ({
               return acc;
             }, {},
           ));
-
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
         }
@@ -158,7 +166,7 @@ const GoalPicker = ({
       }
     }
     fetchCitations();
-  }, [goalForEditing, regionId, startDate, grantIds]);
+  }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
 
   const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
 
@@ -248,6 +256,37 @@ const GoalPicker = ({
     onChangeGoal(goal);
   };
 
+  useDeepCompareEffect(() => {
+    // We have only a single monitoring goal selected.
+    if (isMonitoringGoal && (!selectedGoals || selectedGoals.length === 0)) {
+      // Get the monitoring goal from the templates.
+      const monitoringGoal = goalTemplates.find((goal) => goal.standard === 'Monitoring');
+      if (monitoringGoal) {
+        // Find any grants that are missing from the monitoring goal.
+        const missingGrants = grantIds.filter(
+          (grantId) => !monitoringGoal.goals.find((g) => g.grantId === grantId),
+        );
+
+        if (missingGrants.length > 0) {
+        // get the names of the grants that are missing from goalForEditing.grants
+          const grantsIdsMissingMonitoringFullNames = activityRecipients.filter(
+            (ar) => missingGrants.includes(ar.activityRecipientId),
+          ).map((grant) => grant.name);
+          setGrantsWithoutMonitoring(grantsIdsMissingMonitoringFullNames);
+        } else {
+          setGrantsWithoutMonitoring([]);
+        }
+      }
+    } else {
+      setGrantsWithoutMonitoring([]);
+    }
+  }, [goalForEditing,
+    grantIds,
+    selectedGoals,
+    activityRecipients,
+    isMonitoringGoal,
+    goalTemplates]);
+
   const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
 
   return (
@@ -268,6 +307,37 @@ const GoalPicker = ({
         <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
       </Modal>
       <div className="margin-top-3 position-relative">
+        {
+          grantsWithoutMonitoring.length > 0 && (
+            <Alert type="warning" className="margin-bottom-2">
+              <span>
+                <span className="margin-top-0">
+                  {grantsWithoutMonitoring.length > 1
+                    ? 'These grants do not have the standard monitoring goal:'
+                    : 'This grant does not have the standard monitoring goal:'}
+                  <ul className="margin-top-2">
+                    {grantsWithoutMonitoring.map((grant) => (
+                      <li key={grant}>{grant}</li>
+                    ))}
+                  </ul>
+                </span>
+                <span className="margin-top-2 margin-bottom-0">
+                  To avoid errors when submitting the report, you can either:
+                  <ul className="margin-top-2 margin-bottom-0">
+                    <li>
+                      Add a different goal to the report
+                    </li>
+                    <li>
+                      Remove the grant from the
+                      {' '}
+                      <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                    </li>
+                  </ul>
+                </span>
+              </span>
+            </Alert>
+          )
+       }
         <Label>
           Select recipient&apos;s goal
           <Req />
