@@ -77,11 +77,13 @@ const Draft = ({
     return completeRoleList.sort();
   };
 
+  const canSubmitReport = allGoalsHavePromptResponses
+  && !hasIncompletePages
+  && !grantsMissingMonitoring.length
+  && !grantsMissingCitations.length;
+
   const onSubmit = (e) => {
-    if (allGoalsHavePromptResponses
-      && !hasIncompletePages
-      && !grantsMissingMonitoring.length
-      && !grantsMissingCitations.length) {
+    if (canSubmitReport) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
