@@ -305,7 +305,7 @@ const switchToTopicCentric = (input) => {
               }
               return [...reports, report];
             }, output[topic].reports);
-            output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+            output[topic].resources = resourceObjects.reduce((resources, resource) => {
               const exists = resources.find((r) => r.resourceId === resource.resourceId);
               if (exists) {
                 return resources;
