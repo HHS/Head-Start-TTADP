@@ -19,6 +19,7 @@ import {
   findEventHelper,
   filterEventsByStatus,
   findAllEvents,
+  findEventHelperBlob,
 } from './event';
 import { auditLogger } from '../logger';
 import * as mailer from '../lib/mailer';
@@ -1054,6 +1055,20 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       const eventWithFallback = foundEvents.find((event) => event.id === createdEvent1.id);
       expect(eventWithFallback.data.status).toBe(null);
       await destroyEvent(createdEvent1.id);
+    });
+  });
+
+  describe('findEventHelperBlob', () => {
+    it('should return null if no events are found', async () => {
+      jest.spyOn(db.EventReportPilot, 'findAll').mockResolvedValue(null);
+      const result = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        scopes: [],
+      });
+      expect(result).toBeNull();
+      jest.restoreAllMocks();
     });
   });
 });
