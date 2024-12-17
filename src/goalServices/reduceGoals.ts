@@ -184,7 +184,7 @@ export function reduceObjectivesForActivityReport(
         objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
           ? [
-            ...exists.citations,
+            ...exists.citations || [],
             ...objective.activityReportObjectives.flatMap(
               (aro) => aro.activityReportObjectiveCitations.map((c) => ({
                 ...c.dataValues,
