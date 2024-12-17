@@ -1,6 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
-import moment from 'moment';
 import { DECIMAL_BASE } from '@ttahub/common';
 
 /**
