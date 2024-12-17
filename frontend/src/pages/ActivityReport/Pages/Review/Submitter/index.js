@@ -105,7 +105,49 @@ const Submitter = ({
         (recipient) => !goalsAndObjectives[0].grantIds.includes(recipient.activityRecipientId),
       ).map((recipient) => recipient.activityRecipientId);
 
-      // From activityRecipients get the name of the grants that matcht the activityRecipientId.
+      // From activityRecipients get the name of the grants that match the activityRecipientId.
+      const grantNames = activityRecipients.filter(
+        (recipient) => missingGrants.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      return grantNames;
+    }
+    return [];
+  };
+
+  const grantsMissingCitations = () => {
+    // Determine if we have a monitoring goal selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
+      const citationGrantIds = Array.from(hasMonitoringGoalSelected.objectives.reduce(
+        (acc, objective) => {
+          const monitoringReferencesFlat = objective.citations.map(
+            (citation) => citation.monitoringReferences,
+          ).flat();
+
+          const monitoringReferenceGrantIds = new Set(monitoringReferencesFlat.map(
+            (reference) => reference.grantId,
+          ));
+
+          // if acc doesnt have the grant ids in monitoringReferenceGrantIds, add them.
+          monitoringReferenceGrantIds.forEach((grantId) => {
+            if (!acc.has(grantId)) {
+              acc.add(grantId);
+            }
+          });
+          return acc;
+        }, new Set(),
+      ));
+
+      // console.log('hasMonitoringGoalSelected', hasMonitoringGoalSelected);
+      // Then get the grantIds from activityRecipients
+      // Then compare the two lists and return the difference
+      const missingGrants = activityRecipients.filter(
+        (recipient) => !citationGrantIds.includes(recipient.activityRecipientId),
+      ).map((recipient) => recipient.activityRecipientId);
+
+      // From activityRecipients get the name of the grants that match the activityRecipientId.
       const grantNames = activityRecipients.filter(
         (recipient) => missingGrants.includes(recipient.activityRecipientId),
       ).map(
@@ -141,6 +183,7 @@ const Submitter = ({
               lastSaveTime={lastSaveTime}
               creatorRole={creatorRole}
               grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
             />
           )}
         {submitted
