@@ -740,7 +740,7 @@ const replacements: Record<string, string> = {
 
 const applyReplacements = (value: string) => replacements[value] || value;
 
-const mapLineToData = (line: Record<string, string>) => {
+export const mapLineToData = (line: Record<string, string>) => {
   const data: Record<string, unknown> = {};
 
   Object.keys(line).forEach((key) => {
@@ -755,7 +755,7 @@ const mapLineToData = (line: Record<string, string>) => {
   return data;
 };
 
-const checkUserExists = async (key:'email' | 'name', value: string) => {
+export const checkUserExists = async (key:'email' | 'name', value: string) => {
   const user = await db.User.findOne({
     where: {
       [key]: {
@@ -780,7 +780,7 @@ const checkUserExists = async (key:'email' | 'name', value: string) => {
   return user;
 };
 
-const checkUserExistsByNationalCenter = async (identifier: string) => {
+export const checkUserExistsByNationalCenter = async (identifier: string) => {
   const user = await db.User.findOne({
     attributes: ['id', 'name'],
     include: [
