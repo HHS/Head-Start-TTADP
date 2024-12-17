@@ -277,7 +277,7 @@ const GoalPicker = ({
           setGrantsWithoutMonitoring([]);
         }
       }
-    } else {
+    } else if (grantsWithoutMonitoring.length > 0) {
       setGrantsWithoutMonitoring([]);
     }
   }, [goalForEditing,
