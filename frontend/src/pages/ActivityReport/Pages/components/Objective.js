@@ -1,12 +1,13 @@
 import React, {
   useState, useContext, useRef,
-  useEffect,
+  // useEffect,
 } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import {
-  useController, useFormContext,
+  useController, useFormContext, useWatch,
 } from 'react-hook-form';
 import {
   Alert,
@@ -69,6 +70,7 @@ export default function Objective({
   const [onApprovedAR, setOnApprovedAR] = useState(initialObjective.onApprovedAR);
   const [citationWarnings, setCitationWarnings] = useState([]);
   const activityRecipients = watch('activityRecipients');
+  const selectedGoals = useWatch({ name: 'goals' });
 
   /**
    * add controllers for all the controlled fields
@@ -387,9 +389,13 @@ export default function Objective({
     onChangeCitations([...newCitationsObjects]);
   };
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     // Get a distinct list of grantId's from the citation.grants array.
-    if (!objectiveCitations || !objectiveCitations.length) {
+    if ((!objectiveCitations || !objectiveCitations.length)
+        || (selectedGoals && selectedGoals.length > 0)) {
+      if (citationWarnings.length > 0) {
+        setCitationWarnings([]);
+      }
       return;
     }
     const grantIdsWithCitations = Array.from(objectiveCitations.reduce((acc, citation) => {
@@ -403,7 +409,7 @@ export default function Objective({
     ).map((recipient) => recipient.name);
 
     setCitationWarnings(missingRecipientGrantNames);
-  }, [objectiveCitations, activityRecipients]);
+  }, [objectiveCitations, activityRecipients, selectedGoals, citationWarnings]);
 
   return (
     <>
