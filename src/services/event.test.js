@@ -925,6 +925,40 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(filteredEvents[0].sessionReports).toHaveLength(1);
       expect(filteredEvents[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
     });
+
+    it('should return events for all users when status is COMPLETE', async () => {
+      const completeEvent = {
+        ...event,
+        data: { status: TRS.COMPLETE },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [completeEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.COMPLETE, 999);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events for all users when status is SUSPENDED', async () => {
+      const suspendedEvent = {
+        ...event,
+        data: { status: TRS.SUSPENDED },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [suspendedEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.SUSPENDED, 999);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
   });
 
   describe('findAllEvents', () => {
