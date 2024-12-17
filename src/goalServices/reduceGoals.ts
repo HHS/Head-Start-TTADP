@@ -178,19 +178,26 @@ export function reduceObjectivesForActivityReport(
         'course',
         exists,
       );
-      // Citations should return null if they are not applicable.
+
+      // Citations should return null not exists (every subsequent adding of objective).
       exists.citations = objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
-        && objective.activityReportObjectives[0].activityReportObjectiveCitations
-        && objective.activityReportObjectives[0].activityReportObjectiveCitations.length > 0
-        ? uniq(objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
-          (c) => ({
-            ...c.dataValues,
-            id: c.monitoringReferences[0].standardId,
-            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-          }),
-        ))
-        : null;
+        ? uniq([
+          ...exists.citations,
+          ...objective.activityReportObjectives.flatMap(
+            (aro) => aro.activityReportObjectiveCitations.map((c) => ({
+              ...c.dataValues,
+              id: c.monitoringReferences[0].standardId,
+              name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
+            })),
+          ),
+        ])
+        : [];
+
+      // Set to null if we don't have any citations.
+      if (exists.citations.length === 0) {
+        exists.citations = null;
+      }
 
       exists.files = uniqBy([
         ...exists.files,
@@ -226,7 +233,7 @@ export function reduceObjectivesForActivityReport(
 
     const { id } = objective;
 
-    return [...objectives, {
+    const newObjective = {
       ...objective.dataValues,
       title: objective.title.trim(),
       value: id,
@@ -258,7 +265,7 @@ export function reduceObjectivesForActivityReport(
         'value',
       ),
       files: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
+      && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
           .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
         : [],
@@ -267,23 +274,25 @@ export function reduceObjectivesForActivityReport(
         'activityReportObjectiveCourses',
         'course',
       ),
-      // Citations should return null if they are not applicable.
+      // Citations should return null if they are not applicable (first time we add the objective).
       citations: objective.activityReportObjectives
       && objective.activityReportObjectives.length > 0
-      && objective.activityReportObjectives[0].activityReportObjectiveCitations
-      && objective.activityReportObjectives[0].activityReportObjectiveCitations.length > 0
-        ? uniq(
-          objective.activityReportObjectives[0].activityReportObjectiveCitations.map(
-            (c) => (
-              {
-                ...c.dataValues,
-                id: c.monitoringReferences[0].standardId,
-                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-              }),
-          ),
-        )
-        : null,
-    }];
+        ? uniq(objective.activityReportObjectives.flatMap(
+          (aro) => aro.activityReportObjectiveCitations.map((c) => ({
+            ...c.dataValues,
+            id: c.monitoringReferences[0].standardId,
+            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
+          })),
+        ))
+        : [],
+    };
+
+    // If we have no citations set to null.
+    if (newObjective.citations.length === 0) {
+      newObjective.citations = null;
+    }
+
+    return [...objectives, newObjective];
   }, currentObjectives);
 
   // Sort by AR Order in place.
