@@ -755,7 +755,6 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
 
   describe('findEventHelper', () => {
     it('should set owner when ownerUser exists', async () => {
-      const eventId = 12345;
       const ownerId = 67890;
 
       const mockUser = {
@@ -790,13 +789,34 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
       jest.restoreAllMocks();
     });
+
+    it('should return default values when data, sessionReports, and eventReportPilotNationalCenterUsers are undefined', async () => {
+      const ownerId = 67890;
+
+      // Create an event without data, sessionReports, and eventReportPilotNationalCenterUsers
+      const createdEvent = await db.EventReportPilot.create({
+        ownerId,
+        pocIds: [ownerId],
+        collaboratorIds: [ownerId],
+        regionId: 1,
+        data: {},
+      });
+
+      const foundEvent = await findEventHelper({ id: createdEvent.id });
+
+      expect(foundEvent).toHaveProperty('data', {});
+      expect(foundEvent).toHaveProperty('sessionReports', []);
+      expect(foundEvent).toHaveProperty('eventReportPilotNationalCenterUsers', []);
+
+      // Clean up
+      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+    });
   });
 
   describe('destroyEvent', () => {
     it('logs an error when deleting session reports fails', async () => {
       const eventId = 12345;
 
-      // Mock the SessionReportPilot.destroy method to throw an error
       jest.spyOn(db.SessionReportPilot, 'destroy').mockRejectedValue(new Error('Session report deletion error'));
       const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
 
@@ -810,7 +830,6 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
     it('logs an error when deleting event report fails', async () => {
       const eventId = 12345;
 
-      // Mock the EventReportPilot.destroy method to throw an error
       jest.spyOn(db.EventReportPilot, 'destroy').mockRejectedValue(new Error('Event report deletion error'));
       const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
 
