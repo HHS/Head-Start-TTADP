@@ -707,6 +707,20 @@ describe('sortDomainCounts', () => {
       { domain: 'example.com', reportCount: 2, recipientCount: 1 },
     ]);
   });
+
+  it('should handle ties in reportCount and recipientCount by sorting by domain name in reverse order', () => {
+    const domainCounts = [
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'zexample.com', reportCount: 2, recipientCount: 1 },
+    ];
+
+    const sorted = sortDomainCounts(domainCounts);
+
+    expect(sorted).toEqual([
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'zexample.com', reportCount: 2, recipientCount: 1 },
+    ]);
+  });
 });
 
 describe('generateResourceDomainList', () => {
