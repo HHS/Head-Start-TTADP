@@ -198,6 +198,39 @@ WITH
     JOIN "UserRoles" ur ON u.id = ur."userId"
     JOIN "Roles" r ON ur."roleId" = r.id
   ),
+  filtered_grants AS (
+    SELECT DISTINCT
+      gr.*
+    FROM "Grants" gr
+    LEFT JOIN "GrantReplacements" grr
+    ON gr.id = grr."replacedGrantId"
+    WHERE gr."deleted" != true
+	AND (grr."replacementDate" IS NULL
+        OR grr."replacementDate" > '2020-08-31')
+    -- Filter for startDate dates between two values if ssdi.startDate is defined
+    AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
+        OR gr."inactivationDate" IS NULL
+        OR gr."inactivationDate"::date >= (
+        SELECT MIN(value::timestamp)::date
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.startDate', true), ''),'[]')::json) AS value
+        ))
+    AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
+        OR gr."startDate"::date <= (
+        SELECT MAX(value::timestamp)::date
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.startDate', true), ''),'[]')::json) AS value
+        ))
+    AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
+        OR gr."endDate"::date >= (
+        SELECT MIN(value::timestamp)::date
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.startDate', true), ''),'[]')::json) AS value
+        ))
+    -- Filter for region if ssdi.region is defined
+    AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
+        OR gr."regionId" in (
+        SELECT value::integer AS my_array
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
+        ))
+  ),
   grant_counts AS (
     SELECT
       r.name,
@@ -214,10 +247,9 @@ WITH
       ON u.id = a."userId"
     LEFT JOIN "ActivityRecipients" ar
       ON a.id = ar."activityReportId"
-    LEFT JOIN "Grants" gr
+    LEFT JOIN filtered_grants gr
       ON gr."id" = ar."grantId"
-    WHERE (gr.status = 'Active' OR gr.status IS NULL)
-      AND r.name IS NOT NULL
+    WHERE r.name IS NOT NULL
     GROUP BY r.name
   ),
   grant_count_users AS (
@@ -235,24 +267,16 @@ WITH
       ON u.id = a."userId"
     LEFT JOIN "ActivityRecipients" ar
       ON a.id = ar."activityReportId"
-    LEFT JOIN "Grants" gr
+    LEFT JOIN filtered_grants gr
       ON gr."id" = ar."grantId"
-    WHERE (gr.status = 'Active' OR gr.status IS NULL)
-      AND r.name IS NOT NULL
+    WHERE r.name IS NOT NULL
     GROUP BY 1,2
   ),
   total_grants AS (
     SELECT
       COUNT(DISTINCT gr.number) AS grant_count,
       COUNT(DISTINCT gr."recipientId") AS recipient_count
-    FROM "Grants" gr
-    WHERE gr.status = 'Active'
-      -- Filter for region if ssdi.region is defined
-      AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
-          OR gr."regionId" in (
-          SELECT value::integer AS my_array
-            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
-          ))
+    FROM filtered_grants gr
   ),
   recipient_data AS (
     SELECT
