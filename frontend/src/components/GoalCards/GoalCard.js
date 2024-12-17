@@ -20,7 +20,6 @@ import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import colors from '../../colors';
-import Tooltip from '../Tooltip';
 import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
@@ -28,6 +27,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import DataCard from '../DataCard';
+import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 
 export const ObjectiveSwitch = ({
   objective,
@@ -256,7 +256,7 @@ export default function GoalCard({
             {' '}
             {goalNumbers}
             {isMerged && (
-              <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
+              <Tag className="usa-tag--merged-goal border margin-left-1 text-ink text-normal radius-sm" background={colors.baseLightest}>
                 Merged
               </Tag>
             )}
@@ -298,28 +298,12 @@ export default function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          {collaborators.map((c) => {
-            if (!c.goalCreatorName) return null;
-
-            return (
-              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
-                {collaborators.length > 1 && (
-                  <>
-                    <strong className="margin-right-1 text-no-wrap">{c.goalNumber}</strong>
-                    {' '}
-                  </>
-                )}
-                <Tooltip
-                  displayText={c.goalCreatorRoles}
-                  screenReadDisplayText={false}
-                  buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
-                  tooltipText={c.goalCreatorName}
-                  underlineStyle="solid"
-                  className="ttahub-goal-card__entered-by-tooltip"
-                />
-              </p>
-            );
-          })}
+          <SpecialistTags
+            specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
+              name: c.goalCreatorName,
+              roles: [c.goalCreatorRoles].flat(),
+            }))}
+          />
         </div>
       </div>
 
