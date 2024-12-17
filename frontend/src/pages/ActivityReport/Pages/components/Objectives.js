@@ -13,6 +13,7 @@ export default function Objectives({
   reportId,
   citationOptions,
   rawCitations,
+  isMonitoringGoal,
 }) {
   const { errors, getValues, setValue } = useFormContext();
   const isMonitoring = citationOptions && citationOptions.length > 0;
@@ -141,6 +142,7 @@ export default function Objectives({
               reportId={reportId}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
             />
           );
         })}
@@ -158,6 +160,7 @@ Objectives.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })),
+  isMonitoringGoal: PropTypes.bool,
   rawCitations: PropTypes.arrayOf(PropTypes.shape({
     standardId: PropTypes.number,
     citation: PropTypes.string,
@@ -180,4 +183,5 @@ Objectives.propTypes = {
 Objectives.defaultProps = {
   citationOptions: [],
   rawCitations: [],
+  isMonitoringGoal: false,
 };

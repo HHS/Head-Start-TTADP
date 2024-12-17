@@ -382,6 +382,7 @@ const GoalPicker = ({
               isMultiRecipientReport={isMultiRecipientReport}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
             />
           </div>
         ) : null}
