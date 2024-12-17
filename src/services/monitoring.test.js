@@ -152,6 +152,54 @@ describe('monitoring services', () => {
         IS: expect.any(String),
       });
     });
+    it('returns an empty object when no score is found', async () => {
+      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce(null);
+
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).toEqual({});
+    });
+    it('returns an empty object when the score date is before 2020-11-09', async () => {
+      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce({
+        emotionalSupport: 6.2303,
+        classroomOrganization: 5.2303,
+        instructionalSupport: 3.2303,
+        reportDeliveryDate: '2020-10-01 21:00:00-07',
+      });
+
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).toEqual({});
+    });
+    it('returns an empty object when the grant is a CDI grant', async () => {
+      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce({
+        emotionalSupport: 6.2303,
+        classroomOrganization: 5.2303,
+        instructionalSupport: 3.2303,
+        reportDeliveryDate: '2023-05-22 21:00:00-07',
+      });
+
+      jest.spyOn(Grant, 'findOne').mockResolvedValueOnce({
+        number: GRANT_NUMBER,
+        cdi: true,
+      });
+
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
+
+      expect(data).toEqual({});
+    });
   });
   describe('monitoringData', () => {
     beforeAll(async () => {
