@@ -125,7 +125,6 @@ describe('filtersToScopes', () => {
   let includedUser2;
   let includedUser3;
   let excludedUser;
-  let client;
 
   beforeAll(async () => {
     await User.create(mockUser);
