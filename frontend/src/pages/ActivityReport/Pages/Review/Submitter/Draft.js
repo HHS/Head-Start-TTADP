@@ -78,7 +78,10 @@ const Draft = ({
   };
 
   const onSubmit = (e) => {
-    if (allGoalsHavePromptResponses && !hasIncompletePages && !grantsMissingMonitoring.length) {
+    if (allGoalsHavePromptResponses
+      && !hasIncompletePages
+      && !grantsMissingMonitoring.length
+      && !grantsMissingCitations.length) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
