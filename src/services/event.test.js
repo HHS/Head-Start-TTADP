@@ -22,6 +22,7 @@ import {
   findEventHelperBlob,
   mapLineToData,
   checkUserExists,
+  checkUserExistsByNationalCenter,
 } from './event';
 import { auditLogger } from '../logger';
 import * as mailer from '../lib/mailer';
@@ -1146,6 +1147,30 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
 
       await expect(checkUserExists('name', 'Nonexistent User')).rejects.toThrow('User with name: Nonexistent User does not exist');
+
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('checkUserExistsByNationalCenter', () => {
+    it('should return the user if they exist', async () => {
+      const mockUser = {
+        id: 1,
+        name: 'Test User',
+      };
+
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(mockUser);
+
+      const result = await checkUserExistsByNationalCenter('Test National Center');
+      expect(result).toEqual(mockUser);
+
+      jest.restoreAllMocks();
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
+
+      await expect(checkUserExistsByNationalCenter('Nonexistent National Center')).rejects.toThrow('User associated with National Center: Nonexistent National Center does not exist');
 
       jest.restoreAllMocks();
     });
