@@ -908,6 +908,40 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(filteredEvents[0].sessionReports).toHaveLength(2);
     });
 
+    it('should return events with all sessions for collaborator when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 789);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events with all sessions for POC when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 456);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
     it('should return events with only complete sessions for non-owner, non-collaborator, non-POC when status is IN_PROGRESS', async () => {
       const inProgressEvent = {
         ...event,
