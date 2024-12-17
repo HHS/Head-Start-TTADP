@@ -21,6 +21,7 @@ import {
   findAllEvents,
 } from './event';
 import { auditLogger } from '../logger';
+import * as mailer from '../lib/mailer';
 
 describe('event service', () => {
   afterAll(async () => {
@@ -128,6 +129,38 @@ describe('event service', () => {
       expect(updated).toHaveProperty('ownerId', 123);
 
       await destroyEvent(updated.id);
+    });
+
+    it('calls trEventComplete when status is updated to COMPLETE', async () => {
+      const created = await createAnEvent(98_989);
+
+      const mockEvent = {
+        toJSON: jest.fn().mockReturnValue({
+          id: created.id,
+          ownerId: created.ownerId,
+          pocIds: created.pocIds,
+          collaboratorIds: created.collaboratorIds,
+          regionId: created.regionId,
+          data: created.data,
+        }),
+        update: jest.fn(),
+      };
+
+      jest.spyOn(db.EventReportPilot, 'findByPk').mockResolvedValue(mockEvent);
+      const trEventCompleteSpy = jest.spyOn(mailer, 'trEventComplete').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: created.ownerId,
+        pocIds: created.pocIds,
+        regionId: created.regionId,
+        collaboratorIds: created.collaboratorIds,
+        data: { status: TRS.COMPLETE },
+      });
+
+      expect(trEventCompleteSpy).toHaveBeenCalledWith(mockEvent.toJSON());
+
+      await destroyEvent(created.id);
+      jest.restoreAllMocks();
     });
   });
 
