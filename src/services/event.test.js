@@ -17,6 +17,8 @@ import {
   csvImport,
   validateFields,
   findEventHelper,
+  filterEventsByStatus,
+  findAllEvents,
 } from './event';
 import { auditLogger } from '../logger';
 
@@ -838,6 +840,109 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting event report for event ${eventId}:`, expect.any(Error));
 
       jest.restoreAllMocks();
+    });
+  });
+
+  describe('filterEventsByStatus', () => {
+    const userId = 123;
+    const event = {
+      id: 1,
+      ownerId: userId,
+      pocIds: [456],
+      collaboratorIds: [789],
+      regionId: 1,
+      data: { status: TRS.NOT_STARTED },
+      sessionReports: [],
+    };
+
+    it('should return events for POC, owner, or collaborator when status is null', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, null, userId);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events for collaborator when status is null', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, null, 789);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events for owner when status is null', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, null, userId);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events for admin without filtering', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.NOT_STARTED, userId, true);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events with all sessions for owner, collaborator, or POC when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, userId);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events with only complete sessions for non-owner, non-collaborator, non-POC when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 999);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
+    });
+  });
+
+  describe('findAllEvents', () => {
+    it('should return all events', async () => {
+      const event1 = await createAnEvent(1);
+      const event2 = await createAnEvent(2);
+
+      const events = await findAllEvents();
+
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: event1.id }),
+          expect.objectContaining({ id: event2.id }),
+        ]),
+      );
+
+      await destroyEvent(event1.id);
+      await destroyEvent(event2.id);
     });
   });
 });
