@@ -64,6 +64,7 @@ const RenderObjective = ({
   citationOptions = [],
   rawCitations = [],
   additionalHookFormData = {},
+  isMonitoringGoal = false,
 }) => {
   const hookForm = useForm({
     mode: 'onBlur',
@@ -102,6 +103,7 @@ const RenderObjective = ({
               topicOptions={[]}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
               options={[
                 {
                   label: 'Create a new objective',
@@ -188,7 +190,11 @@ describe('Objective', () => {
       }],
     }];
 
-    render(<RenderObjective citationOptions={citationOptions} rawCitations={rawCitations} />);
+    render(<RenderObjective
+      citationOptions={citationOptions}
+      rawCitations={rawCitations}
+      isMonitoringGoal
+    />);
     const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
     expect(helpButton).toBeVisible();
     const citationsButton = screen.getByRole('button', { name: /Citation/i });
@@ -340,6 +346,7 @@ describe('Objective', () => {
       citationOptions={citationOptions}
       rawCitations={rawCitations}
       additionalHookFormData={additionalHookFormData}
+      isMonitoringGoal
     />);
 
     const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });

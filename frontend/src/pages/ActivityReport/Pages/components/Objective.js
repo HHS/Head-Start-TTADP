@@ -49,6 +49,7 @@ export default function Objective({
   reportId,
   citationOptions,
   rawCitations,
+  isMonitoringGoal,
 }) {
   const modalRef = useRef();
 
@@ -440,7 +441,7 @@ export default function Objective({
         />
       </FormFieldThatIsSometimesReadOnly>
       {
-        citationOptions.length > 0 && citationWarnings.length > 0 && (
+        isMonitoringGoal && citationWarnings.length > 0 && (
           <Alert type="warning" className="margin-bottom-2">
             <span>
               <span className="margin-top-0">
@@ -474,7 +475,7 @@ export default function Objective({
         )
       }
       {
-        citationOptions.length > 0 && (
+        isMonitoringGoal && (
           <GenericSelectWithDrawer
             error={errors.citations
               ? ERROR_FORMAT(errors.citations.message)
@@ -642,6 +643,7 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })),
+  isMonitoringGoal: PropTypes.bool,
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
@@ -659,4 +661,5 @@ Objective.propTypes = {
 Objective.defaultProps = {
   citationOptions: [],
   rawCitations: [],
+  isMonitoringGoal: false,
 };
