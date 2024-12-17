@@ -1227,7 +1227,7 @@ const generateResourceList = (
   return resourceCounts;
 };
 
-function generateResourceDomainList(
+export function generateResourceDomainList(
   precalculatedData, // data generated from calling resourceData
   removeLists, // exclude list of report ids and recipient ids from result
 ) {

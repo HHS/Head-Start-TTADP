@@ -25,6 +25,7 @@ import {
   resourceTopicUse,
   reduceRecipients,
   mergeInResources,
+  generateResourceDomainList,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -667,6 +668,60 @@ describe('mergeInResources', () => {
     expect(mergedData[0].resources.length).toBe(1);
     expect(mergedData[0].resources[0].sourceFields).toEqual([
       { tableType: 'objective', sourceField: 'field1' },
+    ]);
+  });
+});
+
+describe('generateResourceDomainList', () => {
+  it('should sort domains correctly', () => {
+    const data = {
+      resources: [
+        {
+          domain: 'example.com',
+          url: 'https://example.com/resource1',
+          reports: [{ id: 1 }, { id: 2 }],
+          recipients: [{ recipientId: 1 }],
+        },
+        {
+          domain: 'example.com',
+          url: 'https://example.com/resource2',
+          reports: [{ id: 3 }],
+          recipients: [{ recipientId: 2 }],
+        },
+        {
+          domain: 'another.com',
+          url: 'https://another.com/resource1',
+          reports: [{ id: 4 }, { id: 5 }],
+          recipients: [{ recipientId: 3 }, { recipientId: 4 }],
+        },
+        {
+          domain: 'another.com',
+          url: 'https://another.com/resource2',
+          reports: [{ id: 6 }],
+          recipients: [{ recipientId: 5 }],
+        },
+      ],
+    };
+
+    const result = generateResourceDomainList(data, true);
+
+    expect(result).toEqual([
+      {
+        domain: 'another.com',
+        title: undefined,
+        count: 3,
+        reportCount: 3,
+        recipientCount: 3,
+        resourceCount: 2,
+      },
+      {
+        domain: 'example.com',
+        title: undefined,
+        count: 3,
+        reportCount: 3,
+        recipientCount: 2,
+        resourceCount: 2,
+      },
     ]);
   });
 });
