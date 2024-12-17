@@ -700,6 +700,12 @@ describe('generateResourceDomainList', () => {
           reports: [{ id: 6 }],
           recipients: [{ recipientId: 5 }],
         },
+        {
+          domain: 'example.com',
+          url: 'https://example.com/resource3',
+          reports: [{ id: 7 }],
+          recipients: [{ recipientId: 1 }],
+        },
       ],
     };
 
@@ -707,19 +713,19 @@ describe('generateResourceDomainList', () => {
 
     expect(result).toEqual([
       {
+        domain: 'example.com',
+        title: undefined,
+        count: 4,
+        reportCount: 4,
+        recipientCount: 2,
+        resourceCount: 3,
+      },
+      {
         domain: 'another.com',
         title: undefined,
         count: 3,
         reportCount: 3,
         recipientCount: 3,
-        resourceCount: 2,
-      },
-      {
-        domain: 'example.com',
-        title: undefined,
-        count: 3,
-        reportCount: 3,
-        recipientCount: 2,
         resourceCount: 2,
       },
     ]);
