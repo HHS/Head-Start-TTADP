@@ -30,6 +30,7 @@ export default function GoalForm({
   isMultiRecipientReport,
   citationOptions,
   rawCitations,
+  isMonitoringGoal,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -224,6 +225,7 @@ export default function GoalForm({
         reportId={parseInt(reportId, DECIMAL_BASE)}
         citationOptions={citationOptions}
         rawCitations={rawCitations}
+        isMonitoringGoal={isMonitoringGoal}
       />
     </>
   );
@@ -262,6 +264,7 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })),
+  isMonitoringGoal: PropTypes.bool,
   rawCitations: PropTypes.arrayOf(PropTypes.shape({
     standardId: PropTypes.number,
     citation: PropTypes.string,
@@ -292,4 +295,5 @@ GoalForm.defaultProps = {
   isMultiRecipientReport: false,
   citationOptions: [],
   rawCitations: [],
+  isMonitoringGoal: false,
 };
