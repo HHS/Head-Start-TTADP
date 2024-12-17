@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import { Tag } from '@trussworks/react-uswds';
@@ -8,8 +8,10 @@ import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
 import FindingWithinReview from './FindingWithinReview';
 import SpecialistTags from './SpecialistTags';
+import ToggleTtaActivityButton from './ToggleTtaActivityButton';
 
 export default function ReviewCard({ review, regionId }) {
+  const [expanded, setExpanded] = useState(false);
   return (
     <DataCard
       testId="review-card"
@@ -22,7 +24,7 @@ export default function ReviewCard({ review, regionId }) {
           {' '}
           {review.name}
         </h3>
-        <Tag className="margin-left-1 text-ink text-normal border" background={colors.baseLightest}>
+        <Tag className="margin-left-1 text-ink text-normal border radius-sm" background={colors.baseLightest}>
           {review.reviewType}
         </Tag>
       </div>
@@ -60,13 +62,18 @@ export default function ReviewCard({ review, regionId }) {
           <SpecialistTags specialists={review.specialists} />
         </DescriptionItem>
       </DescriptionList>
-      {review.findings.map((finding) => (
+      <ToggleTtaActivityButton
+        count={review.findings.length}
+        expanded={expanded}
+        setExpanded={setExpanded}
+      />
+      {expanded && (review.findings.map((finding) => (
         <FindingWithinReview
           key={uniqueId('review-card-finding-')}
           finding={finding}
           regionId={Number(regionId)}
         />
-      ))}
+      )))}
     </DataCard>
   );
 }
