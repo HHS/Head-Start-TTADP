@@ -81,14 +81,14 @@ describe('Monitoring', () => {
 
     expect(await screen.findAllByTestId('review-card')).toHaveLength(3);
     let toggles = await screen.findAllByRole('button', { name: 'View TTA activity' });
-    expect(toggles).toHaveLength(4);
+    expect(toggles).toHaveLength(3);
     const [toggle] = toggles;
     act(() => {
       userEvent.click(toggle);
     });
 
     toggles = await screen.findAllByRole('button', { name: 'View TTA activity' });
-    expect(toggles).toHaveLength(3);
+    expect(toggles).toHaveLength(2);
 
     const hideButton = screen.getByRole('button', { name: 'Hide TTA activity' });
     expect(hideButton).toBeInTheDocument();
