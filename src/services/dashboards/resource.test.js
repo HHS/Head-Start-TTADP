@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -26,6 +27,7 @@ import {
   reduceRecipients,
   mergeInResources,
   generateResourceDomainList,
+  generateResourceList,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -727,6 +729,77 @@ describe('generateResourceDomainList', () => {
         reportCount: 3,
         recipientCount: 3,
         resourceCount: 2,
+      },
+    ]);
+  });
+});
+
+describe('generateResourceList', () => {
+  it('should sort resources correctly, including empty URL cases', () => {
+    const data = {
+      resources: [
+        {
+          url: 'https://example.com/resource1',
+          reports: [{ id: 1 }, { id: 2 }],
+          participants: 0,
+          recipients: [{ recipientId: 1 }],
+        },
+        {
+          url: 'https://example.com/resource2',
+          reports: [{ id: 3 }],
+          participants: 0,
+          recipients: [{ recipientId: 2 }],
+        },
+        {
+          url: null,
+          reports: [{ id: 4 }, { id: 5 }],
+          participants: 0,
+          recipients: [{ recipientId: 3 }, { recipientId: 4 }],
+        },
+        {
+          url: null,
+          reports: [{ id: 6 }],
+          participants: 0,
+          recipients: [{ recipientId: 5 }],
+        },
+      ],
+      reports: [],
+    };
+
+    const result = generateResourceList(data, true, true);
+
+    expect(result).toEqual([
+      {
+        name: null,
+        url: null,
+        count: 2,
+        reportCount: 2,
+        participantCount: 0,
+        recipientCount: 2,
+      },
+      {
+        name: 'https://example.com/resource1',
+        url: 'https://example.com/resource1',
+        count: 2,
+        reportCount: 2,
+        participantCount: 0,
+        recipientCount: 1,
+      },
+      {
+        name: null,
+        url: null,
+        count: 1,
+        reportCount: 1,
+        participantCount: 0,
+        recipientCount: 1,
+      },
+      {
+        name: 'https://example.com/resource2',
+        url: 'https://example.com/resource2',
+        count: 1,
+        reportCount: 1,
+        participantCount: 0,
+        recipientCount: 1,
       },
     ]);
   });
