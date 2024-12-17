@@ -17,6 +17,8 @@ import filtersToScopes from '../../scopes';
 import {
   resourceList,
   resourceDomainList,
+  resourceDashboardFlat,
+  resourceDashboardPhase1,
   resourcesDashboardOverview,
   resourceUse,
   resourceDashboard,
@@ -624,5 +626,47 @@ describe('mergeInResources', () => {
     expect(mergedData[0].resources[0].sourceFields).toEqual([
       { tableType: 'objective', sourceField: 'field1' },
     ]);
+  });
+});
+
+describe('resourceDashboardPhase1', () => {
+  it('should return the correct data structure', async () => {
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
+
+    const data = await resourceDashboardPhase1(scopes);
+
+    expect(data).toHaveProperty('overview');
+    expect(data).toHaveProperty('use');
+    expect(data).toHaveProperty('topicUse');
+    expect(data).toHaveProperty('reportIds');
+  });
+});
+
+describe('resourceDashboardFlat', () => {
+  it('should return the correct data structure', async () => {
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
+
+    const mockData = {
+      resourcesDashboardOverview: {},
+      resourcesUse: { headers: [], resources: [] },
+      topicUse: { headers: [], topics: [] },
+      reportIds: [],
+    };
+
+    // eslint-disable-next-line global-require
+    jest.spyOn(require('./resource'), 'resourceDashboardFlat').mockImplementationOnce(() => Promise.resolve(mockData));
+
+    const data = await resourceDashboardFlat(scopes);
+
+    expect(data).toHaveProperty('resourcesDashboardOverview');
+    expect(data).toHaveProperty('resourcesUse');
+    expect(data).toHaveProperty('topicUse');
+    expect(data).toHaveProperty('reportIds');
   });
 });
