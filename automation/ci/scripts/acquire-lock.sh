@@ -12,12 +12,12 @@ LOCK_TIMEOUT=7200  # 2 hours in seconds
 wait_for_restaging() {
   echo "Waiting for app $APP_NAME to finish restaging..."
   while true; do
-    APP_STATE=$(cf app "$APP_NAME" | grep "state" | awk '{print $2}')
-    if [ "$APP_STATE" == "STARTED" ]; then
+    APP_STATE=$(cf apps | grep "$APP_NAME" | awk '{print $2}')
+    if [ "$APP_STATE" == "started" ]; then
       echo "App $APP_NAME is running."
       break
     else
-      echo "App $APP_NAME is still restaging..."
+      echo "App $APP_NAME is still $APP_STATE..."
       sleep 5
     fi
   done
@@ -45,9 +45,9 @@ if [ -n "$LOCK_DATA" ]; then
 fi
 
 # Check if app is restaging
-APP_STATE=$(cf app "$APP_NAME" | grep "state" | awk '{print $2}')
-if [ "$APP_STATE" != "STARTED" ]; then
-  echo "App $APP_NAME is currently restaging. Cannot acquire lock."
+APP_STATE=$(cf apps | grep "$APP_NAME" | awk '{print $2}')
+if [ "$APP_STATE" != "started" ]; then
+  echo "App $APP_NAME is currently $APP_STATE. Cannot acquire lock."
   exit 1
 fi
 

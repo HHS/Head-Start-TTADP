@@ -9,12 +9,12 @@ BUILD_ID=$3
 wait_for_restaging() {
   echo "Waiting for app $APP_NAME to finish restaging..."
   while true; do
-    APP_STATE=$(cf app "$APP_NAME" | grep "state" | awk '{print $2}')
-    if [ "$APP_STATE" == "STARTED" ]; then
+    APP_STATE=$(cf apps | grep "$APP_NAME" | awk '{print $2}')
+    if [ "$APP_STATE" == "started" ]; then
       echo "App $APP_NAME is running."
       break
     else
-      echo "App $APP_NAME is still restaging..."
+      echo "App $APP_NAME is still $APP_STATE..."
       sleep 5
     fi
   done
