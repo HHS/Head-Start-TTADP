@@ -693,8 +693,7 @@ export async function findEventsByStatus(
     scopes,
   }) as EventShape[];
 
-  const es = await filterEventsByStatus(events, status, userId, isAdmin);
-  return es;
+  return filterEventsByStatus(events, status, userId, isAdmin);
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {

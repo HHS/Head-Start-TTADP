@@ -1013,4 +1013,14 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       await destroyEvent(event2.id);
     });
   });
+
+  describe('findEventsByStatus', () => {
+    it('should handle default values for fallbackValue, allowNull, and scopes', async () => {
+      const createdEvent1 = await createAnEventWithStatus(50_500, null);
+      const foundEvents = await findEventsByStatus(null, [], 50_500);
+      const eventWithFallback = foundEvents.find((event) => event.id === createdEvent1.id);
+      expect(eventWithFallback.data.status).toBe(null);
+      await destroyEvent(createdEvent1.id);
+    });
+  });
 });
