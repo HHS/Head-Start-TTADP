@@ -5,6 +5,8 @@ import db from '../models';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import handleErrors from '../lib/apiErrorHandler';
 
+let newrelicMock;
+
 jest.mock('../lib/apiErrorHandler', () => jest.fn((req, res, err, context) => context));
 jest.mock('../lib/programmaticTransaction', () => ({
   captureSnapshot: jest.fn(),
@@ -86,7 +88,6 @@ describe('transactionWrapper', () => {
 
 describe('logRequestDuration', () => {
   let logRequestDuration;
-  let newrelicMock;
 
   beforeEach(() => {
     jest.resetModules();
