@@ -92,6 +92,7 @@ describe('logRequestDuration', () => {
     jest.resetModules();
     newrelicMock = { noticeError: jest.fn() };
     jest.mock('newrelic', () => newrelicMock);
+    // eslint-disable-next-line global-require
     ({ logRequestDuration } = require('./transactionWrapper'));
   });
 
@@ -111,7 +112,7 @@ describe('logRequestDuration', () => {
     logRequestDuration('testFunction', 15000, 'success');
     expect(newrelicMock.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({ duration: 15000, functionName: 'testFunction' })
+      expect.objectContaining({ duration: 15000, functionName: 'testFunction' }),
     );
     process.env.NODE_ENV = 'test';
   });
@@ -129,14 +130,14 @@ describe('logRequestDuration', () => {
 
   it('should alert if duration exceeds mean + delta after enough requests in production', () => {
     process.env.NODE_ENV = 'production';
-
+    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 25; i++) {
       logRequestDuration('testFunction', 200, 'success');
     }
     logRequestDuration('testFunction', 500, 'success');
     expect(newrelicMock.noticeError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({ duration: 500, functionName: 'testFunction' })
+      expect.objectContaining({ duration: 500, functionName: 'testFunction' }),
     );
     process.env.NODE_ENV = 'test';
   });
