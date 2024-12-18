@@ -2,7 +2,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniq, uniqBy } from 'lodash';
-import db, { sequelize } from '../models';
+import db from '../models';
 import {
   ITTAByReviewResponse,
   IMonitoringReview,
@@ -353,8 +353,8 @@ export async function ttaByReviews(
         const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId));
 
         objectives.forEach(({ endDate }) => {
-          if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-            lastTTADate = moment(endDate, 'MM/DD/YYYY');
+          if (!lastTTADate || moment(endDate, 'YYYY-MM-DD').isAfter(lastTTADate)) {
+            lastTTADate = moment(endDate, 'YYYY-MM-DD');
           }
           specialists = specialists.concat(objectives.map((o) => o.specialists).flat());
         });
@@ -363,7 +363,7 @@ export async function ttaByReviews(
           citation,
           status,
           findingType: finding.findingType,
-          correctionDeadline: finding.correctionDeadLine || '',
+          correctionDeadline: finding.correctionDeadLine ? moment(finding.correctionDeadLine).format('MM/DD/YYYY') : '',
           category: finding.source,
           objectives,
         });
@@ -515,8 +515,8 @@ export async function ttaByCitations(
 
       const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
       objectives.forEach(({ endDate }) => {
-        if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-          lastTTADate = moment(endDate, 'MM/DD/YYYY');
+        if (!lastTTADate || moment(endDate, 'YYYY-MM-DD').isAfter(lastTTADate)) {
+          lastTTADate = moment(endDate, 'YYYY-MM-DD');
         }
       });
 
