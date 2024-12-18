@@ -12,6 +12,7 @@ export async function textByCitation(
       citation: citationIds,
     },
     group: ['text', 'citation'],
+    order: ['citation'],
   });
 }
 

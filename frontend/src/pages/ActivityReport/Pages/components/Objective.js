@@ -1,5 +1,8 @@
 import React, {
-  useState, useContext, useRef,
+  useState,
+  useContext,
+  useRef,
+  useMemo,
 } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
@@ -33,6 +36,8 @@ import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import CitationDrawerContent from '../../../../components/CitationDrawerContent';
 
 export default function Objective({
   objective,
@@ -51,6 +56,9 @@ export default function Objective({
   isMonitoringGoal,
 }) {
   const modalRef = useRef();
+
+  const citationNames = useMemo(() => rawCitations.map((rawCitation) => rawCitation.citation),
+    [rawCitations]);
 
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
@@ -485,9 +493,15 @@ export default function Objective({
             values={objectiveCitations}
             onChangeValues={selectedCitationsChanged}
             inputName={objectiveCitationsInputName}
+            drawerTitle="Citation guidance"
+            drawerContent={(
+              <CitationDrawerContent
+                citations={citationNames}
+              />
+            )}
           />
         )
-            }
+      }
 
       <GenericSelectWithDrawer
         error={errors.topics
@@ -499,6 +513,8 @@ export default function Objective({
         values={objectiveTopics}
         onChangeValues={onChangeTopics}
         inputName={objectiveTopicsInputName}
+        drawerTitle="Topic guidance"
+        drawerContent={useMemo(() => <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />, [])}
       />
 
       <IpdCourseSelect

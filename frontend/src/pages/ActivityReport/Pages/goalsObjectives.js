@@ -316,6 +316,7 @@ const GoalsObjectives = ({
   );
 
   const startDateHasValue = startDate && startDate !== 'Invalid date';
+
   const alertIsDisplayed = (!isOtherEntityReport && !isRecipientReport)
     || !startDateHasValue
     || (isRecipientReport && !showGoals);
@@ -512,7 +513,7 @@ export default {
       <DraftAlert />
       <Buttons
         formData={formData}
-        isAppLoading={isAppLoading}
+        isAppLoading={isAppLoading || false}
         onContinue={onContinue}
         onSaveDraft={onSaveDraft}
         onUpdatePage={onUpdatePage}

@@ -5,6 +5,7 @@ import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
 import ReviewObjective from './ReviewObjective';
 import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
+import CitationDrawer from './CitationDrawer';
 import './FindingWithinReview.css';
 
 export default function FindingWithinReview({ finding, regionId }) {
@@ -12,7 +13,7 @@ export default function FindingWithinReview({ finding, regionId }) {
     <div className="ttahub-review-card--finding-within-review margin-top-4" key={uniqueId('review-card-finding-')}>
       <DescriptionList>
         <DescriptionItem title="Citation">
-          {finding.citation}
+          <CitationDrawer citationNumber={finding.citation} />
         </DescriptionItem>
         <DescriptionItem title="Finding status">
           {finding.status}
