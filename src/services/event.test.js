@@ -784,6 +784,18 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped.length).toEqual(1);
       expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725']);
     });
+
+    it('defaults to `Creator` heading when `IST/Creator` is not found, but errors when Creator fallback is not found', async () => {
+      const reportId = 'R01-TR-5725';
+      const newHeadings = headings.filter((h) => h !== 'IST/Creator');
+      const d = `${newHeadings.join(',')}
+${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},Recipients,${poc.name}`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(0);
+      expect(result.errors.length).toEqual(1);
+      expect(result.errors).toEqual(['No creator listed on import for R01-TR-5725']);
+    });
   });
 
   describe('validateFields', () => {
