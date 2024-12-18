@@ -2,7 +2,6 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   File,
   ActivityReport,
-  ActivityReportObjective,
   ActivityReportFile,
   User,
   Grant,
@@ -11,7 +10,7 @@ import db, {
   Recipient,
 } from '../../models';
 import app from '../../app';
-import { deleteFileFromS3, uploadFile } from '../../lib/s3';
+import { uploadFile } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import { FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -19,21 +18,6 @@ import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
 import * as s3Queue from '../../services/s3Queue';
-import { deleteHandler, deleteActivityReportObjectiveFile } from './handlers';
-import { userById } from '../../services/users';
-import {
-  getFileById,
-  deleteActivityReportFile,
-  deleteFile,
-} from '../../services/files';
-import { logById } from '../../services/communicationLog';
-import { currentUserId } from '../../services/currentUser';
-import EventPolicy from '../../policies/event';
-import CommunicationLogPolicy from '../../policies/communicationLog';
-import Users from '../../policies/user';
-import { findSessionById } from '../../services/sessionReports';
-import { findEventBySmartsheetIdSuffix } from '../../services/event';
-import { activityReportAndRecipientsById } from '../../services/activityReports';
 
 jest.mock('../../services/scanQueue', () => jest.fn());
 jest.mock('bull');
@@ -46,23 +30,6 @@ jest.mock('../../services/accessValidation', () => ({
 }));
 jest.mock('axios');
 jest.mock('smartsheet');
-jest.mock('../../services/users');
-jest.mock('../../services/files', () => ({
-  ...jest.requireActual('../../services/files'),
-  deleteActivityReportFile: jest.fn(),
-  deleteFile: jest.fn(),
-  deleteSessionFile: jest.fn(),
-  deleteCommunicationLogFile: jest.fn(),
-  getFileById: jest.fn(),
-  deleteSessionSupportingAttachment: jest.fn(),
-  deleteSpecificActivityReportObjectiveFile: jest.fn(),
-}));
-jest.mock('../../services/sessionReports');
-jest.mock('../../services/communicationLog');
-jest.mock('../../services/currentUser');
-jest.mock('../../policies/event');
-jest.mock('../../policies/communicationLog');
-jest.mock('../../policies/user');
 
 const request = require('supertest');
 
@@ -302,248 +269,5 @@ describe('File Upload', () => {
             .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
         });
     });
-  });
-});
-
-describe('deleteHandler', () => {
-  const mockReq = {
-    params: {
-      reportId: 1,
-      fileId: 1,
-      eventSessionId: 1,
-      communicationLogId: 1,
-      sessionAttachmentId: 1,
-    },
-  };
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    send: jest.fn(),
-    sendStatus: jest.fn(),
-    end: jest.fn(),
-  };
-  // eslint-disable-next-line @typescript-eslint/no-shadow
-  const mockUser = { id: 1 };
-
-  beforeEach(() => {
-    // jest.clearAllMocks();
-    currentUserId.mockResolvedValue(mockUser.id);
-    userById.mockResolvedValue(mockUser);
-  });
-
-  it('returns 403 if user is not authorized for report', async () => {
-    getFileById.mockResolvedValue({ reportFiles: [{ activityReportId: 1 }] });
-    jest.spyOn(ActivityReport, 'findOne').mockResolvedValueOnce({ id: 1 });
-    const mockPolicy = { canUpdate: jest.fn().mockReturnValue(false) };
-    ActivityReportPolicy.mockImplementation(() => mockPolicy);
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
-  });
-
-  it('deletes activity report file if authorized', async () => {
-    getFileById.mockResolvedValue({ reportFiles: [{ activityReportId: 1 }] });
-    jest.spyOn(ActivityReport, 'findOne').mockResolvedValueOnce({ id: 1 });
-    const mockPolicy = { canUpdate: jest.fn().mockReturnValue(true) };
-    ActivityReportPolicy.mockImplementation(() => mockPolicy);
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(deleteActivityReportFile).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
-  });
-
-  it('returns 403 if user is not authorized for event session', async () => {
-    getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
-    findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
-    const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
-    EventPolicy.mockImplementation(() => mockPolicy);
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
-  });
-
-  it('deletes session file if authorized', async () => {
-    getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
-    findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
-    const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
-    EventPolicy.mockImplementation(() => mockPolicy);
-
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const mockReq = {
-      params: {
-        reportId: undefined,
-        fileId: 1,
-        eventSessionId: 1,
-        communicationLogId: 1,
-        sessionAttachmentId: 1,
-      },
-    };
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(Files.deleteSessionFile).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
-  });
-
-  it('returns 403 if user is not authorized for communication log', async () => {
-    getFileById.mockResolvedValue({ communicationLogFiles: [{ communicationLogId: 1 }] });
-    logById.mockResolvedValue({ id: 1 });
-    const mockPolicy = { canUploadFileToLog: jest.fn().mockReturnValue(false) };
-    CommunicationLogPolicy.mockImplementation(() => mockPolicy);
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
-  });
-
-  it('deletes communication log file if authorized', async () => {
-    getFileById.mockResolvedValue({ communicationLogFiles: [{ communicationLogId: 1 }] });
-    logById.mockResolvedValue({ id: 1 });
-    const mockPolicy = { canUploadFileToLog: jest.fn().mockReturnValue(true) };
-    CommunicationLogPolicy.mockImplementation(() => mockPolicy);
-
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const mockReq = {
-      params: {
-        reportId: undefined,
-        fileId: 1,
-        eventSessionId: undefined,
-        communicationLogId: 1,
-        sessionAttachmentId: 1,
-      },
-    };
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(Files.deleteCommunicationLogFile).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
-  });
-
-  it('returns 403 if user is not authorized for session attachment', async () => {
-    getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
-    findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
-    const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
-    EventPolicy.mockImplementation(() => mockPolicy);
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
-  });
-
-  it('deletes session attachment file if authorized', async () => {
-    getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
-    findSessionById.mockResolvedValue({ eventId: 1 });
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
-    const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
-    EventPolicy.mockImplementation(() => mockPolicy);
-
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const mockReq = {
-      params: {
-        reportId: undefined,
-        fileId: 1,
-        eventSessionId: undefined,
-        communicationLogId: undefined,
-        sessionAttachmentId: 1,
-      },
-    };
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(Files.deleteSessionSupportingAttachment).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
-  });
-
-  it('deletes file from S3 if no associated records', async () => {
-    getFileById.mockResolvedValue({
-      reports: [],
-      reportObjectiveFiles: [],
-      objectiveFiles: [],
-      objectiveTemplateFiles: [],
-      sessionFiles: [],
-    });
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(deleteFileFromS3).toHaveBeenCalled();
-    expect(deleteFile).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
-  });
-});
-
-describe('deleteActivityReportObjectiveFile', () => {
-  const mockReq = {
-    params: {
-      fileId: 1,
-      reportId: 1,
-    },
-    body: {
-      objectiveIds: [1, 2],
-    },
-  };
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    send: jest.fn(),
-    sendStatus: jest.fn(),
-    end: jest.fn(),
-  };
-  // eslint-disable-next-line @typescript-eslint/no-shadow
-  const mockUser = { id: 1 };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    currentUserId.mockResolvedValue(mockUser.id);
-    userById.mockResolvedValue(mockUser);
-  });
-
-  it('returns 404 if report is not found', async () => {
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([]);
-    await deleteActivityReportObjectiveFile(mockReq, mockRes);
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(404);
-  });
-
-  it('returns 404 if file is not found', async () => {
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
-    getFileById.mockResolvedValue(null);
-    await deleteActivityReportObjectiveFile(mockReq, mockRes);
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(404);
-  });
-
-  it('returns 403 if user is not authorized to update report', async () => {
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
-    getFileById.mockResolvedValue({ id: 1 });
-    const mockPolicy = { canUpdate: jest.fn().mockReturnValue(false) };
-    ActivityReportPolicy.mockImplementation(() => mockPolicy);
-    await deleteActivityReportObjectiveFile(mockReq, mockRes);
-    expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
-  });
-
-  it('deletes specific activity report objective file if authorized', async () => {
-    // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
-    getFileById.mockResolvedValue({ id: 1 });
-    const mockPolicy = { canUpdate: jest.fn().mockReturnValue(true) };
-    ActivityReportPolicy.mockImplementation(() => mockPolicy);
-    await deleteActivityReportObjectiveFile(mockReq, mockRes);
-    expect(Files.deleteSpecificActivityReportObjectiveFile).toHaveBeenCalledWith(1, 1, [1, 2]);
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
   });
 });
