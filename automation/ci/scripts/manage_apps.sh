@@ -91,15 +91,23 @@ for env in "${apps[@]}"; do
 
     echo "Last activity duration for $app_name: $activity_duration seconds"
 
-    # Get the last power-on timestamp for the app
-    last_power_on=$(cf events "$app_name" | grep "audit.app.start" | awk '{print $1, $2}' | tail -n 1)
+    echo "Fetching power-on events for $app_name..."
+    events_output=$(cf events "$app_name" || echo "")
 
-    if [ -z "$last_power_on" ]; then
-      # Default to an arbitrarily long time ago if no power-on event found
+    if [[ -z "$events_output" ]]; then
+      echo "No events found for $app_name. Defaulting power-on duration to 43200 seconds (12 hours)."
       power_on_duration=43200
     else
-      # Calculate power-on duration in seconds
-      power_on_duration=$(( $(date +%s) - $(date -ud "${last_power_on}" +%s) ))
+      # Extract the last power-on timestamp
+      last_power_on=$(echo "$events_output" | grep "audit.app.start" | awk '{print $1, $2}' | tail -n 1)
+
+      if [[ -z "$last_power_on" ]]; then
+        echo "No power-on event found for $app_name. Defaulting power-on duration to 43200 seconds (12 hours)."
+        power_on_duration=43200
+      else
+        # Calculate power-on duration in seconds
+        power_on_duration=$(( $(date +%s) - $(date -ud "${last_power_on}" +%s) ))
+      fi
     fi
 
     echo "Last power-on duration for $app_name: $power_on_duration seconds"
