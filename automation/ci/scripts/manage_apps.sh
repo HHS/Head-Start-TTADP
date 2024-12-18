@@ -70,21 +70,27 @@ for env in "${apps[@]}"; do
       continue
     fi
 
-    echo "Checking activity for $app_name..."
+    echo "Fetching recent logs for $app_name..."
+    recent_logs=$(cf logs --recent "$app_name" || echo "")
 
-    # Get the last activity timestamp for the app
-    last_activity=$(cf logs --recent "$app_name" | grep "\"label\":\"REQUEST\"" | grep "api" | awk '{print $1}' | tail -n 1)
-
-    if [ -z "$last_activity" ]; then
-      # Default to 12 hours if no activity found
+    if [[ -z "$recent_logs" ]]; then
+      echo "No recent logs found for $app_name. Defaulting activity duration to 43200 seconds (12 hours)."
       activity_duration=43200
     else
-      # Calculate duration in seconds
-      activity_duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+      # Attempt to extract the last activity
+      last_activity=$(echo "$recent_logs" | grep '"label":"REQUEST"' | grep "api" | awk '{print $1}' | tail -n 1)
+
+      if [[ -z "$last_activity" ]]; then
+        echo "No matching activity found in recent logs. Defaulting activity duration to 43200 seconds (12 hours)."
+        activity_duration=43200
+      else
+        # Calculate duration in seconds
+        activity_duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+      fi
     fi
 
     echo "Last activity duration for $app_name: $activity_duration seconds"
-    
+
     # Get the last power-on timestamp for the app
     last_power_on=$(cf events "$app_name" | grep "audit.app.start" | awk '{print $1, $2}' | tail -n 1)
 
