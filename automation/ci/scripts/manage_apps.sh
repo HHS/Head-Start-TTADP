@@ -71,21 +71,40 @@ for env in "${apps[@]}"; do
     fi
 
     echo "Fetching recent logs for $app_name..."
-    recent_logs=$(cf logs --recent "$app_name" || echo "")
 
+    # Safely fetch recent logs
+    recent_logs=$(cf logs --recent "$app_name" 2>/dev/null || echo "")
+
+    # Check if logs are empty
     if [[ -z "$recent_logs" ]]; then
       echo "No recent logs found for $app_name. Defaulting activity duration to 43200 seconds (12 hours)."
       activity_duration=43200
     else
-      # Attempt to extract the last activity
-      last_activity=$(echo "$recent_logs" | grep '"label":"REQUEST"' | grep "api" | awk '{print $1}' | tail -n 1)
+      # Filter for logs containing '"label":"REQUEST"' and "api"
+      request_logs=$(echo "$recent_logs" | grep '"label":"REQUEST"' | grep "api" || echo "")
 
-      if [[ -z "$last_activity" ]]; then
-        echo "No matching activity found in recent logs. Defaulting activity duration to 43200 seconds (12 hours)."
+      if [[ -z "$request_logs" ]]; then
+        echo "No matching activity logs found for $app_name. Defaulting activity duration to 43200 seconds (12 hours)."
         activity_duration=43200
       else
-        # Calculate duration in seconds
-        activity_duration=$(( $(date +%s) - $(date -ud "${last_activity}" +%s) ))
+        # Extract the last activity timestamp
+        last_activity=$(echo "$request_logs" | awk '{print $1}' | tail -n 1 || echo "")
+
+        if [[ -z "$last_activity" ]]; then
+          echo "Failed to extract activity timestamp. Defaulting activity duration to 43200 seconds (12 hours)."
+          activity_duration=43200
+        else
+          # Safely calculate duration in seconds
+          current_time=$(date +%s)
+          activity_time=$(date -ud "$last_activity" +%s 2>/dev/null || echo "0")
+
+          if [[ "$activity_time" -eq "0" ]]; then
+            echo "Invalid timestamp for last activity. Defaulting activity duration to 43200 seconds (12 hours)."
+            activity_duration=43200
+          else
+            activity_duration=$((current_time - activity_time))
+          fi
+        fi
       fi
     fi
 
