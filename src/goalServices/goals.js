@@ -26,6 +26,7 @@ import {
   ActivityReportGoalFieldResponse,
   File,
   Program,
+  ActivityReportObjectiveCitation,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -199,6 +200,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 },
               },
               {
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                attributes: ['citation', 'monitoringReferences'],
+              },
+              {
                 model: Resource,
                 as: 'resources',
                 attributes: ['url', 'title'],
@@ -301,6 +307,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         files: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,
           'files',
+        ),
+        citations: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'activityReportObjectiveCitations',
         ),
       })),
   }));
@@ -1192,6 +1202,7 @@ export async function createObjectivesForGoal(goal, objectives) {
       status,
       resources,
       topics,
+      citations, // Not saved for objective only ARO (pass through).
       files,
       supportType,
       courses,
@@ -1252,6 +1263,7 @@ export async function createObjectivesForGoal(goal, objectives) {
       ...savedObjective.toJSON(),
       status,
       topics,
+      citations, // Not saved for objective only ARO (pass through).
       resources,
       files,
       courses,
@@ -1281,7 +1293,43 @@ export async function saveGoalsForReport(goals, report) {
     },
   });
 
-  const currentGoals = await Promise.all(goals.map(async (goal) => {
+  // Loop and Create or Update goals.
+  const currentGoals = await Promise.all(goals.map(async (goal, index) => {
+    // We need to skip creation of monitoring goals for non monitoring grants.
+    if (goal.goalTemplateId) {
+      const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
+
+      if (goalTemplate.standard === 'Monitoring') {
+      // Find the corresponding monitoring goals.
+        const monitoringGoals = await Goal.findAll({
+          attributes: ['grantId'],
+          raw: true,
+          where: {
+            grantId: goal.grantIds,
+            createdVia: 'monitoring',
+            status: { [Op.not]: GOAL_STATUS.CLOSED },
+          },
+        });
+
+        const distinctMonitoringGoalGrantIds = [...new Set(
+          monitoringGoals.map((monitoringGoal) => monitoringGoal.grantId),
+        )];
+
+        if (distinctMonitoringGoalGrantIds.length > 0) {
+        // Replace the goal granIds only with the grants that should have monitoring goals created.
+        // eslint-disable-next-line no-param-reassign
+          goals[index].grantIds = distinctMonitoringGoalGrantIds;
+        } else {
+        // Do not create monitoring goals for any of these recipients.
+        // eslint-disable-next-line no-param-reassign
+        // delete goals[index];
+        // eslint-disable-next-line no-param-reassign
+          goals[index].grantIds = [];
+          return [];
+        }
+      }
+    }
+
     const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
@@ -1418,6 +1466,7 @@ export async function saveGoalsForReport(goals, report) {
       supportType,
       courses,
       objectiveCreatedHere,
+      citations,
     } = savedObjective;
 
     // this will link our objective to the activity report through
@@ -1429,6 +1478,7 @@ export async function saveGoalsForReport(goals, report) {
       {
         resources,
         topics,
+        citations,
         files,
         courses,
         status,

@@ -224,6 +224,7 @@ describe('getGoalsByActivityRecipient', () => {
         userId: 1000,
       },
     };
+    jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValueOnce(true);
     recipientById.mockResolvedValue(recipientWhere);
     getUserReadRegions.mockResolvedValue([1]);
     getGoalsByActivityRecipient.mockResolvedValue(recipientWhere);
