@@ -14,12 +14,14 @@ while [[ "$#" -gt 0 ]]; do
     --activity_timeout) activity_timeout=$2; shift ;;
     --cg_api) cg_api="$2"; shift ;;
     --cg_org) cg_org="$2"; shift ;;
+    --branch) branch="$2"; shift ;;
+    --build) build="$2"; shift ;;
     *) echo "Unknown parameter: $1"; exit 1 ;;
   esac
   shift
 done
 
-if [[ -z "${env_list:-}" || -z "${env_state:-}" || -z "${check_activity:-}" || -z "${cg_api:-}" || -z "${cg_org:-}" ]]; then
+if [[ -z "${env_list:-}" || -z "${env_state:-}" || -z "${check_activity:-}" || -z "${cg_api:-}" || -z "${cg_org:-}" || -z "${branch:-}" || -z "${build:-}" ]]; then
   echo "Error: Missing required arguments."
   exit 1
 fi
@@ -60,6 +62,11 @@ for env in "${apps[@]}"; do
     -o "$cg_org" \
     -s "$space"
 
+  ./automation/ci/scripts/acquire-lock.sh \
+    "$env" \
+    "$branch" \
+    "$build"
+
   # Perform activity check only for the primary prefix (tta-smarthub)
   if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
     app_name="${primary_prefix}-${env_suffix}"
@@ -67,6 +74,11 @@ for env in "${apps[@]}"; do
     current_state=$(cf apps | grep "${app_name}" | awk '{print $2}' || echo "unknown")
     if [ "$current_state" == "stopped" ]; then
           echo "$app_name is already stopped."
+
+          ./automation/ci/scripts/release-lock.sh \
+            "$env" \
+            "$branch" \
+            "$build"
       continue
     fi
 
@@ -152,6 +164,11 @@ for env in "${apps[@]}"; do
 
     if [ "$activity_duration" -le $(($activity_timeout * 60)) ] || [ "$power_on_duration" -le $(($activity_timeout * 60)) ]; then
       echo "$app_name has been active or powered on within the last $activity_timeout minutes. No action taken."
+
+      ./automation/ci/scripts/release-lock.sh \
+        "$env" \
+        "$branch" \
+        "$build"
       continue
     fi
   fi
@@ -193,8 +210,19 @@ for env in "${apps[@]}"; do
         ;;
       *)
         echo "Unknown env_state: $env_state"
+
+        ./automation/ci/scripts/release-lock.sh \
+          "$env" \
+          "$branch" \
+          "$build"
+
         exit 1
         ;;
     esac
   done
+
+  ./automation/ci/scripts/release-lock.sh \
+    "$env" \
+    "$branch" \
+    "$build"
 done
