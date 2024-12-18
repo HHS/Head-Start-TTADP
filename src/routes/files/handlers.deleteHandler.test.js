@@ -106,6 +106,17 @@ describe('deleteHandler', () => {
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const mockReq = {
+      params: {
+        reportId: undefined,
+        fileId: 1,
+        eventSessionId: 1,
+        communicationLogId: 1,
+        sessionAttachmentId: 1,
+      },
+    };
+
     await deleteHandler(mockReq, mockRes);
 
     expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
@@ -143,6 +154,17 @@ describe('deleteHandler', () => {
     const mockPolicy = { canUploadFileToLog: jest.fn().mockReturnValue(false) };
     CommunicationLogPolicy.mockImplementation(() => mockPolicy);
 
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const mockReq = {
+      params: {
+        reportId: undefined,
+        fileId: 1,
+        eventSessionId: undefined,
+        communicationLogId: 1,
+        sessionAttachmentId: 1,
+      },
+    };
+
     await deleteHandler(mockReq, mockRes);
 
     expect(mockRes.sendStatus).toHaveBeenCalledWith(403);
@@ -179,6 +201,17 @@ describe('deleteHandler', () => {
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
+
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const mockReq = {
+      params: {
+        reportId: undefined,
+        fileId: 1,
+        eventSessionId: undefined,
+        communicationLogId: undefined,
+        sessionAttachmentId: 1,
+      },
+    };
 
     await deleteHandler(mockReq, mockRes);
 
@@ -224,6 +257,23 @@ describe('deleteHandler', () => {
 
     expect(deleteFileFromS3).toHaveBeenCalled();
     expect(deleteFile).toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(204);
+    expect(mockRes.send).toHaveBeenCalled();
+  });
+
+  it('handles file with associated records correctly', async () => {
+    getFileById.mockResolvedValue({
+      reports: [{ id: 1 }],
+      reportObjectiveFiles: [{ id: 1 }],
+      objectiveFiles: [{ id: 1 }],
+      objectiveTemplateFiles: [{ id: 1 }],
+      sessionFiles: [],
+    });
+
+    await deleteHandler(mockReq, mockRes);
+
+    expect(deleteFileFromS3).not.toHaveBeenCalled();
+    expect(deleteFile).not.toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(204);
     expect(mockRes.send).toHaveBeenCalled();
   });
