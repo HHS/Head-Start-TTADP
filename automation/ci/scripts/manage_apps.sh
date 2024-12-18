@@ -92,21 +92,40 @@ for env in "${apps[@]}"; do
     echo "Last activity duration for $app_name: $activity_duration seconds"
 
     echo "Fetching power-on events for $app_name..."
-    events_output=$(cf events "$app_name" || echo "")
 
+    # Get events output safely
+    events_output=$(cf events "$app_name" 2>/dev/null || echo "")
+
+    # Check if events_output is empty
     if [[ -z "$events_output" ]]; then
       echo "No events found for $app_name. Defaulting power-on duration to 43200 seconds (12 hours)."
       power_on_duration=43200
     else
-      # Extract the last power-on timestamp
-      last_power_on=$(echo "$events_output" | grep "audit.app.start" | awk '{print $1, $2}' | tail -n 1)
+      # Filter for 'audit.app.start' and check if any matches are found
+      audit_start_events=$(echo "$events_output" | grep "audit.app.start" || echo "")
 
-      if [[ -z "$last_power_on" ]]; then
-        echo "No power-on event found for $app_name. Defaulting power-on duration to 43200 seconds (12 hours)."
+      if [[ -z "$audit_start_events" ]]; then
+        echo "No 'audit.app.start' event found for $app_name. Defaulting power-on duration to 43200 seconds (12 hours)."
         power_on_duration=43200
       else
-        # Calculate power-on duration in seconds
-        power_on_duration=$(( $(date +%s) - $(date -ud "${last_power_on}" +%s) ))
+        # Extract the last 'audit.app.start' timestamp
+        last_power_on=$(echo "$audit_start_events" | awk '{print $1, $2}' | tail -n 1 || echo "")
+
+        if [[ -z "$last_power_on" ]]; then
+          echo "Failed to extract timestamp for 'audit.app.start'. Defaulting power-on duration to 43200 seconds (12 hours)."
+          power_on_duration=43200
+        else
+          # Safely calculate duration in seconds
+          current_time=$(date +%s)
+          power_on_time=$(date -ud "$last_power_on" +%s 2>/dev/null || echo "0")
+
+          if [[ "$power_on_time" -eq "0" ]]; then
+            echo "Invalid timestamp for last power-on. Defaulting power-on duration to 43200 seconds (12 hours)."
+            power_on_duration=43200
+          else
+            power_on_duration=$((current_time - power_on_time))
+          fi
+        fi
       fi
     fi
 
