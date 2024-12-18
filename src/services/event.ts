@@ -100,8 +100,6 @@ export async function destroyEvent(id: number): Promise<void> {
 }
 
 export async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
-  let event;
-
   const query = {
     attributes: [
       'id',
@@ -136,11 +134,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     ],
   };
 
-  if (plural) {
-    event = await EventReportPilot.findAll(query);
-  } else {
-    event = await EventReportPilot.findOne(query);
-  }
+  const event = plural ? await EventReportPilot.findAll(query) : await EventReportPilot.findOne(query);
 
   if (!event) {
     return null;
@@ -183,7 +177,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
-    data: event?.data ?? {},
+    data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
     eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
@@ -199,7 +193,7 @@ interface FindEventHelperBlobOptions {
   scopes: SequelizeWhereOptions[];
 }
 
-async function findEventHelperBlob({
+export async function findEventHelperBlob({
   key,
   value,
   regions,
@@ -693,8 +687,7 @@ export async function findEventsByStatus(
     scopes,
   }) as EventShape[];
 
-  const es = await filterEventsByStatus(events, status, userId, isAdmin);
-  return es;
+  return filterEventsByStatus(events, status, userId, isAdmin);
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
@@ -741,7 +734,7 @@ const replacements: Record<string, string> = {
 
 const applyReplacements = (value: string) => replacements[value] || value;
 
-const mapLineToData = (line: Record<string, string>) => {
+export const mapLineToData = (line: Record<string, string>) => {
   const data: Record<string, unknown> = {};
 
   Object.keys(line).forEach((key) => {
@@ -756,7 +749,7 @@ const mapLineToData = (line: Record<string, string>) => {
   return data;
 };
 
-const checkUserExists = async (key:'email' | 'name', value: string) => {
+export const checkUserExists = async (key:'email' | 'name', value: string) => {
   const user = await db.User.findOne({
     where: {
       [key]: {
@@ -781,7 +774,7 @@ const checkUserExists = async (key:'email' | 'name', value: string) => {
   return user;
 };
 
-const checkUserExistsByNationalCenter = async (identifier: string) => {
+export const checkUserExistsByNationalCenter = async (identifier: string) => {
   const user = await db.User.findOne({
     attributes: ['id', 'name'],
     include: [
