@@ -99,7 +99,7 @@ export async function destroyEvent(id: number): Promise<void> {
   }
 }
 
-async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
+export async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
   let event;
 
   const query = {
@@ -173,8 +173,6 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
       if (ownerUser) {
         owner = ownerUser.toJSON();
       }
-    } else {
-      owner = null;
     }
   }
 

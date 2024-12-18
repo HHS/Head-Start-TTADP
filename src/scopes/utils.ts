@@ -16,7 +16,7 @@ export function compareDate(dates: string[], property: string, operator: string)
     ...acc,
     {
       [property]: {
-        [operator]: new Date(date),
+        [operator]: date,
       },
     },
   ], []);
@@ -45,8 +45,8 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       ...acc,
       {
         [property]: {
-          [Op.gte]: new Date(startDate),
-          [Op.lte]: new Date(endDate),
+          [Op.gte]: startDate,
+          [Op.lte]: endDate,
         },
       },
     ];
