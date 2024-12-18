@@ -272,8 +272,8 @@ describe('deleteHandler', () => {
 
     await deleteHandler(mockReq, mockRes);
 
-    expect(deleteFileFromS3).not.toHaveBeenCalled();
-    expect(deleteFile).not.toHaveBeenCalled();
+    expect(deleteFileFromS3).toHaveBeenCalled();
+    expect(deleteFile).toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(204);
     expect(mockRes.send).toHaveBeenCalled();
   });
