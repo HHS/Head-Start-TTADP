@@ -1621,7 +1621,9 @@ jobs:
               --check_activity "<< parameters.check_activity >>" \
               --activity_timeout << parameters.activity_timeout >> \
               --cg_api "<< pipeline.parameters.cg_api >>" \
-              --cg_org "<< pipeline.parameters.cg_org >>"
+              --cg_org "<< pipeline.parameters.cg_org >>" \
+              --branch "<< pipeline.git.branch >>" \
+              --build "<< pipeline.number >>"
 
       # Release lock for each environment
       # - run:
