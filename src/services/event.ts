@@ -100,8 +100,6 @@ export async function destroyEvent(id: number): Promise<void> {
 }
 
 export async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
-  let event;
-
   const query = {
     attributes: [
       'id',
@@ -136,11 +134,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     ],
   };
 
-  if (plural) {
-    event = await EventReportPilot.findAll(query);
-  } else {
-    event = await EventReportPilot.findOne(query);
-  }
+  const event = plural ? await EventReportPilot.findAll(query) : await EventReportPilot.findOne(query);
 
   if (!event) {
     return null;
