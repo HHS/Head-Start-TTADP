@@ -24,8 +24,7 @@ wait_for_restaging() {
 }
 
 # Fetch environment variables
-CF_ENV=$(cf env "$APP_NAME")
-LOCK_DATA=$(echo "$CF_ENV" | grep 'LOCK_APP' | awk '{print $2}' | tr -d '"')
+LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
 
 # Check if lock exists
 if [ -n "$LOCK_DATA" ]; then
@@ -60,14 +59,13 @@ LOCK_DATA_JSON=$(jq -n \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
 
 cf set-env "$APP_NAME" LOCK_APP "$LOCK_DATA_JSON"
-cf restage "$APP_NAME"
+# cf restage "$APP_NAME"
 
-# Wait for restaging to complete
-wait_for_restaging
+# # Wait for restaging to complete
+# wait_for_restaging
 
 # Validate the lock
-CF_ENV=$(cf env "$APP_NAME")
-LOCK_DATA=$(echo "$CF_ENV" | grep 'LOCK_APP' | awk '{print $2}' | tr -d '"')
+LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
 VALID_BRANCH=$(echo "$LOCK_DATA" | jq -r '.branch')
 VALID_BUILD_ID=$(echo "$LOCK_DATA" | jq -r '.build_id')
 

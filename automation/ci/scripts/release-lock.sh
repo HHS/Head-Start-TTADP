@@ -21,8 +21,7 @@ wait_for_restaging() {
 }
 
 # Fetch environment variables
-CF_ENV=$(cf env "$APP_NAME")
-LOCK_DATA=$(echo "$CF_ENV" | grep 'LOCK_APP' | awk '{print $2}' | tr -d '"')
+LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
 
 # Check if lock exists
 if [ -z "$LOCK_DATA" ]; then
@@ -42,14 +41,13 @@ fi
 
 # Release lock
 cf unset-env "$APP_NAME" LOCK_APP
-cf restage "$APP_NAME"
+# cf restage "$APP_NAME"
 
-# Wait for restaging to complete
-wait_for_restaging
+# # Wait for restaging to complete
+# wait_for_restaging
 
 # Validate lock release
-CF_ENV=$(cf env "$APP_NAME")
-LOCK_DATA=$(echo "$CF_ENV" | grep 'LOCK_APP' | awk '{print $2}' | tr -d '"')
+LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
 
 if [ -z "$LOCK_DATA" ]; then
   echo "Lock successfully released for app $APP_NAME."
