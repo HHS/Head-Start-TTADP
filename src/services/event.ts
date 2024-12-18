@@ -183,7 +183,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     pocIds: event?.pocIds,
     collaboratorIds: event?.collaboratorIds,
     regionId: event?.regionId,
-    data: event?.data ?? {},
+    data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
     eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
