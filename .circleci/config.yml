@@ -1563,56 +1563,57 @@ jobs:
           directories: "automation/ci/scripts"
           branch: "<< pipeline.git.branch >>"
       # Acquire lock for each environment
-      - run:
-          name: Acquire Locks
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            env_list="<< parameters.env_list >>"
-            apps=(${env_list//,/ })
-            for env in "${apps[@]}"; do
-              case "$env" in
-                "PROD")
-                  cf_username="${CLOUDGOV_PROD_USERNAME}"
-                  cf_password="${CLOUDGOV_PROD_PASSWORD}"
-                  cf_space="${CLOUDGOV_PROD_SPACE}"
-                  ;;
-                "SANDBOX")
-                  cf_username="${CLOUDGOV_SANDBOX_USERNAME}"
-                  cf_password="${CLOUDGOV_SANDBOX_PASSWORD}"
-                  cf_space="${CLOUDGOV_SANDBOX_SPACE}"
-                  ;;
-                "STAGING")
-                  cf_username="${CLOUDGOV_STAGING_USERNAME}"
-                  cf_password="${CLOUDGOV_STAGING_PASSWORD}"
-                  cf_space="${CLOUDGOV_STAGING_SPACE}"
-                  ;;
-                "DEV")
-                  cf_username="${CLOUDGOV_DEV_USERNAME}"
-                  cf_password="${CLOUDGOV_DEV_PASSWORD}"
-                  cf_space="${CLOUDGOV_DEV_SPACE}"
-                  ;;
-                *)
-                  echo "Unknown environment: $env"
-                  exit 1
-                  ;;
-              esac
+      # - run:
+      #     name: Acquire Locks
+      #     command: |
+      #       chmod +x ./automation/ci/scripts/*-lock.sh
+      #       env_list="<< parameters.env_list >>"
+      #       apps=(${env_list//,/ })
+      #       for env in "${apps[@]}"; do
+      #         case "$env" in
+      #           "PROD")
+      #             cf_username="${CLOUDGOV_PROD_USERNAME}"
+      #             cf_password="${CLOUDGOV_PROD_PASSWORD}"
+      #             cf_space="${CLOUDGOV_PROD_SPACE}"
+      #             ;;
+      #           "SANDBOX")
+      #             cf_username="${CLOUDGOV_SANDBOX_USERNAME}"
+      #             cf_password="${CLOUDGOV_SANDBOX_PASSWORD}"
+      #             cf_space="${CLOUDGOV_SANDBOX_SPACE}"
+      #             ;;
+      #           "STAGING")
+      #             cf_username="${CLOUDGOV_STAGING_USERNAME}"
+      #             cf_password="${CLOUDGOV_STAGING_PASSWORD}"
+      #             cf_space="${CLOUDGOV_STAGING_SPACE}"
+      #             ;;
+      #           "DEV")
+      #             cf_username="${CLOUDGOV_DEV_USERNAME}"
+      #             cf_password="${CLOUDGOV_DEV_PASSWORD}"
+      #             cf_space="${CLOUDGOV_DEV_SPACE}"
+      #             ;;
+      #           *)
+      #             echo "Unknown environment: $env"
+      #             exit 1
+      #             ;;
+      #         esac
 
-              # Perform cf login and acquire lock with dynamically selected credentials
-              cf login -a << pipeline.parameters.cg_api >> \
-                -u "${cf_username}" \
-                -p "${cf_password}" \
-                -o << pipeline.parameters.cg_org >> \
-                -s "${cf_space}"
+      #         # Perform cf login and acquire lock with dynamically selected credentials
+      #         cf login -a << pipeline.parameters.cg_api >> \
+      #           -u "${cf_username}" \
+      #           -p "${cf_password}" \
+      #           -o << pipeline.parameters.cg_org >> \
+      #           -s "${cf_space}"
 
-              ./automation/ci/scripts/acquire-lock.sh \
-                "$env" \
-                "<< pipeline.git.branch >>" \
-                "<< pipeline.number >>"
-            done
+      #         ./automation/ci/scripts/acquire-lock.sh \
+      #           "$env" \
+      #           "<< pipeline.git.branch >>" \
+      #           "<< pipeline.number >>"
+      #       done
       # Perform the desired action on environments
       - run:
           name: Manage Apps
           command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
             chmod +x ./automation/ci/scripts/manage_apps.sh
             ./automation/ci/scripts/manage_apps.sh \
               --env_list "<< parameters.env_list >>" \
@@ -1623,52 +1624,52 @@ jobs:
               --cg_org "<< pipeline.parameters.cg_org >>"
 
       # Release lock for each environment
-      - run:
-          name: Release Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            env_list="<< parameters.env_list >>"
-            apps=(${env_list//,/ })
-            for env in "${apps[@]}"; do
-              case "$env" in
-                "PROD")
-                  cf_username="${CLOUDGOV_PROD_USERNAME}"
-                  cf_password="${CLOUDGOV_PROD_PASSWORD}"
-                  cf_space="${CLOUDGOV_PROD_SPACE}"
-                  ;;
-                "SANDBOX")
-                  cf_username="${CLOUDGOV_SANDBOX_USERNAME}"
-                  cf_password="${CLOUDGOV_SANDBOX_PASSWORD}"
-                  cf_space="${CLOUDGOV_SANDBOX_SPACE}"
-                  ;;
-                "STAGING")
-                  cf_username="${CLOUDGOV_STAGING_USERNAME}"
-                  cf_password="${CLOUDGOV_STAGING_PASSWORD}"
-                  cf_space="${CLOUDGOV_STAGING_SPACE}"
-                  ;;
-                "DEV")
-                  cf_username="${CLOUDGOV_DEV_USERNAME}"
-                  cf_password="${CLOUDGOV_DEV_PASSWORD}"
-                  cf_space="${CLOUDGOV_DEV_SPACE}"
-                  ;;
-                *)
-                  echo "Unknown environment: $env"
-                  exit 1
-                  ;;
-              esac
+      # - run:
+      #     name: Release Lock
+      #     command: |
+      #       chmod +x ./automation/ci/scripts/*-lock.sh
+      #       env_list="<< parameters.env_list >>"
+      #       apps=(${env_list//,/ })
+      #       for env in "${apps[@]}"; do
+      #         case "$env" in
+      #           "PROD")
+      #             cf_username="${CLOUDGOV_PROD_USERNAME}"
+      #             cf_password="${CLOUDGOV_PROD_PASSWORD}"
+      #             cf_space="${CLOUDGOV_PROD_SPACE}"
+      #             ;;
+      #           "SANDBOX")
+      #             cf_username="${CLOUDGOV_SANDBOX_USERNAME}"
+      #             cf_password="${CLOUDGOV_SANDBOX_PASSWORD}"
+      #             cf_space="${CLOUDGOV_SANDBOX_SPACE}"
+      #             ;;
+      #           "STAGING")
+      #             cf_username="${CLOUDGOV_STAGING_USERNAME}"
+      #             cf_password="${CLOUDGOV_STAGING_PASSWORD}"
+      #             cf_space="${CLOUDGOV_STAGING_SPACE}"
+      #             ;;
+      #           "DEV")
+      #             cf_username="${CLOUDGOV_DEV_USERNAME}"
+      #             cf_password="${CLOUDGOV_DEV_PASSWORD}"
+      #             cf_space="${CLOUDGOV_DEV_SPACE}"
+      #             ;;
+      #           *)
+      #             echo "Unknown environment: $env"
+      #             exit 1
+      #             ;;
+      #         esac
 
-              # Perform cf login and acquire lock with dynamically selected credentials
-              cf login -a << pipeline.parameters.cg_api >> \
-                -u "${cf_username}" \
-                -p "${cf_password}" \
-                -o << pipeline.parameters.cg_org >> \
-                -s "${cf_space}"
-              ./automation/ci/scripts/release-lock.sh \
-                "$env" \
-                "<< pipeline.git.branch >>" \
-                "<< pipeline.number >>"
-            done
-          when: always
+      #         # Perform cf login and acquire lock with dynamically selected credentials
+      #         cf login -a << pipeline.parameters.cg_api >> \
+      #           -u "${cf_username}" \
+      #           -p "${cf_password}" \
+      #           -o << pipeline.parameters.cg_org >> \
+      #           -s "${cf_space}"
+      #         ./automation/ci/scripts/release-lock.sh \
+      #           "$env" \
+      #           "<< pipeline.git.branch >>" \
+      #           "<< pipeline.number >>"
+      #       done
+      #     when: always
   restore_production_for_processing:
     docker:
       - image: cimg/base:2024.05
