@@ -13,7 +13,9 @@ import {
 } from '../../services/files';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
-import { deleteHandler } from './handlers';
+import { deleteActivityReportObjectiveFile, deleteHandler } from './handlers';
+import handleErrors from '../../lib/apiErrorHandler';
+import { currentUserId } from '../../services/currentUser';
 
 jest.mock('../../services/scanQueue', () => jest.fn());
 jest.mock('bull');
@@ -27,6 +29,7 @@ jest.mock('../../services/accessValidation', () => ({
 jest.mock('axios');
 jest.mock('smartsheet');
 jest.mock('../../services/users');
+jest.mock('../../services/currentUser');
 jest.mock('../../services/files', () => ({
   ...jest.requireActual('../../services/files'),
   deleteActivityReportFile: jest.fn(),
@@ -48,6 +51,7 @@ jest.mock('../../lib/s3', () => ({
   deleteFileFromS3: jest.fn(),
   uploadFile: jest.fn(),
 }));
+jest.mock('../../lib/apiErrorHandler', () => jest.fn());
 
 describe('deleteHandler', () => {
   const mockReq = {
@@ -276,5 +280,31 @@ describe('deleteHandler', () => {
     expect(deleteFile).toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(204);
     expect(mockRes.send).toHaveBeenCalled();
+  });
+});
+
+describe('deleteActivityReportObjectiveFile', () => {
+  const mockReq = {
+    params: {
+      reportId: 1,
+      objectiveId: 1,
+      fileId: 1,
+    },
+    body: {
+      objectiveIds: [],
+    },
+  };
+
+  const mockRes = {
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn(),
+    sendStatus: jest.fn(),
+    end: jest.fn(),
+  };
+
+  it('calls handleErrors if an error occurs', async () => {
+    currentUserId.mockRejectedValue(new Error('test error'));
+    await deleteActivityReportObjectiveFile(mockReq, mockRes);
+    expect(handleErrors).toHaveBeenCalled();
   });
 });
