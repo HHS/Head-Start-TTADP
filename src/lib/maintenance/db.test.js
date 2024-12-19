@@ -153,6 +153,21 @@ describe('maintenance', () => {
         && typeof log.data.benchmarks[0] === 'number')
         || (log.type === MAINTENANCE_TYPE.VACUUM_TABLES))).toBe(true);
     });
+
+    it('should use default offset and limit values', async () => {
+      const preLog = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+
+      await vacuumTables();
+
+      const logs = await MaintenanceLog.findAll({
+        where: { id: { [Op.gt]: preLog.id } },
+        order: [['id', 'DESC']],
+        raw: true,
+      });
+
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs.every((log) => log.isSuccessful)).toBe(true);
+    });
   });
 
   describe('reindexTables', () => {
@@ -186,6 +201,21 @@ describe('maintenance', () => {
       expect(logs.every((log) => (log.data?.benchmarks?.length > 0
         && typeof log.data.benchmarks[0] === 'number')
         || (log.type === MAINTENANCE_TYPE.REINDEX_TABLES))).toBe(true);
+    });
+
+    it('should use default offset and limit values', async () => {
+      const preLog = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+
+      await reindexTables();
+
+      const logs = await MaintenanceLog.findAll({
+        where: { id: { [Op.gt]: preLog.id } },
+        order: [['id', 'DESC']],
+        raw: true,
+      });
+
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs.every((log) => log.isSuccessful)).toBe(true);
     });
   });
 
