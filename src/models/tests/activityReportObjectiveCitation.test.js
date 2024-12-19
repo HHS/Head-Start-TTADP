@@ -1,7 +1,6 @@
-/* eslint-disable max-len */
-/* eslint-disable prefer-destructuring */
 import { REPORT_STATUSES } from '@ttahub/common';
 import { faker } from '@faker-js/faker';
+import { sequelize } from 'sequelize';
 import db, {
   User,
   Recipient,
@@ -163,13 +162,23 @@ describe('activityReportObjectiveCitation', () => {
     const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
       citation: 'Sample Citation 1',
-      monitoringReferences: [{ grantId: grant.id, findingId: 1, reviewName: 'Review Name 1' }],
+      monitoringReferences: [{
+        grantId: grant.id, findingId: 1, reviewName: 'Review Name 1', grantNumber: grant.number,
+      }],
     }, { individualHooks: true });
 
     const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: activityReportObjective.id,
       citation: 'Sample Citation 2',
-      monitoringReferences: [{ grantId: grant.id, findingId: 2, reviewName: 'Review Name 2' }],
+      monitoringReferences: [{
+        grantId: grant.id, findingId: 2, reviewName: 'Review Name 2', grantNumber: grant.number,
+      }],
+    }, { individualHooks: true });
+
+    const activityReportObjectiveCitation3 = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: activityReportObjective.id,
+      citation: 'Sample Citation 3',
+      monitoringReferences: [],
     }, { individualHooks: true });
 
     // Assert citations.
@@ -181,7 +190,9 @@ describe('activityReportObjectiveCitation', () => {
     expect(activityReportObjectiveCitationLookUp.length).toBe(2);
 
     // Assert citation values regardless of order.
-    activityReportObjectiveCitationLookUp = activityReportObjectiveCitationLookUp.map((c) => c.get({ plain: true }));
+    activityReportObjectiveCitationLookUp = activityReportObjectiveCitationLookUp.map(
+      (c) => c.get({ plain: true }),
+    );
 
     // Citation 1.
     const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 1');
@@ -192,6 +203,11 @@ describe('activityReportObjectiveCitation', () => {
     expect(reference.findingId).toBe(1);
     expect(reference.reviewName).toBe('Review Name 1');
 
+    // test virtual column lookups and cases
+    expect(citation1LookUp.findingIds).toStrictEqual([1]);
+    expect(citation1LookUp.grantNumber).toBe(grant.number);
+    expect(citation1LookUp.reviewNames).toStrictEqual(['Review Name 1']);
+
     // Citation 2.
     const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 2');
     expect(citation2LookUp).toBeDefined();
@@ -200,5 +216,14 @@ describe('activityReportObjectiveCitation', () => {
     expect(secondReference.grantId).toBe(grant.id);
     expect(secondReference.findingId).toBe(2);
     expect(secondReference.reviewName).toBe('Review Name 2');
+
+    // citation 3 should have empty monitoring references
+    const citationThree = await ActivityReportObjectiveCitation.findByPk(
+      activityReportObjectiveCitation3.id,
+    );
+
+    expect(citationThree.findingIds).toStrictEqual([]);
+    expect(citationThree.grantNumber).toBeNull();
+    expect(citationThree.reviewNames).toStrictEqual([]);
   });
 });
