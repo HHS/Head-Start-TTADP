@@ -9,6 +9,7 @@ const {
   reindexTables,
   dailyMaintenance,
   dbMaintenance,
+  nextBlock,
 } = require('./db');
 const { sequelize, MaintenanceLog } = require('../../models');
 const { auditLogger } = require('../../logger');
@@ -259,6 +260,21 @@ describe('maintenance', () => {
           || log.type === MAINTENANCE_TYPE.VACUUM_TABLES
           || log.type === MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE))).toBe(true);
     });
+
+    it('should use default offset and limit values', async () => {
+      const preLog = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
+
+      await dailyMaintenance();
+
+      const logs = await MaintenanceLog.findAll({
+        where: { id: { [Op.gt]: preLog.id } },
+        order: [['id', 'DESC']],
+        raw: true,
+      });
+
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs.every((log) => log.isSuccessful)).toBe(true);
+    });
   });
 
   describe('dbMaintenance', () => {
@@ -392,6 +408,17 @@ describe('maintenance', () => {
         error = err;
       }
       expect(error).toBeDefined();
+    });
+  });
+
+  describe('nextBlock', () => {
+    it('should use default offset and limit values when no log is found', async () => {
+      jest.spyOn(MaintenanceLog, 'findOne').mockResolvedValue(null);
+
+      const result = await nextBlock(MAINTENANCE_TYPE.VACUUM_ANALYZE);
+
+      expect(result.offset).toBe(0);
+      expect(result.limit).toBeGreaterThan(0);
     });
   });
 });
