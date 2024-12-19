@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
@@ -17,10 +18,17 @@ import filtersToScopes from '../../scopes';
 import {
   resourceList,
   resourceDomainList,
+  resourceDashboardFlat,
+  resourceDashboardPhase1,
   resourcesDashboardOverview,
   resourceUse,
   resourceDashboard,
   resourceTopicUse,
+  reduceRecipients,
+  mergeInResources,
+  generateResourceDomainList,
+  generateResourceList,
+  sortDomainCounts,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -294,6 +302,48 @@ describe('Resources dashboard', () => {
     jest.clearAllMocks();
   });
 
+  describe('resourceDashboardPhase1', () => {
+    it('should return the correct data structure', async () => {
+      const scopes = await filtersToScopes({
+        'region.in': [REGION_ID],
+        'startDate.win': '2021/01/01-2021/01/31',
+      });
+
+      const data = await resourceDashboardPhase1(scopes);
+
+      expect(data).toHaveProperty('overview');
+      expect(data).toHaveProperty('use');
+      expect(data).toHaveProperty('topicUse');
+      expect(data).toHaveProperty('reportIds');
+    });
+  });
+
+  describe('resourceDashboardFlat', () => {
+    it('should return the correct data structure', async () => {
+      const scopes = await filtersToScopes({
+        'region.in': [REGION_ID],
+        'startDate.win': '2021/01/01-2021/01/31',
+      });
+
+      const mockData = {
+        resourcesDashboardOverview: {},
+        resourcesUse: { headers: [], resources: [] },
+        topicUse: { headers: [], topics: [] },
+        reportIds: [],
+      };
+
+      // eslint-disable-next-line global-require
+      jest.spyOn(require('./resource'), 'resourceDashboardFlat').mockImplementationOnce(() => Promise.resolve(mockData));
+
+      const data = await resourceDashboardFlat(scopes);
+
+      expect(data).toHaveProperty('resourcesDashboardOverview');
+      expect(data).toHaveProperty('resourcesUse');
+      expect(data).toHaveProperty('topicUse');
+      expect(data).toHaveProperty('reportIds');
+    });
+  });
+
   it('retrieves resources list within date range for specified region', async () => {
     const scopes = await filtersToScopes({
       'region.in': [REGION_ID],
@@ -549,5 +599,257 @@ describe('Resources dashboard', () => {
         },
       ],
     });
+  });
+});
+
+describe('reduceRecipients', () => {
+  it('should handle recipients with otherEntityId correctly', () => {
+    const source = [
+      { recipientId: null, grantIds: [1], otherEntityId: 100 },
+    ];
+    const adding = [
+      { recipientId: null, grantId: 2, otherEntityId: 100 },
+    ];
+    const result = reduceRecipients(source, adding);
+    expect(result).toEqual([
+      { recipientId: null, grantIds: [1, 2], otherEntityId: 100 },
+    ]);
+  });
+});
+
+describe('mergeInResources', () => {
+  it('should handle new resources correctly', () => {
+    const currentData = new Map();
+
+    const additionalData = [
+      {
+        id: 1,
+        resourceObjects: [
+          {
+            resourceId: 101,
+            sourceFields: ['field1'],
+            tableType: 'objective',
+          },
+        ],
+      },
+    ];
+
+    const result = mergeInResources(currentData, additionalData);
+    const mergedData = Array.from(result.values());
+
+    expect(mergedData.length).toBe(1);
+    expect(mergedData[0].resourceObjects.length).toBe(1);
+    expect(mergedData[0].resourceObjects[0].sourceFields).toEqual([
+      'field1',
+    ]);
+  });
+
+  it('should handle empty resourceObjects correctly', () => {
+    const currentData = new Map([
+      [1, {
+        id: 1,
+        resources: [
+          {
+            resourceId: 101,
+            sourceFields: [{ tableType: 'objective', sourceField: 'field1' }],
+          },
+        ],
+      }],
+    ]);
+
+    const additionalData = [
+      {
+        id: 1,
+        resourceObjects: [],
+      },
+    ];
+
+    const result = mergeInResources(currentData, additionalData);
+    const mergedData = Array.from(result.values());
+
+    expect(mergedData.length).toBe(1);
+    expect(mergedData[0].resources.length).toBe(1);
+    expect(mergedData[0].resources[0].sourceFields).toEqual([
+      { tableType: 'objective', sourceField: 'field1' },
+    ]);
+  });
+});
+
+describe('sortDomainCounts', () => {
+  it('should sort domains by reportCount, recipientCount, and domain name', () => {
+    const domainCounts = [
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'another.com', reportCount: 3, recipientCount: 2 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 2 },
+      { domain: 'another.com', reportCount: 3, recipientCount: 1 },
+    ];
+
+    const sorted = sortDomainCounts(domainCounts);
+
+    expect(sorted).toEqual([
+      { domain: 'another.com', reportCount: 3, recipientCount: 2 },
+      { domain: 'another.com', reportCount: 3, recipientCount: 1 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 2 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+    ]);
+  });
+
+  it('should handle ties in reportCount and recipientCount by sorting by domain name', () => {
+    const domainCounts = [
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'another.com', reportCount: 2, recipientCount: 1 },
+    ];
+
+    const sorted = sortDomainCounts(domainCounts);
+
+    expect(sorted).toEqual([
+      { domain: 'another.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+    ]);
+  });
+
+  it('should handle ties in reportCount and recipientCount by sorting by domain name in reverse order', () => {
+    const domainCounts = [
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'zexample.com', reportCount: 2, recipientCount: 1 },
+    ];
+
+    const sorted = sortDomainCounts(domainCounts);
+
+    expect(sorted).toEqual([
+      { domain: 'example.com', reportCount: 2, recipientCount: 1 },
+      { domain: 'zexample.com', reportCount: 2, recipientCount: 1 },
+    ]);
+  });
+});
+
+describe('generateResourceDomainList', () => {
+  it('should sort domains correctly', () => {
+    const data = {
+      resources: [
+        {
+          domain: 'example.com',
+          url: 'https://example.com/resource1',
+          reports: [{ id: 1 }, { id: 2 }],
+          recipients: [{ recipientId: 1 }],
+        },
+        {
+          domain: 'example.com',
+          url: 'https://example.com/resource2',
+          reports: [{ id: 3 }],
+          recipients: [{ recipientId: 2 }],
+        },
+        {
+          domain: 'another.com',
+          url: 'https://another.com/resource1',
+          reports: [{ id: 4 }, { id: 5 }],
+          recipients: [{ recipientId: 3 }, { recipientId: 4 }],
+        },
+        {
+          domain: 'another.com',
+          url: 'https://another.com/resource2',
+          reports: [{ id: 6 }],
+          recipients: [{ recipientId: 5 }],
+        },
+        {
+          domain: 'example.com',
+          url: 'https://example.com/resource3',
+          reports: [{ id: 7 }],
+          recipients: [{ recipientId: 1 }],
+        },
+      ],
+    };
+
+    const result = generateResourceDomainList(data, true);
+
+    expect(result).toEqual([
+      {
+        domain: 'example.com',
+        title: undefined,
+        count: 4,
+        reportCount: 4,
+        recipientCount: 2,
+        resourceCount: 3,
+      },
+      {
+        domain: 'another.com',
+        title: undefined,
+        count: 3,
+        reportCount: 3,
+        recipientCount: 3,
+        resourceCount: 2,
+      },
+    ]);
+  });
+});
+
+describe('generateResourceList', () => {
+  it('should sort resources correctly, including empty URL cases', () => {
+    const data = {
+      resources: [
+        {
+          url: 'https://example.com/resource1',
+          reports: [{ id: 1 }, { id: 2 }],
+          participants: 0,
+          recipients: [{ recipientId: 1 }],
+        },
+        {
+          url: 'https://example.com/resource2',
+          reports: [{ id: 3 }],
+          participants: 0,
+          recipients: [{ recipientId: 2 }],
+        },
+        {
+          url: null,
+          reports: [{ id: 4 }, { id: 5 }],
+          participants: 0,
+          recipients: [{ recipientId: 3 }, { recipientId: 4 }],
+        },
+        {
+          url: null,
+          reports: [{ id: 6 }],
+          participants: 0,
+          recipients: [{ recipientId: 5 }],
+        },
+      ],
+      reports: [],
+    };
+
+    const result = generateResourceList(data, true, true);
+
+    expect(result).toEqual([
+      {
+        name: null,
+        url: null,
+        count: 2,
+        reportCount: 2,
+        participantCount: 0,
+        recipientCount: 2,
+      },
+      {
+        name: 'https://example.com/resource1',
+        url: 'https://example.com/resource1',
+        count: 2,
+        reportCount: 2,
+        participantCount: 0,
+        recipientCount: 1,
+      },
+      {
+        name: null,
+        url: null,
+        count: 1,
+        reportCount: 1,
+        participantCount: 0,
+        recipientCount: 1,
+      },
+      {
+        name: 'https://example.com/resource2',
+        url: 'https://example.com/resource2',
+        count: 1,
+        reportCount: 1,
+        participantCount: 0,
+        recipientCount: 1,
+      },
+    ]);
   });
 });
