@@ -206,6 +206,7 @@ describe('reduceGoals', () => {
             activityReportObjectiveTopics: [],
             activityReportObjectiveCourses: [],
             activityReportObjectiveFiles: [],
+            activityReportObjectiveCitations: [],
           },
         ],
       },
@@ -223,6 +224,7 @@ describe('reduceGoals', () => {
         resources: [],
         files: [],
         courses: [],
+        citations: [],
       },
     ];
 

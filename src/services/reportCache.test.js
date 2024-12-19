@@ -127,6 +127,7 @@ describe('activityReportObjectiveCitation', () => {
   let goal;
   let objective;
   let aro;
+  const citationIds = [];
 
   beforeAll(async () => {
     recipient = await createRecipient({});
@@ -166,7 +167,7 @@ describe('activityReportObjectiveCitation', () => {
   afterAll(async () => {
     await ActivityReportObjectiveCitation.destroy({
       where: {
-        id: [activityReportObjectiveCitation1.id, activityReportObjectiveCitation2.id],
+        id: citationIds,
       },
     });
 
@@ -204,6 +205,7 @@ describe('activityReportObjectiveCitation', () => {
     });
 
     const citation1Id = createdAroCitations[0].id;
+    citationIds.push(citation1Id);
 
     expect(createdAroCitations).toHaveLength(1);
     expect(createdAroCitations[0].citation).toEqual('Citation 1');
@@ -294,7 +296,7 @@ describe('activityReportObjectiveCitation', () => {
       },
     ];
 
-    const result = await cacheCitations(objective.id, aro.id, multiGrantCitations);
+    await cacheCitations(objective.id, aro.id, multiGrantCitations);
 
     // Retrieve all citations for the aro.
     const aroCitations = await ActivityReportObjectiveCitation.findAll({
@@ -304,6 +306,8 @@ describe('activityReportObjectiveCitation', () => {
     });
 
     expect(aroCitations).toHaveLength(2);
+    citationIds.push(aroCitations[0].id);
+    citationIds.push(aroCitations[1].id);
 
     // Assert citations are saved correctly.
     expect(aroCitations[0].citation).toEqual('Citation 1');
