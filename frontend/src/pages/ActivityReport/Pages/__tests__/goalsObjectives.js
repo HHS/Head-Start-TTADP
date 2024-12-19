@@ -21,13 +21,33 @@ const goalUrl = join('api', 'activity-reports', 'goals');
 
 const spy = jest.fn();
 
+const defaultGoals = [{
+  id: 1,
+  name: 'This is a test goal',
+  isNew: true,
+  goalIds: [1],
+  grants: [
+    {
+      value: 1, label: 'Turtle 1', programs: [], id: 1,
+    },
+  ],
+  objectives: [{
+    id: 1,
+    title: 'title',
+    ttaProvided: 'tta',
+    status: 'In Progress',
+    courses: [],
+  }],
+}];
+
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, connectionActive = true,
+  grantIds, activityRecipientType, connectionActive = true, goalsToUse = defaultGoals,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
   }));
   const data = { activityRecipientType, activityRecipients };
+
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -39,24 +59,7 @@ const RenderGoalsObjectives = ({
         ],
       },
       collaborators: [],
-      goals: [{
-        id: 1,
-        name: 'This is a test goal',
-        isNew: true,
-        goalIds: [1],
-        grants: [
-          {
-            value: 1, label: 'Turtle 1', programs: [], id: 1,
-          },
-        ],
-        objectives: [{
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          courses: [],
-        }],
-      }],
+      goals: [...goalsToUse],
       objectivesWithoutGoals: [],
       approvers: [],
       ...data,
@@ -100,6 +103,7 @@ const renderGoals = (
   isGoalFormClosed = false,
   throwFetchError = false,
   toggleGoalForm = jest.fn(),
+  goalsToUse = defaultGoals,
 ) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   const fetchResponse = throwFetchError ? 500 : goals;
@@ -112,6 +116,7 @@ const renderGoals = (
           grantIds={grantIds}
           activityRecipientType={activityRecipientType}
           connectionActive={!throwFetchError}
+          goalsToUse={goalsToUse}
         />
       </GoalFormContext.Provider>
     </UserContext.Provider>,
@@ -252,6 +257,86 @@ describe('goals objectives', () => {
         expect(spy).toHaveBeenCalledWith(key, '');
       });
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
+    });
+
+    it('can remove a goal while editing another', async () => {
+      const goalsToUse = [{
+        id: 3,
+        name: 'Sample Goal to Remove',
+        isNew: true,
+        goalIds: [1],
+        grants: [
+          {
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          },
+        ],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+          courses: [],
+        }],
+      },
+      {
+        id: 4,
+        name: 'Sample Goal to Edit',
+        isNew: true,
+        goalIds: [1],
+        grants: [
+          {
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          },
+        ],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+          courses: [],
+        }],
+      }];
+
+      const sampleGoals = [
+        { name: 'Sample Goal to Remove', id: 3, objectives: [] },
+        { name: 'Sample Goal to Edit', id: 4, objectives: [] },
+      ];
+      const isGoalFormClosed = true;
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+      fetchMock.restore();
+      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1', 200);
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm, goalsToUse);
+
+      // Verify both goals are visible
+      expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
+      expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+
+      // Edit the first goal
+      let actions = await screen.findByRole('button', { name: /actions for goal 4/i });
+      act(() => userEvent.click(actions));
+      const [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(async () => {
+        userEvent.click(editButton);
+        await waitFor(async () => {
+          expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
+          expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+        });
+      });
+
+      // Remove the first goal
+      actions = await screen.findByRole('button', { name: /actions for goal 3/i });
+      act(() => userEvent.click(actions));
+      const [removeButton] = await screen.findAllByRole('button', { name: 'Remove' });
+      act(async () => {
+        userEvent.click(removeButton);
+        await waitFor(async () => {
+          // Assert the goal was removed while the goal being edited is visible still.
+          expect(screen.queryAllByText('Sample Goal to Remove').length).toBe(0);
+          expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+        });
+      });
     });
 
     it('does not fetch if there are no grants', async () => {
