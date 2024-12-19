@@ -277,7 +277,7 @@ const GoalPicker = ({
           setGrantsWithoutMonitoring([]);
         }
       }
-    } else {
+    } else if (grantsWithoutMonitoring.length > 0) {
       setGrantsWithoutMonitoring([]);
     }
   }, [goalForEditing,
@@ -382,6 +382,7 @@ const GoalPicker = ({
               isMultiRecipientReport={isMultiRecipientReport}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
             />
           </div>
         ) : null}

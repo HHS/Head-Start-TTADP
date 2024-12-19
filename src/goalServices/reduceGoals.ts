@@ -180,19 +180,21 @@ export function reduceObjectivesForActivityReport(
       );
 
       // Citations should return null not exists (every subsequent adding of objective).
-      exists.citations = objective.activityReportObjectives
+      exists.citations = uniq(
+        objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
-        ? uniq([
-          ...exists.citations,
-          ...objective.activityReportObjectives.flatMap(
-            (aro) => aro.activityReportObjectiveCitations.map((c) => ({
-              ...c.dataValues,
-              id: c.monitoringReferences[0].standardId,
-              name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-            })),
-          ),
-        ])
-        : [];
+          ? [
+            ...exists.citations || [],
+            ...objective.activityReportObjectives.flatMap(
+              (aro) => (aro.activityReportObjectiveCitations || []).map((c) => ({
+                ...c.dataValues,
+                id: c.monitoringReferences[0].standardId,
+                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
+              })),
+            ),
+          ]
+          : [],
+      );
 
       // Set to null if we don't have any citations.
       if (exists.citations.length === 0) {
@@ -275,16 +277,17 @@ export function reduceObjectivesForActivityReport(
         'course',
       ),
       // Citations should return null if they are not applicable (first time we add the objective).
-      citations: objective.activityReportObjectives
-      && objective.activityReportObjectives.length > 0
-        ? uniq(objective.activityReportObjectives.flatMap(
-          (aro) => aro.activityReportObjectiveCitations.map((c) => ({
-            ...c.dataValues,
-            id: c.monitoringReferences[0].standardId,
-            name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-          })),
-        ))
-        : [],
+      citations:
+        uniq(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives.flatMap(
+            (aro) => aro.activityReportObjectiveCitations.map((c) => ({
+              ...c.dataValues,
+              id: c.monitoringReferences[0].standardId,
+              name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
+            })),
+          )
+          : []),
     };
 
     // If we have no citations set to null.

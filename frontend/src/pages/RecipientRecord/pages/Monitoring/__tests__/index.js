@@ -58,6 +58,13 @@ describe('Monitoring', () => {
   beforeEach(() => {
     fetchMock.get(citationUrl, citationData);
     fetchMock.get(reviewUrl, reviewData);
+
+    // citation drawer content fetchers
+    fetchMock.get('/api/citations/text?citationIds=1302.47%28b%29%285%29%28iv%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1392.47%28b%29%285%29%28i%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1302.91%28a%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1302.12%28m%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1302.47%28b%29%285%29%28i%29', []);
   });
 
   afterEach(() => {
