@@ -222,6 +222,15 @@ describe('checkIdParamMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('throw 400 if param object is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('throw 400 if param is not string or integer', () => {
       const mockRequest = {
         path: '/api/endpoint',
@@ -270,6 +279,15 @@ describe('checkIdParamMiddleware', () => {
       checkAlertIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param object is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkAlertIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: alertId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {
@@ -322,6 +340,15 @@ describe('checkIdParamMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('throw 400 if param object is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('throw 400 if param is not string or integer', () => {
       const mockRequest = {
         path: '/api/endpoint',
@@ -370,6 +397,15 @@ describe('checkIdParamMiddleware', () => {
       checkGroupIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param object is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkGroupIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: groupId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {
