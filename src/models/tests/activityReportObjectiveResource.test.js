@@ -16,5 +16,12 @@ describe('ActivityReportObjectiveResource model', () => {
       const instance = ActivityReportObjectiveResource.build({});
       expect(instance.userProvidedUrl).toBe('');
     });
+
+    it('returns the resource URL if resource is present', () => {
+      const resource = Resource.build({ url: 'http://example.com' });
+      const instance = ActivityReportObjectiveResource.build({});
+      instance.resource = resource;
+      expect(instance.userProvidedUrl).toBe('http://example.com');
+    });
   });
 });
