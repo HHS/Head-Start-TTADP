@@ -255,31 +255,29 @@ const switchToTopicCentric = (input) => {
     recipients: recipientObjects,
     resources: resourceObjects,
   }) => {
-    if (topics) {
-      topics.forEach((topic) => {
-        if (!output[topic]) {
-          output[topic] = {
-            topic,
-            reports: [],
-            resources: [],
-            recipients: [],
-          };
-        }
-        output[topic].reports.push({
-          id,
-          numberOfParticipants,
-          startDate,
-        });
-        output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
-          const exists = resources.find((r) => r.resourceId === resource.resourceId);
-          if (exists) {
-            return resources;
-          }
-          return [...resources, resource];
-        }, output[topic].resources);
-        output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+    topics?.forEach?.((topic) => {
+      if (!output[topic]) {
+        output[topic] = {
+          topic,
+          reports: [],
+          resources: [],
+          recipients: [],
+        };
+      }
+      output[topic].reports.push({
+        id,
+        numberOfParticipants,
+        startDate,
       });
-    }
+      output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+        const exists = resources.find((r) => r.resourceId === resource.resourceId);
+        if (exists) {
+          return resources;
+        }
+        return [...resources, resource];
+      }, output[topic].resources);
+      output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+    });
     if (resourceObjects) {
       resourceObjects.forEach(({
         topics: resourceTopics,
