@@ -311,6 +311,29 @@ describe('import', () => {
         );
     });
 
+    it('should not enqueue any jobs if downloadMore and processMore are falsy', async () => {
+      const id = 123;
+      downloadImport.mockResolvedValue([{}, {}]);
+      moreToDownload.mockResolvedValue(false);
+      moreToProcess.mockResolvedValue(false);
+
+      await importDownload(id);
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+
+      expect(downloadImport).toHaveBeenCalledWith(id);
+      expect(moreToDownload).toHaveBeenCalledWith(id);
+      expect(moreToProcess).toHaveBeenCalledWith(id);
+      expect(enqueueMaintenanceJob).not.toHaveBeenCalled();
+      expect(results?.isSuccessful).toBe(true);
+    });
+
     it('should return an object with isSuccessful false when download fails', async () => {
       const id = 123;
       downloadImport.mockResolvedValue([{}, {}]);
