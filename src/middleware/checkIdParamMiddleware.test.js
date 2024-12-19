@@ -12,6 +12,8 @@ import {
   checkIdIdParam,
   checkCommunicationLogIdParam,
   checkGoalGroupIdParam,
+  checkGoalTemplateIdParam,
+  checkSessionAttachmentIdParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
@@ -67,6 +69,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: activityReportId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if activity report param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkActivityReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: activityReportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkFileIdParam', () => {
@@ -102,6 +113,29 @@ describe('checkIdParamMiddleware', () => {
         path: '/api/endpoint',
         params: {
           reportId: '1',
+        },
+      };
+
+      checkFileIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: fileId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if fileId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkFileIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: fileId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if fileId is undefined', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          fileId: undefined,
         },
       };
 
@@ -154,6 +188,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: reportId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if reportId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: reportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkObjectiveIdParam', () => {
@@ -168,6 +211,15 @@ describe('checkIdParamMiddleware', () => {
       checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param object is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it('throw 400 if param is not string or integer', () => {
@@ -193,6 +245,15 @@ describe('checkIdParamMiddleware', () => {
       checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if objectiveId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -252,6 +313,15 @@ describe('checkIdParamMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('throw 400 if param object is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('throw 400 if param is not string or integer', () => {
       const mockRequest = {
         path: '/api/endpoint',
@@ -275,6 +345,15 @@ describe('checkIdParamMiddleware', () => {
       checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if objectiveTemplateId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -318,6 +397,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if groupId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkGroupIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: groupId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkIdParam', () => {
@@ -357,6 +445,15 @@ describe('checkIdParamMiddleware', () => {
       checkIdParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if arbitraryId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkIdParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: arbitraryId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -483,6 +580,7 @@ describe('checkIdParamMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
+
   describe('checkCommunicationLogIdParam', () => {
     it('calls next if id is string or integer', () => {
       const mockRequest = {
@@ -562,6 +660,50 @@ describe('checkIdParamMiddleware', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkGoalTemplateIdParam', () => {
+    it('calls next if goalTemplateId is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          goalTemplateId: '2',
+        },
+      };
+
+      checkGoalTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          goalTemplateId: '2D',
+        },
+      };
+
+      checkGoalTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: goalTemplateId 2D`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkSessionAttachmentIdParam', () => {
+    it('calls next if sessionAttachmentId is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          sessionAttachmentId: '2',
+        },
+      };
+
+      checkSessionAttachmentIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 });
