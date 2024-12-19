@@ -14,10 +14,10 @@ export default function ReviewObjective({ objective, regionId }) {
       </DescriptionItem>
       <DescriptionItem title="Activity reports">
         <ul className="usa-list add-list-reset">
-          {objective.activityReportIds.map((reportId) => (
-            <li key={reportId}>
-              <Link to={`/activity-reports/view/${reportId}`}>
-                {reportId}
+          {objective.activityReports.map(({ id, displayId }) => (
+            <li key={displayId}>
+              <Link to={`/activity-reports/view/${id}`}>
+                {displayId}
               </Link>
             </li>
           ))}
@@ -45,7 +45,7 @@ export default function ReviewObjective({ objective, regionId }) {
 ReviewObjective.propTypes = {
   objective: PropTypes.shape({
     title: PropTypes.string.isRequired,
-    activityReportIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+    activityReports: PropTypes.arrayOf(PropTypes.string).isRequired,
     endDate: PropTypes.string.isRequired,
     topics: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.string.isRequired,

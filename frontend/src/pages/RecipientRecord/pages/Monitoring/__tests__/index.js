@@ -11,6 +11,7 @@ import userEvent from '@testing-library/user-event';
 import Monitoring from '../index';
 import { citationData, reviewData } from '../testHelpers/mockData';
 import UserContext from '../../../../../UserContext';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 
 describe('Monitoring', () => {
   const recipientId = 1;
@@ -37,21 +38,23 @@ describe('Monitoring', () => {
   const history = createMemoryHistory();
   const renderTest = (currentPage = '') => {
     render(
-      <UserContext.Provider value={{ user: { id: 1 } }}>
-        <Router history={history}>
-          <Monitoring
-            match={{
-              params: {
-                currentPage,
-                recipientId,
-                regionId,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </Router>
-      </UserContext.Provider>,
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <Router history={history}>
+            <Monitoring
+              match={{
+                params: {
+                  currentPage,
+                  recipientId,
+                  regionId,
+                },
+                path: '',
+                url: '',
+              }}
+            />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 
