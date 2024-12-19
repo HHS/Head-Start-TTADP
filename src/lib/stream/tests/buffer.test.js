@@ -170,6 +170,10 @@ describe('BufferStream', () => {
   it('should return a promise that resolves immediately if the stream is finished', async () => {
     bufferStream.write('test data');
     bufferStream.end();
+
+    // eslint-disable-next-line no-promise-executor-return
+    await new Promise((resolve) => bufferStream.on('finish', resolve));
+
     const readable = await bufferStream.getReadableStream();
     const chunks = [];
     readable.on('data', (chunk) => chunks.push(chunk));
