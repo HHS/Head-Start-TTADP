@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { ttaByCitations } from './monitoring';
 import {
   createAdditionalMonitoringData,
@@ -26,10 +27,10 @@ describe('ttaByCitations', () => {
   let reviewId;
 
   let goal;
-  let objective;
-  let report;
+  let objectives;
+  let reports;
   let topic;
-  let citation;
+  let citations;
 
   beforeAll(async () => {
     await Recipient.findOrCreate({
@@ -74,10 +75,10 @@ describe('ttaByCitations', () => {
     );
 
     goal = arocResult.goal;
-    objective = arocResult.objective;
-    report = arocResult.report;
+    objectives = arocResult.objectives;
+    reports = arocResult.reports;
     topic = arocResult.topic;
-    citation = arocResult.citation;
+    citations = arocResult.citations;
   });
 
   afterAll(async () => {
@@ -85,10 +86,10 @@ describe('ttaByCitations', () => {
     await destroyAdditionalMonitoringData(findingId, reviewId);
     await destroyReportAndCitationData(
       goal,
-      objective,
-      report,
+      objectives,
+      reports,
       topic,
-      citation,
+      citations,
     );
 
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
@@ -111,7 +112,7 @@ describe('ttaByCitations', () => {
         grantNumbers: [
           '01HP044446',
         ],
-        lastTTADate: '01/01/2021',
+        lastTTADate: moment().format('MM/DD/YYYY'),
         reviews: [
           {
             findingStatus: 'Complete',
@@ -144,6 +145,37 @@ describe('ttaByCitations', () => {
                 ],
                 status: OBJECTIVE_STATUS.IN_PROGRESS,
                 title: 'Objective Title',
+                topics: [
+                  'Spleunking',
+                ],
+              },
+              {
+                activityReports: [
+                  {
+                    displayId: expect.any(String),
+                    id: expect.any(Number),
+                  },
+                ],
+                endDate: moment().format('MM/DD/YYYY'),
+                findingIds: [
+                  findingId,
+                ],
+                grantNumber: GRANT_NUMBER,
+                reviewNames: [
+                  'REVIEW!!!',
+                ],
+                specialists: [
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: ['SS'],
+                  },
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: ['SS'],
+                  },
+                ],
+                status: OBJECTIVE_STATUS.IN_PROGRESS,
+                title: 'Objective Title Two',
                 topics: [
                   'Spleunking',
                 ],

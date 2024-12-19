@@ -297,25 +297,48 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
   });
 
   const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
-  const objective = await Objective.create({
+  const objectiveOne = await Objective.create({
     goalId: goal.id,
     title: 'Objective Title',
     status: OBJECTIVE_STATUS.IN_PROGRESS,
   });
 
-  const report = await createReport({
+  const objectiveTwo = await Objective.create({
+    goalId: goal.id,
+    title: 'Objective Title Two',
+    status: OBJECTIVE_STATUS.IN_PROGRESS,
+  });
+
+  const reportOne = await createReport({
     activityRecipients: [{ grantId: grant.id }],
     regionId: grant.regionId,
     userId: 1,
   });
 
-  const aro = await ActivityReportObjective.create({
-    activityReportId: report.id,
-    objectiveId: objective.id,
+  const aroOne = await ActivityReportObjective.create({
+    activityReportId: reportOne.id,
+    objectiveId: objectiveOne.id,
   });
 
   await ActivityReportCollaborator.create({
-    activityReportId: report.id,
+    activityReportId: reportOne.id,
+    userId: 1,
+  });
+
+  const reportTwo = await createReport({
+    activityRecipients: [{ grantId: grant.id }],
+    regionId: grant.regionId,
+    userId: 1,
+    endDate: new Date(),
+  });
+
+  const aroTwo = await ActivityReportObjective.create({
+    activityReportId: reportTwo.id,
+    objectiveId: objectiveTwo.id,
+  });
+
+  await ActivityReportCollaborator.create({
+    activityReportId: reportTwo.id,
     userId: 1,
   });
 
@@ -324,12 +347,27 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
   });
 
   await ActivityReportObjectiveTopic.create({
-    activityReportObjectiveId: aro.id,
+    activityReportObjectiveId: aroOne.id,
     topicId: topic.id,
   });
 
-  const citation = await ActivityReportObjectiveCitation.create({
-    activityReportObjectiveId: aro.id,
+  await ActivityReportObjectiveTopic.create({
+    activityReportObjectiveId: aroTwo.id,
+    topicId: topic.id,
+  });
+
+  const citationOne = await ActivityReportObjectiveCitation.create({
+    activityReportObjectiveId: aroOne.id,
+    citation: 'Citation',
+    monitoringReferences: [{
+      findingId,
+      grantNumber,
+      reviewName: 'REVIEW!!!',
+    }],
+  });
+
+  const citationTwo = await ActivityReportObjectiveCitation.create({
+    activityReportObjectiveId: aroTwo.id,
     citation: 'Citation',
     monitoringReferences: [{
       findingId,
@@ -340,22 +378,22 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
 
   return {
     goal,
-    objective,
-    report,
+    objectives: [objectiveOne, objectiveTwo],
+    reports: [reportOne, reportTwo],
     topic,
-    citation,
+    citations: [citationOne, citationTwo],
   };
 }
 
 async function destroyReportAndCitationData(
   goal:{ id: number },
-  objective: { id: number },
-  report: { id: number },
+  objectives: { id: number }[],
+  reports: { id: number }[],
   topic: { id: number },
-  citation: { id: number },
+  citations: { id: number }[],
 ) {
   await ActivityReportObjectiveCitation.destroy({
-    where: { id: citation.id },
+    where: { id: citations.map((c) => c.id) },
     force: true,
     individualHooks: true,
   });
@@ -373,20 +411,21 @@ async function destroyReportAndCitationData(
   });
 
   await ActivityReportCollaborator.destroy({
-    where: { activityReportId: report.id },
+    where: { activityReportId: reports.map((r) => r.id) },
     force: true,
     individualHooks: true,
   });
 
   await ActivityReportObjective.destroy({
-    where: { objectiveId: objective.id },
+    where: { objectiveId: objectives.map((o) => o.id) },
     force: true,
     individualHooks: true,
   });
 
-  await destroyReport(report);
+  await Promise.all(reports.map((report) => destroyReport(report)));
+
   await Objective.destroy({
-    where: { id: objective.id },
+    where: { id: objectives.map((o) => o.id) },
     force: true,
     individualHooks: true,
   });
