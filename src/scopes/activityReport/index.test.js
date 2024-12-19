@@ -43,6 +43,7 @@ import {
 } from '../../testUtils';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
+import { formatDeliveryMethod } from './deliveryMethod';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -3303,6 +3304,12 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+      });
+    });
+
+    describe('formatDeliveryMethod', () => {
+      it('returns in-person for "in person"', () => {
+        expect(formatDeliveryMethod('in person')).toBe('in-person');
       });
     });
 
