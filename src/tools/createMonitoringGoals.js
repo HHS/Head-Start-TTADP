@@ -138,7 +138,7 @@ const createMonitoringGoals = async () => {
               'FA-2', 'FA2-CR',
               'Special'
             )
-            AND g.status = 'Closed'
+            AND g.status IN ('Closed', 'Suspended')
           GROUP BY 1
         )
       UPDATE "Goals"
