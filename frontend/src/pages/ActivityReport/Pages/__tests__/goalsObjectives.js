@@ -38,11 +38,14 @@ const defaultGoals = [{
     status: 'In Progress',
     courses: [],
   }],
-  
 }];
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, connectionActive = true, startDate = null, , goalsToUse = defaultGoals,
+  grantIds,
+  activityRecipientType,
+  connectionActive = true,
+  startDate = null,
+  goalsToUse = defaultGoals,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
