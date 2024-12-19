@@ -29,6 +29,7 @@ const Draft = ({
   lastSaveTime,
   creatorRole,
   grantsMissingMonitoring,
+  grantsMissingCitations,
 }) => {
   const {
     watch,
@@ -76,8 +77,13 @@ const Draft = ({
     return completeRoleList.sort();
   };
 
+  const canSubmitReport = allGoalsHavePromptResponses
+  && !hasIncompletePages
+  && !grantsMissingMonitoring.length
+  && !grantsMissingCitations.length;
+
   const onSubmit = (e) => {
-    if (allGoalsHavePromptResponses && !hasIncompletePages && !grantsMissingMonitoring.length) {
+    if (canSubmitReport) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
@@ -185,6 +191,30 @@ const Draft = ({
             </Alert>
           )
         }
+        {
+          grantsMissingCitations.length > 0 && (
+            <Alert validation slim type="error">
+              {
+                grantsMissingCitations.length > 1
+                  ? 'These grants do not have any of the citations selected:'
+                  : 'This grant does not have any of the citations selected:'
+              }
+              <ul>
+                {grantsMissingCitations.map((grant) => <li key={grant}>{grant}</li>)}
+              </ul>
+              You can either:
+              <ul>
+                <li>Add a citation for this grant under an objective for the monitoring goal</li>
+                <li>
+                  Remove the grant from the
+                  {' '}
+                  <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                </li>
+                <li>Add another goal to the report</li>
+              </ul>
+            </Alert>
+          )
+        }
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         {!allGoalsHavePromptResponses && (
         <SomeGoalsHaveNoPromptResponse
@@ -256,6 +286,7 @@ Draft.propTypes = {
   lastSaveTime: PropTypes.instanceOf(moment),
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
+  grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 Draft.defaultProps = {

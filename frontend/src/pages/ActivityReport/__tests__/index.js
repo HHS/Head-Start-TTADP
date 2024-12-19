@@ -963,6 +963,7 @@ describe('ActivityReport', () => {
     fetchMock.get('//api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/activity-reports/1', {
       ...data,
+      startDate: moment().format('YYYY-MM-DD'),
       activityRecipientType: 'recipient',
       activityRecipients: [
         {

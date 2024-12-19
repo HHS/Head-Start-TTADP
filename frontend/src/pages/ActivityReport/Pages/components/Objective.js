@@ -1,11 +1,19 @@
 import React, {
-  useState, useContext, useRef,
+  useState,
+  useContext,
+  useRef,
+  useMemo,
 } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
+import { Link } from 'react-router-dom';
 import {
-  useController, useFormContext,
+  useController, useFormContext, useWatch,
 } from 'react-hook-form';
+import {
+  Alert,
+} from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
 import GenericSelectWithDrawer from '../../../../components/GoalForm/GenericSelectWithDrawer';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
@@ -28,6 +36,8 @@ import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import CitationDrawerContent from '../../../../components/CitationDrawerContent';
 
 export default function Objective({
   objective,
@@ -43,8 +53,12 @@ export default function Objective({
   reportId,
   citationOptions,
   rawCitations,
+  isMonitoringGoal,
 }) {
   const modalRef = useRef();
+
+  const citationNames = useMemo(() => rawCitations.map((rawCitation) => rawCitation.citation),
+    [rawCitations]);
 
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
@@ -56,10 +70,15 @@ export default function Objective({
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
-  const { getValues, setError, clearErrors } = useFormContext();
+  const {
+    getValues, setError, clearErrors, watch,
+  } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
   const { objectiveCreatedHere } = initialObjective;
   const [onApprovedAR, setOnApprovedAR] = useState(initialObjective.onApprovedAR);
+  const [citationWarnings, setCitationWarnings] = useState([]);
+  const activityRecipients = watch('activityRecipients');
+  const selectedGoals = useWatch({ name: 'goals' });
 
   /**
    * add controllers for all the controlled fields
@@ -67,6 +86,24 @@ export default function Objective({
    * but we want to keep the logic in one place for the AR/RTR
    * if at all possible
    */
+  const {
+    field: {
+      onChange: onChangeCitations,
+      onBlur: onBlurCitations,
+      value: objectiveCitations,
+      name: objectiveCitationsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].citations`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
+      },
+    },
+    // If citations are not available, set citations to null
+    defaultValue: objective.citations,
+  });
+
   const {
     field: {
       onChange: onChangeTitle,
@@ -100,24 +137,6 @@ export default function Objective({
       },
     },
     defaultValue: objective.topics,
-  });
-
-  const {
-    field: {
-      onChange: onChangeCitations,
-      onBlur: onBlurCitations,
-      value: objectiveCitations,
-      name: objectiveCitationsInputName,
-    },
-  } = useController({
-    name: `${fieldArrayName}[${index}].citations`,
-    rules: {
-      validate: {
-        notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
-      },
-    },
-    // If citations are not available, set citations to null
-    defaultValue: objective.citations,
   });
 
   const {
@@ -374,8 +393,31 @@ export default function Objective({
           })),
         ],
       }));
+
     onChangeCitations([...newCitationsObjects]);
   };
+
+  useDeepCompareEffect(() => {
+    // Get a distinct list of grantId's from the citation.grants array.
+    if ((!objectiveCitations || !objectiveCitations.length)
+        || (selectedGoals && selectedGoals.length > 0)) {
+      if (citationWarnings.length > 0) {
+        setCitationWarnings([]);
+      }
+      return;
+    }
+    const grantIdsWithCitations = Array.from(objectiveCitations.reduce((acc, citation) => {
+      const grantsToAdd = citation.monitoringReferences.map((grant) => grant.grantId);
+      return new Set([...acc, ...grantsToAdd]);
+    }, new Set()));
+
+    // Find all the grantIds not in grantIdsWithCitations.
+    const missingRecipientGrantNames = (activityRecipients || []).filter(
+      (recipient) => !grantIdsWithCitations.includes(recipient.activityRecipientId),
+    ).map((recipient) => recipient.name);
+
+    setCitationWarnings(missingRecipientGrantNames);
+  }, [objectiveCitations, activityRecipients, selectedGoals, citationWarnings]);
 
   return (
     <>
@@ -406,7 +448,41 @@ export default function Objective({
         />
       </FormFieldThatIsSometimesReadOnly>
       {
-        citationOptions.length > 0 && (
+        isMonitoringGoal && citationWarnings.length > 0 && (
+          <Alert type="warning" className="margin-bottom-2">
+            <span>
+              <span className="margin-top-0">
+                {citationWarnings.length > 1
+                  ? 'These grants do not have any of the citations selected:'
+                  : 'This grant does not have any of the citations selected:'}
+                <ul className="margin-top-2">
+                  {citationWarnings.map((grant) => (
+                    <li key={grant}>{grant}</li>
+                  ))}
+                </ul>
+              </span>
+              <span className="margin-top-2 margin-bottom-0">
+                To avoid errors when submitting the report, you can either:
+                <ul className="margin-top-2 margin-bottom-0">
+                  <li>
+                    Add a citation for this grant under an objective for the monitoring goal
+                  </li>
+                  <li>
+                    Remove the grant from the
+                    {' '}
+                    <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                  </li>
+                  <li>
+                    Add another goal to the report
+                  </li>
+                </ul>
+              </span>
+            </span>
+          </Alert>
+        )
+      }
+      {
+        isMonitoringGoal && (
           <GenericSelectWithDrawer
             error={errors.citations
               ? ERROR_FORMAT(errors.citations.message)
@@ -417,9 +493,15 @@ export default function Objective({
             values={objectiveCitations}
             onChangeValues={selectedCitationsChanged}
             inputName={objectiveCitationsInputName}
+            drawerTitle="Citation guidance"
+            drawerContent={(
+              <CitationDrawerContent
+                citations={citationNames}
+              />
+            )}
           />
         )
-            }
+      }
 
       <GenericSelectWithDrawer
         error={errors.topics
@@ -431,6 +513,8 @@ export default function Objective({
         values={objectiveTopics}
         onChangeValues={onChangeTopics}
         inputName={objectiveTopicsInputName}
+        drawerTitle="Topic guidance"
+        drawerContent={useMemo(() => <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />, [])}
       />
 
       <IpdCourseSelect
@@ -574,6 +658,7 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })),
+  isMonitoringGoal: PropTypes.bool,
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
@@ -591,4 +676,5 @@ Objective.propTypes = {
 Objective.defaultProps = {
   citationOptions: [],
   rawCitations: [],
+  isMonitoringGoal: false,
 };
