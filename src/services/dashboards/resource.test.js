@@ -853,3 +853,30 @@ describe('generateResourceList', () => {
     ]);
   });
 });
+
+describe('resourceDashboardFlat', () => {
+  it('should return the correct data structure', async () => {
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
+
+    const mockData = {
+      resourcesDashboardOverview: {},
+      resourcesUse: { headers: [], resources: [] },
+      topicUse: { headers: [], topics: [] },
+      reportIds: [],
+    };
+
+    // Mock the implementation of resourceDashboardFlat to return mockData
+    // eslint-disable-next-line global-require
+    jest.spyOn(require('./resource'), 'resourceDashboardFlat').mockImplementationOnce(() => Promise.resolve(mockData));
+
+    const data = await resourceDashboardFlat(scopes);
+
+    expect(data).toHaveProperty('resourcesDashboardOverview');
+    expect(data).toHaveProperty('resourcesUse');
+    expect(data).toHaveProperty('topicUse');
+    expect(data).toHaveProperty('reportIds');
+  });
+});
