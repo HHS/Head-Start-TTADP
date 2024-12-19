@@ -51,6 +51,29 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+    findingIds: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.monitoringReferences) return null;
+        return this.monitoringReferences.map((reference) => reference.findingId);
+      },
+    },
+    grantNumber: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.monitoringReferences) return null;
+        const [reference] = this.monitoringReferences;
+        if (!reference) return null;
+        return reference.grantNumber;
+      },
+    },
+    reviewNames: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (!this.monitoringReferences) return null;
+        return this.monitoringReferences.map((reference) => reference.reviewName);
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveCitation',
