@@ -166,4 +166,29 @@ describe('BufferStream', () => {
     const readable = await bufferStream.getReadableStream();
     expect(readable).toBeInstanceOf(Readable);
   });
+
+  it('should return a promise that resolves immediately if the stream is finished', async () => {
+    bufferStream.write('test data');
+    bufferStream.end();
+    const readable = await bufferStream.getReadableStream();
+    const chunks = [];
+    readable.on('data', (chunk) => chunks.push(chunk));
+    // eslint-disable-next-line no-promise-executor-return
+    await new Promise((resolve) => readable.on('end', resolve));
+    expect(Buffer.concat(chunks).toString()).toBe('test data');
+  });
+
+  it('should return the same promise if called multiple times before finishing', async () => {
+    const promise1 = bufferStream.getReadableStream();
+    const promise2 = bufferStream.getReadableStream();
+    expect(promise1).toBe(promise2);
+    bufferStream.write('test data');
+    bufferStream.end();
+    const readable = await promise1;
+    const chunks = [];
+    readable.on('data', (chunk) => chunks.push(chunk));
+    // eslint-disable-next-line no-promise-executor-return
+    await new Promise((resolve) => readable.on('end', resolve));
+    expect(Buffer.concat(chunks).toString()).toBe('test data');
+  });
 });
