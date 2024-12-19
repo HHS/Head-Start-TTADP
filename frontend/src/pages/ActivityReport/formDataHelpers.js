@@ -133,6 +133,8 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: g.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
     })),
   ];
@@ -163,6 +165,8 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: goal.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
       grantIds,
       prompts: grantIds.length < 2 ? prompts : [],
