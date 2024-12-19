@@ -46,4 +46,21 @@ describe('topicsByGoalStatus', () => {
     expect(healthTopic.total).toBe(2);
     expect(educationTopic.total).toBe(1);
   });
+
+  it('handles the case where the topic is not in the accumulator', async () => {
+    db.Goal.findAll.mockResolvedValue([
+      {
+        id: 1,
+        status: GOAL_STATUS.NOT_STARTED,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 3,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Safety',
+      },
+    ]);
+
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const response = await topicsByGoalStatus({ goal: { id: [1] } });
+    const safetyTopic = response.find((t) => t.topic === 'Safety');
+    expect(safetyTopic.total).toBe(1);
+    expect(safetyTopic.statuses[GOAL_STATUS.NOT_STARTED]).toBe(1);
+  });
 });
