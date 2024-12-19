@@ -6,6 +6,7 @@ import {
   importDownload,
   importProcess,
   importMaintenance,
+  enqueue,
 } from './import';
 import { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } from '../../constants';
 import {
@@ -47,6 +48,14 @@ jest.mock('../importSystem', () => ({
   moreToProcess: jest.fn(),
   getImportSchedules: jest.fn(),
 }));
+
+jest.mock('./import', () => {
+  const originalModule = jest.requireActual('./import');
+  return {
+    ...originalModule,
+    enqueueImportMaintenanceJob: jest.fn(),
+  };
+});
 
 describe('import', () => {
   beforeEach(() => {
@@ -534,6 +543,59 @@ describe('import', () => {
       const result = await importMaintenance(job);
 
       expect(result?.isSuccessful).toBe(true);
+    });
+  });
+
+  describe('enqueue function', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      jest.resetModules();
+      process.env = { ...originalEnv };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it('should enqueue job when not in CI and in production with CF_INSTANCE_INDEX 0', () => {
+      process.env.CI = undefined;
+      process.env.NODE_ENV = 'production';
+      process.env.CF_INSTANCE_INDEX = '0';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(true);
+    });
+
+    it('should not enqueue job when in CI', () => {
+      process.env.CI = 'true';
+      process.env.NODE_ENV = 'production';
+      process.env.CF_INSTANCE_INDEX = '0';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(false);
+    });
+
+    it('should enqueue job when not in production', () => {
+      process.env.CI = undefined;
+      process.env.NODE_ENV = 'development';
+      process.env.CF_INSTANCE_INDEX = '0';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(true);
+    });
+
+    it('should not enqueue job when in production but CF_INSTANCE_INDEX is not 0', () => {
+      process.env.CI = undefined;
+      process.env.NODE_ENV = 'production';
+      process.env.CF_INSTANCE_INDEX = '1';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(false);
     });
   });
 });
