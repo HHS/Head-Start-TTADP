@@ -5,21 +5,6 @@ APP_NAME=$( [ "$1" == "DEV" ] && echo "tta-smarthub-dev" || ([ "$1" == "SANDBOX"
 BRANCH=$2
 BUILD_ID=$3
 
-# Function to wait for restaging to complete
-wait_for_restaging() {
-  echo "Waiting for app $APP_NAME to finish restaging..."
-  while true; do
-    APP_STATE=$(cf apps | grep "$APP_NAME" | awk '{print $2}')
-    if [ "$APP_STATE" == "started" ]; then
-      echo "App $APP_NAME is running."
-      break
-    else
-      echo "App $APP_NAME is still $APP_STATE..."
-      sleep 5
-    fi
-  done
-}
-
 # Fetch environment variables
 LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
 
@@ -41,10 +26,6 @@ fi
 
 # Release lock
 cf unset-env "$APP_NAME" LOCK_APP
-# cf restage "$APP_NAME"
-
-# # Wait for restaging to complete
-# wait_for_restaging
 
 # Validate lock release
 LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")

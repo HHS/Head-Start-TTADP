@@ -8,21 +8,6 @@ BUILD_ID=$3
 # Constants
 LOCK_TIMEOUT=7200  # 2 hours in seconds
 
-# Function to wait for restaging to complete
-wait_for_restaging() {
-  echo "Waiting for app $APP_NAME to finish restaging..."
-  while true; do
-    APP_STATE=$(cf apps | grep "$APP_NAME" | awk '{print $2}')
-    if [ "$APP_STATE" == "started" ]; then
-      echo "App $APP_NAME is running."
-      break
-    else
-      echo "App $APP_NAME is still $APP_STATE..."
-      sleep 5
-    fi
-  done
-}
-
 # Fetch environment variables
 LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
 
@@ -59,10 +44,6 @@ LOCK_DATA_JSON=$(jq -n \
   '{branch: $branch, build_id: $build_id, timestamp: $timestamp}')
 
 cf set-env "$APP_NAME" LOCK_APP "$LOCK_DATA_JSON"
-# cf restage "$APP_NAME"
-
-# # Wait for restaging to complete
-# wait_for_restaging
 
 # Validate the lock
 LOCK_DATA=$(cf env "$APP_NAME" | grep -A 10 LOCK_APP | sed ':a;N;$!ba;s/\n/ /g' | grep -oP "[{][^}]+[}]")
