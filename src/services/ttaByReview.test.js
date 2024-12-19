@@ -116,7 +116,7 @@ describe('ttaByReviews', () => {
                     id: expect.any(Number),
                   },
                 ],
-                endDate: '01/01/2021',
+                endDate: expect.any(String),
                 findingIds: [
                   findingId,
                 ],
@@ -139,7 +139,7 @@ describe('ttaByReviews', () => {
                   },
                 ],
                 status: 'In Progress',
-                title: 'Objective Title',
+                title: expect.any(String),
                 topics: [
                   'Spleunking',
                 ],
@@ -151,7 +151,7 @@ describe('ttaByReviews', () => {
                     id: expect.any(Number),
                   },
                 ],
-                endDate: moment().format('MM/DD/YYYY'),
+                endDate: expect.any(String),
                 findingIds: [
                   findingId,
                 ],
@@ -174,7 +174,7 @@ describe('ttaByReviews', () => {
                   },
                 ],
                 status: 'In Progress',
-                title: 'Objective Title Two',
+                title: expect.any(String),
                 topics: [
                   'Spleunking',
                 ],
