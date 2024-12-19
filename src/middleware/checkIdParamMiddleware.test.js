@@ -130,6 +130,20 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: fileId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if fileId is undefined', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          fileId: undefined,
+        },
+      };
+
+      checkFileIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: fileId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkReportIdParam', () => {
