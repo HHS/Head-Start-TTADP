@@ -14,4 +14,10 @@ describe('CollaboratorType Model', () => {
     expect(newInstance.latestName).toEqual('Standalone Collaborator');
     expect(newInstance.latestId).toBeNull();
   });
+
+  it('should return correct latestName and latestId when mapsTo is defined', async () => {
+    const newInstance = await CollaboratorType.findByPk(instance.id);
+    expect(newInstance.latestName).toEqual('Mapped Collaborator');
+    expect(newInstance.latestId).toEqual(mapsToInstance.id);
+  });
 });
