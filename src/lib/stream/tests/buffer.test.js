@@ -160,4 +160,10 @@ describe('BufferStream', () => {
     // Verify the data matches what was written
     expect(data).toBe('test data');
   });
+
+  it('should return a resolved promise with a readable stream if already finished', async () => {
+    bufferStream.end();
+    const readable = await bufferStream.getReadableStream();
+    expect(readable).toBeInstanceOf(Readable);
+  });
 });
