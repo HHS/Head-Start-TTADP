@@ -18,6 +18,7 @@ jest.mock('unzipper', () => {
           vars: {
             uncompressedSize: 100,
             lastModifiedDateTime: new Date('2020-01-01'),
+            crc32: '1234abcd',
           },
           pipe: jest.fn(),
           autodrain: jest.fn(),
@@ -61,6 +62,7 @@ describe('ZipStream', () => {
       type: 'File',
       size: 100,
       date: new Date('2020-01-01'),
+      crc32: '1234abcd',
     });
   });
 
@@ -73,6 +75,7 @@ describe('ZipStream', () => {
     const fileDetails = await zipStream.getAllFileDetails();
     expect(fileDetails).toEqual([
       {
+        crc32: '1234abcd',
         name: 'file.txt',
         path: 'folder',
         type: 'File',
@@ -85,5 +88,23 @@ describe('ZipStream', () => {
   test('getFileStream should return null for a non-existing file', async () => {
     const fileStream = await zipStream.getFileStream('nonexistent/file.txt');
     expect(fileStream).toBeNull();
+  });
+
+  test('constructor should handle default filesNeedingStreams', async () => {
+    const zipStreamDefault = new ZipStream(mockReadable);
+    const files = await zipStreamDefault.listFiles();
+    expect(files).toEqual(['folder/file.txt']);
+  });
+
+  test('getFileDetails should include crc32 if present', async () => {
+    const fileInfo = await zipStream.getFileDetails('folder/file.txt');
+    expect(fileInfo).toEqual({
+      name: 'file.txt',
+      path: 'folder',
+      type: 'File',
+      size: 100,
+      date: new Date('2020-01-01'),
+      crc32: '1234abcd',
+    });
   });
 });

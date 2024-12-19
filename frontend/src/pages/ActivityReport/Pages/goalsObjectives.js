@@ -104,6 +104,7 @@ const GoalsObjectives = ({
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const startDate = watch('startDate');
   const pageState = getValues('pageState');
+  const goalForEditing = watch('goalForEditing');
 
   const {
     isRecipientReport,
@@ -212,8 +213,9 @@ const GoalsObjectives = ({
     onUpdateGoals(copyOfSelectedGoals);
 
     // if we have no goals, open the form up via the
-    // hander provided by the context
-    if (copyOfSelectedGoals.length === 0) {
+    // handler provided by the context
+    // Unless we are currently editing a goal and removing at the same time.
+    if (copyOfSelectedGoals.length === 0 && !goalForEditing) {
       setValue('goalForEditing', '');
       setValue('goalName', '');
       setValue('goalEndDate', '');
