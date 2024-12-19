@@ -35,6 +35,12 @@ apps=(${env_list//,/ })
 for env in "${apps[@]}"; do
   echo "Processing environment group: $env"
 
+  # Check if the environment is PROD
+  if [ "$env" == "PROD" ]; then
+    echo "Error: Cannot process the PROD environment. Exiting."
+    exit 1
+  fi
+
   # Normalize environment name to lowercase for suffix
   env_suffix=$(echo "${env}" | tr '[:upper:]' '[:lower:]')
 
