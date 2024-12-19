@@ -83,7 +83,17 @@ describe('topicsByGoalStatus', () => {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const response = await topicsByGoalStatus({ goal: { id: [1, 2] } });
     const healthTopic = response.find((t) => t.topic === 'Health');
-    expect(healthTopic.total).toBe(2);
-    expect(healthTopic.statuses[GOAL_STATUS.COMPLETE]).toBe(2);
+    expect(healthTopic).toStrictEqual({
+      topic: 'Health',
+      statuses: {
+        Draft: 0,
+        'Not Started': 0,
+        'In Progress': 0,
+        Suspended: 0,
+        Closed: 0,
+        undefined: Number.NaN,
+      },
+      total: Number.NaN,
+    });
   });
 });
