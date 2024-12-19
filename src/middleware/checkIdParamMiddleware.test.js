@@ -12,6 +12,8 @@ import {
   checkIdIdParam,
   checkCommunicationLogIdParam,
   checkGoalGroupIdParam,
+  checkGoalTemplateIdParam,
+  checkSessionAttachmentIdParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
@@ -555,6 +557,7 @@ describe('checkIdParamMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
+
   describe('checkCommunicationLogIdParam', () => {
     it('calls next if id is string or integer', () => {
       const mockRequest = {
@@ -634,6 +637,36 @@ describe('checkIdParamMiddleware', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkGoalTemplateIdParam', () => {
+    it('calls next if goalTemplateId is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          goalTemplateId: '2',
+        },
+      };
+
+      checkGoalTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+  });
+
+  describe('checkSessionAttachmentIdParam', () => {
+    it('calls next if sessionAttachmentId is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          sessionAttachmentId: '2',
+        },
+      };
+
+      checkSessionAttachmentIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 });
