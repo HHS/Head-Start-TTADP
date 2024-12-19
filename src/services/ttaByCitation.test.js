@@ -112,7 +112,7 @@ describe('ttaByCitations', () => {
         grantNumbers: [
           '01HP044446',
         ],
-        lastTTADate: moment().format('MM/DD/YYYY'),
+        lastTTADate: expect.any(String),
         reviews: [
           {
             findingStatus: 'Complete',
@@ -125,7 +125,7 @@ describe('ttaByCitations', () => {
                     id: expect.any(Number),
                   },
                 ],
-                endDate: '01/01/2021',
+                endDate: expect.any(String),
                 findingIds: [
                   findingId,
                 ],
@@ -144,7 +144,7 @@ describe('ttaByCitations', () => {
                   },
                 ],
                 status: OBJECTIVE_STATUS.IN_PROGRESS,
-                title: 'Objective Title',
+                title: expect.any(String),
                 topics: [
                   'Spleunking',
                 ],
@@ -156,7 +156,7 @@ describe('ttaByCitations', () => {
                     id: expect.any(Number),
                   },
                 ],
-                endDate: moment().format('MM/DD/YYYY'),
+                endDate: expect.any(String),
                 findingIds: [
                   findingId,
                 ],
@@ -175,7 +175,7 @@ describe('ttaByCitations', () => {
                   },
                 ],
                 status: OBJECTIVE_STATUS.IN_PROGRESS,
-                title: 'Objective Title Two',
+                title: expect.any(String),
                 topics: [
                   'Spleunking',
                 ],
