@@ -35,12 +35,12 @@ export function getScoreBadge(key, score, received, size) {
     // See TTAHUB-2097 for details.
     const dt = moment(received, 'MM/DD/YYYY');
 
-    if (dt.isAfter('2025-08-01')) {
+    if (dt.isAfter('2027-08-01')) {
       if (score < 2.5) return BadgeBelowCompetitive(fontSize);
       return BadgeBelowQuality(fontSize);
     }
 
-    if (dt.isAfter('2020-11-09') && dt.isBefore('2025-07-31')) {
+    if (dt.isAfter('2020-11-09') && dt.isBefore('2027-07-31')) {
       if (score < 2.3) return BadgeBelowCompetitive(fontSize);
       return BadgeBelowQuality(fontSize);
     }
