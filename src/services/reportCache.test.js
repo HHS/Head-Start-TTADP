@@ -18,6 +18,7 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCourse,
+  ActivityReportObjectiveCitation,
   ActivityReportGoalFieldResponse,
   GoalTemplateFieldPrompt,
   CollaboratorRole,
@@ -27,6 +28,7 @@ import db, {
 import {
   cacheGoalMetadata,
   cacheCourses,
+  cacheCitations,
 } from './reportCache';
 import {
   createReport,
@@ -113,6 +115,208 @@ describe('cacheCourses', () => {
 
     expect(aroCourses).toHaveLength(1);
     expect(aroCourses[0].courseId).toEqual(courseTwo.id);
+  });
+});
+
+describe('activityReportObjectiveCitation', () => {
+  let activityReportObjectiveCitation1;
+  let activityReportObjectiveCitation2;
+  let activityReport;
+  let grant;
+  let recipient;
+  let goal;
+  let objective;
+  let aro;
+  const citationIds = [];
+
+  beforeAll(async () => {
+    recipient = await createRecipient({});
+
+    grant = await createGrant({ recipientId: recipient.id });
+
+    activityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId: grant.id,
+        },
+      ],
+    });
+
+    goal = await Goal.create({
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.NOT_STARTED,
+      endDate: null,
+      isFromSmartsheetTtaPlan: false,
+      onApprovedAR: false,
+      grantId: grant.id,
+      createdVia: 'monitoring',
+    });
+
+    objective = await Objective.create({
+      goalId: goal.id,
+      title: faker.datatype.string(200),
+      status: 'Not Started',
+    });
+
+    aro = await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: activityReport.id,
+    });
+  });
+
+  afterAll(async () => {
+    await ActivityReportObjectiveCitation.destroy({
+      where: {
+        id: citationIds,
+      },
+    });
+
+    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await destroyReport(activityReport);
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+    await Recipient.destroy({ where: { id: recipient.id } });
+  });
+
+  it('should create, read, update, and delete', async () => {
+    // Create a new ActivityReportObjectiveCitation.
+    const citationsToCreate = [
+      {
+        citation: 'Citation 1',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1',
+        }],
+      },
+    ];
+
+    // Save the ActivityReportObjectiveCitation.
+    let result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    // Assert created.
+    expect(result[0]).toBeDefined();
+
+    const createdAroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    const citation1Id = createdAroCitations[0].id;
+    citationIds.push(citation1Id);
+
+    expect(createdAroCitations).toHaveLength(1);
+    expect(createdAroCitations[0].citation).toEqual('Citation 1');
+    expect(createdAroCitations[0].monitoringReferences).toEqual([{
+      grantId: grant.id,
+      findingId: 1,
+      reviewName: 'Review 1',
+    }]);
+
+    // Update the ActivityReportObjectiveCitation.
+    const citationsToUpdate = [
+      {
+        id: citation1Id,
+        citation: 'Citation 1 Updated',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1 Updated',
+        }],
+      },
+    ];
+
+    result = await cacheCitations(objective.id, aro.id, citationsToUpdate);
+
+    // Assert updated.
+    expect(result[0]).toBeDefined();
+
+    const updatedAroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(updatedAroCitations).toHaveLength(1);
+    expect(updatedAroCitations[0].citation).toEqual('Citation 1 Updated');
+    expect(updatedAroCitations[0].monitoringReferences).toEqual([{
+      grantId: grant.id,
+      findingId: 1,
+      reviewName: 'Review 1 Updated',
+    }]);
+
+    // Delete the ActivityReportObjectiveCitation.
+    result = await cacheCitations(objective.id, aro.id, []);
+
+    // Assert deleted.
+    expect(result).toHaveLength(0);
+
+    const deletedAroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(deletedAroCitations).toHaveLength(0);
+  });
+
+  it('correctly saves aro citations per grant', async () => {
+    const multiGrantCitations = [
+      {
+        citation: 'Citation 1',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1',
+        }],
+      },
+      {
+        citation: 'Citation 2',
+        monitoringReferences: [{
+          grantId: 2,
+          findingId: 1,
+          reviewName: 'Review 2',
+        }],
+      },
+      {
+        citation: 'Citation 3',
+        monitoringReferences: [
+          {
+            grantId: 3,
+            findingId: 1,
+            reviewName: 'Review 3',
+          },
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 4',
+          }],
+      },
+    ];
+
+    await cacheCitations(objective.id, aro.id, multiGrantCitations);
+
+    // Retrieve all citations for the aro.
+    const aroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(aroCitations).toHaveLength(2);
+    citationIds.push(aroCitations[0].id);
+    citationIds.push(aroCitations[1].id);
+
+    // Assert citations are saved correctly.
+    expect(aroCitations[0].citation).toEqual('Citation 1');
+    expect(aroCitations[0].monitoringReferences.length).toEqual(1);
+    expect(aroCitations[0].monitoringReferences[0].grantId).toBe(grant.id);
+
+    expect(aroCitations[1].citation).toEqual('Citation 3');
+    expect(aroCitations[1].monitoringReferences.length).toEqual(1);
+    expect(aroCitations[1].monitoringReferences[0].grantId).toBe(grant.id);
   });
 });
 
