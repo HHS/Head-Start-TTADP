@@ -67,6 +67,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: activityReportId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if activity report param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkActivityReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: activityReportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkFileIdParam', () => {
@@ -104,6 +113,15 @@ describe('checkIdParamMiddleware', () => {
           reportId: '1',
         },
       };
+
+      checkFileIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: fileId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if fileId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
 
       checkFileIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -154,6 +172,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: reportId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if reportId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: reportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkObjectiveIdParam', () => {
@@ -193,6 +220,15 @@ describe('checkIdParamMiddleware', () => {
       checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if objectiveId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -236,6 +272,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if alertId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkAlertIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: alertId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkObjectiveTemplateIdParam', () => {
@@ -275,6 +320,15 @@ describe('checkIdParamMiddleware', () => {
       checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if objectiveTemplateId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -318,6 +372,15 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
     });
+
+    it('throw 400 if groupId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkGroupIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: groupId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 
   describe('checkIdParam', () => {
@@ -357,6 +420,15 @@ describe('checkIdParamMiddleware', () => {
       checkIdParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if arbitraryId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkIdParam(mockRequest, mockResponse, mockNext, 'arbitraryId');
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: arbitraryId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
