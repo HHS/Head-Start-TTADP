@@ -11,6 +11,7 @@ const propagateDestroyToMetadata = async (sequelize, instance, options) => Promi
     sequelize.models.ActivityReportObjectiveResource,
     sequelize.models.ActivityReportObjectiveTopic,
     sequelize.models.ActivityReportObjectiveCourse,
+    sequelize.models.ActivityReportObjectiveCitation,
   ].map(async (model) => model.destroy({
     where: {
       activityReportObjectiveId: instance.id,
