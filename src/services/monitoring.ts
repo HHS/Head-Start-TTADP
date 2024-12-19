@@ -398,6 +398,8 @@ export async function ttaByCitations(
     granteeIds,
   } = await extractExternalData(recipientId, regionId);
 
+  console.log(citationsOnActivityReports);
+
   const citations = await MonitoringStandard.findAll({
     include: [
       {

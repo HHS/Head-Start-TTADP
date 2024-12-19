@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
@@ -25,10 +26,10 @@ describe('ttaByReviews', () => {
   let reviewId;
 
   let goal;
-  let objective;
-  let report;
+  let objectives;
+  let reports;
   let topic;
-  let citation;
+  let citations;
 
   beforeAll(async () => {
     await Recipient.findOrCreate({
@@ -71,10 +72,10 @@ describe('ttaByReviews', () => {
     );
 
     goal = arocResult.goal;
-    objective = arocResult.objective;
-    report = arocResult.report;
+    objectives = arocResult.objectives;
+    reports = arocResult.reports;
     topic = arocResult.topic;
-    citation = arocResult.citation;
+    citations = arocResult.citations;
   });
 
   afterAll(async () => {
@@ -83,10 +84,10 @@ describe('ttaByReviews', () => {
 
     await destroyReportAndCitationData(
       goal,
-      objective,
-      report,
+      objectives,
+      reports,
       topic,
-      citation,
+      citations,
     );
 
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
@@ -143,6 +144,41 @@ describe('ttaByReviews', () => {
                   'Spleunking',
                 ],
               },
+              {
+                activityReports: [
+                  {
+                    displayId: expect.any(String),
+                    id: expect.any(Number),
+                  },
+                ],
+                endDate: moment().format('MM/DD/YYYY'),
+                findingIds: [
+                  findingId,
+                ],
+                grantNumber: '01HP044446',
+                reviewNames: [
+                  'REVIEW!!!',
+                ],
+                specialists: [
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: [
+                      'SS',
+                    ],
+                  },
+                  {
+                    name: 'Hermione Granger, SS',
+                    roles: [
+                      'SS',
+                    ],
+                  },
+                ],
+                status: 'In Progress',
+                title: 'Objective Title Two',
+                topics: [
+                  'Spleunking',
+                ],
+              },
             ],
             status: 'Complete',
           },
@@ -151,7 +187,7 @@ describe('ttaByReviews', () => {
           '01HP044446',
         ],
         id: expect.any(Number),
-        lastTTADate: '01/01/2021',
+        lastTTADate: moment().format('MM/DD/YYYY'),
         name: 'REVIEW!!!',
         outcome: 'Complete',
         reviewReceived: '02/22/2023',
