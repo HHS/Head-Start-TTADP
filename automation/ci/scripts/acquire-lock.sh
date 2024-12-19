@@ -45,7 +45,7 @@ fi
 
 # Check if app is restaging
 APP_STATE=$(cf apps | grep "$APP_NAME" | awk '{print $2}')
-if [ "$APP_STATE" != "started" ]; then
+if [ "$APP_STATE" != "started" ] && [ "$APP_STATE" != "stopped" ]; then
   echo "App $APP_NAME is currently $APP_STATE. Cannot acquire lock."
   exit 1
 fi
