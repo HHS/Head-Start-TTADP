@@ -21,7 +21,7 @@ export function checkActivityReportIdParam(req, res, next) {
     return next();
   }
 
-  const msg = `${errorMessage}: activityReportId ${req.params ? (req.params.activityReportId || 'undefined') : 'undefined'}`;
+  const msg = `${errorMessage}: activityReportId ${String(req?.params?.activityReportId)}`;
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
