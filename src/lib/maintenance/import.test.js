@@ -49,24 +49,16 @@ jest.mock('../importSystem', () => ({
   getImportSchedules: jest.fn(),
 }));
 
-jest.mock('./import', () => {
-  const originalModule = jest.requireActual('./import');
-  return {
-    ...originalModule,
-    enqueueImportMaintenanceJob: jest.fn(),
-  };
-});
-
 describe('import', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('enqueueImportMaintenanceJob', () => {
-    it('should enqueue a maintenance job with the correct category and type', () => {
+    it('should enqueue a maintenance job with the correct category and type', async () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
       const id = 123;
-      enqueueImportMaintenanceJob(type, id);
+      await enqueueImportMaintenanceJob(type, id);
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
         { type, id },
