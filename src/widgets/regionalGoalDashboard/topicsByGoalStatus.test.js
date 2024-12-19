@@ -63,4 +63,27 @@ describe('topicsByGoalStatus', () => {
     expect(safetyTopic.total).toBe(1);
     expect(safetyTopic.statuses[GOAL_STATUS.NOT_STARTED]).toBe(1);
   });
+
+  it('handles the case where the topic is already in the accumulator', async () => {
+    db.Goal.findAll.mockResolvedValue([
+      {
+        id: 1,
+        status: GOAL_STATUS.COMPLETE,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 1,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Health',
+      },
+      {
+        id: 2,
+        status: GOAL_STATUS.COMPLETE,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 1,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Health',
+      },
+    ]);
+
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const response = await topicsByGoalStatus({ goal: { id: [1, 2] } });
+    const healthTopic = response.find((t) => t.topic === 'Health');
+    expect(healthTopic.total).toBe(2);
+    expect(healthTopic.statuses[GOAL_STATUS.COMPLETE]).toBe(2);
+  });
 });
