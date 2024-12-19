@@ -10,9 +10,15 @@ const {
   dailyMaintenance,
   dbMaintenance,
   nextBlock,
+  enqueueDBMaintenanceJob,
 } = require('./db');
 const { sequelize, MaintenanceLog } = require('../../models');
 const { auditLogger } = require('../../logger');
+
+jest.mock('./common', () => ({
+  ...jest.requireActual('./common'),
+  enqueueMaintenanceJob: jest.fn(),
+}));
 
 describe('maintenance', () => {
   beforeAll(async () => {
@@ -75,9 +81,8 @@ describe('maintenance', () => {
       const command = 'VACUUM ANALYZE';
       const category = MAINTENANCE_CATEGORY.DB;
       const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
-      const model = MaintenanceLog;
 
-      await tableMaintenanceCommand(command, category, type, model);
+      await tableMaintenanceCommand(command, category, type, MaintenanceLog);
 
       const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
       auditLogger.error(`tableMaintenanceCommand: ${JSON.stringify(log)}`);
@@ -90,11 +95,10 @@ describe('maintenance', () => {
 
   describe('vacuumTable', () => {
     it('should call tableMaintenanceCommand with VACUUM and the given model', async () => {
-      const model = MaintenanceLog;
       const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
       const command = 'VACUUM ANALYZE';
 
-      await vacuumTable(model);
+      await vacuumTable(MaintenanceLog);
 
       const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
@@ -107,11 +111,10 @@ describe('maintenance', () => {
 
   describe('reindexTable', () => {
     it('should call tableMaintenanceCommand with REINDEX and the given model', async () => {
-      const model = MaintenanceLog;
       const type = MAINTENANCE_TYPE.REINDEX;
       const command = 'REINDEX TABLE';
 
-      await reindexTable(model);
+      await reindexTable(MaintenanceLog);
 
       const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
@@ -419,6 +422,27 @@ describe('maintenance', () => {
 
       expect(result.offset).toBe(0);
       expect(result.limit).toBeGreaterThan(0);
+    });
+  });
+
+  describe('enqueueDBMaintenanceJob', () => {
+    it('should enqueue a DB maintenance job with default percent value', async () => {
+      const type = MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE;
+      const data = { someKey: 'someValue' };
+
+      // eslint-disable-next-line global-require
+      const enqueueSpy = require('./common').enqueueMaintenanceJob;
+
+      await enqueueDBMaintenanceJob(type, data);
+
+      expect(enqueueSpy).toHaveBeenCalledTimes(1);
+      expect(enqueueSpy).toHaveBeenCalledWith(
+        MAINTENANCE_CATEGORY.DB,
+        expect.objectContaining({
+          type,
+          someKey: 'someValue',
+        }),
+      );
     });
   });
 });
