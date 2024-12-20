@@ -411,7 +411,7 @@ commands:
           name: Release Lock
           command: |
             chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/release-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
               "<< parameters.app_name >>" \
               "<< parameters.build_branch >>" \
               "<< pipeline.number >>"
