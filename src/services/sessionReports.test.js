@@ -2,8 +2,7 @@ import faker from '@faker-js/faker';
 import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  Grant,
-  Recipient,
+  Grant, Recipient,
   SessionReportPilot,
 } from '../models';
 import { createEvent, destroyEvent } from './event';
@@ -15,6 +14,7 @@ import {
   updateSession,
   getPossibleSessionParticipants,
   findSessionHelper,
+  validateFields,
 } from './sessionReports';
 import sessionReportPilot from '../models/sessionReportPilot';
 import { createGrant, createGoal, destroyGoal } from '../testUtils';
@@ -56,6 +56,11 @@ describe('session reports service', () => {
       });
 
       await destroySession(created.id);
+    });
+    it('throws when no event could be found given the provided eventId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-shadow
+      const eventId = 'R01-PD-99_999';
+      await expect(createSession({ eventId, data: {} })).rejects.toThrow();
     });
   });
 
@@ -316,6 +321,14 @@ describe('session reports service', () => {
       expect(sessions[0].data.startDate).toBe('02/10/2022');
       expect(sessions[1].data.startDate).toBe('04/20/2022');
       expect(sessions[2].data.startDate).toBe('01/01/2023');
+    });
+  });
+
+  describe('validateFields', () => {
+    it('throws an error when there are missingFields', () => {
+      expect(() => {
+        validateFields({ data: { field1: 'value1' }, requiredFields: ['field1', 'field2'] });
+      }).toThrow();
     });
   });
 });
