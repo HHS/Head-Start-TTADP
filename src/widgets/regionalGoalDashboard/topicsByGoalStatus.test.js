@@ -64,6 +64,22 @@ describe('topicsByGoalStatus', () => {
     expect(safetyTopic.statuses[GOAL_STATUS.NOT_STARTED]).toBe(1);
   });
 
+  it('handles the case where .topic.topic is undefined', async () => {
+    db.Goal.findAll.mockResolvedValue([
+      {
+        id: 1,
+        status: GOAL_STATUS.NOT_STARTED,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 3,
+        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': undefined,
+      },
+    ]);
+
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const response = await topicsByGoalStatus({ goal: { id: [1] } });
+    const undefinedTopic = response.find((t) => t.topic === undefined);
+    expect(undefinedTopic).toBeUndefined();
+  });
+
   it('handles the case where the topic is already in the accumulator', async () => {
     db.Goal.findAll.mockResolvedValue([
       {
