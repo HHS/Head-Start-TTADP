@@ -41,7 +41,7 @@ describe('nextBlock', () => {
   });
 
   test('should use default offset and limit when log data is undefined', async () => {
-    MaintenanceLog.findOne.mockResolvedValueOnce({});
+    MaintenanceLog.findOne.mockResolvedValueOnce({ data: {} });
 
     const result = await nextBlock('type');
 
