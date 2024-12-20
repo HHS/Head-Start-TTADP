@@ -57,10 +57,11 @@ describe('session reports service', () => {
 
       await destroySession(created.id);
     });
-    it('throws when no event could be found given the provided eventId', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-shadow
-      const eventId = 'R01-PD-99_999';
-      await expect(createSession({ eventId, data: {} })).rejects.toThrow();
+
+    it('throws an error when the event is not found', async () => {
+      await expect(createSession({ eventId: 999999, data: { card: 'ace' } }))
+        .rejects
+        .toThrow('Event with id 999999 not found');
     });
   });
 
@@ -321,6 +322,22 @@ describe('session reports service', () => {
       expect(sessions[0].data.startDate).toBe('02/10/2022');
       expect(sessions[1].data.startDate).toBe('04/20/2022');
       expect(sessions[2].data.startDate).toBe('01/01/2023');
+    });
+
+    it('should return null if no sessions are found', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findAll').mockResolvedValueOnce(null);
+      const sessions = await findSessionHelper({ eventId: 999999 }, true);
+      expect(sessions).toBeNull();
+    });
+
+    it('should return a single session when plural is false', async () => {
+      const session = await findSessionHelper({ id: sessionIds[0] }, false);
+      expect(session).toHaveProperty('id', sessionIds[0]);
+    });
+
+    it('should return multiple sessions when plural is true', async () => {
+      const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
+      expect(sessions.length).toBe(3);
     });
   });
 
