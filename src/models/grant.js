@@ -91,7 +91,10 @@ export default (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+        if (this.recipient) {
+          return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+        }
+        return `${this.numberWithProgramTypes}`;
       },
     },
     numberWithProgramTypes: {
@@ -111,7 +114,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         const programsList = this.programTypes.length > 0 ? `${this.programTypes.join(', ')}` : '';
-        return `${this.recipient.name} - ${this.number}${programsList ? ` - ${programsList}` : ''}`;
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number}${programsList ? ` - ${programsList}` : ''}`
+          : `${this.number} - ${this.recipientId}`;
       },
     },
   }, {
