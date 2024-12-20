@@ -70,14 +70,12 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
 
   let sanitized = allTopics.reduce((acc, goal) => {
     const { status, 'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': topic } = goal;
-    if (topic && !acc[topic]) {
-      acc[topic] = { ...Object.values(GOAL_STATUS).reduce((a, s) => ({ ...a, [s]: 0 }), {}) };
-    }
-
-    if (acc[topic]) {
+    if (topic) {
+      if (!acc[topic]) {
+        acc[topic] = { ...Object.values(GOAL_STATUS).reduce((a, s) => ({ ...a, [s]: 0 }), {}) };
+      }
       acc[topic][status] += 1;
     }
-
     return acc;
   }, {});
 
