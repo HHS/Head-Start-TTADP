@@ -30,9 +30,9 @@ const addToScanQueue = (fileKey) => {
 const onFailedScanQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
 const onCompletedScanQueue = (job, result) => {
   if (result.status === 200) {
-    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   } else {
-    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
   }
 };
 const processScanQueue = () => {
@@ -41,7 +41,12 @@ const processScanQueue = () => {
   scanQueue.on('completed', onCompletedScanQueue);
   increaseListeners(scanQueue);
   const processFileFromJob = async (job) => processFile(job.data.key);
-  scanQueue.process(transactionQueueWrapper(processFileFromJob));
+  scanQueue.process(
+    transactionQueueWrapper(
+      processFileFromJob,
+      'scan',
+    ),
+  );
 };
 
 export {
