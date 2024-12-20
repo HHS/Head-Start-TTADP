@@ -43,8 +43,6 @@ type WhereOptions = {
 
 // eslint-disable-next-line max-len
 export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
-  let session;
-
   const query = {
     attributes: [
       'id',
@@ -72,11 +70,9 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     ],
   };
 
-  if (plural) {
-    session = await SessionReportPilot.findAll(query);
-  } else {
-    session = await SessionReportPilot.findOne(query);
-  }
+  const session = plural
+    ? await SessionReportPilot.findAll(query)
+    : await SessionReportPilot.findOne(query);
 
   if (!session) {
     return null;
@@ -104,7 +100,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
-    event: session?.event ?? {},
+    event: session?.event,
   };
 }
 
