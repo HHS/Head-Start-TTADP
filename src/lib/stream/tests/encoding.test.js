@@ -189,4 +189,32 @@ describe('EncodingConverter', () => {
       });
     });
   });
+
+  it('should call the callback with an error in convertChunk on failure', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding, sourceEncoding);
+    const chunk = Buffer.from('Hello, world!', sourceEncoding);
+    const pushSpy = jest.spyOn(converter, 'push');
+    jest.spyOn(chunk, 'toString').mockImplementation(() => {
+      throw new Error('Conversion error');
+    });
+
+    return new Promise((resolve, reject) => {
+      converter.convertChunk(chunk, (error) => {
+        expect(error).toBeDefined();
+        expect(error.message).toBe('Conversion error');
+        expect(pushSpy).not.toHaveBeenCalled();
+        resolve();
+      });
+    });
+  });
+
+  it('should throw an error for unsupported source encoding', () => {
+    const targetEncoding = 'utf-8';
+    const unsupportedSourceEncoding = 'unsupported-encoding';
+
+    expect(() => new EncodingConverter(targetEncoding, unsupportedSourceEncoding))
+      .toThrow(`Unsupported encoding detected: ${unsupportedSourceEncoding}`);
+  });
 });
