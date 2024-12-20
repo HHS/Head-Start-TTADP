@@ -144,4 +144,49 @@ describe('EncodingConverter', () => {
       });
     });
   });
+
+  it('should convert the buffer correctly in convertBuffer', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding, sourceEncoding);
+    const buffer = Buffer.from('Hello, world!', sourceEncoding);
+    const pushSpy = jest.spyOn(converter, 'push');
+
+    return new Promise((resolve, reject) => {
+      converter.buffer = buffer;
+      converter.convertBuffer((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        expect(error).toBeUndefined();
+        expect(pushSpy).toHaveBeenCalled();
+        // eslint-disable-next-line max-len
+        const result = Buffer.concat(pushSpy.mock.calls.map((call) => call[0])).toString(targetEncoding);
+        expect(result).toBe('Hello, world!');
+        resolve();
+      });
+    });
+  });
+
+  it('should call the callback with an error in convertBuffer on failure', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding, sourceEncoding);
+    const buffer = Buffer.from('Hello, world!', sourceEncoding);
+    const pushSpy = jest.spyOn(converter, 'push');
+    jest.spyOn(buffer, 'toString').mockImplementation(() => {
+      throw new Error('Conversion error');
+    });
+
+    return new Promise((resolve, reject) => {
+      converter.buffer = buffer;
+      converter.convertBuffer((error) => {
+        expect(error).toBeDefined();
+        expect(error.message).toBe('Conversion error');
+        expect(pushSpy).not.toHaveBeenCalled();
+        resolve();
+      });
+    });
+  });
 });
