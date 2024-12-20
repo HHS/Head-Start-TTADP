@@ -354,6 +354,16 @@ describe('session reports service', () => {
 
       await SessionReportPilot.destroy({ where: { id: createdSession.id } });
     });
+
+    it('should return null for the eventId when session.event is null', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({ id: 999 });
+      const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
+      expect(foundSession).toHaveProperty('eventId', null);
+      expect(foundSession).toHaveProperty('id', 999);
+      expect(foundSession).toHaveProperty('data', {});
+      expect(foundSession).toHaveProperty('files', []);
+      expect(foundSession).toHaveProperty('supportingAttachments', []);
+    });
   });
 
   describe('validateFields', () => {
