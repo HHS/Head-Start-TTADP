@@ -607,11 +607,14 @@ BEGIN
             WHERE json_values.value = (
             CASE
               -- Get the max reportDeliveryDate for the instructionalSupport domain
+              -- These dates are set by OHS policy and were delayed by two years in July 2024:
+              -- Final Rule to Delay Effective Date for Increasing the CLASS Instructional Support Domain Competitive Threshold
+              -- https://eclkc.ohs.acf.hhs.gov/policy/pi/acf-ohs-pi-24-07
               WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] >= 3 THEN 'Above all thresholds'
-              WHEN (MAX(mcs."reportDeliveryDate") >= '2025-08-01'
+              WHEN (MAX(mcs."reportDeliveryDate") >= '2027-08-01'
               AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.5)
               THEN 'Below competitive'
-              WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2025-07-31'
+              WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2027-07-31'
               AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[1] < 2.3)
               THEN 'Below competitive'
               ELSE 'Below quality'
