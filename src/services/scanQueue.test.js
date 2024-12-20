@@ -84,7 +84,7 @@ describe('addToScanQueue', () => {
         callback(job, error);
       }
     });
-    scanQueue.on('failed', scanQueue);
+    scanQueue.on('failed', onFailedScanQueue);
     expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
   });
 
@@ -97,7 +97,7 @@ describe('addToScanQueue', () => {
         callback(job, result);
       }
     });
-    scanQueue.on('completed', scanQueue);
+    scanQueue.on('completed', onCompletedScanQueue);
     expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
   });
 
