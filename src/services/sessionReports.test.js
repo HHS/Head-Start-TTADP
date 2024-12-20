@@ -339,6 +339,21 @@ describe('session reports service', () => {
       const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
       expect(sessions.length).toBe(3);
     });
+
+    it('should return default values when data, files, supportingAttachments, and event are undefined', async () => {
+      const createdSession = await SessionReportPilot.create({
+        eventId: createdEvent.id,
+        data: {},
+      });
+
+      const foundSession = await findSessionHelper({ id: createdSession.id });
+
+      expect(foundSession).toHaveProperty('data', {});
+      expect(foundSession).toHaveProperty('files', []);
+      expect(foundSession).toHaveProperty('supportingAttachments', []);
+
+      await SessionReportPilot.destroy({ where: { id: createdSession.id } });
+    });
   });
 
   describe('validateFields', () => {
