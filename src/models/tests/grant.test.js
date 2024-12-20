@@ -4,7 +4,7 @@ import db, {
   Program,
 } from '..';
 
-describe('Goals', () => {
+describe('Grants', () => {
   let grant;
   beforeAll(async () => {
     grant = await Grant.unscoped().findOne({
@@ -35,6 +35,21 @@ describe('Goals', () => {
   it('numberWithProgramTypes', () => {
     expect(grant.numberWithProgramTypes)
       .toStrictEqual(`${grant.dataValues.number} ${grant.programTypes?.join(', ')}`);
+  });
+  it('numberWithProgramTypes with program types', async () => {
+    const grantWithPrograms = await Grant.unscoped().findOne({
+      include: [
+        {
+          model: Program,
+          as: 'programs',
+          where: { programType: { [db.Sequelize.Op.ne]: null } },
+        },
+      ],
+      order: [['id', 'ASC']],
+      limit: 1,
+    });
+    expect(grantWithPrograms.numberWithProgramTypes)
+      .toContain(` - ${grantWithPrograms.programTypes.join(', ')}`);
   });
   it('recipientInfo', () => {
     expect(grant.recipientInfo)

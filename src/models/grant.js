@@ -107,9 +107,7 @@ export default (sequelize, DataTypes) => {
     recipientInfo: {
       type: DataTypes.VIRTUAL,
       get() {
-        return this.recipient
-          ? `${this.recipient.name} - ${this.number} - ${this.recipientId}`
-          : `${this.number} - ${this.recipientId}`;
+        return `${this.recipient.name} - ${this.number} - ${this.recipientId}`;
       },
     },
     recipientNameWithPrograms: {
