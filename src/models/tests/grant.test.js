@@ -57,4 +57,29 @@ describe('Grants', () => {
         ? `${grant.recipient.name} - ${grant.dataValues.number} - ${grant.dataValues.recipientId}`
         : `${grant.dataValues.number} - ${grant.dataValues.recipientId}`);
   });
+  describe('grant without recipient', () => {
+    it('recipientInfo', async () => {
+      const g = await Grant.unscoped().findOne({
+        order: [['id', 'ASC']],
+        limit: 1,
+      });
+      expect(g.recipientInfo).toBe(`${g.dataValues.number} - ${g.dataValues.recipientId}`);
+    });
+
+    it('recipientNameWithPrograms', async () => {
+      const g = await Grant.unscoped().findOne({
+        order: [['id', 'ASC']],
+        limit: 1,
+      });
+      expect(g.recipientNameWithPrograms).toBe(`${g.dataValues.number} - ${g.dataValues.recipientId}`);
+    });
+
+    it('name', async () => {
+      const g = await Grant.unscoped().findOne({
+        order: [['id', 'ASC']],
+        limit: 1,
+      });
+      expect(g.name).toContain(`${g.numberWithProgramTypes}`);
+    });
+  });
 });
