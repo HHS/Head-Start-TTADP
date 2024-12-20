@@ -606,7 +606,7 @@ BEGIN
             ) AS json_values
             WHERE json_values.value = (
             CASE
-              -- Get the max reportDeliveryDate for the instructionalSupport domain
+              -- Get the max reportDeliveryDate for the instructionalSupport domain to apply the correct threshold logic
               -- These dates are set by OHS policy and were delayed by two years in July 2024:
               -- Final Rule to Delay Effective Date for Increasing the CLASS Instructional Support Domain Competitive Threshold
               -- https://eclkc.ohs.acf.hhs.gov/policy/pi/acf-ohs-pi-24-07
