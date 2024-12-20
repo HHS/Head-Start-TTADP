@@ -217,4 +217,29 @@ describe('EncodingConverter', () => {
     expect(() => new EncodingConverter(targetEncoding, unsupportedSourceEncoding))
       .toThrow(`Unsupported encoding detected: ${unsupportedSourceEncoding}`);
   });
+
+  it('should detect encoding when buffer length is >= 1024', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding);
+
+    // Create a readable stream with a buffer length >= 1024
+    const readable = new Readable();
+    const largeBuffer = Buffer.alloc(1024, 'a', sourceEncoding);
+    readable.push(largeBuffer);
+    readable.push(null); // Signal end of stream
+
+    const chunks = [];
+
+    return new Promise((resolve) => {
+      converter.on('data', (chunk) => chunks.push(chunk));
+      converter.on('end', () => {
+        const result = Buffer.concat(chunks).toString(targetEncoding);
+        expect(result).toBe(largeBuffer.toString(targetEncoding));
+        resolve();
+      });
+
+      readable.pipe(converter);
+    });
+  });
 });
