@@ -57,19 +57,13 @@ class EncodingConverter extends Transform {
         // We have enough data to detect the encoding
         this.detectEncoding = false; // Set flag to false as we've detected the encoding
         // Default to utf-8 if no encoding is detected
-        // this.sourceEncoding = chardet.detect(this.buffer) || 'utf-8';
         const detectedEncoding = chardet.detect(new Uint8Array(this.buffer));
 
         // Check if the detected encoding is supported
-        if (detectedEncoding
-          && EncodingConverter.supportedEncodings
-            .has(detectedEncoding.toLowerCase() as BufferEncoding)) {
-          this.sourceEncoding = detectedEncoding.toLowerCase();
-        } else {
-          throw new Error(`Unsupported encoding detected: ${detectedEncoding}`);
-        }
-
-        this.sourceEncoding = chardet.analyse(new Uint8Array(this.buffer))?.[0]?.name || 'utf-8';
+        // eslint-disable-next-line max-len
+        this.sourceEncoding = detectedEncoding && EncodingConverter.supportedEncodings.has(detectedEncoding.toLowerCase() as BufferEncoding)
+          ? detectedEncoding.toLowerCase()
+          : 'utf-8';
 
         // If the source encoding matches the target encoding, pass through the entire buffer
         if (this.sourceEncoding === this.targetEncoding) {

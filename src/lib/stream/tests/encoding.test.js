@@ -242,4 +242,31 @@ describe('EncodingConverter', () => {
       readable.pipe(converter);
     });
   });
+
+  it('should fall back to utf-8 when chardet.analyse does not detect encoding', () => {
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding);
+
+    // Create a readable stream with a buffer length >= 1024
+    const readable = new Readable();
+    const largeBuffer = Buffer.alloc(1024, 'a', 'utf16le');
+    readable.push(largeBuffer);
+    readable.push(null); // Signal end of stream
+
+    const chunks = [];
+
+    mockDetect.mockReturnValueOnce(undefined);
+    mockAnalyse.mockReturnValueOnce([]);
+
+    return new Promise((resolve) => {
+      converter.on('data', (chunk) => chunks.push(chunk));
+      converter.on('end', () => {
+        const result = Buffer.concat(chunks).toString(targetEncoding);
+        expect(result).toBe(largeBuffer.toString('utf-8'));
+        resolve();
+      });
+
+      readable.pipe(converter);
+    });
+  });
 });
