@@ -359,7 +359,7 @@ describe('session reports service', () => {
   describe('validateFields', () => {
     it('throws an error when there are missingFields', () => {
       expect(() => {
-        validateFields({ data: { field1: 'value1' }, requiredFields: ['field1', 'field2'] });
+        validateFields({ field1: 'value1' }, ['field1', 'field2']);
       }).toThrow();
     });
   });
