@@ -11,6 +11,7 @@ import userEvent from '@testing-library/user-event';
 import Monitoring from '../index';
 import { citationData, reviewData } from '../testHelpers/mockData';
 import UserContext from '../../../../../UserContext';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 
 describe('Monitoring', () => {
   const recipientId = 1;
@@ -37,27 +38,36 @@ describe('Monitoring', () => {
   const history = createMemoryHistory();
   const renderTest = (currentPage = '') => {
     render(
-      <UserContext.Provider value={{ user: { id: 1 } }}>
-        <Router history={history}>
-          <Monitoring
-            match={{
-              params: {
-                currentPage,
-                recipientId,
-                regionId,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </Router>
-      </UserContext.Provider>,
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <Router history={history}>
+            <Monitoring
+              match={{
+                params: {
+                  currentPage,
+                  recipientId,
+                  regionId,
+                },
+                path: '',
+                url: '',
+              }}
+            />
+          </Router>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 
   beforeEach(() => {
     fetchMock.get(citationUrl, citationData);
     fetchMock.get(reviewUrl, reviewData);
+
+    // citation drawer content fetchers
+    fetchMock.get('/api/citations/text?citationIds=1302.47%28b%29%285%29%28iv%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1392.47%28b%29%285%29%28i%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1302.91%28a%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1302.12%28m%29', []);
+    fetchMock.get('/api/citations/text?citationIds=1302.47%28b%29%285%29%28i%29', []);
   });
 
   afterEach(() => {

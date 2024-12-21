@@ -42,6 +42,7 @@ describe('GoalCard', () => {
         activityReports: [],
         grantNumbers: ['G-1'],
         topics: [],
+        citations: [],
       },
       {
         id: 2,
@@ -55,6 +56,7 @@ describe('GoalCard', () => {
         activityReports: [],
         grantNumbers: ['G-1'],
         topics: [],
+        citations: [],
       },
     ],
     previousStatus: null,
@@ -125,6 +127,20 @@ describe('GoalCard', () => {
     const objectives = document.querySelectorAll('.ttahub-goal-card__objective-list');
 
     expect(objectives.length).toBe(2);
+  });
+
+  it('shows the monitoring flag when the goal creatdVia is monitoring', () => {
+    renderGoalCard({ }, { ...goal, createdVia: 'monitoring' });
+    const monitoringToolTip = screen.getByRole('button', {
+      name: /reason for flag on goal g-1 is monitoring\. click button to visually reveal this information\./i,
+    });
+    expect(monitoringToolTip).toBeInTheDocument();
+  });
+
+  it('shows entered by as OHS when the goal createdVia is monitoring', () => {
+    renderGoalCard({ }, { ...goal, createdVia: 'monitoring' });
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+    expect(screen.getByText(/OHS/i)).toBeInTheDocument();
   });
 
   it('shows goal source', () => {
@@ -396,6 +412,7 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [],
+          citations: [],
         },
         {
           id: 2,
@@ -408,6 +425,7 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-2'],
           topics: [],
+          citations: [],
         },
       ],
     };
@@ -445,6 +463,7 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [],
+          citations: [],
           ids: [1],
         },
         {
@@ -459,6 +478,7 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-2'],
           topics: [],
+          citations: [],
         },
       ],
     };
@@ -495,6 +515,7 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [],
+          citations: [],
           ids: [1],
         },
         {
@@ -509,6 +530,7 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-2'],
           topics: [],
+          citations: [],
         },
       ],
     };
