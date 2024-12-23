@@ -305,42 +305,41 @@ const importMaintenance = async (job) => {
     id,
   } = job.data;
 
-  // Declare a variable to hold the action to be performed
-  let action;
-
   // Use a switch statement to determine the action based on the job type
   switch (type) {
     // If the job type is import schedule, call the importSchedule function
     case MAINTENANCE_TYPE.IMPORT_SCHEDULE:
-      action = await importSchedule();
-      break;
+      return importSchedule();
     // If the job type is import download, call the importDownload function with the provided id
     case MAINTENANCE_TYPE.IMPORT_DOWNLOAD:
-      action = await importDownload(id);
-      break;
+      return importDownload(id);
     // If the job type is import process, call the importProcess function with the provided id
     case MAINTENANCE_TYPE.IMPORT_PROCESS:
-      action = await importProcess(id);
-      break;
+      return importProcess(id);
     // If the job type does not match any case, throw an error
     default:
       throw new Error('Unknown type');
   }
-
-  // Return the result of the action performed
-  return action;
 };
 
 addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
 // TODO: commented out to prevent scheduled execution, as there is a concurrency issue that still
 // needs to be addressed
-if (!process.env.CI
-  && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
-  || process.env.NODE_ENV !== 'production')) {
-  enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', false);
-}
+
+const enqueue = () => {
+  if (!process.env.CI
+    && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
+    || process.env.NODE_ENV !== 'production')) {
+    enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', false);
+    return true;
+  }
+  return false;
+};
+
+enqueue();
 
 export {
+  enqueue,
   enqueueImportMaintenanceJob,
   scheduleImportCrons,
   importSchedule,
