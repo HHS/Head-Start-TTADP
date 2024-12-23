@@ -1,10 +1,14 @@
-import { processFile } from '../process';
+import processFile from '../processFile';
+import processRecords from '../processRecords';
 import { auditLogger } from '../../../logger';
+import XMLStream from '../../stream/xml';
+import Hasher from '../../stream/hasher';
 
 jest.mock('../../stream/hasher');
 jest.mock('../../stream/encoding');
 jest.mock('../../stream/xml');
 jest.mock('../../../logger');
+jest.mock('../processRecords');
 
 describe('processFile', () => {
   const processDefinition = {
@@ -56,5 +60,27 @@ describe('processFile', () => {
 
     expect(result.errors).toContain('Encoding not found');
     expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Encoding not found'), expect.any(Error));
+  });
+
+  it('should return result', async () => {
+    Hasher.prototype.getHash.mockResolvedValue('hash');
+    XMLStream.prototype.initialize.mockResolvedValue(null);
+    XMLStream.prototype.getObjectSchema.mockResolvedValue({});
+    processRecords.mockResolvedValueOnce({
+      errors: [],
+    });
+    const result = await processFile(processDefinition, fileInfo, fileStream);
+
+    expect(result).toStrictEqual({ hash: 'hash', schema: {}, errors: [] });
+  });
+
+  it('handles generic error', async () => {
+    Hasher.prototype.getHash.mockResolvedValue('hash');
+    XMLStream.prototype.initialize.mockResolvedValue(null);
+    XMLStream.prototype.getObjectSchema.mockResolvedValue({});
+    processRecords.mockRejectedValueOnce(new Error('Generic error'));
+    const result = await processFile(processDefinition, fileInfo, fileStream);
+
+    expect(result).toStrictEqual({ errors: ['Generic error'] });
   });
 });
