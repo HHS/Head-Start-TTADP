@@ -1,5 +1,5 @@
 import { DataTypes, Op } from 'sequelize';
-import { processRecords } from '../process';
+import processRecords from '../processRecords';
 import XMLStream from '../../stream/xml';
 import { modelForTable } from '../../modelUtils';
 
