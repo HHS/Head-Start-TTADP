@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Request, Response } from 'express';
 import filtersToScopes from '../../scopes';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -20,6 +19,50 @@ const namespace = 'HANDLERS:COURSES';
 const logContext = {
   namespace,
 };
+
+export async function courseAuthorization(req: Request, res: Response, newCourse = false): Promise<{
+  course: {
+    id: number;
+    update: (data: { mapsTo: number }) => Promise<void>;
+    destroy: () => Promise<void>;
+  } | null;
+  isAuthorized: boolean;
+}> {
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const authorization = new UserPolicy(user);
+
+  if (!authorization.isAdmin()) {
+    res.status(403).send('Forbidden');
+    return {
+      course: null,
+      isAuthorized: false,
+    };
+  }
+
+  if (newCourse) {
+    return {
+      course: null,
+      isAuthorized: true,
+    };
+  }
+
+  const { id } = req.params;
+
+  const course = await getById(Number(id));
+  if (!course) {
+    res.status(404).send('Course not found');
+    return {
+      course: null,
+      isAuthorized: false,
+    };
+  }
+
+  return {
+    course,
+    isAuthorized: true,
+  };
+}
 
 export async function allCourses(req: Request, res: Response) {
   try {
@@ -44,19 +87,8 @@ export async function getCourseById(req: Request, res: Response) {
 
 export async function updateCourseById(req: Request, res: Response) {
   try {
-    const { id } = req.params;
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const authorization = new UserPolicy(user);
-
-    if (!authorization.isAdmin()) {
-      res.status(403).send('Forbidden');
-      return;
-    }
-
-    const course = await getById(Number(id));
-    if (!course) {
-      res.status(404).send('Course not found');
+    const { isAuthorized, course } = await courseAuthorization(req, res);
+    if (!isAuthorized) {
       return;
     }
 
@@ -76,12 +108,8 @@ export async function updateCourseById(req: Request, res: Response) {
 
 export async function createCourseByName(req: Request, res: Response) {
   try {
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const authorization = new UserPolicy(user);
-
-    if (!authorization.isAdmin()) {
-      res.status(403).send('Forbidden');
+    const { isAuthorized } = await courseAuthorization(req, res, true);
+    if (!isAuthorized) {
       return;
     }
 
@@ -96,34 +124,20 @@ export async function createCourseByName(req: Request, res: Response) {
 
 export async function deleteCourseById(req: Request, res: Response) {
   try {
-    const { id } = req.params;
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const authorization = new UserPolicy(user);
-
-    if (!authorization.isAdmin()) {
-      res.status(403).send('Forbidden');
+    const { isAuthorized, course } = await courseAuthorization(req, res);
+    if (!isAuthorized) {
       return;
     }
 
-    const course = await getById(Number(id));
-    if (!course) {
-      res.status(404).send('Course not found');
-      return;
-    }
-    try {
-      await course.destroy();
-    } catch (error) {
-      res.status(500).send('Could not destroy course.');
-      return;
-    }
+    await course.destroy();
+
     res.status(204).send();
   } catch (err) {
     await handleErrors(req, res, err, logContext);
   }
 }
 
-export async function getCourseUrlWidgetDataWithCache(req, res) {
+export async function getCourseUrlWidgetDataWithCache(req: Request, res: Response) {
   const userId = await currentUserId(req, res);
   const query = await setReadRegions(req.query, userId);
   const key = `getCourseWidgetUrlData?v=${COURSE_DATA_CACHE_VERSION}&${JSON.stringify(query)}`;
