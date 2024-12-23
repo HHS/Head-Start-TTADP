@@ -8,6 +8,7 @@ import {
 } from './record';
 import { IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
+import processFilesFromZip from './processFilesFromZip';
 
 /**
  * Processes a zip file from S3.
