@@ -18,6 +18,7 @@ import db, {
   GoalTemplate,
   Goal,
   GrantRelationshipToActive,
+  GrantReplacements,
 } from '../models';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 
@@ -147,9 +148,6 @@ const createMonitoringData = async (
       citable,
     }, { individualHooks: true });
   }));
-
-  // Refresh the materialized view.
-  await GrantRelationshipToActive.refresh();
 };
 
 describe('citations service', () => {
@@ -160,11 +158,15 @@ describe('citations service', () => {
 
   let recipient1;
   let recipient2;
+  let recipient3;
 
   let grant1; // Recipient 1
   let grant1a; // Recipient 1
   let grant2; // Recipient 2
   let grant3; // Recipient 2 (Inactive)
+
+  let grant4Original;
+  let grant4Replacement;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -183,6 +185,9 @@ describe('citations service', () => {
     const grantNumber2 = faker.datatype.string(8);
     const grantNumber3 = faker.datatype.string(8);
 
+    const grantNumber4Original = faker.datatype.string(8);
+    const grantNumber4Replacement = faker.datatype.string(8);
+
     // Recipients 1.
     recipient1 = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
@@ -191,6 +196,12 @@ describe('citations service', () => {
 
     // Recipients 2.
     recipient2 = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+
+    // Recipients 3.
+    recipient3 = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
@@ -237,6 +248,26 @@ describe('citations service', () => {
         endDate: new Date(),
         status: 'Inactive',
       },
+      // Grant 4 for Recipient 3 (original).
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: grantNumber4Original,
+        recipientId: recipient3.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+      // Grant 4 for Recipient 3 (replacement).
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: grantNumber4Replacement,
+        recipientId: recipient3.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
     ]);
 
     // set the grants.
@@ -244,6 +275,10 @@ describe('citations service', () => {
     grant1a = grants[1];
     grant2 = grants[2];
     grant3 = grants[3];
+
+    // Replacement citations test.
+    grant4Original = grants[4];
+    grant4Replacement = grants[5];
 
     // Create Goals and Link them to Grants.
     await Goal.create({
@@ -296,13 +331,38 @@ describe('citations service', () => {
       goalTemplateId: monitoringGoalTemplate.id,
     });
 
+    // Regular goal for grant 4 being replaced.
+    await Goal.create({
+      name: 'Regular Goal 4 Original',
+      status: 'In Progress',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: grant4Original.id,
+      createdAt: '2024-11-26T19:16:15.842Z',
+      onApprovedAR: true,
+      createdVia: 'activityReport',
+    });
+
+    // Replacement goal for grant 4 monitoring.
+    await Goal.create({
+      name: 'Monitoring Goal 4 replacement',
+      status: 'Not started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: grant4Replacement.id,
+      createdAt: '2024-11-26T19:16:15.842Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
     /*
         Citation Object Properties:
           citationText, // Citation Text
           monitoringFindingType, // Monitoring Finding ('Deficiency', 'Significant Deficiency', 'Material Weakness', 'No Finding').
           monitoringFindingStatusName, // Monitoring Finding Status name must be 'Active'.
           monitoringFindingGrantFindingType, // Monitoring Finding Grant Finding Type must be in ('Corrective Action', 'Management Decision', 'No Finding').
-        */
+    */
 
     // Create Monitoring Review Citations.
     const grant1Citations1 = [
@@ -364,6 +424,39 @@ describe('citations service', () => {
       },
     ];
     await createMonitoringData(grant3.number, 5, new Date(), 'AIAN-DEF', 'Complete', grant1Citations3);
+
+    // Create Grant Replacement data.
+    await GrantReplacements.create({
+      replacedGrantId: grant4Original.id,
+      replacingGrantId: grant4Replacement.id,
+      replacementDate: new Date(),
+    });
+
+    // Grant 4 original.
+    const grant1Citations4Original = [
+      {
+        citationText: 'Grant 4 ON REPLACED - Citation 1 - Good',
+        monitoringFindingType: 'Material Weakness',
+        monitoringFindingStatusName: 'Active',
+        monitoringFindingGrantFindingType: 'Corrective Action',
+      },
+    ];
+    await createMonitoringData(grant4Original.number, 6, new Date(), 'AIAN-DEF', 'Complete', grant1Citations4Original);
+
+    // Grant 4 replacement.
+    const grant1Citations4Replacement = [
+      {
+        citationText: 'Grant 4 replacement - Citation 1 - Good',
+        monitoringFindingType: 'Material Weakness',
+        monitoringFindingStatusName: 'Active',
+        monitoringFindingGrantFindingType: 'Corrective Action',
+      },
+    ];
+
+    await createMonitoringData(grant4Replacement.number, 7, new Date(), 'AIAN-DEF', 'Complete', grant1Citations4Replacement);
+
+    // Refresh the materialized view.
+    await GrantRelationshipToActive.refresh();
   });
 
   afterAll(async () => {
@@ -416,6 +509,41 @@ describe('citations service', () => {
     expect(citation3.grants[0].reviewName).toBeDefined();
     expect(citation3.grants[0].reportDeliveryDate).toBeDefined();
     expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
+  });
+
+  it('gets the citations linked to a grant that has been replaced by another grant', async () => {
+    const reportStartDate = new Date().toISOString().split('T')[0];
+    const citationsToAssert = await getCitationsByGrantIds([grant4Replacement.id], reportStartDate);
+
+    // Assert correct number of citations.
+    expect(citationsToAssert.length).toBe(2);
+
+    // Assert the citations.
+    // Get the citation with the text 'Grant 4 replacement - Citation 1 - Good'.
+    const citation1 = citationsToAssert.find((c) => c.citation === 'Grant 4 replacement - Citation 1 - Good');
+    expect(citation1).toBeDefined();
+    expect(citation1.grants.length).toBe(1);
+    expect(citation1.grants[0].findingId).toBeDefined();
+    expect(citation1.grants[0].grantId).toBe(grant4Replacement.id);
+    expect(citation1.grants[0].grantNumber).toBe(grant4Replacement.number);
+    expect(citation1.grants[0].reviewName).toBeDefined();
+    expect(citation1.grants[0].reportDeliveryDate).toBeDefined();
+    expect(citation1.grants[0].findingType).toBe('Material Weakness');
+    expect(citation1.grants[0].findingSource).toBe('Internal Controls');
+    expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
+
+    // Get the citation with the text 'Grant 4 ON REPLACED - Citation 1 - Good'.
+    const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 4 ON REPLACED - Citation 1 - Good');
+    expect(citation2).toBeDefined();
+    expect(citation2.grants.length).toBe(1);
+    expect(citation2.grants[0].findingId).toBeDefined();
+    expect(citation2.grants[0].grantId).toBe(grant4Replacement.id);
+    expect(citation2.grants[0].grantNumber).toBe(grant4Original.number); // ?
+    expect(citation2.grants[0].reviewName).toBeDefined();
+    expect(citation2.grants[0].reportDeliveryDate).toBeDefined();
+    expect(citation2.grants[0].findingType).toBe('Material Weakness');
+    expect(citation2.grants[0].findingSource).toBe('Internal Controls');
+    expect(citation2.grants[0].monitoringFindingStatusName).toBe('Active');
   });
 
   describe('textByCitation', () => {
