@@ -1,4 +1,4 @@
-import { Model, Op } from 'sequelize';
+import { Op } from 'sequelize';
 import { Readable } from 'stream';
 import {
   remap,
