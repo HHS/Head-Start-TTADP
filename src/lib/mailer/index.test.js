@@ -22,6 +22,7 @@ import {
   trCollaboratorAdded,
   filterAndDeduplicateEmails,
   onCompletedNotification,
+  onFailedNotification,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -254,6 +255,47 @@ describe('mailer tests', () => {
       }, null);
 
       expect(logger.info).toHaveBeenCalledWith('Did not send reportApproved notification for mockReport-1 preferences are not set or marked as "no-send"');
+    });
+  });
+
+  describe('onFailedNotification', () => {
+    afterEach(() => {
+      logger.info.mockClear();
+    });
+
+    it('if multiple reports fail we log each', () => {
+      onFailedNotification({
+        data: {
+          reports: [mockReport, { ...mockReport, displayId: 'mockReport-2' }],
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, new Error('Error!'));
+
+      expect(auditLogger.error).toHaveBeenCalledWith('job reportApproved failed for report mockReport-1 with error Error: Error!');
+      expect(auditLogger.error).toHaveBeenCalledWith('job reportApproved failed for report mockReport-2 with error Error: Error!');
+    });
+
+    it('if single report fails without a report object we log an error with unknown', () => {
+      onFailedNotification({
+        data: {
+          reports: null,
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, new Error('Error!'));
+
+      expect(auditLogger.error).toHaveBeenCalledWith('job reportApproved failed for report unknown with error Error: Error!');
+    });
+
+    it('if single report fails we log an error', () => {
+      onFailedNotification({
+        data: {
+          reports: null,
+          report: mockReport,
+        },
+        name: EMAIL_ACTIONS.APPROVED,
+      }, new Error('Error!'));
+
+      expect(auditLogger.error).toHaveBeenCalledWith('job reportApproved failed for report mockReport-1 with error Error: Error!');
     });
   });
 
