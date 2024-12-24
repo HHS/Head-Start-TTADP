@@ -491,7 +491,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 export const trSessionCreated = async (event, sessionId) => {
   if (process.env.CI) return;
   try {
-    if (!event.pocIds && !event.pocIds.length) {
+    if (!event.pocIds || !event.pocIds.length) {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
     }
 
