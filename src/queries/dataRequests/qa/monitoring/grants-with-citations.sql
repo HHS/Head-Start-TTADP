@@ -150,4 +150,4 @@ AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
     ))
 GROUP BY 1,2,3,4,5
-ORDER BY 1,2,4
+ORDER BY 1,2,4;
