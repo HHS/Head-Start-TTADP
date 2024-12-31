@@ -13,6 +13,8 @@ jest.mock('../lib/programmaticTransaction', () => ({
   hasModifiedData: jest.fn(),
 }));
 
+const mockAuditLogger = jest.spyOn(auditLogger, 'info');
+
 describe('transactionWrapper', () => {
   let originalFunction = jest.fn().mockResolvedValue('result');
   let wrapper;
@@ -32,7 +34,7 @@ describe('transactionWrapper', () => {
   it('should log the execution time of the original function', async () => {
     originalFunction = jest.fn().mockResolvedValue('result');
     wrapper = transactionWrapper(originalFunction);
-    const mockAuditLogger = jest.spyOn(auditLogger, 'info');
+    // const mockAuditLogger = jest.spyOn(auditLogger, 'info');
 
     await wrapper();
 
@@ -42,7 +44,7 @@ describe('transactionWrapper', () => {
   it('should accept and log the context, if specified', async () => {
     originalFunction = jest.fn().mockResolvedValue('result');
     wrapper = transactionWrapper(originalFunction, 'testContext');
-    const mockAuditLogger = jest.spyOn(auditLogger, 'info');
+    // const mockAuditLogger = jest.spyOn(auditLogger, 'info');
 
     await wrapper();
 
@@ -102,7 +104,7 @@ describe('logRequestDuration', () => {
   });
 
   it('should log durations and not alert if below thresholds', () => {
-    const mockAuditLogger = jest.spyOn(auditLogger, 'info');
+    // const mockAuditLogger = jest.spyOn(auditLogger, 'info');
     logRequestDuration('testFunction', 150, 'success');
     expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('testFunction'));
     expect(mockNewrelic.noticeError).not.toHaveBeenCalled();
