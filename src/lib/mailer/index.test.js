@@ -24,6 +24,8 @@ import {
   onCompletedNotification,
   onFailedNotification,
   programSpecialistRecipientReportApprovedNotification,
+  trOwnerAdded,
+  trEventComplete,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -145,6 +147,8 @@ const submittedReport = {
 
 jest.mock('../../services/userSettings', () => ({
   usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
+  // eslint-disable-next-line max-len
+  userSettingOverridesById: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -1405,6 +1409,109 @@ describe('mailer tests', () => {
 
       expect(logger.info).toHaveBeenCalledTimes(1);
       expect(logger.info).toHaveBeenCalledWith('Did not send tr session created notification for 1234 preferences are not set or marked as "no-send"');
+    });
+
+    it('trOwnerAdded returns if process.env.ci is true', async () => {
+      process.env.CI = 'true';
+      await trOwnerAdded();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+    });
+
+    it('trOwnerAdded correctly gets added to the notificationQueue', async () => {
+      userById.mockImplementationOnce(() => Promise.resolve({ email: 'test.owner@govtest.gov' }));
+      const data = {
+        eventId: 'tr-1234',
+        emailTo: ['test.owner@govtest.gov'],
+        templatePath: 'tr_owner_added',
+        debugMessage: 'Congrats dude',
+        displayId: 'mockReport-1',
+        reportPath: '/asdf/',
+        report: {
+          id: 123,
+          displayId: 'mockReport-1',
+        },
+      };
+
+      await trOwnerAdded({
+        data,
+      }, jsonTransport);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+        expect.any(Object),
+      );
+    });
+
+    it('trOwnerAdded correctly logs exceptions', async () => {
+      userById.mockImplementationOnce(() => Promise.resolve({ email: 'test@gov.test' }));
+      const data = {
+        emailTo: ['test@gov.test'],
+        templatePath: 'tr_owner_added',
+        debugMessage: 'Congrats dude',
+        displayId: 'mockReport-1',
+        reportPath: '/asdf/',
+        report: {
+          id: 123,
+          displayId: 'mockReport-1',
+        },
+      };
+
+      await trOwnerAdded({
+        data,
+      }, jsonTransport);
+      expect(auditLogger.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('trEventComplete returns if process.env.ci is true', async () => {
+      process.env.CI = 'true';
+      await trEventComplete();
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
+    });
+
+    it('trEventComplete correctly gets added to the notificationQueue', async () => {
+      userById.mockImplementationOnce(() => Promise.resolve({ email: 'test.complete@test.gov' }));
+      const data = {
+        eventId: 'tr-1234',
+        emailTo: ['test.complete@test.gov'],
+        templatePath: 'tr_event_complete',
+        debugMessage: 'Congrats dude',
+        displayId: 'mockReport-1',
+        reportPath: '/asdf/',
+        report: {
+          id: 123,
+          displayId: 'mockReport-1',
+        },
+      };
+      await trEventComplete({
+        ownerId: 1,
+        collaboratorIds: [2],
+        pocIds: [3],
+        data,
+      }, jsonTransport);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+        expect.any(Object),
+      );
+    });
+
+    it('trEventComplete correctly logs exceptions', async () => {
+      userById.mockImplementationOnce(() => Promise.resolve({ email: 'test@gov.test' }));
+      const data = {
+        emailTo: ['test@gov.test'],
+        templatePath: 'tr_event_complete',
+        debugMessage: 'Congrats dude',
+        displayId: 'mockReport-1',
+        reportPath: '/asdf/',
+        report: {
+          id: 123,
+          displayId: 'mockReport-1',
+        },
+      };
+
+      await trEventComplete({
+        data,
+      }, jsonTransport);
+
+      expect(auditLogger.error).toHaveBeenCalledTimes(1);
     });
 
     it('trCollaboratorAdded success', async () => {
