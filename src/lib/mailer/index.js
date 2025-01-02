@@ -1294,7 +1294,6 @@ export const sendEmailVerificationRequestWithToken = (
   const toEmails = filterAndDeduplicateEmails([user.email]);
 
   if (toEmails.length === 0) {
-    console.log('\n\n\n---- return null path ----\n\n\n');
     return null;
   }
 
