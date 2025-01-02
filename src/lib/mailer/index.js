@@ -1286,10 +1286,15 @@ export const processNotificationQueue = () => {
  * @param {string} token
  * @returns Promise<any>
  */
-export const sendEmailVerificationRequestWithToken = (user, token) => {
+export const sendEmailVerificationRequestWithToken = (
+  user,
+  token,
+  transport = defaultTransport,
+) => {
   const toEmails = filterAndDeduplicateEmails([user.email]);
 
   if (toEmails.length === 0) {
+    console.log('\n\n\n---- return null path ----\n\n\n');
     return null;
   }
 
@@ -1298,7 +1303,7 @@ export const sendEmailVerificationRequestWithToken = (user, token) => {
       from: process.env.FROM_EMAIL_ADDRESS,
     },
     send,
-    transport: defaultTransport,
+    transport,
     htmlToText: {
       wordwrap: 120,
     },

@@ -26,6 +26,7 @@ import {
   programSpecialistRecipientReportApprovedNotification,
   trOwnerAdded,
   trEventComplete,
+  sendEmailVerificationRequestWithToken,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -500,6 +501,32 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('sendEmailVerificationRequestWithToken', () => {
+    it('returns null if there are no emails to verify', async () => {
+      const email = await sendEmailVerificationRequestWithToken({
+        email: null,
+      }, null);
+      expect(email).toBeNull();
+    });
+
+    it('sends verification when there is a valid email', async () => {
+      const email = await sendEmailVerificationRequestWithToken(
+        {
+          email: 'test@test.gov',
+        },
+        'test-token-string',
+        jsonTransport,
+      );
+
+      // Expect email.send to have been called.
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual(['test@test.gov']);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe('Please verify your email address');
+      expect(message.text).toContain('In order to verify your email address');
+    });
+  });
+
   describe('sendTrainingReportNotification', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
@@ -608,6 +635,20 @@ describe('mailer tests', () => {
   });
 
   describe('Collaborators digest', () => {
+    it('returns null if the user has no email', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest({
+        data: {
+          user: { email: null },
+          reports: [mockReport],
+          type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+          freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
+        },
+      }, jsonTransport);
+      expect(email).toBeNull();
+    });
+
     it('tests that an email is sent for a daily setting', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
