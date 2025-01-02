@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { ttaByCitations } from './monitoring';
 import {
   createAdditionalMonitoringData,
