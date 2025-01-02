@@ -47,7 +47,7 @@ const {
   Role,
 } = db;
 
-const MIN_DELIVERY_DATE = '2022-01-01';
+const MIN_DELIVERY_DATE = '2024-01-01';
 const REVIEW_STATUS_COMPLETE = 'Complete';
 
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
