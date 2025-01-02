@@ -245,7 +245,7 @@ export async function ttaByReviews(
   } = await extractExternalData(recipientId, regionId);
 
   const reviews = await MonitoringReview.findAll({
-    order: [['reportDeliveryDate', 'ASC']],
+    order: [['reportDeliveryDate', 'DESC']],
     where: {
       reportDeliveryDate: {
         [Op.gte]: MIN_DELIVERY_DATE,
