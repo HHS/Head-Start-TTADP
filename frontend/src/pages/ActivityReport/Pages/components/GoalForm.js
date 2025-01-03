@@ -187,7 +187,7 @@ export default function GoalForm({
         permissions={isCurated ? [
           isSourceEditable,
           !goal.onApprovedAR || !goal.source,
-          citationOptions.length,
+          !isMonitoringGoal,
         ] : [!goal.onApprovedAR || !goal.source]}
         label="Goal source"
         value={goalSource}
