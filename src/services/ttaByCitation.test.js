@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { ttaByCitations } from './monitoring';
 import {
   createAdditionalMonitoringData,
@@ -182,7 +181,7 @@ describe('ttaByCitations', () => {
               },
             ],
             outcome: 'Complete',
-            reviewReceived: '02/22/2023',
+            reviewReceived: '02/22/2024',
             reviewType: 'FA-1',
             specialists: [
               {

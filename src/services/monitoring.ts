@@ -47,7 +47,7 @@ const {
   Role,
 } = db;
 
-const MIN_DELIVERY_DATE = '2022-01-01';
+const MIN_DELIVERY_DATE = '2024-01-01';
 const REVIEW_STATUS_COMPLETE = 'Complete';
 
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
@@ -245,6 +245,7 @@ export async function ttaByReviews(
   } = await extractExternalData(recipientId, regionId);
 
   const reviews = await MonitoringReview.findAll({
+    order: [['reportDeliveryDate', 'DESC']],
     where: {
       reportDeliveryDate: {
         [Op.gte]: MIN_DELIVERY_DATE,
@@ -399,6 +400,7 @@ export async function ttaByCitations(
   } = await extractExternalData(recipientId, regionId);
 
   const citations = await MonitoringStandard.findAll({
+    order: [['citation', 'ASC']],
     include: [
       {
         model: MonitoringStandardLink,
