@@ -1508,6 +1508,19 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
     });
 
+    it('logs the appropriate message when there are no emails to send to', async () => {
+      userById.mockImplementationOnce(() => Promise.resolve({ email: null }));
+      await trEventComplete({
+        collaboratorIds: [],
+        pocIds: [],
+        data: {
+          eventId: 'tr-1234',
+        },
+      }, jsonTransport);
+      expect(logger.info).toHaveBeenCalledTimes(1);
+      expect(logger.info).toHaveBeenCalledWith('Did not send tr event complete notification for 1234 preferences are not set or marked as "no-send"');
+    });
+
     it('trEventComplete correctly gets added to the notificationQueue', async () => {
       userById.mockImplementationOnce(() => Promise.resolve({ email: 'test.complete@test.gov' }));
       const data = {
