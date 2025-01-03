@@ -27,6 +27,8 @@ const Submitter = ({
     calculatedStatus,
     approvers,
     creatorRole,
+    goalsAndObjectives,
+    activityRecipients,
   } = formData;
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
@@ -92,6 +94,70 @@ const Submitter = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
 
+  const grantsMissingMonitoring = () => {
+    // First determine if we have a monitoring goal selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    // If we only have a monitoring goal.
+    if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
+      // Then get the grantIds from activityRecipients
+      // Then compare the two lists and return the difference
+      const missingGrants = activityRecipients.filter(
+        (recipient) => !goalsAndObjectives[0].grantIds.includes(recipient.activityRecipientId),
+      ).map((recipient) => recipient.activityRecipientId);
+
+      // From activityRecipients get the name of the grants that match the activityRecipientId.
+      const grantNames = activityRecipients.filter(
+        (recipient) => missingGrants.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      return grantNames;
+    }
+    return [];
+  };
+
+  const grantsMissingCitations = () => {
+    // Determine if we have a monitoring goal selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
+      const citationGrantIds = Array.from(hasMonitoringGoalSelected.objectives.reduce(
+        (acc, objective) => {
+          const monitoringReferencesFlat = objective.citations.map(
+            (citation) => citation.monitoringReferences,
+          ).flat();
+
+          const monitoringReferenceGrantIds = new Set(monitoringReferencesFlat.map(
+            (reference) => reference.grantId,
+          ));
+
+          // if acc doesnt have the grant ids in monitoringReferenceGrantIds, add them.
+          monitoringReferenceGrantIds.forEach((grantId) => {
+            if (!acc.has(grantId)) {
+              acc.add(grantId);
+            }
+          });
+          return acc;
+        }, new Set(),
+      ));
+
+      // console.log('hasMonitoringGoalSelected', hasMonitoringGoalSelected);
+      // Then get the grantIds from activityRecipients
+      // Then compare the two lists and return the difference
+      const missingGrants = activityRecipients.filter(
+        (recipient) => !citationGrantIds.includes(recipient.activityRecipientId),
+      ).map((recipient) => recipient.activityRecipientId);
+
+      // From activityRecipients get the name of the grants that match the activityRecipientId.
+      const grantNames = activityRecipients.filter(
+        (recipient) => missingGrants.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      return grantNames;
+    }
+    return [];
+  };
+
   return (
     <>
       {renderTopAlert()}
@@ -116,6 +182,8 @@ const Submitter = ({
               approverStatusList={approverStatusList}
               lastSaveTime={lastSaveTime}
               creatorRole={creatorRole}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
             />
           )}
         {submitted
@@ -179,6 +247,14 @@ Submitter.propTypes = {
         status: PropTypes.string,
       }),
     ),
+    goalsAndObjectives: PropTypes.arrayOf(PropTypes.shape({
+      standard: PropTypes.string,
+      grantIds: PropTypes.arrayOf(PropTypes.number),
+    })),
+    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
+      activityRecipientId: PropTypes.number,
+      name: PropTypes.string,
+    })),
   }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
 

@@ -35,6 +35,7 @@ export const ObjectiveSwitch = ({
   regionId,
   goalStatus,
   dispatchStatusChange,
+  isMonitoringGoal,
 }) => (
   <ObjectiveCard
     objective={objective}
@@ -42,6 +43,7 @@ export const ObjectiveSwitch = ({
     goalStatus={goalStatus}
     regionId={regionId}
     dispatchStatusChange={dispatchStatusChange}
+    isMonitoringGoal={isMonitoringGoal}
   />
 );
 
@@ -54,6 +56,7 @@ ObjectiveSwitch.propTypes = {
   regionId: PropTypes.number.isRequired,
   goalStatus: PropTypes.string.isRequired,
   dispatchStatusChange: PropTypes.func.isRequired,
+  isMonitoringGoal: PropTypes.bool.isRequired,
 };
 
 export default function GoalCard({
@@ -85,6 +88,14 @@ export default function GoalCard({
     onAR,
     isReopenedGoal,
   } = goal;
+
+  // Check for monitoring goal.
+  const reasonsToMonitor = [...reasons];
+  let isMonitoringGoal = false;
+  if (goal.createdVia === 'monitoring') {
+    reasonsToMonitor.push('Monitoring Goal');
+    isMonitoringGoal = true;
+  }
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -206,6 +217,27 @@ export default function GoalCard({
     return responses.map((r) => r).join(', ');
   };
 
+  const renderEnteredBy = () => {
+    if (isMonitoringGoal) {
+      return (
+        <SpecialistTags
+          specialists={[{
+            name: 'System-generated',
+            roles: ['OHS'],
+          }]}
+        />
+      );
+    }
+    return (
+      <SpecialistTags
+        specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
+          name: c.goalCreatorName,
+          roles: [c.goalCreatorRoles].flat(),
+        }))}
+      />
+    );
+  };
+
   return (
     <DataCard
       testId="goalCard"
@@ -265,7 +297,7 @@ export default function GoalCard({
             {goalText}
             {' '}
             <FlagStatus
-              reasons={reasons}
+              reasons={reasonsToMonitor}
               goalNumbers={goalNumbers}
             />
           </p>
@@ -298,12 +330,9 @@ export default function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          <SpecialistTags
-            specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
-              name: c.goalCreatorName,
-              roles: [c.goalCreatorRoles].flat(),
-            }))}
-          />
+          {
+            renderEnteredBy()
+          }
         </div>
       </div>
 
@@ -324,6 +353,7 @@ export default function GoalCard({
           goalStatus={goalStatus}
           regionId={parseInt(regionId, DECIMAL_BASE)}
           dispatchStatusChange={dispatchStatusChange}
+          isMonitoringGoal={isMonitoringGoal}
         />
       ))}
     </DataCard>
