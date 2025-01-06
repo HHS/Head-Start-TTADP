@@ -79,7 +79,7 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
                 ],
               },
               {
-                model: ActivityReport.unscoped(),
+                model: ActivityReport,
                 as: 'activityReport',
                 required: true,
                 attributes: [],
