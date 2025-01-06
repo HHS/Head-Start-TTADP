@@ -27,6 +27,7 @@ import {
   trOwnerAdded,
   trEventComplete,
   sendEmailVerificationRequestWithToken,
+  recipientApprovedDigest,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -1376,6 +1377,10 @@ describe('mailer tests', () => {
 
     it('"approved" digest which logs on bad date', async () => {
       await expect(approvedDigest('')).rejects.toThrow();
+    });
+
+    it('recipientApprovedDigest throws an error when the date is invalid', async () => {
+      await expect(recipientApprovedDigest('')).rejects.toThrow();
     });
   });
 
