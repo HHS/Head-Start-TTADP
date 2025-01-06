@@ -23,11 +23,15 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
   const queryResults = await Goal.findAll({
     attributes: [
       [Sequelize.literal('COALESCE("%2"."name", "%1"."name")'), 'topic'],
+      // eslint-disable-next-line @typescript-eslint/quotes
       [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'Not Started')`), 'Not Started'],
+      // eslint-disable-next-line @typescript-eslint/quotes
       [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'In Progress')`), 'In Progress'],
+      // eslint-disable-next-line @typescript-eslint/quotes
       [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'Closed')`), 'Closed'],
+      // eslint-disable-next-line @typescript-eslint/quotes
       [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'Suspended')`), 'Suspended'],
-      [Sequelize.literal(`COUNT(DISTINCT "Goal"."id")`), 'total'],
+      [Sequelize.literal('COUNT(DISTINCT "Goal"."id")'), 'total'],
     ],
     where: {
       [Op.and]: [
