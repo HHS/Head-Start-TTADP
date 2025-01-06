@@ -87,7 +87,7 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
   });
 
   // Transform queryResults to TopicResponse[]
-  const response: TopicResponse[] = queryResults.map(( result ) => {
+  const response: TopicResponse[] = queryResults.map((result) => {
     const { topic, total, ...statuses } = result;
     return {
       topic,
