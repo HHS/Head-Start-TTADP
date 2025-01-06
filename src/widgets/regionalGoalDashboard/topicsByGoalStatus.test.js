@@ -13,24 +13,8 @@ describe('topicsByGoalStatus', () => {
 
   beforeAll(async () => {
     db.Goal.findAll.mockResolvedValue([
-      {
-        id: 1,
-        status: GOAL_STATUS.IN_PROGRESS,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 1,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Health',
-      },
-      {
-        id: 2,
-        status: GOAL_STATUS.IN_PROGRESS,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 2,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Education',
-      },
-      {
-        id: 3,
-        status: GOAL_STATUS.IN_PROGRESS,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 1,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Health',
-      },
+      { topic: 'Health', total: 2, 'Not Started': 0, 'In Progress': 2, Closed: 0, Suspended: 0 },
+      { topic: 'Education', total: 1, 'Not Started': 0, 'In Progress': 1, Closed: 0, Suspended: 0 },
     ]);
 
     response = await topicsByGoalStatus({ goal: { id: [1, 2, 3] } });
@@ -44,72 +28,38 @@ describe('topicsByGoalStatus', () => {
     const healthTopic = response.find((t) => t.topic === 'Health');
     const educationTopic = response.find((t) => t.topic === 'Education');
     expect(healthTopic.total).toBe(2);
+    expect(healthTopic.statuses['In Progress']).toBe(2);
     expect(educationTopic.total).toBe(1);
+    expect(educationTopic.statuses['In Progress']).toBe(1);
   });
 
   it('handles the case where the topic is not in the accumulator', async () => {
     db.Goal.findAll.mockResolvedValue([
-      {
-        id: 1,
-        status: GOAL_STATUS.NOT_STARTED,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 3,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Safety',
-      },
+      { topic: 'Safety', total: 1, 'Not Started': 1, 'In Progress': 0, Closed: 0, Suspended: 0 },
     ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-shadow
     const response = await topicsByGoalStatus({ goal: { id: [1] } });
     const safetyTopic = response.find((t) => t.topic === 'Safety');
     expect(safetyTopic.total).toBe(1);
-    expect(safetyTopic.statuses[GOAL_STATUS.NOT_STARTED]).toBe(1);
-  });
-
-  it('handles the case where .topic.topic is undefined', async () => {
-    db.Goal.findAll.mockResolvedValue([
-      {
-        id: 1,
-        status: GOAL_STATUS.NOT_STARTED,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 3,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': undefined,
-      },
-    ]);
-
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const response = await topicsByGoalStatus({ goal: { id: [1] } });
-    const undefinedTopic = response.find((t) => t.topic === undefined);
-    expect(undefinedTopic).toBeUndefined();
+    expect(safetyTopic.statuses['Not Started']).toBe(1);
   });
 
   it('handles the case where the topic is already in the accumulator', async () => {
     db.Goal.findAll.mockResolvedValue([
-      {
-        id: 1,
-        status: GOAL_STATUS.COMPLETE,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 1,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Health',
-      },
-      {
-        id: 2,
-        status: GOAL_STATUS.COMPLETE,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': 1,
-        'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': 'Health',
-      },
+      { topic: 'Health', total: 2, 'Not Started': 0, 'In Progress': 0, Closed: 2, Suspended: 0 },
     ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-shadow
     const response = await topicsByGoalStatus({ goal: { id: [1, 2] } });
     const healthTopic = response.find((t) => t.topic === 'Health');
     expect(healthTopic).toStrictEqual({
       topic: 'Health',
       statuses: {
-        Draft: 0,
         'Not Started': 0,
         'In Progress': 0,
         Suspended: 0,
-        Closed: 0,
-        undefined: Number.NaN,
+        Closed: 2,
       },
-      total: Number.NaN,
+      total: 2,
     });
   });
 });
