@@ -1,15 +1,15 @@
 import { Sequelize, Op } from 'sequelize';
-import { TOPICS } from '@ttahub/common';
 import { GOAL_STATUS } from '../../constants';
-import {
-  // @ts-ignore
+import db from '../../models';
+
+const {
   Goal,
   Objective,
   Topic,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   ActivityReport,
-} from '../../models';
+} = db;
 
 type Status = keyof typeof GOAL_STATUS;
 
