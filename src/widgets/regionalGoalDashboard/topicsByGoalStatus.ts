@@ -1,9 +1,14 @@
-import { Op } from 'sequelize';
+import { Sequelize, Op } from 'sequelize';
 import { TOPICS } from '@ttahub/common';
 import { GOAL_STATUS } from '../../constants';
 import {
   // @ts-ignore
-  Goal, Objective, Topic, ActivityReportObjective, ActivityReportObjectiveTopic,
+  Goal,
+  Objective,
+  Topic,
+  ActivityReportObjective,
+  ActivityReportObjectiveTopic,
+  ActivityReport,
 } from '../../models';
 
 type Status = keyof typeof GOAL_STATUS;
@@ -15,19 +20,15 @@ type TopicResponse = {
 };
 
 export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[]> {
-  // Goal -> Objective -> ObjectiveTopic -> Topic
-  // Legacy solution:
-  // Goal -> ARGoal -> AR -> AR.topics (array of enums)
-
-  type QueryResults = {
-    id: number;
-    status: Status;
-    'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': number;
-    'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': typeof TOPICS[number];
-  };
-
-  const allTopics = await Goal.findAll({
-    attributes: ['id', 'status'],
+  const queryResults = await Goal.findAll({
+    attributes: [
+      [Sequelize.literal('COALESCE("Topic2"."name", "Topic"."name")'), 'topic'],
+      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'Not Started' } } }), 'Not Started'],
+      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'In Progress' } } }), 'In Progress'],
+      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'Closed' } } }), 'Closed'],
+      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'Suspended' } } }), 'Suspended'],
+      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"'))), 'total'],
+    ],
     where: {
       [Op.and]: [
         scopes.goal,
@@ -42,6 +43,7 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
       {
         model: Objective,
         as: 'objectives',
+        attributes: [],
         include: [
           {
             model: ActivityReportObjective,
@@ -56,7 +58,7 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
                   {
                     model: Topic,
                     as: 'topic',
-                    attributes: [['name', 'topic']],
+                    attributes: ['name'],
                   },
                 ],
               },
@@ -64,36 +66,35 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
           },
         ],
       },
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        attributes: [],
+        where: {
+          calculatedStatus: 'approved',
+        },
+      },
+      {
+        model: Topic,
+        as: 'topic2', // Alias for the LEFT JOIN
+        attributes: ['name'],
+        required: false,
+        on: Sequelize.literal('"Topic"."mapsTo" = "Topic2"."id"'),
+      },
     ],
+    group: [Sequelize.literal('COALESCE("Topic2"."name", "Topic"."name")')],
     raw: true,
-  }) as QueryResults[];
+  });
 
-  let sanitized = allTopics.reduce((acc, goal) => {
-    const { status, 'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': topic } = goal;
-    if (topic) {
-      if (!acc[topic]) {
-        acc[topic] = { ...Object.values(GOAL_STATUS).reduce((a, s) => ({ ...a, [s]: 0 }), {}) };
-      }
-      acc[topic][status] += 1;
-    }
-    return acc;
-  }, {});
-
-  sanitized = Object.entries(sanitized).reduce((acc, [topic, statuses]) => {
-    acc[topic].total = Object.values(statuses).reduce((a, s) => a + s, 0);
-    return acc;
-  }, sanitized);
-
-  // Format this so it's more easily digestible by the frontend
-  const response: TopicResponse[] = Object.entries(sanitized)
-    .map(([topic, statuses]) => ({ topic, statuses }))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((obj: any) => {
-      const { statuses } = obj;
-      const { total } = statuses;
-      delete statuses.total;
-      return { ...obj, total };
-    });
+  // Transform queryResults to TopicResponse[]
+  const response: TopicResponse[] = queryResults.map(result => {
+    const { topic, total, ...statuses } = result;
+    return {
+      topic,
+      statuses,
+      total,
+    };
+  });
 
   return response;
 }
