@@ -22,12 +22,12 @@ type TopicResponse = {
 export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[]> {
   const queryResults = await Goal.findAll({
     attributes: [
-      [Sequelize.literal('COALESCE("Topic2"."name", "Topic"."name")'), 'topic'],
-      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'Not Started' } } }), 'Not Started'],
-      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'In Progress' } } }), 'In Progress'],
-      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'Closed' } } }), 'Closed'],
-      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"')), { filter: { where: { status: 'Suspended' } } }), 'Suspended'],
-      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('"Goal"."id"'))), 'total'],
+      [Sequelize.literal('COALESCE("%2"."name", "%1"."name")'), 'topic'],
+      [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'Not Started')`), 'Not Started'],
+      [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'In Progress')`), 'In Progress'],
+      [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'Closed')`), 'Closed'],
+      [Sequelize.literal(`COUNT(DISTINCT "Goal"."id") FILTER (WHERE "Goal"."status" = 'Suspended')`), 'Suspended'],
+      [Sequelize.literal(`COUNT(DISTINCT "Goal"."id")`), 'total'],
     ],
     where: {
       [Op.and]: [
@@ -43,46 +43,52 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
       {
         model: Objective,
         as: 'objectives',
+        required: true,
         attributes: [],
         include: [
           {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
+            required: true,
             attributes: [],
             include: [
               {
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
+                required: true,
                 attributes: [],
                 include: [
                   {
                     model: Topic,
                     as: 'topic',
-                    attributes: ['name'],
+                    required: true,
+                    attributes: [],
+                    include: [
+                      {
+                        model: Topic,
+                        as: 'mapsToTopic',
+                        required: false,
+                        attributes: [],
+                      },
+                    ],
                   },
                 ],
+              },
+              {
+                model: ActivityReport.unscoped(),
+                as: 'activityReport',
+                required: true,
+                attributes: [],
+                where: {
+                  calculatedStatus: 'approved',
+                },
               },
             ],
           },
         ],
       },
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        attributes: [],
-        where: {
-          calculatedStatus: 'approved',
-        },
-      },
-      {
-        model: Topic,
-        as: 'topic2', // Alias for the LEFT JOIN
-        attributes: ['name'],
-        required: false,
-        on: Sequelize.literal('"Topic"."mapsTo" = "Topic2"."id"'),
-      },
     ],
-    group: [Sequelize.literal('COALESCE("Topic2"."name", "Topic"."name")')],
+    group: [Sequelize.literal('COALESCE("%2"."name", "%1"."name")')],
     raw: true,
   });
 
