@@ -13,8 +13,22 @@ describe('topicsByGoalStatus', () => {
 
   beforeAll(async () => {
     db.Goal.findAll.mockResolvedValue([
-      { topic: 'Health', total: 2, 'Not Started': 0, 'In Progress': 2, Closed: 0, Suspended: 0 },
-      { topic: 'Education', total: 1, 'Not Started': 0, 'In Progress': 1, Closed: 0, Suspended: 0 },
+      {
+        topic: 'Health',
+        total: 2,
+        'Not Started': 0,
+        'In Progress': 2,
+        Closed: 0,
+        Suspended: 0,
+      },
+      {
+        topic: 'Education',
+        total: 1,
+        'Not Started': 0,
+        'In Progress': 1,
+        Closed: 0,
+        Suspended: 0,
+      },
     ]);
 
     response = await topicsByGoalStatus({ goal: { id: [1, 2, 3] } });
@@ -35,22 +49,36 @@ describe('topicsByGoalStatus', () => {
 
   it('handles the case where the topic is not in the accumulator', async () => {
     db.Goal.findAll.mockResolvedValue([
-      { topic: 'Safety', total: 1, 'Not Started': 1, 'In Progress': 0, Closed: 0, Suspended: 0 },
+      {
+        topic: 'Safety',
+        total: 1,
+        'Not Started': 1,
+        'In Progress': 0,
+        Closed: 0,
+        Suspended: 0,
+      },
     ]);
 
-    const response = await topicsByGoalStatus({ goal: { id: [1] } });
-    const safetyTopic = response.find((t) => t.topic === 'Safety');
+    const funcResponse = await topicsByGoalStatus({ goal: { id: [1] } });
+    const safetyTopic = funcResponse.find((t) => t.topic === 'Safety');
     expect(safetyTopic.total).toBe(1);
     expect(safetyTopic.statuses['Not Started']).toBe(1);
   });
 
   it('handles the case where the topic is already in the accumulator', async () => {
     db.Goal.findAll.mockResolvedValue([
-      { topic: 'Health', total: 2, 'Not Started': 0, 'In Progress': 0, Closed: 2, Suspended: 0 },
+      {
+        topic: 'Health',
+        total: 2,
+        'Not Started': 0,
+        'In Progress': 0,
+        Closed: 2,
+        Suspended: 0,
+      },
     ]);
 
-    const response = await topicsByGoalStatus({ goal: { id: [1, 2] } });
-    const healthTopic = response.find((t) => t.topic === 'Health');
+    const funcResponse = await topicsByGoalStatus({ goal: { id: [1, 2] } });
+    const healthTopic = funcResponse.find((t) => t.topic === 'Health');
     expect(healthTopic).toStrictEqual({
       topic: 'Health',
       statuses: {
