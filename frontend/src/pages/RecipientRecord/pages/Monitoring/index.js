@@ -2,13 +2,14 @@ import React, {
   useEffect, useState, useMemo, useContext,
 } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useHistory } from 'react-router';
 import Container from '../../../../components/Container';
 import Tabs from '../../../../components/Tabs';
 import { getTtaByCitation, getTtaByReview } from '../../../../fetchers/monitoring';
 import ReviewCards from './components/ReviewCards';
 import CitationCards from './components/CitationCards';
-import { ROUTES } from '../../../../Constants';
+// import { ROUTES } from '../../../../Constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
 const MONITORING_PAGES = {
@@ -56,24 +57,30 @@ export default function Monitoring({
     }
   }, [currentPage, history, recipientId, regionId]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
+    const controller = new AbortController();
     async function fetchMonitoringData(slug) {
-      const data = await lookup[slug].fetcher(recipientId, regionId);
-      lookup[slug].setter(data);
-    }
-
-    if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
       setIsAppLoading(true);
       try {
-        fetchMonitoringData(currentPage);
+        const data = await lookup[slug].fetcher(recipientId, regionId, controller.signal);
+        lookup[slug].setter(data);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
-        history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
+        // todo: handle error (but not abort error)
+        // history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
       } finally {
         setIsAppLoading(false);
       }
     }
+
+    if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
+      fetchMonitoringData(currentPage);
+    }
+
+    return () => {
+      controller.abort();
+    };
   }, [currentPage, history, lookup, recipientId, regionId, setIsAppLoading]);
 
   return (

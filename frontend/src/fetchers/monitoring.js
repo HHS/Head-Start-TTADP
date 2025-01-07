@@ -4,7 +4,7 @@ import { get } from '.';
 const monitoringUrl = join('/', 'api', 'monitoring');
 const classUrl = join('/', 'api', 'monitoring', 'class');
 
-export const getTtaByCitation = async (recipientId, regionId) => {
+export const getTtaByCitation = async (recipientId, regionId, signal) => {
   const data = await get(
     join(
       monitoringUrl,
@@ -14,12 +14,13 @@ export const getTtaByCitation = async (recipientId, regionId) => {
       'tta',
       'citation',
     ),
+    signal,
   );
 
   return data.json();
 };
 
-export const getTtaByReview = async (recipientId, regionId) => {
+export const getTtaByReview = async (recipientId, regionId, signal) => {
   const data = await get(
     join(
       monitoringUrl,
@@ -29,6 +30,7 @@ export const getTtaByReview = async (recipientId, regionId) => {
       'tta',
       'review',
     ),
+    signal,
   );
 
   return data.json();
