@@ -2,7 +2,23 @@ const fs = require('fs');
 const path = require('path');
 
 function calculateCoverage(coverageFilePath, requiredCoverage) {
-  const coverageData = JSON.parse(fs.readFileSync(coverageFilePath, 'utf-8'));
+  let coverageData;
+
+  try {
+    coverageData = JSON.parse(fs.readFileSync(coverageFilePath, 'utf-8'));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // eslint-disable-next-line no-console
+      console.error(`Error: Coverage file not found at ${coverageFilePath}`);
+    } else if (error instanceof SyntaxError) {
+      // eslint-disable-next-line no-console
+      console.error('Error: Failed to parse coverage data. Ensure the file contains valid JSON.');
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('Error: Unexpected error while reading the coverage file.');
+    }
+    process.exit(1);
+  }
 
   let totalStatementsCovered = 0;
   let totalStatements = 0;
@@ -55,15 +71,20 @@ function calculateCoverage(coverageFilePath, requiredCoverage) {
   }
 }
 
-const coverageFilePath = path.resolve('./coverage/coverage-final.json');
+const [,, coverageFilePath, requiredCoverageArg] = process.argv;
 
-// Get required coverage from command line argument
-const requiredCoverage = parseFloat(process.argv[2]);
-
-if (isNaN(requiredCoverage)) {
+if (!coverageFilePath || !requiredCoverageArg) {
   // eslint-disable-next-line no-console
-  console.error('Error: Please provide a valid required coverage percentage as an argument.');
+  console.error('Error: Please provide both the coverage file path and required coverage percentage.');
   process.exit(1);
 }
 
-calculateCoverage(coverageFilePath, requiredCoverage);
+const requiredCoverage = parseFloat(requiredCoverageArg);
+
+if (isNaN(requiredCoverage)) {
+  // eslint-disable-next-line no-console
+  console.error('Error: Please provide a valid required coverage percentage as a number.');
+  process.exit(1);
+}
+
+calculateCoverage(path.resolve(coverageFilePath), requiredCoverage);

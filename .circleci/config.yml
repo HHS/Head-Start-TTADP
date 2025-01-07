@@ -955,6 +955,7 @@ jobs:
           command: |
             chmod +x ./tools/summarize-coverage.js
             node ./tools/summarize-coverage.js \
+              ./coverage/coverage-final.json \
               90
           when: always
       - run:
