@@ -951,6 +951,13 @@ jobs:
             fi
           when: always
       - run:
+          name: Check coverage for modified lines
+          command: |
+            chmod +x ./tools/summarize-coverage.js
+            node ./tools/summarize-coverage.js \
+              90
+          when: always
+      - run:
           name: Compress coverage artifacts
           command: tar -cvzf backend-coverage-artifacts.tar coverage/
       - store_artifacts:
