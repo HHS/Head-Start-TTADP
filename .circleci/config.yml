@@ -951,7 +951,7 @@ jobs:
             fi
           when: always
       - run:
-          name: Check coverage for modified lines
+          name: Summarize coverage
           command: |
             chmod +x ./tools/summarize-coverage.js
             node ./tools/summarize-coverage.js \
