@@ -4,6 +4,7 @@ import moment from 'moment';
 import { uniq, uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
+import getCachedResponse from '../lib/cache';
 import {
   ITTAByReviewResponse,
   IMonitoringReview,
@@ -29,6 +30,8 @@ const {
   MonitoringClassSummary,
   MonitoringFindingLink,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
+  MonitoringFindingHistoryStatusLink,
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingStatusLink,
@@ -47,8 +50,9 @@ const {
   Role,
 } = db;
 
-const MIN_DELIVERY_DATE = '2024-01-01';
+const MIN_DELIVERY_DATE = '2023-01-01';
 const REVIEW_STATUS_COMPLETE = 'Complete';
+const EIGHT_HOURS = 60 * 60 * 8;
 
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
   const grants = await Grant.findAll({
@@ -244,99 +248,104 @@ export async function ttaByReviews(
     granteeIds,
   } = await extractExternalData(recipientId, regionId);
 
-  const reviews = await MonitoringReview.findAll({
-    order: [['reportDeliveryDate', 'DESC']],
-    where: {
-      reportDeliveryDate: {
-        [Op.gte]: MIN_DELIVERY_DATE,
+  const reviews = await getCachedResponse(
+    `ttaByReviews-${recipientId}-${regionId}-${grantNumbers.join('-')}`,
+    async () => JSON.stringify(await MonitoringReview.findAll({
+      order: [['reportDeliveryDate', 'DESC']],
+      where: {
+        reportDeliveryDate: {
+          [Op.gte]: MIN_DELIVERY_DATE,
+        },
       },
-    },
-    include: [
-      {
-        model: MonitoringReviewStatusLink,
-        as: 'statusLink',
-        include: [
-          {
-            model: MonitoringReviewStatus,
-            as: 'monitoringReviewStatuses',
-            required: true,
-            where: {
-              name: REVIEW_STATUS_COMPLETE,
-            },
-          },
-        ],
-      },
-      {
-        model: MonitoringReviewLink,
-        as: 'monitoringReviewLink',
-        required: true,
-        include: [
-          {
-            model: MonitoringReviewGrantee,
-            as: 'monitoringReviewGrantees',
-            required: true,
-            where: {
-              grantNumber: grantNumbers,
-            },
-          },
-          {
-            model: MonitoringFindingHistory,
-            as: 'monitoringFindingHistories',
-            required: true,
-            include: [
-              {
-                model: MonitoringFindingLink,
-                as: 'monitoringFindingLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringFindingGrant,
-                    as: 'monitoringFindingGrants',
-                    where: {
-                      granteeId: granteeIds,
-                    },
-                    required: true,
-                  },
-                  {
-                    model: MonitoringFindingStandard,
-                    as: 'monitoringFindingStandards',
-                    include: [
-                      {
-                        model: MonitoringStandardLink,
-                        as: 'standardLink',
-                        include: [
-                          {
-                            model: MonitoringStandard,
-                            as: 'monitoringStandards',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    model: MonitoringFinding,
-                    as: 'monitoringFindings',
-                    include: [
-                      {
-                        model: MonitoringFindingStatusLink,
-                        as: 'statusLink',
-                        include: [
-                          {
-                            model: MonitoringFindingStatus,
-                            as: 'monitoringFindingStatuses',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
+      include: [
+        {
+          model: MonitoringReviewStatusLink,
+          as: 'statusLink',
+          include: [
+            {
+              model: MonitoringReviewStatus,
+              as: 'monitoringReviewStatuses',
+              required: true,
+              where: {
+                name: REVIEW_STATUS_COMPLETE,
               },
-            ],
-          },
-        ],
-      },
-    ],
-  }) as MonitoringReviewType[];
+            },
+          ],
+        },
+        {
+          model: MonitoringReviewLink,
+          as: 'monitoringReviewLink',
+          required: true,
+          include: [
+            {
+              model: MonitoringReviewGrantee,
+              as: 'monitoringReviewGrantees',
+              required: true,
+              where: {
+                grantNumber: grantNumbers,
+              },
+            },
+            {
+              model: MonitoringFindingHistory,
+              as: 'monitoringFindingHistories',
+              required: true,
+              include: [
+                {
+                  model: MonitoringFindingLink,
+                  as: 'monitoringFindingLink',
+                  required: true,
+                  include: [
+                    {
+                      model: MonitoringFindingGrant,
+                      as: 'monitoringFindingGrants',
+                      where: {
+                        granteeId: granteeIds,
+                      },
+                      required: true,
+                    },
+                    {
+                      model: MonitoringFindingStandard,
+                      as: 'monitoringFindingStandards',
+                      include: [
+                        {
+                          model: MonitoringStandardLink,
+                          as: 'standardLink',
+                          include: [
+                            {
+                              model: MonitoringStandard,
+                              as: 'monitoringStandards',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      model: MonitoringFinding,
+                      as: 'monitoringFindings',
+                      include: [
+                        {
+                          model: MonitoringFindingStatusLink,
+                          as: 'statusLink',
+                          include: [
+                            {
+                              model: MonitoringFindingStatus,
+                              as: 'monitoringFindingStatuses',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })),
+    JSON.parse,
+    { EX: EIGHT_HOURS },
+  ) as unknown as MonitoringReviewType[];
 
   return reviews.map((review) => {
     const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
@@ -399,108 +408,125 @@ export async function ttaByCitations(
     granteeIds,
   } = await extractExternalData(recipientId, regionId);
 
-  const citations = await MonitoringStandard.findAll({
-    order: [['citation', 'ASC']],
-    include: [
-      {
-        model: MonitoringStandardLink,
-        as: 'standardLink',
-        required: true,
-        include: [
-          {
-            model: MonitoringFindingStandard,
-            as: 'monitoringFindingStandards',
-            required: true,
-            include: [
-              {
-                model: MonitoringFindingLink,
-                as: 'findingLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringFinding,
-                    as: 'monitoringFindings',
-                    required: true,
-                    include: [
-                      {
-                        model: MonitoringFindingStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        include: [
-                          {
-                            model: MonitoringFindingStatus,
-                            as: 'monitoringFindingStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    model: MonitoringFindingGrant,
-                    as: 'monitoringFindingGrants',
-                    where: {
-                      granteeId: granteeIds,
+  const citations = await getCachedResponse(
+    `ttaByCitations-${recipientId}-${regionId}-${grantNumbers.join('-')}`,
+    async () => JSON.stringify(await MonitoringStandard.findAll({
+      order: [['citation', 'ASC']],
+      include: [
+        {
+          model: MonitoringStandardLink,
+          as: 'standardLink',
+          required: true,
+          include: [
+            {
+              model: MonitoringFindingStandard,
+              as: 'monitoringFindingStandards',
+              required: true,
+              include: [
+                {
+                  model: MonitoringFindingLink,
+                  as: 'findingLink',
+                  required: true,
+                  include: [
+                    {
+                      model: MonitoringFinding,
+                      as: 'monitoringFindings',
+                      required: true,
+                      include: [
+                        {
+                          model: MonitoringFindingStatusLink,
+                          as: 'statusLink',
+                          required: true,
+                          include: [
+                            {
+                              model: MonitoringFindingStatus,
+                              as: 'monitoringFindingStatuses',
+                              required: true,
+                            },
+                          ],
+                        },
+                      ],
                     },
-                    required: true,
-                  },
-                  {
-                    model: MonitoringFindingHistory,
-                    as: 'monitoringFindingHistories',
-                    required: true,
-                    include: [
-                      {
-                        model: MonitoringReviewLink,
-                        as: 'monitoringReviewLink',
-                        required: true,
-                        include: [
-                          {
-                            model: MonitoringReview,
-                            as: 'monitoringReviews',
-                            required: true,
-                            where: {
-                              reportDeliveryDate: {
-                                [Op.gte]: MIN_DELIVERY_DATE,
-                              },
-                            },
-                            include: [
-                              {
-                                model: MonitoringReviewStatusLink,
-                                as: 'statusLink',
-                                required: true,
-                                include: [
-                                  {
-                                    model: MonitoringReviewStatus,
-                                    as: 'monitoringReviewStatuses',
-                                    required: true,
-                                    where: {
-                                      name: REVIEW_STATUS_COMPLETE,
-                                    },
-                                  },
-                                ],
-                              },
-                            ],
-                          },
-                          {
-                            model: MonitoringReviewGrantee,
-                            as: 'monitoringReviewGrantees',
-                            required: true,
-                            where: {
-                              grantNumber: grantNumbers,
-                            },
-                          },
-                        ],
+                    {
+                      model: MonitoringFindingGrant,
+                      as: 'monitoringFindingGrants',
+                      where: {
+                        granteeId: granteeIds,
                       },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  }) as MonitoringStandardType[];
+                      required: true,
+                    },
+                    {
+                      model: MonitoringFindingHistory,
+                      as: 'monitoringFindingHistories',
+                      required: true,
+                      include: [
+                        {
+                          model: MonitoringFindingHistoryStatusLink,
+                          as: 'monitoringFindingStatusLink',
+                          required: true,
+                          include: [
+                            {
+                              model: MonitoringFindingHistoryStatus,
+                              as: 'monitoringFindingHistoryStatuses',
+                              required: true,
+                            },
+                          ],
+                        },
+                        {
+                          model: MonitoringReviewLink,
+                          as: 'monitoringReviewLink',
+                          required: true,
+                          include: [
+                            {
+                              model: MonitoringReview,
+                              as: 'monitoringReviews',
+                              required: true,
+                              where: {
+                                reportDeliveryDate: {
+                                  [Op.gte]: MIN_DELIVERY_DATE,
+                                },
+                              },
+                              include: [
+                                {
+                                  model: MonitoringReviewStatusLink,
+                                  as: 'statusLink',
+                                  required: true,
+                                  include: [
+                                    {
+                                      model: MonitoringReviewStatus,
+                                      as: 'monitoringReviewStatuses',
+                                      required: true,
+                                      where: {
+                                        name: REVIEW_STATUS_COMPLETE,
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            {
+                              model: MonitoringReviewGrantee,
+                              as: 'monitoringReviewGrantees',
+                              required: true,
+                              where: {
+                                grantNumber: grantNumbers,
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })),
+    JSON.parse,
+    { EX: EIGHT_HOURS },
+  ) as unknown as MonitoringStandardType[];
 
   return citations.map((citation) => {
     const [findingStandard] = citation.standardLink.monitoringFindingStandards;
@@ -516,8 +542,10 @@ export async function ttaByCitations(
     const [status] = finding.statusLink.monitoringFindingStatuses;
 
     monitoringFindingHistories.forEach((history) => {
-      const { monitoringReviewLink } = history;
+      const { monitoringReviewLink, monitoringFindingStatusLink } = history;
       const { monitoringReviews } = monitoringReviewLink;
+
+      const [monitoringStatus] = monitoringFindingStatusLink.monitoringFindingHistoryStatuses;
 
       const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
       objectives.forEach(({ endDate }) => {
@@ -527,8 +555,6 @@ export async function ttaByCitations(
       });
 
       monitoringReviews.forEach((review) => {
-        const { statusLink } = review;
-        const [reviewStatus] = statusLink.monitoringReviewStatuses;
         const { monitoringReviewGrantees } = monitoringReviewLink;
         const gr = monitoringReviewGrantees.map((grantee) => grantee.grantNumber);
 
@@ -541,7 +567,7 @@ export async function ttaByCitations(
           outcome: review.outcome,
           specialists: uniqBy(objectives.map((o) => o.specialists).flat(), 'name'),
           objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
-          findingStatus: reviewStatus.name, // todo: is this the correct status to access?
+          findingStatus: monitoringStatus.name,
         });
       });
     });

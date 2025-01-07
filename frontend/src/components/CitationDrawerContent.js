@@ -7,9 +7,10 @@ export default function CitationDrawerContent({ citations }) {
   const [content, setContent] = useState([]); // { text: string, citation: string }[]
 
   useEffect(() => {
+    const abortController = new AbortController();
     async function fetchCitations() {
       try {
-        const response = await fetchCitationTextByName(citations);
+        const response = await fetchCitationTextByName(citations, abortController.signal);
         setContent(response);
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -17,7 +18,13 @@ export default function CitationDrawerContent({ citations }) {
       }
     }
 
-    fetchCitations();
+    if (citations) {
+      fetchCitations();
+    }
+
+    return () => {
+      abortController.abort();
+    };
   }, [citations]);
 
   return (
