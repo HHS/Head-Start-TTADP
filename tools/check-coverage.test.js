@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // tests/check-coverage.test.js
 
 const fs = require('fs');
@@ -96,7 +97,7 @@ describe('check-coverage script', () => {
 
       expect(modifiedLines).toEqual({
         'src/file1.js': [1, 2],
-        'unfiltered/file2.ts': [1,2],
+        'unfiltered/file2.ts': [1, 2],
       });
     });
 
@@ -110,8 +111,8 @@ describe('check-coverage script', () => {
 
     it('should ignore non-JavaScript/TypeScript files', async () => {
       const gitDiffMock = jest.fn()
-        .mockResolvedValueOnce('file1.py\nfile2.txt\n')  // Files that should be ignored
-        .mockResolvedValue('');  // No line diffs
+        .mockResolvedValueOnce('file1.py\nfile2.txt\n') // Files that should be ignored
+        .mockResolvedValue(''); // No line diffs
 
       simpleGit.mockReturnValue({ diff: gitDiffMock });
 
@@ -146,11 +147,11 @@ describe('check-coverage script', () => {
       const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => loadCoverage('non-existent-file.json')).toThrow(
-        'Failed to parse coverage data at non-existent-file.json'
+        'Failed to parse coverage data at non-existent-file.json',
       );
 
       expect(consoleErrorMock).toHaveBeenCalledWith(
-        expect.stringContaining('Coverage file not found at')
+        expect.stringContaining('Coverage file not found at'),
       );
     });
 
@@ -159,7 +160,7 @@ describe('check-coverage script', () => {
       fs.writeFileSync(coverageFile, 'Not JSON content'); // Non-JSON content
 
       expect(() => loadCoverage(coverageFile)).toThrow(
-        'Failed to parse coverage data at'
+        'Failed to parse coverage data at',
       );
     });
 
@@ -168,7 +169,6 @@ describe('check-coverage script', () => {
       fs.writeFileSync(coverageFile, '{"bad json}');
       expect(() => loadCoverage(coverageFile)).toThrow('Failed to parse coverage data');
     });
-    
   });
 
   describe('checkCoverage', () => {
@@ -182,13 +182,13 @@ describe('check-coverage script', () => {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {
-            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
-            '1': { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
-            '2': { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
+            0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            1: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            2: { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 0, '1': 1, '2': 0 },
+          s: { 0: 0, 1: 1, 2: 0 },
           f: {},
           b: {},
         },
@@ -240,13 +240,13 @@ describe('check-coverage script', () => {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {
-            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
-            '1': { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
-            '2': { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
+            0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            1: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            2: { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 0, '1': 0, '2': 0 },
+          s: { 0: 0, 1: 0, 2: 0 },
           f: {},
           b: {},
         },
@@ -275,13 +275,13 @@ describe('check-coverage script', () => {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {
-            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
-            '1': { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
-            '2': { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
+            0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            1: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            2: { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 0, '1': 3, '2': 3  },
+          s: { 0: 0, 1: 3, 2: 3 },
           f: {},
           b: {},
         },
@@ -300,13 +300,13 @@ describe('check-coverage script', () => {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {
-            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
-            '1': { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
-            '2': { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
+            0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            1: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            2: { start: { line: 3, column: 0 }, end: { line: 3, column: 0 } },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 3, '1': 3, '2': 1 },
+          s: { 0: 3, 1: 3, 2: 1 },
           f: {},
           b: {},
         },
@@ -329,12 +329,12 @@ describe('check-coverage script', () => {
           path: normalizedFilePath,
           statementMap: {},
           fnMap: {
-            '0': { name: 'functionOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
-            '1': { name: 'functionTwo', loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } } },
+            0: { name: 'functionOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+            1: { name: 'functionTwo', loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } } },
           },
           branchMap: {},
           s: {},
-          f: { '0': 0, '1': 1 },
+          f: { 0: 0, 1: 1 },
           b: {},
         },
       };
@@ -346,7 +346,9 @@ describe('check-coverage script', () => {
         'fileWithUncoveredFunctions.js': {
           statements: [],
           functions: [
-            { id: '0', name: 'functionOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            {
+              id: '0', name: 'functionOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 },
+            },
           ],
           branches: [],
         },
@@ -365,12 +367,12 @@ describe('check-coverage script', () => {
           statementMap: {},
           fnMap: {},
           branchMap: {
-            '0': { locations: [{ start: { line: 1, column: 0 }, end: { line: 1, column: 0 } }] },
-            '1': { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
+            0: { locations: [{ start: { line: 1, column: 0 }, end: { line: 1, column: 0 } }] },
+            1: { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
           },
           s: {},
           f: {},
-          b: { '0': [0], '1': [1] },
+          b: { 0: [0], 1: [1] },
         },
       };
 
@@ -382,7 +384,9 @@ describe('check-coverage script', () => {
           statements: [],
           functions: [],
           branches: [
-            { id: '0', locationIndex: 0, start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            {
+              id: '0', locationIndex: 0, start: { line: 1, column: 0 }, end: { line: 1, column: 0 },
+            },
           ],
         },
       });
@@ -396,14 +400,14 @@ describe('check-coverage script', () => {
           path: normalizedFilePath,
           statementMap: {},
           fnMap: {
-            '0': { name: 'funcOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+            0: { name: 'funcOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
           },
           branchMap: {
-            '1': { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
+            1: { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
           },
           s: {},
-          f: { '0': 0 },
-          b: { '1': [0] },
+          f: { 0: 0 },
+          b: { 1: [0] },
         },
       };
 
@@ -414,10 +418,14 @@ describe('check-coverage script', () => {
         'complexFile.js': {
           statements: [],
           functions: [
-            { id: '0', name: 'funcOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            {
+              id: '0', name: 'funcOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 },
+            },
           ],
           branches: [
-            { id: '1', locationIndex: 0, start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            {
+              id: '1', locationIndex: 0, start: { line: 2, column: 0 }, end: { line: 2, column: 0 },
+            },
           ],
         },
       });
@@ -443,7 +451,7 @@ describe('check-coverage script', () => {
 
     it('should not create a new entry in uncovered if already exists', () => {
       const modifiedLines = { 'file1.js': [1] };
-      const coverageMap = createCoverageMap({ 
+      const coverageMap = createCoverageMap({
         'file1.js': {
           path: 'file1.js',
           statementMap: {},
@@ -451,11 +459,11 @@ describe('check-coverage script', () => {
           branchMap: {},
           s: {},
           f: {},
-          b: {}
-        }
+          b: {},
+        },
       });
       const uncovered = { 'file1.js': { statements: [], functions: [], branches: [] } };
-    
+
       checkCoverage(modifiedLines, coverageMap);
       expect(Object.keys(uncovered)).toContain('file1.js');
     });
@@ -503,7 +511,7 @@ describe('check-coverage script', () => {
       const uncovered = {};
       const artifactDir = path.join(tmpDir, 'existingDir');
       fs.mkdirSync(artifactDir);
-    
+
       generateArtifact(uncovered, artifactDir);
       expect(fs.existsSync(artifactDir)).toBe(true);
     });
@@ -518,7 +526,7 @@ describe('check-coverage script', () => {
       };
       const artifactDir = path.join(tmpDir, 'artifacts');
       generateArtifact(uncovered, artifactDir);
-    
+
       const artifactPath = path.join(artifactDir, 'uncovered-lines.json');
       const content = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
       expect(content['file1.js'].statements).toHaveLength(1);
@@ -528,13 +536,15 @@ describe('check-coverage script', () => {
       const uncovered = {
         'file1.js': {
           statements: [],
-          functions: [{ id: '0', name: 'myFunc', start: { line: 1 }, end: { line: 2 } }],
+          functions: [{
+            id: '0', name: 'myFunc', start: { line: 1 }, end: { line: 2 },
+          }],
           branches: [],
         },
       };
       const artifactDir = path.join(tmpDir, 'artifacts');
       generateArtifact(uncovered, artifactDir);
-    
+
       const artifactPath = path.join(artifactDir, 'uncovered-lines.json');
       const content = JSON.parse(fs.readFileSync(artifactPath, 'utf-8'));
       expect(content['file1.js'].functions).toHaveLength(1);
@@ -585,7 +595,7 @@ describe('check-coverage script', () => {
       };
       const artifactDir = path.join(tmpDir, 'artifacts');
       generateHtmlReport(uncovered, artifactDir);
-    
+
       const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
       expect(fs.existsSync(artifactPath)).toBe(true);
     });
@@ -594,18 +604,20 @@ describe('check-coverage script', () => {
         'file1.js': {
           statements: [],
           functions: [
-            { id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 } },
+            {
+              id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 },
+            },
           ],
           branches: [],
         },
       };
-  
+
       const artifactDir = path.join(tmpDir, 'artifacts');
       generateHtmlReport(uncovered, artifactDir);
-  
+
       const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
       expect(fs.existsSync(artifactPath)).toBe(true);
-  
+
       const content = fs.readFileSync(artifactPath, 'utf-8');
       expect(content).toContain('<h2>file1.js</h2>');
       expect(content).toContain('<h3>Functions</h3>');
@@ -614,7 +626,7 @@ describe('check-coverage script', () => {
       expect(content).toContain('<td>5</td>'); // start line
       expect(content).toContain('<td>10</td>'); // end line
     });
-  
+
     it('should include branches in the HTML report when uncovered branches are present', () => {
       const uncovered = {
         'file1.js': {
@@ -630,13 +642,13 @@ describe('check-coverage script', () => {
           ],
         },
       };
-  
+
       const artifactDir = path.join(tmpDir, 'artifacts');
       generateHtmlReport(uncovered, artifactDir);
-  
+
       const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
       expect(fs.existsSync(artifactPath)).toBe(true);
-  
+
       const content = fs.readFileSync(artifactPath, 'utf-8');
       expect(content).toContain('<h2>file1.js</h2>');
       expect(content).toContain('<h3>Branches</h3>');
@@ -645,13 +657,15 @@ describe('check-coverage script', () => {
       expect(content).toContain('<td>15</td>'); // start line
       expect(content).toContain('<td>20</td>'); // end line
     });
-  
+
     it('should include statements, functions, and branches in the same HTML report when all are present', () => {
       const uncovered = {
         'file1.js': {
           statements: [{ id: '0', start: { line: 1 }, end: { line: 1 } }],
           functions: [
-            { id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 } },
+            {
+              id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 },
+            },
           ],
           branches: [
             {
@@ -663,24 +677,24 @@ describe('check-coverage script', () => {
           ],
         },
       };
-  
+
       const artifactDir = path.join(tmpDir, 'artifacts');
       generateHtmlReport(uncovered, artifactDir);
-  
+
       const artifactPath = path.join(artifactDir, 'uncovered-lines.html');
       expect(fs.existsSync(artifactPath)).toBe(true);
-  
+
       const content = fs.readFileSync(artifactPath, 'utf-8');
       expect(content).toContain('<h2>file1.js</h2>');
       expect(content).toContain('<h3>Statements</h3>');
       expect(content).toContain('<td>1</td>'); // statement start line
-  
+
       expect(content).toContain('<h3>Functions</h3>');
       expect(content).toContain('<td>1</td>'); // function ID
       expect(content).toContain('<td>myFunction</td>');
       expect(content).toContain('<td>5</td>'); // function start line
       expect(content).toContain('<td>10</td>'); // function end line
-  
+
       expect(content).toContain('<h3>Branches</h3>');
       expect(content).toContain('<td>2</td>'); // branch ID
       expect(content).toContain('<td>0</td>'); // location index
@@ -766,11 +780,11 @@ describe('check-coverage script', () => {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {
-            '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -812,10 +826,10 @@ describe('check-coverage script', () => {
       const coverageData = {
         [normalizedFilePath]: {
           path: normalizedFilePath,
-          statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+          statementMap: { 0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
           fnMap: {},
           branchMap: {},
-          s: { '0': 0 }, // Mark line as uncovered
+          s: { 0: 0 }, // Mark line as uncovered
           f: {},
           b: {},
         },
@@ -869,10 +883,10 @@ describe('check-coverage script', () => {
       const coverageData = {
         [normalizedFilePath]: {
           path: normalizedFilePath,
-          statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+          statementMap: { 0: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -894,64 +908,64 @@ describe('check-coverage script', () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       jest.spyOn(console, 'error').mockImplementation(() => {});
       jest.spyOn(process, 'exit').mockImplementation(() => {});
-  
+
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
       const gitDiffMock = jest.fn()
         .mockResolvedValueOnce('file1.js\n')
         .mockResolvedValueOnce('@@ -4,0 +5 @@\n+line5\n');
-  
+
       simpleGit.mockReturnValue({
         fetch: gitFetchMock,
         raw: gitRawMock,
         diff: gitDiffMock,
       });
-  
+
       // Coverage data with uncovered function
       const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
       const coverageData = {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {},
-          fnMap: { '1': { name: 'uncoveredFunction', loc: { start: { line: 5 }, end: { line: 10 } } } },
+          fnMap: { 1: { name: 'uncoveredFunction', loc: { start: { line: 5 }, end: { line: 10 } } } },
           branchMap: {},
           s: {},
-          f: { '1': 0 }, // Mark function as uncovered
+          f: { 1: 0 }, // Mark function as uncovered
           b: {},
         },
       };
-  
+
       const coverageFile = path.join(tmpDir, 'coverage-final.json');
       fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
-  
+
       await main({
         coverageFile,
         artifactDir: path.join(tmpDir, 'artifacts'),
         outputFormat: 'json',
       });
-  
+
       expect(console.log.mock.calls.flat()).toContain('Uncovered lines detected:');
     });
-  
+
     it('should detect uncovered branches and report them', async () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       jest.spyOn(console, 'error').mockImplementation(() => {});
       jest.spyOn(process, 'exit').mockImplementation(() => {});
-  
+
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
       const gitDiffMock = jest.fn()
         .mockResolvedValueOnce('file1.js\n')
         .mockResolvedValueOnce('@@ -15,0 +16 @@\n+line16\n');
-  
+
       simpleGit.mockReturnValue({
         fetch: gitFetchMock,
         raw: gitRawMock,
         diff: gitDiffMock,
       });
-  
+
       // Coverage data with uncovered branch
       const normalizedFilePath = path.resolve(process.cwd(), 'file1.js');
       const coverageData = {
@@ -960,7 +974,7 @@ describe('check-coverage script', () => {
           statementMap: {},
           fnMap: {},
           branchMap: {
-            '2': {
+            2: {
               locations: [
                 { start: { line: 16 }, end: { line: 20 } },
               ],
@@ -968,19 +982,19 @@ describe('check-coverage script', () => {
           },
           s: {},
           f: {},
-          b: { '2': [0] }, // Mark branch as uncovered
+          b: { 2: [0] }, // Mark branch as uncovered
         },
       };
-  
+
       const coverageFile = path.join(tmpDir, 'coverage-final.json');
       fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
-  
+
       await main({
         coverageFile,
         artifactDir: path.join(tmpDir, 'artifacts'),
         outputFormat: 'json',
       });
-  
+
       expect(console.log.mock.calls.flat()).toContain('Uncovered lines detected:');
     });
   });

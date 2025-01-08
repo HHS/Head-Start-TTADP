@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // tests/merge-coverage.test.js
 
 const fs = require('fs');
@@ -61,7 +62,7 @@ describe('merge-coverage script', () => {
   describe('mergeCoverageFiles', () => {
     it('should throw an error when coverageFiles is empty', () => {
       expect(() => mergeCoverageFiles([])).toThrow(
-        'No coverage-final.json files found to merge.'
+        'No coverage-final.json files found to merge.',
       );
     });
 
@@ -70,14 +71,14 @@ describe('merge-coverage script', () => {
         'file1.js': {
           path: 'file1.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -86,14 +87,14 @@ describe('merge-coverage script', () => {
         'file2.js': {
           path: 'file2.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -151,14 +152,14 @@ describe('merge-coverage script', () => {
         'file1.js': {
           path: 'file1.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -167,14 +168,14 @@ describe('merge-coverage script', () => {
         'file2.js': {
           path: 'file2.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -188,11 +189,11 @@ describe('merge-coverage script', () => {
 
       fs.writeFileSync(
         pathModule.join(coverageDir1, 'coverage-final.json'),
-        JSON.stringify(coverageData1)
+        JSON.stringify(coverageData1),
       );
       fs.writeFileSync(
         pathModule.join(coverageDir2, 'coverage-final.json'),
-        JSON.stringify(coverageData2)
+        JSON.stringify(coverageData2),
       );
 
       const mergedCoverageFile = pathModule.join(tmpDir, 'coverage-final.json');
@@ -204,16 +205,16 @@ describe('merge-coverage script', () => {
       expect(console.log).toHaveBeenCalledWith('Merging coverage files...');
       expect(console.log).toHaveBeenCalledWith('Writing merged coverage report...');
       expect(console.log).toHaveBeenCalledWith(
-        `Merged coverage written to ${mergedCoverageFile}`
+        `Merged coverage written to ${mergedCoverageFile}`,
       );
       expect(console.log).toHaveBeenCalledWith(
-        'Coverage merging completed successfully.'
+        'Coverage merging completed successfully.',
       );
       expect(process.exit).not.toHaveBeenCalled();
 
       // Verify that the merged coverage file was written
       const mergedCoverage = JSON.parse(
-        fs.readFileSync(mergedCoverageFile, 'utf8')
+        fs.readFileSync(mergedCoverageFile, 'utf8'),
       );
       expect(mergedCoverage['file1.js']).toBeDefined();
       expect(mergedCoverage['file2.js']).toBeDefined();
@@ -229,7 +230,7 @@ describe('merge-coverage script', () => {
       expect(console.log).toHaveBeenCalledWith('Merging coverage files...');
       expect(console.error).toHaveBeenCalledWith(
         'Error during coverage merging:',
-        'No coverage-final.json files found to merge.'
+        'No coverage-final.json files found to merge.',
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });

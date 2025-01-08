@@ -1,6 +1,6 @@
-const { summarizeCoverage, logCoverageResults } = require('./summarize-coverage');
 const fs = require('fs');
 const path = require('path');
+const { summarizeCoverage, logCoverageResults } = require('./summarize-coverage');
 
 describe('summarizeCoverage', () => {
   let coverageFile;
@@ -18,9 +18,9 @@ describe('summarizeCoverage', () => {
   it('should calculate overall coverage correctly when all lines are covered', () => {
     const coverageData = {
       'file1.js': {
-        s: { '0': 1, '1': 1 },
-        f: { '0': 1 },
-        b: { '0': [1] },
+        s: { 0: 1, 1: 1 },
+        f: { 0: 1 },
+        b: { 0: [1] },
       },
     };
     fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
@@ -46,20 +46,20 @@ describe('summarizeCoverage', () => {
     const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
       throw new Error('Unexpected error');
     });
-  
+
     expect(() => summarizeCoverage(coverageFile, 80)).toThrow(
-      'Unexpected error while reading the coverage file.'
+      'Unexpected error while reading the coverage file.',
     );
-  
+
     mockReadFileSync.mockRestore();
   });
 
   it('should calculate coverage correctly when some lines are uncovered', () => {
     const coverageData = {
       'file1.js': {
-        s: { '0': 1, '1': 0 },
-        f: { '0': 1 },
-        b: { '0': [1, 0] },
+        s: { 0: 1, 1: 0 },
+        f: { 0: 1 },
+        b: { 0: [1, 0] },
       },
     };
     fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
@@ -83,7 +83,9 @@ describe('logCoverageResults', () => {
   });
 
   it('should log success when coverage meets the requirement', () => {
-    const coverage = { statements: 90, functions: 90, branches: 90, overall: 90 };
+    const coverage = {
+      statements: 90, functions: 90, branches: 90, overall: 90,
+    };
     logCoverageResults(coverage, 80);
 
     expect(mockLog).toHaveBeenCalledWith('Coverage Summary:');
@@ -96,7 +98,9 @@ describe('logCoverageResults', () => {
   });
 
   it('should log an error and exit when coverage is below the requirement', () => {
-    const coverage = { statements: 50, functions: 50, branches: 50, overall: 50 };
+    const coverage = {
+      statements: 50, functions: 50, branches: 50, overall: 50,
+    };
     logCoverageResults(coverage, 80);
 
     expect(mockLog).toHaveBeenCalledWith('Coverage Summary:');
