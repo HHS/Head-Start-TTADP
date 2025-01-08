@@ -269,82 +269,6 @@ run_script() {
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# Postgres helper functions
-# -----------------------------------------------------------------------------
-function rds_validate() {
-  export_validate "PGHOST"
-  export_validate "PGPORT"
-  export_validate "PGUSER"
-  export_validate "PGPASSWORD"
-  export_validate "PGDATABASE"
-}
-
-function rds_prep() {
-  local json_blob=$1
-  local db_server=$2
-
-  log "INFO" "Preparing RDS configurations."
-  parameters_validate "${json_blob}"
-  parameters_validate "${db_server}"
-
-  log "INFO" "Extracting RDS data from provided JSON."
-  local rds_data
-  rds_data=$(process_json "${json_blob}" '."aws-rds"')
-  parameters_validate "${rds_data}"
-  local server_data
-  server_data=$(find_json_object "${rds_data}" "name" "${db_server}")
-  parameters_validate "${server_data}"
-  local db_host
-  db_host=$(process_json "${server_data}" ".credentials.host" "-r")
-  parameters_validate "${db_host}"
-  local db_port
-  db_port=$(process_json "${server_data}" ".credentials.port" "-r")
-  parameters_validate "${db_port}"
-  local db_username
-  db_username=$(process_json "${server_data}" ".credentials.username" "-r")
-  parameters_validate "${db_username}"
-  local db_password
-  db_password=$(process_json "${server_data}" ".credentials.password" "-r")
-  parameters_validate "${db_password}"
-  local db_name
-  db_name=$(process_json "${server_data}" ".credentials.name" "-r")
-  parameters_validate "${db_name}"
-
-  log "INFO" "Configuring PostgreSQL client environment."
-  export PGHOST="${db_host}"
-  export PGPORT="${db_port}"
-  export PGUSER="${db_username}"
-  export PGPASSWORD="${db_password}"
-  export PGDATABASE="${db_name}"
-
-  rds_validate
-}
-
-function rds_clear() {
-  unset PGHOST
-  unset PGPORT
-  unset PGUSER
-  unset PGPASSWORD
-  unset PGDATABASE
-}
-
-function rds_test_connectivity() {
-    rds_validate
-
-    log "INFO" "Testing RDS connectivity using pg_isready..."
-
-    if pg_isready > /dev/null 2>&1; then
-        log "INFO" "RDS database is ready and accepting connections."
-    else
-        log "ERROR" "Failed to connect to RDS database. Check server status, credentials, and network settings."
-        set -e
-        return 1
-    fi
-}
-
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
 # AWS S3 helper functions
 # -----------------------------------------------------------------------------
 function aws_s3_validate() {
@@ -412,25 +336,6 @@ function s3_test_connectivity() {
     fi
 }
 
-
-function aws_s3_copy_file_prep() {
-  local file_name=$1
-  local sub_dir=$2
-
-  parameters_validate "${file_name}"
-  parameters_validate "${sub_dir}"
-  aws_s3_validate
-
-  local s3_bucket=$AWS_DEFAULT_BUCKET
-
-  echo "aws s3 cp - \"s3://${s3_bucket}/${sub_dir}/${file_name}\""
-}
-
-function aws_s3_copy_file() {
-  local file_name=$1
-  exec "$(aws_s3_copy_file_prep "${file_name}")"
-}
-
 function aws_s3_check_file_exists() {
   local file_name=$1
 
@@ -470,182 +375,123 @@ function aws_s3_safe_remove_file() {
   fi
 }
 
-aws_s3_verify_file_integrity() {
-  local backup_file_path="$1"
-  local md5_file_path="$2"
-  local sha256_file_path="$3"
+# -----------------------------------------------------------------------------
 
-  log "INFO" "Stream the expected hashes directly from S3"
-  local expected_md5 expected_sha256
-  expected_md5=$(aws s3 cp "s3://${md5_file_path}" -)
-  expected_sha256=$(aws s3 cp "s3://${sha256_file_path}" -)
+# -----------------------------------------------------------------------------
+# Backup Retention
+# -----------------------------------------------------------------------------
+backup_retention() {
+    log "INFO" "Starting backup retention process"
 
-  log "INFO" "Prepare the command to stream the S3 file and calculate hashes"
-  set +e
-  log "INFO" "Execute the command and capture its exit status"
-  aws s3 cp "s3://${backup_file_path}" - |\
-      tee \
-        >(sha256sum |\
-          awk '{print $1}' > /tmp/computed_sha256 &\
-          echo $? > /tmp/md5_status \
-        ) \
-        >(md5sum |\
-          awk '{print $1}' > /tmp/computed_md5 &\
-          echo $? > /tmp/sha256_status \
-        ) \
-      >/dev/null
-  local main_exit_status=$?
+    local backup_filename_prefix=$1
+    local s3_bucket=$AWS_DEFAULT_BUCKET
 
-  log "INFO" "Wait for all subprocesses and check their exit statuses"
-  local md5_exit_status sha256_exit_status
-  read md5_exit_status < /tmp/md5_status
-  read sha256_exit_status < /tmp/sha256_status
-  rm -f /tmp/md5_status /tmp/sha256_status
+    log "INFO" "Fetching the list of backup objects"
+    BACKUPS=$(aws s3api list-objects-v2 --bucket $s3_bucket --prefix ${backup_filename_prefix}/ --query 'Contents[].[Key, LastModified]' --output text) || {
+        log "ERROR" "Failed to fetch list of backup objects"
+        set -e
+        return 1
+    }
 
-  log "INFO" "Check if any of the hash calculations failed"
-  if [ "$md5_exit_status" -ne 0 ] || [ "$sha256_exit_status" -ne 0 ] || [ "$main_exit_status" -ne 0 ]; then
-      log "ERROR" "Error during file verification."
-      set -e
-      return 1
-  fi
+    NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-  log "INFO" "Read computed hash values from temporary storage"
-  local computed_md5 computed_sha256
-  read computed_md5 < /tmp/computed_md5
-  read computed_sha256 < /tmp/computed_sha256
+    date_diff() {
+        d1=$(date -d "$1" +%s)
+        d2=$(date -d "$2" +%s)
+        echo $(( (d1 - d2) / 86400 ))
+    }
 
-  log "INFO" "Verify hashes"
-  if [ "$computed_md5" != "$expected_md5" ] || [ "$computed_sha256" != "$expected_sha256" ]; then
-      log "ERROR" "File verification failed."
-      log "ERROR" "Expected MD5: $expected_md5, Computed MD5: $computed_md5"
-      log "ERROR" "Expected SHA256: $expected_sha256, Computed SHA256: $computed_sha256"
-      set -e
-      return 1
-  fi
+    get_base_name() {
+        echo "$1" | sed -e 's/\.[a-z0-9]*$//'
+    }
 
-  log "INFO" "File hashes verified"
-  rm -f /tmp/computed_md5 /tmp/computed_sha256
-  set -e
-  return 0
+    declare -A backup_sets
+    declare -A processed_dates
+
+    while IFS= read -r line; do
+        KEY=$(echo $line | awk '{print $1}')
+        LAST_MODIFIED=$(echo $line | awk '{print $2}')
+
+        BASE_NAME=$(get_base_name "$KEY")
+        if [ -z "${backup_sets[$BASE_NAME]+isset}" ]; then
+            backup_sets[$BASE_NAME]="$LAST_MODIFIED"
+        fi
+    done <<< "$BACKUPS"
+
+    delete_backup_set() {
+        BASE_NAME=$1
+        for EXT in ".zip" ".zenc" ".pwd" ".md5" ".sha256"; do
+            KEY="${BASE_NAME}${EXT}"
+            log "INFO" "Deleting $KEY"
+            aws_s3_safe_remove_file ${KEY} || {
+                log "ERROR" "Failed to delete $KEY"
+                set -e
+                return 1
+            }
+        done
+    }
+
+    local deleted_count=0  # Counter for deleted sets
+    local max_deletes=15   # Maximum number of sets to delete
+
+    for BASE_NAME in "${!backup_sets[@]}"; do
+        LAST_MODIFIED=${backup_sets[$BASE_NAME]}
+        AGE=$(date_diff "$NOW" "$LAST_MODIFIED")
+
+        if [ $AGE -le 30 ]; then
+            continue
+        elif [ $AGE -le 60 ]; then
+            DATE=$(date -d "$LAST_MODIFIED" +%Y-%m-%d)
+            if [ "${processed_dates[$DATE]+isset}" ]; then
+                delete_backup_set "$BASE_NAME" || {
+                    log "ERROR" "Failed to delete backup set for $BASE_NAME"
+                    set -e
+                    return 1
+                }
+                ((deleted_count++))
+            else
+                processed_dates[$DATE]=true
+            fi
+        elif [ $AGE -le 90 ]; then
+            if [ $(date -d "$LAST_MODIFIED" +%u) -eq 1 ] || [ $(date -d "$LAST_MODIFIED" +%d) -eq 1 ] || [ $(date -d "$LAST_MODIFIED" +%d) -eq 15 ]; then
+                continue
+            else
+                delete_backup_set "$BASE_NAME" || {
+                    log "ERROR" "Failed to delete backup set for $BASE_NAME"
+                    set -e
+                    return 1
+                }
+                ((deleted_count++))
+            fi
+        elif [ $AGE -le 730 ]; then
+            if [ $(date -d "$LAST_MODIFIED" +%d) -eq 1 ]; then
+                continue
+            else
+                delete_backup_set "$BASE_NAME" || {
+                    log "ERROR" "Failed to delete backup set for $BASE_NAME"
+                    set -e
+                    return 1
+                }
+                ((deleted_count++))
+            fi
+        else
+            delete_backup_set "$BASE_NAME" || {
+                log "ERROR" "Failed to delete backup set for $BASE_NAME"
+                set -e
+                return 1
+            }
+            ((deleted_count++))
+        fi
+
+        # Exit the loop if the maximum number of deletions is reached
+        if [ "$deleted_count" -ge "$max_deletes" ]; then
+            log "INFO" "Maximum deletions reached: $deleted_count"
+            break
+        fi
+    done
+
+    log "INFO" "Backup retention process completed"
 }
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# Backup & Upload helper functions
-# -----------------------------------------------------------------------------
-perform_backup_and_upload() {
-  local backup_filename_prefix=$1
-
-  parameters_validate "${backup_filename_prefix}"
-
-  local s3_bucket=$AWS_DEFAULT_BUCKET
-
-  local backup_password timestamp
-  backup_password=$(openssl rand -base64 12)
-  timestamp="$(date --utc +%Y-%m-%d-%H-%M-%S)-UTC"
-
-  local backup_filename="${backup_filename_prefix}-${timestamp}.sql.zenc"
-  local md5_filename="${backup_filename_prefix}-${timestamp}.sql.md5"
-  local sha256_filename="${backup_filename_prefix}-${timestamp}.sql.sha256"
-  local password_filename="${backup_filename_prefix}-${timestamp}.sql.pwd"
-  local latest_backup_filename="${backup_filename_prefix}-latest-backup.txt"
-
-  local aws_s3_copy_backup_file_cmd
-  aws_s3_copy_backup_file_cmd=$(aws_s3_copy_file_prep "$backup_filename" "${backup_filename_prefix}")
-  parameters_validate "${aws_s3_copy_backup_file_cmd}"
-
-  local aws_s3_copy_md5_file_cmd
-  aws_s3_copy_md5_file_cmd=$(aws_s3_copy_file_prep "$md5_filename" "${backup_filename_prefix}")
-  parameters_validate "${aws_s3_copy_md5_file_cmd}"
-
-  local aws_s3_copy_sha256_file_cmd
-  aws_s3_copy_sha256_file_cmd=$(aws_s3_copy_file_prep "$sha256_filename" "${backup_filename_prefix}")
-  parameters_validate "${aws_s3_copy_sha256_file_cmd}"
-
-  local aws_s3_copy_password_file_cmd
-  aws_s3_copy_password_file_cmd=$(aws_s3_copy_file_prep "$password_filename" "${backup_filename_prefix}")
-  parameters_validate "${aws_s3_copy_password_file_cmd}"
-
-  local aws_s3_copy_latest_backup_file_cmd
-  aws_s3_copy_latest_backup_file_cmd=$(aws_s3_copy_file_prep "$latest_backup_filename" "${backup_filename_prefix}")
-  parameters_validate "${aws_s3_copy_latest_backup_file_cmd}"
-
-  log "INFO" "Execute the command and capture its exit status"
-  set +e
-  pg_dump |\
-    gzip |\
-    openssl enc -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
-    tee \
-      >(md5sum |\
-        awk '{print $1}' |\
-        aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${md5_filename}" ;\
-        echo $? > /tmp/md5_status \
-      ) \
-      >(sha256sum |\
-        awk '{print $1}' |\
-        aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${sha256_filename}" ;\
-        echo $? > /tmp/sha256_status \
-      ) |\
-    aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${backup_filename}"
-  local main_exit_status=$?
-
-  log "INFO" "Wait for all subprocesses and check their exit statuses"
-  local md5_exit_status sha256_exit_status
-
-  # Read from FIFOs to get the exit statuses
-  read md5_exit_status < /tmp/md5_status
-  read sha256_exit_status < /tmp/sha256_status
-
-  # Clean up named pipes
-  rm -f /tmp/md5_status /tmp/sha256_status
-
-  log "INFO" "Check if any of the backup uploads or integrity checks failed"
-  if [ "$md5_exit_status" -ne 0 ] || [ "$sha256_exit_status" -ne 0 ] || [ "$main_exit_status" -ne 0 ]; then
-      log "ERROR" "Backup upload failed."
-      aws_s3_safe_remove_file "${backup_filename}"
-      aws_s3_safe_remove_file "${md5_filename}"
-      aws_s3_safe_remove_file "${sha256_filename}"
-      set -e
-      return 1
-  fi
-
-  log "INFO" "Upload the backup password"
-  if ! echo -n "${backup_password}" |\
-    eval "$aws_s3_copy_password_file_cmd"; then
-    log "ERROR" "Password file upload failed."
-    aws_s3_safe_remove_file "${password_filename}"
-    aws_s3_safe_remove_file "${backup_filename}"
-    aws_s3_safe_remove_file "${md5_filename}"
-    aws_s3_safe_remove_file "${sha256_filename}"
-    set -e
-    return 1
-  fi
-
-  local backup_file_path="${s3_bucket}/${backup_filename_prefix}/${backup_filename}"
-  local md5_file_path="${s3_bucket}/${backup_filename_prefix}/${md5_filename}"
-  local sha256_file_path="${s3_bucket}/${backup_filename_prefix}/${sha256_filename}"
-  local password_file_path="${s3_bucket}/${backup_filename_prefix}/${password_filename}"
-
-  if ! aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}"; then
-    log "ERROR" "Verification of file integrity check failed"
-    aws_s3_safe_remove_file "${password_filename}"
-    aws_s3_safe_remove_file "${backup_filename}"
-    aws_s3_safe_remove_file "${md5_filename}"
-    aws_s3_safe_remove_file "${sha256_filename}"
-    set -e
-    return 1
-  fi
-
-  log "INFO" "Update the latest backup file list"
-  if ! printf "%s\n%s\n%s\n%s" "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" "${password_file_path}" |\
-    eval "${aws_s3_copy_latest_backup_file_cmd}"; then
-    log "ERROR" "Latest backup file list upload failed."
-    set -e
-    return 1
-  fi
-  set -e
-}
-
 # -----------------------------------------------------------------------------
 
 function main() {
@@ -656,7 +502,6 @@ function main() {
 
   log "INFO" "Validate parameters and exports"
   parameters_validate "${backup_filename_prefix}"
-  parameters_validate "${rds_server}"
   parameters_validate "${aws_s3_server}"
   parameters_validate "${duration}"
 
@@ -669,35 +514,14 @@ function main() {
     exit 1
   }
 
-  log "INFO" "Verify or install postgrescli"
-  run_script 'postgrescli_install.sh' '../../common/scripts/' || {
-    log "ERROR" "Failed to install or verify postgrescli"
-    set -e
-    exit 1
-  }
-
   log "INFO" "add the bin dir for the new cli tools to PATH"
   add_to_path '/tmp/local/bin'
 
   log "INFO" "check dependencies"
-  check_dependencies aws md5sum openssl pg_dump pg_isready sha256sum gzip
-
-  log "INFO" "collect and configure credentials"
-  rds_prep "${VCAP_SERVICES}" "${rds_server}" || {
-    log "ERROR" "Failed to prepare RDS credentials"
-    set -e
-    exit 1
-  }
+  check_dependencies aws
 
   aws_s3_prep "${VCAP_SERVICES}" "${aws_s3_server}" || {
     log "ERROR" "Failed to prepare AWS S3 credentials"
-    set -e
-    exit 1
-  }
-
-  log "INFO" "verify rds & s3 connectivity"
-  rds_test_connectivity || {
-    log "ERROR" "RDS connectivity test failed"
     set -e
     exit 1
   }
@@ -708,9 +532,9 @@ function main() {
     exit 1
   }
 
-  log "INFO" "backup, upload, verify db"
-  perform_backup_and_upload "${backup_filename_prefix}" || {
-    log "ERROR" "Backup and upload process failed"
+  log "INFO" "run backup retention"
+  backup_retention "${backup_filename_prefix}" || {
+    log "ERROR" "Backup retention process failed"
     set -e
     exit 1
   }
