@@ -1,10 +1,8 @@
+const { summarizeCoverage, logCoverageResults } = require('./summarize-coverage');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
-const summarizeCoverageScript = path.resolve('./tools/summarize-coverage.js');
-
-describe('summarize-coverage script', () => {
+describe('summarizeCoverage', () => {
   let coverageFile;
 
   beforeEach(() => {
@@ -17,33 +15,34 @@ describe('summarize-coverage script', () => {
     }
   });
 
-  it('should handle missing coverage file gracefully', () => {
-    expect(() => {
-      execSync(`node "${summarizeCoverageScript}" "missing.json" 80`, { encoding: 'utf-8' });
-    }).toThrow();
+  it('should calculate overall coverage correctly when all lines are covered', () => {
+    const coverageData = {
+      'file1.js': {
+        s: { '0': 1, '1': 1 },
+        f: { '0': 1 },
+        b: { '0': [1] },
+      },
+    };
+    fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
 
-    try {
-      execSync(`node "${summarizeCoverageScript}" "missing.json" 80`, { encoding: 'utf-8' });
-    } catch (error) {
-      expect(error.stderr).toContain('Coverage file not found');
-    }
+    const coverage = summarizeCoverage(coverageFile, 80);
+
+    expect(coverage.statements).toBe(100);
+    expect(coverage.functions).toBe(100);
+    expect(coverage.branches).toBe(100);
+    expect(coverage.overall).toBe(100);
   });
 
-  it('should handle malformed JSON in the coverage file', () => {
+  it('should throw an error if the coverage file is missing', () => {
+    expect(() => summarizeCoverage('missing.json', 80)).toThrow('Coverage file not found');
+  });
+
+  it('should throw an error if the coverage file contains malformed JSON', () => {
     fs.writeFileSync(coverageFile, '{ invalid json');
-
-    expect(() => {
-      execSync(`node "${summarizeCoverageScript}" "${coverageFile}" 80`, { encoding: 'utf-8' });
-    }).toThrow();
-
-    try {
-      execSync(`node "${summarizeCoverageScript}" "${coverageFile}" 80`, { encoding: 'utf-8' });
-    } catch (error) {
-      expect(error.stderr).toContain('Failed to parse coverage data');
-    }
+    expect(() => summarizeCoverage(coverageFile, 80)).toThrow('Failed to parse coverage data');
   });
 
-  it('should calculate coverage when some lines are uncovered', () => {
+  it('should calculate coverage correctly when some lines are uncovered', () => {
     const coverageData = {
       'file1.js': {
         s: { '0': 1, '1': 0 },
@@ -53,13 +52,47 @@ describe('summarize-coverage script', () => {
     };
     fs.writeFileSync(coverageFile, JSON.stringify(coverageData));
 
-    const output = execSync(`node "${summarizeCoverageScript}" "${coverageFile}" 50`, { encoding: 'utf-8' });
+    const coverage = summarizeCoverage(coverageFile, 50);
 
-    expect(output).toContain('Coverage Summary:');
-    expect(output).toContain('Statements: 50.00%');
-    expect(output).toContain('Functions: 100.00%');
-    expect(output).toContain('Branches: 50.00%');
-    expect(output).toContain('Overall Coverage: 60.00%');
-    expect(output).toContain('Success: Coverage (60.00%) meets the required 50%');
+    expect(coverage.statements).toBe(50);
+    expect(coverage.functions).toBe(100);
+    expect(coverage.branches).toBe(50);
+    expect(coverage.overall).toBeCloseTo(60, 2);
+  });
+});
+
+describe('logCoverageResults', () => {
+  const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+  const mockLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const mockError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should log success when coverage meets the requirement', () => {
+    const coverage = { statements: 90, functions: 90, branches: 90, overall: 90 };
+    logCoverageResults(coverage, 80);
+
+    expect(mockLog).toHaveBeenCalledWith('Coverage Summary:');
+    expect(mockLog).toHaveBeenCalledWith('Statements: 90.00%');
+    expect(mockLog).toHaveBeenCalledWith('Functions: 90.00%');
+    expect(mockLog).toHaveBeenCalledWith('Branches: 90.00%');
+    expect(mockLog).toHaveBeenCalledWith('Overall Coverage: 90.00%');
+    expect(mockLog).toHaveBeenCalledWith('Success: Coverage (90.00%) meets the required 80%');
+    expect(mockExit).not.toHaveBeenCalled();
+  });
+
+  it('should log an error and exit when coverage is below the requirement', () => {
+    const coverage = { statements: 50, functions: 50, branches: 50, overall: 50 };
+    logCoverageResults(coverage, 80);
+
+    expect(mockLog).toHaveBeenCalledWith('Coverage Summary:');
+    expect(mockLog).toHaveBeenCalledWith('Statements: 50.00%');
+    expect(mockLog).toHaveBeenCalledWith('Functions: 50.00%');
+    expect(mockLog).toHaveBeenCalledWith('Branches: 50.00%');
+    expect(mockLog).toHaveBeenCalledWith('Overall Coverage: 50.00%');
+    expect(mockError).toHaveBeenCalledWith('Error: Coverage (50.00%) is below the required 80%');
+    expect(mockExit).toHaveBeenCalledWith(1);
   });
 });

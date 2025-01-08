@@ -953,8 +953,8 @@ jobs:
       - run:
           name: Summarize coverage
           command: |
-            chmod +x ./tools/summarize-coverage.js
-            node ./tools/summarize-coverage.js \
+            chmod +x ./tools/summarize-coverageCLI.js
+            node ./tools/summarize-coverageCLI.js \
               ./coverage/coverage-final.json \
               90
           when: always
