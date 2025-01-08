@@ -318,8 +318,52 @@ function check_app_running {
     fi
 }
 
-# Ensure the application is stopped
-function ensure_app_stopped() {
+# Function to check if app logs have changed
+function check_logs_idle {
+    local app_name="$1"
+    local previous_logs="$2"
+
+    log "INFO" "Checking logs for activity..."
+
+    # Capture logs for comparison
+    local current_logs
+    current_logs=$(cf logs --recent "$app_name" 2>&1)
+
+    if [[ "$previous_logs" == "$current_logs" ]]; then
+        log "INFO" "No new logs detected for application '$app_name'."
+        return 0  # Logs indicate idle
+    else
+        log "INFO" "Activity detected in logs for application '$app_name'."
+        return 1  # Logs indicate activity
+    fi
+}
+
+# Function to check if tasks are idle
+function check_tasks_idle {
+    local app_name="$1"
+    local previous_tasks="$2"
+
+    log "INFO" "Checking tasks for activity..."
+
+    # Capture tasks for comparison
+    local current_tasks
+    current_tasks=$(cf tasks "$app_name" 2>&1)
+
+    # Extract the most recent task status
+    local recent_task_status
+    recent_task_status=$(echo "$current_tasks" | awk '/^[0-9]+/ {latest=$0} END {print latest}' | awk '{print $NF}')
+
+    if [[ "$previous_tasks" == "$current_tasks" && "$recent_task_status" != "PENDING" && "$recent_task_status" != "RUNNING" && "$recent_task_status" != "CANCELING" ]]; then
+        log "INFO" "No new tasks detected and no active tasks for application '$app_name'."
+        return 0  # Tasks indicate idle
+    else
+        log "INFO" "Active or pending tasks detected for application '$app_name'."
+        return 1  # Tasks indicate activity
+    fi
+}
+
+# Updated ensure_app_stopped function
+function ensure_app_stopped {
     local app_name="tta-automation"
     local timeout=${1:-300}  # Default timeout is 300 seconds (5 minutes)
 
@@ -327,19 +371,36 @@ function ensure_app_stopped() {
     local start_time=$(date +%s)
     local current_time
 
+    # Initialize previous values for logs and tasks
+    local previous_logs=$(cf logs --recent "$app_name" 2>&1)
+    local previous_tasks=$(cf tasks "$app_name" 2>&1)
+
     while true; do
+        current_time=$(date +%s)
+
+        # Check logs and tasks every 60 seconds
+        if (( (current_time - start_time) % 60 < 10 )); then
+            log "INFO" "Performing periodic checks for logs and tasks."
+            if check_logs_idle "$app_name" "$previous_logs" && check_tasks_idle "$app_name" "$previous_tasks"; then
+                log "INFO" "Application '$app_name' appears to be idle. Sending shutdown command."
+                cf stop "$app_name"
+            else
+                previous_logs=$(cf logs --recent "$app_name" 2>&1)
+                previous_tasks=$(cf tasks "$app_name" 2>&1)
+            fi
+        fi
+
         if ! check_app_running; then
             log "INFO" "Application '$app_name' is already stopped."
             return 0  # App is stopped
         fi
 
-        current_time=$(date +%s)
         if (( current_time - start_time >= timeout )); then
             log "ERROR" "Timeout reached while waiting for application '$app_name' to stop."
             return 1  # Timeout reached
         fi
 
-        log "INFO" "Application '$app_name' is running. Waiting for it to stop..."
+        log "INFO" "Waiting for application '$app_name' to stop..."
         sleep 10
     done
 }
