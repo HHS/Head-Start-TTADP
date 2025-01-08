@@ -42,6 +42,18 @@ describe('summarizeCoverage', () => {
     expect(() => summarizeCoverage(coverageFile, 80)).toThrow('Failed to parse coverage data');
   });
 
+  it('should throw an error for an unexpected error while reading the coverage file', () => {
+    const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
+      throw new Error('Unexpected error');
+    });
+  
+    expect(() => summarizeCoverage(coverageFile, 80)).toThrow(
+      'Unexpected error while reading the coverage file.'
+    );
+  
+    mockReadFileSync.mockRestore();
+  });
+
   it('should calculate coverage correctly when some lines are uncovered', () => {
     const coverageData = {
       'file1.js': {
