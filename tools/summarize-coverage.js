@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fs = require('fs');
 
 function summarizeCoverage(coverageFilePath, requiredCoverage) {
@@ -22,6 +23,7 @@ function summarizeCoverage(coverageFilePath, requiredCoverage) {
   let totalBranchesCovered = 0;
   let totalBranches = 0;
 
+  // eslint-disable-next-line no-restricted-syntax, guard-for-in
   for (const file in coverageData) {
     const fileData = coverageData[file];
 
@@ -42,8 +44,8 @@ function summarizeCoverage(coverageFilePath, requiredCoverage) {
       .reduce((acc, total) => acc + total, 0);
   }
 
-  const overallCoverage = ((totalStatementsCovered + totalFunctionsCovered + totalBranchesCovered) /
-    (totalStatements + totalFunctions + totalBranches)) * 100;
+  const overallCoverage = ((totalStatementsCovered + totalFunctionsCovered + totalBranchesCovered)
+    / (totalStatements + totalFunctions + totalBranches)) * 100;
 
   return {
     statements: (totalStatementsCovered / totalStatements) * 100,
@@ -54,23 +56,16 @@ function summarizeCoverage(coverageFilePath, requiredCoverage) {
 }
 
 function logCoverageResults(coverage, requiredCoverage) {
-  // eslint-disable-next-line no-console
   console.log('Coverage Summary:');
-  // eslint-disable-next-line no-console
   console.log(`Statements: ${coverage.statements.toFixed(2)}%`);
-  // eslint-disable-next-line no-console
   console.log(`Functions: ${coverage.functions.toFixed(2)}%`);
-  // eslint-disable-next-line no-console
   console.log(`Branches: ${coverage.branches.toFixed(2)}%`);
-  // eslint-disable-next-line no-console
   console.log(`Overall Coverage: ${coverage.overall.toFixed(2)}%`);
 
   if (coverage.overall < requiredCoverage) {
-    // eslint-disable-next-line no-console
     console.error(`Error: Coverage (${coverage.overall.toFixed(2)}%) is below the required ${requiredCoverage}%`);
     process.exit(1);
   } else {
-    // eslint-disable-next-line no-console
     console.log(`Success: Coverage (${coverage.overall.toFixed(2)}%) meets the required ${requiredCoverage}%`);
   }
 }
