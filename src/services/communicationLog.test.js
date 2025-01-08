@@ -100,6 +100,7 @@ describe('communicationLog services', () => {
 
       expect(result).toEqual([
         [sequelize.literal('author.name asc')],
+        // eslint-disable-next-line @typescript-eslint/quotes
         [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE asc`)],
       ]);
     });
@@ -112,6 +113,7 @@ describe('communicationLog services', () => {
 
       expect(result).toEqual([
         ['data.purpose', 'desc'],
+        // eslint-disable-next-line @typescript-eslint/quotes
         [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE desc`)],
       ]);
     });
@@ -124,6 +126,7 @@ describe('communicationLog services', () => {
 
       expect(result).toEqual([
         ['data.result', 'asc'],
+        // eslint-disable-next-line @typescript-eslint/quotes
         [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE asc`)],
       ]);
     });
@@ -135,6 +138,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual(
+        // eslint-disable-next-line @typescript-eslint/quotes
         [[sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE desc`)]],
       );
     });
@@ -145,6 +149,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(undefined, sortDir);
 
       expect(result).toEqual(
+        // eslint-disable-next-line @typescript-eslint/quotes
         [[sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE asc`)]],
       );
     });
