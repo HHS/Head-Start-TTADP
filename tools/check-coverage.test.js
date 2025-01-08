@@ -904,6 +904,7 @@ describe('check-coverage script', () => {
       expect(console.log.mock.calls.flat()).toContain('All modified lines are covered by tests.');
       expect(process.exit).not.toHaveBeenCalled();
     });
+
     it('should detect uncovered functions and report them', async () => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
       jest.spyOn(console, 'error').mockImplementation(() => {});
