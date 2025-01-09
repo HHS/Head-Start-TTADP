@@ -20,7 +20,7 @@ const createMonitoringGoals = async () => {
     return;
   }
 
-  // Create monitoring goals for grants that need them.
+  // 1. Create monitoring goals for grants that need them.
   await sequelize.transaction(async (transaction) => {
     await sequelize.query(`
       WITH
@@ -94,7 +94,7 @@ const createMonitoringGoals = async () => {
       FROM new_goals;
     `, { transaction });
 
-    // Reopen monitoring goals for grants that need them.
+    // 2. Reopen monitoring goals for grants that need them.
     await sequelize.query(`
       WITH
         grants_needing_goal_reopend AS (
@@ -146,6 +146,87 @@ const createMonitoringGoals = async () => {
         "updatedAt" = NOW()
       FROM grants_needing_goal_reopend
       WHERE "Goals".id = grants_needing_goal_reopend."goalId";
+    `, { transaction });
+
+    // 3. Close monitoring goals that no longer have any active citations and un-approved reports.
+    await sequelize.query(`
+      WITH
+    grants_with_monitoring_goal AS (
+      SELECT
+        gr.id "grantId",
+        gr.number,
+        g.id "goalId"
+      FROM "GoalTemplates" gt
+      JOIN "Goals" g
+      ON gt.id = g."goalTemplateId"
+      JOIN "Grants" gr
+      ON g."grantId" = gr.id
+      WHERE gt.standard = 'Monitoring'
+      AND g.status != 'Closed'
+    ),
+    with_no_active_reports AS (
+      SELECT
+        gwmg."grantId",
+        gwmg.number,
+        gwmg."goalId"
+      FROM grants_with_monitoring_goal gwmg
+      LEFT JOIN "ActivityReportGoals" arg
+      ON gwmg."goalId" = arg."goalId"
+      LEFT JOIN "ActivityReports" a
+      ON arg."activityReportId" = a.id
+      AND a."calculatedStatus" NOT IN ('deleted', 'approved')
+      WHERE a.id IS NULL
+    ),
+    with_active_citations AS (
+      SELECT
+        wnar."grantId",
+        wnar.number,
+        wnar."goalId"
+      FROM with_no_active_reports wnar
+      JOIN "GrantRelationshipToActive" grta
+      ON wnar."grantId" = grta."grantId"
+      OR wnar."grantId" = grta."activeGrantId"
+      JOIN "Grants" gr
+      ON grta."grantId" = gr.id
+      JOIN "MonitoringReviewGrantees" mrg
+      ON gr.number = mrg."grantNumber"
+      JOIN "MonitoringReviews" mr
+      ON mrg."reviewId" = mr."reviewId"
+      AND mr."reportDeliveryDate" BETWEEN '2024-01-01' AND NOW()
+      JOIN "MonitoringReviewStatuses" mrs
+      ON mr."statusId" = mrs."statusId"
+      AND mrs.name = 'Complete'
+      JOIN "MonitoringFindingHistories" mfh
+      ON mr."reviewId" = mfh."reviewId"
+      JOIN "MonitoringFindings" mf
+      ON mfh."findingId" = mf."findingId"
+      JOIN "MonitoringFindingStatuses" mfs
+      ON mf."statusId" = mfs."statusId"
+      AND mfs.name = 'Active'
+      JOIN "MonitoringFindingGrants" mfg
+      ON mf."findingId" = mfg."findingId"
+      AND mrg."granteeId" = mfg."granteeId"
+    ),
+    -- Because findings can have multiple reviews as different states.
+    -- It's better to first get everything that is still active and do a NOT EXISTS IN.
+    without_active_citations_and_reports AS (
+      SELECT
+        wnar."grantId",
+        wnar.number,
+        wnar."goalId"
+      FROM with_no_active_reports wnar
+      EXCEPT
+      SELECT
+        wac."grantId",
+        wac.number,
+        wac."goalId"
+      FROM with_active_citations wac
+    )
+      UPDATE "Goals"
+      SET "status" = 'Closed',
+        "updatedAt" = NOW()
+      FROM without_active_citations_and_reports
+      WHERE "Goals".id = without_active_citations_and_reports."goalId";
     `, { transaction });
   });
 };
