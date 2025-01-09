@@ -235,12 +235,14 @@ download_and_verify() {
     local checksum_sha256=$(curl -s "$sha256_url")
     local checksum_md5=$(curl -s "$md5_url")
 
-    # Download file and generate hashes simultaneously
-    echo "Downloading file and generating hashes..."
-    $downloader "$backup_url" |\
-      tee >(sha256sum | awk '{print $1}' > "${backup_file_name}.sha256") \
-          >(md5sum | awk '{print $1}' > "${backup_file_name}.md5") \
-          > "$backup_file_name"
+   # Download file
+    echo "Downloading file..."
+    $downloader "$backup_url" > "$backup_file_name"
+
+    # Calculate hashes
+    echo "Calculating hashes..."
+    sha256sum "$backup_file_name" | awk '{print $1}' > "${backup_file_name}.sha256"
+    md5sum "$backup_file_name" | awk '{print $1}' > "${backup_file_name}.md5"
 
     # Verify SHA-256 checksum
     echo "Verifying SHA-256 checksum..."
