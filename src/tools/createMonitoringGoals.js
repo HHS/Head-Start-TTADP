@@ -1,6 +1,7 @@
 import {
   sequelize,
   GoalTemplate,
+  Goal,
 } from '../models';
 import { auditLogger } from '../logger';
 
@@ -95,7 +96,7 @@ const createMonitoringGoals = async () => {
     `, { transaction });
 
     // 2. Reopen monitoring goals for grants that need them.
-    await sequelize.query(`
+    const goalsToOpen = await sequelize.query(`
       WITH
         grants_needing_goal_reopend AS (
           SELECT
@@ -141,15 +142,26 @@ const createMonitoringGoals = async () => {
             AND g.status IN ('Closed', 'Suspended')
           GROUP BY 1
         )
-      UPDATE "Goals"
-      SET "status" = 'Not Started',
-        "updatedAt" = NOW()
-      FROM grants_needing_goal_reopend
-      WHERE "Goals".id = grants_needing_goal_reopend."goalId";
+      SELECT "goalId"
+      FROM grants_needing_goal_reopend;
     `, { transaction });
 
+    // Set reopened goals via Sequelize so we ensure the hooks fire.
+    if (goalsToOpen[0].length > 0) {
+      const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
+      await Goal.update({
+        status: 'Not Started',
+      }, {
+        where: {
+          id: goalsToOpenIds,
+        },
+        individualHooks: true,
+        transaction,
+      });
+    }
+
     // 3. Close monitoring goals that no longer have any active citations and un-approved reports.
-    await sequelize.query(`
+    const goalsToClose = await sequelize.query(`
       WITH
     grants_with_monitoring_goal AS (
       SELECT
@@ -222,12 +234,23 @@ const createMonitoringGoals = async () => {
         wac."goalId"
       FROM with_active_citations wac
     )
-      UPDATE "Goals"
-      SET "status" = 'Closed',
-        "updatedAt" = NOW()
-      FROM without_active_citations_and_reports
-      WHERE "Goals".id = without_active_citations_and_reports."goalId";
+      SELECT "goalId"
+      FROM without_active_citations_and_reports;
     `, { transaction });
+
+    // Set closed goals via Sequelize so we ensure the hooks fire.
+    if (goalsToClose[0].length > 0) {
+      const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
+      await Goal.update({
+        status: 'Closed',
+      }, {
+        where: {
+          id: goalsToCloseIds,
+        },
+        individualHooks: true,
+        transaction,
+      });
+    }
   });
 };
 
