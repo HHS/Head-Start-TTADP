@@ -4,11 +4,13 @@
 const fs = require('fs');
 const pathModule = require('path'); // Avoid naming conflict with 'path' variable
 const os = require('os');
+const istanbulCoverage = require('istanbul-lib-coverage');
 const {
   findCoverageFiles,
   mergeCoverageFiles,
   writeMergedCoverage,
   main,
+  DEFAULT_COVERAGE_DIR,
 } = require('./merge-coverage');
 
 describe('merge-coverage script', () => {
@@ -233,6 +235,36 @@ describe('merge-coverage script', () => {
         'No coverage-final.json files found to merge.',
       );
       expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should execute main with default arguments', () => {
+      jest.spyOn(fs, 'readdirSync').mockImplementation((dir) => {
+        if (dir === DEFAULT_COVERAGE_DIR) {
+          return [
+            { name: 'coverage-1', isDirectory: () => true, isFile: () => false },
+            { name: 'coverage-2', isDirectory: () => true, isFile: () => false },
+          ];
+        }
+        if (dir === path.join(DEFAULT_COVERAGE_DIR, 'coverage-1')) {
+          return [{ name: 'coverage-final.json', isDirectory: () => false, isFile: () => true }];
+        }
+        if (dir === path.join(DEFAULT_COVERAGE_DIR, 'coverage-2')) {
+          return [{ name: 'coverage-final.json', isDirectory: () => false, isFile: () => true }];
+        }
+        return [];
+      });
+
+      jest.mock('istanbul-lib-coverage');
+
+      const mockCoverageMap = {
+        merge: jest.fn(),
+        toJSON: jest.fn().mockReturnValue({ merged: true }),
+      };
+      istanbulCoverage.createCoverageMap = jest.fn().mockReturnValue(mockCoverageMap);
+  
+      main();
+  
+      expect(fs.readdirSync).toHaveBeenCalledWith(DEFAULT_COVERAGE_DIR, { withFileTypes: true });
     });
   });
 });
