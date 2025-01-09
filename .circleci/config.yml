@@ -1751,6 +1751,7 @@ workflows:
             - build_and_lint_similarity_api
       - dynamic_security_scan_similarity:
           requires:
+            - build_and_lint
             - build_and_lint_similarity_api
       - test_utils:
           requires:
@@ -1822,6 +1823,7 @@ workflows:
             - build_and_lint_similarity_api
       - dynamic_security_scan_similarity:
           requires:
+            - build_and_lint
             - build_and_lint_similarity_api
       - test_utils:
           requires:
