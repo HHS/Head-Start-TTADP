@@ -1217,6 +1217,35 @@ jobs:
       - store_artifacts:
           path: reports/owasp_report_cleaned.html
     resource_class: large
+  dynamic_security_scan_similarity:
+    executor: machine-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Clean previous reports
+          command: rm -rf reports/*
+      - run:
+          name: Start up local server
+          command: ./bin/prod-style-server
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 8080
+      - run:
+          name: Pull OWASP ZAP docker image
+          command: docker pull softwaresecurityproject/zap-stable:latest
+      - run:
+          name: Make reports directory group writeable
+          command: chmod g+w reports
+      - run:
+          name: Run OWASP ZAP
+          command: ./bin/run-owasp-similarity-scan
+      - run:
+          name: Run Node.js cleaning script
+          command: node src/tools/clean-zap-report.js reports/owasp_api_report.html reports/owasp_api_report_cleaned.html
+      - store_artifacts:
+          path: reports/owasp_api_report_cleaned.html
+    resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -1720,6 +1749,9 @@ workflows:
       - test_similarity_api:
           requires:
             - build_and_lint_similarity_api
+      - dynamic_security_scan_similarity:
+          requires:
+            - build_and_lint_similarity_api
       - test_utils:
           requires:
             - build_and_lint
@@ -1786,6 +1818,9 @@ workflows:
           requires:
             - build_and_lint
       - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
+      - dynamic_security_scan_similarity:
           requires:
             - build_and_lint_similarity_api
       - test_utils:
