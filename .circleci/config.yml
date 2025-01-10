@@ -738,8 +738,8 @@ commands:
           cloudgov_username: << parameters.cloudgov_username >>
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
-          task_name: "backup"
-          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+          task_name: "retention"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-backup"
           success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
