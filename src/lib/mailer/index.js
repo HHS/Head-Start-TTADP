@@ -491,7 +491,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 export const trSessionCreated = async (event, sessionId) => {
   if (process.env.CI) return;
   try {
-    if (!event.pocIds && !event.pocIds.length) {
+    if (!event.pocIds || !event.pocIds.length) {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
     }
 
@@ -1286,7 +1286,11 @@ export const processNotificationQueue = () => {
  * @param {string} token
  * @returns Promise<any>
  */
-export const sendEmailVerificationRequestWithToken = (user, token) => {
+export const sendEmailVerificationRequestWithToken = (
+  user,
+  token,
+  transport = defaultTransport,
+) => {
   const toEmails = filterAndDeduplicateEmails([user.email]);
 
   if (toEmails.length === 0) {
@@ -1298,7 +1302,7 @@ export const sendEmailVerificationRequestWithToken = (user, token) => {
       from: process.env.FROM_EMAIL_ADDRESS,
     },
     send,
-    transport: defaultTransport,
+    transport,
     htmlToText: {
       wordwrap: 120,
     },
