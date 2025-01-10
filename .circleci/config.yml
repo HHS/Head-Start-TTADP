@@ -1228,6 +1228,7 @@ jobs:
             reports/server/owasp_api_report_cleaned.html
       - store_artifacts:
           path: reports/server
+          when: always
     resource_class: large
   dynamic_security_scan_similarity:
     executor: machine-executor
@@ -1269,6 +1270,7 @@ jobs:
             reports/similarity_api/owasp_api_report_cleaned.html
       - store_artifacts:
           path: reports/similarity_api
+          when: always
     resource_class: large
   deploy:
     executor: docker-executor
