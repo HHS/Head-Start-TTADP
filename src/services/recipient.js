@@ -40,6 +40,7 @@ import {
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
+import { ensureArray } from '../lib/utils';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -389,10 +390,6 @@ export function combineObjectiveIds(existing, objective) {
   return ids;
 }
 
-export function ensureArray(input) {
-  return Array.isArray(input) ? input : [];
-}
-
 /**
  *
  * @param {Object} currentModel
@@ -520,8 +517,13 @@ export function reduceObjectivesForRecipientRecord(
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
   }).sort((a, b) => {
-    const dateA = a?.endDate?.trim() ? new Date(a.endDate) : new Date('1970-01-01');
-    const dateB = b?.endDate?.trim() ? new Date(b.endDate) : new Date('1970-01-01');
+    const dateA = a?.endDate?.trim() && !Number.isNaN(new Date(a.endDate))
+      ? new Date(a.endDate)
+      : new Date('1970-01-01');
+
+    const dateB = b?.endDate?.trim() && !Number.isNaN(new Date(b.endDate))
+      ? new Date(b.endDate)
+      : new Date('1970-01-01');
 
     if (dateA.getTime() === dateB.getTime()) {
       return b.id - a.id;
