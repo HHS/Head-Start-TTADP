@@ -539,7 +539,6 @@ function main() {
   }
 
   log "INFO" "clear the populated env vars"
-  rds_clear
   aws_s3_clear
 }
 
