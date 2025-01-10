@@ -25,47 +25,51 @@ if [ -n "$2" ]; then
   network=$2
 fi
 
-# Ensure the reports directory exists
-mkdir -p $(pwd)/reports
-
 # Extract a clean name from the target URL for report naming
-clean_target=$(echo "$target_url" | sed 's/[\/:]/_/g')
+clean_target=$(echo "$target_url" | sed -E 's/^(https?:\/\/)?(www\.)?([^/:]+).*/\3/')
+
+# Ensure the reports directory exists
+mkdir -p "$(pwd)/reports/$clean_target"
+chmod -R g+w "$(pwd)/reports/$clean_target"
+
 
 # Run zap-baseline.py
 echo "Running zap-baseline.py..."
 docker run \
-  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
   -v $(pwd)/reports:/zap/wrk:rw \
+  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
   --rm \
   --user zap:$(id -g) \
   --network=$network \
+  --platform linux/amd64 \
   -t softwaresecurityproject/zap-stable:latest zap-baseline.py \
   -t $target_url \
-  -c zap.conf -I -i -r reports/owasp_baseline_${clean_target}_report.html
+  -c zap.conf -I -i -r reports/$clean_target/owasp_baseline_${clean_target}_report.html
 
 # Run zap-full-scan.py
 echo "Running zap-full-scan.py..."
 docker run \
-  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
   -v $(pwd)/reports:/zap/wrk:rw \
+  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
   --rm \
   --user zap:$(id -g) \
   --network=$network \
+  --platform linux/amd64 \
   -t softwaresecurityproject/zap-stable:latest zap-full-scan.py \
   -t $target_url \
-  -c zap.conf -I -i -r reports/owasp_full_scan_${clean_target}_report.html
+  -c zap.conf -I -i -r reports/$clean_target/owasp_full_scan_${clean_target}_report.html
 
 # Run zap-api-scan.py
 echo "Running zap-api-scan.py..."
 docker run \
-  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
   -v $(pwd)/reports:/zap/wrk:rw \
+  -v $(pwd)/zap.conf:/zap/wrk/zap.conf:ro \
   --rm \
   --user zap:$(id -g) \
   --network=$network \
   --platform linux/amd64 \
   -t softwaresecurityproject/zap-stable:latest zap-api-scan.py \
   -t ${target_url}/openapi.json \
-  -f openapi -I -i -r reports/owasp_api_${clean_target}_report.html
+  -f openapi -I -i -r reports/$clean_target/owasp_api_${clean_target}_report.html
 
 echo "All scans completed. Reports are saved in the 'reports' directory."

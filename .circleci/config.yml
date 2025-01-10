@@ -1207,24 +1207,24 @@ jobs:
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
           name: Make reports directory group writeable
-          command: mkdir -p reports/server && chmod g+w reports/server
+          command: mkdir -p reports/server && chmod -R g+w reports/server
       - run:
           name: Run OWASP ZAP scans
           command: ./bin/run-owasp-scan http://server:8080 project_smarthub
       - run:
           name: Clean baseline report
           command: node src/tools/clean-zap-report.js \
-            reports/server/owasp_baseline_http_server_8080_report.html \
+            reports/server/owasp_baseline_server_report.html \
             reports/server/owasp_baseline_report_cleaned.html
       - run:
           name: Clean full scan report
           command: node src/tools/clean-zap-report.js \
-            reports/server/owasp_full_scan_http_server_8080_report.html \
+            reports/server/owasp_full_scan_server_report.html \
             reports/server/owasp_full_scan_report_cleaned.html
       - run:
           name: Clean API scan report
           command: node src/tools/clean-zap-report.js \
-            reports/server/owasp_api_http_server_8080_report.html \
+            reports/server/owasp_api_server_report.html \
             reports/server/owasp_api_report_cleaned.html
       - store_artifacts:
           path: reports/server
@@ -1249,24 +1249,24 @@ jobs:
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
           name: Make reports directory group writeable
-          command: mkdir -p reports/similarity_api && chmod g+w reports/similarity_api
+          command: mkdir -p reports/similarity_api && chmod -R g+w reports/similarity_api
       - run:
           name: Run OWASP ZAP scans
           command: ./bin/run-owasp-scan http://similarity_api:8080 project_smarthub
       - run:
           name: Clean baseline report
           command: node src/tools/clean-zap-report.js \
-            reports/similarity_api/owasp_baseline_http_similarity_api_8080_report.html \
+            reports/similarity_api/owasp_baseline_similarity_api_report.html \
             reports/similarity_api/owasp_baseline_report_cleaned.html
       - run:
           name: Clean full scan report
           command: node src/tools/clean-zap-report.js \
-            reports/similarity_api/owasp_full_scan_http_similarity_api_8080_report.html \
+            reports/similarity_api/owasp_full_scan_similarity_api_report.html \
             reports/similarity_api/owasp_full_scan_report_cleaned.html
       - run:
           name: Clean API scan report
           command: node src/tools/clean-zap-report.js \
-            reports/similarity_api/owasp_api_http_similarity_api_8080_report.html \
+            reports/similarity_api/owasp_api_similarity_api_report.html \
             reports/similarity_api/owasp_api_report_cleaned.html
       - store_artifacts:
           path: reports/similarity_api
