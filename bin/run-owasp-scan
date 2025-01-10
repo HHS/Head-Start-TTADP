@@ -31,6 +31,12 @@ clean_target=$(echo "$target_url" | sed -E 's/^(https?:\/\/)?(www\.)?([^/:]+).*/
 # Ensure the reports directory exists
 mkdir -p "$(pwd)/reports/$clean_target"
 chmod -R g+w "$(pwd)/reports/$clean_target"
+touch "$(pwd)/reports/$clean_target/owasp_baseline_${clean_target}_report.html"
+touch "$(pwd)/reports/$clean_target/owasp_full_scan_${clean_target}_report.html"
+touch "$(pwd)/reports/$clean_target/owasp_api_${clean_target}_report.html"
+chmod 666 "$(pwd)/reports/$clean_target/owasp_baseline_${clean_target}_report.html"
+chmod 666 "$(pwd)/reports/$clean_target/owasp_full_scan_${clean_target}_report.html"
+chmod 666 "$(pwd)/reports/$clean_target/owasp_api_${clean_target}_report.html"
 
 
 # Run zap-baseline.py
