@@ -373,7 +373,8 @@ commands:
             ./automation/ci/scripts/acquire-lock.sh \
               "<< parameters.app_name >>" \
               "<< parameters.build_branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Push application with deployment vars
           command: |
@@ -414,7 +415,8 @@ commands:
             ./automation/ci/scripts/release-lock.sh \
               "<< parameters.app_name >>" \
               "<< parameters.build_branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
           when: always
       # - run:
       #     name: Push maintenance application
@@ -455,7 +457,8 @@ commands:
             ./automation/ci/scripts/acquire-lock.sh \
               "tta-automation" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Migrate database
           command: |
@@ -469,7 +472,8 @@ commands:
             ./automation/ci/scripts/release-lock.sh \
               "tta-automation" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
@@ -561,7 +565,8 @@ commands:
             ./automation/ci/scripts/acquire-lock.sh \
               "tta-automation" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Start Log Monitoring
           command: |
@@ -640,7 +645,8 @@ commands:
             ./automation/ci/scripts/release-lock.sh \
               "tta-automation" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Logout of service account
           command: |
