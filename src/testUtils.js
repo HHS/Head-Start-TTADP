@@ -68,9 +68,10 @@ export async function createUser(user) {
 }
 
 function defaultRegion() {
-  const number = faker.datatype.number({ min: 50, max: 2000 });
+  // eslint-disable-next-line max-len
+  const number = faker.unique(() => faker.datatype.number({ min: 50, max: 2000 }));
   return {
-    id: faker.unique(() => number, { maxRetries: 20 }),
+    id: number,
     name: `Region ${number}`,
   };
 }
@@ -81,7 +82,7 @@ export async function createRegion(region) {
 
 function defaultGrant() {
   return {
-    id: faker.datatype.number({ min: 10000, max: 30000 }),
+    id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
     number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
     regionId: 10,
     status: 'Active',
@@ -92,7 +93,7 @@ function defaultGrant() {
 
 export async function createRecipient(recipient) {
   return Recipient.create({
-    id: faker.datatype.number({ min: 10000, max: 30000 }),
+    id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
     // eslint-disable-next-line max-len
     name: faker.company.companyName() + faker.company.companySuffix() + faker.datatype.number({ min: 1, max: 1000 }),
     uei: 'NNA5N2KHMGN2',

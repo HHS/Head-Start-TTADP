@@ -25,6 +25,22 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+
+      models.Topic.belongsTo(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsToTopic',
+        },
+      );
+
+      models.Topic.hasMany(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsFromTopics',
+        },
+      );
     }
   }
   Topic.init({

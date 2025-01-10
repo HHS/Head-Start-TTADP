@@ -17,7 +17,15 @@ import {
   csvImport,
   validateFields,
   findEventHelper,
+  filterEventsByStatus,
+  findAllEvents,
+  findEventHelperBlob,
+  mapLineToData,
+  checkUserExists,
+  checkUserExistsByNationalCenter,
 } from './event';
+import { auditLogger } from '../logger';
+import * as mailer from '../lib/mailer';
 
 describe('event service', () => {
   afterAll(async () => {
@@ -125,6 +133,38 @@ describe('event service', () => {
       expect(updated).toHaveProperty('ownerId', 123);
 
       await destroyEvent(updated.id);
+    });
+
+    it('calls trEventComplete when status is updated to COMPLETE', async () => {
+      const created = await createAnEvent(98_989);
+
+      const mockEvent = {
+        toJSON: jest.fn().mockReturnValue({
+          id: created.id,
+          ownerId: created.ownerId,
+          pocIds: created.pocIds,
+          collaboratorIds: created.collaboratorIds,
+          regionId: created.regionId,
+          data: created.data,
+        }),
+        update: jest.fn(),
+      };
+
+      jest.spyOn(db.EventReportPilot, 'findByPk').mockResolvedValue(mockEvent);
+      const trEventCompleteSpy = jest.spyOn(mailer, 'trEventComplete').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: created.ownerId,
+        pocIds: created.pocIds,
+        regionId: created.regionId,
+        collaboratorIds: created.collaboratorIds,
+        data: { status: TRS.COMPLETE },
+      });
+
+      expect(trEventCompleteSpy).toHaveBeenCalledWith(mockEvent.toJSON());
+
+      await destroyEvent(created.id);
+      jest.restoreAllMocks();
     });
   });
 
@@ -744,6 +784,18 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped.length).toEqual(1);
       expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725']);
     });
+
+    it('defaults to `Creator` heading when `IST/Creator` is not found, but errors when Creator fallback is not found', async () => {
+      const reportId = 'R01-TR-5725';
+      const newHeadings = headings.filter((h) => h !== 'IST/Creator');
+      const d = `${newHeadings.join(',')}
+${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},Recipients,${poc.name}`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(0);
+      expect(result.errors.length).toEqual(1);
+      expect(result.errors).toEqual(['No creator listed on import for R01-TR-5725']);
+    });
   });
 
   describe('validateFields', () => {
@@ -754,7 +806,6 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
 
   describe('findEventHelper', () => {
     it('should set owner when ownerUser exists', async () => {
-      const eventId = 12345;
       const ownerId = 67890;
 
       const mockUser = {
@@ -787,6 +838,352 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       });
 
       await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+      jest.restoreAllMocks();
+    });
+
+    it('should return default values when data, sessionReports, and eventReportPilotNationalCenterUsers are undefined', async () => {
+      const ownerId = 67890;
+
+      // Create an event without data, sessionReports, and eventReportPilotNationalCenterUsers
+      const createdEvent = await db.EventReportPilot.create({
+        ownerId,
+        pocIds: [ownerId],
+        collaboratorIds: [ownerId],
+        regionId: 1,
+        data: {},
+      });
+
+      const foundEvent = await findEventHelper({ id: createdEvent.id });
+
+      expect(foundEvent).toHaveProperty('data', {});
+      expect(foundEvent).toHaveProperty('sessionReports', []);
+      expect(foundEvent).toHaveProperty('eventReportPilotNationalCenterUsers', []);
+
+      // Clean up
+      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+    });
+  });
+
+  describe('destroyEvent', () => {
+    it('logs an error when deleting session reports fails', async () => {
+      const eventId = 12345;
+
+      jest.spyOn(db.SessionReportPilot, 'destroy').mockRejectedValue(new Error('Session report deletion error'));
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+
+      await destroyEvent(eventId);
+
+      expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting session reports for event ${eventId}:`, expect.any(Error));
+
+      jest.restoreAllMocks();
+    });
+
+    it('logs an error when deleting event report fails', async () => {
+      const eventId = 12345;
+
+      jest.spyOn(db.EventReportPilot, 'destroy').mockRejectedValue(new Error('Event report deletion error'));
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+
+      await destroyEvent(eventId);
+
+      expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting event report for event ${eventId}:`, expect.any(Error));
+
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('filterEventsByStatus', () => {
+    const userId = 123;
+    const event = {
+      id: 1,
+      ownerId: userId,
+      pocIds: [456],
+      collaboratorIds: [789],
+      regionId: 1,
+      data: { status: TRS.NOT_STARTED },
+      sessionReports: [],
+    };
+
+    it('should return events for POC, owner, or collaborator when status is null', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, null, userId);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events for collaborator when status is null', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, null, 789);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events for owner when status is null', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, null, userId);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events for admin without filtering', async () => {
+      const events = [event];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.NOT_STARTED, userId, true);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0]).toEqual(event);
+    });
+
+    it('should return events with all sessions for owner, collaborator, or POC when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, userId);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events with all sessions for collaborator when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 789);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events with all sessions for POC when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 456);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events with only complete sessions for non-owner, non-collaborator, non-POC when status is IN_PROGRESS', async () => {
+      const inProgressEvent = {
+        ...event,
+        data: { status: TRS.IN_PROGRESS },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [inProgressEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 999);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports[0].data.status).toBe(TRS.COMPLETE);
+    });
+
+    it('should return events for all users when status is COMPLETE', async () => {
+      const completeEvent = {
+        ...event,
+        data: { status: TRS.COMPLETE },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [completeEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.COMPLETE, 999);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return events for all users when status is SUSPENDED', async () => {
+      const suspendedEvent = {
+        ...event,
+        data: { status: TRS.SUSPENDED },
+        sessionReports: [
+          { id: 1, data: { status: TRS.COMPLETE } },
+          { id: 2, data: { status: TRS.IN_PROGRESS } },
+        ],
+      };
+      const events = [suspendedEvent];
+
+      const filteredEvents = await filterEventsByStatus(events, TRS.SUSPENDED, 999);
+
+      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents[0].sessionReports).toHaveLength(2);
+    });
+
+    it('should return an empty array for an unknown status', async () => {
+      const events = [event];
+      const filteredEvents = await filterEventsByStatus(events, 'UNKNOWN_STATUS', userId);
+      expect(filteredEvents).toHaveLength(0);
+    });
+  });
+
+  describe('findAllEvents', () => {
+    it('should return all events', async () => {
+      const event1 = await createAnEvent(1);
+      const event2 = await createAnEvent(2);
+
+      const events = await findAllEvents();
+
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: event1.id }),
+          expect.objectContaining({ id: event2.id }),
+        ]),
+      );
+
+      await destroyEvent(event1.id);
+      await destroyEvent(event2.id);
+    });
+  });
+
+  describe('findEventsByStatus', () => {
+    it('should handle default values for fallbackValue, allowNull, and scopes', async () => {
+      const createdEvent1 = await createAnEventWithStatus(50_500, null);
+      const foundEvents = await findEventsByStatus(null, [], 50_500);
+      const eventWithFallback = foundEvents.find((event) => event.id === createdEvent1.id);
+      expect(eventWithFallback.data.status).toBe(null);
+      await destroyEvent(createdEvent1.id);
+    });
+  });
+
+  describe('findEventHelperBlob', () => {
+    it('should return null if no events are found', async () => {
+      jest.spyOn(db.EventReportPilot, 'findAll').mockResolvedValue(null);
+      const result = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        scopes: [],
+      });
+      expect(result).toBeNull();
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('mapLineToData', () => {
+    it('should map CSV line to data object correctly', () => {
+      const line = {
+        Audience: 'Recipients',
+        'IST/Creator': 'creator@example.com',
+        'Event Title': 'Event Title Example',
+        'Event Duration': '2 days',
+        'Event Duration/#NC Days of Support': '3 days',
+        'Event ID': 'R01-TR-1234',
+        'Overall Vision/Goal for the PD Event': 'Overall Vision',
+        'Vision/Goal/Outcomes for the PD Event': 'Vision Outcome',
+        'Reason for Activity': 'Complaint',
+        'Reason(s) for PD': 'Planning/Coordination',
+        'Target Population(s)': 'Program Staff\nAffected by Disaster',
+        'Event Organizer - Type of Event': 'Regional office/TTA',
+        'IST Name:': 'IST Name Example',
+        'IST Name': 'IST Name Example 2',
+        'Extra Column': 'Extra Value',
+      };
+
+      const expectedData = {
+        eventIntendedAudience: 'Recipients',
+        creator: 'creator@example.com',
+        eventName: 'Event Title Example',
+        trainingType: '3 days',
+        eventId: 'R01-TR-1234',
+        vision: 'Vision Outcome',
+        reasons: ['Planning/Coordination'],
+        targetPopulations: ['Program Staff', 'Affected by Disaster'],
+        eventOrganizer: 'Regional office/TTA',
+        istName: 'IST Name Example 2',
+      };
+
+      const result = mapLineToData(line);
+      expect(result).toEqual(expectedData);
+    });
+  });
+
+  describe('checkUserExists', () => {
+    it('should return the user if they exist', async () => {
+      const mockUser = {
+        id: 1,
+        name: 'Test User',
+        email: 'test@example.com',
+      };
+
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(mockUser);
+
+      const result = await checkUserExists('email', 'test@example.com');
+      expect(result).toEqual(mockUser);
+
+      jest.restoreAllMocks();
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
+
+      await expect(checkUserExists('email', 'nonexistent@example.com')).rejects.toThrow('User with email: nonexistent@example.com does not exist');
+
+      jest.restoreAllMocks();
+    });
+
+    it('should throw an error if the user does not exist by name', async () => {
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
+
+      await expect(checkUserExists('name', 'Nonexistent User')).rejects.toThrow('User with name: Nonexistent User does not exist');
+
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('checkUserExistsByNationalCenter', () => {
+    it('should return the user if they exist', async () => {
+      const mockUser = {
+        id: 1,
+        name: 'Test User',
+      };
+
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(mockUser);
+
+      const result = await checkUserExistsByNationalCenter('Test National Center');
+      expect(result).toEqual(mockUser);
+
+      jest.restoreAllMocks();
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
+
+      await expect(checkUserExistsByNationalCenter('Nonexistent National Center')).rejects.toThrow('User associated with National Center: Nonexistent National Center does not exist');
+
       jest.restoreAllMocks();
     });
   });

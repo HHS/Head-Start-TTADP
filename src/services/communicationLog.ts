@@ -56,8 +56,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
       result = [[
         sequelize.literal(`author.name ${sortDir}`),
       ], [
-        'data.communicationDate',
-        sortDir,
+        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
     case 'purpose':
@@ -66,8 +65,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sortDir,
       ],
       [
-        'data.communicationDate',
-        sortDir,
+        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
     case 'result':
@@ -76,15 +74,13 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sortDir,
       ],
       [
-        'data.communicationDate',
-        sortDir,
+        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
     case 'communicationDate':
     default:
       result = [[
-        'data.communicationDate',
-        sortDir,
+        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
   }

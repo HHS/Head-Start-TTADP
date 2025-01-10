@@ -144,4 +144,129 @@ describe('EncodingConverter', () => {
       });
     });
   });
+
+  it('should convert the buffer correctly in convertBuffer', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding, sourceEncoding);
+    const buffer = Buffer.from('Hello, world!', sourceEncoding);
+    const pushSpy = jest.spyOn(converter, 'push');
+
+    return new Promise((resolve, reject) => {
+      converter.buffer = buffer;
+      converter.convertBuffer((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        expect(error).toBeUndefined();
+        expect(pushSpy).toHaveBeenCalled();
+        // eslint-disable-next-line max-len
+        const result = Buffer.concat(pushSpy.mock.calls.map((call) => call[0])).toString(targetEncoding);
+        expect(result).toBe('Hello, world!');
+        resolve();
+      });
+    });
+  });
+
+  it('should call the callback with an error in convertBuffer on failure', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding, sourceEncoding);
+    const buffer = Buffer.from('Hello, world!', sourceEncoding);
+    const pushSpy = jest.spyOn(converter, 'push');
+    jest.spyOn(buffer, 'toString').mockImplementation(() => {
+      throw new Error('Conversion error');
+    });
+
+    return new Promise((resolve, reject) => {
+      converter.buffer = buffer;
+      converter.convertBuffer((error) => {
+        expect(error).toBeDefined();
+        expect(error.message).toBe('Conversion error');
+        expect(pushSpy).not.toHaveBeenCalled();
+        resolve();
+      });
+    });
+  });
+
+  it('should call the callback with an error in convertChunk on failure', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding, sourceEncoding);
+    const chunk = Buffer.from('Hello, world!', sourceEncoding);
+    const pushSpy = jest.spyOn(converter, 'push');
+    jest.spyOn(chunk, 'toString').mockImplementation(() => {
+      throw new Error('Conversion error');
+    });
+
+    return new Promise((resolve, reject) => {
+      converter.convertChunk(chunk, (error) => {
+        expect(error).toBeDefined();
+        expect(error.message).toBe('Conversion error');
+        expect(pushSpy).not.toHaveBeenCalled();
+        resolve();
+      });
+    });
+  });
+
+  it('should throw an error for unsupported source encoding', () => {
+    const targetEncoding = 'utf-8';
+    const unsupportedSourceEncoding = 'unsupported-encoding';
+
+    expect(() => new EncodingConverter(targetEncoding, unsupportedSourceEncoding))
+      .toThrow(`Unsupported encoding detected: ${unsupportedSourceEncoding}`);
+  });
+
+  it('should detect encoding when buffer length is >= 1024', () => {
+    const sourceEncoding = 'utf16le';
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding);
+
+    // Create a readable stream with a buffer length >= 1024
+    const readable = new Readable();
+    const largeBuffer = Buffer.alloc(1024, 'a', sourceEncoding);
+    readable.push(largeBuffer);
+    readable.push(null); // Signal end of stream
+
+    const chunks = [];
+
+    return new Promise((resolve) => {
+      converter.on('data', (chunk) => chunks.push(chunk));
+      converter.on('end', () => {
+        const result = Buffer.concat(chunks).toString(targetEncoding);
+        expect(result).toBe(largeBuffer.toString(targetEncoding));
+        resolve();
+      });
+
+      readable.pipe(converter);
+    });
+  });
+
+  it('should fall back to utf-8 when chardet.analyse does not detect encoding', () => {
+    const targetEncoding = 'utf-8';
+    const converter = new EncodingConverter(targetEncoding);
+
+    // Create a readable stream with a buffer length >= 1024
+    const readable = new Readable();
+    const largeBuffer = Buffer.alloc(1024, 'a', 'utf16le');
+    readable.push(largeBuffer);
+    readable.push(null); // Signal end of stream
+
+    const chunks = [];
+
+    mockDetect.mockReturnValueOnce(undefined);
+    mockAnalyse.mockReturnValueOnce([]);
+
+    return new Promise((resolve) => {
+      converter.on('data', (chunk) => chunks.push(chunk));
+      converter.on('end', () => {
+        const result = Buffer.concat(chunks).toString(targetEncoding);
+        expect(result).toBe(largeBuffer.toString('utf-8'));
+        resolve();
+      });
+
+      readable.pipe(converter);
+    });
+  });
 });

@@ -6,6 +6,7 @@ import {
   importDownload,
   importProcess,
   importMaintenance,
+  enqueue,
 } from './import';
 import { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } from '../../constants';
 import {
@@ -54,10 +55,10 @@ describe('import', () => {
   });
 
   describe('enqueueImportMaintenanceJob', () => {
-    it('should enqueue a maintenance job with the correct category and type', () => {
+    it('should enqueue a maintenance job with the correct category and type', async () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
       const id = 123;
-      enqueueImportMaintenanceJob(type, id);
+      await enqueueImportMaintenanceJob(type, id);
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
         { type, id },
@@ -310,6 +311,29 @@ describe('import', () => {
         );
     });
 
+    it('should not enqueue any jobs if downloadMore and processMore are falsy', async () => {
+      const id = 123;
+      downloadImport.mockResolvedValue([{}, {}]);
+      moreToDownload.mockResolvedValue(false);
+      moreToProcess.mockResolvedValue(false);
+
+      await importDownload(id);
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+
+      expect(downloadImport).toHaveBeenCalledWith(id);
+      expect(moreToDownload).toHaveBeenCalledWith(id);
+      expect(moreToProcess).toHaveBeenCalledWith(id);
+      expect(enqueueMaintenanceJob).not.toHaveBeenCalled();
+      expect(results?.isSuccessful).toBe(true);
+    });
+
     it('should return an object with isSuccessful false when download fails', async () => {
       const id = 123;
       downloadImport.mockResolvedValue([{}, {}]);
@@ -534,6 +558,59 @@ describe('import', () => {
       const result = await importMaintenance(job);
 
       expect(result?.isSuccessful).toBe(true);
+    });
+  });
+
+  describe('enqueue function', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      jest.resetModules();
+      process.env = { ...originalEnv };
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it('should enqueue job when not in CI and in production with CF_INSTANCE_INDEX 0', () => {
+      process.env.CI = undefined;
+      process.env.NODE_ENV = 'production';
+      process.env.CF_INSTANCE_INDEX = '0';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(true);
+    });
+
+    it('should not enqueue job when in CI', () => {
+      process.env.CI = 'true';
+      process.env.NODE_ENV = 'production';
+      process.env.CF_INSTANCE_INDEX = '0';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(false);
+    });
+
+    it('should enqueue job when not in production', () => {
+      process.env.CI = undefined;
+      process.env.NODE_ENV = 'development';
+      process.env.CF_INSTANCE_INDEX = '0';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(true);
+    });
+
+    it('should not enqueue job when in production but CF_INSTANCE_INDEX is not 0', () => {
+      process.env.CI = undefined;
+      process.env.NODE_ENV = 'production';
+      process.env.CF_INSTANCE_INDEX = '1';
+
+      // eslint-disable-next-line global-require
+      const enqueued = require('./import').enqueue();
+      expect(enqueued).toBe(false);
     });
   });
 });

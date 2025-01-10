@@ -11,12 +11,12 @@ const { ENTITY_TYPE } = require('../constants');
 export default (sequelize, DataTypes) => {
   class ValidFor extends Model {
     static associate(models) {
-      ValidFor.belongsTo(models.ValidFor.scope(), {
+      ValidFor.belongsTo(models.ValidFor, {
         foreignKey: 'mapsTo',
         as: 'mapsToValidFor',
       });
 
-      ValidFor.hasMany(models.ValidFor.scope(), {
+      ValidFor.hasMany(models.ValidFor, {
         foreignKey: 'mapsTo',
         as: 'mapsFromValidFor',
       });
@@ -78,22 +78,6 @@ export default (sequelize, DataTypes) => {
           tableName: 'ValidFor',
         },
         key: 'id',
-      },
-    },
-    latestName: {
-      type: DataTypes.VIRTUAL(DataTypes.STRING),
-      get() {
-        return this.get('mapsTo')
-          ? this.get('mapsToCollaboratorType').get('name')
-          : this.get('name');
-      },
-    },
-    latestId: {
-      type: DataTypes.VIRTUAL(DataTypes.INTEGER),
-      get() {
-        return this.get('mapsTo')
-          ? this.get('mapsToValidFor').get('id')
-          : this.get('id');
       },
     },
   }, {

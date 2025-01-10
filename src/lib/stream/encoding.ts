@@ -47,29 +47,23 @@ class EncodingConverter extends Transform {
   // eslint-disable-next-line no-underscore-dangle
   _transform(
     chunk: Buffer,
-    encoding: string,
+    _encoding: string,
     callback: (error?: Error | null, data?: Buffer) => void,
   ): void {
     if (this.detectEncoding) {
       // Continue collecting chunks until we have enough to detect the encoding
-      this.buffer = Buffer.concat([this.buffer, chunk]);
+      this.buffer = Buffer.concat([new Uint8Array(this.buffer), new Uint8Array(chunk)]);
       if (this.buffer.length >= 1024) {
         // We have enough data to detect the encoding
         this.detectEncoding = false; // Set flag to false as we've detected the encoding
         // Default to utf-8 if no encoding is detected
-        // this.sourceEncoding = chardet.detect(this.buffer) || 'utf-8';
-        const detectedEncoding = chardet.detect(this.buffer);
+        const detectedEncoding = chardet.detect(new Uint8Array(this.buffer));
 
         // Check if the detected encoding is supported
-        if (detectedEncoding
-          && EncodingConverter.supportedEncodings
-            .has(detectedEncoding.toLowerCase() as BufferEncoding)) {
-          this.sourceEncoding = detectedEncoding.toLowerCase();
-        } else {
-          throw new Error(`Unsupported encoding detected: ${detectedEncoding}`);
-        }
-
-        this.sourceEncoding = chardet.analyse(this.buffer)?.[0]?.name || 'utf-8';
+        // eslint-disable-next-line max-len
+        this.sourceEncoding = detectedEncoding && EncodingConverter.supportedEncodings.has(detectedEncoding.toLowerCase() as BufferEncoding)
+          ? detectedEncoding.toLowerCase()
+          : 'utf-8';
 
         // If the source encoding matches the target encoding, pass through the entire buffer
         if (this.sourceEncoding === this.targetEncoding) {
@@ -118,7 +112,7 @@ class EncodingConverter extends Transform {
     if (this.detectEncoding && this.buffer.length > 0) {
       // If flush is called and we're still detecting the encoding,
       // perform the conversion on the remaining buffer.
-      this.sourceEncoding = chardet.detect(this.buffer) || 'utf-8';
+      this.sourceEncoding = chardet.detect(new Uint8Array(this.buffer)) || 'utf-8';
 
       // If the source encoding matches the target encoding, pass through the remaining buffer
       if (this.sourceEncoding === this.targetEncoding) {
