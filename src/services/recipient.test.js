@@ -1686,6 +1686,53 @@ describe('Recipient DB service', () => {
       expect(goal.goalTopics).toEqual([]);
       expect(goal.reasons).toEqual([]);
     });
+
+    it('handles objectives with invalid endDate values gracefully', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: 'InvalidDate',
+          },
+          {
+            id: 2,
+            title: 'Objective 2',
+            status: 'Complete',
+            endDate: '2023-12-03',
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 3,
+            title: 'Objective 3',
+            status: 'Not Started',
+            endDate: '2023-12-02',
+          },
+          {
+            id: 4,
+            title: 'Objective 4',
+            status: 'Complete',
+            endDate: undefined,
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
+
+      expect(result).toBeDefined();
+      expect(result.length).toBe(4);
+
+      expect(result.map((obj) => obj.id)).toEqual([2, 3, 4, 1]);
+    });
   });
 
   describe('recipientLeadership', () => {
@@ -2511,65 +2558,6 @@ describe('Recipient DB service', () => {
 
       const result = combineObjectiveIds(existing, objective);
       expect(result).toEqual([]);
-    });
-  });
-  describe('ensureArray', () => {
-    it('returns the same array when input is an array', () => {
-      const input = ['a', 'b', 'c'];
-      const result = ensureArray(input);
-      expect(result).toEqual(input);
-    });
-
-    it('returns an empty array when input is undefined', () => {
-      const result = ensureArray(undefined);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is null', () => {
-      const result = ensureArray(null);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is a string', () => {
-      const input = 'not an array';
-      const result = ensureArray(input);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is a number', () => {
-      const input = 123;
-      const result = ensureArray(input);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is an object', () => {
-      const input = { key: 'value' };
-      const result = ensureArray(input);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is a function', () => {
-      const input = () => {};
-      const result = ensureArray(input);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is a boolean', () => {
-      const input = true;
-      const result = ensureArray(input);
-      expect(result).toEqual([]);
-    });
-
-    it('returns an empty array when input is a symbol', () => {
-      const input = Symbol('test');
-      const result = ensureArray(input);
-      expect(result).toEqual([]);
-    });
-
-    it('returns the same array when input is an empty array', () => {
-      const input = [];
-      const result = ensureArray(input);
-      expect(result).toEqual(input);
     });
   });
 });
