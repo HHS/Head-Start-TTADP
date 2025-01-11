@@ -1,28 +1,68 @@
 #!/bin/bash
 ###########################
 #
-# Unified script to run OWASP ZAP scans on demand.
-# Expects a target and optionally a Docker network.
+# Refactored script to run OWASP ZAP scans with named arguments.
+# Provides flags to control individual scan types.
 #
 # Usage:
-# ./run-owasp-scan.sh <target_url> [network_name]
+# ./run-owasp-scan.sh --target <target_url> [--network <network_name>] [--baseline] [--full] [--api]
 #
 # Example:
-# ./run-owasp-scan.sh http://server:8080 project_smarthub
+# ./run-owasp-scan.sh --target http://server:8080 --network project_smarthub --baseline --api
 #
 ###########################
 
-# Check for required arguments
-if [ -z "$1" ]; then
-  echo "Usage: $0 <target_url> [network_name]"
-  exit 1
-fi
-
-# Define arguments
-target_url=$1
+# Default values
 network="project_smarthub"
-if [ -n "$2" ]; then
-  network=$2
+do_baseline=false
+do_full=false
+do_api=false
+
+# Function to print usage
+usage() {
+  echo "Usage: $0 --target <target_url> [--network <network_name>] [--baseline] [--full] [--api]"
+  echo "  --target     Target URL for the scans (required)"
+  echo "  --network    Docker network name (default: project_smarthub)"
+  echo "  --baseline   Run zap-baseline.py"
+  echo "  --full       Run zap-full-scan.py"
+  echo "  --api        Run zap-api-scan.py"
+  exit 1
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --target)
+      target_url="$2"
+      shift 2
+      ;;
+    --network)
+      network="$2"
+      shift 2
+      ;;
+    --baseline)
+      do_baseline=true
+      shift
+      ;;
+    --full)
+      do_full=true
+      shift
+      ;;
+    --api)
+      do_api=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      usage
+      ;;
+  esac
+done
+
+# Validate required arguments
+if [[ -z "$target_url" ]]; then
+  echo "Error: --target is required"
+  usage
 fi
 
 # Extract a clean name from the target URL for report naming
@@ -33,48 +73,53 @@ mkdir -p "$(pwd)/reports/${clean_target}/"
 cp "$(pwd)/zap.conf" "$(pwd)/reports/"
 chmod -R o+w "$(pwd)/reports/"
 
-
-# Run zap-baseline.py
-echo "Running zap-baseline.py..."
-docker run \
-  -v "$(pwd)/reports:/zap/wrk:rw" \
-  --rm \
-  --user zap:$(id -g) \
-  --network=$network \
-  --platform linux/amd64 \
-  -t softwaresecurityproject/zap-stable:latest zap-baseline.py \
-  -t $target_url \
-  -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_baseline_report.html"
-
+# Run zap-baseline.py if enabled
+if $do_baseline; then
+  echo "Running zap-baseline.py on $target_url"
+  docker run \
+    -v "$(pwd)/reports:/zap/wrk:rw" \
+    --rm \
+    --user zap:$(id -g) \
+    --network=$network \
+    --platform linux/amd64 \
+    -t softwaresecurityproject/zap-stable:latest zap-baseline.py \
+    -t $target_url \
+    -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_baseline_report.html"
   echo "-----------------------------------------------------------------------"
+fi
 
-# Run zap-full-scan.py
-echo "Running zap-full-scan.py..."
-docker run \
-  -v "$(pwd)/zap.conf:/zap/wrk/zap.conf:ro" \
-  -v "$(pwd)/reports:/zap/wrk:rw" \
-  --rm \
-  --user zap:$(id -g) \
-  --network=$network \
-  --platform linux/amd64 \
-  -t softwaresecurityproject/zap-stable:latest zap-full-scan.py \
-  -t $target_url \
-  -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_full_scan_report.html"
-
+# Run zap-full-scan.py if enabled
+if $do_full; then
+  echo "Running zap-full-scan.py on $target_url"
+  docker run \
+    -v "$(pwd)/zap.conf:/zap/wrk/zap.conf:ro" \
+    -v "$(pwd)/reports:/zap/wrk:rw" \
+    --rm \
+    --user zap:$(id -g) \
+    --network=$network \
+    --platform linux/amd64 \
+    -t softwaresecurityproject/zap-stable:latest zap-full-scan.py \
+    -t $target_url \
+    -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_full_scan_report.html"
   echo "-----------------------------------------------------------------------"
+fi
 
-# Run zap-api-scan.py
-echo "Running zap-api-scan.py..."
-docker run \
-  -v "$(pwd)/reports:/zap/wrk:rw" \
-  --rm \
-  --user zap:$(id -g) \
-  --network=$network \
-  --platform linux/amd64 \
-  -t softwaresecurityproject/zap-stable:latest zap-api-scan.py \
-  -t ${target_url}/openapi.json \
-  -f openapi -I -i -r "${clean_target}/owasp_api_report.html"
+# Run zap-api-scan.py if enabled
+if $do_api; then
+  echo "Running zap-api-scan.py on ${target_url}/openapi.json"
+  docker run \
+    -v "$(pwd)/reports:/zap/wrk:rw" \
+    --rm \
+    --user zap:$(id -g) \
+    --network=$network \
+    --platform linux/amd64 \
+    -t softwaresecurityproject/zap-stable:latest zap-api-scan.py \
+    -t ${target_url}/openapi.json \
+    -f openapi -I -i -r "${clean_target}/owasp_api_report.html"
+  echo "-----------------------------------------------------------------------"
+fi
 
-echo "-----------------------------------------------------------------------"
+# Clean up
+rm "$(pwd)/reports/zap.conf"
 
 echo "All scans completed. Reports are saved in the 'reports' directory."

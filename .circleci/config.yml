@@ -1212,29 +1212,17 @@ jobs:
             chmod -R g+w reports
       - run:
           name: Run OWASP ZAP scans
-          command: ./bin/run-owasp-scan http://server:8080 project_smarthub
-      - run:
-          name: Clean baseline report
-          command: node src/tools/clean-zap-report.js \
-            reports/server/owasp_baseline_report.html \
-            reports/server/owasp_baseline_report_cleaned.html
+          command: ./bin/run-owasp-scan \
+            --target http://server:8080
+            --full
       - run:
           name: Clean full scan report
           command: node src/tools/clean-zap-report.js \
             reports/server/owasp_full_scan_report.html \
             reports/server/owasp_full_scan_report_cleaned.html
       - run:
-          name: Clean API scan report
-          command: node src/tools/clean-zap-report.js \
-            reports/server/owasp_api_report.html \
-            reports/server/owasp_api_report_cleaned.html
-      - run:
           name: cleanup
-          command: |
-            rm \
-              reports/server/owasp_baseline_report.html \
-              reports/server/owasp_full_scan_report.html \
-              reports/server/owasp_api_report.html
+          command: rm reports/server/owasp_full_scan_report.html
       - store_artifacts:
           path: reports/server
           when: always
@@ -1263,17 +1251,9 @@ jobs:
             chmod -R g+w reports
       - run:
           name: Run OWASP ZAP scans
-          command: ./bin/run-owasp-scan http://similarity_api:8080 project_smarthub
-      - run:
-          name: Clean baseline report
-          command: node src/tools/clean-zap-report.js \
-            reports/similarity_api/owasp_baseline_report.html \
-            reports/similarity_api/owasp_baseline_report_cleaned.html
-      - run:
-          name: Clean full scan report
-          command: node src/tools/clean-zap-report.js \
-            reports/similarity_api/owasp_full_scan_report.html \
-            reports/similarity_api/owasp_full_scan_report_cleaned.html
+          command: ./bin/run-owasp-scan \
+            --target http://similarity_api:8080
+            --api
       - run:
           name: Clean API scan report
           command: node src/tools/clean-zap-report.js \
@@ -1281,11 +1261,7 @@ jobs:
             reports/similarity_api/owasp_api_report_cleaned.html
       - run:
           name: cleanup
-          command: |
-            rm \
-              reports/similarity_api/owasp_baseline_report.html \
-              reports/similarity_api/owasp_full_scan_report.html \
-              reports/similarity_api/owasp_api_report.html
+          command: rm reports/similarity_api/owasp_api_report.html
       - store_artifacts:
           path: reports/similarity_api
           when: always
