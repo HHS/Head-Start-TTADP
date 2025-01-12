@@ -1239,7 +1239,7 @@ jobs:
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
           name: Run OWASP ZAP scans
-          command: ./bin/run-owasp-scan target http://similarity_api:8080 --api
+          command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - run:
           name: Clean API scan report
           command: node src/tools/clean-zap-report.js \
