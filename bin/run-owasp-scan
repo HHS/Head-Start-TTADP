@@ -17,6 +17,7 @@ network="project_smarthub"
 do_baseline=false
 do_full=false
 do_api=false
+target_url=""
 
 # Function to print usage
 usage() {

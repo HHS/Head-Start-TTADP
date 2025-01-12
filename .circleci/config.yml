@@ -1206,15 +1206,8 @@ jobs:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
-          name: Make reports directory group writeable
-          command: |
-            mkdir -p reports/ && \
-            chmod -R g+w reports
-      - run:
           name: Run OWASP ZAP scans
-          command: ./bin/run-owasp-scan \
-            --target http://server:8080
-            --full
+          command: ./bin/run-owasp-scan --target http://server:8080 --full
       - run:
           name: Clean full scan report
           command: node src/tools/clean-zap-report.js \
@@ -1245,15 +1238,8 @@ jobs:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
-          name: Make reports directory group writeable
-          command: |
-            mkdir -p reports && \
-            chmod -R g+w reports
-      - run:
           name: Run OWASP ZAP scans
-          command: ./bin/run-owasp-scan \
-            --target http://similarity_api:8080
-            --api
+          command: ./bin/run-owasp-scan target http://similarity_api:8080 --api
       - run:
           name: Clean API scan report
           command: node src/tools/clean-zap-report.js \
