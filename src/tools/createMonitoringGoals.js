@@ -150,16 +150,8 @@ const createMonitoringGoals = async () => {
     // Set reopened goals via Sequelize so we ensure the hooks fire.
     if (goalsToOpen[0].length > 0) {
       const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
-      await Goal.update({
-        status: 'Not Started',
-      }, {
-        where: {
-          id: goalsToOpenIds,
-        },
-        individualHooks: true,
-        transaction,
-      });
-
+      // This function also updates the status of the goal via the hook.
+      // No need to explicitly update the goal status.
       await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatus({
         goalId: goal.goalId,
         userId: -1, // -1 is used to define the system is initiating the change
@@ -250,16 +242,8 @@ const createMonitoringGoals = async () => {
     // Set closed goals via Sequelize so we ensure the hooks fire.
     if (goalsToClose[0].length > 0) {
       const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
-      await Goal.update({
-        status: 'Closed',
-      }, {
-        where: {
-          id: goalsToCloseIds,
-        },
-        individualHooks: true,
-        transaction,
-      });
-
+      // This function also updates the status of the goal via the hook.
+      // No need to explicitly update the goal status.
       await Promise.all(goalsToClose[0].map((goal) => changeGoalStatus({
         goalId: goal.goalId,
         userId: -1, // -1 is used to define the system is initiating the change
