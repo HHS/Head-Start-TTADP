@@ -8,6 +8,7 @@ interface GoalStatusChangeParams {
   reason: string;
   context: string;
   transaction?: Sequelize.Transaction;
+  oldStatusToUse?: string | null;
 }
 
 export default async function changeGoalStatus({

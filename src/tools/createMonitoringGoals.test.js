@@ -21,6 +21,7 @@ import {
   ActivityReport,
   ActivityReportGoal,
   User,
+  GoalStatusChange,
 } from '../models';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
@@ -125,6 +126,9 @@ describe('createMonitoringGoals', () => {
   const grantClosedMonitoringGoalNumber13 = uuidv4();
   const grantToNotCloseMonitoringGoalNumber14 = uuidv4();
   const grantWithApprovedReportsButOpenCitationsNumber15 = uuidv4();
+
+  let goalForReopen12;
+  let goalForClose13;
 
   let snapShot;
 
@@ -2011,7 +2015,7 @@ describe('createMonitoringGoals', () => {
     });
 
     // Create a monitoring goal for grantReopenMonitoringGoalNumberReviewId12 in case 12 thats closed and should be set to Not started.
-    await Goal.create({
+    goalForReopen12 = await Goal.create({
       id: faker.datatype.number({ min: 9999 }),
       name: goalTemplateName,
       grantId: grantReopenMonitoringGoal12.id,
@@ -2020,7 +2024,7 @@ describe('createMonitoringGoals', () => {
     });
 
     // Create a monitoring goal to be closed that no longer has any active citations or un-approved reports.
-    const closedGoal = await Goal.create({
+    goalForClose13 = await Goal.create({
       id: faker.datatype.number({ min: 9999 }),
       name: goalTemplateName,
       grantId: grantClosedMonitoringGoal13.id,
@@ -2161,13 +2165,31 @@ describe('createMonitoringGoals', () => {
     expect(grant12Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant12Goals[0].status).toBe('Not Started');
 
+    // Ensure the correct GoalChangeStatus has been created.
+    const goalChangeStatus12 = await GoalStatusChange.findOne({ where: { goalId: goalForReopen12.id } });
+    expect(goalChangeStatus12).not.toBeNull();
+    expect(goalChangeStatus12.userId).toBeNull();
+    expect(goalChangeStatus12.oldStatus).toBe('Closed');
+    expect(goalChangeStatus12.newStatus).toBe('Not Started');
+    expect(goalChangeStatus12.userName).toBe('system');
+    expect(goalChangeStatus12.reason).toBe('Active monitoring citations');
+
     // CASE 13: Closes monitoring goal that no longer has any active citations.
     const grant13Goals = await Goal.findAll({ where: { grantId: grantClosedMonitoringGoal13.id } });
     expect(grant13Goals.length).toBe(1);
     expect(grant13Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant13Goals[0].status).toBe('Closed');
 
-    // CASE 14: Monitoring goal wiht no active citations but has a unapproved report (don't close).
+    // Ensure the correct GoalChangeStatus has been created.
+    const goalChangeStatus13 = await GoalStatusChange.findOne({ where: { goalId: goalForClose13.id } });
+    expect(goalChangeStatus13).not.toBeNull();
+    expect(goalChangeStatus13.userId).toBeNull();
+    expect(goalChangeStatus13.oldStatus).toBe('Not started');
+    expect(goalChangeStatus13.newStatus).toBe('Closed');
+    expect(goalChangeStatus13.userName).toBe('system');
+    expect(goalChangeStatus13.reason).toBe('No active monitoring citations');
+
+    // CASE 14: Monitoring goal with no active citations but has a unapproved report (don't close).
     const grant14Goals = await Goal.findAll({ where: { grantId: grantToNotCloseMonitoringGoal14.id } });
     expect(grant14Goals.length).toBe(1);
     expect(grant14Goals[0].goalTemplateId).toBe(goalTemplate.id);
