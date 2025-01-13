@@ -951,6 +951,14 @@ jobs:
             fi
           when: always
       - run:
+          name: Summarize coverage
+          command: |
+            chmod +x ./tools/summarize-coverageCLI.js
+            node ./tools/summarize-coverageCLI.js \
+              ./coverage/coverage-final.json \
+              90
+          when: always
+      - run:
           name: Compress coverage artifacts
           command: tar -cvzf backend-coverage-artifacts.tar coverage/
       - store_artifacts:
