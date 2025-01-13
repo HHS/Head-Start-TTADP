@@ -43,3 +43,4 @@ echo "Starting all services..."
 docker compose -f docker-compose.dss.yml up -d
 
 echo "Setup completed successfully."
+docker ps

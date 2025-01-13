@@ -14,7 +14,8 @@ HOSTNAME=${2:-localhost} # Default to 'localhost' if hostname is not provided
 
 # Retry configuration
 attempt_counter=0
-max_attempts=10
+max_attempts=${3:-10}
+
 
 echo "Pinging server at http://${HOSTNAME}:${PORT}..."
 
