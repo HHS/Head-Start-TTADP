@@ -517,11 +517,11 @@ export function reduceObjectivesForRecipientRecord(
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
   }).sort((a, b) => {
-    const dateA = a?.endDate?.trim() && (new Date(a.endDate) !== 'Invalid Date')
+    const dateA = a?.endDate?.trim() && !Number.isNaN(new Date(a.endDate).getTime())
       ? new Date(a.endDate)
       : new Date('1970-01-01');
 
-    const dateB = b?.endDate?.trim() && (new Date(b.endDate) !== 'Invalid Date')
+    const dateB = b?.endDate?.trim() && !Number.isNaN(new Date(b.endDate).getTime())
       ? new Date(b.endDate)
       : new Date('1970-01-01');
 
