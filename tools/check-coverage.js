@@ -1,14 +1,16 @@
-// src/tools/check-coverage.js
-
+/* eslint-disable no-console */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-await-in-loop */
 const fs = require('fs');
 const path = require('path');
-const simpleGit = require('simple-git');
+// eslint-disable-next-line import/no-extraneous-dependencies
 const { createCoverageMap } = require('istanbul-lib-coverage');
+const simpleGit = require('simple-git');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 
 // Configuration
-const argv = yargs(hideBin(process.argv))
+const { argv } = yargs(hideBin(process.argv))
   .option('coverage-file', {
     alias: 'c',
     type: 'string',
@@ -40,7 +42,7 @@ const argv = yargs(hideBin(process.argv))
     default: 'json',
   })
   .help()
-  .alias('help', 'h').argv;
+  .alias('help', 'h');
 
 const COVERAGE_FILE = path.resolve(__dirname, argv['coverage-file']);
 const BASE_BRANCH = 'main';
@@ -60,12 +62,10 @@ async function fetchBaseBranch() {
  * @param {string} [directoryFilter] - The directory to filter files by (optional).
  */
 async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/common/']) {
-  // eslint-disable-next-line no-console
   console.log('getModifiedLines:', directoryFilter);
 
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${BASE_BRANCH}...HEAD`]);
-  // eslint-disable-next-line no-console
   console.log('getModifiedLines:\n', diffFiles);
 
   // Filter files based on the file extension and optional directory
@@ -81,19 +81,19 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
     files = files.filter((file) => directoryFilter.some((directory) => file.startsWith(directory)));
   }
 
-  // eslint-disable-next-line no-console
   console.log('files:', files);
 
   const modifiedLines = {};
 
+  // eslint-disable-next-line no-restricted-syntax
   for (const file of files) {
     // Log the file being processed
-    // eslint-disable-next-line no-console
     console.log('getModifiedLines:', file);
     const diff = await git.diff(['-U0', `${BASE_BRANCH}...HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
     let match;
 
+    // eslint-disable-next-line no-cond-assign
     while ((match = regex.exec(diff)) !== null) {
       const startLine = parseInt(match[1], 10);
       const lineCount = match[2] ? parseInt(match[2], 10) : 1;
@@ -101,8 +101,8 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
       if (!modifiedLines[file]) {
         modifiedLines[file] = new Set();
       }
+
       for (let i = startLine; i < startLine + lineCount; i++) {
-        // eslint-disable-next-line no-console
         console.log(i);
         modifiedLines[file].add(i);
       }
@@ -124,14 +124,12 @@ function loadCoverage(coverageFile = COVERAGE_FILE) {
   try {
     if (!fs.existsSync(coverageFile)) {
       const errorMessage = `Coverage file not found at ${coverageFile}`;
-      // eslint-disable-next-line no-console
       console.error(errorMessage);
       throw new Error(errorMessage);
     }
 
     const coverageData = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
-    const coverageMap = createCoverageMap(coverageData);
-    return coverageMap;
+    return createCoverageMap(coverageData);
   } catch (error) {
     throw new Error(`Failed to parse coverage data at ${coverageFile}`);
   }
@@ -177,6 +175,33 @@ function intersectLocationWithLines(loc, overlappingLines) {
   return { start: newStart, end: newEnd };
 }
 
+function groupIntoRanges(lines) {
+  const ranges = [];
+  if (lines.length === 0) {
+    return ranges;
+  }
+
+  lines.sort((a, b) => a - b);
+  let start = lines[0];
+  let end = lines[0];
+
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] === end + 1) {
+      // Contiguous line
+      end = lines[i];
+    } else {
+      // Not contiguous, save the previous range
+      ranges.push({ start, end });
+      start = lines[i];
+      end = lines[i];
+    }
+  }
+  // Push the last range
+  ranges.push({ start, end });
+
+  return ranges;
+}
+
 /**
  * Check if modified lines are covered.
  */
@@ -195,7 +220,8 @@ function checkCoverage(modifiedLines, coverageMap) {
       }
     } catch (e) {
       const ranges = groupIntoRanges(lines);
-      console.log('checkCoverage:',ranges);
+      console.log('checkCoverage:', ranges);
+      // eslint-disable-next-line max-len
       uncovered[relativeFile] = uncovered[relativeFile] || { statements: [], functions: [], branches: [] };
       ranges.forEach(({ start, end }) => {
         uncovered[relativeFile].statements.push({
@@ -212,7 +238,7 @@ function checkCoverage(modifiedLines, coverageMap) {
     Object.entries(fileCoverage.statementMap).forEach(([id, loc]) => {
       const statementLines = getLinesFromLocation(loc);
       const overlappingLines = linesIntersect(lines, statementLines);
-      console.log('checkCoverage:',overlappingLines);
+      console.log('checkCoverage:', overlappingLines);
       if (overlappingLines.length > 0 && fileCoverage.s[id] === 0) {
         const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
         if (intersectedLoc) {
@@ -263,42 +289,15 @@ function checkCoverage(modifiedLines, coverageMap) {
 
     // Remove empty file entry if no uncovered items were found
     if (
-      uncovered[relativeFile].statements.length === 0 &&
-      uncovered[relativeFile].functions.length === 0 &&
-      uncovered[relativeFile].branches.length === 0
+      uncovered[relativeFile].statements.length === 0
+      && uncovered[relativeFile].functions.length === 0
+      && uncovered[relativeFile].branches.length === 0
     ) {
       delete uncovered[relativeFile];
     }
   });
 
   return uncovered;
-}
-
-function groupIntoRanges(lines) {
-  const ranges = [];
-  if (lines.length === 0) {
-    return ranges;
-  }
-
-  lines.sort((a, b) => a - b);
-  let start = lines[0];
-  let end = lines[0];
-
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i] === end + 1) {
-      // Contiguous line
-      end = lines[i];
-    } else {
-      // Not contiguous, save the previous range
-      ranges.push({ start, end });
-      start = lines[i];
-      end = lines[i];
-    }
-  }
-  // Push the last range
-  ranges.push({ start, end });
-
-  return ranges;
 }
 
 /**
@@ -312,7 +311,6 @@ function generateArtifact(uncovered, artifactDir = ARTIFACT_DIR) {
   const artifactPath = path.join(artifactDir, 'uncovered-lines.json');
 
   fs.writeFileSync(artifactPath, JSON.stringify(uncovered, null, 2), 'utf-8');
-  // eslint-disable-next-line no-console
   console.log(`JSON artifact generated at ${artifactPath}`);
 }
 
@@ -372,7 +370,7 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
     htmlContent += `<h2>${file}</h2>`;
 
     if (data.statements.length > 0) {
-      htmlContent += `<h3>Statements</h3>`;
+      htmlContent += '<h3>Statements</h3>';
       htmlContent += `
         <table>
           <thead>
@@ -400,7 +398,7 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
     }
 
     if (data.functions.length > 0) {
-      htmlContent += `<h3>Functions</h3>`;
+      htmlContent += '<h3>Functions</h3>';
       htmlContent += `
         <table>
           <thead>
@@ -429,9 +427,12 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
       `;
     }
 
-    if (data.branches.length > 0) {
-      htmlContent += `<h3>Branches</h3>`;
-      htmlContent += `
+    if (!(data.branches.length > 0)) {
+      return;
+    }
+
+    htmlContent += '<h3>Branches</h3>';
+    htmlContent += `
         <table>
           <thead>
             <tr>
@@ -443,8 +444,8 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
           </thead>
           <tbody>
       `;
-      data.branches.forEach((branch) => {
-        htmlContent += `
+    data.branches.forEach((branch) => {
+      htmlContent += `
           <tr>
             <td>${branch.id}</td>
             <td>${branch.locationIndex}</td>
@@ -452,12 +453,11 @@ function generateHtmlReport(uncovered, artifactDir = ARTIFACT_DIR) {
             <td>${branch.end.line}</td>
           </tr>
         `;
-      });
-      htmlContent += `
+    });
+    htmlContent += `
           </tbody>
         </table>
       `;
-    }
   });
 
   htmlContent += `
@@ -481,24 +481,19 @@ async function main({
   outputFormat = argv['output-format'],
 } = {}) {
   try {
-    // eslint-disable-next-line no-console
     console.log('Fetching base branch...');
     await fetchBaseBranch();
 
-    // eslint-disable-next-line no-console
     console.log('Identifying modified lines...');
     const modifiedLines = await getModifiedLines(directoryFilter);
 
-    // eslint-disable-next-line no-console
     console.log('Loading coverage data...');
     const coverageMap = loadCoverage(coverageFile);
 
-    // eslint-disable-next-line no-console
     console.log('Checking coverage...');
     const uncovered = checkCoverage(modifiedLines, coverageMap);
 
     if (Object.keys(uncovered).length > 0) {
-      // eslint-disable-next-line no-console
       console.log('Uncovered lines detected:', uncovered);
       Object.entries(uncovered).forEach(([file, data]) => {
         console.error(`- ${file}:`);
@@ -506,32 +501,30 @@ async function main({
           const lines = data.statements.map((stmt) => stmt.start.line).sort((a, b) => a - b);
           const ranges = groupIntoRanges(lines);
           const rangeStrings = ranges
-            .map((range) =>
-              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
-            )
+            .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
             .join(', ');
           console.log(`  Statements: ${rangeStrings}`);
         }
+
         if (data.functions.length > 0) {
           const lines = data.functions.map((fn) => fn.start.line).sort((a, b) => a - b);
           const ranges = groupIntoRanges(lines);
           const rangeStrings = ranges
-            .map((range) =>
-              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
-            )
+            .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
             .join(', ');
           console.log(`  Functions: ${rangeStrings}`);
         }
-        if (data.branches.length > 0) {
-          const lines = data.branches.map((branch) => branch.start.line).sort((a, b) => a - b);
-          const ranges = groupIntoRanges(lines);
-          const rangeStrings = ranges
-            .map((range) =>
-              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`,
-            )
-            .join(', ');
-          console.log(`  Branches: ${rangeStrings}`);
+
+        if (!(data.branches.length > 0)) {
+          return;
         }
+
+        const lines = data.branches.map((branch) => branch.start.line).sort((a, b) => a - b);
+        const ranges = groupIntoRanges(lines);
+        const rangeStrings = ranges
+          .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+          .join(', ');
+        console.log(`  Branches: ${rangeStrings}`);
       });
 
       // Generate JSON artifact
@@ -545,12 +538,10 @@ async function main({
       }
 
       if (failOnUncovered) {
-        // eslint-disable-next-line no-console
         console.log('Coverage check failed due to uncovered lines.');
         process.exit(1);
       }
     } else {
-      // eslint-disable-next-line no-console
       console.log('All modified lines are covered by tests.');
 
       if (outputFormat.includes('html')) {
@@ -558,7 +549,6 @@ async function main({
       }
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Error during coverage check:', error);
     process.exit(1);
   }

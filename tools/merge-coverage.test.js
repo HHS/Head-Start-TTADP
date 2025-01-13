@@ -1,13 +1,16 @@
+/* eslint-disable no-console */
 // tests/merge-coverage.test.js
 
 const fs = require('fs');
 const pathModule = require('path'); // Avoid naming conflict with 'path' variable
 const os = require('os');
+const istanbulCoverage = require('istanbul-lib-coverage');
 const {
   findCoverageFiles,
   mergeCoverageFiles,
   writeMergedCoverage,
   main,
+  DEFAULT_COVERAGE_DIR,
 } = require('./merge-coverage');
 
 describe('merge-coverage script', () => {
@@ -61,7 +64,7 @@ describe('merge-coverage script', () => {
   describe('mergeCoverageFiles', () => {
     it('should throw an error when coverageFiles is empty', () => {
       expect(() => mergeCoverageFiles([])).toThrow(
-        'No coverage-final.json files found to merge.'
+        'No coverage-final.json files found to merge.',
       );
     });
 
@@ -70,14 +73,14 @@ describe('merge-coverage script', () => {
         'file1.js': {
           path: 'file1.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -86,14 +89,14 @@ describe('merge-coverage script', () => {
         'file2.js': {
           path: 'file2.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -151,14 +154,14 @@ describe('merge-coverage script', () => {
         'file1.js': {
           path: 'file1.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -167,14 +170,14 @@ describe('merge-coverage script', () => {
         'file2.js': {
           path: 'file2.js',
           statementMap: {
-            '0': {
+            0: {
               start: { line: 1, column: 0 },
               end: { line: 1, column: 10 },
             },
           },
           fnMap: {},
           branchMap: {},
-          s: { '0': 1 },
+          s: { 0: 1 },
           f: {},
           b: {},
         },
@@ -188,11 +191,11 @@ describe('merge-coverage script', () => {
 
       fs.writeFileSync(
         pathModule.join(coverageDir1, 'coverage-final.json'),
-        JSON.stringify(coverageData1)
+        JSON.stringify(coverageData1),
       );
       fs.writeFileSync(
         pathModule.join(coverageDir2, 'coverage-final.json'),
-        JSON.stringify(coverageData2)
+        JSON.stringify(coverageData2),
       );
 
       const mergedCoverageFile = pathModule.join(tmpDir, 'coverage-final.json');
@@ -204,16 +207,16 @@ describe('merge-coverage script', () => {
       expect(console.log).toHaveBeenCalledWith('Merging coverage files...');
       expect(console.log).toHaveBeenCalledWith('Writing merged coverage report...');
       expect(console.log).toHaveBeenCalledWith(
-        `Merged coverage written to ${mergedCoverageFile}`
+        `Merged coverage written to ${mergedCoverageFile}`,
       );
       expect(console.log).toHaveBeenCalledWith(
-        'Coverage merging completed successfully.'
+        'Coverage merging completed successfully.',
       );
       expect(process.exit).not.toHaveBeenCalled();
 
       // Verify that the merged coverage file was written
       const mergedCoverage = JSON.parse(
-        fs.readFileSync(mergedCoverageFile, 'utf8')
+        fs.readFileSync(mergedCoverageFile, 'utf8'),
       );
       expect(mergedCoverage['file1.js']).toBeDefined();
       expect(mergedCoverage['file2.js']).toBeDefined();
@@ -229,9 +232,39 @@ describe('merge-coverage script', () => {
       expect(console.log).toHaveBeenCalledWith('Merging coverage files...');
       expect(console.error).toHaveBeenCalledWith(
         'Error during coverage merging:',
-        'No coverage-final.json files found to merge.'
+        'No coverage-final.json files found to merge.',
       );
       expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should execute main with default arguments', () => {
+      jest.spyOn(fs, 'readdirSync').mockImplementation((dir) => {
+        if (dir === DEFAULT_COVERAGE_DIR) {
+          return [
+            { name: 'coverage-1', isDirectory: () => true, isFile: () => false },
+            { name: 'coverage-2', isDirectory: () => true, isFile: () => false },
+          ];
+        }
+        if (dir === path.join(DEFAULT_COVERAGE_DIR, 'coverage-1')) {
+          return [{ name: 'coverage-final.json', isDirectory: () => false, isFile: () => true }];
+        }
+        if (dir === path.join(DEFAULT_COVERAGE_DIR, 'coverage-2')) {
+          return [{ name: 'coverage-final.json', isDirectory: () => false, isFile: () => true }];
+        }
+        return [];
+      });
+
+      jest.mock('istanbul-lib-coverage');
+
+      const mockCoverageMap = {
+        merge: jest.fn(),
+        toJSON: jest.fn().mockReturnValue({ merged: true }),
+      };
+      istanbulCoverage.createCoverageMap = jest.fn().mockReturnValue(mockCoverageMap);
+  
+      main();
+  
+      expect(fs.readdirSync).toHaveBeenCalledWith(DEFAULT_COVERAGE_DIR, { withFileTypes: true });
     });
   });
 });
