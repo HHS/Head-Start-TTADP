@@ -3,7 +3,7 @@ import db from '../models';
 
 interface GoalStatusChangeParams {
   goalId: number;
-  userId: number; // Always required
+  userId: number; // Always required, unless it's a system change.
   newStatus: string;
   reason: string;
   context: string;
@@ -13,13 +13,13 @@ interface GoalStatusChangeParams {
 
 export default async function changeGoalStatus({
   goalId,
-  userId,
+  userId = null,
   newStatus,
   reason,
   context,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
-    userId !== -1
+    userId
       ? db.User.findOne({
         where: { id: userId },
         attributes: ['id', 'name'],
@@ -34,7 +34,7 @@ export default async function changeGoalStatus({
           },
         ],
       })
-      : null, // Skip user lookup if userId is -1
+      : null,
     db.Goal.findByPk(goalId),
   ]);
 
@@ -42,18 +42,12 @@ export default async function changeGoalStatus({
     throw new Error('Goal not found');
   }
 
-  if (!user && userId !== -1) {
-    throw new Error('User not found');
-  }
-
   const oldStatus = goal.status;
-
   await db.GoalStatusChange.create({
     goalId,
-    userId: userId === -1 ? null : user.id, // Use null for -1, otherwise the user's ID
-    userName: userId === -1 ? 'system' : user.name, // Use "system" for -1, otherwise the user's name
-    // eslint-disable-next-line max-len
-    userRoles: userId === -1 ? null : user.roles.map((role) => role.name), // Use null for -1, otherwise the user's roles
+    userId: !user ? null : user.id,
+    userName: !user ? 'system' : user.name,
+    userRoles: !user ? null : user.roles.map((role) => role.name),
     oldStatus,
     newStatus,
     reason,

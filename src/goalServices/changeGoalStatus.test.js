@@ -131,28 +131,4 @@ describe('changeGoalStatus service', () => {
       }),
     ).rejects.toThrow('Goal not found');
   });
-
-  it('should throw an error if the user does not exist', async () => {
-    await expect(
-      changeGoalStatus({
-        goalId: goal.id,
-        userId: 9999, // non-existent userId
-        newStatus,
-        reason,
-        context,
-      }),
-    ).rejects.toThrow('User not found');
-  });
-
-  it('should throw an error if userId is null', async () => {
-    await expect(
-      changeGoalStatus({
-        goalId: goal.id,
-        userId: null, // Invalid userId
-        newStatus,
-        reason,
-        context,
-      }),
-    ).rejects.toThrow('User not found');
-  });
 });
