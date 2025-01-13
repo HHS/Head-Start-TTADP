@@ -648,110 +648,6 @@ perform_backup_and_upload() {
 
 # -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# Backup Retention
-# -----------------------------------------------------------------------------
-backup_retention() {
-    log "INFO" "Starting backup retention process"
-
-    local backup_filename_prefix=$1
-    local s3_bucket=$AWS_DEFAULT_BUCKET
-
-    log "INFO" "Fetching the list of backup objects"
-    BACKUPS=$(aws s3api list-objects-v2 --bucket $s3_bucket --prefix ${backup_filename_prefix}/ --query 'Contents[].[Key, LastModified]' --output text) || {
-        log "ERROR" "Failed to fetch list of backup objects"
-        set -e
-        return 1
-    }
-
-    NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-    date_diff() {
-        d1=$(date -d "$1" +%s)
-        d2=$(date -d "$2" +%s)
-        echo $(( (d1 - d2) / 86400 ))
-    }
-
-    get_base_name() {
-        echo "$1" | sed -e 's/\.[a-z0-9]*$//'
-    }
-
-    declare -A backup_sets
-    declare -A processed_dates
-
-    while IFS= read -r line; do
-        KEY=$(echo $line | awk '{print $1}')
-        LAST_MODIFIED=$(echo $line | awk '{print $2}')
-
-        BASE_NAME=$(get_base_name "$KEY")
-        if [ -z "${backup_sets[$BASE_NAME]+isset}" ]; then
-            backup_sets[$BASE_NAME]="$LAST_MODIFIED"
-        fi
-    done <<< "$BACKUPS"
-
-    delete_backup_set() {
-        BASE_NAME=$1
-        for EXT in ".zenc" ".pwd" ".md5" ".sha256"; do
-            KEY="${BASE_NAME}${EXT}"
-            log "INFO" "Deleting $KEY"
-            aws s3 rm "s3://${s3_bucket}/${KEY}" || {
-                log "ERROR" "Failed to delete $KEY"
-                set -e
-                return 1
-            }
-        done
-    }
-
-    for BASE_NAME in "${!backup_sets[@]}"; do
-        LAST_MODIFIED=${backup_sets[$BASE_NAME]}
-        AGE=$(date_diff $NOW $LAST_MODIFIED)
-
-        if [ $AGE -le 30 ]; then
-            continue
-        elif [ $AGE -le 60 ]; then
-            DATE=$(date -d $LAST_MODIFIED +%Y-%m-%d)
-            if [ "${processed_dates[$DATE]+isset}" ]; then
-                delete_backup_set $BASE_NAME || {
-                    log "ERROR" "Failed to delete backup set for $BASE_NAME"
-                    set -e
-                    return 1
-                }
-            else
-                processed_dates[$DATE]=true
-            fi
-        elif [ $AGE -le 90 ]; then
-            if [ $(date -d $LAST_MODIFIED +%u) -eq 1 ] || [ $(date -d $LAST_MODIFIED +%d) -eq 1 ] || [ $(date -d $LAST_MODIFIED +%d) -eq 15 ]; then
-                continue
-            else
-                delete_backup_set $BASE_NAME || {
-                    log "ERROR" "Failed to delete backup set for $BASE_NAME"
-                    set -e
-                    return 1
-                }
-            fi
-        elif [ $AGE -le 730 ]; then
-            if [ $(date -d $LAST_MODIFIED +%d) -eq 1 ]; then
-                continue
-            else
-                delete_backup_set $BASE_NAME || {
-                    log "ERROR" "Failed to delete backup set for $BASE_NAME"
-                    set -e
-                    return 1
-                }
-            fi
-        else
-            delete_backup_set $BASE_NAME || {
-                log "ERROR" "Failed to delete backup set for $BASE_NAME"
-                set -e
-                return 1
-            }
-        fi
-    done
-
-    log "INFO" "Backup retention process completed"
-}
-# -----------------------------------------------------------------------------
-
 function main() {
   local backup_filename_prefix=$1
   local rds_server=$2
@@ -815,13 +711,6 @@ function main() {
   log "INFO" "backup, upload, verify db"
   perform_backup_and_upload "${backup_filename_prefix}" || {
     log "ERROR" "Backup and upload process failed"
-    set -e
-    exit 1
-  }
-
-  log "INFO" "run backup retention"
-  backup_retention "${backup_filename_prefix}" || {
-    log "ERROR" "Backup retention process failed"
     set -e
     exit 1
   }
