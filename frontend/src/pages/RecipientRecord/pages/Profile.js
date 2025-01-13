@@ -15,7 +15,6 @@ export default function Profile({
   regionId,
   recipientId,
 }) {
-  const activeGrants = (recipientSummary.grants || []).filter((grant) => grant.status === 'Active');
   const { hasMonitoringData, hasClassData } = useGrantData();
 
   return (
@@ -34,7 +33,7 @@ export default function Profile({
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
           </Grid>
-          {activeGrants.map((grant) => (
+          {(recipientSummary.grants || []).map((grant) => (
             <React.Fragment key={grant.number}>
               {hasMonitoringData(grant.number) || hasClassData(grant.number) ? (
                 <Grid desktop={{ col: 12 }}>
