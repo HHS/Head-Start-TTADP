@@ -3,6 +3,6 @@
  * @param input - The value to check.
  * @returns The input if it's an array, or an empty array.
  */
-export function ensureArray<T>(input: T | T[]): T[] {
-    return Array.isArray(input) ? input : [];
+export default function ensureArray<T>(input: T | T[]): T[] {
+  return Array.isArray(input) ? input : [];
 }

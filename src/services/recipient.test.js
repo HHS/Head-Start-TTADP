@@ -39,7 +39,6 @@ import {
   reduceObjectivesForRecipientRecord,
   reduceTopicsOfDifferingType,
   combineObjectiveIds,
-  ensureArray,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
@@ -1700,7 +1699,7 @@ describe('Recipient DB service', () => {
             id: 2,
             title: 'Objective 2',
             status: 'Complete',
-            endDate: '2023-12-03',
+            endDate: '2023-12-01',
           },
         ],
       };
@@ -1731,7 +1730,7 @@ describe('Recipient DB service', () => {
       expect(result).toBeDefined();
       expect(result.length).toBe(4);
 
-      expect(result.map((obj) => obj.id)).toEqual([2, 3, 4, 1]);
+      expect(result.map((obj) => obj.id)).toEqual([3, 2, 4, 1]);
     });
   });
 
@@ -2553,11 +2552,19 @@ describe('Recipient DB service', () => {
     });
 
     it('should handle when both existing.ids and objective.ids/id are missing', () => {
-      const existing = { ids: [] };
+      const existing = {};
       const objective = {};
 
       const result = combineObjectiveIds(existing, objective);
       expect(result).toEqual([]);
+    });
+
+    it('should handle duplicates in existing.ids and objective.ids', () => {
+      const existing = { ids: [1, 2] };
+      const objective = { ids: [2, 3] };
+      const result = combineObjectiveIds(existing, objective);
+
+      expect(result).toEqual([1, 2, 3]);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { ensureArray } from './utils';
+import ensureArray from './utils';
 
 describe('ensureArray', () => {
   it('returns the same array when input is an array', () => {

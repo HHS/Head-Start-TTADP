@@ -40,7 +40,7 @@ import {
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
-import { ensureArray } from '../lib/utils';
+import ensureArray from '../lib/utils';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -377,7 +377,7 @@ export function reduceTopicsOfDifferingType(topics) {
 }
 
 export function combineObjectiveIds(existing, objective) {
-  let ids = [...existing.ids];
+  let ids = [...(existing.ids || [])];
 
   if (objective.ids && Array.isArray(objective.ids)) {
     ids = [...ids, ...objective.ids];
@@ -387,7 +387,7 @@ export function combineObjectiveIds(existing, objective) {
     ids.push(objective.id);
   }
 
-  return ids;
+  return [...new Set(ids)];
 }
 
 /**
@@ -517,11 +517,11 @@ export function reduceObjectivesForRecipientRecord(
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
   }).sort((a, b) => {
-    const dateA = a?.endDate?.trim() && !Number.isNaN(new Date(a.endDate))
+    const dateA = a?.endDate?.trim() && (new Date(a.endDate) !== 'Invalid Date')
       ? new Date(a.endDate)
       : new Date('1970-01-01');
 
-    const dateB = b?.endDate?.trim() && !Number.isNaN(new Date(b.endDate))
+    const dateB = b?.endDate?.trim() && (new Date(b.endDate) !== 'Invalid Date')
       ? new Date(b.endDate)
       : new Date('1970-01-01');
 
