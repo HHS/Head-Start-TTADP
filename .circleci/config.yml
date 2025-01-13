@@ -1203,10 +1203,10 @@ jobs:
           command: ./bin/prod-style-server
       - run:
           name: Wait for Node.js server to start
-          command: ./bin/ping-server 8080 server
+          command: ./bin/ping-server 8080
       - run:
           name: Wait for similarity_api to start
-          command: ./bin/ping-server 8080 similarity_api
+          command: ./bin/ping-server 9100
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
