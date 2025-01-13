@@ -1195,61 +1195,44 @@ jobs:
           at: .
       - run:
           name: Clean previous reports
-          command: rm -rf reports/server/*
+          command: |
+            rm -rf reports/server/*
+            rm -rf reports/similarity_api/*
       - run:
-          name: Start up local server
+          name: Start up local services
           command: ./bin/prod-style-server
       - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 8080
+          name: Wait for Node.js server to start
+          command: ./bin/ping-server 8080 server
+      - run:
+          name: Wait for similarity_api to start
+          command: ./bin/ping-server 8080 similarity_api
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
-          name: Run OWASP ZAP scans
+          name: Run OWASP ZAP scan for Node.js server
           command: ./bin/run-owasp-scan --target http://server:8080 --full
       - run:
-          name: Clean full scan report
+          name: Run OWASP ZAP scan for similarity_api
+          command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
+      - run:
+          name: Clean full scan report for Node.js server
           command: node src/tools/clean-zap-report.js \
             reports/server/owasp_full_scan_report.html \
             reports/server/owasp_full_scan_report_cleaned.html
       - run:
-          name: cleanup
-          command: rm reports/server/owasp_full_scan_report.html
-      - store_artifacts:
-          path: reports/server
-          when: always
-    resource_class: large
-  dynamic_security_scan_similarity:
-    executor: machine-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Clean previous reports
-          command: rm -rf reports/similarity_api/*
-      - run:
-          name: Start up local server
-          command: ./bin/prod-style-server
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 8080
-      - run:
-          name: Pull OWASP ZAP docker image
-          command: docker pull softwaresecurityproject/zap-stable:latest
-      - run:
-          name: Run OWASP ZAP scans
-          command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
-      - run:
-          name: Clean API scan report
+          name: Clean API scan report for similarity_api
           command: node src/tools/clean-zap-report.js \
             reports/similarity_api/owasp_api_report.html \
             reports/similarity_api/owasp_api_report_cleaned.html
       - run:
-          name: cleanup
-          command: rm reports/similarity_api/owasp_api_report.html
+          name: Cleanup raw reports
+          command: |
+            rm reports/server/owasp_full_scan_report.html
+            rm reports/similarity_api/owasp_api_report.html
       - store_artifacts:
-          path: reports/similarity_api
+          path: reports
           when: always
     resource_class: large
   deploy:
@@ -1755,10 +1738,6 @@ workflows:
       - test_similarity_api:
           requires:
             - build_and_lint_similarity_api
-      - dynamic_security_scan_similarity:
-          requires:
-            - build_and_lint
-            - build_and_lint_similarity_api
       - test_utils:
           requires:
             - build_and_lint
@@ -1768,6 +1747,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+            - build_and_lint_similarity_api
       - backup_upload_production:
           requires:
             - test_backend
@@ -1827,16 +1807,13 @@ workflows:
       - test_similarity_api:
           requires:
             - build_and_lint_similarity_api
-      - dynamic_security_scan_similarity:
-          requires:
-            - build_and_lint
-            - build_and_lint_similarity_api
       - test_utils:
           requires:
             - build_and_lint
       - dynamic_security_scan:
           requires:
             - build_and_lint
+            - build_and_lint_similarity_api
   daily_backup_upload_production:
     triggers:
       - schedule:
