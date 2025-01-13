@@ -16,6 +16,7 @@ describe('changeGoalStatus service', () => {
   let user;
   let role;
   let goal;
+  let goal2;
   let grant;
   let recipient;
   const newStatus = 'In Progress';
@@ -41,6 +42,11 @@ describe('changeGoalStatus service', () => {
       status: 'Draft',
       grantId: grant.id,
     });
+    goal2 = await db.Goal.create({
+      name: 'Plant a tree',
+      status: 'Draft',
+      grantId: grant.id,
+    });
     role = await db.Role.create({
       id: faker.datatype.number(),
       name: 'Astronaut',
@@ -53,17 +59,17 @@ describe('changeGoalStatus service', () => {
   });
 
   afterAll(async () => {
-    await db.Goal.destroy({ where: { id: goal.id }, force: true });
+    await db.GoalStatusChange.destroy({ where: { goalId: [goal.id, goal2.id] }, force: true });
+    await db.Goal.destroy({ where: { id: [goal.id, goal2.id] }, force: true });
     await db.GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
     await db.Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await db.Recipient.destroy({ where: { id: recipient.id } });
     await db.UserRole.destroy({ where: { userId: user.id } });
     await db.Role.destroy({ where: { id: role.id } });
     await db.User.destroy({ where: { id: mockUser.id } });
-    await db.sequelize.close();
   });
 
-  it('should change the status of a goal and create a status change log', async () => {
+  it('should change the status of a goal and create a status change log for a valid user', async () => {
     await changeGoalStatus({
       goalId: goal.id,
       userId: mockUser.id,
@@ -75,6 +81,7 @@ describe('changeGoalStatus service', () => {
     const updatedGoal = await db.Goal.findByPk(goal.id);
     const statusChangeLog = await db.GoalStatusChange.findOne({
       where: { goalId: goal.id, newStatus },
+      order: [['id', 'DESC']], // Order by `id` in descending order to get the newest value.
     });
 
     expect(updatedGoal.status).toBe(newStatus);
@@ -88,23 +95,64 @@ describe('changeGoalStatus service', () => {
     expect(statusChangeLog.userRoles).toStrictEqual(['Astronaut']);
   });
 
-  it('should throw an error if the goal does not exist', async () => {
-    await expect(changeGoalStatus({
-      goalId: 9999, // non-existent goalId
-      userId: mockUser.id,
+  it('should change the status of a goal and create a status change log for system user', async () => {
+    await changeGoalStatus({
+      goalId: goal2.id,
+      userId: -1, // System user
       newStatus,
       reason,
       context,
-    })).rejects.toThrow('Goal or user not found');
+    });
+
+    const updatedGoal = await db.Goal.findByPk(goal2.id);
+    const statusChangeLog = await db.GoalStatusChange.findOne({
+      where: { goalId: goal2.id, newStatus },
+    });
+
+    expect(updatedGoal.status).toBe(newStatus);
+    expect(statusChangeLog).toBeTruthy();
+    expect(statusChangeLog.oldStatus).toBe('Draft');
+    expect(statusChangeLog.newStatus).toBe(newStatus);
+    expect(statusChangeLog.reason).toBe(reason);
+    expect(statusChangeLog.context).toBe(context);
+    expect(statusChangeLog.userId).toBeNull(); // userId should be null for system user
+    expect(statusChangeLog.userName).toBe('system'); // userName should be "system"
+    expect(statusChangeLog.userRoles).toBeNull(); // userRoles should be null for system user
+  });
+
+  it('should throw an error if the goal does not exist', async () => {
+    await expect(
+      changeGoalStatus({
+        goalId: 9999, // non-existent goalId
+        userId: mockUser.id,
+        newStatus,
+        reason,
+        context,
+      }),
+    ).rejects.toThrow('Goal not found');
   });
 
   it('should throw an error if the user does not exist', async () => {
-    await expect(changeGoalStatus({
-      goalId: goal.id,
-      userId: 9999, // non-existent userId
-      newStatus,
-      reason,
-      context,
-    })).rejects.toThrow('Goal or user not found');
+    await expect(
+      changeGoalStatus({
+        goalId: goal.id,
+        userId: 9999, // non-existent userId
+        newStatus,
+        reason,
+        context,
+      }),
+    ).rejects.toThrow('User not found');
+  });
+
+  it('should throw an error if userId is null', async () => {
+    await expect(
+      changeGoalStatus({
+        goalId: goal.id,
+        userId: null, // Invalid userId
+        newStatus,
+        reason,
+        context,
+      }),
+    ).rejects.toThrow('User not found');
   });
 });
