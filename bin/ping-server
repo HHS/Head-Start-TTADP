@@ -11,17 +11,18 @@ fi
 
 PORT=$1
 HOSTNAME=${2:-localhost} # Default to 'localhost' if hostname is not provided
+URLPATH=${3}
 
 # Retry configuration
 attempt_counter=0
-max_attempts=${3:-10}
+max_attempts=${4:-10}
 
 
-echo "Pinging server at http://${HOSTNAME}:${PORT}..."
+echo "Pinging server at http://${HOSTNAME}:${PORT}${URLPATH}..."
 
-until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}); do
+until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}); do
     if [ ${attempt_counter} -eq ${max_attempts} ]; then
-        echo "Error: Max attempts reached. Server at ${HOSTNAME}:${PORT} is not responding."
+        echo "Error: Max attempts reached. Server at ${HOSTNAME}:${PORT}${URLPATH} is not responding."
         exit 1
     fi
 
@@ -30,4 +31,4 @@ until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HO
     sleep 30
 done
 
-echo "Success: Server at ${HOSTNAME}:${PORT} is responding."
+echo "Success: Server at ${HOSTNAME}:${PORT}${URLPATH} is responding."

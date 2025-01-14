@@ -1206,7 +1206,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Wait for similarity_api to start
-          command: ./bin/ping-server 9100
+          command: ./bin/ping-server 9100 localhost /openapi.json
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
