@@ -4,7 +4,7 @@ import {
   Goal,
 } from '../models';
 import { auditLogger } from '../logger';
-import changeGoalStatus from '../goalServices/changeGoalStatus';
+import { changeGoalStatusWithSystemUser } from '../goalServices/changeGoalStatus';
 
 const createMonitoringGoals = async () => {
   const cutOffDate = '2024-01-01'; // TODO: Set this before we deploy to prod.
@@ -152,9 +152,8 @@ const createMonitoringGoals = async () => {
       const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
       // This function also updates the status of the goal via the hook.
       // No need to explicitly update the goal status.
-      await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatus({
+      await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatusWithSystemUser({
         goalId: goal.goalId,
-        userId: -1, // -1 is used to define the system is initiating the change
         newStatus: 'Not Started',
         reason: 'Active monitoring citations',
         context: null,
@@ -244,9 +243,8 @@ const createMonitoringGoals = async () => {
       const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
       // This function also updates the status of the goal via the hook.
       // No need to explicitly update the goal status.
-      await Promise.all(goalsToClose[0].map((goal) => changeGoalStatus({
+      await Promise.all(goalsToClose[0].map((goal) => changeGoalStatusWithSystemUser({
         goalId: goal.goalId,
-        userId: -1, // -1 is used to define the system is initiating the change
         newStatus: 'Closed',
         reason: 'No active monitoring citations',
         context: null,
