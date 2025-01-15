@@ -9,7 +9,7 @@ import Tabs from '../../../../components/Tabs';
 import { getTtaByCitation, getTtaByReview } from '../../../../fetchers/monitoring';
 import ReviewCards from './components/ReviewCards';
 import CitationCards from './components/CitationCards';
-// import { ROUTES } from '../../../../Constants';
+import { ROUTES } from '../../../../Constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
 const MONITORING_PAGES = {
@@ -58,17 +58,15 @@ export default function Monitoring({
   }, [currentPage, history, recipientId, regionId]);
 
   useDeepCompareEffect(() => {
-    const controller = new AbortController();
     async function fetchMonitoringData(slug) {
       setIsAppLoading(true);
       try {
-        const data = await lookup[slug].fetcher(recipientId, regionId, controller.signal);
+        const data = await lookup[slug].fetcher(recipientId, regionId);
         lookup[slug].setter(data);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
-        // todo: handle error (but not abort error)
-        // history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
+        history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
       } finally {
         setIsAppLoading(false);
       }
@@ -77,10 +75,6 @@ export default function Monitoring({
     if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
       fetchMonitoringData(currentPage);
     }
-
-    return () => {
-      controller.abort();
-    };
   }, [currentPage, history, lookup, recipientId, regionId, setIsAppLoading]);
 
   return (
