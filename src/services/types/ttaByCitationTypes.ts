@@ -77,6 +77,7 @@ export interface StatusLink {
   deletedAt: null;
   monitoringReviewStatuses?: MonitoringStatus[];
   monitoringFindingStatuses?: MonitoringStatus[];
+  monitoringFindingHistoryStatuses?: MonitoringStatus[];
 }
 
 export interface MonitoringStatus {
@@ -108,6 +109,7 @@ export interface MonitoringFindingHistory {
   updatedAt: Date;
   deletedAt: null;
   monitoringReviewLink: MonitoringReviewLink;
+  monitoringFindingStatusLink: StatusLink;
 }
 
 export interface MonitoringReviewLink {

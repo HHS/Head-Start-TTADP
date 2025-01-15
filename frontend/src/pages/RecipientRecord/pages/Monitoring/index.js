@@ -2,6 +2,7 @@ import React, {
   useEffect, useState, useMemo, useContext,
 } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useHistory } from 'react-router';
 import Container from '../../../../components/Container';
 import Tabs from '../../../../components/Tabs';
@@ -56,16 +57,12 @@ export default function Monitoring({
     }
   }, [currentPage, history, recipientId, regionId]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchMonitoringData(slug) {
-      const data = await lookup[slug].fetcher(recipientId, regionId);
-      lookup[slug].setter(data);
-    }
-
-    if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
       setIsAppLoading(true);
       try {
-        fetchMonitoringData(currentPage);
+        const data = await lookup[slug].fetcher(recipientId, regionId);
+        lookup[slug].setter(data);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
@@ -73,6 +70,10 @@ export default function Monitoring({
       } finally {
         setIsAppLoading(false);
       }
+    }
+
+    if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
+      fetchMonitoringData(currentPage);
     }
   }, [currentPage, history, lookup, recipientId, regionId, setIsAppLoading]);
 

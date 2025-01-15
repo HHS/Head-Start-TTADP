@@ -1,11 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import CitationCard from './CitationCard';
 
 export default function CitationCards({ data, regionId }) {
   return (
     data.map((citation) => (
-      <CitationCard key={citation.id} citation={citation} regionId={regionId} />
+      <CitationCard key={uniqueId('citation-card-')} citation={citation} regionId={regionId} />
     )));
 }
 
