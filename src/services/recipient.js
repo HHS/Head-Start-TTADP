@@ -354,7 +354,7 @@ export function reduceTopicsOfDifferingType(topics) {
   const newTopics = uniq((topics || null)
     .filter((topic) => topic !== null && topic !== undefined).map((topic) => {
       if (typeof topic === 'string') {
-        return topic;
+        return topic.trim();
       }
 
       if (typeof topic === 'object' && topic.name) {
