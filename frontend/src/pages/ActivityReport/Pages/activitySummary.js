@@ -63,6 +63,7 @@ const ActivitySummary = ({
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
   const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
+  const [previousStartDate, setPreviousStartDate] = useState(null);
 
   const activityRecipientType = watch('activityRecipientType');
   const watchFormRecipients = watch('activityRecipients');
@@ -71,6 +72,10 @@ const ActivitySummary = ({
   const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
+
+  const selectedGoals = watch('goals');
+  const goalForEditing = watch('goalForEditing');
+
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
@@ -232,6 +237,37 @@ const ActivitySummary = ({
       </FormItem>
     </div>
   );
+
+  const validateCitations = () => {
+    const allGoals = [selectedGoals, goalForEditing].flat().filter((g) => g !== null);
+    // If we have a monitoring goal.
+    const selectedMonitoringGoal = allGoals.find((goal) => goal.standard === 'Monitoring');
+    if (selectedMonitoringGoal) {
+      // Get all the citations in a single array from all the goal objectives.
+      const allCitations = selectedMonitoringGoal.objectives.map(
+        (objective) => objective.citations,
+      ).flat();
+      // If we have selected citations
+      if (allCitations.length) {
+        const start = moment(startDate, 'MM/DD/YYYY');
+        const invalidCitations = allCitations.filter(
+          (citation) => citation.monitoringReferences.some(
+            (monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start),
+          ),
+        );
+        // If any of the citations are invalid given the new date.
+        if (invalidCitations.length) {
+          // Rollback the start date.
+          setValue('startDate', previousStartDate);
+          // Display monitoring citation warning and keep start date.
+          return 'The date entered is not valid with the selected citations.';
+        }
+      }
+    }
+    // Save the last good start date.
+    setPreviousStartDate(startDate);
+    return null;
+  };
 
   return (
     <>
@@ -421,6 +457,7 @@ const ActivitySummary = ({
                   isStartDate
                   inputId="startDate"
                   endDate={endDate}
+                  additionalValidation={validateCitations}
                 />
               </FormItem>
             </Grid>
