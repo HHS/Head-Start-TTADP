@@ -29,6 +29,8 @@ const {
   MonitoringClassSummary,
   MonitoringFindingLink,
   MonitoringFindingHistory,
+  MonitoringFindingHistoryStatus,
+  MonitoringFindingHistoryStatusLink,
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingStatusLink,
@@ -47,8 +49,9 @@ const {
   Role,
 } = db;
 
-const MIN_DELIVERY_DATE = '2024-01-01';
+const MIN_DELIVERY_DATE = '2023-01-01';
 const REVIEW_STATUS_COMPLETE = 'Complete';
+const EIGHT_HOURS = 60 * 60 * 8;
 
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
   const grants = await Grant.findAll({
@@ -450,6 +453,18 @@ export async function ttaByCitations(
                     required: true,
                     include: [
                       {
+                        model: MonitoringFindingHistoryStatusLink,
+                        as: 'monitoringFindingStatusLink',
+                        required: true,
+                        include: [
+                          {
+                            model: MonitoringFindingHistoryStatus,
+                            as: 'monitoringFindingHistoryStatuses',
+                            required: true,
+                          },
+                        ],
+                      },
+                      {
                         model: MonitoringReviewLink,
                         as: 'monitoringReviewLink',
                         required: true,
@@ -516,8 +531,10 @@ export async function ttaByCitations(
     const [status] = finding.statusLink.monitoringFindingStatuses;
 
     monitoringFindingHistories.forEach((history) => {
-      const { monitoringReviewLink } = history;
+      const { monitoringReviewLink, monitoringFindingStatusLink } = history;
       const { monitoringReviews } = monitoringReviewLink;
+
+      const [monitoringStatus] = monitoringFindingStatusLink.monitoringFindingHistoryStatuses;
 
       const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(finding.findingId));
       objectives.forEach(({ endDate }) => {
@@ -527,8 +544,6 @@ export async function ttaByCitations(
       });
 
       monitoringReviews.forEach((review) => {
-        const { statusLink } = review;
-        const [reviewStatus] = statusLink.monitoringReviewStatuses;
         const { monitoringReviewGrantees } = monitoringReviewLink;
         const gr = monitoringReviewGrantees.map((grantee) => grantee.grantNumber);
 
@@ -541,7 +556,7 @@ export async function ttaByCitations(
           outcome: review.outcome,
           specialists: uniqBy(objectives.map((o) => o.specialists).flat(), 'name'),
           objectives: objectives.filter((o) => o.reviewNames.includes(review.name)),
-          findingStatus: reviewStatus.name, // todo: is this the correct status to access?
+          findingStatus: monitoringStatus.name,
         });
       });
     });
