@@ -40,6 +40,7 @@ import {
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
+import ensureArray from '../lib/utils';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -349,26 +350,34 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
  * So instead, we depuplicating once after the objectives have been reduced, and accounting for
  * the differing formats then
  */
-function reduceTopicsOfDifferingType(topics) {
-  const newTopics = uniq(topics.map((topic) => {
-    if (typeof topic === 'string') {
+export function reduceTopicsOfDifferingType(topics) {
+  const newTopics = uniq((topics || null)
+    .filter((topic) => topic !== null && topic !== undefined).map((topic) => {
+      if (typeof topic === 'string') {
+        return topic.trim();
+      }
+
+      if (typeof topic === 'object' && topic.name) {
+        return topic.name.trim();
+      }
+
       return topic;
+    }));
+
+  newTopics.sort((a, b) => {
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a.localeCompare(b);
     }
-
-    if (topic.name) {
-      return topic.name;
-    }
-
-    return topic;
-  }));
-
-  newTopics.sort();
+    if (typeof a === 'string') return -1;
+    if (typeof b === 'string') return 1;
+    return 0;
+  });
 
   return newTopics;
 }
 
-function combineObjectiveIds(existing, objective) {
-  let ids = [...existing.ids];
+export function combineObjectiveIds(existing, objective) {
+  let ids = [...(existing.ids || [])];
 
   if (objective.ids && Array.isArray(objective.ids)) {
     ids = [...ids, ...objective.ids];
@@ -378,7 +387,7 @@ function combineObjectiveIds(existing, objective) {
     ids.push(objective.id);
   }
 
-  return ids;
+  return [...new Set(ids)];
 }
 
 /**
@@ -416,12 +425,18 @@ export function reduceObjectivesForRecipientRecord(
         reportTopics,
         reportReasons,
         endDate,
-      } = (objective.activityReports || []).reduce((accumulated, currentReport) => ({
-        reportTopics: [...accumulated.reportTopics, ...currentReport.topics],
-        reportReasons: [...accumulated.reportReasons, ...currentReport.reason],
-        // eslint-disable-next-line max-len
-        endDate: new Date(currentReport.endDate) < new Date(accumulated.endDate) ? accumulated.endDate : currentReport.endDate,
-      }), { reportTopics: [], reportReasons: [], endDate: '' });
+      } = (objective.activityReports || []).reduce(
+        (accumulated, currentReport) => ({
+          reportTopics: [...accumulated.reportTopics, ...(currentReport.topics || [])],
+          reportReasons: [...accumulated.reportReasons, ...(currentReport.reason || [])],
+          endDate: !accumulated.endDate
+            || (currentReport.endDate
+              && new Date(currentReport.endDate) < new Date(accumulated.endDate))
+            ? currentReport.endDate
+            : accumulated.endDate,
+        }),
+        { reportTopics: [], reportReasons: [], endDate: null },
+      );
 
       const objectiveTitle = objective.title.trim();
       const objectiveStatus = objective.status;
@@ -437,7 +452,10 @@ export function reduceObjectivesForRecipientRecord(
       ));
 
       if (existing) {
-        existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
+        const existingReports = existing.activityReports || [];
+        const objectiveReports = objective.activityReports || [];
+
+        existing.activityReports = uniqBy([...existingReports, ...objectiveReports], 'displayId');
         existing.reasons = uniq([...existing.reasons, ...reportReasons]);
         existing.reasons.sort();
         existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
@@ -449,15 +467,17 @@ export function reduceObjectivesForRecipientRecord(
       }
 
       // Look up grant number by index.
-      let grantNumberToUse = currentModel.grant.number;
-      const indexOfGoal = goal.ids.indexOf(objective.goalId);
+      let grantNumberToUse = currentModel?.grant?.number || 'Unknown';
+      const ids = Array.isArray(goal.ids) ? goal.ids : [];
+      const indexOfGoal = ids.indexOf(objective.goalId);
       if (indexOfGoal !== -1 && goal.grantNumbers[indexOfGoal]) {
         grantNumberToUse = goal.grantNumbers[indexOfGoal];
       }
 
       const formattedObjective = {
+        id: objective.id,
         title: objective.title.trim(),
-        endDate,
+        endDate: endDate || objective.endDate,
         status: objectiveStatus,
         grantNumbers: [grantNumberToUse],
         reasons: uniq(reportReasons),
@@ -481,22 +501,38 @@ export function reduceObjectivesForRecipientRecord(
     });
 
   const current = goal;
-  current.goalTopics = reduceTopicsOfDifferingType([...goal.goalTopics, ...topics]);
+  const goalTopics = Array.isArray(goal.goalTopics) ? goal.goalTopics : [];
+  const safeTopics = ensureArray(topics);
+  const goalReasons = Array.isArray(goal.reasons) ? goal.reasons : [];
+  const safeReasons = ensureArray(reasons);
+
+  current.goalTopics = reduceTopicsOfDifferingType([...goalTopics, ...safeTopics]);
   current.goalTopics.sort();
 
-  current.reasons = uniq([...goal.reasons, ...reasons]);
+  current.reasons = uniq([...goalReasons, ...safeReasons]);
   current.reasons.sort();
 
   return [...objectives].map((obj) => {
     // eslint-disable-next-line no-param-reassign
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
-  }).sort((a, b) => ((
-    a.endDate === b.endDate ? a.id < b.id
-      : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+  }).sort((a, b) => {
+    const dateA = a?.endDate?.trim() && !Number.isNaN(new Date(a.endDate).getTime())
+      ? new Date(a.endDate)
+      : new Date('1970-01-01');
+
+    const dateB = b?.endDate?.trim() && !Number.isNaN(new Date(b.endDate).getTime())
+      ? new Date(b.endDate)
+      : new Date('1970-01-01');
+
+    if (dateA.getTime() === dateB.getTime()) {
+      return b.id - a.id;
+    }
+    return dateB - dateA;
+  });
 }
 
-function wasGoalPreviouslyClosed(goal) {
+export function wasGoalPreviouslyClosed(goal) {
   if (goal.statusChanges) {
     return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
   }
@@ -504,7 +540,7 @@ function wasGoalPreviouslyClosed(goal) {
   return false;
 }
 
-function calculatePreviousStatus(goal) {
+export function calculatePreviousStatus(goal) {
   if (goal.statusChanges && goal.statusChanges.length > 0) {
     // statusChanges is an array of { oldStatus, newStatus }.
     const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
@@ -580,7 +616,7 @@ export async function getGoalsByActivityRecipient(
   };
 
   // If we have specified goals only retrieve those else all for recipient.
-  if (sortBy !== 'mergedGoals' && goalIds && goalIds.length) {
+  if (sortBy !== 'mergedGoals' && goalIds?.length) {
     goalWhere = {
       id: goalIds,
       ...goalWhere,
@@ -594,10 +630,6 @@ export async function getGoalsByActivityRecipient(
   const sanitizedIds = [
     0,
     ...(() => {
-      if (!goalIds) {
-        return [];
-      }
-
       if (Array.isArray(goalIds)) {
         return goalIds;
       }
