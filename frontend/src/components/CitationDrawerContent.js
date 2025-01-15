@@ -1,31 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import { fetchCitationTextByName } from '../fetchers/citations';
+import useFetch from '../hooks/useFetch';
 
 export default function CitationDrawerContent({ citations }) {
-  const [content, setContent] = useState([]); // { text: string, citation: string }[]
-
-  useEffect(() => {
-    const abortController = new AbortController();
-    async function fetchCitations() {
-      try {
-        const response = await fetchCitationTextByName(citations, abortController.signal);
-        setContent(response);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(err);
-      }
-    }
-
-    if (citations) {
-      fetchCitations();
-    }
-
-    return () => {
-      abortController.abort();
-    };
-  }, [citations]);
+  const fetcher = useCallback(() => fetchCitationTextByName(citations), [citations]);
+  const content = useFetch([], fetcher, [citations]);
 
   return (
     <div>

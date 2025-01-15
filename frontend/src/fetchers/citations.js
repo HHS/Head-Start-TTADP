@@ -22,7 +22,7 @@ export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
  * @param {String[]} citationIds
  * @returns {Promise<{ text: String; citation: String; }[]>}
  */
-export async function fetchCitationTextByName(citationIds, signal) {
+export async function fetchCitationTextByName(citationIds) {
   const params = new URLSearchParams();
   citationIds.forEach((name) => {
     params.append('citationIds', encodeURIComponent(name));
@@ -35,6 +35,6 @@ export async function fetchCitationTextByName(citationIds, signal) {
     'text',
     `?${params.toString()}`,
   );
-  const citations = await get(url, signal);
+  const citations = await get(url);
   return citations.json();
 }
