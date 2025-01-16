@@ -667,7 +667,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments Not started' }).click();
     await page.getByRole('button', { name: 'Next steps Not started' }).click();
     await page.getByRole('button', { name: 'Review and submit' }).click();    
-    await page.getByRole('button', { name: 'Activity summary Complete' }).click();
+    await page.getByRole('button', { name: 'Activity summary In Progress' }).click();
 
     // select participants
     await page.getByLabel('Other entity participants  *- Select -').focus();
