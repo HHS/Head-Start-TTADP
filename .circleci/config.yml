@@ -455,7 +455,7 @@ commands:
           command: |
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/acquire-lock.sh \
-              "tta-automation" \
+              "<< parameters.app_name >>" \
               "<< pipeline.git.branch >>" \
               "<< pipeline.number >>" \
               "$CIRCLE_JOB"
@@ -470,7 +470,7 @@ commands:
           command: |
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/release-lock.sh \
-              "tta-automation" \
+              "<< parameters.app_name >>" \
               "<< pipeline.git.branch >>" \
               "<< pipeline.number >>" \
               "$CIRCLE_JOB"
