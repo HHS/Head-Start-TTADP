@@ -9,6 +9,19 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
+      // Run a query to determine if the column postProcessingActions exists in the table Imports.
+      const [results] = await queryInterface.sequelize.query(/* sql */`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'Imports'
+            AND column_name = 'postProcessingActions';
+        `, { transaction });
+
+      // If the column postProcessingActions exists in the table Imports, then return.
+      if (results.length > 0) {
+        return;
+      }
+
       // Add column postProcessingActions to table Imports of JSONB type.
       await queryInterface.addColumn(
         'Imports',
