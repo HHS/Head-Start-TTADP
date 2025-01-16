@@ -63,8 +63,6 @@ const ActivitySummary = ({
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
   const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
-  const [previousStartDate, setPreviousStartDate] = useState(null);
-
   const activityRecipientType = watch('activityRecipientType');
   const watchFormRecipients = watch('activityRecipients');
   const watchGroup = watch('recipientGroup');
@@ -72,6 +70,7 @@ const ActivitySummary = ({
   const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
+  const [previousStartDate, setPreviousStartDate] = useState(startDate);
 
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
