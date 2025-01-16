@@ -47,7 +47,7 @@ class EncodingConverter extends Transform {
   // eslint-disable-next-line no-underscore-dangle
   _transform(
     chunk: Buffer,
-    encoding: string,
+    _encoding: string,
     callback: (error?: Error | null, data?: Buffer) => void,
   ): void {
     if (this.detectEncoding) {

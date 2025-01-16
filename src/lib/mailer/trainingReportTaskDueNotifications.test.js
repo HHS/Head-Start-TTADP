@@ -872,4 +872,58 @@ describe('trainingReportTaskDueNotifications', () => {
       },
     ]);
   });
+
+  it('return null if the user is not found', async () => {
+    getTrainingReportAlerts.mockResolvedValue([
+      // 20 days past event startDate: should send email
+      {
+        id: 1,
+        eventId: 'RO1-012-1234',
+        eventName: 'Event 1',
+        alertType: 'missingEventInfo',
+        sessionName: '',
+        isSession: false,
+        ownerId: 1,
+        pocIds: [2],
+        collaboratorIds: [3],
+        startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
+        endDate: today,
+      },
+    ]);
+
+    userById.mockResolvedValue(null);
+
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+
+    expect(emails).toEqual([null, null]);
+    expect(userById).toHaveBeenCalledWith(1);
+    expect(userById).toHaveBeenCalledWith(3);
+  });
+
+  it('return null if the user email is not found', async () => {
+    getTrainingReportAlerts.mockResolvedValue([
+      // 20 days past event startDate: should send email
+      {
+        id: 1,
+        eventId: 'RO1-012-1234',
+        eventName: 'Event 1',
+        alertType: 'missingEventInfo',
+        sessionName: '',
+        isSession: false,
+        ownerId: 1,
+        pocIds: [2],
+        collaboratorIds: [3],
+        startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
+        endDate: today,
+      },
+    ]);
+
+    userById.mockResolvedValue({ id: 1, email: null });
+
+    const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
+
+    expect(emails).toEqual([null, null]);
+    expect(userById).toHaveBeenCalledWith(1);
+    expect(userById).toHaveBeenCalledWith(3);
+  });
 });
