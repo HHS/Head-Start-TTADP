@@ -69,7 +69,7 @@ const hsesUsers = [
     name: 'Jon Pyers', hsesUsername: 'test.tta.jon', hsesUserId: '52829', email: 'jon.pyers@adhocteam.us',
   },
   {
-    name: 'Heather Smith', hsesUsername: 'test.tta.heather', hsesUserId: '55174', email: 'no-send_smith92@yahoo.com',
+    name: 'Heather Smith', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',
   },
   {
     name: 'Tammy Smith', hsesUsername: 'test.tta.tammy', hsesUserId: '53719', email: 'no-send_smith93@yahoo.com',

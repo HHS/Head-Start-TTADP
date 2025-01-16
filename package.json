@@ -240,10 +240,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 75,
-        "functions": 75,
-        "branches": 75,
-        "lines": 75
+        "statements": 90,
+        "functions": 88,
+        "branches": 80,
+        "lines": 90
       }
     },
     "setupFiles": [
