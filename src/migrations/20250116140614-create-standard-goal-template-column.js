@@ -12,6 +12,19 @@ module.exports = {
         WHERE "creationMethod" = 'System Generated';
         `, { transaction });
 
+      // Write a query to determine if column standard exists in the table GoalTemplates.
+      const [results] = await queryInterface.sequelize.query(/* sql */`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'GoalTemplates'
+            AND column_name = 'standard';
+        `, { transaction });
+
+      // If the column standard exists in the table GoalTemplates, then return.
+      if (results.length > 0) {
+        return;
+      }
+
       // Add a standard column that we populate with whats in () in the template name when curated.
       await queryInterface.sequelize.query(/* sql */`
       ALTER TABLE "GoalTemplates"
