@@ -1,7 +1,14 @@
 import Queue from 'bull';
-import { addDeleteFileToQueue, s3Queue } from './s3Queue';
+import {
+  addDeleteFileToQueue,
+  s3Queue,
+  onFailedS3Queue,
+  onCompletedS3Queue,
+  processS3Queue,
+} from './s3Queue';
 import { FILE_STATUSES, S3_ACTIONS } from '../constants';
 import db, { File } from '../models';
+import { auditLogger, logger } from '../logger';
 
 jest.mock('bull');
 
@@ -28,7 +35,11 @@ describe('s3 queue manager tests', () => {
   });
 
   beforeEach(() => {
-    Queue.mockImplementation(() => s3Queue);
+    Queue.mockImplementation(() => ({
+      add: jest.fn(),
+      on: jest.fn(),
+      process: jest.fn(),
+    }));
   });
 
   afterEach(() => {
@@ -56,5 +67,62 @@ describe('s3 queue manager tests', () => {
         },
       },
     );
+  });
+
+  it('onFailedS3Queue logs an error', () => {
+    const job = { data: { key: 'test-key' } };
+    const error = new Error('Test error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    onFailedS3Queue(job, error);
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+  });
+
+  it('onCompletedS3Queue logs info on success', () => {
+    const job = { data: { key: 'test-key' } };
+    const result = { status: 200, data: { message: 'Success' } };
+    const loggerSpy = jest.spyOn(logger, 'info');
+    onCompletedS3Queue(job, result);
+    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+  });
+
+  it('onCompletedS3Queue logs error on failure', () => {
+    const job = { data: { key: 'test-key' } };
+    const result = { status: 400, data: { message: 'Failure' } };
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    onCompletedS3Queue(job, result);
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}');
+  });
+
+  it('s3Queue on failed event triggers onFailedS3Queue', () => {
+    const job = { data: { key: 'test-key' } };
+    const error = new Error('Test error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    s3Queue.on.mockImplementation((event, callback) => {
+      if (event === 'failed') {
+        callback(job, error);
+      }
+    });
+    s3Queue.on('failed', onFailedS3Queue);
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+  });
+
+  it('s3Queue on completed event triggers onCompletedS3Queue', () => {
+    const job = { data: { key: 'test-key' } };
+    const result = { status: 200, data: { message: 'Success' } };
+    const loggerSpy = jest.spyOn(logger, 'info');
+    s3Queue.on.mockImplementation((event, callback) => {
+      if (event === 'completed') {
+        callback(job, result);
+      }
+    });
+    s3Queue.on('completed', onCompletedS3Queue);
+    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+  });
+
+  it('processS3Queue sets up listeners and processes the queue', () => {
+    processS3Queue();
+    expect(s3Queue.on).toHaveBeenCalledWith('failed', onFailedS3Queue);
+    expect(s3Queue.on).toHaveBeenCalledWith('completed', onCompletedS3Queue);
+    expect(s3Queue.process).toHaveBeenCalled();
   });
 });

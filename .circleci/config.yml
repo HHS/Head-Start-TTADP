@@ -26,6 +26,19 @@ executors:
     docker:
       - image: cimg/aws:2024.03
 commands:
+  install_cf_tools:
+    description: "Install Cloud Foundry CLI"
+    steps:
+      - run:
+          name: Install CF tools
+          command: |
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
     parameters:
@@ -370,6 +383,15 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
           name: Push application with deployment vars
           command: |
             set -x
@@ -402,6 +424,16 @@ commands:
               --var BUILD_COMMIT=<< parameters.build_commit >> \
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+          when: always
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -435,11 +467,29 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
           name: Migrate database
           command: |
             cf run-task << parameters.app_name >> \
               --command "yarn db:migrate:prod" \
               --name "migrate"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
@@ -525,6 +575,15 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
           name: Start Log Monitoring
           command: |
             #!/bin/bash
@@ -595,6 +654,15 @@ commands:
           slack_bot_token: $SLACK_BOT_TOKEN
           slack_channel: "acf-head-start-eng"
           message_text_file: "/tmp/message_file"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Logout of service account
           command: |
@@ -677,6 +745,26 @@ commands:
           success_message: ':database: Restored data processed'
           directory: "./"
           timeout: "3000"
+  cf_retention:
+    description: "Delete Backup from S3 based on retention"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "retention"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -700,7 +788,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "main"
+    default: "TTAHUB-3542/TTAHUB-3544/s3Queue-scanQueue-coverage"
     type: string
   # TODO: need to figure out how to make/get more new relic ids
   prod_new_relic_app_id:
@@ -716,6 +804,21 @@ parameters:
     default: "867346799"
     type: string
   manual-trigger:
+    type: boolean
+    default: false
+  env_list:
+    description: "List of environments to manage (start/stop)"
+    type: string
+    default: "DEV,SANDBOX"
+  space_list:
+    description: "List of Cloud Foundry spaces corresponding to each environment"
+    type: string
+    default: ""
+  env_state:
+    description: "State of the environment to change (start, stop, restart, restage)"
+    type: string
+    default: "none"
+  manual-manage-env:
     type: boolean
     default: false
   manual-restore:
@@ -755,6 +858,12 @@ parameters:
     type: boolean
     default: false
   fail-on-modified-lines:
+    type: boolean
+    default: false
+  manual-retention-production:
+    type: boolean
+    default: false
+  manual-retention-processed:
     type: boolean
     default: false
 jobs:
@@ -889,6 +998,14 @@ jobs:
             else
               echo "Not a PR build. Skipping coverage check."
             fi
+          when: always
+      - run:
+          name: Summarize coverage
+          command: |
+            chmod +x ./tools/summarize-coverageCLI.js
+            node ./tools/summarize-coverageCLI.js \
+              ./coverage/coverage-final.json \
+              90
           when: always
       - run:
           name: Compress coverage artifacts
@@ -1409,6 +1526,46 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
+  manage_env_apps:
+    executor: docker-executor
+    parameters:
+      env_list:
+        type: string
+        description: "Comma-separated list of environments to manage (both smarthub and similarity-api)"
+        default: "<< pipeline.parameters.env_list >>"
+      env_state:
+        type: string
+        description: "Action to perform on apps (start, stop, restart, restage)"
+        default: "<< pipeline.parameters.env_state >>"
+      check_activity:
+        type: boolean
+        description: "If true, only stop apps if inactive for more than activity_timeout minutes"
+        default: false
+      activity_timeout:
+        type: string
+        description: "number of minutes considered for inactivity"
+        default: "60"
+    steps:
+      - install_cf_tools
+      # Sparse checkout the automation scripts
+      - sparse_checkout:
+          directories: "automation/ci/scripts"
+          branch: "<< pipeline.git.branch >>"
+      # Perform the desired action on environments
+      - run:
+          name: Manage Apps
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            chmod +x ./automation/ci/scripts/manage_apps.sh
+            ./automation/ci/scripts/manage_apps.sh \
+              --env_list "<< parameters.env_list >>" \
+              --env_state "<< parameters.env_state >>" \
+              --check_activity "<< parameters.check_activity >>" \
+              --activity_timeout << parameters.activity_timeout >> \
+              --cg_api "<< pipeline.parameters.cg_api >>" \
+              --cg_org "<< pipeline.parameters.cg_org >>" \
+              --branch "<< pipeline.git.branch >>" \
+              --build "<< pipeline.number >>"
   restore_production_for_processing:
     docker:
       - image: cimg/base:2024.05
@@ -1519,16 +1676,48 @@ jobs:
           cloudgov_username: CLOUDGOV_DEV_USERNAME
           cloudgov_password: CLOUDGOV_DEV_PASSWORD
           cloudgov_space: CLOUDGOV_DEV_SPACE
+  retention_production:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_retention:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
+  retention_processed:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_retention:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
 workflows:
   build_test_deploy:
     when:
       and:
+        # Ensure the workflow is only triggered when `manual-trigger` is false
+        # and `env_state` is empty (i.e., it's not for starting/stopping environments)
         - equal: [false, << pipeline.parameters.manual-trigger >>]
         - equal: [false, << pipeline.parameters.manual-restore >>]
         - equal: [false, << pipeline.parameters.manual-process >>]
         - equal: [false, << pipeline.parameters.manual-backup >>]
         - equal: [false, << pipeline.parameters.manual-full-process >>]
+        - equal: [false, << pipeline.parameters.manual-manage-env >>]
         - equal: [false, << pipeline.parameters.manual-restore-staging >>]
+        - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-nimbus >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-cirrus >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-stratus >>]
@@ -1536,6 +1725,8 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-restore-dev-lenticular >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-fog >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-clear >>]
+        - equal: [false, << pipeline.parameters.manual-retention-production >>]
+        - equal: [false, << pipeline.parameters.manual-retention-processed >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1670,11 +1861,72 @@ workflows:
       - restore_processed_to_dev_clear:
           requires:
             - restore_processed_to_dev_fog
+      - retention_production:
+          requires:
+            - restore_processed_to_dev_clear
+      - retention_processed:
+          requires:
+            - retention_production
   manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload_production
+  stop_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 2-6"  # Runs at 6 PM PST M-F (1 AM UTC next day)
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "stop"
+          env_list: "<< pipeline.parameters.env_list >>"
+  start_lower_env_workflow:
+    triggers:
+      - schedule:
+          cron: "0 11 * * 1-5"  # Runs at 6 AM EST M-F(11 AM UTC)
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - manage_env_apps:
+          env_state: "start"
+          env_list: "<< pipeline.parameters.env_list >>"
+  manual_manage_env_workflow:
+    when:
+      equal: [true, << pipeline.parameters.manual-manage-env >>]
+    jobs:
+      - manage_env_apps:
+          env_state: "<< pipeline.parameters.env_state >>"
+          env_list: "<< pipeline.parameters.env_list >>"
+  monitor_and_shutdown_envs:
+    triggers:
+      # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
+      - schedule:
+          cron: "0,15,30,45 11-23 * * 1-5"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+
+      # Every 15 minutes from 12 AM to 12:45 AM UTC (7 PM to 8:45 PM EST, 4 PM to 5:45 PM PST), Monday to Friday
+      - schedule:
+          cron: "0,15,30,45 0-3 * * 2-6"
+          filters:
+            branches:
+              only:
+                - main
+                - TTAHUB-3071/shutdown-unutilized-envs
+    jobs:
+      - manage_env_apps:
+          env_state: "stop"
+          env_list: "<< pipeline.parameters.env_list >>"
+          check_activity: true
   manual_restore_production:
     when:
       equal: [true, << pipeline.parameters.manual-restore >>]
@@ -1744,3 +1996,13 @@ workflows:
       equal: [true, << pipeline.parameters.manual-restore-dev-clear >>]
     jobs:
       - restore_processed_to_dev_clear
+  manual_retention_production:
+    when:
+      equal: [true, << pipeline.parameters.manual-retention-production >>]
+    jobs:
+      - retention_production
+  manual_retention_processed:
+    when:
+      equal: [true, << pipeline.parameters.manual-retention-processed >>]
+    jobs:
+      - retention_processed
