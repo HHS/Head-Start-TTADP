@@ -277,9 +277,7 @@ const COMMUNICATION_METHODS = [
 exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
 
 const COMMUNICATION_PURPOSES = [
-  'CLASS',
-  'FEI',
-  'Monitoring',
+  'General Check-In',
   'New TTA request',
   'Program Specialist or Regional Office meeting',
   'Program Specialist\'s Monthly contact',
