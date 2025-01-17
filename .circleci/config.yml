@@ -1218,14 +1218,10 @@ jobs:
           command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - run:
           name: Clean full scan report for Node.js server
-          command: node src/tools/clean-zap-report.js \
-            reports/server/owasp_full_scan_report.html \
-            reports/server/owasp_full_scan_report_cleaned.html
+          command: node src/tools/clean-zap-report.js reports/server/owasp_full_scan_report.html reports/server/owasp_full_scan_report_cleaned.html
       - run:
           name: Clean API scan report for similarity_api
-          command: node src/tools/clean-zap-report.js \
-            reports/similarity_api/owasp_api_report.html \
-            reports/similarity_api/owasp_api_report_cleaned.html
+          command: node src/tools/clean-zap-report.js reports/similarity_api/owasp_api_report.html reports/similarity_api/owasp_api_report_cleaned.html
       - run:
           name: Cleanup raw reports
           command: |

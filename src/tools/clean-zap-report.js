@@ -17,6 +17,8 @@ const ignoreIds = ['10096'];
 
 fs.readFile(sourceFile, 'utf8', (err, data) => {
   if (err) {
+    // eslint-disable-next-line no-console
+    console.log(err);
     process.exit(1);
   }
 
@@ -41,6 +43,8 @@ fs.readFile(sourceFile, 'utf8', (err, data) => {
 
   fs.writeFile(destinationFile, $.html(), 'utf8', (error) => {
     if (error) {
+      // eslint-disable-next-line no-console
+      console.log(err);
       process.exit(1);
     }
   });
