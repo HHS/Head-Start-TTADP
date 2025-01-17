@@ -87,6 +87,8 @@ if $do_baseline; then
     -t $target_url \
     -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_baseline_report.html"
   echo "-----------------------------------------------------------------------"
+  node src/tools/clean-zap-report.js reports/${clean_target}/owasp_baseline_report.html reports/${clean_target}/owasp_baseline_report_cleaned.html
+  rm -f reports/${clean_target}/owasp_full_scan_report.html
 fi
 
 # Run zap-full-scan.py if enabled
@@ -103,6 +105,8 @@ if $do_full; then
     -t $target_url \
     -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_full_scan_report.html"
   echo "-----------------------------------------------------------------------"
+  node src/tools/clean-zap-report.js reports/${clean_target}/owasp_full_scan_report.html reports/${clean_target}/owasp_full_scan_report_cleaned.html
+  rm -f reports/${clean_target}/owasp_full_scan_report.html
 fi
 
 # Run zap-api-scan.py if enabled
@@ -118,6 +122,8 @@ if $do_api; then
     -t ${target_url}/openapi.json \
     -f openapi -I -i -r "${clean_target}/owasp_api_report.html"
   echo "-----------------------------------------------------------------------"
+  node src/tools/clean-zap-report.js reports/${clean_target}/owasp_api_report.html reports/${clean_target}/owasp_api_report_cleaned.html
+  rm -f reports/${clean_target}/owasp_api_report.html
 fi
 
 # Clean up

@@ -1216,21 +1216,6 @@ jobs:
       - run:
           name: Run OWASP ZAP scan for similarity_api
           command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
-      - run:
-          name: Clean full scan report for Node.js server
-          command: node src/tools/clean-zap-report.js reports/server/owasp_full_scan_report.html reports/server/owasp_full_scan_report_cleaned.html
-      - run:
-          name: Clean API scan report for similarity_api
-          command: node src/tools/clean-zap-report.js reports/similarity_api/owasp_api_report.html reports/similarity_api/owasp_api_report_cleaned.html
-      - run:
-          name: Cleanup raw reports
-          command: |
-            ls -l reports/server/owasp_full_scan_report.html
-            chmod +w reports/server/owasp_full_scan_report.html
-            rm -f reports/server/owasp_full_scan_report.html
-            ls -l reports/similarity_api/owasp_api_report.html
-            chmod +w reports/similarity_api/owasp_api_report.html
-            rm -f reports/similarity_api/owasp_api_report.html
       - store_artifacts:
           path: reports
           when: always
