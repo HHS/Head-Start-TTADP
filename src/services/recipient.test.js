@@ -1235,7 +1235,7 @@ describe('Recipient DB service', () => {
       const goalsForRecord = await getGoalsByActivityRecipient(
         recipient.id,
         grant.regionId,
-        { excludeMonitoringGoals: false },
+        {},
       );
 
       // Assert counts.

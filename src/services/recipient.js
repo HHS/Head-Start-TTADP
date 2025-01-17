@@ -587,7 +587,6 @@ export async function getGoalsByActivityRecipient(
     offset = 0,
     limit = GOALS_PER_PAGE,
     goalIds = [],
-    excludeMonitoringGoals = true,
     ...filters
   },
 ) {
@@ -632,15 +631,6 @@ export async function getGoalsByActivityRecipient(
     goalWhere = {
       id: goalIds,
       ...goalWhere,
-    };
-  }
-
-  if (excludeMonitoringGoals) {
-    goalWhere = {
-      ...goalWhere,
-      createdVia: {
-        [Op.not]: 'monitoring',
-      },
     };
   }
 
