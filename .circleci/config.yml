@@ -1235,27 +1235,30 @@ jobs:
           at: .
       - run:
           name: Clean previous reports
-          command: rm -rf reports/*
+          command: |
+            rm -rf reports/server/*
+            rm -rf reports/similarity_api/*
       - run:
-          name: Start up local server
+          name: Start up local services
           command: ./bin/prod-style-server
       - run:
-          name: Wait for server to start
+          name: Wait for Node.js server to start
           command: ./bin/ping-server 8080
+      - run:
+          name: Wait for similarity_api to start
+          command: ./bin/ping-server 9100 localhost /openapi.json
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
-          name: Make reports directory group writeable
-          command: chmod g+w reports
+          name: Run OWASP ZAP scan for Node.js server
+          command: ./bin/run-owasp-scan --target http://server:8080 --full
       - run:
-          name: Run OWASP ZAP
-          command: ./bin/run-owasp-scan
-      - run:
-          name: Run Node.js cleaning script
-          command: node src/tools/clean-zap-report.js reports/owasp_report_.html reports/owasp_report_cleaned.html
+          name: Run OWASP ZAP scan for similarity_api
+          command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - store_artifacts:
-          path: reports/owasp_report_cleaned.html
+          path: reports
+          when: always
     resource_class: large
   deploy:
     executor: docker-executor
@@ -1799,6 +1802,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+            - build_and_lint_similarity_api
       - backup_upload_production:
           requires:
             - test_backend
@@ -1864,6 +1868,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+            - build_and_lint_similarity_api
   daily_backup_upload_production:
     triggers:
       - schedule:
