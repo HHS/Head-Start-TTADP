@@ -551,7 +551,6 @@ class Imports{
  * updatedAt : timestamp with time zone
  fileMask : text
  path : text
- postProcessingActions : jsonb
 }
 
 class MailerLogs{
