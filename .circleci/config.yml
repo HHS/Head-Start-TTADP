@@ -1225,8 +1225,12 @@ jobs:
       - run:
           name: Cleanup raw reports
           command: |
-            rm reports/server/owasp_full_scan_report.html
-            rm reports/similarity_api/owasp_api_report.html
+            ls -l reports/server/owasp_full_scan_report.html
+            chmod +w reports/server/owasp_full_scan_report.html
+            rm -f reports/server/owasp_full_scan_report.html
+            ls -l reports/similarity_api/owasp_api_report.html
+            chmod +w reports/similarity_api/owasp_api_report.html
+            rm -f reports/similarity_api/owasp_api_report.html
       - store_artifacts:
           path: reports
           when: always
