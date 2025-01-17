@@ -4,6 +4,7 @@ services:
       context: .
     command: yarn start:web
     user: ${CURRENT_USER:-root}
+    platform: linux/amd64
     networks:
       - smarthub
     ports:
@@ -27,6 +28,7 @@ services:
       context: ./similarity_api
     command: gunicorn -w 4 -b 0.0.0.0:8080 app:app --preload
     user: ${CURRENT_USER:-root}
+    platform: linux/amd64
     depends_on:
       - db
     environment:
