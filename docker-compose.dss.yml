@@ -44,6 +44,8 @@ services:
       - "./similarity_api/src:/app:rw"
     ports:
       - "9100:8080"
+    networks:
+      - smarthub
 
   db:
     image: postgres:15.6
