@@ -1325,6 +1325,54 @@ jobs:
                   ]
           steps:
             - run:
+                name: Determine target app for deployment
+                command: |
+                  TARGET_APP=""
+                  FALLBACK_APP=""
+                  LEAST_RECENTLY_DEPLOYED=""
+                  APPS=$(cf apps | awk 'NR>4 {print $1}')
+
+                  # Check for an app with matching BUILD_BRANCH
+                  for APP in $APPS; do
+                    echo "Checking $APP..."
+                    BUILD_BRANCH=$(cf env "$APP" | grep "BUILD_BRANCH" | awk -F'"' '{print $2}')
+                    if [ "$BUILD_BRANCH" == "<< pipeline.git.branch >>" ]; then
+                      echo "Match found: $APP"
+                      TARGET_APP=$APP
+                      break
+                    fi
+                  done
+
+                  # If no app matches, find a suitable fallback app
+                  if [ -z "$TARGET_APP" ]; then
+                    echo "No app found with BUILD_BRANCH matching << pipeline.git.branch >>"
+                    echo "Looking for a fallback app..."
+                    
+                    for APP in $APPS; do
+                      APP_STATE=$(cf app "$APP" | grep "state:" | awk '{print $2}')
+                      if [ "$APP_STATE" == "stopped" ]; then
+                        LAST_DEPLOYED=$(cf events "$APP" | grep "audit.app.create" -B 1 | head -n 1 | awk '{print $1}')
+                        if [ -z "$LEAST_RECENTLY_DEPLOYED" ] || [ "$LAST_DEPLOYED" -lt "$LEAST_RECENTLY_DEPLOYED" ]; then
+                          LEAST_RECENTLY_DEPLOYED="$LAST_DEPLOYED"
+                          FALLBACK_APP="$APP"
+                        fi
+                      fi
+                    done
+
+                    if [ -n "$FALLBACK_APP" ]; then
+                      echo "Using fallback app: $FALLBACK_APP"
+                      TARGET_APP="$FALLBACK_APP"
+                    else
+                      echo "No suitable fallback app found. Exiting."
+                      exit 1
+                    fi
+                  fi
+
+                  echo "Deploying to $TARGET_APP"
+                  echo "TARGET_APP=$TARGET_APP" >> target_app.env
+                  ENVIRONMENT=$(echo "$TARGET_APP" | sed -E 's/^tta-smarthub-(dev-.*)$/\1/')
+                   echo "ENVIRONMENT=$ENVIRONMENT" >> target_app.env
+            - run:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
                 environment:
@@ -1334,39 +1382,16 @@ jobs:
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
                   REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
-            - cf_deploy:
-                app_name: tta-smarthub-dev
-                auth_client_id: DEV_AUTH_CLIENT_ID
-                auth_client_secret: DEV_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_DEV_USERNAME
-                cloudgov_password: CLOUDGOV_DEV_PASSWORD
-                cloudgov_space: CLOUDGOV_DEV_SPACE
-                deploy_config_file: deployment_config/dev_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: DEV_SESSION_SECRET
-                jwt_secret: DEV_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
+            - run:
+                name: Deploy application
+                command: |
+                  source target_app.env
+                  cf push "$TARGET_APP" -f deployment_config/dev_vars.yml
             - run:
                 name: Migrate database
                 command: |
-                  cf run-task tta-smarthub-dev \
+                  source target_app.env
+                  cf run-task "$TARGET_APP" \
                     --command "yarn db:migrate:prod" \
                     --name "Reset DB"
             - notify_new_relic:
