@@ -2,9 +2,7 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { Button } from '@trussworks/react-uswds';
 import { uniqueId } from 'lodash';
 import { getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -112,34 +110,6 @@ export default function CommunicationLog({ regionId, recipientId }) {
     }
   };
 
-  const AddCommunication = () => (
-    <Link
-      to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
-      className="usa-button smart-hub--new-report-btn"
-    >
-      <span className="smart-hub--plus">+</span>
-      <span className="smart-hub--new-report">Add communication</span>
-    </Link>
-  );
-
-  const ExportLog = () => (
-    <Button
-      type="button"
-      onClick={exportLog}
-      className="margin-bottom-1 desktop:margin-bottom-0"
-      outline
-    >
-      Export log
-    </Button>
-  );
-
-  const TitleSlot = () => (
-    <div className="desktop:display-flex">
-      <ExportLog />
-      <AddCommunication />
-    </div>
-  );
-
   const requestSort = (sortBy) => {
     let direction = 'asc';
     if (
@@ -170,6 +140,13 @@ export default function CommunicationLog({ regionId, recipientId }) {
     setSortConfig(sort);
   };
 
+  const menuItems = [
+    {
+      label: 'Export logs',
+      onClick: exportLog,
+    },
+  ];
+
   return (
     <>
       <Helmet>
@@ -187,10 +164,11 @@ export default function CommunicationLog({ regionId, recipientId }) {
         />
       </div>
       <WidgetContainer
+        menuItems={menuItems}
         className="maxw-widescreen"
         title="Communication log"
         showPagingBottom={logs && logs.count > 0}
-        showPagingTop={logs && logs.count > 0}
+        showPagingTop={false}
         loading={false}
         currentPage={sortConfig.activePage}
         totalCount={logs ? logs.count : 0}
@@ -198,7 +176,6 @@ export default function CommunicationLog({ regionId, recipientId }) {
         perPage={COMMUNICATION_LOG_PER_PAGE}
         handlePageChange={handlePageChange}
         error={error}
-        titleSlot={<TitleSlot />}
       >
         {(logs && logs.count > 0) ? (
           <CommunicationLogTable
@@ -209,9 +186,14 @@ export default function CommunicationLog({ regionId, recipientId }) {
             regionId={regionId}
           />
         ) : (
-          <div className="display-flex flex-align-center flex-justify-center width-full padding-4">
-            <p className="usa-prose text-center">
-              There are no communication logs for this recipient.
+          <div className="display-flex flex-column flex-align-center flex-justify-center width-full padding-4">
+            <p className="usa-prose text-center bold">
+              <strong>You haven&apos;t logged any communication yet.</strong>
+              <br />
+              You can record interactions with recipients that are not
+              included in an activity report here.
+              <br />
+              Click the &quot;Add communication&quot; button to get started.
             </p>
           </div>
         )}

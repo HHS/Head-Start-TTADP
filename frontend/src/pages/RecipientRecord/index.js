@@ -34,6 +34,7 @@ export function PageWithHeading({
   recipientNameWithRegion,
   backLink,
   slug,
+  inlineHeadingChildren,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
   return (
@@ -50,8 +51,9 @@ export function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
+                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3 display-flex`}>
                   {recipientNameWithRegion}
+                  {inlineHeadingChildren}
                 </h1>
                 {children}
               </>
@@ -69,12 +71,14 @@ PageWithHeading.propTypes = {
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
   slug: PropTypes.string,
+  inlineHeadingChildren: PropTypes.node,
 };
 
 PageWithHeading.defaultProps = {
   error: '',
   backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
+  inlineHeadingChildren: null,
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
@@ -339,6 +343,15 @@ export default function RecipientRecord({ match, hasAlerts }) {
               recipientId={recipientId}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
+              inlineHeadingChildren={(
+                <Link
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
+                  className="usa-button smart-hub--new-report-btn margin-left-4"
+                >
+                  <span className="smart-hub--plus">+</span>
+                  <span className="smart-hub--new-report">Add communication</span>
+                </Link>
+              )}
             >
               <CommunicationLog
                 regionId={regionId}

@@ -1,5 +1,12 @@
 import httpCodes from 'http-codes';
+import { Op } from 'sequelize';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { Request, Response } from 'express';
+import UserPolicy from '../../policies/user';
+import {
+  // @ts-ignore
+  GoalTemplate, User, UserRole, Permission, Role, sequelize,
+} from '../../models';
 import {
   logById,
   logsByRecipientAndScopes,
@@ -10,10 +17,11 @@ import {
 } from '../../services/communicationLog';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
+import { userById, usersWithPermissions } from '../../services/users';
 import Policy from '../../policies/communicationLog';
 import filtersToScopes from '../../scopes';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
+import SCOPES from '../../middleware/scopeConstants';
 
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
 
@@ -34,6 +42,58 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
   const user = await userById(userId);
   return new Policy(user, Number(regionId), log);
 };
+
+async function getAvailableUsersAndGoals(req: Request, res: Response) {
+  const user = await userById(await currentUserId(req, res));
+  const { regionId } = req.params;
+  const authorization = new UserPolicy(user);
+
+  if (!authorization.canViewUsersInRegion(parseInt(String(regionId), DECIMAL_BASE))) {
+    return null;
+  }
+
+  let regionalUsers = await User.findAll({
+    attributes: ['id', 'name',
+      [sequelize.col('"userRoles".role.name'), 'rolename'],
+    ],
+    where: {
+      [Op.and]: [
+        { '$permissions.scopeId$': SCOPES.SITE_ACCESS },
+        { '$permissions.regionId$': 14 },
+        { homeRegionId: regionId },
+      ],
+    },
+    include: [
+      { model: Permission, as: 'permissions', attributes: [] },
+      {
+        model: UserRole,
+        as: 'userRoles',
+        attributes: [],
+        include: [
+          { model: Role, as: 'role', attributes: [] },
+        ],
+      },
+    ],
+    raw: true,
+  });
+
+  regionalUsers = regionalUsers.map((u) => ({ value: Number(u.id), label: `${u.name} (${u.rolename})` }));
+
+  let standardGoals = await GoalTemplate.findAll({
+    where: { standard: { [Op.ne]: null } },
+    attributes: ['standard', 'id'],
+    raw: true,
+  });
+
+  standardGoals = standardGoals.map((g) => ({ value: Number(g.id), label: g.standard }));
+
+  return { regionalUsers, standardGoals };
+}
+
+async function communicationLogAdditionalData(req: Request, res: Response) {
+  const { regionalUsers, standardGoals } = await getAvailableUsersAndGoals(req, res);
+  res.status(httpCodes.OK).json({ regionalUsers, standardGoals });
+}
 
 async function communicationLogById(req: Request, res: Response) {
   try {
@@ -157,6 +217,7 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
 };
 
 export {
+  communicationLogAdditionalData,
   communicationLogById,
   communicationLogsByRecipientId,
   updateLogById,

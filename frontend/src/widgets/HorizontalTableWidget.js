@@ -225,7 +225,7 @@ export default function HorizontalTableWidget(
                   {
                     r.isUrl
                       ? handleUrl(r)
-                      : r.heading
+                      : r.heading || JSON.stringify(r)
                   }
                 </td>
                 {(r.data || []).map((d, cellIndex) => (

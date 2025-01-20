@@ -73,6 +73,22 @@ describe('CommunicationLogForm', () => {
     expect(history.location.pathname).toEqual(`/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/new/log`);
   });
 
+  it('fetches additional data', async () => {
+    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
+    fetchMock.get(url, {
+      regionalUsers: [{ value: 1, label: 'One' }],
+      standardGOals: [{ value: 1, label: 'One' }],
+    });
+
+    await act(() => waitFor(() => {
+      renderTest('new', 'log');
+    }));
+
+    expect(fetchMock.called(url)).toBe(true);
+
+    expect(screen.getByText(/Little Lord Wigglytoes/i)).toBeInTheDocument();
+  });
+
   it('fetches log by id', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
     fetchMock.get(url, {
