@@ -10,6 +10,21 @@ const communicationLogUrl = join(
   'communication-logs',
 );
 
+export const getAdditionalCommunicationLogData = async (regionId, recipientId) => {
+  const response = await get(
+    join(
+      communicationLogUrl,
+      'region',
+      String(regionId),
+      'recipient',
+      String(recipientId),
+      'additional-data',
+    ),
+  );
+
+  return response.json();
+};
+
 export const getCommunicationLogById = async (regionId, logId) => {
   const response = await get(
     join(

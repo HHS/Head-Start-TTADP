@@ -19,6 +19,8 @@ import {
 import ReadOnlyField from '../../../../../components/ReadOnlyField';
 import UserContext from '../../../../../UserContext';
 import { mustBeQuarterHalfOrWhole } from '../../../../../Constants';
+import MultiSelect from '../../../../../components/MultiSelect';
+import LogContext from '../LogContext';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -30,8 +32,12 @@ const Log = ({ datePickerKey }) => {
   } = useFormContext();
 
   const { user } = useContext(UserContext);
+  const { regionalUsers, standardGoals } = useContext(LogContext);
   const communicationDate = watch('communicationDate');
   const authorName = watch('author.name');
+
+  const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
+  const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
 
   return (
     <>
@@ -41,6 +47,25 @@ const Log = ({ datePickerKey }) => {
         <ReadOnlyField label="Creator name">
           {authorName || user.name}
         </ReadOnlyField>
+      </div>
+
+      <div className="margin-top-2">
+        <FormItem
+          label="Other TTA staff"
+          name="otherStaff"
+          id="otherStaff-label"
+          htmlFor="otherStaff"
+        >
+          <MultiSelect
+            control={control}
+            simple={false}
+            name="otherStaff"
+            id="otherStaff"
+            options={otherStaffOptions}
+            required={false}
+            placeholderText="- Select -"
+          />
+        </FormItem>
       </div>
 
       <div className="margin-top-2">
@@ -126,6 +151,22 @@ const Log = ({ datePickerKey }) => {
               <option key={`purposeoptions${option}`}>{option}</option>
             ))}
           </Dropdown>
+        </FormItem>
+      </div>
+      <div className="margin-top-2">
+        <FormItem
+          label="Select any recipient goals that this activity supports."
+          name="goals"
+        >
+          <MultiSelect
+            control={control}
+            simple={false}
+            name="goals"
+            id="goals"
+            options={standardGoalsOptions}
+            required={false}
+            placeholderText="- Select -"
+          />
         </FormItem>
       </div>
       <div className="margin-top-2">
