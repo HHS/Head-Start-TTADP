@@ -20,6 +20,7 @@ const {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveCourse,
+  ActivityReportObjectiveCitation,
   sequelize,
   Resource,
   ActivityReportGoal,
@@ -46,6 +47,7 @@ export default async function getGoalsForReport(reportId: number) {
         [sequelize.col('grant.regionId'), 'regionId'],
         [sequelize.col('grant.recipient.id'), 'recipientId'],
         [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+        [sequelize.literal('"goalTemplate"."standard"'), 'standard'],
         [sequelize.literal(`(
           SELECT
             jsonb_agg( DISTINCT jsonb_build_object(
@@ -129,6 +131,12 @@ export default async function getGoalsForReport(reportId: number) {
                     as: 'topic',
                   },
                 ],
+              },
+              {
+                separate: true,
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                required: false,
               },
               {
                 separate: true,

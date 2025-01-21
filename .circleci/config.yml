@@ -373,7 +373,8 @@ commands:
             ./automation/ci/scripts/acquire-lock.sh \
               "<< parameters.app_name >>" \
               "<< parameters.build_branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Push application with deployment vars
           command: |
@@ -414,7 +415,8 @@ commands:
             ./automation/ci/scripts/release-lock.sh \
               "<< parameters.app_name >>" \
               "<< parameters.build_branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
           when: always
       # - run:
       #     name: Push maintenance application
@@ -453,9 +455,10 @@ commands:
           command: |
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/acquire-lock.sh \
-              "tta-automation" \
+              "<< parameters.app_name >>" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Migrate database
           command: |
@@ -467,9 +470,10 @@ commands:
           command: |
             chmod +x ./automation/ci/scripts/*-lock.sh
             ./automation/ci/scripts/release-lock.sh \
-              "tta-automation" \
+              "<< parameters.app_name >>" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
@@ -561,7 +565,8 @@ commands:
             ./automation/ci/scripts/acquire-lock.sh \
               "tta-automation" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Start Log Monitoring
           command: |
@@ -640,7 +645,8 @@ commands:
             ./automation/ci/scripts/release-lock.sh \
               "tta-automation" \
               "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>"
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
       - run:
           name: Logout of service account
           command: |
@@ -723,6 +729,26 @@ commands:
           success_message: ':database: Restored data processed'
           directory: "./"
           timeout: "3000"
+  cf_retention:
+    description: "Delete Backup from S3 based on retention"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "retention"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -761,7 +787,7 @@ parameters:
     default: "TTAHUB-3542/TTAHUB-3544/s3Queue-scanQueue-coverage"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "TTAHUB-3678/login"
+    default: "al-ttahub-3603-activity-report-objective-citations"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -815,6 +841,12 @@ parameters:
     type: boolean
     default: false
   fail-on-modified-lines:
+    type: boolean
+    default: false
+  manual-retention-production:
+    type: boolean
+    default: false
+  manual-retention-processed:
     type: boolean
     default: false
 jobs:
@@ -949,6 +981,14 @@ jobs:
             else
               echo "Not a PR build. Skipping coverage check."
             fi
+          when: always
+      - run:
+          name: Summarize coverage
+          command: |
+            chmod +x ./tools/summarize-coverageCLI.js
+            node ./tools/summarize-coverageCLI.js \
+              ./coverage/coverage-final.json \
+              90
           when: always
       - run:
           name: Compress coverage artifacts
@@ -1195,27 +1235,30 @@ jobs:
           at: .
       - run:
           name: Clean previous reports
-          command: rm -rf reports/*
+          command: |
+            rm -rf reports/server/*
+            rm -rf reports/similarity_api/*
       - run:
-          name: Start up local server
+          name: Start up local services
           command: ./bin/prod-style-server
       - run:
-          name: Wait for server to start
+          name: Wait for Node.js server to start
           command: ./bin/ping-server 8080
+      - run:
+          name: Wait for similarity_api to start
+          command: ./bin/ping-server 9100 localhost /openapi.json
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
-          name: Make reports directory group writeable
-          command: chmod g+w reports
+          name: Run OWASP ZAP scan for Node.js server
+          command: ./bin/run-owasp-scan --target http://server:8080 --full
       - run:
-          name: Run OWASP ZAP
-          command: ./bin/run-owasp-scan
-      - run:
-          name: Run Node.js cleaning script
-          command: node src/tools/clean-zap-report.js reports/owasp_report_.html reports/owasp_report_cleaned.html
+          name: Run OWASP ZAP scan for similarity_api
+          command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - store_artifacts:
-          path: reports/owasp_report_cleaned.html
+          path: reports
+          when: always
     resource_class: large
   deploy:
     executor: docker-executor
@@ -1687,6 +1730,34 @@ jobs:
           cloudgov_username: CLOUDGOV_DEV_USERNAME
           cloudgov_password: CLOUDGOV_DEV_PASSWORD
           cloudgov_space: CLOUDGOV_DEV_SPACE
+  retention_production:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_retention:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
+  retention_processed:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_retention:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
 workflows:
   build_test_deploy:
     when:
@@ -1702,6 +1773,8 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-restore-staging >>]
         - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev >>]
+        - equal: [false, << pipeline.parameters.manual-retention-production >>]
+        - equal: [false, << pipeline.parameters.manual-retention-processed >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1729,6 +1802,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+            - build_and_lint_similarity_api
       - backup_upload_production:
           requires:
             - test_backend
@@ -1794,6 +1868,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+            - build_and_lint_similarity_api
   daily_backup_upload_production:
     triggers:
       - schedule:
@@ -1822,6 +1897,12 @@ workflows:
       - restore_processed_to_dev:
           requires:
             - restore_processed_to_sandbox
+      - retention_production:
+          requires:
+            - restore_processed_to_dev
+      - retention_processed:
+          requires:
+            - retention_production
   manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
@@ -1926,3 +2007,13 @@ workflows:
       equal: [true, << pipeline.parameters.manual-restore-dev >>]
     jobs:
       - restore_processed_to_dev
+  manual_retention_production:
+    when:
+      equal: [true, << pipeline.parameters.manual-retention-production >>]
+    jobs:
+      - retention_production
+  manual_retention_processed:
+    when:
+      equal: [true, << pipeline.parameters.manual-retention-processed >>]
+    jobs:
+      - retention_processed

@@ -23,6 +23,7 @@ export default function ControlledDatePicker({
   endDate,
   customValidationMessages,
   required,
+  additionalValidation,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -74,6 +75,12 @@ export default function ControlledDatePicker({
 
     if (newValue.isAfter(max.moment)) {
       return beforeMessage || `Please enter a date before ${max.display}`;
+    }
+
+    // Call any additional validation logic.
+    const customValidationMsg = additionalValidation();
+    if (customValidationMsg) {
+      return customValidationMsg;
     }
 
     return true;
@@ -146,6 +153,7 @@ ControlledDatePicker.propTypes = {
     afterMessage: PropTypes.string,
     invalidMessage: PropTypes.string,
   }),
+  additionalValidation: PropTypes.func,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -161,4 +169,5 @@ ControlledDatePicker.defaultProps = {
     afterMessage: '',
     invalidMessage: '',
   },
+  additionalValidation: () => {},
 };

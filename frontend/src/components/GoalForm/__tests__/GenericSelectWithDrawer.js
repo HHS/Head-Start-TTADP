@@ -4,7 +4,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import ObjectiveTopics from '../ObjectiveTopics';
+import GenericSelectWithDrawer from '../GenericSelectWithDrawer';
 
 describe('ObjectiveTopics', () => {
   beforeEach(() => fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -33,16 +33,19 @@ describe('ObjectiveTopics', () => {
     goalStatus = 'In Progress',
     userCanEdit = true,
   ) => render((
-    <ObjectiveTopics
+    <GenericSelectWithDrawer
       error={<></>}
-      topicOptions={[]}
-      validateObjectiveTopics={jest.fn()}
-      topics={topics}
-      onChangeTopics={jest.fn()}
+      name="topic"
+      options={[]}
+      validateValues={jest.fn()}
+      values={topics}
+      onChangeValues={jest.fn()}
       status={objectiveStatus}
       isOnReport={isOnReport}
       goalStatus={goalStatus}
       userCanEdit={userCanEdit}
+      drawerContent={<div>Drawer Content</div>}
+      drawerTitle="Drawer Title"
     />
   ));
 

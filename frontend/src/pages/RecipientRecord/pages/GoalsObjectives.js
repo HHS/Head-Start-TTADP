@@ -38,7 +38,7 @@ export default function GoalsObjectives({
   const filtersToApply = expandFilters(filters);
 
   let hasActiveGrants = false;
-  if (recipient.grants.find((g) => g.status === 'Active')) {
+  if (recipient.grants && recipient.grants.find((g) => g.status === 'Active')) {
     hasActiveGrants = true;
   }
 

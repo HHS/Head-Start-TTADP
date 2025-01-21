@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
 import { REPORT_STATUSES } from '@ttahub/common';
@@ -22,6 +23,8 @@ import db, {
   sequelize,
   ActivityReportApprover,
   ActivityReportCollaborator,
+  Role,
+  GoalCollaborator,
 } from '../models';
 import {
   allRecipients,
@@ -31,16 +34,28 @@ import {
   getGoalsByActivityRecipient,
   recipientLeadership,
   allArUserIdsByRecipientAndRegion,
+  calculatePreviousStatus,
+  wasGoalPreviouslyClosed,
+  reduceObjectivesForRecipientRecord,
+  reduceTopicsOfDifferingType,
+  combineObjectiveIds,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
-import { GOAL_STATUS, OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
+import {
+  GOAL_STATUS,
+  OBJECTIVE_STATUS,
+  AUTOMATIC_CREATION,
+} from '../constants';
 import {
   createRecipient,
   createReport,
   destroyReport,
   createGrant,
 } from '../testUtils';
+
+// Seed faker for reproducibility
+faker.seed(123);
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -580,7 +595,9 @@ describe('Recipient DB service', () => {
     it('sorts based on name', async () => {
       const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(4);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([67, 68, 63, 66].sort());
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual(
+        [67, 68, 63, 66].sort((a, b) => a - b),
+      );
     });
 
     it('sorts based on program specialist', async () => {
@@ -765,12 +782,7 @@ describe('Recipient DB service', () => {
         caution: '',
         fieldType: 'multiselect',
         required: {},
-        options: [
-          'gotta',
-          'dont have to',
-          'not sure',
-          'too tired to answer',
-        ],
+        options: ['gotta', 'dont have to', 'not sure', 'too tired to answer'],
       });
 
       // Find a GoalTemplateFieldPrompt with the title 'FEI root cause'.
@@ -786,6 +798,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const goal2 = await Goal.create({
@@ -794,6 +807,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const goal3 = await Goal.create({
@@ -802,6 +816,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const goal4 = await Goal.create({
@@ -810,6 +825,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const feiGoal = await Goal.create({
@@ -819,6 +835,7 @@ describe('Recipient DB service', () => {
         onApprovedAR: true,
         source: null,
         goalTemplateId: feiRootCausePrompt.goalTemplateId,
+        createdVia: 'rtr',
       });
 
       goals = [goal1, goal2, goal3, goal4, feiGoal];
@@ -933,7 +950,9 @@ describe('Recipient DB service', () => {
 
       const notSureResponse = goalRows.find((r) => r.id === goals[1].id);
       expect(notSureResponse).toBeTruthy();
-      expect(notSureResponse.responsesForComparison).toBe('not sure,dont have to');
+      expect(notSureResponse.responsesForComparison).toBe(
+        'not sure,dont have to',
+      );
 
       const notSureResponse2 = goalRows.find((r) => r.id === goals[2].id);
       expect(notSureResponse2).toBeTruthy();
@@ -999,6 +1018,52 @@ describe('Recipient DB service', () => {
     });
   });
 
+  describe('reduceTopicsOfDifferingType', () => {
+    it('should deduplicate and sort string topics', () => {
+      const topics = ['a topic', 'b topic', 'c topic', 'a topic'];
+      const result = reduceTopicsOfDifferingType(topics);
+      expect(result).toEqual(['a topic', 'b topic', 'c topic']);
+    });
+
+    it('should handle mixed strings and objects with "name"', () => {
+      const topics = [
+        'a topic',
+        { name: 'b topic' },
+        'c topic',
+        { name: 'a topic' },
+        { name: 'c topic' },
+      ];
+      const result = reduceTopicsOfDifferingType(topics);
+      expect(result).toEqual(['a topic', 'b topic', 'c topic']);
+    });
+
+    it('should include and preserve non-string, non-object topics', () => {
+      const topics = [
+        'a topic',
+        42,
+        { name: 'b topic' },
+        { id: 1 },
+        'c topic',
+        { name: 'a topic' },
+      ];
+      const result = reduceTopicsOfDifferingType(topics);
+      expect(result).toEqual(['a topic', 'b topic', 'c topic', 42, { id: 1 }]);
+    });
+
+    it('should handle null and undefined topics gracefully', () => {
+      const topics = [
+        'a topic',
+        null,
+        { name: 'b topic' },
+        undefined,
+        'c topic',
+        { name: 'a topic' },
+      ];
+      const result = reduceTopicsOfDifferingType(topics);
+      expect(result).toEqual(['a topic', 'b topic', 'c topic']);
+    });
+  });
+
   describe('reduceObjectivesForRecipientRecord', () => {
     let recipient;
     let grant;
@@ -1024,6 +1089,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'monitoring',
       });
 
       const goal2 = await Goal.create({
@@ -1032,6 +1098,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'monitoring',
       });
 
       goals = [goal1, goal2];
@@ -1165,7 +1232,11 @@ describe('Recipient DB service', () => {
     });
 
     it('successfully maintains two goals without losing topics', async () => {
-      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
+      const goalsForRecord = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {},
+      );
 
       // Assert counts.
       expect(goalsForRecord.count).toBe(2);
@@ -1212,6 +1283,465 @@ describe('Recipient DB service', () => {
       expect(goal2.objectives[0].topics).toEqual(
         expect.arrayContaining([topics[3].name, topics[4].name]),
       );
+    });
+
+    it('sorts objectives by endDate and id when endDates are equal', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 3,
+            endDate: '2024-12-30',
+            title: 'Objective 3',
+            status: 'Complete',
+          },
+          {
+            id: 2,
+            endDate: '2024-12-30',
+            title: 'Objective 2',
+            status: 'In Progress',
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            endDate: '2024-12-30',
+            title: 'Objective 1',
+            status: 'In Progress',
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]);
+    });
+
+    it('sorts objectives by endDate when dates differ', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 3,
+            endDate: '2024-12-31',
+            title: 'Objective 3',
+            status: 'Complete',
+          },
+          {
+            id: 2,
+            endDate: '2024-12-30',
+            title: 'Objective 2',
+            status: 'In Progress',
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            endDate: '2024-12-29',
+            title: 'Objective 1',
+            status: 'In Progress',
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]); // Sorted by endDate descending
+    });
+
+    it('handles undefined activityReports gracefully', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 3,
+            endDate: null,
+            title: 'Objective 3',
+            status: 'In Progress',
+            activityReports: undefined,
+          },
+          {
+            id: 2,
+            endDate: '2024-12-30',
+            title: 'Objective 2',
+            status: 'Complete',
+            activityReports: [],
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            endDate: undefined,
+            title: 'Objective 1',
+            status: 'Not Started',
+            activityReports: undefined,
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+      // Expected order: [1 (missing date), 3 (null date), 2 (valid date)]
+      expect(result.map((obj) => obj.id)).toEqual([2, 3, 1]);
+    });
+
+    it('handles an empty objectives array', () => {
+      const currentModel = { objectives: [] };
+      const goal = { objectives: [], goalTopics: [], reasons: [] };
+      const grantNumbers = ['12345'];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('sorts objectives by endDate and id', () => {
+      const currentModel = {
+        grant: { number: 'G123' },
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: '2023-12-01',
+          },
+          {
+            id: 2,
+            title: 'Objective 2',
+            status: 'In Progress',
+            endDate: '2023-11-30',
+          },
+        ],
+      };
+
+      const goal = {
+        ids: [1, 2],
+        grantNumbers: ['G123', 'G124'],
+        objectives: [
+          {
+            id: 3,
+            title: 'Objective 3',
+            status: 'Complete',
+            endDate: '2023-12-01',
+          },
+        ],
+      };
+
+      const grantNumbers = ['G123'];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.map((o) => o.id)).toEqual([3, 1, 2]);
+    });
+
+    it('handles objectives with missing or invalid endDate', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: null,
+          },
+          {
+            id: 2,
+            title: 'Objective 2',
+            status: 'In Progress',
+            endDate: 'InvalidDate',
+          },
+        ],
+      };
+
+      const goal = { ids: [], grantNumbers: [], objectives: [] };
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result).toBeDefined();
+      expect(result.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('handles a single objective without sorting', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: '2023-12-01',
+          },
+        ],
+      };
+
+      const goal = { ids: [], grantNumbers: [], objectives: [] };
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it('merges activityReports correctly when objectives have existing activityReports', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [
+              { displayId: 'AR1', topic: 'Report Topic 1' },
+            ],
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [
+              { displayId: 'AR2', topic: 'Report Topic 2' },
+            ],
+          },
+        ],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].activityReports).toEqual([
+        { displayId: 'AR1', topic: 'Report Topic 1' },
+        { displayId: 'AR2', topic: 'Report Topic 2' },
+      ]);
+    });
+
+    it('handles merging when existing.activityReports or objective.activityReports are undefined', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: undefined,
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: undefined,
+          },
+        ],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].activityReports).toEqual([]);
+    });
+
+    it('handles undefined existing.activityReports gracefully', () => {
+      const currentModel = {
+        objectives: [],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [
+              { displayId: 'AR1', topic: 'Report Topic 1' },
+            ],
+          },
+        ],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result[0].activityReports).toEqual([
+        { displayId: 'AR1', topic: 'Report Topic 1' },
+      ]);
+    });
+
+    it('handles undefined topics and reasons gracefully', () => {
+      const currentModel = {
+        objectives: [],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [],
+          },
+        ],
+        goalTopics: undefined,
+        reasons: undefined,
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result).toBeDefined();
+      expect(goal.goalTopics).toEqual([]);
+      expect(goal.reasons).toEqual([]);
+    });
+
+    it('handles invalid types for topics and reasons', () => {
+      const currentModel = {
+        objectives: [],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [],
+          },
+        ],
+        goalTopics: 'invalid-type',
+        reasons: 12345,
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result).toBeDefined();
+      expect(goal.goalTopics).toEqual([]);
+      expect(goal.reasons).toEqual([]);
+    });
+
+    it('handles objectives with invalid endDate values gracefully', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: 'InvalidDate',
+          },
+          {
+            id: 2,
+            title: 'Objective 2',
+            status: 'Complete',
+            endDate: '2023-12-01',
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 3,
+            title: 'Objective 3',
+            status: 'Not Started',
+            endDate: '2023-12-02',
+          },
+          {
+            id: 4,
+            title: 'Objective 4',
+            status: 'Complete',
+            endDate: undefined,
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers);
+
+      expect(result).toBeDefined();
+      expect(result.length).toBe(4);
+
+      expect(result.map((obj) => obj.id)).toEqual([3, 2, 4, 1]);
     });
   });
 
@@ -1329,18 +1859,18 @@ describe('Recipient DB service', () => {
 
       // Program personnel to ignore
       // because it's on a different grant
-      await createProgramPersonnel(irrelevantGrant.id, irrelevantProgram.id, 'director', true, 'HS');
+      await createProgramPersonnel(irrelevantGrant.id, irrelevantProgram.id, 'director', true);
 
       // Program personnel to ignore
       // because it's inactive
-      await createProgramPersonnel(grant.id, program1.id, 'director', false, 'HS');
+      await createProgramPersonnel(grant.id, program1.id, 'director', false);
 
       // program personnel to retrieve
       activePersonnel = await Promise.all([
-        createProgramPersonnel(grant.id, program1.id, 'director', true, 'HS'),
-        createProgramPersonnel(grant2.id, program2.id, 'director', true, 'EHS'),
-        createProgramPersonnel(grant.id, program1.id, 'cfo', true, 'HS'),
-        createProgramPersonnel(grant2.id, program2.id, 'cfo', true, 'EHS'),
+        createProgramPersonnel(grant.id, program1.id, 'director', true),
+        createProgramPersonnel(grant2.id, program2.id, 'director', true),
+        createProgramPersonnel(grant.id, program1.id, 'cfo', true),
+        createProgramPersonnel(grant2.id, program2.id, 'cfo', true),
       ]);
     });
     afterAll(async () => {
@@ -1558,6 +2088,494 @@ describe('Recipient DB service', () => {
       expect(userIds).toContain(collaboratorTwo.id);
       expect(userIds).toContain(approverOne.id);
       expect(userIds).toContain(approverTwo.id);
+    });
+  });
+
+  describe('calculatePreviousStatus', () => {
+    it('returns the oldStatus from the last status change', () => {
+      const goal = {
+        statusChanges: [
+          { oldStatus: 'Draft', newStatus: 'In Progress' },
+          { oldStatus: 'In Progress', newStatus: 'Complete' },
+        ],
+        objectives: [],
+      };
+
+      const result = calculatePreviousStatus(goal);
+
+      expect(result).toBe('In Progress'); // Last status change's oldStatus
+    });
+
+    it('returns "In Progress" if objectives are on AR and at least one is "In Progress" or "Complete"', () => {
+      const goal = {
+        statusChanges: [],
+        objectives: [
+          { status: 'In Progress', onApprovedAR: true },
+          { status: 'Not Started', onApprovedAR: false },
+        ],
+      };
+
+      const result = calculatePreviousStatus(goal);
+
+      expect(result).toBe('In Progress');
+    });
+
+    it('returns "Not Started" if objectives are on AR but none are "In Progress" or "Complete"', () => {
+      const goal = {
+        statusChanges: [],
+        objectives: [
+          { status: 'Not Started', onApprovedAR: true },
+          { status: 'Suspended', onApprovedAR: true },
+        ],
+      };
+
+      const result = calculatePreviousStatus(goal);
+
+      expect(result).toBe('Not Started');
+    });
+
+    it('returns null if there are no objectives or valid status changes', () => {
+      const goal = {
+        statusChanges: [],
+        objectives: [],
+      };
+
+      const result = calculatePreviousStatus(goal);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('wasGoalPreviouslyClosed', () => {
+    it('returns false when goal.statusChanges is undefined', () => {
+      const goal = {
+        statusChanges: undefined,
+      };
+
+      const result = wasGoalPreviouslyClosed(goal);
+
+      expect(result).toBe(false); // Validate the uncovered line
+    });
+
+    it('returns false when goal.statusChanges is null', () => {
+      const goal = {
+        statusChanges: null,
+      };
+
+      const result = wasGoalPreviouslyClosed(goal);
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false when goal.statusChanges is empty', () => {
+      const goal = {
+        statusChanges: [],
+      };
+
+      const result = wasGoalPreviouslyClosed(goal);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getGoalsByActivityRecipient', () => {
+    let recipient;
+    let grant;
+    let goals;
+    let collaborators;
+    let roles;
+    const goal3Name = 'Test Goal 3';
+
+    beforeEach(async () => {
+      recipient = await Recipient.findByPk(74);
+      grant = await Grant.findOne({
+        where: {
+          recipientId: recipient.id,
+        },
+      });
+
+      // Create test goals
+      goals = await Promise.all(
+        ['Goal 1', 'Goal 2'].map((name) => Goal.create({
+          name,
+          status: GOAL_STATUS.IN_PROGRESS,
+          grantId: grant.id,
+          onApprovedAR: true,
+        })),
+      );
+
+      roles = await Role.findAll({
+        where: {
+          name: {
+            [Op.in]: ['ECS', 'HS'],
+          },
+        },
+        limit: 2,
+      });
+
+      collaborators = await Promise.all(
+        goals.map((goal) => GoalCollaborator.create({
+          goalId: goal.id,
+          collaboratorTypeId: 1, // '1' is 'Creator'
+          userId: 1,
+        })),
+      );
+    });
+
+    afterEach(async () => {
+      await GoalCollaborator.destroy({
+        where: { goalId: goals.map((g) => g.id) },
+        individualHooks: true,
+        force: true,
+      });
+      await Goal.destroy({
+        where: { id: goals.map((g) => g.id) },
+        individualHooks: true,
+        force: true,
+      });
+    });
+
+    it('constructs goalWhere when goalIds is an array', async () => {
+      const goalIds = goals.map((goal) => goal.id);
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          goalIds,
+          sortBy: 'goalStatus',
+        },
+      );
+
+      expect(result.goalRows.length).toBe(goalIds.length);
+      result.goalRows.forEach((goal) => {
+        expect(goalIds).toContain(goal.id);
+      });
+    });
+
+    it('sanitizes goalIds when provided as a single string', async () => {
+      const singleGoalId = String(goals[0].id);
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          goalIds: singleGoalId,
+        },
+      );
+
+      expect(result.goalRows.length).toBe(1);
+      expect(result.goalRows[0].id).toBe(Number(singleGoalId));
+    });
+
+    it('fetches the FEI root cause field prompt', async () => {
+      const result = await getGoalsByActivityRecipient(1, 1, {});
+
+      expect(result).toBeDefined();
+    });
+
+    it('applies goalWhere when sortBy is not "mergedGoals" and goalIds are provided', async () => {
+      const goalIds = [goals[0].id];
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          goalIds,
+        },
+      );
+
+      expect(result.goalRows.length).toBe(1);
+      expect(result.goalRows[0].id).toBe(goalIds[0]);
+    });
+
+    it('correctly sanitizes goalIds as part of sanitizedIds', async () => {
+      const goalIds = goals.map((goal) => String(goal.id));
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          goalIds,
+        },
+      );
+
+      expect(result.goalRows.length).toBe(goals.length);
+    });
+
+    it('maps collaborator roles correctly', async () => {
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {},
+      );
+
+      result.goalRows.forEach((goal) => {
+        expect(goal.collaborators).toBeDefined();
+        goal.collaborators.forEach((collaborator) => {
+          expect(collaborator.goalCreatorRoles).toBeDefined();
+          expect(collaborator.goalCreatorRoles.length).toBeGreaterThanOrEqual(
+            0,
+          );
+        });
+      });
+    });
+
+    it('assigns collaborators to goals', async () => {
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {},
+      );
+
+      result.goalRows.forEach((goal) => {
+        expect(goal.collaborators).toBeDefined();
+        expect(goal.collaborators.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('returns all goals if limitNum is falsy', async () => {
+      const findAll = jest.spyOn(Goal, 'findAll');
+
+      await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          limit: 0,
+        },
+      );
+
+      expect(findAll).not.toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
+    });
+
+    it('sorts by goalStatus correctly with mixed statuses', async () => {
+      await Goal.update(
+        { status: 'Draft' },
+        { where: { id: goals[0].id }, individualHooks: true },
+      );
+      await Goal.update(
+        { status: 'Suspended' },
+        { where: { id: goals[1].id }, individualHooks: true },
+      );
+
+      const goal3 = await Goal.create({
+        name: goal3Name,
+        status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        onApprovedAR: true,
+      });
+
+      goals.push(goal3);
+
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'asc',
+        },
+      );
+
+      expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([
+        'Draft',
+        'In Progress',
+        'Suspended',
+      ]);
+      await Goal.destroy({ where: { id: goal3.id }, individualHooks: true, force: true });
+    });
+
+    it('sorts correctly with null statuses', async () => {
+      await Goal.update(
+        { status: null },
+        { where: { id: goals[0].id }, individualHooks: true },
+      );
+      await Goal.update(
+        { status: null },
+        { where: { id: goals[1].id }, individualHooks: true },
+      );
+
+      const goal3 = await Goal.create({
+        name: goal3Name,
+        status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        onApprovedAR: true,
+      });
+
+      goals.push(goal3);
+
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'asc',
+        },
+      );
+
+      expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([
+        null,
+        null,
+        'In Progress',
+      ]);
+      await Goal.destroy({ where: { id: goal3.id }, individualHooks: true, force: true });
+    });
+
+    it('correctly handles invalid statuses', async () => {
+      await Goal.update(
+        { status: 'In Progress' },
+        { where: { id: goals[0].id }, individualHooks: true },
+      );
+      await Goal.update(
+        { status: 'Unknown' },
+        { where: { id: goals[1].id }, individualHooks: true },
+      );
+
+      const goal3 = await Goal.create({
+        name: goal3Name,
+        status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        onApprovedAR: true,
+      });
+
+      goals.push(goal3);
+
+      const result = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'asc',
+        },
+      );
+
+      expect(result.goalRows.map((goal) => goal.goalStatus)).toEqual([
+        'In Progress',
+        'In Progress',
+        'Unknown',
+      ]);
+      await Goal.destroy({ where: { id: goal3.id }, individualHooks: true, force: true });
+    });
+
+    it('filters correctly when sortBy is not mergedGoals', async () => {
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        sortBy: 'notMergedGoals',
+        goalIds: [goals[0].id],
+      });
+
+      expect(result.goalRows.length).toBe(1);
+      expect(result.goalRows[0].id).toBe(goals[0].id);
+    });
+
+    it('handles goals with missing collaborators gracefully', async () => {
+      await GoalCollaborator.destroy({
+        where: { goalId: goals.map((g) => g.id) },
+        force: true,
+      });
+
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
+
+      expect(result.goalRows.every((goal) => !goal.collaborators.goalCreator)).toBe(true);
+    });
+
+    it('returns an empty array when offset exceeds total count', async () => {
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        offset: goals.length + 1, // Exceed total count
+        limit: 5,
+      });
+
+      expect(result.goalRows.length).toBe(0);
+      expect(result.count).toBe(goals.length);
+    });
+
+    it('handles sorting ties by secondary field (e.g., ID)', async () => {
+      await Goal.update({ createdAt: new Date('2024-01-01') }, { where: {} });
+
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
+        sortBy: 'createdAt',
+        sortDir: 'asc',
+      });
+
+      const ids = result.goalRows.map((goal) => goal.id);
+      expect(ids).toEqual(goals.map((goal) => goal.id).sort());
+    });
+
+    it('fetches and applies FEI root cause correctly', async () => {
+      const feiPrompt = await GoalTemplateFieldPrompt.create({
+        goalTemplateId: 1,
+        title: 'FEI root cause',
+        ordinal: 1,
+        prompt: 'prompt',
+      });
+
+      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
+
+      const feiGoals = result.goalRows
+        .filter((goal) => goal.goalTemplateId === feiPrompt.goalTemplateId);
+      const nonFeiGoals = result.goalRows
+        .filter((goal) => goal.goalTemplateId !== feiPrompt.goalTemplateId);
+
+      feiGoals.forEach((goal) => {
+        expect(goal.isFei).toBe(true);
+      });
+
+      nonFeiGoals.forEach((goal) => {
+        expect(goal.isFei).toBe(false);
+      });
+    });
+  });
+
+  describe('combineObjectiveIds', () => {
+    it('should combine ids from existing and objective', () => {
+      const existing = { ids: [1, 2] };
+      const objective = { ids: [3, 4], id: 5 };
+
+      const result = combineObjectiveIds(existing, objective);
+      expect(result).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('should handle when existing.ids is empty', () => {
+      const existing = { ids: [] };
+      const objective = { ids: [6, 7], id: 8 };
+
+      const result = combineObjectiveIds(existing, objective);
+      expect(result).toEqual([6, 7, 8]);
+    });
+
+    it('should handle when objective.ids is not provided', () => {
+      const existing = { ids: [1, 2] };
+      const objective = { id: 3 };
+
+      const result = combineObjectiveIds(existing, objective);
+      expect(result).toEqual([1, 2, 3]);
+    });
+
+    it('should handle when objective.id is not provided', () => {
+      const existing = { ids: [1, 2] };
+      const objective = { ids: [3, 4] };
+
+      const result = combineObjectiveIds(existing, objective);
+      expect(result).toEqual([1, 2, 3, 4]);
+    });
+
+    it('should handle when both existing.ids and objective.ids are empty', () => {
+      const existing = { ids: [] };
+      const objective = { ids: [], id: 9 };
+
+      const result = combineObjectiveIds(existing, objective);
+      expect(result).toEqual([9]);
+    });
+
+    it('should handle when both existing.ids and objective.ids/id are missing', () => {
+      const existing = {};
+      const objective = {};
+
+      const result = combineObjectiveIds(existing, objective);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle duplicates in existing.ids and objective.ids', () => {
+      const existing = { ids: [1, 2] };
+      const objective = { ids: [2, 3] };
+      const result = combineObjectiveIds(existing, objective);
+
+      expect(result).toEqual([1, 2, 3]);
     });
   });
 });

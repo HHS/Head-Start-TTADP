@@ -1,11 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import CitationCard from './CitationCard';
 
 export default function CitationCards({ data, regionId }) {
   return (
     data.map((citation) => (
-      <CitationCard key={citation.id} citation={citation} regionId={regionId} />
+      <CitationCard key={uniqueId('citation-card-')} citation={citation} regionId={regionId} />
     )));
 }
 
@@ -29,7 +30,10 @@ CitationCards.propTypes = {
       })).isRequired,
       objectives: PropTypes.arrayOf(PropTypes.shape({
         title: PropTypes.string.isRequired,
-        activityReportIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+        activityReports: PropTypes.arrayOf(PropTypes.shape({
+          id: PropTypes.number.isRequired,
+          displayId: PropTypes.string.isRequired,
+        })).isRequired,
         endDate: PropTypes.string.isRequired,
         topics: PropTypes.arrayOf(PropTypes.string).isRequired,
         status: PropTypes.string.isRequired,

@@ -105,7 +105,9 @@
     "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish",
     "merge-coverage": "node ./src/tools/merge-coverage.js",
-    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true"
+    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true",
+    "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
+    "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js"
   },
   "repository": {
     "type": "git",
@@ -238,10 +240,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 75,
-        "functions": 75,
-        "branches": 75,
-        "lines": 75
+        "statements": 90,
+        "functions": 88,
+        "branches": 80,
+        "lines": 90
       }
     },
     "setupFiles": [
