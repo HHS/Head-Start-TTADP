@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import React from 'react';
 import join from 'url-join';
 import {
@@ -11,6 +12,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
+import LogContext from '../LogContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -32,21 +34,23 @@ describe('CommunicationLogForm', () => {
     render(
       <Router history={history}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-            <CommunicationLogForm
-              recipientName={RECIPIENT_NAME}
-              match={{
-                params: {
-                  currentPage,
-                  communicationLogId,
-                  recipientId: RECIPIENT_ID,
-                  regionId: REGION_ID,
-                },
-                path: currentPage,
-                url: currentPage,
-              }}
-            />
-          </UserContext.Provider>
+          <LogContext.Provider value={{ regionalUsers: [], regionalGoals: [] }}>
+            <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+              <CommunicationLogForm
+                recipientName={RECIPIENT_NAME}
+                match={{
+                  params: {
+                    currentPage,
+                    communicationLogId,
+                    recipientId: RECIPIENT_ID,
+                    regionId: REGION_ID,
+                  },
+                  path: currentPage,
+                  url: currentPage,
+                }}
+              />
+            </UserContext.Provider>
+          </LogContext.Provider>
         </AppLoadingContext.Provider>
       </Router>,
     );
@@ -55,6 +59,11 @@ describe('CommunicationLogForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     fetchMock.reset();
+    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
+    fetchMock.get(url, {
+      regionalUsers: [{ value: 1, label: 'One' }],
+      standardGoals: [{ value: 1, label: 'One' }],
+    });
   });
 
   it('renders training report form', async () => {
@@ -75,10 +84,6 @@ describe('CommunicationLogForm', () => {
 
   it('fetches additional data', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
-    fetchMock.get(url, {
-      regionalUsers: [{ value: 1, label: 'One' }],
-      standardGOals: [{ value: 1, label: 'One' }],
-    });
 
     await act(() => waitFor(() => {
       renderTest('new', 'log');
@@ -129,6 +134,8 @@ describe('CommunicationLogForm', () => {
   });
 
   it('Validates required fields', async () => {
+    fetchMock.reset();
+
     await act(() => waitFor(() => {
       renderTest('new', 'log');
     }));
@@ -143,6 +150,7 @@ describe('CommunicationLogForm', () => {
     await Promise.all([
       /Select a communication method/i,
       /enter duration/i,
+      /enter valid date/i,
       /Select a purpose of communication/i,
     ].map(async (message) => {
       expect(await screen.findByText(message)).toBeInTheDocument();
