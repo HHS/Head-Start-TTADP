@@ -7,8 +7,7 @@ import { auditLogger } from '../logger';
 import { changeGoalStatusWithSystemUser } from '../goalServices/changeGoalStatus';
 
 const createMonitoringGoals = async () => {
-  const cutOffDate = '2024-01-01'; // TODO: Set this before we deploy to prod.
-
+  const cutOffDate = '2024-01-21';
   // Verify that the monitoring goal template exists.
   const monitoringGoalTemplate = await GoalTemplate.findOne({
     where: {
@@ -204,7 +203,7 @@ const createMonitoringGoals = async () => {
       ON gr.number = mrg."grantNumber"
       JOIN "MonitoringReviews" mr
       ON mrg."reviewId" = mr."reviewId"
-      AND mr."reportDeliveryDate" BETWEEN '2024-01-01' AND NOW()
+      AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
       JOIN "MonitoringReviewStatuses" mrs
       ON mr."statusId" = mrs."statusId"
       AND mrs.name = 'Complete'
