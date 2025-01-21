@@ -16,7 +16,7 @@ export async function textByCitation(
   });
 }
 
-const cutOffStartDate = '2024-01-21';
+const cutOffStartDate = '2025-01-21';
 /*
   The purpose of this function is to get citations by grant id.
   We then need to format the response for how it needs to be
