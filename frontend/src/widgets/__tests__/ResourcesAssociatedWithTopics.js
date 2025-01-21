@@ -184,9 +184,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[0]).toHaveTextContent(/secondrow/i);
       expect(tableCells[1]).toHaveTextContent(/2/i);
       expect(tableCells[2]).toHaveTextContent(/4/i);
-      expect(tableCells[3]).toHaveTextContent(/firstrow/i);
-      expect(tableCells[4]).toHaveTextContent(/1/i);
-      expect(tableCells[5]).toHaveTextContent(/3/i);
+      expect(tableCells[4]).toHaveTextContent(/firstrow/i);
+      expect(tableCells[5]).toHaveTextContent(/1/i);
+      expect(tableCells[6]).toHaveTextContent(/3/i);
     });
 
     // Sort.
@@ -208,9 +208,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[0]).toHaveTextContent(cellValues[0]);
       expect(tableCells[1]).toHaveTextContent(cellValues[1]);
       expect(tableCells[2]).toHaveTextContent(cellValues[2]);
-      expect(tableCells[3]).toHaveTextContent(cellValues[3]);
-      expect(tableCells[4]).toHaveTextContent(cellValues[4]);
-      expect(tableCells[5]).toHaveTextContent(cellValues[5]);
+      expect(tableCells[4]).toHaveTextContent(cellValues[3]);
+      expect(tableCells[5]).toHaveTextContent(cellValues[4]);
+      expect(tableCells[6]).toHaveTextContent(cellValues[5]);
     });
 
     sortColBtn = await screen.findByRole('button', { name: /topic\. activate to sort descending/i });
@@ -221,9 +221,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[0]).toHaveTextContent(/secondrow/i);
       expect(tableCells[1]).toHaveTextContent(/2/i);
       expect(tableCells[2]).toHaveTextContent(/4/i);
-      expect(tableCells[3]).toHaveTextContent(/firstrow/i);
-      expect(tableCells[4]).toHaveTextContent(/1/i);
-      expect(tableCells[5]).toHaveTextContent(/3/i);
+      expect(tableCells[4]).toHaveTextContent(/firstrow/i);
+      expect(tableCells[5]).toHaveTextContent(/1/i);
+      expect(tableCells[6]).toHaveTextContent(/3/i);
     });
 
     sortColBtn = await screen.findByRole('button', { name: /topic\. activate to sort ascending/i });
@@ -235,9 +235,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[0]).toHaveTextContent(cellValues[0]);
       expect(tableCells[1]).toHaveTextContent(cellValues[1]);
       expect(tableCells[2]).toHaveTextContent(cellValues[2]);
-      expect(tableCells[3]).toHaveTextContent(cellValues[3]);
-      expect(tableCells[4]).toHaveTextContent(cellValues[4]);
-      expect(tableCells[5]).toHaveTextContent(cellValues[5]);
+      expect(tableCells[4]).toHaveTextContent(cellValues[3]);
+      expect(tableCells[5]).toHaveTextContent(cellValues[4]);
+      expect(tableCells[6]).toHaveTextContent(cellValues[5]);
     });
   });
 
