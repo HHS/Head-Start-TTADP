@@ -9,6 +9,7 @@ import colors from '../colors';
 import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
 import ContextMenu from '../components/ContextMenu';
+import Tooltip from '../components/Tooltip';
 
 export default function HorizontalTableWidget(
   {
@@ -233,7 +234,7 @@ export default function HorizontalTableWidget(
                   {
                     r.isUrl
                       ? handleUrl(r)
-                      : r.heading || JSON.stringify(r)
+                      : <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" hideUnderline />
                   }
                 </td>
                 {(r.data || []).map((d, cellIndex) => (
@@ -242,7 +243,7 @@ export default function HorizontalTableWidget(
                       // eslint-disable-next-line no-nested-ternary
                       d.isUrl
                         ? handleUrl(d)
-                        : showDashForNullValue && !d.value ? '-' : d.value
+                        : showDashForNullValue && !d.value ? '-' : <Tooltip displayText={d.value} tooltipText={d.value} buttonLabel="click to reveal" hideUnderline />
                     }
                   </td>
                 ))}
