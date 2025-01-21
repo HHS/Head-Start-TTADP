@@ -9,6 +9,7 @@ import {
   reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
 } from '../helpers';
 import ReadOnlyContent from '../../../components/ReadOnlyContent';
+import RenderReviewCitations from '../../ActivityReport/Pages/components/RenderReviewCitations';
 
 function formatNextSteps(nextSteps, heading, striped) {
   return nextSteps.map((step, index) => ({
@@ -75,7 +76,13 @@ function formatTtaType(ttaType) {
   return ttaType.map((type) => dict[type]).join(', ');
 }
 
-function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntity = false) {
+function addObjectiveSectionsToArray(
+  objectives,
+  sections,
+  striped,
+  activityRecipients,
+  isOtherEntity = false,
+) {
   let isStriped = striped;
   objectives.forEach((objective) => {
     isStriped = !isStriped;
@@ -83,6 +90,8 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
       heading: 'Objective summary',
       data: {
         'TTA objective': objective.title,
+        ...(objective.citations && objective.citations.length > 0
+          ? { 'Citations addressed': <RenderReviewCitations citations={objective.citations} activityRecipients={activityRecipients} className="" /> } : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
         'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
@@ -165,10 +174,16 @@ function calculateGoalsAndObjectives(report) {
 
       sections.push(goalSection);
 
-      addObjectiveSectionsToArray(goal.objectives, sections, striped);
+      addObjectiveSectionsToArray(goal.objectives, sections, striped, report.activityRecipients);
     });
   } else if (report.activityRecipientType === 'other-entity') {
-    addObjectiveSectionsToArray(report.objectivesWithoutGoals, sections, striped, true);
+    addObjectiveSectionsToArray(
+      report.objectivesWithoutGoals,
+      sections,
+      striped,
+      report.activityRecipients,
+      true,
+    );
   }
 
   return sections;

@@ -127,7 +127,9 @@ export async function getGoalsByRecipient(req, res) {
     const recipientGoals = await getGoalsByActivityRecipient(
       recipientId,
       regionId,
-      req.query,
+      {
+        ...req.query,
+      },
     );
     res.json(recipientGoals);
   } catch (error) {
