@@ -37,6 +37,15 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    /*
+      We want to track as a single entity a link to N findings containing the same citation.
+      This would require a lot of database structure to represent traditionally, but because the
+      subset of imported monitoring data we reference is expected to remain completely static,
+      referential drift is not expected to ever become a problem.
+      So, the JSONB allows us to encapsulate the complications with minimal structure
+      In addition, the data in this field is tracked as citation per grant.
+      This also allows us to quickly display the data without have to join monitoring tables.
+    */
     monitoringReferences: {
       type: DataTypes.JSONB,
       allowNull: false,
