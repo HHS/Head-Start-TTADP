@@ -202,7 +202,7 @@ export default function HorizontalTableWidget(
             {
             data.some((r) => r.actions) && (
               <th scope="col" aria-label="context menu" className="">
-                &nbsp;
+                Actions
               </th>
             )
             }
@@ -232,9 +232,12 @@ export default function HorizontalTableWidget(
                 }
                 <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'} ${!hideFirstColumnBorder ? 'smarthub-horizontal-table-first-column-border' : ''}`}>
                   {
+                    // eslint-disable-next-line no-nested-ternary
                     r.isUrl
                       ? handleUrl(r)
-                      : <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" hideUnderline />
+                      : r.tooltip
+                        ? <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" />
+                        : r.heading
                   }
                 </td>
                 {(r.data || []).map((d, cellIndex) => (
@@ -243,7 +246,12 @@ export default function HorizontalTableWidget(
                       // eslint-disable-next-line no-nested-ternary
                       d.isUrl
                         ? handleUrl(d)
-                        : showDashForNullValue && !d.value ? '-' : <Tooltip displayText={d.value} tooltipText={d.value} buttonLabel="click to reveal" hideUnderline />
+                        // eslint-disable-next-line no-nested-ternary
+                        : showDashForNullValue && !d.value
+                          ? '-'
+                          : d.tooltip
+                            ? <Tooltip displayText={d.value} tooltipText={d.value} buttonLabel="click to reveal" />
+                            : d.value
                     }
                   </td>
                 ))}

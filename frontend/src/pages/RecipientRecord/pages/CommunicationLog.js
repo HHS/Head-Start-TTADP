@@ -1,13 +1,12 @@
-/* eslint-disable no-console */
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { uniqueId } from 'lodash';
-import { getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
+import { useHistory } from 'react-router-dom';
+import { deleteCommunicationLogById, getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
 import WidgetContainer from '../../../components/WidgetContainer';
-import CommunicationLogTable from './components/CommunicationLogTable';
+import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import UserContext from '../../../UserContext';
 import useFilters from '../../../hooks/useFilters';
@@ -17,9 +16,20 @@ import {
   methodFilter,
   resultFilter,
 } from '../../../components/filter/communicationLogFilters';
+import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
+import useWidgetExport from '../../../hooks/useWidgetExport';
+import useWidgetSorting from '../../../hooks/useWidgetSorting';
+import { EMPTY_ARRAY } from '../../../Constants';
+import Modal from '../../../components/Modal';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'communication-log-filters';
+
+const DEFAULT_SORT_CONFIG = {
+  sortBy: 'id',
+  direction: 'asc',
+  activePage: 1,
+};
 
 const COMMUNICATION_LOG_FILTER_CONFIG = [
   methodFilter,
@@ -30,15 +40,67 @@ const COMMUNICATION_LOG_FILTER_CONFIG = [
 
 COMMUNICATION_LOG_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
+const headers = ['Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
+
+const DeleteLogModal = ({
+  modalRef,
+  onLogRemoved,
+  log,
+}) => {
+  const onDeleteLog = () => {
+    onLogRemoved(log)
+      .then(modalRef.current.toggleModal(false));
+  };
+
+  return (
+    <>
+      <Modal
+        modalRef={modalRef}
+        onOk={onDeleteLog}
+        modalId="DeleteLogModal"
+        title="Are you sure you want to delete this log?"
+        okButtonText="Delete"
+        okButtonAriaLabel="Confirm delete"
+        showCloseX
+      >
+        <p>This action cannot be undone.</p>
+      </Modal>
+    </>
+  );
+};
+
+DeleteLogModal.propTypes = {
+  modalRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape(),
+  ]).isRequired,
+  onLogRemoved: PropTypes.func.isRequired,
+  log: PropTypes.shape({
+    id: PropTypes.number,
+    displayId: PropTypes.string,
+    data: PropTypes.shape({
+      communicationDate: PropTypes.string,
+      purpose: PropTypes.string,
+      result: PropTypes.string,
+    }),
+    userId: PropTypes.number,
+  }),
+};
+
+DeleteLogModal.defaultProps = {
+  log: null,
+};
+
 export default function CommunicationLog({ regionId, recipientId }) {
   const [logs, setLogs] = useState();
   const [error, setError] = useState();
-  const [sortConfig, setSortConfig] = useState({
-    sortBy: 'communicationDate',
-    direction: 'desc',
-    offset: 0,
-    activePage: 1,
-  });
+  const [showTabularData, setShowTabularData] = useState(true);
+  const [checkboxes, setCheckboxes] = useState({});
+  const [tabularData, setTabularData] = useState([]);
+  const [logToDelete, setLogToDelete] = useState(null);
+  const modalRef = useRef();
+  // const widgetRef = useRef(null);
+  const history = useHistory();
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -55,6 +117,48 @@ export default function CommunicationLog({ regionId, recipientId }) {
     COMMUNICATION_LOG_FILTER_CONFIG,
   );
 
+  const { exportRows } = useWidgetExport(
+    tabularData,
+    headers,
+    checkboxes,
+    'Log ID',
+    'Communication_Log_Export',
+  );
+
+  const menuItems = useWidgetMenuItems(
+    showTabularData,
+    setShowTabularData,
+    () => {}, // capture function
+    checkboxes,
+    exportRows,
+  );
+
+  const {
+    requestSort,
+    sortConfig,
+  } = useWidgetSorting(
+    'communication-log-table', // localStorageKey
+    DEFAULT_SORT_CONFIG, // defaultSortConfig
+    tabularData, // dataToUse
+    setTabularData, // setDataToUse
+    headers, // stringColumns
+    EMPTY_ARRAY, // dateColumns
+    EMPTY_ARRAY, // keyColumns
+  );
+
+  const handleDelete = (log) => {
+    setLogToDelete(log);
+    modalRef.current.toggleModal(true);
+  };
+
+  const handleRowActionClick = (action, row) => {
+    if (action === 'View') {
+      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${row.id}/view`);
+    } else if (action === 'Delete') {
+      handleDelete(row);
+    }
+  };
+
   useDeepCompareEffect(() => {
     async function fetchLogs() {
       try {
@@ -65,12 +169,35 @@ export default function CommunicationLog({ regionId, recipientId }) {
           String(recipientId),
           sortConfig.sortBy,
           sortConfig.direction,
-          sortConfig.offset,
+          sortConfig.offset || 0,
           COMMUNICATION_LOG_PER_PAGE,
           filters,
         );
 
+        const data = response.rows.map((log) => ({
+          heading: log.displayId,
+          id: log.id,
+          isUrl: true,
+          isInternalLink: true,
+          link: `/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`,
+          data: [
+            { title: 'Date', value: log.data.communicationDate },
+            { title: 'Purpose', value: log.data.purpose },
+            { title: 'Goals', value: (log.data.goals || []).map((g) => g.label).join(', '), tooltip: true },
+            { title: 'Creator name', value: log.authorName },
+            { title: 'Other TTA staff', value: (log.data.otherStaff || []).map((u) => u.label).join(', '), tooltip: true },
+            { title: 'Result', value: log.data.result },
+          ],
+          actions: log.userId === user.id ? [
+            { label: 'View', onClick: () => handleRowActionClick('View', log) },
+            { label: 'Delete', onClick: () => handleRowActionClick('Delete', log) },
+          ] : [
+            { label: 'View', onClick: () => handleRowActionClick('View', log) },
+          ],
+        }));
+
         setLogs(response);
+        setTabularData(data);
       } catch (err) {
         setError('Error fetching communication logs');
       } finally {
@@ -86,66 +213,15 @@ export default function CommunicationLog({ regionId, recipientId }) {
     filters,
   ]);
 
-  const exportLog = async () => {
+  const deleteLog = async (log) => {
     try {
-      const blob = await getCommunicationLogsByRecipientId(
-        String(regionId),
-        String(recipientId),
-        'communicationDate', // default values for sort
-        'desc', // and direction
-        0, // no offset
-        false,
-        filters,
-        'csv',
-      );
-      const csv = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = csv;
-      a.download = `${uniqueId('communication-log-')}.csv`;
-      document.body.appendChild(a);
-      a.click();
+      await deleteCommunicationLogById(log.id);
+      window.location.reload();
     } catch (err) {
-      console.log(err);
-      setError('There was an error exporting logs');
+      // eslint-disable-next-line no-console
+      console.error('Error deleting log:', err);
     }
   };
-
-  const requestSort = (sortBy) => {
-    let direction = 'asc';
-    if (
-      sortConfig
-      && sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
-    }
-
-    setSortConfig({
-      sortBy,
-      direction,
-      activePage: 1,
-      offset: 0,
-    });
-  };
-
-  const handlePageChange = (pageNumber) => {
-    // copy state
-    const sort = { ...sortConfig };
-
-    // mutate
-    sort.activePage = pageNumber;
-    sort.offset = (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE;
-
-    // store it
-    setSortConfig(sort);
-  };
-
-  const menuItems = [
-    {
-      label: 'Export logs',
-      onClick: exportLog,
-    },
-  ];
 
   return (
     <>
@@ -174,19 +250,24 @@ export default function CommunicationLog({ regionId, recipientId }) {
         totalCount={logs ? logs.count : 0}
         offset={sortConfig.offset}
         perPage={COMMUNICATION_LOG_PER_PAGE}
-        handlePageChange={handlePageChange}
         error={error}
       >
         {(logs && logs.count > 0) ? (
-          <CommunicationLogTable
+          <HorizontalTableWidget
+            headers={headers}
+            data={tabularData}
+            firstHeading="Log ID"
+            lastHeading=""
+            enableCheckboxes
+            checkboxes={checkboxes}
+            setCheckboxes={setCheckboxes}
+            enableSorting
             sortConfig={sortConfig}
             requestSort={requestSort}
-            logs={logs.rows}
-            recipientId={recipientId}
-            regionId={regionId}
+            showTotalColumn={false}
           />
         ) : (
-          <div className="display-flex flex-column flex-align-center flex-justify-center width-full padding-4">
+          <div className="display-flex flex-column flex-align-center flex-justify-center width-full padding-4 minh-tablet">
             <p className="usa-prose text-center bold">
               <strong>You haven&apos;t logged any communication yet.</strong>
               <br />
@@ -198,6 +279,11 @@ export default function CommunicationLog({ regionId, recipientId }) {
           </div>
         )}
       </WidgetContainer>
+      <DeleteLogModal
+        modalRef={modalRef}
+        onLogRemoved={deleteLog}
+        log={logToDelete}
+      />
     </>
   );
 }
