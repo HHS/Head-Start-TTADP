@@ -136,6 +136,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
   const {
     requestSort,
     sortConfig,
+    setSortConfig,
   } = useWidgetSorting(
     'communication-log-table', // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
@@ -223,6 +224,11 @@ export default function CommunicationLog({ regionId, recipientId }) {
     }
   };
 
+  const handlePageChange = (pageNumber) => {
+    // eslint-disable-next-line max-len
+    setSortConfig({ ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE });
+  };
+
   return (
     <>
       <Helmet>
@@ -251,6 +257,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
         offset={sortConfig.offset}
         perPage={COMMUNICATION_LOG_PER_PAGE}
         error={error}
+        handlePageChange={handlePageChange}
       >
         {(logs && logs.count > 0) ? (
           <HorizontalTableWidget
