@@ -8,6 +8,7 @@ import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
+import ContextMenu from '../components/ContextMenu';
 
 export default function HorizontalTableWidget(
   {
@@ -198,6 +199,13 @@ export default function HorizontalTableWidget(
             headers.map((h) => (<Header header={h} sortingEnabled={enableSorting} />))
             }
             {
+            data.some((r) => r.actions) && (
+              <th scope="col" aria-label="context menu" className="">
+                &nbsp;
+              </th>
+            )
+            }
+            {
             showTotalColumn && (
               enableSorting
                 ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
@@ -238,6 +246,15 @@ export default function HorizontalTableWidget(
                     }
                   </td>
                 ))}
+                <td data-label="Row actions" key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                  {r.actions && r.actions.length ? (
+                    <ContextMenu
+                      fixed
+                      label="Actions for Communication Log"
+                      menuItems={r.actions}
+                    />
+                  ) : null}
+                </td>
               </tr>
             ))
             }
@@ -264,6 +281,10 @@ HorizontalTableWidget.propTypes = {
         name: PropTypes.string,
         count: PropTypes.number,
         label: PropTypes.string,
+        actions: PropTypes.arrayOf(PropTypes.shape({
+          label: PropTypes.string,
+          onClick: PropTypes.func,
+        })),
       }),
     ), PropTypes.shape({}),
   ]),
