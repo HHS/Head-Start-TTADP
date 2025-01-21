@@ -1,6 +1,7 @@
 // this is an importable config object for the react select/emotion
 // to use this, give the select the "usa-select" classname and pass this as
 // its style object, its meant to match the USDWS styles
+import colors from '../colors';
 
 const selectOptionsReset = {
   container: (provided, state) => {
@@ -13,6 +14,14 @@ const selectOptionsReset = {
       height: 'auto',
     };
   },
+  groupHeading: (provided) => ({
+    ...provided,
+    fontWeight: 'bold',
+    textTransform: 'capitalize',
+    fontSize: '14px',
+    color: colors.smartHubTextInk,
+    lineHeight: '22px',
+  }),
   control: (provided, state) => {
     const selected = state.getValue();
     return {

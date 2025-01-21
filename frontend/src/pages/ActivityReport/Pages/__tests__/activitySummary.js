@@ -8,11 +8,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, { isPageComplete } from '../activitySummary';
 
-const RenderActivitySummary = ({ passedGroups = null }) => {
+const RenderActivitySummary = ({ passedGroups = null, passedGoals = [] }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
-      goals: [],
+      goals: passedGoals,
       objectivesWithoutGoals: [],
       participants: [],
       activityRecipients: [],
@@ -64,6 +64,72 @@ describe('activity summary', () => {
       const input = container.querySelector('#duration');
       userEvent.type(input, '99.5');
       expect(await screen.findByText('Duration must be less than or equal to 99 hours')).toBeInTheDocument();
+    });
+  });
+
+  describe('start date citations validation', () => {
+    it('correctly displays the start date citations validation', async () => {
+      const passedGoalsWithCitations = [
+        {
+          id: 1,
+          name: 'goal 1',
+          standard: 'Monitoring',
+          objectives: [
+            {
+              id: 1,
+              title: 'objective 1',
+              citations: [
+                {
+                  id: 1,
+                  monitoringReferences: [{
+                    reportDeliveryDate: '2024-08-07T04:00:00+00:00',
+                  }],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+      const { container } = render(
+        <RenderActivitySummary passedGoals={passedGoalsWithCitations} />,
+      );
+      const input = container.querySelector('#startDate');
+      userEvent.type(input, '01/01/2024');
+      // trigger blur.
+      userEvent.tab();
+      expect(await screen.findByText('The date entered is not valid with the selected citations.')).toBeInTheDocument();
+    });
+
+    it('does not show the start date citations validation when the date is valid', async () => {
+      const passedGoalsWithCitations = [
+        {
+          id: 1,
+          name: 'goal 1',
+          standard: 'Monitoring',
+          objectives: [
+            {
+              id: 1,
+              title: 'objective 1',
+              citations: [
+                {
+                  id: 1,
+                  monitoringReferences: [{
+                    reportDeliveryDate: '2024-08-07T04:00:00+00:00',
+                  }],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+      const { container } = render(
+        <RenderActivitySummary passedGoals={passedGoalsWithCitations} />,
+      );
+      const input = container.querySelector('#startDate');
+      userEvent.type(input, '08/08/2024');
+      // trigger blur.
+      userEvent.tab();
+      expect(screen.queryByText('The date entered is not valid with the selected citations.')).not.toBeInTheDocument();
     });
   });
 

@@ -11,9 +11,12 @@ export default function Objectives({
   topicOptions,
   noObjectiveError,
   reportId,
+  citationOptions,
+  rawCitations,
+  isMonitoringGoal,
 }) {
   const { errors, getValues, setValue } = useFormContext();
-
+  const isMonitoring = citationOptions && citationOptions.length > 0;
   const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
   const defaultValues = objectivesForGoal || [];
@@ -39,7 +42,7 @@ export default function Objectives({
   );
 
   const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE() });
+    append({ ...NEW_OBJECTIVE(isMonitoring) });
   };
 
   const setUpdatedUsedObjectiveIds = () => {
@@ -79,7 +82,7 @@ export default function Objectives({
   };
 
   const options = [
-    NEW_OBJECTIVE(),
+    NEW_OBJECTIVE(isMonitoring),
     // filter out used objectives and return them in them in a format that react-select understands
     ...objectiveOptions.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
       (objective) => ({
@@ -137,6 +140,9 @@ export default function Objectives({
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
               reportId={reportId}
+              citationOptions={citationOptions}
+              rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
             />
           );
         })}
@@ -150,9 +156,32 @@ Objectives.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  isMonitoringGoal: PropTypes.bool,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   objectiveOptions: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
+};
+
+Objectives.defaultProps = {
+  citationOptions: [],
+  rawCitations: [],
+  isMonitoringGoal: false,
 };

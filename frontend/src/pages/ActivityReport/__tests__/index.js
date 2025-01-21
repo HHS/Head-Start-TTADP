@@ -2,6 +2,7 @@
 /* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
+import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import {
   screen,
@@ -14,7 +15,7 @@ import {
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
-import { mockWindowProperty, withText } from '../../../testHelpers';
+import { mockRSSData, mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
   history,
@@ -765,7 +766,7 @@ describe('ActivityReport', () => {
       source: null,
       isCurated: false,
     }]);
-    fetchMock.get('/api/goal-templates?grantIds=10431', []);
+    fetchMock.get('/api/goal-templates?grantIds=10431&reportStartDate=2012-05-20', []);
     fetchMock.get('/api/activity-reports/1', {
       ...formData(),
       activityRecipientType: 'recipient',
@@ -955,11 +956,14 @@ describe('ActivityReport', () => {
   it('you can add a goal and objective and add a file after saving', async () => {
     const data = formData();
     fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
+    fetchMock.get('/api/courses', []);
     fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-    fetchMock.get('/api/goal-templates?grantIds=12539', []);
+    fetchMock.get('/api/goal-templates?grantIds=12539&reportStartDate=2012-05-20', []);
     fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=37504', {});
+    fetchMock.get('//api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/activity-reports/1', {
       ...data,
+      startDate: moment().format('YYYY-MM-DD'),
       activityRecipientType: 'recipient',
       activityRecipients: [
         {
@@ -1027,6 +1031,8 @@ describe('ActivityReport', () => {
     fetchMock.put('/api/activity-reports/1', {
       id: 23786,
       userId: 355,
+      startDate: moment().format('YYYY-MM-DD'),
+      endDate: null,
       lastUpdatedById: 355,
       ECLKCResourcesUsed: [],
       nonECLKCResourcesUsed: [],
@@ -1035,8 +1041,6 @@ describe('ActivityReport', () => {
       deliveryMethod: null,
       version: 2,
       duration: null,
-      endDate: null,
-      startDate: null,
       activityRecipientType: 'recipient',
       activityRecipients: [
         {
@@ -1194,7 +1198,7 @@ describe('ActivityReport', () => {
     });
 
     fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
-      endDate: '',
+      startDate: moment().format('YYYY-MM-DD'),
       status: 'Draft',
       value: 37504,
       label: 'dfghgh',
