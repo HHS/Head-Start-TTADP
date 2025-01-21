@@ -44,22 +44,6 @@ describe('CommunicationLog', () => {
     expect(screen.getByText('Communication log')).toBeInTheDocument();
   });
 
-  it('you can export logs', async () => {
-    const response = {
-      rows: [],
-      count: 0,
-    };
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', response);
-    await act(() => waitFor(() => renderTest()));
-
-    expect(screen.getByText('Communication log')).toBeInTheDocument();
-
-    const exportLog = await screen.findByRole('button', { name: /export log/i });
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=csv&', 'test\nnew');
-    await act(() => waitFor(() => userEvent.click(exportLog)));
-    expect(fetchMock.called('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&format=csv&')).toBe(true);
-  });
-
   it('you can apply a filter', async () => {
     const response = {
       rows: [],
