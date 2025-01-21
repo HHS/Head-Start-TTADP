@@ -77,17 +77,13 @@ export const updateCommunicationLogById = async (logId, data) => {
   return response.json();
 };
 
-export const deleteCommunicationLogById = async (logId) => {
-  const response = await destroy(
-    join(
-      communicationLogUrl,
-      'log',
-      String(logId),
-    ),
-  );
-
-  return response.json();
-};
+export const deleteCommunicationLogById = async (logId) => destroy(
+  join(
+    communicationLogUrl,
+    'log',
+    String(logId),
+  ),
+);
 
 export const createCommunicationLogByRecipientId = async (regionId, recipientId, data) => {
   const response = await post(
