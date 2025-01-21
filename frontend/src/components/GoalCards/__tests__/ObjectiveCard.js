@@ -13,7 +13,11 @@ import UserContext from '../../../UserContext';
 
 describe('ObjectiveCard', () => {
   const history = createMemoryHistory();
-  const renderObjectiveCard = (objective, dispatchStatusChange = jest.fn()) => {
+  const renderObjectiveCard = (
+    objective,
+    dispatchStatusChange = jest.fn(),
+    isMonitoringGoal = false,
+  ) => {
     render(
       <UserContext.Provider value={{
         user: {
@@ -31,6 +35,7 @@ describe('ObjectiveCard', () => {
             goalStatus="In Progress"
             objectivesExpanded
             dispatchStatusChange={dispatchStatusChange}
+            isMonitoringGoal={isMonitoringGoal}
           />
         </Router>
       </UserContext.Provider>,
@@ -49,6 +54,7 @@ describe('ObjectiveCard', () => {
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
       topics: [],
+      citations: [],
       supportTypes: ['Planning'],
       activityReports: [
         {
@@ -79,6 +85,7 @@ describe('ObjectiveCard', () => {
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
       topics: [],
+      citations: [],
       supportTypes: ['Planning'],
       activityReports: [],
     };
@@ -106,6 +113,55 @@ describe('ObjectiveCard', () => {
     });
   });
 
+  it('shows citations addressed field when the prop isMonitoringGoal is true', async () => {
+    const objective = {
+      id: 123,
+      ids: [123],
+      title: 'This is an objective',
+      endDate: '2020-01-01',
+      reasons: ['reason1', 'reason2'],
+      status: 'In Progress',
+      grantNumbers: ['grant1', 'grant2'],
+      topics: [],
+      supportTypes: ['Planning'],
+      activityReports: [],
+      citations: ['citation1', 'citation2'],
+    };
+
+    renderObjectiveCard(objective, jest.fn(), true);
+
+    expect(screen.getByText('This is an objective')).toBeInTheDocument();
+    expect(screen.getByText('2020-01-01')).toBeInTheDocument();
+    expect(screen.getByText('reason1')).toBeInTheDocument();
+    expect(screen.getByText('reason2')).toBeInTheDocument();
+    expect(screen.getByText('Citations addressed')).toBeInTheDocument();
+    expect(screen.getByText('citation1, citation2')).toBeInTheDocument();
+  });
+
+  it('hides citations addressed field when the prop isMonitoringGoal is false', async () => {
+    const objective = {
+      id: 123,
+      ids: [123],
+      title: 'This is an objective',
+      endDate: '2020-01-01',
+      reasons: ['reason1', 'reason2'],
+      status: 'In Progress',
+      grantNumbers: ['grant1', 'grant2'],
+      topics: [],
+      supportTypes: ['Planning'],
+      activityReports: [],
+      citations: [],
+    };
+
+    renderObjectiveCard(objective, jest.fn(), false);
+    expect(screen.getByText('This is an objective')).toBeInTheDocument();
+    expect(screen.getByText('2020-01-01')).toBeInTheDocument();
+    expect(screen.getByText('reason1')).toBeInTheDocument();
+    expect(screen.getByText('reason2')).toBeInTheDocument();
+    expect(screen.queryAllByText('Citations addressed').length).toBe(0);
+    expect(screen.queryAllByText('citation1, citation2').length).toBe(0);
+  });
+
   it('suspends an objective', async () => {
     const objective = {
       id: 123,
@@ -116,6 +172,7 @@ describe('ObjectiveCard', () => {
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
       topics: [],
+      citations: [],
       supportTypes: ['Planning'],
       activityReports: [],
     };

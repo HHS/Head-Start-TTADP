@@ -787,7 +787,7 @@ parameters:
     default: "TTAHUB-3542/TTAHUB-3544/s3Queue-scanQueue-coverage"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "TTAHUB-3678/login"
+    default: "al-ttahub-3603-activity-report-objective-citations"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

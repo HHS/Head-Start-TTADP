@@ -33,7 +33,7 @@ export default class Users {
    * @returns {bool} whether the user can view the feature flag
    */
   canSeeBehindFeatureFlag(flag) {
-    return this.isAdmin() || this.user.flags.find((f) => f === flag);
+    return this.isAdmin() || !!(this.user.flags.find((f) => f === flag));
   }
 
   getAllAccessibleRegions() {
@@ -66,6 +66,17 @@ export default class Users {
   }
 
   canViewUsersInRegion(region) {
+    const permissions = this.user.permissions.find(
+      (permission) => (
+        (permission.scopeId === SCOPES.READ_WRITE_REPORTS
+          || permission.scopeId === SCOPES.READ_REPORTS
+          || permission.scopeId === SCOPES.APPROVE_REPORTS)
+        && permission.regionId === region),
+    );
+    return !_.isUndefined(permissions);
+  }
+
+  canViewCitationsInRegion(region) {
     const permissions = this.user.permissions.find(
       (permission) => (
         (permission.scopeId === SCOPES.READ_WRITE_REPORTS
