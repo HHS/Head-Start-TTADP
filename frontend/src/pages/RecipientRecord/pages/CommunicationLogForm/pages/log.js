@@ -157,6 +157,7 @@ const Log = ({ datePickerKey }) => {
         <FormItem
           label="Select any recipient goals that this activity supports."
           name="goals"
+          required={false}
         >
           <MultiSelect
             control={control}
