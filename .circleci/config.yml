@@ -1609,6 +1609,7 @@ jobs:
       - run:
           name: Manage Apps
           command: |
+            env
             chmod +x ./automation/ci/scripts/*-lock.sh
             chmod +x ./automation/ci/scripts/manage_apps.sh
             ./automation/ci/scripts/manage_apps.sh \
