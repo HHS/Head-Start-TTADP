@@ -403,6 +403,7 @@ class GoalTemplates{
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
+ standard : text
 }
 
 class Goals{
