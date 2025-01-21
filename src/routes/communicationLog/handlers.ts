@@ -77,7 +77,9 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
     raw: true,
   });
 
-  regionalUsers = regionalUsers.map((u) => ({ value: Number(u.id), label: `${u.name} (${u.rolename})` }));
+  regionalUsers = regionalUsers
+    .map((u) => ({ value: Number(u.id), label: `${u.name} (${u.rolename})` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   let standardGoals = await GoalTemplate.findAll({
     where: { standard: { [Op.ne]: null } },
@@ -85,7 +87,9 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
     raw: true,
   });
 
-  standardGoals = standardGoals.map((g) => ({ value: Number(g.id), label: g.standard }));
+  standardGoals = standardGoals
+    .map((g) => ({ value: Number(g.id), label: g.standard }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   return { regionalUsers, standardGoals };
 }
