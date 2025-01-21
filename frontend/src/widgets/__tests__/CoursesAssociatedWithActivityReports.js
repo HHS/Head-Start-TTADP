@@ -183,15 +183,19 @@ describe('iPD Courses Associated with Activity Reports', () => {
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
+
       expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
       expect(tableCells[2]).toHaveTextContent(/2/i);
       expect(tableCells[3]).toHaveTextContent(/4/i);
-      expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[6]).toHaveTextContent(/1/i);
-      expect(tableCells[7]).toHaveTextContent(/3/i);
-      expect(tableCells[9]).toHaveTextContent(/Sample Course 3/i);
-      expect(tableCells[10]).toHaveTextContent(/2/i);
-      expect(tableCells[11]).toHaveTextContent(/5/i);
+      expect(tableCells[5]).toHaveTextContent('');
+      expect(tableCells[6]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[7]).toHaveTextContent(/1/i);
+      expect(tableCells[8]).toHaveTextContent(/3/i);
+      expect(tableCells[9]).toHaveTextContent('');
+      expect(tableCells[10]).toHaveTextContent('');
+      expect(tableCells[11]).toHaveTextContent(/Sample Course 3/i);
+      expect(tableCells[12]).toHaveTextContent(/2/i);
+      expect(tableCells[13]).toHaveTextContent(/5/i);
     });
 
     // Sort.
@@ -204,12 +208,12 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[1]).toHaveTextContent(/Sample Course 1/i);
       expect(tableCells[2]).toHaveTextContent(/1/i);
       expect(tableCells[3]).toHaveTextContent(/3/i);
-      expect(tableCells[5]).toHaveTextContent(/Sample Course 2/i);
-      expect(tableCells[6]).toHaveTextContent(/2/i);
-      expect(tableCells[7]).toHaveTextContent(/4/i);
-      expect(tableCells[9]).toHaveTextContent(/Sample Course 3/i);
-      expect(tableCells[10]).toHaveTextContent(/2/i);
-      expect(tableCells[11]).toHaveTextContent(/5/i);
+      expect(tableCells[6]).toHaveTextContent(/Sample Course 2/i);
+      expect(tableCells[7]).toHaveTextContent(/2/i);
+      expect(tableCells[8]).toHaveTextContent(/4/i);
+      expect(tableCells[11]).toHaveTextContent(/Sample Course 3/i);
+      expect(tableCells[12]).toHaveTextContent(/2/i);
+      expect(tableCells[13]).toHaveTextContent(/5/i);
     });
   });
 
@@ -222,9 +226,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
       expect(tableCells[2]).toHaveTextContent(/2/i);
       expect(tableCells[3]).toHaveTextContent(/4/i);
-      expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[6]).toHaveTextContent(/1/i);
-      expect(tableCells[7]).toHaveTextContent(/3/i);
+      expect(tableCells[6]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[7]).toHaveTextContent(/1/i);
+      expect(tableCells[8]).toHaveTextContent(/3/i);
     });
 
     // Sort.
@@ -246,9 +250,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
         expect(tableCells[1]).toHaveTextContent(cellValues[0]);
         expect(tableCells[2]).toHaveTextContent(cellValues[1]);
         expect(tableCells[3]).toHaveTextContent(cellValues[2]);
-        expect(tableCells[5]).toHaveTextContent(cellValues[3]);
+        expect(tableCells[6]).toHaveTextContent(cellValues[3]);
         expect(tableCells[6]).toHaveTextContent(cellValues[4]);
-        expect(tableCells[7]).toHaveTextContent(cellValues[5]);
+        expect(tableCells[8]).toHaveTextContent(cellValues[5]);
       });
     });
 
@@ -260,9 +264,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
       expect(tableCells[2]).toHaveTextContent(/2/i);
       expect(tableCells[3]).toHaveTextContent(/4/i);
-      expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[6]).toHaveTextContent(/1/i);
-      expect(tableCells[7]).toHaveTextContent(/3/i);
+      expect(tableCells[6]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[7]).toHaveTextContent(/1/i);
+      expect(tableCells[8]).toHaveTextContent(/3/i);
     });
 
     sortColBtn = await screen.findByRole('button', { name: /course name\. activate to sort ascending/i });
@@ -274,9 +278,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[1]).toHaveTextContent(cellValues[0]);
       expect(tableCells[2]).toHaveTextContent(cellValues[1]);
       expect(tableCells[3]).toHaveTextContent(cellValues[2]);
-      expect(tableCells[5]).toHaveTextContent(cellValues[3]);
-      expect(tableCells[6]).toHaveTextContent(cellValues[4]);
-      expect(tableCells[7]).toHaveTextContent(cellValues[5]);
+      expect(tableCells[6]).toHaveTextContent(cellValues[3]);
+      expect(tableCells[7]).toHaveTextContent(cellValues[4]);
+      expect(tableCells[8]).toHaveTextContent(cellValues[5]);
     });
   });
 
