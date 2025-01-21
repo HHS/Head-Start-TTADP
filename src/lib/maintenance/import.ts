@@ -17,6 +17,7 @@ import {
 } from '../importSystem';
 import LockManager from '../lockManager';
 import { auditLogger } from '../../logger';
+import handlePostProcessing from '../importSystem/postProcess';
 
 /**
  * Enqueues a maintenance job for imports with a specified type and optional id.
@@ -252,6 +253,11 @@ const importProcess = async (id) => maintenanceCommand(
         // Process the import and await the results.
         const processResults = await processImport(id);
         auditLogger.log('info', `import: importProcess->maintenanceCommand: ${JSON.stringify({ processResults })}`);
+
+        // Post process.
+        // Uses the object set on the import.postProcessingActions field in the database.
+        await handlePostProcessing(id);
+
         // Check if there are more items to process after the current import.
         const more = await moreToProcess(id);
         auditLogger.log('info', `import: importProcess->maintenanceCommand: ${JSON.stringify({ more })}`);

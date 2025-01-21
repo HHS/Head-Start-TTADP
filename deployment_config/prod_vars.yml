@@ -5,7 +5,7 @@ worker_instances: 2
 worker_memory: 1GB
 similarity_api_instances: 1
 similarity_api_memory: 1GB
-similarity_api_disk_quota: 5GB
+similarity_api_disk_quota: 6GB
 LOG_LEVEL: info
 AUTH_BASE: https://hses.ohs.acf.hhs.gov
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
