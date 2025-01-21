@@ -25,6 +25,18 @@ jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/communicationLog');
 jest.mock('../../services/accessValidation');
+jest.mock('../../models', () => ({
+  User: {
+    findAll: jest.fn(),
+  },
+  GoalTemplate: {
+    findAll: jest.fn(),
+  },
+  sequelize: {
+    close: jest.fn(),
+    col: jest.fn(),
+  },
+}));
 
 describe('communicationLog handlers', () => {
   const REGION_ID = 15;
@@ -555,9 +567,9 @@ describe('communicationLog handlers', () => {
       };
       const mockUsers = [{ value: 1, label: 'User (Role)' }];
       const mockGoals = [{ value: 1, label: 'Goal' }];
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      User.findAll.mockImplementation(() => Promise.resolve(mockUsers));
-      GoalTemplate.findAll.mockImplementation(() => Promise.resolve(mockGoals));
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'User', rolename: 'Role' }]);
+      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
       const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
       expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals });
     });
@@ -591,10 +603,10 @@ describe('communicationLog handlers', () => {
       };
       const mockUsers = [{ value: 1, label: 'User (Role)' }];
       const mockGoals = [{ value: 1, label: 'Goal' }];
-      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      User.findAll.mockImplementation(() => Promise.resolve(mockUsers));
-      GoalTemplate.findAll.mockImplementation(() => Promise.resolve(mockGoals));
-      await communicationLogAdditionalData(mockRequest, { ...mockResponse });
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'User', rolename: 'Role' }]);
+      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
+      const result = await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       // eslint-disable-next-line max-len
       expect(statusJson).toHaveBeenCalledWith({ regionalUsers: mockUsers, standardGoals: mockGoals });
     });
