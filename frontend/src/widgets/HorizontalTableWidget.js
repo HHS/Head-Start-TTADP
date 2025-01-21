@@ -1,5 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useState, useEffect } from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Table, Checkbox } from '@trussworks/react-uswds';
@@ -197,7 +198,7 @@ export default function HorizontalTableWidget(
                 )
             }
             {
-            headers.map((h) => (<Header header={h} sortingEnabled={enableSorting} />))
+            headers.map((h) => (<Header header={h} key={`header-${uniqueId()}`} sortingEnabled={enableSorting} />))
             }
             {
             data.some((r) => r.actions) && (
