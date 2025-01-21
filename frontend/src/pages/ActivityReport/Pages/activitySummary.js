@@ -243,7 +243,7 @@ const ActivitySummary = ({
     const selectedMonitoringGoal = allGoals.filter((gf) => gf && gf.standard).find((goal) => goal.standard === 'Monitoring') || {};
     if (selectedMonitoringGoal) {
       // Get all the citations in a single array from all the goal objectives.
-      const allCitations = selectedMonitoringGoal.objectives
+      const allCitations = (selectedMonitoringGoal.objectives || [])
         .map((objective) => objective.citations)
         .flat()
         .filter((citation) => citation !== null);
