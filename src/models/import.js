@@ -43,6 +43,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       allowNull: false,
     },
+    postProcessingActions: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Import',

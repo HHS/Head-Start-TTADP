@@ -1,5 +1,4 @@
 import {
-  getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
 
@@ -12,6 +11,7 @@ const {
   ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCitation,
   Goal,
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
@@ -138,11 +138,76 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   ]);
 };
 
+/*
+  - ActivityReportObjectiveCitation -
+  Each row in this table is per grant (from ARO).
+  Each row has a json column called 'monitoringReferences', this is an array of objects.
+  Each object is unique by a combination of grantId, findingId, and reviewName (for the same grant).
+  To avoid complex lookups, we will simply UPDATE (by id) existing and CREATE new citations.
+  Citations to remove will be determined by id.
+*/
+export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
+  let newCitations = [];
+  // Delete all existing citations for this activity report objective.
+  await ActivityReportObjectiveCitation.destroy({
+    where: { activityReportObjectiveId },
+    individualHooks: true,
+    hookMetadata: { objectiveId },
+  });
+
+  // Create citations to save.
+  if (citations && citations.length > 0) {
+    // Get the grant id from the goal.
+    const goal = await Goal.findOne({
+      attributes: ['grantId'],
+      include: [
+        {
+          model: Objective,
+          as: 'objectives',
+          where: { id: objectiveId },
+          required: true,
+        },
+      ],
+    });
+
+    const grantForThisCitation = goal.grantId;
+
+    // Get all the citations for the grant.
+    const citationsToSave = citations.reduce((acc, citation) => {
+      const { monitoringReferences } = citation;
+      monitoringReferences.forEach((ref) => {
+        const { grantId } = ref;
+        if (grantId === grantForThisCitation) {
+          acc.push(citation);
+        }
+      });
+      return acc;
+    }, []);
+
+    newCitations = citationsToSave.map((citation) => (
+      {
+        activityReportObjectiveId,
+        citation: citation.citation,
+        // Only save the monitoring references for the grant we are working with.
+        monitoringReferences: citation.monitoringReferences.filter(
+          (ref) => ref.grantId === grantForThisCitation,
+        ),
+      }));
+
+    // If we have citations to save, create them.
+    if (newCitations.length > 0) {
+      return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });
+    }
+  }
+  return newCitations;
+};
+
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
     files,
     resources,
     topics,
+    citations,
     ttaProvided,
     status,
     courses,
@@ -196,6 +261,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
     cacheCourses(objectiveId, activityReportObjectiveId, courses),
+    cacheCitations(objectiveId, activityReportObjectiveId, citations),
   ]);
 };
 

@@ -34,6 +34,14 @@ export default function ReadOnlyObjective({ objective }) {
         <p className="usa-prose margin-0">{objective.title}</p>
       </div>
 
+      {objective.citations && objective.citations.length
+        ? (
+          <div className="margin-bottom-2">
+            <h4 className="margin-0">Citations</h4>
+            <p className="usa-prose margin-0">{objective.citations.map((citation) => citation.name).join(', ')}</p>
+          </div>
+        ) : null }
+
       {objective.topics && objective.topics.length
         ? (
           <div className="margin-bottom-2">
@@ -133,6 +141,9 @@ ReadOnlyObjective.propTypes = {
     })),
     supportType: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+    })),
+    citations: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string,
     })),
     courses: PropTypes.arrayOf(PropTypes.shape({

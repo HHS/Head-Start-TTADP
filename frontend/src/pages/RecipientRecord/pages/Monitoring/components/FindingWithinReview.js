@@ -5,6 +5,7 @@ import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
 import ReviewObjective from './ReviewObjective';
 import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
+import CitationDrawer from './CitationDrawer';
 import './FindingWithinReview.css';
 
 export default function FindingWithinReview({ finding, regionId }) {
@@ -12,13 +13,13 @@ export default function FindingWithinReview({ finding, regionId }) {
     <div className="ttahub-review-card--finding-within-review margin-top-4" key={uniqueId('review-card-finding-')}>
       <DescriptionList>
         <DescriptionItem title="Citation">
-          {finding.citation}
+          <CitationDrawer citationNumber={finding.citation} />
         </DescriptionItem>
         <DescriptionItem title="Finding status">
           {finding.status}
         </DescriptionItem>
         <DescriptionItem title="Finding type">
-          {finding.type}
+          {finding.findingType}
         </DescriptionItem>
         <DescriptionItem title="Due date (as of review)">
           {finding.correctionDeadline}
@@ -39,7 +40,7 @@ FindingWithinReview.propTypes = {
   finding: PropTypes.shape({
     citation: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
-    type: PropTypes.string.isRequired,
+    findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     correctionDeadline: PropTypes.string.isRequired,
     objectives: PropTypes.arrayOf(PropTypes.shape({

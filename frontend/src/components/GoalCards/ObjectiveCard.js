@@ -20,6 +20,7 @@ function ObjectiveCard({
   regionId,
   dispatchStatusChange,
   forceReadOnly,
+  isMonitoringGoal,
 }) {
   const {
     title,
@@ -31,6 +32,7 @@ function ObjectiveCard({
     activityReports,
     supportType,
     ids,
+    citations,
   } = objective;
   const modalRef = useRef(null);
   const [localStatus, setLocalStatus] = useState(status || 'Not Started');
@@ -106,6 +108,14 @@ function ObjectiveCard({
         <span className="margin-right-3 desktop:text-normal text-bold">Objective </span>
         <div>{title}</div>
       </li>
+      {
+        isMonitoringGoal && (
+          <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+            <span className="margin-right-3 desktop:text-normal text-bold">Citations addressed </span>
+            <div>{citations.join(', ')}</div>
+          </li>
+        )
+      }
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Activity reports </span>
         <ul className="usa-list usa-list--unstyled">
@@ -205,6 +215,7 @@ export const objectivePropTypes = PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })),
+  citations: PropTypes.arrayOf(PropTypes.string),
   supportType: PropTypes.string,
   ids: PropTypes.arrayOf(PropTypes.number).isRequired,
 });
@@ -221,6 +232,7 @@ objectivePropTypes.defaultProps = {
 ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,
   objectivesExpanded: PropTypes.bool.isRequired,
+  isMonitoringGoal: PropTypes.bool,
   goalStatus: PropTypes.string,
   regionId: PropTypes.number.isRequired,
   dispatchStatusChange: PropTypes.func,
@@ -231,6 +243,7 @@ ObjectiveCard.defaultProps = {
   dispatchStatusChange: () => {},
   goalStatus: null,
   forceReadOnly: false,
+  isMonitoringGoal: false,
 };
 
 export default ObjectiveCard;

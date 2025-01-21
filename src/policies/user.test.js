@@ -196,6 +196,47 @@ describe('User policies', () => {
     });
   });
 
+  describe('canViewCitationsInRegion', () => {
+    const writeUser = {
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      }],
+    };
+    const approveUser = {
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      }],
+    };
+    const readUser = {
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      }],
+    };
+
+    it('is true if the user has read/write permissions', () => {
+      const policy = new User(writeUser);
+      expect(policy.canViewCitationsInRegion(1)).toBeTruthy();
+    });
+
+    it('is true if the user has read permissions', () => {
+      const policy = new User(readUser);
+      expect(policy.canViewCitationsInRegion(1)).toBeTruthy();
+    });
+
+    it('is true if the user has approve permissions', () => {
+      const policy = new User(approveUser);
+      expect(policy.canViewCitationsInRegion(1)).toBeTruthy();
+    });
+
+    it('is false if the user does not have read/write permissions', () => {
+      const policy = new User(writeUser);
+      expect(policy.canViewCitationsInRegion(2)).toBeFalsy();
+    });
+  });
+
   describe('checkPermissions', () => {
     const userWithFeatureFlag = {
       permissions: [{ regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS }],

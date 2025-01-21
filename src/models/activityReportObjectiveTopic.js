@@ -25,11 +25,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     activityReportObjectiveId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     topicId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   }, {

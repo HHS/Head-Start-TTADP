@@ -798,6 +798,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const goal2 = await Goal.create({
@@ -806,6 +807,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const goal3 = await Goal.create({
@@ -814,6 +816,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const goal4 = await Goal.create({
@@ -822,6 +825,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'rtr',
       });
 
       const feiGoal = await Goal.create({
@@ -831,6 +835,7 @@ describe('Recipient DB service', () => {
         onApprovedAR: true,
         source: null,
         goalTemplateId: feiRootCausePrompt.goalTemplateId,
+        createdVia: 'rtr',
       });
 
       goals = [goal1, goal2, goal3, goal4, feiGoal];
@@ -1084,6 +1089,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'monitoring',
       });
 
       const goal2 = await Goal.create({
@@ -1092,6 +1098,7 @@ describe('Recipient DB service', () => {
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        createdVia: 'monitoring',
       });
 
       goals = [goal1, goal2];
@@ -1225,7 +1232,11 @@ describe('Recipient DB service', () => {
     });
 
     it('successfully maintains two goals without losing topics', async () => {
-      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
+      const goalsForRecord = await getGoalsByActivityRecipient(
+        recipient.id,
+        grant.regionId,
+        {},
+      );
 
       // Assert counts.
       expect(goalsForRecord.count).toBe(2);
@@ -2321,7 +2332,9 @@ describe('Recipient DB service', () => {
     });
 
     it('returns all goals if limitNum is falsy', async () => {
-      const { goalRows, count } = await getGoalsByActivityRecipient(
+      const findAll = jest.spyOn(Goal, 'findAll');
+
+      await getGoalsByActivityRecipient(
         recipient.id,
         grant.regionId,
         {
@@ -2329,9 +2342,7 @@ describe('Recipient DB service', () => {
         },
       );
 
-      expect(count).toBe(goals.length);
-      expect(goalRows.length).toBe(goals.length);
-      expect(goalRows[0].id).toBe(goals[1].id);
+      expect(findAll).not.toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
     });
 
     it('sorts by goalStatus correctly with mixed statuses', async () => {

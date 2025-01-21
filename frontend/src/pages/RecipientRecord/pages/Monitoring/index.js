@@ -1,5 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect, useState, useMemo, useContext,
+} from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useHistory } from 'react-router';
 import Container from '../../../../components/Container';
 import Tabs from '../../../../components/Tabs';
@@ -7,6 +10,7 @@ import { getTtaByCitation, getTtaByReview } from '../../../../fetchers/monitorin
 import ReviewCards from './components/ReviewCards';
 import CitationCards from './components/CitationCards';
 import { ROUTES } from '../../../../Constants';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const MONITORING_PAGES = {
   REVIEW: 'review',
@@ -29,7 +33,7 @@ export default function Monitoring({
   match,
 }) {
   const { params: { currentPage, recipientId, regionId } } = match;
-
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
   const [byReview, setByReview] = useState([]);
   const [byCitation, setByCitation] = useState([]);
@@ -53,22 +57,25 @@ export default function Monitoring({
     }
   }, [currentPage, history, recipientId, regionId]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchMonitoringData(slug) {
-      const data = await lookup[slug].fetcher(recipientId, regionId);
-      lookup[slug].setter(data);
-    }
-
-    if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
+      setIsAppLoading(true);
       try {
-        fetchMonitoringData(currentPage);
+        const data = await lookup[slug].fetcher(recipientId, regionId);
+        lookup[slug].setter(data);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching monitoring data:', error);
         history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${error.status}`);
+      } finally {
+        setIsAppLoading(false);
       }
     }
-  }, [currentPage, history, lookup, recipientId, regionId]);
+
+    if (currentPage && ALLOWED_PAGE_SLUGS.includes(currentPage)) {
+      fetchMonitoringData(currentPage);
+    }
+  }, [currentPage, history, lookup, recipientId, regionId, setIsAppLoading]);
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
