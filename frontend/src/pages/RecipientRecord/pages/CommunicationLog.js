@@ -26,8 +26,8 @@ const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'communication-log-filters';
 
 const DEFAULT_SORT_CONFIG = {
-  sortBy: 'id',
-  direction: 'asc',
+  sortBy: 'communicationDate',
+  direction: 'desc',
   activePage: 1,
 };
 

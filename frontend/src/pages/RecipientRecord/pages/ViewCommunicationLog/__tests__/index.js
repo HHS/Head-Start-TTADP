@@ -87,6 +87,8 @@ describe('ViewCommunicationForm', () => {
           2: NOT_STARTED,
           3: NOT_STARTED,
         },
+        otherStaff: [],
+        goals: [],
       },
     };
 
@@ -147,6 +149,8 @@ describe('ViewCommunicationForm', () => {
           2: NOT_STARTED,
           3: NOT_STARTED,
         },
+        otherStaff: [],
+        goals: [],
       },
     };
 
