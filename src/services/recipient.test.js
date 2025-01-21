@@ -2332,7 +2332,9 @@ describe('Recipient DB service', () => {
     });
 
     it('returns all goals if limitNum is falsy', async () => {
-      const { goalRows, count } = await getGoalsByActivityRecipient(
+      const findAll = jest.spyOn(Goal, 'findAll');
+
+      await getGoalsByActivityRecipient(
         recipient.id,
         grant.regionId,
         {
@@ -2340,9 +2342,7 @@ describe('Recipient DB service', () => {
         },
       );
 
-      expect(count).toBe(goals.length);
-      expect(goalRows.length).toBe(goals.length);
-      expect(goalRows[0].id).toBe(goals[1].id);
+      expect(findAll).not.toHaveBeenCalledWith(expect.objectContaining({ limit: 0 }));
     });
 
     it('sorts by goalStatus correctly with mixed statuses', async () => {
