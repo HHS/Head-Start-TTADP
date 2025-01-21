@@ -223,4 +223,5 @@ export {
   updateLogById,
   deleteLogById,
   createLogByRecipientId,
+  getAvailableUsersAndGoals,
 };
