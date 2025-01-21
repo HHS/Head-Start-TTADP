@@ -154,9 +154,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[0]).toHaveTextContent(/secondrow/i);
       expect(tableCells[1]).toHaveTextContent(/2/i);
       expect(tableCells[2]).toHaveTextContent(/4/i);
-      expect(tableCells[3]).toHaveTextContent(/firstrow/i);
-      expect(tableCells[4]).toHaveTextContent(/1/i);
-      expect(tableCells[5]).toHaveTextContent(/3/i);
+      expect(tableCells[4]).toHaveTextContent(/firstrow/i);
+      expect(tableCells[5]).toHaveTextContent(/1/i);
+      expect(tableCells[6]).toHaveTextContent(/3/i);
     });
 
     // Sort.
@@ -169,9 +169,9 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[0]).toHaveTextContent(/firstrow/i);
       expect(tableCells[1]).toHaveTextContent(/1/i);
       expect(tableCells[2]).toHaveTextContent(/3/i);
-      expect(tableCells[3]).toHaveTextContent(/secondrow/i);
-      expect(tableCells[4]).toHaveTextContent(/2/i);
-      expect(tableCells[5]).toHaveTextContent(/4/i);
+      expect(tableCells[4]).toHaveTextContent(/secondrow/i);
+      expect(tableCells[5]).toHaveTextContent(/2/i);
+      expect(tableCells[6]).toHaveTextContent(/4/i);
     });
   });
 
