@@ -7,7 +7,7 @@ import { auditLogger } from '../logger';
 import { changeGoalStatusWithSystemUser } from '../goalServices/changeGoalStatus';
 
 const createMonitoringGoals = async () => {
-  const cutOffDate = '2024-01-21';
+  const cutOffDate = '2025-01-21';
   // Verify that the monitoring goal template exists.
   const monitoringGoalTemplate = await GoalTemplate.findOne({
     where: {
