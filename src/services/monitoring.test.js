@@ -98,7 +98,7 @@ describe('monitoring services', () => {
         emotionalSupport: 6.2303,
         classroomOrganization: 5.2303,
         instructionalSupport: 3.2303,
-        reportDeliveryDate: '2024-05-22 21:00:00-07',
+        reportDeliveryDate: '2025-05-22 21:00:00-07',
       });
 
       jest.spyOn(Grant, 'findOne').mockResolvedValueOnce({
@@ -174,7 +174,7 @@ describe('monitoring services', () => {
       });
 
       expect(data).not.toBeNull();
-      expect(data.reviewDate).toEqual('02/22/2024');
+      expect(data.reviewDate).toEqual('02/22/2025');
 
       await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C809' }, force: true });
       await MonitoringReview.destroy({ where: { reviewId: 'D58FBB78-91CA-4236-8DB6-0022E7E8D909' }, force: true });
