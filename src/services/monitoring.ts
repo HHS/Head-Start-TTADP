@@ -49,9 +49,8 @@ const {
   Role,
 } = db;
 
-const MIN_DELIVERY_DATE = '2023-01-01';
+const MIN_DELIVERY_DATE = '2025-01-21';
 const REVIEW_STATUS_COMPLETE = 'Complete';
-const EIGHT_HOURS = 60 * 60 * 8;
 
 async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
   const grants = await Grant.findAll({
