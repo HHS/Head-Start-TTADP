@@ -269,7 +269,7 @@ export default function HorizontalTableWidget(
                       fixed
                       label="Actions for Communication Log"
                       menuItems={r.actions}
-                      menuWidthOffset={0}
+                      menuWidthOffset={110}
                     />
                   ) : null}
                 </td>
