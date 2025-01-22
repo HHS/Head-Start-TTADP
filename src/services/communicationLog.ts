@@ -190,28 +190,40 @@ const logsByRecipientAndScopes = async (
   direction = 'desc',
   limit = COMMUNICATION_LOGS_PER_PAGE || false,
   scopes: WhereOptions[] = [],
-) => CommunicationLog
-  .findAndCountAll({
-    attributes: LOG_INCLUDE_ATTRIBUTES,
-    where: {
-      recipientId,
-      [Op.and]: [
-        ...scopes,
-      ],
-    },
-    include: [
-      {
-        model: db.User,
-        attributes: [
-          'name', 'id',
+) => {
+  const logs = await CommunicationLog
+    .findAndCountAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      where: {
+        recipientId,
+        [Op.and]: [
+          ...scopes,
         ],
-        as: 'author',
       },
-    ],
-    order: orderLogsBy(sortBy, direction),
-    limit: limit || undefined,
-    offset,
-  });
+      include: [
+        {
+          model: db.File,
+          as: 'files',
+        },
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+      // TODO: Why does this make the query fail
+      // with a missing FROM-clause entry?
+      //
+      // limit: limit || undefined,
+      offset,
+    });
+
+  return logs;
+};
 
 const deleteLog = async (id: number) => CommunicationLog.destroy({
   where: {

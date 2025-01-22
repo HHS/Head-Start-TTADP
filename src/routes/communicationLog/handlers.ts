@@ -53,9 +53,7 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
   }
 
   let regionalUsers = await User.findAll({
-    attributes: ['id', 'name',
-      [sequelize.col('"userRoles".role.name'), 'rolename'],
-    ],
+    attributes: ['id', 'name'],
     where: {
       [Op.and]: [
         { '$permissions.scopeId$': SCOPES.SITE_ACCESS },
@@ -78,7 +76,7 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
   });
 
   regionalUsers = regionalUsers
-    .map((u) => ({ value: Number(u.id), label: `${u.name} (${u.rolename})` }))
+    .map((u) => ({ value: Number(u.id), label: u.name }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
   let standardGoals = await GoalTemplate.findAll({
