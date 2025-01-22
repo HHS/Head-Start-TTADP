@@ -62,7 +62,7 @@ const Log = ({ datePickerKey }) => {
             name="otherStaff"
             id="otherStaff"
             options={otherStaffOptions}
-            required={false}
+            required="Select at least one"
             placeholderText="- Select -"
           />
         </FormItem>
