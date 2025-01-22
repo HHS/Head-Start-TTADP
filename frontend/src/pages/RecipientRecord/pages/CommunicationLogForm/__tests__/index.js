@@ -3,6 +3,7 @@ import React from 'react';
 import join from 'url-join';
 import {
   render, screen, act, waitFor,
+  within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -162,6 +163,14 @@ describe('CommunicationLogForm', () => {
       renderTest('new', 'log');
     }));
 
+    const view = screen.getByTestId('otherStaff-click-container');
+    const select = within(view).getByText(/- select -/i);
+    userEvent.click(select);
+    await act(async () => {
+      userEvent.type(select, 'One');
+      userEvent.type(select, '{enter}');
+    });
+
     const communicationDate = document.querySelector('#communicationDate');
     userEvent.type(communicationDate, '11/01/2023');
 
@@ -252,6 +261,8 @@ describe('CommunicationLogForm', () => {
         purpose: 'Monitoring',
         duration: '1',
         notes: 'This is a note',
+        goals: [{ label: 'CQI and Data', value: '1' }],
+        otherStaff: [{ label: 'A', value: '1' }],
         specialistNextSteps: [
           {
             note: 'next step 1',
@@ -306,6 +317,8 @@ describe('CommunicationLogForm', () => {
         duration: 1,
         regionId: '1',
         createdAt: '2023-11-15T16:15:55.134Z',
+        goals: [{ label: 'CQI and Data', value: '1' }],
+        otherStaff: [{ label: 'A', value: '1' }],
         pageState: {
           1: 'Complete',
           2: 'Complete',
@@ -362,6 +375,8 @@ describe('CommunicationLogForm', () => {
         duration: 1,
         regionId: '1',
         createdAt: '2023-11-15T16:15:55.134Z',
+        goals: [{ label: 'CQI and Data', value: '1' }],
+        otherStaff: [{ label: 'A', value: '1' }],
         pageState: {
           1: 'Complete',
           2: 'Complete',
@@ -418,6 +433,8 @@ describe('CommunicationLogForm', () => {
         duration: 1,
         regionId: '1',
         createdAt: '2023-11-15T16:15:55.134Z',
+        goals: [{ label: 'CQI and Data', value: '1' }],
+        otherStaff: [{ label: 'A', value: '1' }],
         pageState: {
           1: 'Complete',
           2: 'Complete',
