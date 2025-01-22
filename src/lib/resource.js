@@ -385,8 +385,9 @@ const getResourceMetaDataJob = async (job) => {
   } = job.data;
 
   try {
-    // Determine if this is an ECLKC resource.
-    const isEclkc = resourceUrl.includes('headstart.gov');
+    // Determine if this is an ECLKC or HeadStart resource.
+    const isEclkc = resourceUrl.includes('eclkc.ohs.acf.hhs.gov');
+    const isHeadStart = resourceUrl.includes('headstart.gov');
 
     let statusCode;
     let mimeType;
@@ -411,8 +412,8 @@ const getResourceMetaDataJob = async (job) => {
       return { status: statusCode || 500, data: { url: resourceUrl } };
     }
 
-    // If it is an ECLKC resource, get the metadata values.
-    if (isEclkc) {
+    // If it is an ECLKC or HeadStart resource, get the metadata values.
+    if (isEclkc || isHeadStart) {
       ({ title, statusCode } = await getMetadataValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
         auditLogger.error(`Resource Queue: Warning, unable to retrieve metadata or resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);
