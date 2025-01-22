@@ -21,6 +21,7 @@ import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting from '../../../hooks/useWidgetSorting';
 import { EMPTY_ARRAY } from '../../../Constants';
 import Modal from '../../../components/Modal';
+import { UsersIcon } from '../../../components/icons';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'communication-log-filters';
@@ -181,6 +182,10 @@ export default function CommunicationLog({ regionId, recipientId }) {
           isUrl: true,
           isInternalLink: true,
           link: `/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`,
+          // TODO: Multi-recipient support isn't implemented yet, so data.recipients may not exactly
+          // be correct here, and may need to be changed when MR support is in.
+          suffixContent:
+            log.data.recipients && log.data.recipients.length > 0 ? <UsersIcon /> : null,
           data: [
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose },
