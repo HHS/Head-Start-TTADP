@@ -1,6 +1,4 @@
-/* eslint-disable import/prefer-default-export */
 import { Sequelize, Op } from 'sequelize';
-import Users from '../policies/user';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
 
@@ -61,37 +59,19 @@ specified region.
 export async function getCuratedTemplates(
   grantIds: number[] | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user: any = null,
 ): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
 
-  // Check if the user has the monitoring feature flag.
-  let hasGoalMonitoringOverride = false;
-  if (user) {
-    hasGoalMonitoringOverride = !!(new Users(user).canSeeBehindFeatureFlag('monitoring_integration'));
-  }
-  // If they have the monitoring flag include monitoring goals.
   let monitoringGoalIds = [];
-  if (hasGoalMonitoringOverride) {
-    const monitoringGoals = await GoalModel.findAll({
-      attributes: ['id'],
-      where: {
-        createdVia: 'monitoring',
-        grantId: grantIds,
-      },
-    });
-    monitoringGoalIds = monitoringGoals.map((goal) => goal.id);
-  }
-
-  const filterForMonitoringGoals = monitoringGoalIds.length > 0
-    ? {
-      [Op.or]: [
-        { '$goals.id$': monitoringGoalIds },
-        { '$goals.createdVia$': { [Op.not]: 'monitoring' } },
-      ],
-    }
-    : { '$goals.createdVia$': { [Op.not]: 'monitoring' } };
+  const monitoringGoals = await GoalModel.findAll({
+    attributes: ['id'],
+    where: {
+      createdVia: 'monitoring',
+      grantId: grantIds,
+    },
+  });
+  monitoringGoalIds = monitoringGoals.map((goal) => goal.id);
 
   return GoalTemplateModel.findAll({
     attributes: [
@@ -152,10 +132,11 @@ export async function getCuratedTemplates(
     ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
-      ...filterForMonitoringGoals,
       [Op.or]: [
         { '$"region.grants"."id"$': { [Op.not]: null } },
         { regionId: null },
+        { '$goals.id$': monitoringGoalIds },
+        { '$goals.createdVia$': { [Op.not]: 'monitoring' } },
       ],
     },
     order: [['templateName', 'ASC']],
