@@ -96,6 +96,7 @@ export default function RegionalCommunicationLog() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const filtersToApply = expandFilters(filters);
 
   return (
