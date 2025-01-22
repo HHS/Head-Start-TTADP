@@ -1,9 +1,21 @@
-import { parseCheckboxEvent, NOOP, arrayExistsAndHasLength } from '../Constants';
+import { parseCheckboxEvent, NOOP, arrayExistsAndHasLength, mustBeQuarterHalfOrWhole } from '../Constants';
 
 describe('Constants', () => {
   describe('NOOP', () => {
     it('returns undefined', () => {
       expect(NOOP()).toBeUndefined();
+    });
+  });
+
+  describe('mustBeQuarterHalfOrWhole', () => {
+    it('works, happy path', () => {
+      const x = mustBeQuarterHalfOrWhole(1);
+      expect(x).toBe(true);
+    });
+
+    it('works, sad path', () => {
+      const x = mustBeQuarterHalfOrWhole(1.1);
+      expect(x).toBe('Duration must be rounded to the nearest quarter hour');
     });
   });
 
