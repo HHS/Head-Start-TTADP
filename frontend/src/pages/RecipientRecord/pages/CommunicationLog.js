@@ -41,6 +41,7 @@ const COMMUNICATION_LOG_FILTER_CONFIG = [
 COMMUNICATION_LOG_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
 const headers = ['Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
+const headersForExporting = [...headers, 'Recipient next steps', 'Specialist next steps', 'Files'];
 
 const DeleteLogModal = ({
   modalRef,
@@ -99,7 +100,6 @@ export default function CommunicationLog({ regionId, recipientId }) {
   const [tabularData, setTabularData] = useState([]);
   const [logToDelete, setLogToDelete] = useState(null);
   const modalRef = useRef();
-  // const widgetRef = useRef(null);
   const history = useHistory();
 
   const { user } = useContext(UserContext);
@@ -119,7 +119,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
 
   const { exportRows } = useWidgetExport(
     tabularData,
-    headers,
+    headersForExporting,
     checkboxes,
     'Log ID',
     'Communication_Log_Export',
@@ -131,7 +131,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
     () => {}, // capture function
     checkboxes,
     exportRows,
-  );
+  ).filter((m) => !m.label.includes('Display'));
 
   const {
     requestSort,
@@ -188,6 +188,9 @@ export default function CommunicationLog({ regionId, recipientId }) {
             { title: 'Creator name', value: log.authorName },
             { title: 'Other TTA staff', value: (log.data.otherStaff || []).map((u) => u.label).join(', '), tooltip: true },
             { title: 'Result', value: log.data.result },
+            { title: 'Recipient next steps', value: log.data.recipientNextSteps.map((s) => s.note).join(', '), hidden: true },
+            { title: 'Specialist next steps', value: log.data.specialistNextSteps.map((s) => s.note).join(', '), hidden: true },
+            { title: 'Files', value: log.files.map((f) => f.originalFileName).join(', '), hidden: true },
           ],
           actions: log.userId === user.id ? [
             { label: 'View', onClick: () => handleRowActionClick('View', log) },
@@ -246,7 +249,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
         />
       </div>
       <WidgetContainer
-        menuItems={menuItems}
+        menuItems={logs && logs.count > 0 ? menuItems : []}
         className="maxw-widescreen"
         title="Communication log"
         showPagingBottom={logs && logs.count > 0}

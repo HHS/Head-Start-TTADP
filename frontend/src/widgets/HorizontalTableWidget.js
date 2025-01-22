@@ -190,9 +190,9 @@ export default function HorizontalTableWidget(
             }
             {
               enableSorting
-                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, `smarthub-horizontal-table-first-column ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, `smarthub-horizontal-table-first-column smarthub-horizontal-table-first-column-border ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
                 : (
-                  <th className={`smarthub-horizontal-table-first-column data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                  <th className={`smarthub-horizontal-table-first-column smarthub-horizontal-table-first-column-border data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     {firstHeading}
                   </th>
                 )
@@ -202,7 +202,7 @@ export default function HorizontalTableWidget(
             }
             {
             data.some((r) => r.actions) && (
-              <th scope="col" aria-label="context menu" className="">
+              <th scope="col" aria-label="context menu" className="smarthub-horizontal-table-last-column">
                 Actions
               </th>
             )
@@ -241,7 +241,7 @@ export default function HorizontalTableWidget(
                         : r.heading
                   }
                 </td>
-                {(r.data || []).map((d, cellIndex) => (
+                {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {
                       // eslint-disable-next-line no-nested-ternary
