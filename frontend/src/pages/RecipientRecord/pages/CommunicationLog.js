@@ -280,6 +280,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
             sortConfig={sortConfig}
             requestSort={requestSort}
             showTotalColumn={false}
+            showDashForNullValue
           />
         ) : (
           <div className="display-flex flex-column flex-align-center flex-justify-center width-full padding-4 minh-tablet">
