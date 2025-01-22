@@ -57,9 +57,7 @@ describe('Constants', () => {
     });
 
     it('returns null checked and value from event', () => {
-      const event = {
-        target: {},
-      };
+      const event = {};
       expect(parseCheckboxEvent(event)).toEqual({
         checked: null,
         value: null,
