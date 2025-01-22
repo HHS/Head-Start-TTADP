@@ -59,10 +59,6 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
-    deletedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
-    },
     templateNameModifiedAt: {
       allowNull: false,
       type: DataTypes.DATE,

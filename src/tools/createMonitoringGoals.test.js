@@ -1978,7 +1978,7 @@ describe('createMonitoringGoals', () => {
     ], { individualHooks: true });
 
     // Retrieve the goal template.
-    goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' }, logging: console.log });
+    goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' }, logging: console.log, paranoid: false });
     console.log({ goalTemplate });
 
     // Create a goal for grantThatAlreadyHasMonitoringGoal2.
