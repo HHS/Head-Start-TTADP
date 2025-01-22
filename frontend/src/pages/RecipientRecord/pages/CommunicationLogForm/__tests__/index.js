@@ -217,6 +217,14 @@ describe('CommunicationLogForm', () => {
       renderTest('new', 'log');
     }));
 
+    const view = screen.getByTestId('otherStaff-click-container');
+    const select = within(view).getByText(/- select -/i);
+    userEvent.click(select);
+    await act(async () => {
+      userEvent.type(select, 'One');
+      userEvent.type(select, '{enter}');
+    });
+
     const communicationDate = document.querySelector('#communicationDate');
     userEvent.type(communicationDate, '11/01/2023');
 
