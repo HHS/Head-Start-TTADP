@@ -204,6 +204,7 @@ const logsByRecipientAndScopes = async (
         {
           model: db.File,
           as: 'files',
+          required: false,
         },
         {
           model: db.User,
@@ -215,11 +216,9 @@ const logsByRecipientAndScopes = async (
         },
       ],
       order: orderLogsBy(sortBy, direction),
-      // TODO: Why does this make the query fail
-      // with a missing FROM-clause entry?
-      //
-      // limit: limit || undefined,
+      limit: limit || undefined,
       offset,
+      subQuery: false,
     });
 
   return logs;
