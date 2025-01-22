@@ -240,6 +240,13 @@ export default function HorizontalTableWidget(
                         ? <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" />
                         : r.heading
                   }
+                  {
+                    r.suffixContent && (
+                      <span className="margin-left-2">
+                        {r.suffixContent}
+                      </span>
+                    )
+                  }
                 </td>
                 {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
