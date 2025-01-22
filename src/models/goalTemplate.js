@@ -59,6 +59,10 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
+    deletedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
     templateNameModifiedAt: {
       allowNull: false,
       type: DataTypes.DATE,
@@ -86,6 +90,7 @@ export default (sequelize, DataTypes) => {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
+    paranoid: true,
   });
   return GoalTemplate;
 };
