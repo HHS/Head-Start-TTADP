@@ -144,7 +144,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
     tabularData, // dataToUse
     setTabularData, // setDataToUse
     headers, // stringColumns
-    EMPTY_ARRAY, // dateColumns
+    ['Date'], // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
 
