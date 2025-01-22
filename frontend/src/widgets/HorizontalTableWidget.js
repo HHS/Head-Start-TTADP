@@ -210,7 +210,7 @@ export default function HorizontalTableWidget(
             {
             showTotalColumn && (
               enableSorting
-                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'total', 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
                 : (
                   <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
                     {lastHeading}
@@ -263,16 +263,16 @@ export default function HorizontalTableWidget(
                     }
                   </td>
                 ))}
-                <td data-label="Row actions" key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
-                  {r.actions && r.actions.length ? (
+                {r.actions && r.actions.length ? (
+                  <td data-label="Row actions" key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     <ContextMenu
                       fixed
                       label="Actions for Communication Log"
                       menuItems={r.actions}
                       menuWidthOffset={110}
                     />
-                  ) : null}
-                </td>
+                  </td>
+                ) : null}
               </tr>
             ))
             }
