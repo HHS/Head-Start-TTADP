@@ -40,5 +40,10 @@ describe('FilterSingleOrMultiSelect', () => {
       const result = mapDisplayValue(['foo']);
       expect(result).toBe('');
     });
+
+    it('accepts a string', () => {
+      const result = mapDisplayValue('single-recipient');
+      expect(result).toBe('Single recipient reports');
+    });
   });
 });
