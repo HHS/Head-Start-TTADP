@@ -128,7 +128,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
   const menuItems = useWidgetMenuItems(
     showTabularData,
     setShowTabularData,
-    () => {}, // capture function
+    null, // capture function
     checkboxes,
     exportRows,
   ).filter((m) => !m.label.includes('Display'));
