@@ -7,20 +7,26 @@ import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import Drawer from '../Drawer';
 import Req from '../Req';
-import ContentFromFeedByTag from '../ContentFromFeedByTag';
 import DrawerTriggerButton from '../DrawerTriggerButton';
 
-export default function ObjectiveTopics({
+export default function GenericSelectWithDrawer({
   error,
-  topicOptions,
-  validateObjectiveTopics,
-  topics,
-  onChangeTopics,
+  name,
+  options,
+  validateValues,
+  values,
+  onChangeValues,
   inputName,
   isLoading,
+
+  // drawer props
+  drawerContent,
+  drawerTitle,
 }) {
   const drawerTriggerRef = useRef(null);
-  topicOptions.sort((a, b) => a.name.localeCompare(b.name));
+  if (options && options.length > 0) {
+    options.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }
 
   return (
     <>
@@ -28,21 +34,25 @@ export default function ObjectiveTopics({
         triggerRef={drawerTriggerRef}
         stickyHeader
         stickyFooter
-        title="Topic guidance"
+        title={drawerTitle}
       >
-        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
+        {drawerContent}
       </Drawer>
       <FormGroup error={error.props.children}>
         <div className="display-flex">
           <Label htmlFor={inputName}>
             <>
-              Topics
+              {name}
+              s
               {' '}
               <Req />
             </>
           </Label>
           <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
-            Get help choosing topics
+            Get help choosing
+            {' '}
+            {name.toLowerCase()}
+            s
           </DrawerTriggerButton>
         </div>
         {error}
@@ -56,10 +66,10 @@ export default function ObjectiveTopics({
           }}
           className="usa-select"
           isMulti
-          options={topicOptions}
-          onBlur={validateObjectiveTopics}
-          value={topics}
-          onChange={onChangeTopics}
+          options={options}
+          onBlur={validateValues}
+          value={values}
+          onChange={onChangeValues}
           closeMenuOnSelect={false}
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}
@@ -71,23 +81,25 @@ export default function ObjectiveTopics({
   );
 }
 
-ObjectiveTopics.propTypes = {
+GenericSelectWithDrawer.propTypes = {
+  name: PropTypes.string.isRequired,
   error: PropTypes.node.isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+  options: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
-  validateObjectiveTopics: PropTypes.func.isRequired,
-  topics: PropTypes.arrayOf(PropTypes.shape({
+  validateValues: PropTypes.func.isRequired,
+  values: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
-  onChangeTopics: PropTypes.func.isRequired,
-  inputName: PropTypes.string,
+  onChangeValues: PropTypes.func.isRequired,
+  inputName: PropTypes.string.isRequired,
   isLoading: PropTypes.bool,
+  drawerContent: PropTypes.node.isRequired,
+  drawerTitle: PropTypes.string.isRequired,
 };
 
-ObjectiveTopics.defaultProps = {
-  inputName: 'topics',
+GenericSelectWithDrawer.defaultProps = {
   isLoading: false,
 };

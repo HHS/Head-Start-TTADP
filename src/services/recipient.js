@@ -25,6 +25,7 @@ import {
   ActivityReportApprover,
   ActivityReportObjective,
   GoalTemplateFieldPrompt,
+  ActivityReportObjectiveCitation,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -446,6 +447,12 @@ export function reduceObjectivesForRecipientRecord(
         objective.activityReportObjectives?.flatMap((aro) => aro.topics) || []
       );
 
+      // get our citations.
+      const objectiveCitations = objective.activityReportObjectives?.flatMap(
+        (aro) => aro.activityReportObjectiveCitations,
+      ) || [];
+      const reportObjectiveCitations = objectiveCitations.map((c) => `${c.dataValues.monitoringReferences[0].findingType} - ${c.dataValues.citation} - ${c.dataValues.monitoringReferences[0].findingSource}`);
+
       const existing = acc.objectives.find((o) => (
         o.title === objectiveTitle
         && o.status === objectiveStatus
@@ -460,6 +467,7 @@ export function reduceObjectivesForRecipientRecord(
         existing.reasons.sort();
         existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
         existing.topics.sort();
+        existing.citations = uniq([...existing.citations, ...reportObjectiveCitations]);
         existing.grantNumbers = grantNumbers;
         existing.ids = combineObjectiveIds(existing, objective);
 
@@ -483,6 +491,7 @@ export function reduceObjectivesForRecipientRecord(
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
+        citations: uniq(reportObjectiveCitations),
         ids: combineObjectiveIds({ ids: [] }, objective),
       };
 
@@ -493,11 +502,13 @@ export function reduceObjectivesForRecipientRecord(
         objectives: [...acc.objectives, formattedObjective],
         reasons: [...acc.reasons, ...reportReasons],
         topics: reduceTopicsOfDifferingType([...acc.topics, ...reportTopics, ...objectiveTopics]),
+        citations: uniq([...acc.citations, ...reportObjectiveCitations]),
       };
     }, {
       objectives: [],
       topics: [],
       reasons: [],
+      citations: [],
     });
 
   const current = goal;
@@ -750,12 +761,19 @@ export async function getGoalsByActivityRecipient(
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: ['id', 'objectiveId'],
-            separate: true,
             include: [
               {
                 model: Topic,
                 as: 'topics',
                 attributes: ['name'],
+              },
+              {
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                attributes: [
+                  'citation',
+                  'monitoringReferences',
+                ],
               },
             ],
           },

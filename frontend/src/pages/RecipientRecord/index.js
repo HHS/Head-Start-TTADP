@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -25,6 +25,7 @@ import ViewGoals from './pages/ViewGoals';
 import GoalNameForm from '../../components/GoalNameForm';
 import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
+import AppLoadingContext from '../../AppLoadingContext';
 
 export function PageWithHeading({
   children,
@@ -85,7 +86,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
   const history = useHistory();
   const { recipientId, regionId } = match.params;
 
-  const [loading, setLoading] = useState(true);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -121,7 +122,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
   useDeepCompareEffect(() => {
     async function fetchRecipient() {
       try {
-        setLoading(true);
+        setIsAppLoading(true);
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({
@@ -131,7 +132,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
       } finally {
-        setLoading(false);
+        setIsAppLoading(false);
       }
     }
 
@@ -147,10 +148,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
-
-  if (loading) {
-    return <div>loading...</div>;
-  }
 
   return (
     <>

@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import changeGoalStatus from './changeGoalStatus';
+import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 import db from '../models';
 
 const fakeName = faker.name.firstName() + faker.name.lastName();
@@ -16,6 +16,7 @@ describe('changeGoalStatus service', () => {
   let user;
   let role;
   let goal;
+  let systemChangedGoal;
   let grant;
   let recipient;
   const newStatus = 'In Progress';
@@ -41,6 +42,11 @@ describe('changeGoalStatus service', () => {
       status: 'Draft',
       grantId: grant.id,
     });
+    systemChangedGoal = await db.Goal.create({
+      name: 'Change status using system user',
+      status: 'Draft',
+      grantId: grant.id,
+    });
     role = await db.Role.create({
       id: faker.datatype.number(),
       name: 'Astronaut',
@@ -53,7 +59,7 @@ describe('changeGoalStatus service', () => {
   });
 
   afterAll(async () => {
-    await db.Goal.destroy({ where: { id: goal.id }, force: true });
+    await db.Goal.destroy({ where: { id: [goal.id, systemChangedGoal.id] }, force: true });
     await db.GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
     await db.Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await db.Recipient.destroy({ where: { id: recipient.id } });
@@ -106,5 +112,38 @@ describe('changeGoalStatus service', () => {
       reason,
       context,
     })).rejects.toThrow('Goal or user not found');
+  });
+
+  it('changeGoalStatusWithSystemUser should change the status of a goal and create a status change log', async () => {
+    await changeGoalStatusWithSystemUser({
+      goalId: systemChangedGoal.id,
+      newStatus,
+      reason,
+      context,
+    });
+
+    const updatedGoal = await db.Goal.findByPk(systemChangedGoal.id);
+    const statusChangeLog = await db.GoalStatusChange.findOne({
+      where: { goalId: systemChangedGoal.id, newStatus },
+    });
+
+    expect(updatedGoal.status).toBe(newStatus);
+    expect(statusChangeLog).toBeTruthy();
+    expect(statusChangeLog.oldStatus).toBe('Draft');
+    expect(statusChangeLog.newStatus).toBe(newStatus);
+    expect(statusChangeLog.reason).toBe(reason);
+    expect(statusChangeLog.context).toBe(context);
+    expect(statusChangeLog.userId).toBe(null);
+    expect(statusChangeLog.userName).toBe('system');
+    expect(statusChangeLog.userRoles).toBe(null);
+  });
+
+  it('changeGoalStatusWithSystemUser should throw an error if the goal does not exist', async () => {
+    await expect(changeGoalStatusWithSystemUser({
+      goalId: 9999, // non-existent goalId
+      newStatus,
+      reason,
+      context,
+    })).rejects.toThrow('Goal not found');
   });
 });
