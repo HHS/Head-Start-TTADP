@@ -107,7 +107,7 @@ const getMetadataValuesFrommJson = async (url) => {
   let result;
   try {
     // Attempt to get the resource metadata (if valid ECLKC resource).
-    // Sample: https://eclkc.ohs.acf.hhs.gov/mental-health/article/head-start-heals-campaign?_format=json
+    // Sample: https://headstart.gov/mental-health/article/head-start-heals-campaign?_format=json
     let metadataUrl;
 
     // Check if the URL already contains query parameters
@@ -386,7 +386,7 @@ const getResourceMetaDataJob = async (job) => {
 
   try {
     // Determine if this is an ECLKC resource.
-    const isEclkc = resourceUrl.includes('eclkc.ohs.acf.hhs.gov');
+    const isEclkc = resourceUrl.includes('headstart.gov');
 
     let statusCode;
     let mimeType;

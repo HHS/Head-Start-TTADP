@@ -19,8 +19,8 @@ const urlReturn = `
 <meta name="node-id" content="7858" />
 <meta name="exclude-from-dynamic-view" content="False" />
 <script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
-<link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
-<link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
+<link rel="canonical" href="https://headstart.gov/" />
+<link rel="image_src" href="https://headstart.gov/themes/gesso/images/site-logo.png" />
 <title>Head Start | ECLKC</title>
 <body>
 test
@@ -147,9 +147,9 @@ describe('resource worker tests', () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov' });
 
     expect(mockUpdate).toBeCalledTimes(2);
 
@@ -200,7 +200,7 @@ describe('resource worker tests', () => {
       {
         individualHooks: true,
         where: {
-          url: 'http://www.eclkc.ohs.acf.hhs.gov',
+          url: 'http://www.headstart.gov',
         },
       },
     );
@@ -216,14 +216,14 @@ describe('resource worker tests', () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov/activity-reports?region.in[]=1' } });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1' });
+    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov/activity-reports?region.in[]=1' });
 
     expect(mockUpdate).toBeCalledTimes(2);
 
     expect(mockAxios).toBeCalledWith(
-      'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1&_format=json',
+      'http://www.headstart.gov/activity-reports?region.in[]=1&_format=json',
       {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
         maxRedirects: 25,
@@ -278,7 +278,7 @@ describe('resource worker tests', () => {
       {
         individualHooks: true,
         where: {
-          url: 'http://www.eclkc.ohs.acf.hhs.gov/activity-reports?region.in[]=1',
+          url: 'http://www.headstart.gov/activity-reports?region.in[]=1',
         },
       },
     );
@@ -294,15 +294,15 @@ describe('resource worker tests', () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov/section#2' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov/section#2' } });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov/section#2' });
+    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov/section#2' });
 
     expect(mockUpdate).toBeCalledTimes(2);
 
     // Expect axios get to have been called with the correct url.
     expect(mockAxios).toBeCalledWith(
-      'http://www.eclkc.ohs.acf.hhs.gov/section?_format=json',
+      'http://www.headstart.gov/section?_format=json',
       {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
         maxRedirects: 25,
@@ -357,7 +357,7 @@ describe('resource worker tests', () => {
       {
         individualHooks: true,
         where: {
-          url: 'http://www.eclkc.ohs.acf.hhs.gov/section#2',
+          url: 'http://www.headstart.gov/section#2',
         },
       },
     );
@@ -373,9 +373,9 @@ describe('resource worker tests', () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
     expect(got.status).toBe(500);
-    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov' });
 
     expect(mockUpdate).toBeCalledTimes(2);
   });
@@ -388,7 +388,7 @@ describe('resource worker tests', () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
 
     // Verify auditlogger.error was called with the message we expect.
     expect(auditLogger.error).toBeCalledTimes(3);
@@ -412,9 +412,9 @@ describe('resource worker tests', () => {
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov' });
 
     expect(mockUpdate).toBeCalledTimes(2);
 
@@ -426,7 +426,7 @@ describe('resource worker tests', () => {
       },
       {
         individualHooks: true,
-        where: { url: 'http://www.eclkc.ohs.acf.hhs.gov' },
+        where: { url: 'http://www.headstart.gov' },
       },
     );
 
@@ -473,7 +473,7 @@ describe('resource worker tests', () => {
       {
         individualHooks: true,
         where: {
-          url: 'http://www.eclkc.ohs.acf.hhs.gov',
+          url: 'http://www.headstart.gov',
         },
       },
     );
@@ -504,9 +504,9 @@ describe('resource worker tests', () => {
   it('eclkc resource url not found', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
     expect(got.status).toBe(404);
-    expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
+    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov' });
     expect(mockAxiosHead).toBeCalled();
     expect(mockAxios).not.toBeCalled();
     expect(mockUpdate).toBeCalled();
