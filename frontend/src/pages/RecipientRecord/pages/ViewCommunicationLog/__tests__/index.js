@@ -58,7 +58,6 @@ describe('ViewCommunicationForm', () => {
       recipientId: RECIPIENT_ID,
       userId: '1',
       updatedAt: new Date(),
-      files: [],
       author: {
         id: 1,
         name: 'Ted User',
@@ -87,9 +86,19 @@ describe('ViewCommunicationForm', () => {
           2: NOT_STARTED,
           3: NOT_STARTED,
         },
-        otherStaff: [],
-        goals: [],
+        otherStaff: [{ label: 'Me', value: 1 }],
+        goals: [{ label: 'Goal', value: 1 }],
       },
+      files: [
+        {
+          id: 1,
+          originalFileName: 'cat.png',
+          url: {
+            url: 'https://wikipedia.com/cats',
+            error: null,
+          },
+        },
+      ],
     };
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
