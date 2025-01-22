@@ -52,10 +52,14 @@ export function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3 display-flex`}>
-                  {recipientNameWithRegion}
-                  {inlineHeadingChildren}
-                </h1>
+                <div className="display-flex">
+                  <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
+                    {recipientNameWithRegion}
+                  </h1>
+                  <div>
+                    {inlineHeadingChildren}
+                  </div>
+                </div>
                 {children}
               </>
             )
