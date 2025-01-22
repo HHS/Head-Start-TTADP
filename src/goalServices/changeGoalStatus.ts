@@ -10,6 +10,39 @@ interface GoalStatusChangeParams {
   transaction?: Sequelize.Transaction;
 }
 
+export async function changeGoalStatusWithSystemUser({
+  goalId,
+  newStatus,
+  reason,
+  context,
+}: GoalStatusChangeParams) {
+  // Lookup goal.
+  const goal = await db.Goal.findByPk(goalId);
+
+  // Error if goal not found.
+  if (!goal) {
+    throw new Error('Goal not found');
+  }
+
+  // Change goal status.
+  await db.GoalStatusChange.create({
+    goalId: goal.id,
+    userId: null, // For now we will use null to prevent FK constraint violation.
+    userName: 'system',
+    userRoles: null,
+    oldStatus: goal.status,
+    newStatus,
+    reason,
+    context,
+  });
+
+  // Reload goal.
+  await goal.reload();
+
+  //  Return goal.
+  return goal;
+}
+
 export default async function changeGoalStatus({
   goalId,
   userId = 1,

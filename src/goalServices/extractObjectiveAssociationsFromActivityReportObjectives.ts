@@ -4,6 +4,7 @@ import {
   IResourceModelInstance,
   ITopicModelInstance,
   ICourseModelInstance,
+  ICitationModelInstance,
 } from './types';
 
 /**
@@ -14,9 +15,13 @@ import {
  */
 export default function extractObjectiveAssociationsFromActivityReportObjectives(
   activityReportObjectives: IActivityReportObjectivesModelInstance[],
-  associationName: 'topics' | 'resources' | 'files' | 'courses',
+  associationName: 'topics' | 'resources' | 'files' | 'courses' | 'activityReportObjectiveCitations',
 ) {
   return activityReportObjectives.map((aro) => aro[associationName].map((
-    a: ITopicModelInstance | IResourceModelInstance | IFileModelInstance | ICourseModelInstance,
+    a: ITopicModelInstance |
+    IResourceModelInstance |
+    IFileModelInstance |
+    ICourseModelInstance |
+    ICitationModelInstance,
   ) => a.toJSON())).flat();
 }

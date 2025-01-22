@@ -14,8 +14,6 @@ import {
   ActivityReportObjective,
   Objective,
   Topic,
-  EventReportPilot,
-  SessionReportPilot,
   ActivityReportObjectiveTopic,
 } from '../models';
 import { getGoalsByActivityRecipient } from '../services/recipient';
@@ -244,7 +242,6 @@ describe('Goals by Recipient Test', () => {
   let objectiveIds = [];
   let goalIds = [];
   let curatedGoalTemplate;
-  let event;
 
   beforeAll(async () => {
     // Create User.
@@ -332,6 +329,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
         // goal 2 (AR1)
         Goal.create({
@@ -342,6 +340,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-02-15T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
         // goal 3 (AR1)
         Goal.create({
@@ -352,6 +351,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-03-03T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
         // goal 4 (AR2)
         Goal.create({
@@ -362,6 +362,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 301,
           createdAt: '2021-04-02T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
         // goal 5 (AR3 Exclude)
         Goal.create({
@@ -372,6 +373,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 302,
           createdAt: '2021-05-02T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
         // 6
         Goal.create({
@@ -382,6 +384,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'rtr',
         }),
         // 7
         Goal.create({
@@ -393,6 +396,7 @@ describe('Goals by Recipient Test', () => {
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
           onAR: true,
+          createdVia: 'rtr',
         }),
         // 8
         Goal.create({
@@ -403,6 +407,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: false,
+          createdVia: 'activityReport',
         }),
 
         // 9
@@ -414,6 +419,7 @@ describe('Goals by Recipient Test', () => {
           grantId: grant3.id,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
 
         // 10
@@ -425,6 +431,7 @@ describe('Goals by Recipient Test', () => {
           grantId: grant4.id,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
 
         // 11
@@ -436,6 +443,7 @@ describe('Goals by Recipient Test', () => {
           grantId: grant4.id,
           createdAt: '2021-02-10T19:16:15.842Z',
           onApprovedAR: true,
+          createdVia: 'activityReport',
         }),
 
         // 12
@@ -447,6 +455,7 @@ describe('Goals by Recipient Test', () => {
           grantId: grant4.id,
           createdAt: '2021-03-10T19:16:15.842Z',
           onApprovedAR: false,
+          createdVia: 'imported',
         }),
 
         // 13, goal from template
@@ -459,6 +468,7 @@ describe('Goals by Recipient Test', () => {
           createdAt: '2021-03-10T19:16:15.842Z',
           onApprovedAR: false,
           goalTemplateId: curatedGoalTemplate.id,
+          createdVia: 'rtr',
         }),
       ],
     );
@@ -640,24 +650,12 @@ describe('Goals by Recipient Test', () => {
         }),
       ],
     );
-
-    event = await EventReportPilot.create({
-      ownerId: 1,
-      regionId: 1,
-      collaboratorIds: [1],
-      data: {},
-      imported: {},
-      pocIds: [],
-    });
   });
 
   afterAll(async () => {
     // Get Report Ids.
     const reportsToDelete = await ActivityReport.findAll({ where: { userId: mockGoalUser.id } });
     const reportIdsToDelete = reportsToDelete.map((report) => report.id);
-
-    await SessionReportPilot.destroy({ where: { eventId: event.id } });
-    await EventReportPilot.destroy({ where: { ownerId: 1 } });
 
     // Delete AR Objectives.
     await ActivityReportObjective.destroy({

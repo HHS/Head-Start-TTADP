@@ -114,6 +114,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       name: g.name,
       grantIds,
       id: g.id,
+      createdVia: g.createdVia,
       goalTemplateId: g.goalTemplateId,
       isActivelyBeingEditing: false,
       prompts: grantIds.length < 2 ? g.prompts : [],
@@ -125,12 +126,15 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         status: objective.status,
         resources: objective.resources,
         topics: objective.topics,
+        citations: objective.citations,
         files: objective.files,
         supportType: objective.supportType,
         courses: objective.courses,
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: g.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
     })),
   ];
@@ -143,6 +147,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       onApprovedAR: goal.onApprovedAR,
       source: goal.source,
       name: goal.name,
+      createdVia: goal.createdVia,
       isActivelyBeingEditing: goal.isActivelyBeingEditing,
       goalTemplateId: goal.goalTemplateId,
       objectives: goal.objectives.map((objective) => ({
@@ -153,12 +158,15 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         status: objective.status,
         resources: objective.resources,
         topics: objective.topics,
+        citations: objective.citations,
         files: objective.files,
         supportType: objective.supportType,
         courses: objective.courses,
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
         createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: goal.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
       grantIds,
       prompts: grantIds.length < 2 ? prompts : [],
