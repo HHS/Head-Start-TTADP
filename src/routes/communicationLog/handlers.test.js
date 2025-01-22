@@ -565,10 +565,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ value: 1, label: 'User (Role)' }];
+      const mockUsers = [{ value: 1, label: 'User' }];
       const mockGoals = [{ value: 1, label: 'Goal' }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([{ id: 1, name: 'User', rolename: 'Role' }]);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'User' }]);
       GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
       const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
       expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals });
@@ -601,10 +601,10 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ value: 1, label: 'User (Role)' }];
+      const mockUsers = [{ value: 1, label: 'User' }];
       const mockGoals = [{ value: 1, label: 'Goal' }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([{ id: 1, name: 'User', rolename: 'Role' }]);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'User' }]);
       GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
       const result = await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       // eslint-disable-next-line max-len
