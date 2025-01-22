@@ -132,11 +132,23 @@ export async function getCuratedTemplates(
     ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
-      [Op.or]: [
-        { '$"region.grants"."id"$': { [Op.not]: null } },
-        { regionId: null },
-        { '$goals.id$': monitoringGoalIds },
-        { '$goals.createdVia$': { [Op.not]: 'monitoring' } },
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { '$"region.grants"."id"$': { [Op.not]: null } },
+            { regionId: null },
+          ],
+        },
+        {
+          [Op.or]: [
+            { '$goals.id$': monitoringGoalIds },
+            {
+              standard: {
+                [Op.not]: 'Monitoring',
+              },
+            },
+          ],
+        },
       ],
     },
     order: [['templateName', 'ASC']],

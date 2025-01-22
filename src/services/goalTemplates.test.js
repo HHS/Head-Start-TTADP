@@ -121,27 +121,23 @@ describe('goalTemplates services', () => {
       });
     });
 
-    it('returns only non-monitoring templates', async () => {
+    it('returns only regular templates', async () => {
       const templates = await getCuratedTemplates(
-        [monitoringGrant.id, regularGrant.id],
-        { id: 1, name: 'regular user', flags: [] },
+        [regularGrant.id],
       );
 
-      // Make sure the results contain the regular template and NOT the monitoring template.
       const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
       expect(regularTemplateToAssert).toBeTruthy();
 
       const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
-      expect(monitoringTemplateToAssert).toBeFalsy();
+      expect(monitoringTemplateToAssert).not.toBeTruthy();
     });
 
     it('returns both regular and only monitoring templates', async () => {
       const templates = await getCuratedTemplates(
         [monitoringGrant.id, regularGrant.id],
-        { id: 1, name: 'regular user', flags: ['monitoring_integration'] },
       );
 
-      // Make sure the results contain the regular template and NOT the monitoring template.
       const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
       expect(regularTemplateToAssert).toBeTruthy();
 
