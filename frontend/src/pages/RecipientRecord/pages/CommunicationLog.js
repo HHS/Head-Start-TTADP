@@ -62,7 +62,7 @@ const DeleteLogModal = ({
         modalId="DeleteLogModal"
         title="Are you sure you want to delete this log?"
         okButtonText="Delete"
-        okButtonAriaLabel="Confirm delete"
+        okButtonAriaLabel="Confirm delete and reload page"
         showCloseX
       >
         <p>This action cannot be undone.</p>
