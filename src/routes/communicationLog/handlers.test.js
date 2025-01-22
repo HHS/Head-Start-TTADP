@@ -565,11 +565,11 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ value: 1, label: 'User' }];
-      const mockGoals = [{ value: 1, label: 'Goal' }];
+      const mockUsers = [{ value: 1, label: 'UserA' }, { value: 2, label: 'UserB' }];
+      const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([{ id: 1, name: 'User' }]);
-      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }]);
+      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'GoalA' }, { id: 2, standard: 'GoalB' }]);
       const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
       expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals });
     });
