@@ -35,16 +35,19 @@ const enqueueImportMaintenanceJob = async (
   requiredLaunchScript?: string,
   requiresLock = false,
   holdLock = false,
-) => enqueueMaintenanceJob(
-  MAINTENANCE_CATEGORY.IMPORT,
-  {
+) => enqueueMaintenanceJob({
+  category: MAINTENANCE_CATEGORY.IMPORT,
+  data: {
     type,
     id,
   },
   requiredLaunchScript,
   requiresLock,
   holdLock,
-);
+  jobSettings: type === MAINTENANCE_TYPE.IMPORT_PROCESS
+    ? { timeout: 60000 } // 10 min
+    : {},
+});
 
 /**
  * Asynchronously sets up cron jobs for each import schedule retrieved from a data source.
