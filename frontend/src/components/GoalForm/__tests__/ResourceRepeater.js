@@ -31,7 +31,7 @@ describe('ResourceRepeater', () => {
     expect(resources1).not.toBeNull();
     const resources2 = document.querySelector('input[value=\'http://www.resources2.com\']');
     expect(resources2).toBeVisible();
-    expect(screen.queryAllByText('Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.').length).toBe(2);
+    expect(screen.queryAllByText('Copy & paste web address of TTA resource used for this objective. Usually an HeadStart.gov page.').length).toBe(2);
   });
 
   it('calls validateResources() when a resource is removed', async () => {
@@ -73,11 +73,11 @@ describe('ResourceRepeater', () => {
       isLoading={false}
       goalStatus="In Progress"
       userCanEdit
-      toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
+      toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an HeadStart.gov page."
     />);
 
     expect(await screen.findByText(/Did you use any other TTA resources that are available as a link/i)).toBeVisible();
-    expect(screen.queryAllByText("Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page.").length).toBe(2);
+    expect(screen.queryAllByText("Copy & paste web address of TTA resource you'll use for this objective. Usually an HeadStart.gov page.").length).toBe(2);
   });
 
   it('cannot add a resource if the first is blank', async () => {

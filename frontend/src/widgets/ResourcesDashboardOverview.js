@@ -26,11 +26,11 @@ const createOverviewFieldArray = (data) => ([
     key: 'eclkc-resources',
     icon: faCube,
     showTooltip: true,
-    label1: 'ECLKC resources',
+    label1: 'HeadStart.gov resources',
     label2: `${data.resource.numEclkc} of ${data.resource.num}`,
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
-    tooltipText: 'Percentage of all cited resources that are from ECLKC',
+    tooltipText: 'Percentage of all cited resources that are from HeadStart.gov',
     data: data.resource.percentEclkc,
   },
   {
