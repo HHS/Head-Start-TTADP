@@ -410,7 +410,6 @@ class GoalTemplates{
  * templateName : text
  * templateNameModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
  standard : text

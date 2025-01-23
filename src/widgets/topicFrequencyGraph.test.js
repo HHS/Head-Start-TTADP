@@ -468,6 +468,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Equity',
+        count: 0,
+      },
+      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -634,6 +638,10 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
+        count: 0,
+      },
+      {
+        topic: 'Equity',
         count: 0,
       },
       {
@@ -806,6 +814,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Equity',
+        count: 0,
+      },
+      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -971,6 +983,10 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
+        count: 0,
+      },
+      {
+        topic: 'Equity',
         count: 0,
       },
       {

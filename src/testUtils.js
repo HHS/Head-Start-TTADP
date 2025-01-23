@@ -334,6 +334,7 @@ export function mockTrainingReportData(data) {
       'Affected by Disaster',
       'Affected by Substance Use',
       'Children Experiencing Homelessness',
+      'Children/Families affected by systemic discrimination/bias/exclusion.',
       'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
       'Children in Migrant and Seasonal Families',
       'Children with Disabilities',
