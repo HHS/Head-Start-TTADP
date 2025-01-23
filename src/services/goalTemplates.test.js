@@ -286,6 +286,7 @@ describe('goalTemplates services', () => {
   describe('getCuratedTemplates more coverage', () => {
     let grant;
     let recipient;
+    let template;
 
     beforeAll(async () => {
       recipient = await Recipient.create({
@@ -301,14 +302,14 @@ describe('goalTemplates services', () => {
         recipientId: recipient.id,
       });
 
-      await GoalTemplate.create({
+      template = await GoalTemplate.create({
         templateName: faker.lorem.sentence(5),
         creationMethod: AUTOMATIC_CREATION,
       });
     });
 
     afterAll(async () => {
-      await GoalTemplate.destroy({ where: {}, individualHooks: true });
+      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
     });
