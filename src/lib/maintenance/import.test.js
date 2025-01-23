@@ -135,7 +135,7 @@ describe('import', () => {
               requiresLock: false,
               holdLock: false,
               jobSettings: {},
-            }
+            },
           );
       }
 
@@ -177,7 +177,7 @@ describe('import', () => {
               requiresLock: false,
               holdLock: false,
               jobSettings: {},
-            }
+            },
           );
       }
 
@@ -279,7 +279,7 @@ describe('import', () => {
             requiresLock: false,
             holdLock: false,
             jobSettings: {},
-          }
+          },
         );
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
@@ -291,7 +291,7 @@ describe('import', () => {
             requiresLock: false,
             holdLock: false,
             jobSettings: { timeout: 60000 },
-          }
+          },
         );
       expect(results?.isSuccessful).toBe(true);
     });
@@ -324,7 +324,7 @@ describe('import', () => {
             requiresLock: false,
             holdLock: false,
             jobSettings: { timeout: 60000 },
-          }
+          },
         );
     });
 
@@ -425,7 +425,7 @@ describe('import', () => {
           requiresLock: false,
           holdLock: false,
           jobSettings: { timeout: 60000 },
-        }
+        },
       );
     });
 
