@@ -59,25 +59,27 @@ describe('import', () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
       const id = 123;
       await enqueueImportMaintenanceJob(type, id);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type, id },
-        undefined,
-        false,
-        false,
-      );
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: { type, id },
+        requiredLaunchScript: undefined,
+        requiresLock: false,
+        holdLock: false,
+        jobSettings: {},
+      });
     });
 
     it('should be able to enqueue a job without an id', () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
       enqueueImportMaintenanceJob(type);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type, id: undefined },
-        undefined,
-        false,
-        false,
-      );
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: { type, id: undefined },
+        requiredLaunchScript: undefined,
+        requiresLock: false,
+        holdLock: false,
+        jobSettings: {},
+      });
     });
   });
 
@@ -126,11 +128,14 @@ describe('import', () => {
         expect(enqueueMaintenanceJob)
           .toHaveBeenNthCalledWith(
             index + 1,
-            MAINTENANCE_CATEGORY.IMPORT,
-            { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
-            undefined,
-            false,
-            false,
+            {
+              category: MAINTENANCE_CATEGORY.IMPORT,
+              data: { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+              requiredLaunchScript: undefined,
+              requiresLock: false,
+              holdLock: false,
+              jobSettings: {},
+            }
           );
       }
 
@@ -165,11 +170,14 @@ describe('import', () => {
         expect(enqueueMaintenanceJob)
           .toHaveBeenNthCalledWith(
             index + 1,
-            MAINTENANCE_CATEGORY.IMPORT,
-            { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
-            undefined,
-            false,
-            false,
+            {
+              category: MAINTENANCE_CATEGORY.IMPORT,
+              data: { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+              requiredLaunchScript: undefined,
+              requiresLock: false,
+              holdLock: false,
+              jobSettings: {},
+            }
           );
       }
 
@@ -264,20 +272,26 @@ describe('import', () => {
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
           1,
-          MAINTENANCE_CATEGORY.IMPORT,
-          { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
-          undefined,
-          false,
-          false,
+          {
+            category: MAINTENANCE_CATEGORY.IMPORT,
+            data: { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+            requiredLaunchScript: undefined,
+            requiresLock: false,
+            holdLock: false,
+            jobSettings: {},
+          }
         );
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
           2,
-          MAINTENANCE_CATEGORY.IMPORT,
-          { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
-          undefined,
-          false,
-          false,
+          {
+            category: MAINTENANCE_CATEGORY.IMPORT,
+            data: { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+            requiredLaunchScript: undefined,
+            requiresLock: false,
+            holdLock: false,
+            jobSettings: { timeout: 60000 },
+          }
         );
       expect(results?.isSuccessful).toBe(true);
     });
@@ -303,11 +317,14 @@ describe('import', () => {
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
           2,
-          MAINTENANCE_CATEGORY.IMPORT,
-          { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
-          undefined,
-          false,
-          false,
+          {
+            category: MAINTENANCE_CATEGORY.IMPORT,
+            data: { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+            requiredLaunchScript: undefined,
+            requiresLock: false,
+            holdLock: false,
+            jobSettings: { timeout: 60000 },
+          }
         );
     });
 
@@ -398,14 +415,17 @@ describe('import', () => {
       await anonymousFunction();
 
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
         {
-          type: MAINTENANCE_TYPE.IMPORT_PROCESS,
-          id,
-        },
-        undefined,
-        false,
-        false,
+          category: MAINTENANCE_CATEGORY.IMPORT,
+          data: {
+            type: MAINTENANCE_TYPE.IMPORT_PROCESS,
+            id,
+          },
+          requiredLaunchScript: undefined,
+          requiresLock: false,
+          holdLock: false,
+          jobSettings: { timeout: 60000 },
+        }
       );
     });
 
@@ -424,13 +444,14 @@ describe('import', () => {
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
       await anonymousFunction();
 
-      expect(enqueueMaintenanceJob).not.toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        {
+      expect(enqueueMaintenanceJob).not.toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: {
           type: MAINTENANCE_TYPE.IMPORT_PROCESS,
           id,
         },
-      );
+        jobSettings: { timeout: 60000 },
+      });
     });
 
     it('should return an object with isSuccessful false when processing fails', async () => {

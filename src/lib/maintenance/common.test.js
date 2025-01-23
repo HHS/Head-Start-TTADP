@@ -155,13 +155,13 @@ describe('Maintenance Queue', () => {
       const processor = jest.fn();
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
-      enqueueMaintenanceJob(category, data);
+      enqueueMaintenanceJob({ category, data });
       expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data);
     });
 
     it('should log an error if no processor is defined for the given type', () => {
       const category = 'non-existent-category';
-      enqueueMaintenanceJob(category);
+      enqueueMaintenanceJob({ category });
       expect(auditLogger.error).toHaveBeenCalledWith(new Error(`Maintenance Queue Error: no processor defined for ${category}`));
     });
   });
