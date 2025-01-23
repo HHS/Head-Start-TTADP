@@ -1781,28 +1781,28 @@ workflows:
       - test_backend:
           requires:
             - build_and_lint
-      # - test_frontend:
-      #     requires:
-      #       - build_and_lint
-      # - test_e2e:
-      #     requires:
-      #       - build_and_lint
-      # - test_api:
-      #     requires:
-      #       - build_and_lint
-      # - test_similarity_api:
-      #     requires:
-      #       - build_and_lint_similarity_api
-      # - test_utils:
-      #     requires:
-      #       - build_and_lint
-      # - cucumber_test:
-      #     requires:
-      #       - build_and_lint
-      # - dynamic_security_scan:
-      #     requires:
-      #       - build_and_lint
-      #       - build_and_lint_similarity_api
+      - test_frontend:
+          requires:
+            - build_and_lint
+      - test_e2e:
+          requires:
+            - build_and_lint
+      - test_api:
+          requires:
+            - build_and_lint
+      - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
+      - test_utils:
+          requires:
+            - build_and_lint
+      - cucumber_test:
+          requires:
+            - build_and_lint
+      - dynamic_security_scan:
+          requires:
+            - build_and_lint
+            - build_and_lint_similarity_api
       - backup_upload_production:
           requires:
             - test_backend
