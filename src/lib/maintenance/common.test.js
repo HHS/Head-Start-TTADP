@@ -156,7 +156,7 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
       enqueueMaintenanceJob({ category, data });
-      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data);
+      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, {});
     });
 
     it('should log an error if no processor is defined for the given type', () => {
