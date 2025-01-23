@@ -364,7 +364,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -417,7 +417,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/7,135 of 18,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/1.66%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/819 of 1,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
@@ -457,7 +457,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -509,7 +509,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*reports citing ipd courses[ \t]*$/i)[0]).toBeInTheDocument();
 
     expect(screen.getByText(/.66%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
@@ -545,7 +545,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();
@@ -583,7 +583,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/.66%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/148/i)).toBeVisible();
@@ -619,7 +619,7 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
 
     expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
 
     expect(await screen.findByText(/248/i)).toBeVisible();

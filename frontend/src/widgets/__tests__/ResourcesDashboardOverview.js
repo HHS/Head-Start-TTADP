@@ -21,7 +21,7 @@ describe('Resource Dashboard Overview Widget', () => {
     renderResourcesDashboardOverview({ data: undefined });
 
     expect(screen.getByText(/reports with resources/i)).toBeInTheDocument();
-    expect(screen.getByText(/eclkc resources/i)).toBeInTheDocument();
+    expect(screen.getByText(/headstart.gov resources/i)).toBeInTheDocument();
     expect(screen.getByText(/recipients reached/i)).toBeInTheDocument();
     expect(screen.getByText(/participants reached/i)).toBeInTheDocument();
     expect(screen.getByText(/reports citing ipd courses/i)).toBeInTheDocument();
