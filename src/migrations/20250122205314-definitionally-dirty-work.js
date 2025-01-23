@@ -16,7 +16,7 @@ module.exports = {
       );
       return queryInterface.sequelize.query(`
          UPDATE "Topics" SET "deletedAt" = NOW() WHERE "name" = 'Equity';
-         -- UPDATE "GoalTemplates" SET "deletedAt" = NOW() WHERE "templateName" = '(DEIA) The recipient will implement comprehensive systems and services that promote diversity, equity, inclusion, accessibility, and belonging.';
+         UPDATE "GoalTemplates" SET "deletedAt" = NOW() WHERE "templateName" = '(DEIA) The recipient will implement comprehensive systems and services that promote diversity, equity, inclusion, accessibility, and belonging.';
        `, { transaction });
     });
   },
