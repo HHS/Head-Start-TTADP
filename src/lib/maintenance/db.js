@@ -293,7 +293,7 @@ const enqueueDBMaintenanceJob = async (
   percent = null, // optional parameter with default value of null
 ) => enqueueMaintenanceJob({
   category: MAINTENANCE_CATEGORY.DB, // constant representing the category of maintenance
- data: {
+  data: {
     type, // shorthand property notation for type: type
     ...(!data // spread operator used to merge properties of two objects
       // if data is not provided, call nextBlock function and merge its result

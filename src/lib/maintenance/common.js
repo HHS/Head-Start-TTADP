@@ -125,7 +125,7 @@ const enqueueMaintenanceJob = async ({
   requiredLaunchScript = null,
   requiresLock = false,
   holdLock = false,
-  jobSettings = {}
+  jobSettings = {},
 }) => {
   const action = async () => {
     // Check if there is a processor defined for the given type
@@ -536,9 +536,11 @@ addCronJob(
   (category, type, timezone, schedule) => new CronJob(
     schedule, // The schedule parameter specifies when the job should run
     () => enqueueMaintenanceJob({
-      category: MAINTENANCE_CATEGORY.MAINTENANCE, // constant representing the category of maintenance
+      // constant representing the category of maintenance
+      category: MAINTENANCE_CATEGORY.MAINTENANCE,
       data: {
-        type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // shorthand property notation for type: type
+        // shorthand property notation for type: type
+        type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
         dateOffSet: 90, // otherwise, merge the provided data object
       },
     }),
