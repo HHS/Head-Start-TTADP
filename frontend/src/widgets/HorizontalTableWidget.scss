@@ -1,10 +1,14 @@
 @use "../colors.scss" as *;
 
 @media (min-width: 60em) {
-  // Keep the border regardless of the size.
   .smarthub-horizontal-table-widget
-  .smarthub-horizontal-table-first-column-border {
-    border-right: 1px solid black !important;
+  .smarthub-horizontal-table-first-column-border::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    border-right: 1px solid black;
   }
 
   .smarthub-horizontal-table-widget .data-header {
@@ -20,8 +24,19 @@
     position: sticky;
     right: 0;
     font-weight: bold;
-    border-left: 1px solid black !important;
     min-width: 90px;
+  }
+
+  // Because putting the border on the sticky element doesn't work, and box-shadow
+  // isn't ideal because of z-indexing weirdness that happens when a ContextMenu
+  // is above the border.
+  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-left: 1px solid black;
   }
 
   .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
@@ -81,6 +96,13 @@
   text-decoration: none;
   font-weight: bold;
   color: $base-darkest;
+}
+
+// Because .usa-table--borderless thead th applies a transparent
+// background, so .bg-white on the th isn't specific enough, hence
+// a class seems like an okay solution here.
+.smarthub-horizontal-table-widget .usa-table thead th.fixed-th {
+  background-color: white;
 }
 
 .smarthub-horizontal-table-widget .usa-checkbox__label {

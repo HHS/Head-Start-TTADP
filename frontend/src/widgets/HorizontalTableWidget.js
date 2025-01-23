@@ -202,7 +202,7 @@ export default function HorizontalTableWidget(
             }
             {
             data.some((r) => r.actions) && (
-              <th scope="col" aria-label="context menu" className="smarthub-horizontal-table-last-column">
+              <th scope="col" aria-label="context menu" className="smarthub-horizontal-table-last-column fixed-th">
                 Actions
               </th>
             )
