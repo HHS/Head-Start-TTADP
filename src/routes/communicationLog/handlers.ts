@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 import UserPolicy from '../../policies/user';
 import {
   // @ts-ignore
-  GoalTemplate, User, UserRole, Permission, Role, sequelize,
+  GoalTemplate, User, UserRole, Permission, Role,
 } from '../../models';
 import {
   logById,
@@ -17,7 +17,7 @@ import {
 } from '../../services/communicationLog';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
-import { userById, usersWithPermissions } from '../../services/users';
+import { userById } from '../../services/users';
 import Policy from '../../policies/communicationLog';
 import filtersToScopes from '../../scopes';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
@@ -72,22 +72,20 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
         ],
       },
     ],
-    raw: true,
+    order: [['name', 'ASC']],
   });
 
   regionalUsers = regionalUsers
-    .map((u) => ({ value: Number(u.id), label: u.name }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .map((u) => ({ value: Number(u.id), label: u.name }));
 
   let standardGoals = await GoalTemplate.findAll({
     where: { standard: { [Op.ne]: null } },
     attributes: ['standard', 'id'],
-    raw: true,
+    order: [['standard', 'ASC']],
   });
 
   standardGoals = standardGoals
-    .map((g) => ({ value: Number(g.id), label: g.standard }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    .map((g) => ({ value: Number(g.id), label: g.standard }));
 
   return { regionalUsers, standardGoals };
 }

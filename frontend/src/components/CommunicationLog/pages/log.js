@@ -9,17 +9,14 @@ import {
   Textarea,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
-import FormItem from '../../../../../components/FormItem';
-import ControlledDatePicker from '../../../../../components/ControlledDatePicker';
-import {
-  pageComplete,
-  defaultLogValues,
-} from '../constants';
-import ReadOnlyField from '../../../../../components/ReadOnlyField';
-import UserContext from '../../../../../UserContext';
-import { mustBeQuarterHalfOrWhole } from '../../../../../Constants';
-import MultiSelect from '../../../../../components/MultiSelect';
+import IndicatesRequiredField from '../../IndicatesRequiredField';
+import FormItem from '../../FormItem';
+import ControlledDatePicker from '../../ControlledDatePicker';
+import { pageComplete, defaultLogValues } from '../constants';
+import ReadOnlyField from '../../ReadOnlyField';
+import UserContext from '../../../UserContext';
+import { mustBeQuarterHalfOrWhole } from '../../../Constants';
+import MultiSelect from '../../MultiSelect';
 import LogContext from '../LogContext';
 
 const fields = Object.keys(defaultLogValues);
@@ -185,7 +182,7 @@ const Log = ({ datePickerKey }) => {
         <FormItem
           label="Result"
           name="result"
-          required={false}
+          required
         >
           <Dropdown
             id="result"

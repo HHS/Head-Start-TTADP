@@ -12,7 +12,7 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
-import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from './constants';
+import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from '../../../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 import Navigator from '../../../../components/Navigator';
@@ -25,7 +25,7 @@ import {
   getCommunicationLogById,
   getAdditionalCommunicationLogData,
 } from '../../../../fetchers/communicationLog';
-import LogContext from './LogContext';
+import LogContext from '../../../../components/CommunicationLog/LogContext';
 
 /**
  * this is just a simple handler to "flatten"

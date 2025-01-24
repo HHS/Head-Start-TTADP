@@ -1,4 +1,4 @@
-import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import { NOT_STARTED } from '../Navigator/constants';
 
 const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],

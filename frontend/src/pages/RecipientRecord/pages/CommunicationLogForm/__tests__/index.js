@@ -13,7 +13,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
-import LogContext from '../LogContext';
+import LogContext from '../../../../../components/CommunicationLog/LogContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;

@@ -6,9 +6,9 @@ import {
   Fieldset,
 } from '@trussworks/react-uswds';
 import { pageComplete } from '../constants';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
-import NextStepsRepeater from '../../../../ActivityReport/Pages/components/NextStepsRepeater';
-import useCompleteSectionOnVisit from '../../../../../hooks/useCompleteSectionOnVisit';
+import IndicatesRequiredField from '../../IndicatesRequiredField';
+import NextStepsRepeater from '../../../pages/ActivityReport/Pages/components/NextStepsRepeater';
+import useCompleteSectionOnVisit from '../../../hooks/useCompleteSectionOnVisit';
 
 const path = 'next-steps';
 const visitedField = `pageVisited-${path}`;
