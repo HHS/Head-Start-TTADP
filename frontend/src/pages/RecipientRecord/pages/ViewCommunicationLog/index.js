@@ -77,9 +77,19 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           </Link>
           )}
           <ReadOnlyField
+            label="Other TTA staff"
+          >
+            {log.data.otherStaff && log.data.otherStaff.map((u) => u.label).join(', ')}
+          </ReadOnlyField>
+          <ReadOnlyField
             label="Purpose"
           >
             {log.data.purpose}
+          </ReadOnlyField>
+          <ReadOnlyField
+            label="Supporting goals"
+          >
+            {log.data.goals && log.data.goals.map((goal) => goal.label).join(', ')}
           </ReadOnlyField>
           <ReadOnlyField
             label="Notes"

@@ -10,6 +10,21 @@ const communicationLogUrl = join(
   'communication-logs',
 );
 
+export const getAdditionalCommunicationLogData = async (regionId, recipientId) => {
+  const response = await get(
+    join(
+      communicationLogUrl,
+      'region',
+      String(regionId),
+      'recipient',
+      String(recipientId),
+      'additional-data',
+    ),
+  );
+
+  return response.json();
+};
+
 export const getCommunicationLogById = async (regionId, logId) => {
   const response = await get(
     join(
@@ -62,17 +77,13 @@ export const updateCommunicationLogById = async (logId, data) => {
   return response.json();
 };
 
-export const deleteCommunicationLogById = async (logId) => {
-  const response = await destroy(
-    join(
-      communicationLogUrl,
-      'log',
-      String(logId),
-    ),
-  );
-
-  return response.json();
-};
+export const deleteCommunicationLogById = async (logId) => destroy(
+  join(
+    communicationLogUrl,
+    'log',
+    String(logId),
+  ),
+);
 
 export const createCommunicationLogByRecipientId = async (regionId, recipientId, data) => {
   const response = await post(
