@@ -35,9 +35,9 @@ describe('Resource Dashboard Overview Widget', () => {
         percentResources: '40.85%',
       },
       resource: {
-        numEclkc: '1,819',
+        numHeadStart: '1,819',
         num: '2,365',
-        percentEclkc: '79.91%',
+        percentHeadStart: '79.91%',
       },
       recipient: {
         numResources: '248',

@@ -118,5 +118,5 @@ ResourceRepeater.propTypes = {
 ResourceRepeater.defaultProps = {
   error: '',
   isLoading: false,
-  toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an HeadStart.gov page.',
+  toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually a HeadStart.gov page.',
 };

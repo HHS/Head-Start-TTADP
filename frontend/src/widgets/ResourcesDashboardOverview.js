@@ -23,15 +23,15 @@ const createOverviewFieldArray = (data) => ([
     data: data.report.percentResources,
   },
   {
-    key: 'eclkc-resources',
+    key: 'headstart-resources',
     icon: faCube,
     showTooltip: true,
     label1: 'HeadStart.gov resources',
-    label2: `${data.resource.numEclkc} of ${data.resource.num}`,
+    label2: `${data.resource.numHeadStart} of ${data.resource.num}`,
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
     tooltipText: 'Percentage of all cited resources that are from HeadStart.gov',
-    data: data.resource.percentEclkc,
+    data: data.resource.percentHeadStart,
   },
   {
     key: 'recipient-reached',
@@ -108,9 +108,9 @@ ResourcesDashboardOverviewWidget.defaultProps = {
       percentResources: '0%',
     },
     resource: {
-      numEclkc: '0',
+      numHeadStart: '0',
       num: '0',
-      percentEclkc: '0%',
+      percentHeadStart: '0%',
     },
     recipient: {
       numResources: '0',

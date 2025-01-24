@@ -834,9 +834,9 @@ describe('Resources dashboard', () => {
         numResources: '1',
       },
       resource: {
-        numEclkc: '2',
+        numHeadStart: '2',
         num: '3',
-        percentEclkc: '66.67%',
+        percentHeadStart: '66.67%',
       },
       ipdCourses: {
         percentReports: '80.00%',
