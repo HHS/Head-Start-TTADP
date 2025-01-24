@@ -1,6 +1,10 @@
 import { auditLogger } from '../logger';
-import { generateRedisConfig, increaseListeners, setRedisConnectionName } from './queue';
-import newQueue from './queue';
+import {
+  generateRedisConfig,
+  increaseListeners,
+  setRedisConnectionName,
+  default as newQueue,
+} from './queue';
 
 describe('increaseListeners', () => {
   const MAX_LISTENERS = 20;
