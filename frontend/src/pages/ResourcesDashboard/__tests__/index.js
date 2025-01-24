@@ -39,9 +39,9 @@ const resourcesDefault = {
       percentResources: '40.85%',
     },
     resource: {
-      numEclkc: '1,819',
+      numHeadStart: '1,819',
       num: '2,365',
-      percentEclkc: '79.91%',
+      percentHeadStart: '79.91%',
     },
     recipient: {
       numResources: '248',
@@ -125,9 +125,9 @@ const resourcesRegion1 = {
       percentResources: '2.65%',
     },
     resource: {
-      numEclkc: '819',
+      numHeadStart: '819',
       num: '1,365',
-      percentEclkc: '1.66%',
+      percentHeadStart: '1.66%',
     },
     recipient: {
       numResources: '148',
@@ -211,9 +211,9 @@ const resourcesRegion2 = {
       percentResources: '1.65%',
     },
     resource: {
-      numEclkc: '818',
+      numHeadStart: '818',
       num: '365',
-      percentEclkc: '.66%',
+      percentHeadStart: '.66%',
     },
     recipient: {
       numResources: '148',
