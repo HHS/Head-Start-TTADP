@@ -22,6 +22,13 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       allowNull: false,
     },
+    displayId: {
+      type: DataTypes.VIRTUAL(DataTypes.STRING, ['id', 'data']),
+      get() {
+        const { id, data: { regionId } } = this;
+        return `R${String(regionId).padStart(2, '0')}-CL-${String(id).padStart(5, '0')}`;
+      },
+    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,

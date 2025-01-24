@@ -190,28 +190,39 @@ const logsByRecipientAndScopes = async (
   direction = 'desc',
   limit = COMMUNICATION_LOGS_PER_PAGE || false,
   scopes: WhereOptions[] = [],
-) => CommunicationLog
-  .findAndCountAll({
-    attributes: LOG_INCLUDE_ATTRIBUTES,
-    where: {
-      recipientId,
-      [Op.and]: [
-        ...scopes,
-      ],
-    },
-    include: [
-      {
-        model: db.User,
-        attributes: [
-          'name', 'id',
+) => {
+  const logs = await CommunicationLog
+    .findAndCountAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      where: {
+        recipientId,
+        [Op.and]: [
+          ...scopes,
         ],
-        as: 'author',
       },
-    ],
-    order: orderLogsBy(sortBy, direction),
-    limit: limit || undefined,
-    offset,
-  });
+      include: [
+        {
+          model: db.File,
+          as: 'files',
+          required: false,
+        },
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+      limit: limit || undefined,
+      offset,
+      subQuery: false,
+    });
+
+  return logs;
+};
 
 const deleteLog = async (id: number) => CommunicationLog.destroy({
   where: {
