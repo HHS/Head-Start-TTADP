@@ -1,5 +1,5 @@
 import httpCodes from 'http-codes';
-import { sequelize } from '../../models';
+import { User, GoalTemplate, sequelize } from '../../models';
 import {
   logById,
   logsByRecipientAndScopes,
@@ -15,6 +15,8 @@ import {
   updateLogById,
   deleteLogById,
   createLogByRecipientId,
+  communicationLogAdditionalData,
+  getAvailableUsersAndGoals,
 } from './handlers';
 import SCOPES from '../../middleware/scopeConstants';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
@@ -23,6 +25,18 @@ jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../services/communicationLog');
 jest.mock('../../services/accessValidation');
+jest.mock('../../models', () => ({
+  User: {
+    findAll: jest.fn(),
+  },
+  GoalTemplate: {
+    findAll: jest.fn(),
+  },
+  sequelize: {
+    close: jest.fn(),
+    col: jest.fn(),
+  },
+}));
 
 describe('communicationLog handlers', () => {
   const REGION_ID = 15;
@@ -536,6 +550,65 @@ describe('communicationLog handlers', () => {
       deleteLog.mockImplementation(() => Promise.resolve({ id: 1 }));
       await deleteLogById(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.NO_CONTENT);
+    });
+  });
+
+  describe('getAvailableUsersAndGoals', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('returns users and goals', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+      const mockUsers = [{ value: 1, label: 'UserA' }, { value: 2, label: 'UserB' }];
+      const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }]);
+      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'GoalA' }, { id: 2, standard: 'GoalB' }]);
+      const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
+      expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals });
+    });
+
+    it('returns null if unauthorized', async () => {
+      const mockRequest = {
+        session: {
+          userId: unauthorized.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(unauthorized));
+      const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('communicationLogAdditionalData', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('returns additional data', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+      const mockUsers = [{ value: 1, label: 'User' }];
+      const mockGoals = [{ value: 1, label: 'Goal' }];
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue([{ id: 1, name: 'User' }]);
+      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
+      const result = await communicationLogAdditionalData(mockRequest, { ...mockResponse });
+      // eslint-disable-next-line max-len
+      expect(statusJson).toHaveBeenCalledWith({ regionalUsers: mockUsers, standardGoals: mockGoals });
     });
   });
 });
