@@ -1,5 +1,7 @@
 import httpCodes from 'http-codes';
-import { User, GoalTemplate, sequelize } from '../../models';
+import {
+  User, GoalTemplate, Recipient, sequelize,
+} from '../../models';
 import {
   logById,
   logsByRecipientAndScopes,
@@ -16,7 +18,7 @@ import {
   deleteLogById,
   createLogByRecipientId,
   communicationLogAdditionalData,
-  getAvailableUsersAndGoals,
+  getAvailableUsersRecipientsAndGoals,
 } from './handlers';
 import SCOPES from '../../middleware/scopeConstants';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
@@ -30,6 +32,9 @@ jest.mock('../../models', () => ({
     findAll: jest.fn(),
   },
   GoalTemplate: {
+    findAll: jest.fn(),
+  },
+  Recipient: {
     findAll: jest.fn(),
   },
   sequelize: {
@@ -567,11 +572,14 @@ describe('communicationLog handlers', () => {
       };
       const mockUsers = [{ value: 1, label: 'UserA' }, { value: 2, label: 'UserB' }];
       const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
+      const mockRecipients = [{ value: 1, label: 'RecipientA' }, { value: 2, label: 'RecipientB' }];
       userById.mockResolvedValue(authorizedToReadOnly);
       User.findAll.mockResolvedValue([{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }]);
       GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'GoalA' }, { id: 2, standard: 'GoalB' }]);
-      const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
-      expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals });
+      Recipient.findAll.mockResolvedValue([{ id: 1, name: 'RecipientA' }, { id: 2, name: 'RecipientB' }]);
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+      // eslint-disable-next-line max-len
+      expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals, recipients: mockRecipients });
     });
 
     it('returns null if unauthorized', async () => {
@@ -584,7 +592,7 @@ describe('communicationLog handlers', () => {
         },
       };
       userById.mockImplementation(() => Promise.resolve(unauthorized));
-      const result = await getAvailableUsersAndGoals(mockRequest, { ...mockResponse });
+      const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
       expect(result).toBeNull();
     });
   });

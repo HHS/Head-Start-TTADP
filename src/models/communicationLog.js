@@ -3,7 +3,6 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class CommunicationLog extends Model {
     static associate(models) {
-      CommunicationLog.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       CommunicationLog.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       CommunicationLog.hasMany(models.CommunicationLogFile, { foreignKey: 'communicationLogId', as: 'communicationLogFiles' });
       CommunicationLog.belongsToMany(models.File, {
@@ -11,6 +10,12 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'communicationLogId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      CommunicationLog.belongsToMany(models.Recipient, {
+        through: models.CommunicationLogRecipient,
+        foreignKey: 'communicationLogId',
+        otherKey: 'recipientId',
+        as: 'recipients',
       });
     }
   }
@@ -30,10 +35,6 @@ export default (sequelize, DataTypes) => {
       },
     },
     userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
