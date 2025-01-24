@@ -3,6 +3,7 @@ import {
   generateRedisConfig,
   increaseListeners,
   setRedisConnectionName,
+  // eslint-disable-next-line import/no-named-default
   default as newQueue,
 } from './queue';
 
