@@ -13,7 +13,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
-import LogContext from '../../../../../components/CommunicationLog/LogContext';
+import { LogProvider } from '../../../../../components/CommunicationLog/LogContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -35,7 +35,7 @@ describe('CommunicationLogForm', () => {
     render(
       <Router history={history}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <LogContext.Provider value={{ regionalUsers: [], regionalGoals: [] }}>
+          <LogProvider regionId={REGION_ID}>
             <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
               <CommunicationLogForm
                 recipientName={RECIPIENT_NAME}
@@ -51,7 +51,7 @@ describe('CommunicationLogForm', () => {
                 }}
               />
             </UserContext.Provider>
-          </LogContext.Provider>
+          </LogProvider>
         </AppLoadingContext.Provider>
       </Router>,
     );
@@ -60,10 +60,11 @@ describe('CommunicationLogForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     fetchMock.reset();
-    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
+    const url = `${communicationLogUrl}/region/${REGION_ID}/additional-data`;
     fetchMock.get(url, {
       regionalUsers: [{ value: 1, label: 'One' }],
       standardGoals: [{ value: 1, label: 'One' }],
+      recipients: [],
     });
   });
 
@@ -84,7 +85,7 @@ describe('CommunicationLogForm', () => {
   });
 
   it('fetches additional data', async () => {
-    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
+    const url = `${communicationLogUrl}/region/${REGION_ID}/additional-data`;
 
     await act(() => waitFor(() => {
       renderTest('new', 'log');

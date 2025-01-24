@@ -17,11 +17,12 @@ import ReadOnlyField from '../../ReadOnlyField';
 import UserContext from '../../../UserContext';
 import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import MultiSelect from '../../MultiSelect';
-import LogContext from '../LogContext';
+
+import { useLogContext } from '../LogContext';
 
 const fields = Object.keys(defaultLogValues);
 
-const Log = ({ datePickerKey }) => {
+const Log = ({ datePickerKey, multiGrant }) => {
   const {
     register,
     watch,
@@ -29,12 +30,13 @@ const Log = ({ datePickerKey }) => {
   } = useFormContext();
 
   const { user } = useContext(UserContext);
-  const { regionalUsers, standardGoals } = useContext(LogContext);
+  const { regionalUsers, standardGoals, recipients } = useLogContext();
   const communicationDate = watch('communicationDate');
   const authorName = watch('author.name');
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
+  const recipientOptions = recipients.map((r) => ({ ...r, value: String(r.value) }));
 
   return (
     <>
@@ -65,6 +67,27 @@ const Log = ({ datePickerKey }) => {
           />
         </FormItem>
       </div>
+
+      {multiGrant && (
+      <div className="margin-top-2">
+        <FormItem
+          label="Recipients"
+          name="recipients"
+          htmlFor="recipients"
+        >
+          <MultiSelect
+            control={control}
+            simple={false}
+            name="recipients"
+            id="recipients"
+            options={recipientOptions}
+            required="Select at least one"
+            placeholderText="- Select -"
+            onClick={() => {}}
+          />
+        </FormItem>
+      </div>
+      )}
 
       <div className="margin-top-2">
         <FormItem
@@ -203,6 +226,11 @@ const Log = ({ datePickerKey }) => {
 
 Log.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
+  multiGrant: PropTypes.bool,
+};
+
+Log.defaultProps = {
+  multiGrant: false,
 };
 
 const path = 'log';
@@ -210,12 +238,13 @@ const position = 1;
 
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
-export default {
+const createLogPage = (multiGrantLog = false) => ({
   position,
   label: 'Communication log',
   path,
   review: false,
   fields,
+  isPageComplete,
   render: (
     _additionalData,
     _formData,
@@ -230,12 +259,16 @@ export default {
     Alert,
   ) => (
     <div className="padding-x-1">
-      <Log datePickerKey={datePickerKey} />
+      <Log datePickerKey={datePickerKey} multiGrant={multiGrantLog} />
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
       </div>
     </div>
   ),
-  isPageComplete,
-};
+});
+
+const log = createLogPage();
+export const multiGrantLog = createLogPage(true);
+
+export default log;
