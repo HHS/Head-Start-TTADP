@@ -32,7 +32,7 @@ import {
 //   getCommunicationLogById,
 //   getAdditionalCommunicationLogData,
 // } from '../../../../fetchers/communicationLog';
-import LogContext from '../../components/CommunicationLog/LogContext';
+import { LogProvider } from '../../components/CommunicationLog/LogContext';
 
 /**
    * this is just a simple handler to "flatten"
@@ -128,8 +128,6 @@ export default function RegionalCommunicationLog() {
 
   // const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   // const [reportFetched, setReportFetched] = useState(false);
-  const [regionalUsers] = useState([]);
-  const [standardGoals] = useState([]);
 
   useEffect(() => {
     // fetch communication log data
@@ -323,7 +321,7 @@ export default function RegionalCommunicationLog() {
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <LogContext.Provider value={{ regionalUsers, standardGoals }}>
+          <LogProvider regionId={regionId}>
             <Navigator
               shouldAutoSave={reportId !== 'new'}
               datePickerKey={datePickerKey}
@@ -355,7 +353,7 @@ export default function RegionalCommunicationLog() {
               formDataStatusProp="status"
               preFlightForNavigation={preFlight}
             />
-          </LogContext.Provider>
+          </LogProvider>
         </FormProvider>
       </NetworkContext.Provider>
     </div>

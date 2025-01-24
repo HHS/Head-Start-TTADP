@@ -22,10 +22,9 @@ router.get(
   transactionWrapper(communicationLogById, `${context} /id/:id`),
 );
 router.get(
-  '/region/:regionId/recipient/:recipientId/additional-data',
+  '/region/:regionId/additional-data',
   checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(communicationLogAdditionalData, `${context} /recipient/:recipientId/additional-data`),
+  transactionWrapper(communicationLogAdditionalData, `${context} /region/:regionId/additional-data`),
 );
 router.get(
   '/region/:regionId/recipient/:recipientId',

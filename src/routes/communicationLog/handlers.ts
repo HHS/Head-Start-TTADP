@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 import UserPolicy from '../../policies/user';
 import {
   // @ts-ignore
-  GoalTemplate, User, UserRole, Permission, Role,
+  GoalTemplate, User, UserRole, Permission, Role, Recipient, Grant,
 } from '../../models';
 import {
   logById,
@@ -43,7 +43,7 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
   return new Policy(user, Number(regionId), log);
 };
 
-async function getAvailableUsersAndGoals(req: Request, res: Response) {
+async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
   const user = await userById(await currentUserId(req, res));
   const { regionId } = req.params;
   const authorization = new UserPolicy(user);
@@ -52,8 +52,11 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
     return null;
   }
 
-  let regionalUsers = await User.findAll({
-    attributes: ['id', 'name'],
+  const regionalUsers = await User.findAll({
+    attributes: [
+      ['id', 'value'],
+      ['name', 'label'],
+    ],
     where: {
       [Op.and]: [
         { '$permissions.scopeId$': SCOPES.SITE_ACCESS },
@@ -72,27 +75,45 @@ async function getAvailableUsersAndGoals(req: Request, res: Response) {
         ],
       },
     ],
-    order: [['name', 'ASC']],
+    order: [['label', 'ASC']],
   });
 
-  regionalUsers = regionalUsers
-    .map((u) => ({ value: Number(u.id), label: u.name }));
-
-  let standardGoals = await GoalTemplate.findAll({
+  const standardGoals = await GoalTemplate.findAll({
     where: { standard: { [Op.ne]: null } },
-    attributes: ['standard', 'id'],
-    order: [['standard', 'ASC']],
+    attributes: [
+      ['standard', 'label'],
+      ['id', 'value'],
+    ],
+    order: [['label', 'ASC']],
   });
 
-  standardGoals = standardGoals
-    .map((g) => ({ value: Number(g.id), label: g.standard }));
+  const recipients = await Recipient.findAll({
+    attributes: [
+      ['id', 'value'],
+      ['name', 'label'],
+    ],
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: [],
+        where: { regionId },
+        required: true,
+      },
+    ],
+    order: [['label', 'ASC']],
+  });
 
-  return { regionalUsers, standardGoals };
+  return { regionalUsers, standardGoals, recipients };
 }
 
 async function communicationLogAdditionalData(req: Request, res: Response) {
-  const { regionalUsers, standardGoals } = await getAvailableUsersAndGoals(req, res);
-  res.status(httpCodes.OK).json({ regionalUsers, standardGoals });
+  const {
+    regionalUsers,
+    standardGoals,
+    recipients,
+  } = await getAvailableUsersRecipientsAndGoals(req, res);
+  res.status(httpCodes.OK).json({ regionalUsers, standardGoals, recipients });
 }
 
 async function communicationLogById(req: Request, res: Response) {
@@ -223,5 +244,5 @@ export {
   updateLogById,
   deleteLogById,
   createLogByRecipientId,
-  getAvailableUsersAndGoals,
+  getAvailableUsersRecipientsAndGoals,
 };

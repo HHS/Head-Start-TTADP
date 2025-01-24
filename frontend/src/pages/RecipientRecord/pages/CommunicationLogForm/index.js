@@ -23,9 +23,8 @@ import {
   updateCommunicationLogById,
   createCommunicationLogByRecipientId,
   getCommunicationLogById,
-  getAdditionalCommunicationLogData,
 } from '../../../../fetchers/communicationLog';
-import LogContext from '../../../../components/CommunicationLog/LogContext';
+import { LogProvider } from '../../../../components/CommunicationLog/LogContext';
 
 /**
  * this is just a simple handler to "flatten"
@@ -128,21 +127,10 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const [reportFetched, setReportFetched] = useState(false);
-  const [regionalUsers, setRegionalUsers] = useState([]);
-  const [standardGoals, setStandardGoals] = useState([]);
 
   useEffect(() => {
     // fetch communication log data
     async function fetchLog() {
-      try {
-        const data = await getAdditionalCommunicationLogData(regionId, recipientId);
-        setRegionalUsers(data.regionalUsers);
-        setStandardGoals(data.standardGoals);
-      } catch (e) {
-        setError('Error fetching additional communication log data');
-        return;
-      }
-
       if (!shouldFetch(
         reportId.current,
         regionId,
@@ -327,7 +315,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <LogContext.Provider value={{ regionalUsers, standardGoals }}>
+          <LogProvider regionId={regionId}>
             <Navigator
               shouldAutoSave={communicationLogId !== 'new'}
               datePickerKey={datePickerKey}
@@ -359,7 +347,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
               formDataStatusProp="status"
               preFlightForNavigation={preFlight}
             />
-          </LogContext.Provider>
+          </LogProvider>
         </FormProvider>
       </NetworkContext.Provider>
     </div>
