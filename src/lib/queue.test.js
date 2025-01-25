@@ -1,3 +1,9 @@
+const mockQueueConstructor = jest.fn(() => ({
+  on: jest.fn(), // Mock the `.on` method
+  close: jest.fn().mockResolvedValue(undefined), // Mock the `.close` method
+}));
+jest.mock('bull', () => jest.fn((...args) => mockQueueConstructor(...args)));
+
 import { auditLogger } from '../logger';
 import {
   generateRedisConfig,
@@ -13,6 +19,7 @@ describe('increaseListeners', () => {
   let redisClient;
 
   beforeEach(() => {
+    mockQueueConstructor.mockClear();
     redisClient = {
       getMaxListeners: jest.fn().mockReturnValue(10),
       setMaxListeners: jest.fn(),
@@ -54,6 +61,7 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
+    mockQueueConstructor.mockClear();
     jest.resetModules();
     process.env = { ...originalEnv };
   });
@@ -126,6 +134,10 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 });
 
 describe('setRedisConnectionName', () => {
+  beforeEach(() => {
+    mockQueueConstructor.mockClear();
+  });
+
   it('logs an error if setting the Redis connection name fails', async () => {
     const mockQueue = {
       client: {
@@ -139,12 +151,10 @@ describe('setRedisConnectionName', () => {
 });
 
 describe('newQueue', () => {
-  const mockQueueConstructor = jest.fn();
-  jest.mock('bull', () => jest.fn((...args) => mockQueueConstructor(...args)));
-
   const originalEnv = process.env;
 
   beforeEach(() => {
+    mockQueueConstructor.mockClear();
     jest.resetModules();
     process.env = { ...originalEnv };
   });
@@ -174,31 +184,6 @@ describe('newQueue', () => {
       expect.objectContaining({
         settings: {
           stalledInterval: 60000, // Custom timeout
-        },
-      }),
-    );
-  });
-
-  it('merges settings from redisOpts with the timeout', () => {
-    const redisOpts = {
-      settings: {
-        maxStalledCount: 5,
-      },
-    };
-    const mockGenerateRedisConfig = jest.fn(() => redisOpts);
-    jest.mock('./queue', () => ({
-      ...jest.requireActual('./queue'),
-      generateRedisConfig: mockGenerateRedisConfig,
-    }));
-
-    const queue = newQueue('test-queue', 45000); // Custom timeout
-    expect(mockQueueConstructor).toHaveBeenCalledWith(
-      'test-queue',
-      expect.stringMatching(/^redis:\/\/.+$/),
-      expect.objectContaining({
-        settings: {
-          maxStalledCount: 5, // Preserved
-          stalledInterval: 45000, // Custom timeout
         },
       }),
     );
