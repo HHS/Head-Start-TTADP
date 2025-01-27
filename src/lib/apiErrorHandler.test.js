@@ -185,7 +185,6 @@ describe('apiErrorHandler plus worker', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
 
-
       const requestErrors = await RequestErrors.findAll();
 
       expect(requestErrors.length).toBe(0);
