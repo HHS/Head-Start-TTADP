@@ -2,7 +2,6 @@ import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
-import { sequelize } from '../models';
 
 /**
  * Logs a request error and stores it in the database.
@@ -77,16 +76,16 @@ export const handleError = async (req, res, error, logContext) => {
     label = 'UNEXPECTED ERROR';
   }
 
-  if (error instanceof Sequelize.ConnectionError
-    || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    const pool = sequelize?.connectionManager?.pool;
-    const usedConnections = pool ? pool.used.length : null;
-    const waitingConnections = pool ? pool.pending.length : null;
-    logger.error(`${logContext.namespace} Connection Pool: Used Connections - ${usedConnections}, Waiting Connections - ${waitingConnections}`);
+  if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
+    logger.error(`${logContext.namespace} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`);
+    throw error;
   }
+
   const requestErrorId = await logRequestError(req, operation, error, logContext);
 
-  const errorMessage = error?.stack || error;
+  const errorMessage = typeof error === 'object'
+    ? JSON.stringify({ ...error, errorStack: error?.stack })
+    : error;
 
   if (requestErrorId) {
     logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
@@ -107,6 +106,10 @@ export const handleError = async (req, res, error, logContext) => {
 export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
   logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
   res.status(INTERNAL_SERVER_ERROR).end();
+  if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
+    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
+  }
 }
 
 /**
@@ -132,7 +135,7 @@ export default async function handleErrors(req, res, error, logContext) {
  * @param {Object} logContext - The logging context.
  * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
  */
-const logWorkerError = async (job, operation, error, logContext) => {
+export const logWorkerError = async (job, operation, error, logContext) => {
   if (
     operation !== 'SequelizeError'
     && process.env.SUPPRESS_ERROR_LOGGING
@@ -192,12 +195,9 @@ export const handleWorkerError = async (job, error, logContext) => {
     label = 'UNEXPECTED ERROR';
   }
 
-  if (error instanceof Sequelize.ConnectionError
-    || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    const pool = sequelize?.connectionManager?.pool;
-    const usedConnections = pool ? pool.used.length : null;
-    const waitingConnections = pool ? pool.pending.length : null;
-    logger.error(`${logContext.namespace} Connection Pool: Used Connections - ${usedConnections}, Waiting Connections - ${waitingConnections}`);
+  if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
+    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    throw error;
   }
 
   const requestErrorId = await logWorkerError(job, operation, error, logContext);
@@ -221,6 +221,10 @@ export const handleWorkerError = async (job, error, logContext) => {
  */
 export const handleUnexpectedWorkerError = (job, error, logContext) => {
   logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
+  if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
+    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
+  }
 };
 
 /**
