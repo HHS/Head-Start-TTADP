@@ -83,8 +83,8 @@ export const handleError = async (req, res, error, logContext) => {
 
   const requestErrorId = await logRequestError(req, operation, error, logContext);
 
-  const errorMessage = typeof error === 'object'
-    ? JSON.stringify({ ...error, errorStack: error?.stack })
+  const errorMessage = typeof error === 'object' && error !== null
+    ? error.stack || JSON.stringify(error)
     : error;
 
   if (requestErrorId) {
