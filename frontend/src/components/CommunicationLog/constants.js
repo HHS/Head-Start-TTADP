@@ -36,12 +36,18 @@ const recipientRecordRootUrl = (
   regionId,
 ) => `/recipient-tta-records/${recipientId}/region/${regionId}`;
 
-const formatCommunicationLogUrl = (
+const formatRecipientCommunicationLogUrl = (
   recipientId,
   regionId,
   communicationLogId,
   currentPage = '',
 ) => `${recipientRecordRootUrl(recipientId, regionId)}/communication/${communicationLogId}/${currentPage}`;
+
+const formatRegionalCommunicationLogUrl = (
+  regionId,
+  communicationLogId,
+  currentPage = '',
+) => `/communication-log/region/${regionId}/log/${communicationLogId}/${currentPage}`;
 
 const pageComplete = (
   hookForm,
@@ -52,7 +58,8 @@ export {
   defaultValues,
   defaultLogValues,
   recipientRecordRootUrl,
-  formatCommunicationLogUrl,
+  formatRecipientCommunicationLogUrl,
+  formatRegionalCommunicationLogUrl,
   pageComplete,
   nextStepsFields,
 };

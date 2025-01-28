@@ -4,25 +4,32 @@ import moment from 'moment';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
 
-const { sequelize, CommunicationLog } = db;
+const { sequelize, CommunicationLog, CommunicationLogRecipient } = db;
 
 interface CommLogData {
+  id: number;
   communicationDate?: string;
   purpose?: string;
   result?: string;
+  recipients: {
+    value: string | number;
+    label: string;
+  }[];
+  authorName?: string;
+  author: {
+    value: string | number;
+    label: string;
+  };
+  files?: {
+    id: number
+  }[];
+  userId: number;
 }
 
-interface CommLog {
-  files: unknown[];
-  recipientId: number;
-  userId: number;
+interface CommunicationLogRecipientInterface {
   id: number;
-  data: CommLogData;
-  authorName: string;
-  author: {
-    id: number;
-    name: string;
-  }
+  communicationLogId: number;
+  recipientId: number;
 }
 
 export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogData => {
@@ -87,24 +94,13 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   return result;
 };
 
-const createLog = async (
-  recipientId: number,
-  userId: number,
-  data: {
-    communicationDate: string;
-  },
-) => CommunicationLog.create({
-  recipientId,
-  userId,
-  data: formatCommunicationDateWithJsonData(data),
-});
-
 const LOG_INCLUDE_ATTRIBUTES = {
   include: [
     [
       sequelize.col('author.name'), 'authorName',
     ],
   ],
+  exclude: ['recipientId'], // I don't fully understand why we have to do this, the column has been removed from the model and the DB but still Sequelize tries to give it to me
 };
 
 const LOG_WHERE_OPTIONS = (id: number) => ({
@@ -112,6 +108,10 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
     id,
   },
   include: [
+    {
+      model: db.Recipient,
+      as: 'recipients',
+    },
     {
       model: db.File,
       as: 'files',
@@ -127,7 +127,32 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
   ],
 });
 
-const logById = async (id: number) => CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
+const logById = async (id: number) => CommunicationLog.findOne({
+  ...LOG_WHERE_OPTIONS(id),
+  attributes: LOG_INCLUDE_ATTRIBUTES,
+});
+
+const createLog = async (
+  recipientIds: number[],
+  userId: number,
+  data: CommLogData,
+) => {
+  const log = await CommunicationLog.create({
+    userId,
+    data: formatCommunicationDateWithJsonData(data),
+  // I don't fully understand why we have to do this, the recipientId column has been removed from
+  // the model and the DB but still Sequelize tries to give it to me
+  }, { returning: ['id'] });
+
+  await CommunicationLogRecipient.bulkCreate(
+    recipientIds.map((recipientId) => ({
+      recipientId,
+      communicationLogId: log.id,
+    })),
+  );
+
+  return logById(log.id);
+};
 
 const csvLogsByRecipientAndScopes = async (
   recipientId: number,
@@ -140,12 +165,19 @@ const csvLogsByRecipientAndScopes = async (
     .findAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
       where: {
-        recipientId,
         [Op.and]: [
           ...scopes,
         ],
       },
       include: [
+        {
+          model: db.Recipient,
+          as: 'recipients',
+          required: true,
+          where: {
+            id: recipientId,
+          },
+        },
         {
           model: db.User,
           attributes: [
@@ -195,12 +227,19 @@ const logsByRecipientAndScopes = async (
     .findAndCountAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
       where: {
-        recipientId,
         [Op.and]: [
           ...scopes,
         ],
       },
       include: [
+        {
+          model: db.Recipient,
+          as: 'recipients',
+          required: true,
+          where: {
+            id: recipientId,
+          },
+        },
         {
           model: db.File,
           as: 'files',
@@ -230,17 +269,39 @@ const deleteLog = async (id: number) => CommunicationLog.destroy({
   },
 });
 
-const updateLog = async (id: number, logData: CommLog) => {
+const updateLog = async (id: number, logData: CommLogData) => {
   const {
     files,
     id: logId,
     userId,
-    recipientId,
     author,
     authorName,
+    recipients,
     ...data
   } = logData;
-  const log = await CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
+  const log = await logById(id);
+
+  const recipientIds = recipients.map((recipient) => Number(recipient.value));
+
+  await CommunicationLogRecipient.destroy({
+    where: {
+      communicationLogId: id,
+      recipientId: {
+        [Op.notIn]: recipientIds,
+      },
+    },
+  });
+
+  await CommunicationLogRecipient.bulkCreate(
+    recipientIds.map((recipientId) => ({
+      recipientId,
+      communicationLogId: id,
+    })),
+    {
+      ignoreDuplicates: true,
+    },
+  );
+
   return log.update({ data: formatCommunicationDateWithJsonData(data as CommLogData) });
 };
 

@@ -17,8 +17,8 @@ import ReadOnlyField from '../../ReadOnlyField';
 import UserContext from '../../../UserContext';
 import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import MultiSelect from '../../MultiSelect';
-
 import { useLogContext } from '../LogContext';
+import CommunicationRecipients from '../components/CommunicationRecipients';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -30,13 +30,12 @@ const Log = ({ datePickerKey, multiGrant }) => {
   } = useFormContext();
 
   const { user } = useContext(UserContext);
-  const { regionalUsers, standardGoals, recipients } = useLogContext();
+  const { regionalUsers, standardGoals } = useLogContext();
   const communicationDate = watch('communicationDate');
   const authorName = watch('author.name');
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
-  const recipientOptions = recipients.map((r) => ({ ...r, value: String(r.value) }));
 
   return (
     <>
@@ -69,24 +68,7 @@ const Log = ({ datePickerKey, multiGrant }) => {
       </div>
 
       {multiGrant && (
-      <div className="margin-top-2">
-        <FormItem
-          label="Recipients"
-          name="recipients"
-          htmlFor="recipients"
-        >
-          <MultiSelect
-            control={control}
-            simple={false}
-            name="recipients"
-            id="recipients"
-            options={recipientOptions}
-            required="Select at least one"
-            placeholderText="- Select -"
-            onClick={() => {}}
-          />
-        </FormItem>
-      </div>
+        <CommunicationRecipients />
       )}
 
       <div className="margin-top-2">

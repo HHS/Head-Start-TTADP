@@ -22,6 +22,7 @@ import Policy from '../../policies/communicationLog';
 import filtersToScopes from '../../scopes';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 import SCOPES from '../../middleware/scopeConstants';
+import { groupsByRegion } from '../../services/groups';
 
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
 
@@ -44,7 +45,8 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
 };
 
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
-  const user = await userById(await currentUserId(req, res));
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const { regionId } = req.params;
   const authorization = new UserPolicy(user);
 
@@ -104,16 +106,22 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
     order: [['label', 'ASC']],
   });
 
-  return { regionalUsers, standardGoals, recipients };
-}
+  const groups = await groupsByRegion(
+    Number(regionId),
+    userId,
+  );
 
-async function communicationLogAdditionalData(req: Request, res: Response) {
-  const {
+  return {
     regionalUsers,
     standardGoals,
     recipients,
-  } = await getAvailableUsersRecipientsAndGoals(req, res);
-  res.status(httpCodes.OK).json({ regionalUsers, standardGoals, recipients });
+    groups,
+  };
+}
+
+async function communicationLogAdditionalData(req: Request, res: Response) {
+  const additionalData = await getAvailableUsersRecipientsAndGoals(req, res);
+  res.status(httpCodes.OK).json(additionalData);
 }
 
 async function communicationLogById(req: Request, res: Response) {
@@ -230,7 +238,27 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     const userId = await currentUserId(req, res);
     const { data } = req.body;
 
-    const log = await createLog(Number(recipientId), userId, data);
+    const log = await createLog([Number(recipientId)], userId, data);
+    res.status(httpCodes.CREATED).json(log);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+};
+
+const createLogByRegionId = async (req: Request, res: Response) => {
+  try {
+    const policy = await getAuthorizationByRegion(req, res);
+    if (!policy.canCreateLog()) {
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const { data } = req.body;
+    const { recipients, ...fields } = data;
+    const recipientIds = recipients.map((recipient: { value: number }) => Number(recipient.value));
+
+    const log = await createLog(recipientIds, userId, fields);
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -245,4 +273,5 @@ export {
   deleteLogById,
   createLogByRecipientId,
   getAvailableUsersRecipientsAndGoals,
+  createLogByRegionId,
 };

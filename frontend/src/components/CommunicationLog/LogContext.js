@@ -13,6 +13,7 @@ const LogProvider = ({ children, regionId }) => {
   const [regionalUsers, setRegionalUsers] = useState([]);
   const [standardGoals, setStandardGoals] = useState([]);
   const [recipients, setRecipients] = useState([]);
+  const [groups, setGroups] = useState([]);
 
   useEffect(() => {
     const fetchLogData = async () => {
@@ -21,6 +22,7 @@ const LogProvider = ({ children, regionId }) => {
         setRegionalUsers(data.regionalUsers);
         setStandardGoals(data.standardGoals);
         setRecipients(data.recipients);
+        setGroups(data.groups);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Error fetching additional communication log data');
@@ -35,6 +37,7 @@ const LogProvider = ({ children, regionId }) => {
       regionalUsers,
       standardGoals,
       recipients,
+      groups,
     }}
     >
       {children}
@@ -44,12 +47,15 @@ const LogProvider = ({ children, regionId }) => {
 
 LogProvider.propTypes = {
   children: PropTypes.node.isRequired,
-  regionId: PropTypes.string.isRequired,
+  regionId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 const useLogContext = () => {
   if (!LogContext) {
-    throw new Error('useLog must be used within a LogProvider');
+    throw new Error('useLogContext must be used within a LogProvider');
   }
 
   return useContext(LogContext);

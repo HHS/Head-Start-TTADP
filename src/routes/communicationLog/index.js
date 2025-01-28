@@ -7,6 +7,7 @@ import {
   deleteLogById,
   createLogByRecipientId,
   communicationLogAdditionalData,
+  createLogByRegionId,
 } from './handlers';
 import {
   checkIdIdParam, checkRecipientIdParam, checkRegionIdParam,
@@ -15,11 +16,16 @@ import {
 const router = express.Router();
 const context = 'communicationLog';
 
+router.post(
+  '/region/:regionId',
+  checkRegionIdParam,
+  transactionWrapper(createLogByRegionId, `${context} /region/:regionId`),
+);
 router.get(
   '/region/:regionId/log/:id',
   checkRegionIdParam,
   checkIdIdParam,
-  transactionWrapper(communicationLogById, `${context} /id/:id`),
+  transactionWrapper(communicationLogById, `${context} /region/:regionId/log/:id`),
 );
 router.get(
   '/region/:regionId/additional-data',

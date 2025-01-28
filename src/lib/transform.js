@@ -532,6 +532,7 @@ const arTransformers = [
 
 const logTransformers = [
   'id',
+  transformRelatedModel('recipients', 'name'),
   transformRelatedModel('author', 'name'),
   transformRelatedModelProp('data', 'communicationDate'),
   transformRelatedModelProp('data', 'duration'),
