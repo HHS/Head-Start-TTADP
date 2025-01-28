@@ -981,6 +981,7 @@ class Resources{
  * updatedAt : timestamp with time zone
  * url : text
  lastStatusCode : integer
+ mapsTo : integer
  metadata : jsonb
  metadataUpdatedAt : timestamp with time zone
  mimeType : varchar(255)

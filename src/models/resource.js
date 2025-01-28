@@ -77,6 +77,16 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'Resource',
+        },
+        key: 'id',
+      },
+    },
   }, {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
