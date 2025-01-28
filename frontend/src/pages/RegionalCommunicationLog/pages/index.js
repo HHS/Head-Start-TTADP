@@ -4,7 +4,7 @@ import supportingAttachments from '../../../components/CommunicationLog/pages/su
 
 const pages = [
   log,
-  nextSteps,
   supportingAttachments,
+  nextSteps,
 ];
 export default pages;

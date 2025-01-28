@@ -83,6 +83,19 @@ export const deleteCommunicationLogById = async (logId) => destroy(
   ),
 );
 
+export const createRegionalCommunicationLog = async (regionId, data) => {
+  const response = await post(
+    join(
+      communicationLogUrl,
+      'region',
+      String(regionId),
+    ),
+    { data },
+  );
+
+  return response.json();
+};
+
 export const createCommunicationLogByRecipientId = async (regionId, recipientId, data) => {
   const response = await post(
     join(

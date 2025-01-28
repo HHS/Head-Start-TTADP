@@ -5,16 +5,18 @@ import React, {
   useContext,
   useRef,
 } from 'react';
+import moment from 'moment';
+
 import PropTypes from 'prop-types';
 // import moment from 'moment';
-import { useParams } from 'react-router';
+import { Redirect, useParams } from 'react-router';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Grid } from '@trussworks/react-uswds';
-// import { useHistory } from 'react-router-dom';
+import { Grid } from '@trussworks/react-uswds';
+import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
-import { defaultValues } from '../../components/CommunicationLog/constants';
+import { defaultValues, formatRegionalCommunicationLogUrl } from '../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
@@ -22,17 +24,13 @@ import pages from './pages';
 // import AppLoadingContext from '../../AppLoadingContext';
 import {
 // updateCommunicationLogById,
-// createCommunicationLogByRecipientId,
+  createRegionalCommunicationLog,
+  getCommunicationLogById,
+  updateCommunicationLogById,
 // getCommunicationLogById,
-// getAdditionalCommunicationLogData,
 } from '../../fetchers/communicationLog';
-// import {
-//   updateCommunicationLogById,
-//   createCommunicationLogByRecipientId,
-//   getCommunicationLogById,
-//   getAdditionalCommunicationLogData,
-// } from '../../../../fetchers/communicationLog';
 import { LogProvider } from '../../components/CommunicationLog/LogContext';
+import AppLoadingContext from '../../AppLoadingContext';
 
 /**
    * this is just a simple handler to "flatten"
@@ -43,42 +41,42 @@ import { LogProvider } from '../../components/CommunicationLog/LogContext';
    * @param {*} updatedLog - the log object from the database, which has some
    * information stored at the top level of the object, and some stored in a data column
    */
-// const resetFormData = (reset, updatedLog) => {
-//   const {
-//     data,
-//     updatedAt,
-//     ...fields
-//   } = updatedLog;
+const resetFormData = (reset, updatedLog) => {
+  const {
+    data,
+    updatedAt,
+    recipients,
+    ...fields
+  } = updatedLog;
 
-//   const form = {
-//     ...defaultValues,
-//     ...data,
-//     ...fields,
-//   };
+  const form = {
+    ...defaultValues,
+    ...data,
+    ...fields,
+    recipients: recipients.map((r) => ({ value: r.id, label: r.name })),
+  };
 
-//   reset(form);
-// };
+  reset(form);
+};
 
-// const shouldFetch = (
-//   communicationLogId,
-//   regionId,
-//   recipientId,
-//   reportFetched,
-//   isAppLoading,
-//   currentPage,
-// ) => {
-//   if (
-//     !currentPage // we
-//       || !communicationLogId // need
-//       || !regionId // all
-//       || !recipientId // of
-//       || communicationLogId === 'new' // these
-//       || reportFetched // conditions
-//       || isAppLoading) { // to
-//     return false; // be
-//   } // met
-//   return true; // to
-// }; // fetch
+const shouldFetch = (
+  communicationLogId,
+  regionId,
+  reportFetched,
+  isAppLoading,
+  currentPage,
+) => {
+  if (
+    !currentPage // we
+      || !communicationLogId // need
+      || !regionId // all
+      || communicationLogId === 'new' // these
+      || reportFetched // conditions
+      || isAppLoading) { // to
+    return false; // be
+  } // met
+  return true; // to
+}; // fetch
 
 export default function RegionalCommunicationLog() {
   const { regionId, logId, currentPage } = useParams();
@@ -86,16 +84,13 @@ export default function RegionalCommunicationLog() {
   const reportId = useRef(logId);
 
   // for redirects if a page is not provided
-  //   const history = useHistory();
+  const history = useHistory();
 
   /* ============
 
     * the following errors are a bit confusingly named, but
     * I'm copying the pattern from the ActivityReport
     */
-
-  // this error is for errors fetching reports, its the top error
-  const [error] = useState();
 
   // this is the error that appears in the sidebar
   const [errorMessage, updateErrorMessage] = useState();
@@ -109,10 +104,9 @@ export default function RegionalCommunicationLog() {
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey] = useState(`i${Date.now().toString()}`);
+  const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
 
-  /* ============
-        */
+  /* ============ */
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -126,113 +120,101 @@ export default function RegionalCommunicationLog() {
 
   const formData = hookForm.getValues();
 
-  // const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
-  // const [reportFetched, setReportFetched] = useState(false);
+  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const [reportFetched, setReportFetched] = useState(false);
 
   useEffect(() => {
     // fetch communication log data
-    // async function fetchLog() {
-    //   try {
-    //     const data = await getAdditionalCommunicationLogData(regionId, recipientId);
-    //     setRegionalUsers(data.regionalUsers);
-    //     setStandardGoals(data.standardGoals);
-    //   } catch (e) {
-    //     setError('Error fetching additional communication log data');
-    //     return;
-    //   }
+    async function fetchLog() {
+      if (!shouldFetch(
+        reportId.current,
+        regionId,
+        reportFetched,
+        isAppLoading,
+        currentPage,
+      )) {
+        return;
+      }
 
-    //   if (!shouldFetch(
-    //     reportId.current,
-    //     regionId,
-    //     // recipientId,
-    //     reportFetched,
-    //     isAppLoading,
-    //     currentPage,
-    //   )) {
-    //     return;
-    //   }
-
-    //   try {
-    //     setIsAppLoading(true);
-    //     const log = await getCommunicationLogById(regionId, reportId.current);
-    //     resetFormData(hookForm.reset, log);
-    //   } catch (e) {
-    //     setError('Error fetching communication log');
-    //   } finally {
-    //     setDatePickerKey(`f${Date.now().toString()}`);
-    //     setReportFetched(true);
-    //     setIsAppLoading(false);
-    //   }
-    // }
-    // fetchLog();
+      try {
+        setIsAppLoading(true);
+        const log = await getCommunicationLogById(regionId, reportId.current);
+        resetFormData(hookForm.reset, log);
+      } catch (e) {
+        // setError('Error fetching communication log');
+      } finally {
+        setDatePickerKey(`f${Date.now().toString()}`);
+        setReportFetched(true);
+        setIsAppLoading(false);
+      }
+    }
+    fetchLog();
   }, [
-    // reportId,
-    // hookForm.reset,
-    // recipientId,
-    // regionId,
-    // reportFetched,
-    // isAppLoading,
-    // setIsAppLoading,
-    // currentPage,
+    reportId,
+    hookForm.reset,
+    regionId,
+    reportFetched,
+    isAppLoading,
+    setIsAppLoading,
+    currentPage,
   ]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
 
-  const updatePage = () => {
-    // const state = {};
-    // if (reportId.current) {
-    //   state.showLastUpdatedTime = true;
-    // }
+  const updatePage = (position) => {
+    const state = {};
+    if (reportId.current) {
+      state.showLastUpdatedTime = true;
+    }
 
-    // const page = pages.find((p) => p.position === position);
-    // const newPath = `${formatCommunicationLogUrl(recipientId, regionId, reportId.current)}${page.path}`;
-    // history.push(newPath, state);
+    const page = pages.find((p) => p.position === position);
+    const newPath = `${formatRegionalCommunicationLogUrl(regionId, reportId.current)}${page.path}`;
+    history.push(newPath, state);
   };
 
-  //   if (!currentPage) {
-  //     return (
-  //       <Redirect to={formatCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
-  //     );
+  if (!currentPage) {
+    return (
+      <Redirect to={formatRegionalCommunicationLogUrl(regionId, reportId.current, 'log')} />
+    );
+  }
 
   const onSave = async () => {
-    // try {
-    //   // reset the error message
-    //   setError('');
-    //   setIsAppLoading(true);
-    //   hookForm.clearErrors();
+    try {
+      // reset the error message
+      setIsAppLoading(true);
+      hookForm.clearErrors();
 
-    //   // grab the newest data from the form
-    //   const data = hookForm.getValues();
+      // grab the newest data from the form
+      const data = hookForm.getValues();
 
-    //   let loggedCommunication;
-    //   // check to see if report ID is "new"
-    //   if (reportId.current === 'new') {
-    //     loggedCommunication = await createCommunicationLogByRecipientId(
-    //       regionId,
-    //       recipientId,
-    //       data,
-    //     );
-    //     reportId.current = loggedCommunication.id;
-    //   } else if (reportId.current) {
-    //     // PUT it to the backend
-    //     loggedCommunication = await updateCommunicationLogById(reportId.current, data);
-    //   }
+      let loggedCommunication;
+      // check to see if report ID is "new"
+      if (reportId.current === 'new') {
+        loggedCommunication = await createRegionalCommunicationLog(
+          regionId,
+          data,
+        );
+        reportId.current = loggedCommunication.id;
+      } else if (reportId.current) {
+        // PUT it to the backend
+        loggedCommunication = await updateCommunicationLogById(reportId.current, data);
+      }
 
-    //   // update the form data
-    //   resetFormData(hookForm.reset, loggedCommunication);
+      // update the form data
+      resetFormData(hookForm.reset, loggedCommunication);
 
-    //   // update the last save time
-    //   updateLastSaveTime(moment(loggedCommunication.updatedAt));
+      // update the last save time
+      updateLastSaveTime(moment(loggedCommunication.updatedAt));
 
-    //   // update the sidebar message
-    //   updateShowSavedDraft(true);
-    // } catch (err) {
-    //   setError('There was an error saving the communication log. Please try again later.');
-    // } finally {
-    //   setReportFetched(true);
-    //   setIsAppLoading(false);
-    // }
+      // update the sidebar message
+      updateShowSavedDraft(true);
+    } catch (err) {
+      // setError('There was an error saving the communication log. Please try again later.');
+    } finally {
+      setReportFetched(true);
+      setIsAppLoading(false);
+    }
   };
 
   const onSaveAndContinue = async () => {
@@ -264,35 +246,36 @@ export default function RegionalCommunicationLog() {
   };
 
   const onFormSubmit = async () => {
-    // try {
-    //   const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
+    try {
+      const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
 
-    //   if (!allPagesComplete) {
-    //     return;
-    //   }
+      if (!allPagesComplete) {
+        return;
+      }
 
-    //   // reset the error message
-    //   setError('');
-    //   setIsAppLoading(true);
+      // reset the error message
+      // setError('');
+      setIsAppLoading(true);
 
-    //   // grab the newest data from the form
-    //   const data = hookForm.getValues();
+      // grab the newest data from the form
+      const data = hookForm.getValues();
 
-    //   // PUT it to the backend
-    //   await updateCommunicationLogById(
-    //     reportId.current,
-    //     data,
-    //   );
+      // PUT it to the backend
+      await updateCommunicationLogById(
+        reportId.current,
+        data,
+      );
 
-    //   history.push(
-    //     `${recipientRecordRootUrl(recipientId, regionId)}/communication`,
-    //     { message: 'You successfully saved the communication log.' },
-    //   );
-    // } catch (err) {
-    //   setError('There was an error saving the communication log. Please try again later.');
-    // } finally {
-    //   setIsAppLoading(false);
-    // }
+      // send us back to the new regional communication log view
+      // history.push(
+      //   `${(recipientId, regionId)}/communication`,
+      //   { message: 'You successfully saved the communication log.' },
+      // );
+    } catch (err) {
+      // setError('There was an error saving the communication log. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
+    }
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
@@ -302,12 +285,6 @@ export default function RegionalCommunicationLog() {
 
   return (
     <div className="smart-hub-communication-log--form maxw-widescreen">
-      { error
-            && (
-            <Alert type="warning">
-              {error}
-            </Alert>
-            )}
       <Helmet titleTemplate="%s - New Communication | TTA Hub" defaultTitle="Communication Log - New Communication | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">

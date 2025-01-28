@@ -12,7 +12,7 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
-import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from '../../../../components/CommunicationLog/constants';
+import { defaultValues, formatRecipientCommunicationLogUrl, recipientRecordRootUrl } from '../../../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 import Navigator from '../../../../components/Navigator';
@@ -176,13 +176,13 @@ export default function CommunicationLogForm({ match, recipientName }) {
     }
 
     const page = pages.find((p) => p.position === position);
-    const newPath = `${formatCommunicationLogUrl(recipientId, regionId, reportId.current)}${page.path}`;
+    const newPath = `${formatRecipientCommunicationLogUrl(recipientId, regionId, reportId.current)}${page.path}`;
     history.push(newPath, state);
   };
 
   if (!currentPage) {
     return (
-      <Redirect to={formatCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
+      <Redirect to={formatRecipientCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
     );
   }
 
