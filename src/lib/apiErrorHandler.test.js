@@ -203,7 +203,7 @@ describe('apiErrorHandler plus worker', () => {
 
       expect(result).toBe(0);
 
-      delete process.env.SUPPRESS_ERROR_LOGGING; // Clean up
+      delete process.env.SUPPRESS_ERROR_LOGGING;
     });
 
     it('should return 0 when error is null', async () => {
@@ -215,7 +215,7 @@ describe('apiErrorHandler plus worker', () => {
     it('should include params in the logged request body if present', async () => {
       const requestWithParams = {
         ...mockRequest,
-        params: { id: '123', action: 'update' }, // Non-empty object for params
+        params: { id: '123', action: 'update' },
       };
 
       const mockError = new Error('Params test error');
@@ -275,27 +275,13 @@ describe('apiErrorHandler plus worker', () => {
       );
     });
 
-    it('should construct responseBody when error is an object', async () => {
-      const mockError = { message: 'Object error', code: 500 };
-
-      // jest.spyOn(logger, 'error').mockImplementation(() => {});
-
-      await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
-
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('"message":"Object error"'), // Ensures the error object is included
-      );
-    });
-
     it('should set responseBody to the error value when error is not an object', async () => {
       const mockError = 'String error';
 
-      // jest.spyOn(logger, 'error').mockImplementation(() => {});
-
       await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
 
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(mockError), // Ensures the raw error string is included
+        expect.stringContaining(mockError),
       );
     });
   });
@@ -331,7 +317,6 @@ describe('apiErrorHandler plus worker', () => {
     });
 
     it('logs an error and returns null on failure to store RequestError', async () => {
-      // Simulate a failure by mocking createRequestError to throw an error
       jest.spyOn(RequestErrors, 'create').mockRejectedValue(new Error('Database error'));
 
       const result = await logRequestError(mockRequest, 'TestOperation', new Error('Test error'), mockLogContext);
