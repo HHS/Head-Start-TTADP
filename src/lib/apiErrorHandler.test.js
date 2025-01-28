@@ -94,7 +94,12 @@ describe('apiErrorHandler plus worker', () => {
 
     it('handles unexpected error in catch block', async () => {
       const mockUnexpectedErr = new Error('Unexpected error');
-      handleUnexpectedErrorInCatchBlock(mockRequest, mockResponse, mockUnexpectedErr, mockLogContext);
+      handleUnexpectedErrorInCatchBlock(
+        mockRequest,
+        mockResponse,
+        mockUnexpectedErr,
+        mockLogContext,
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
 
@@ -167,18 +172,18 @@ describe('apiErrorHandler plus worker', () => {
     });
 
     it('handles specific Sequelize connection acquire timeout error', async () => {
-      const mockConnectionAcquireTimeoutError = new Sequelize.ConnectionAcquireTimeoutError(
+      const mockConnAcquireTimeoutError = new Sequelize.ConnectionAcquireTimeoutError(
         'Connection acquire timeout error',
       );
 
       await expect(
-        handleErrors(mockRequest, mockResponse, mockConnectionAcquireTimeoutError, mockLogContext),
+        handleErrors(mockRequest, mockResponse, mockConnAcquireTimeoutError, mockLogContext),
       ).rejects.toThrow(
         'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.',
       );
 
       await expect(
-        handleWorkerErrors(mockJob, mockConnectionAcquireTimeoutError, mockLogContext),
+        handleWorkerErrors(mockJob, mockConnAcquireTimeoutError, mockLogContext),
       ).rejects.toThrow(
         'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.',
       );
@@ -365,12 +370,12 @@ describe('apiErrorHandler plus worker', () => {
     });
 
     it('throws an unhandled exception for ConnectionAcquireTimeoutError', async () => {
-      const mockConnectionAcquireTimeoutError = new Sequelize.Sequelize.ConnectionAcquireTimeoutError(
+      const mockConnAcquireTimeoutError = new Sequelize.Sequelize.ConnectionAcquireTimeoutError(
         'Connection acquire timeout error',
       );
 
       await expect(
-        handleErrors(mockRequest, mockResponse, mockConnectionAcquireTimeoutError, mockLogContext),
+        handleErrors(mockRequest, mockResponse, mockConnAcquireTimeoutError, mockLogContext),
       ).rejects.toThrow(
         'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.',
       );
@@ -382,8 +387,8 @@ describe('apiErrorHandler plus worker', () => {
   });
 
   describe('handleWorkerError', () => {
-    const mockJob = { id: 123 };
-    const mockLogContext = { namespace: 'WORKER' };
+    const mockErrorJob = { id: 123 };
+    const mockErrorLogContext = { namespace: 'WORKER' };
 
     beforeEach(() => {
       jest.clearAllMocks();
@@ -392,12 +397,12 @@ describe('apiErrorHandler plus worker', () => {
     it('should log and throw Sequelize.ConnectionAcquireTimeoutError', async () => {
       const error = new Sequelize.ConnectionAcquireTimeoutError('Connection timeout error');
 
-      await expect(handleWorkerErrors(mockJob, error, mockLogContext)).rejects.toThrow(
+      await expect(handleWorkerErrors(mockErrorJob, error, mockErrorLogContext)).rejects.toThrow(
         'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.',
       );
 
       expect(logger.error).toHaveBeenCalledWith(
-        `${mockLogContext.namespace} - Critical error: Restarting server.`,
+        `${mockErrorLogContext.namespace} - Critical error: Restarting server.`,
       );
     });
 
