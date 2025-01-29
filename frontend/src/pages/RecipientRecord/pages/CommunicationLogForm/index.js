@@ -12,7 +12,12 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
-import { defaultValues, formatRecipientCommunicationLogUrl, recipientRecordRootUrl } from '../../../../components/CommunicationLog/constants';
+import {
+  defaultValues,
+  formatRecipientCommunicationLogUrl,
+  recipientRecordRootUrl,
+  resetFormData,
+} from '../../../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 import Navigator from '../../../../components/Navigator';
@@ -25,31 +30,6 @@ import {
   getCommunicationLogById,
 } from '../../../../fetchers/communicationLog';
 import { LogProvider } from '../../../../components/CommunicationLog/LogContext';
-
-/**
- * this is just a simple handler to "flatten"
- * the JSON column data into the form
- *
- * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
- *  replaces the form with those values; it also calls the standard form.reset event
- * @param {*} event - not an HTML event, but the event object from the database, which has some
- * information stored at the top level of the object, and some stored in a data column
- */
-const resetFormData = (reset, updatedLog) => {
-  const {
-    data,
-    updatedAt,
-    ...fields
-  } = updatedLog;
-
-  const form = {
-    ...defaultValues,
-    ...data,
-    ...fields,
-  };
-
-  reset(form);
-};
 
 const shouldFetch = (
   communicationLogId,

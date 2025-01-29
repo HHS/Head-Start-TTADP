@@ -313,7 +313,9 @@ describe('CommunicationLogForm', () => {
   it('can submit the form', async () => {
     const formData = {
       id: 1,
-      recipientId: RECIPIENT_ID,
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],
@@ -371,7 +373,9 @@ describe('CommunicationLogForm', () => {
   it('handles error submitting the form', async () => {
     const formData = {
       id: 1,
-      recipientId: RECIPIENT_ID,
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],
