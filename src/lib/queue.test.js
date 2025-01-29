@@ -1,4 +1,4 @@
-/* eslint-disableimport/first */
+/* eslint-disable import/first */
 const mockQueueConstructor = jest.fn(() => ({
   on: jest.fn(), // Mock the `.on` method
   close: jest.fn().mockResolvedValue(undefined), // Mock the `.close` method
