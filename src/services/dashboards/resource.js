@@ -9,12 +9,10 @@ import {
   ActivityReportObjective,
   ActivityRecipient,
   Grant,
-  // NextStep,
   Goal,
   Objective,
   Recipient,
   Resource,
-  // Topic,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
@@ -2093,7 +2091,8 @@ export async function rollUpResourceUse(data) {
 }
 
 export async function rollUpTopicUse(data) {
-  const rolledUpTopicUse = data.topicUseResult.reduce((accumulator, topic) => {
+  const filteredTopics = data.topicUseResult.filter((topic) => topic.name !== 'Equity');
+  const rolledUpTopicUse = filteredTopics.reduce((accumulator, topic) => {
     const exists = accumulator.find((r) => r.name === topic.name);
     if (!exists) {
       // Add a property with the resource's name.

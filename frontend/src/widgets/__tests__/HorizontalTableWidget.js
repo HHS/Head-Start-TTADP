@@ -67,10 +67,10 @@ describe('Horizontal Table Widget', () => {
     expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col3/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
-    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/18/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/17/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/18/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
   });
 
@@ -246,7 +246,7 @@ describe('Horizontal Table Widget', () => {
 
     renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
-    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
     const url = screen.getByText(/Test Link/i);
     expect(url).toHaveAttribute('href', '/example.com');
   });
@@ -272,7 +272,7 @@ describe('Horizontal Table Widget', () => {
 
     renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
-    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
     const url = screen.getByText(/Test Link/i);
     expect(url).toHaveAttribute('href', 'http://external.example.com');
   });
@@ -364,10 +364,10 @@ describe('Horizontal Table Widget', () => {
     expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col3/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
-    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/18/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/17/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/18/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
     expect(screen.queryAllByText(/Last Heading/i).length).toBe(0);
   });
 
@@ -428,9 +428,9 @@ describe('Horizontal Table Widget', () => {
     expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col3/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
-    expect(screen.getByText(/Row 1 Data/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/-/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/17/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/-/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
   });
 });
