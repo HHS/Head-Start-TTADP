@@ -770,7 +770,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
         where: { 'data.eventId': reportId },
       });
       expect(importedEvent).not.toBeNull();
-      expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Pregnant Women / Pregnant Persons']);
+      expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Expectant families']);
     });
 
     it('skips rows that have an invalid audience', async () => {
