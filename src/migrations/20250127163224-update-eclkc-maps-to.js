@@ -15,14 +15,14 @@ module.exports = {
             SELECT DISTINCT ON ("url")
             *
             FROM "Resources"
-            WHERE "url" LIKE '%eclkc.ohs.acf.hhs.gov%'
+            WHERE "domain" = 'eclkc.ohs.acf.hhs.gov'
             ORDER BY "url", "metadataUpdatedAt" DESC, "updatedAt" DESC
             ),
         existing_new_resources AS (
             SELECT
             "url"
             FROM "Resources"
-            WHERE "url" LIKE '%headstart.gov%'
+            WHERE "domain" = 'headstart.gov'
             GROUP BY 1
         ) INSERT INTO "Resources" (
         "domain", "url", "title", "mimeType",
@@ -58,7 +58,7 @@ module.exports = {
         FROM
             "Resources"
         WHERE
-            "url" LIKE '%headstart.gov%'
+            "domian" = 'headstart.gov'
         )
         UPDATE
         "Resources" r
