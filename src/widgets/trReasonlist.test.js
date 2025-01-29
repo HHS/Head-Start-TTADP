@@ -256,8 +256,9 @@ describe('TR reason list', () => {
 
     // run our function
     const data = await trReasonList(scopes);
+    const rs = [...DEPRECATED_REASONS, ...REASONS];
 
-    expect(data.length).toBe([...DEPRECATED_REASONS, ...REASONS].length);
+    expect(data.length).toBe(rs.length);
 
     const areaOfConcern = data.find((reason) => reason.name === 'Monitoring | Area of Concern');
     expect(areaOfConcern.count).toBe(2);
@@ -270,6 +271,6 @@ describe('TR reason list', () => {
 
     const filteredOut = data.filter((reason) => reason.count === 0);
 
-    expect(filteredOut.length).toBe(REASONS.length - 3);
+    expect(filteredOut.length).toBe(rs.length - 3);
   });
 });
