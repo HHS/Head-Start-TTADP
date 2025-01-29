@@ -23,7 +23,9 @@ import {
   updateCommunicationLogById,
   createCommunicationLogByRecipientId,
   getCommunicationLogById,
+  getAdditionalCommunicationLogData,
 } from '../../../../fetchers/communicationLog';
+import LogContext from './LogContext';
 
 /**
  * this is just a simple handler to "flatten"
@@ -126,10 +128,21 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
   const [reportFetched, setReportFetched] = useState(false);
+  const [regionalUsers, setRegionalUsers] = useState([]);
+  const [standardGoals, setStandardGoals] = useState([]);
 
   useEffect(() => {
     // fetch communication log data
     async function fetchLog() {
+      try {
+        const data = await getAdditionalCommunicationLogData(regionId, recipientId);
+        setRegionalUsers(data.regionalUsers);
+        setStandardGoals(data.standardGoals);
+      } catch (e) {
+        setError('Error fetching additional communication log data');
+        return;
+      }
+
       if (!shouldFetch(
         reportId.current,
         regionId,
@@ -314,37 +327,39 @@ export default function CommunicationLogForm({ match, recipientName }) {
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <Navigator
-            shouldAutoSave={communicationLogId !== 'new'}
-            datePickerKey={datePickerKey}
-            socketMessageStore={{}}
-            key={currentPage}
-            editable
-            updatePage={updatePage}
-            reportCreator={reportCreator}
-            lastSaveTime={lastSaveTime}
-            updateLastSaveTime={updateLastSaveTime}
-            reportId={reportId.current}
-            currentPage={currentPage}
-            additionalData={{}}
-            formData={formData}
-            pages={pages}
-            onFormSubmit={onFormSubmit}
-            onSave={onSave}
-            onResetToDraft={() => {}}
-            isApprover={false}
-            isPendingApprover={false}
-            onReview={() => {}}
-            errorMessage={errorMessage}
-            updateErrorMessage={updateErrorMessage}
-            savedToStorageTime={savedToStorageTime}
-            onSaveDraft={onSave}
-            onSaveAndContinue={onSaveAndContinue}
-            showSavedDraft={showSavedDraft}
-            updateShowSavedDraft={updateShowSavedDraft}
-            formDataStatusProp="status"
-            preFlightForNavigation={preFlight}
-          />
+          <LogContext.Provider value={{ regionalUsers, standardGoals }}>
+            <Navigator
+              shouldAutoSave={communicationLogId !== 'new'}
+              datePickerKey={datePickerKey}
+              socketMessageStore={{}}
+              key={currentPage}
+              editable
+              updatePage={updatePage}
+              reportCreator={reportCreator}
+              lastSaveTime={lastSaveTime}
+              updateLastSaveTime={updateLastSaveTime}
+              reportId={reportId.current}
+              currentPage={currentPage}
+              additionalData={{}}
+              formData={formData}
+              pages={pages}
+              onFormSubmit={onFormSubmit}
+              onSave={onSave}
+              onResetToDraft={() => {}}
+              isApprover={false}
+              isPendingApprover={false}
+              onReview={() => {}}
+              errorMessage={errorMessage}
+              updateErrorMessage={updateErrorMessage}
+              savedToStorageTime={savedToStorageTime}
+              onSaveDraft={onSave}
+              onSaveAndContinue={onSaveAndContinue}
+              showSavedDraft={showSavedDraft}
+              updateShowSavedDraft={updateShowSavedDraft}
+              formDataStatusProp="status"
+              preFlightForNavigation={preFlight}
+            />
+          </LogContext.Provider>
         </FormProvider>
       </NetworkContext.Provider>
     </div>

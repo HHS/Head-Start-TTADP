@@ -86,6 +86,7 @@ export default (sequelize, DataTypes) => {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
+    paranoid: true,
   });
   return GoalTemplate;
 };
