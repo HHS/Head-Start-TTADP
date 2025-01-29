@@ -1,4 +1,4 @@
-import { TRAINING_REPORT_STATUSES, REASONS } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, REASONS, DEPRECATED_REASONS } from '@ttahub/common';
 import db, {
   EventReportPilot,
   SessionReportPilot,
@@ -257,7 +257,7 @@ describe('TR reason list', () => {
     // run our function
     const data = await trReasonList(scopes);
 
-    expect(data.length).toBe(REASONS.length);
+    expect(data.length).toBe([...DEPRECATED_REASONS, ...REASONS].length);
 
     const areaOfConcern = data.find((reason) => reason.name === 'Monitoring | Area of Concern');
     expect(areaOfConcern.count).toBe(2);

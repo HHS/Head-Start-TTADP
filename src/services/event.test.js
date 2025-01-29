@@ -755,7 +755,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       const mixedColumns = `${headings.join(',')},Extra Column`;
       const reportId = 'R01-TR-6578';
       const tgtPopToTest = `"Program Staff
-          Pregnant Women / Pregnant Persons
+          Expectant families
           Invalid Pop"`;
 
       const d = `${mixedColumns}
