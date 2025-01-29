@@ -12,7 +12,6 @@ export default (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'files',
       });
-      CommunicationLog.hasMany(models.CommunicationLogRecipient, { foreignKey: 'communicationLogId', as: 'communicationLogRecipients' });
     }
   }
 
