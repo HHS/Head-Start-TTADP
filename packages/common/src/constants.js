@@ -105,6 +105,12 @@ const REASONS = [
 ];
 exports.REASONS = REASONS;
 
+const DEPRECATED_REASONS = [
+  'COVID-19 response'
+];
+
+exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
+
 const REPORT_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',
