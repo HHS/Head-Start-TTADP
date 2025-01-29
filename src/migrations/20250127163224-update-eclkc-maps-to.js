@@ -7,7 +7,21 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      queryInterface.addColumn('Resources', 'mapsTo', { type: Sequelize.INTEGER, allowNull: true }, { transaction });
+      await queryInterface.addColumn(
+        'Resources',
+        'mapsTo',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Resources', // Table name
+            key: 'id', // Column to reference
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'SET NULL', // Adjust as needed (e.g., 'CASCADE' or 'RESTRICT')
+        },
+        { transaction },
+      );
 
       await queryInterface.sequelize.query(/* sql */`
         -- Create new headstart.gov resources for all eclkc resources that are missing.
@@ -75,7 +89,8 @@ module.exports = {
     });
   },
 
-  async down() {
-    // no rollbacks.
+  async down(queryInterface) {
+    // Drop the mapsTo column.
+    await queryInterface.removeColumn('Resources', 'mapsTo');
   },
 };
