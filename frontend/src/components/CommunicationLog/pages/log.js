@@ -192,7 +192,7 @@ const Log = ({ datePickerKey, multiGrant }) => {
           <Dropdown
             id="result"
             name="result"
-            inputRef={register()}
+            inputRef={register({ required: 'Select a result' })}
             defaultValue=""
           >
             <option value="" disabled hidden>Select one</option>

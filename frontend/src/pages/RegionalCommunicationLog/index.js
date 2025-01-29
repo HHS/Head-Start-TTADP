@@ -6,9 +6,7 @@ import React, {
   useRef,
 } from 'react';
 import moment from 'moment';
-
 import PropTypes from 'prop-types';
-// import moment from 'moment';
 import { Redirect, useParams } from 'react-router';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
@@ -16,48 +14,18 @@ import { Grid } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
-import { defaultValues, formatRegionalCommunicationLogUrl } from '../../components/CommunicationLog/constants';
+import { defaultValues, formatRegionalCommunicationLogUrl, resetFormData } from '../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import pages from './pages';
-// import AppLoadingContext from '../../AppLoadingContext';
 import {
-// updateCommunicationLogById,
   createRegionalCommunicationLog,
   getCommunicationLogById,
   updateCommunicationLogById,
-// getCommunicationLogById,
 } from '../../fetchers/communicationLog';
 import { LogProvider } from '../../components/CommunicationLog/LogContext';
 import AppLoadingContext from '../../AppLoadingContext';
-
-/**
-   * this is just a simple handler to "flatten"
-   * the JSON column data into the form
-   *
-   * @param {fn} reset this is the hookForm.reset function (pass it a new set of values and it
-   *  replaces the form with those values; it also calls the standard form.reset event
-   * @param {*} updatedLog - the log object from the database, which has some
-   * information stored at the top level of the object, and some stored in a data column
-   */
-const resetFormData = (reset, updatedLog) => {
-  const {
-    data,
-    updatedAt,
-    recipients,
-    ...fields
-  } = updatedLog;
-
-  const form = {
-    ...defaultValues,
-    ...data,
-    ...fields,
-    recipients: recipients.map((r) => ({ value: r.id, label: r.name })),
-  };
-
-  reset(form);
-};
 
 const shouldFetch = (
   communicationLogId,
@@ -266,7 +234,8 @@ export default function RegionalCommunicationLog() {
         data,
       );
 
-      // send us back to the new regional communication log view
+      // todo: send us back to the new regional communication log view
+      // (once we have it)
       // history.push(
       //   `${(recipientId, regionId)}/communication`,
       //   { message: 'You successfully saved the communication log.' },
