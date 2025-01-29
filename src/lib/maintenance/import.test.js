@@ -58,7 +58,7 @@ describe('import', () => {
     it('should enqueue a maintenance job with the correct category and type', async () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
       const id = 123;
-      await enqueueImportMaintenanceJob(type, id);
+      await enqueueImportMaintenanceJob({ type, id });
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
         category: MAINTENANCE_CATEGORY.IMPORT,
         data: { type, id },
@@ -71,7 +71,7 @@ describe('import', () => {
 
     it('should be able to enqueue a job without an id', () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
-      enqueueImportMaintenanceJob(type);
+      enqueueImportMaintenanceJob({ type });
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
         category: MAINTENANCE_CATEGORY.IMPORT,
         data: { type, id: undefined },
@@ -134,7 +134,7 @@ describe('import', () => {
               requiredLaunchScript: undefined,
               requiresLock: false,
               holdLock: false,
-              jobSettings: {},
+              jobSettings: { timeout: 6000 },
             },
           );
       }
@@ -176,7 +176,7 @@ describe('import', () => {
               requiredLaunchScript: undefined,
               requiresLock: false,
               holdLock: false,
-              jobSettings: {},
+              jobSettings: { timeout: 6000 },
             },
           );
       }
@@ -278,7 +278,7 @@ describe('import', () => {
             requiredLaunchScript: undefined,
             requiresLock: false,
             holdLock: false,
-            jobSettings: {},
+            jobSettings: { timeout: 6000 },
           },
         );
       expect(enqueueMaintenanceJob)
@@ -290,7 +290,7 @@ describe('import', () => {
             requiredLaunchScript: undefined,
             requiresLock: false,
             holdLock: false,
-            jobSettings: { timeout: 60000 },
+            jobSettings: { timeout: 4500 },
           },
         );
       expect(results?.isSuccessful).toBe(true);
@@ -323,7 +323,7 @@ describe('import', () => {
             requiredLaunchScript: undefined,
             requiresLock: false,
             holdLock: false,
-            jobSettings: { timeout: 60000 },
+            jobSettings: { timeout: 4500 },
           },
         );
     });
@@ -424,7 +424,7 @@ describe('import', () => {
           requiredLaunchScript: undefined,
           requiresLock: false,
           holdLock: false,
-          jobSettings: { timeout: 60000 },
+          jobSettings: { timeout: 4500 },
         },
       );
     });
@@ -450,7 +450,7 @@ describe('import', () => {
           type: MAINTENANCE_TYPE.IMPORT_PROCESS,
           id,
         },
-        jobSettings: { timeout: 60000 },
+        jobSettings: { timeout: 4500 },
       });
     });
 
