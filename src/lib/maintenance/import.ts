@@ -23,12 +23,14 @@ import handlePostProcessing from '../importSystem/postProcess';
  * Enqueues a maintenance job for imports with a specified type and optional parameters.
  *
  * @param {Object} params - The parameters for the maintenance job.
- * @param {typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE]} params.type - The type of maintenance job to enqueue, must be a value from MAINTENANCE_TYPE.
+ * @param {typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE]} params.type - The type of
+ *        maintenance job to enqueue, must be a value from MAINTENANCE_TYPE.
  * @param {number} [params.id] - An optional numeric identifier for the job.
  * @param {string} [params.requiredLaunchScript] - An optional launch script required for the job.
  * @param {boolean} [params.requiresLock=false] - Whether the job requires a lock to execute.
  * @param {boolean} [params.holdLock=false] - Whether the job should hold the lock after execution.
- * @param {number} [params.timeout] - An optional timeout (in milliseconds) for the job. If not provided, `jobSettings` will be empty.
+ * @param {number} [params.timeout] - An optional timeout (in milliseconds) for the job. If not
+ *        provided, `jobSettings` will be empty.
  *
  * @returns {Promise<any>} The result of the enqueueMaintenanceJob function.
  *
@@ -48,18 +50,17 @@ const enqueueImportMaintenanceJob = async ({
   requiresLock?: boolean;
   holdLock?: boolean;
   timeout?: number; // Optional timeout
-}) =>
-  enqueueMaintenanceJob({
-    category: MAINTENANCE_CATEGORY.IMPORT,
-    data: {
-      type,
-      id,
-    },
-    requiredLaunchScript,
-    requiresLock,
-    holdLock,
-    jobSettings: timeout !== undefined ? { timeout } : {},
-  });
+}) => enqueueMaintenanceJob({
+  category: MAINTENANCE_CATEGORY.IMPORT,
+  data: {
+    type,
+    id,
+  },
+  requiredLaunchScript,
+  requiresLock,
+  holdLock,
+  jobSettings: timeout !== undefined ? { timeout } : {},
+});
 
 /**
  * Asynchronously sets up cron jobs for each import schedule retrieved from a data source.
@@ -351,7 +352,7 @@ const enqueue = () => {
     || process.env.NODE_ENV !== 'production')) {
     enqueueImportMaintenanceJob({
       type: MAINTENANCE_TYPE.IMPORT_SCHEDULE,
-      requiredLaunchScript: 'index'
+      requiredLaunchScript: 'index',
     });
     return true;
   }
