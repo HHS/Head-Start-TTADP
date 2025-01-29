@@ -72,7 +72,7 @@ module.exports = {
         FROM
             "Resources"
         WHERE
-            "domian" = 'headstart.gov'
+            "domain" = 'headstart.gov'
         )
         UPDATE
         "Resources" r
