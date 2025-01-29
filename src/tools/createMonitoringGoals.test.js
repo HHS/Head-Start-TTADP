@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable jest/expect-expect */
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
@@ -1977,7 +1978,7 @@ describe('createMonitoringGoals', () => {
     ], { individualHooks: true });
 
     // Retrieve the goal template.
-    goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
+    goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' }, paranoid: false });
 
     // Create a goal for grantThatAlreadyHasMonitoringGoal2.
     await Goal.create({
