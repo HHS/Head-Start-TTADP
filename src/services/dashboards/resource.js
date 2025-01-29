@@ -363,14 +363,16 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
     DROP TABLE IF EXISTS ${tblNames.createdResourcesTempTableName};
     SELECT
     DISTINCT
-      id,
-      domain,
-      url,
-      title
+      r.id AS id, -- We need the original id to join on aro resourceId.
+      COALESCE(r2.domain, r.domain) AS domain,
+      COALESCE(r2.url, r.url) AS url,
+      COALESCE(r2.title, r.title) AS title
       INTO TEMP ${tblNames.createdResourcesTempTableName}
-      FROM "Resources"
+      FROM "Resources" r
+      LEFT JOIN "Resources" r2 -- Mapped resource.
+        ON r."mapsTo" = r2.id
       JOIN ${tblNames.createdAroResourcesTempTableName} dr
-        ON "Resources".id = dr."resourceId";
+        ON COALESCE(r2.id, r.id) = dr."resourceId";
 
       -- 4.) Create ARO Topics temp table. **** Revisit
       DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
