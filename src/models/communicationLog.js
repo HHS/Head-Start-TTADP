@@ -5,6 +5,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       CommunicationLog.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       CommunicationLog.hasMany(models.CommunicationLogFile, { foreignKey: 'communicationLogId', as: 'communicationLogFiles' });
+      CommunicationLog.hasMany(models.CommunicationLogRecipient, { foreignKey: 'communicationLogId', as: 'communicationLogRecipients' });
       CommunicationLog.belongsToMany(models.File, {
         through: models.CommunicationLogFile,
         foreignKey: 'communicationLogId',
