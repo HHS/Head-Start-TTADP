@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
+  Alert,
   Button,
   TextInput,
   Label,
@@ -17,12 +18,16 @@ import ReadOnlyField from '../../ReadOnlyField';
 import UserContext from '../../../UserContext';
 import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import MultiSelect from '../../MultiSelect';
-import { useLogContext } from '../LogContext';
+import { useLogContext } from '../components/LogContext';
 import CommunicationRecipients from '../components/CommunicationRecipients';
 
 const fields = Object.keys(defaultLogValues);
 
-const Log = ({ datePickerKey, multiGrant }) => {
+const Log = ({
+  datePickerKey,
+  multiGrant,
+  reportId,
+}) => {
   const {
     register,
     watch,
@@ -40,6 +45,12 @@ const Log = ({ datePickerKey, multiGrant }) => {
   return (
     <>
       <IndicatesRequiredField />
+      {(reportId !== 'new' && multiGrant) && (
+        <Alert type="info">
+          All of the recipients on the communication log will receive
+          the same updates once edits are saved.
+        </Alert>
+      )}
       <input type="hidden" name="author.name" ref={register()} />
       <div className="margin-top-2">
         <ReadOnlyField label="Creator name">
@@ -209,6 +220,7 @@ const Log = ({ datePickerKey, multiGrant }) => {
 Log.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   multiGrant: PropTypes.bool,
+  reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 Log.defaultProps = {
@@ -230,7 +242,7 @@ const createLogPage = (multiGrantLog = false) => ({
   render: (
     _additionalData,
     _formData,
-    _reportId,
+    reportId,
     isAppLoading,
     onContinue,
     _onSaveDraft,
@@ -238,11 +250,11 @@ const createLogPage = (multiGrantLog = false) => ({
     _weAreAutoSaving,
     datePickerKey,
     _onFormSubmit,
-    Alert,
+    BAlert,
   ) => (
     <div className="padding-x-1">
-      <Log datePickerKey={datePickerKey} multiGrant={multiGrantLog} />
-      <Alert />
+      <Log datePickerKey={datePickerKey} multiGrant={multiGrantLog} reportId={reportId} />
+      <BAlert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
       </div>

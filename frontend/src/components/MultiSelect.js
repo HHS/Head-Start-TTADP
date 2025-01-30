@@ -105,8 +105,9 @@ function MultiSelect({
   placeholderText,
   components: componentReplacements,
   onClick = () => {},
+  id = '',
 }) {
-  const inputId = `select-${uuidv4()}`;
+  const inputId = id || `select-${uuidv4()}`;
   const selectorRef = useRef(null);
 
   /**
@@ -186,7 +187,7 @@ function MultiSelect({
               <Selector
                 ref={selectorRef}
                 className="ttahub-multi-select margin-top-1"
-                id={name}
+                id={`${inputId}-multi-select`}
                 value={values}
                 onBlur={onBlur}
                 onChange={(event) => {
@@ -275,9 +276,11 @@ MultiSelect.propTypes = {
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   placeholderText: PropTypes.string,
   onClick: PropTypes.func,
+  id: PropTypes.string,
 };
 
 MultiSelect.defaultProps = {
+  id: '',
   canCreate: false,
   disabled: false,
   singleRowInput: false,

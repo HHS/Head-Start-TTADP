@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
-import { uniqBy } from 'lodash';
+import { uniqBy, isEqual, uniq } from 'lodash';
 import MultiSelect from '../../MultiSelect';
 import FormItem from '../../FormItem';
-import { useLogContext } from '../LogContext';
+import { useLogContext } from './LogContext';
+import GroupAlert from '../../GroupAlert';
 
 export default function CommunicationRecipients() {
+  const [showGroupAlert, setShowGroupAlert] = useState(false);
   const { recipients, groups } = useLogContext();
   const {
     register,
@@ -15,16 +17,47 @@ export default function CommunicationRecipients() {
     watch,
   } = useFormContext();
   const useGroup = watch('useGroup');
+  const recipientsSelected = watch('recipients');
+  const recipientGroup = watch('recipientGroup');
 
   const recipientOptions = recipients.map((r) => ({ ...r, value: String(r.value) }));
+  const recipientsInGroup = useMemo(() => {
+    const selectedGroup = groups.find((group) => group.id === Number(recipientGroup));
+    return selectedGroup ? uniq(selectedGroup.grants.map((gr) => gr.recipient.id)) : [];
+  }, [groups, recipientGroup]);
+
   useEffect(() => {
     if (!useGroup) {
       setValue('recipientGroup', '');
     }
   }, [setValue, useGroup]);
 
-  const handleGroupSelection = (e) => {
-    const selectedGroup = groups.find((group) => group.id === Number(e.target.value));
+  useEffect(() => {
+    if (!recipientGroup) {
+      setShowGroupAlert(false);
+      return;
+    }
+
+    if (
+      useGroup
+      && !isEqual(recipientsSelected.map((r) => r.value), recipientsInGroup)
+      && !showGroupAlert
+    ) {
+      setShowGroupAlert(true);
+    } else if (useGroup && isEqual(recipientsSelected.map((r) => r.value), recipientsInGroup)) {
+      setShowGroupAlert(false);
+    }
+  }, [
+    recipientGroup,
+    recipientsInGroup,
+    recipientsSelected,
+    setValue,
+    showGroupAlert,
+    useGroup,
+  ]);
+
+  const handleGroupSelection = (groupId) => {
+    const selectedGroup = groups.find((group) => group.id === groupId);
 
     if (selectedGroup) {
       const selectedRecipients = uniqBy(selectedGroup.grants.map((gr) => {
@@ -36,8 +69,17 @@ export default function CommunicationRecipients() {
     }
   };
 
+  const onResetGroup = () => {
+    handleGroupSelection(Number(recipientGroup));
+  };
+
+  const onSelectGroup = (e) => {
+    handleGroupSelection(Number(e.target.value));
+  };
+
   return (
     <div className="margin-top-2">
+      {showGroupAlert && (<GroupAlert resetGroup={onResetGroup} />)}
       {useGroup && (
         <div className="margin-top-2">
           <FormItem
@@ -50,7 +92,7 @@ export default function CommunicationRecipients() {
               id="recipientGroup"
               name="recipientGroup"
               inputRef={register({ required: 'Select a group' })}
-              onChange={handleGroupSelection}
+              onChange={onSelectGroup}
               defaultValue=""
             >
               <option value="" disabled>- Select -</option>

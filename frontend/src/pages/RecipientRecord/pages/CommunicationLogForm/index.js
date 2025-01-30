@@ -1,5 +1,4 @@
 import React, {
-  useEffect,
   useState,
   useContext,
   useRef,
@@ -8,37 +7,35 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import { Grid, Alert } from '@trussworks/react-uswds';
+import { Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import useHookFormPageState from '../../../../hooks/useHookFormPageState';
 import {
   defaultValues,
-  formatRecipientCommunicationLogUrl,
   recipientRecordRootUrl,
   resetFormData,
+  formatRecipientCommunicationLogUrl,
 } from '../../../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
-import Navigator from '../../../../components/Navigator';
+import LogFormNavigator from '../../../../components/CommunicationLog/components/LogFormNavigator';
 import BackLink from '../../../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import {
   updateCommunicationLogById,
   createCommunicationLogByRecipientId,
-  getCommunicationLogById,
 } from '../../../../fetchers/communicationLog';
-import { LogProvider } from '../../../../components/CommunicationLog/LogContext';
+import { LogProvider } from '../../../../components/CommunicationLog/components/LogContext';
 
-const shouldFetch = (
+const shouldFetch = ({
   communicationLogId,
   regionId,
   recipientId,
   reportFetched,
   isAppLoading,
   currentPage,
-) => {
+}) => {
   if (
     !currentPage // we
     || !communicationLogId // need
@@ -63,32 +60,13 @@ export default function CommunicationLogForm({ match, recipientName }) {
   } = match;
 
   const reportId = useRef(communicationLogId);
-
-  // for redirects if a page is not provided
-  const history = useHistory();
-
-  /* ============
-
-  * the following errors are a bit confusingly named, but
-  * I'm copying the pattern from the ActivityReport
-  */
-
-  // this error is for errors fetching reports, its the top error
-  const [error, setError] = useState();
-
-  // this is the error that appears in the sidebar
-  const [errorMessage, updateErrorMessage] = useState();
-
   const { user } = useContext(UserContext);
 
   /* ============ */
 
+  const [error, setError] = useState();
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
-
-  // this holds the key for the date pickers to force re-render
-  // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
 
   /* ============
       */
@@ -103,73 +81,12 @@ export default function CommunicationLogForm({ match, recipientName }) {
     shouldUnregister: false,
   });
 
-  const formData = hookForm.getValues();
-
-  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const [reportFetched, setReportFetched] = useState(false);
-
-  useEffect(() => {
-    // fetch communication log data
-    async function fetchLog() {
-      if (!shouldFetch(
-        reportId.current,
-        regionId,
-        recipientId,
-        reportFetched,
-        isAppLoading,
-        currentPage,
-      )) {
-        return;
-      }
-
-      try {
-        setIsAppLoading(true);
-        const log = await getCommunicationLogById(regionId, reportId.current);
-        resetFormData(hookForm.reset, log);
-      } catch (e) {
-        setError('Error fetching communication log');
-      } finally {
-        setDatePickerKey(`f${Date.now().toString()}`);
-        setReportFetched(true);
-        setIsAppLoading(false);
-      }
-    }
-    fetchLog();
-  }, [
-    reportId,
-    hookForm.reset,
-    recipientId,
-    regionId,
-    reportFetched,
-    isAppLoading,
-    setIsAppLoading,
-    currentPage,
-  ]);
-
-  // hook to update the page state in the sidebar
-  useHookFormPageState(hookForm, pages, currentPage);
-
-  const updatePage = (position) => {
-    const state = {};
-    if (reportId.current) {
-      state.showLastUpdatedTime = true;
-    }
-
-    const page = pages.find((p) => p.position === position);
-    const newPath = `${formatRecipientCommunicationLogUrl(recipientId, regionId, reportId.current)}${page.path}`;
-    history.push(newPath, state);
-  };
-
-  if (!currentPage) {
-    return (
-      <Redirect to={formatRecipientCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
-    );
-  }
 
   const onSave = async () => {
     try {
-      // reset the error message
-      setError('');
+      setError(null);
       setIsAppLoading(true);
       hookForm.clearErrors();
 
@@ -177,6 +94,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
       const data = hookForm.getValues();
 
       let loggedCommunication;
+
       // check to see if report ID is "new"
       if (reportId.current === 'new') {
         loggedCommunication = await createCommunicationLogByRecipientId(
@@ -206,70 +124,17 @@ export default function CommunicationLogForm({ match, recipientName }) {
     }
   };
 
-  const onSaveAndContinue = async () => {
-    const valid = await hookForm.trigger();
-    if (!valid) {
-      return;
-    }
-    await onSave();
-    updateShowSavedDraft(false);
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
-    if (nextPage) {
-      updatePage(nextPage.position);
-    }
-  };
-
-  const preFlight = async () => {
-    /**
-     * if we're on the first page of the form (log)
-     * we need to trigger the validation for the date
-     * since we don't want to save the form if the date
-     * is invalid
-     */
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    if (whereWeAre.position === 1) {
-      return hookForm.trigger('communicationDate');
-    }
-    return true;
-  };
-
-  const onFormSubmit = async () => {
-    try {
-      const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
-
-      if (!allPagesComplete) {
-        return;
-      }
-
-      // reset the error message
-      setError('');
-      setIsAppLoading(true);
-
-      // grab the newest data from the form
-      const data = hookForm.getValues();
-
-      // PUT it to the backend
-      await updateCommunicationLogById(
+  if (!currentPage) {
+    return (
+      <Redirect to={formatRecipientCommunicationLogUrl(
+        recipientId,
+        regionId,
         reportId.current,
-        data,
-      );
-
-      history.push(
-        `${recipientRecordRootUrl(recipientId, regionId)}/communication`,
-        { message: 'You successfully saved the communication log.' },
-      );
-    } catch (err) {
-      setError('There was an error saving the communication log. Please try again later.');
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
-
-  const reportCreator = { name: user.name, roles: user.roles };
-
-  // retrieve the last time the data was saved to local storage
-  const savedToStorageTime = formData ? formData.savedToStorageTime : null;
+        'log',
+      )}
+      />
+    );
+  }
 
   return (
     <div className="smart-hub-communication-log--form padding-top-3 maxw-widescreen">
@@ -296,36 +161,27 @@ export default function CommunicationLogForm({ match, recipientName }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <LogProvider regionId={regionId}>
-            <Navigator
-              shouldAutoSave={communicationLogId !== 'new'}
-              datePickerKey={datePickerKey}
-              socketMessageStore={{}}
-              key={currentPage}
-              editable
-              updatePage={updatePage}
-              reportCreator={reportCreator}
+            <LogFormNavigator
+              shouldFetch={shouldFetch}
+              reportFetched={reportFetched}
+              setReportFetched={setReportFetched}
+              pages={pages}
+              currentPage={currentPage}
+              regionId={regionId}
+              onSave={onSave}
+              redirectPathOnSave={() => formatRecipientCommunicationLogUrl(
+                recipientId,
+                regionId,
+                reportId.current,
+              )}
+              redirectToOnSubmit={`${recipientRecordRootUrl(recipientId, regionId)}/communication`}
               lastSaveTime={lastSaveTime}
               updateLastSaveTime={updateLastSaveTime}
-              reportId={reportId.current}
-              currentPage={currentPage}
-              additionalData={{}}
-              formData={formData}
-              pages={pages}
-              onFormSubmit={onFormSubmit}
-              onSave={onSave}
-              onResetToDraft={() => {}}
-              isApprover={false}
-              isPendingApprover={false}
-              onReview={() => {}}
-              errorMessage={errorMessage}
-              updateErrorMessage={updateErrorMessage}
-              savedToStorageTime={savedToStorageTime}
-              onSaveDraft={onSave}
-              onSaveAndContinue={onSaveAndContinue}
               showSavedDraft={showSavedDraft}
               updateShowSavedDraft={updateShowSavedDraft}
-              formDataStatusProp="status"
-              preFlightForNavigation={preFlight}
+              reportId={reportId}
+              recipientId={recipientId}
+              setError={setError}
             />
           </LogProvider>
         </FormProvider>
