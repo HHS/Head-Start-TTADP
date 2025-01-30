@@ -1,6 +1,10 @@
 import httpCodes from 'http-codes';
 import {
-  User, GoalTemplate, Recipient, sequelize,
+  User,
+  GoalTemplate,
+  Recipient,
+  Group,
+  sequelize,
 } from '../../models';
 import {
   logById,
@@ -40,6 +44,9 @@ jest.mock('../../models', () => ({
   sequelize: {
     close: jest.fn(),
     col: jest.fn(),
+  },
+  Group: {
+    findAll: jest.fn(),
   },
 }));
 
@@ -574,12 +581,18 @@ describe('communicationLog handlers', () => {
       const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
       const mockRecipients = [{ value: 1, label: 'RecipientA' }, { value: 2, label: 'RecipientB' }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }]);
-      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'GoalA' }, { id: 2, standard: 'GoalB' }]);
-      Recipient.findAll.mockResolvedValue([{ id: 1, name: 'RecipientA' }, { id: 2, name: 'RecipientB' }]);
+      User.findAll.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue(mockGoals);
+      Recipient.findAll.mockResolvedValue(mockRecipients);
+      Group.findAll.mockResolvedValue([]);
       const result = await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
       // eslint-disable-next-line max-len
-      expect(result).toEqual({ regionalUsers: mockUsers, standardGoals: mockGoals, recipients: mockRecipients });
+      expect(result).toEqual({
+        regionalUsers: mockUsers,
+        standardGoals: mockGoals,
+        recipients: mockRecipients,
+        groups: [],
+      });
     });
 
     it('returns null if unauthorized', async () => {
@@ -612,11 +625,12 @@ describe('communicationLog handlers', () => {
       const mockUsers = [{ value: 1, label: 'User' }];
       const mockGoals = [{ value: 1, label: 'Goal' }];
       userById.mockResolvedValue(authorizedToReadOnly);
-      User.findAll.mockResolvedValue([{ id: 1, name: 'User' }]);
-      GoalTemplate.findAll.mockResolvedValue([{ id: 1, standard: 'Goal' }]);
-      const result = await communicationLogAdditionalData(mockRequest, { ...mockResponse });
+      User.findAll.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue(mockGoals);
+      Group.findAll.mockResolvedValue([]);
+      await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       // eslint-disable-next-line max-len
-      expect(statusJson).toHaveBeenCalledWith({ regionalUsers: mockUsers, standardGoals: mockGoals });
+      expect(statusJson).toHaveBeenCalledWith({ regionalUsers: mockUsers, standardGoals: mockGoals, groups: [] });
     });
   });
 });
