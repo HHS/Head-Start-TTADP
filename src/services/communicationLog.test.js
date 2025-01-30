@@ -1,6 +1,11 @@
 import stringify from 'csv-stringify/lib/sync';
 // import { expect } from '@playwright/test';
-import db, { User, Recipient, CommunicationLog } from '../models';
+import db, {
+  User,
+  Recipient,
+  CommunicationLog,
+  CommunicationLogRecipient,
+} from '../models';
 import {
   logById,
   logsByRecipientAndScopes,
@@ -25,10 +30,11 @@ describe('communicationLog services', () => {
   beforeAll(async () => {
     user = await createUser();
     recipient = await createRecipient({});
-    log = await createLog(recipient.id, user.id, {});
+    log = await createLog([recipient.id], user.id, {});
   });
 
   afterAll(async () => {
+    await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
     await CommunicationLog.destroy({ where: { userId: user.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
@@ -38,7 +44,7 @@ describe('communicationLog services', () => {
   it('gets a log by id', async () => {
     const result = await logById(log.id);
     expect(result.id).toEqual(log.id);
-    expect(result.recipientId).toEqual(recipient.id);
+    expect(result.recipients[0].id).toEqual(recipient.id);
     expect(result.userId).toEqual(user.id);
     expect(result.data).toEqual({});
   });
@@ -74,14 +80,15 @@ describe('communicationLog services', () => {
         notes: '',
         purpose: '',
         result: '',
+        recipients: expect.any(String),
       },
     ], { header: true, quoted: true, quoted_empty: true });
   });
 
   it('updates logs', async () => {
-    const result = await updateLog(log.id, { foo: 'bar' });
+    const result = await updateLog(log.id, { foo: 'bar', recipients: [{ value: recipient.id }] });
     expect(result.id).toEqual(log.id);
-    expect(result.recipientId).toEqual(recipient.id);
+    expect(result.recipients[0].id).toEqual(recipient.id);
     expect(result.userId).toEqual(user.id);
     expect(result.data).toEqual({ foo: 'bar' });
   });
