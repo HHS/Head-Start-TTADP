@@ -1,39 +1,32 @@
 /* eslint-disable max-len */
 import React, {
-  useEffect,
-  useState,
   useContext,
   useRef,
+  useState,
 } from 'react';
 import moment from 'moment';
-import PropTypes from 'prop-types';
 import { Redirect, useParams } from 'react-router';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid } from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
+import { Grid, Alert } from '@trussworks/react-uswds';
 import { FormProvider, useForm } from 'react-hook-form';
-import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues, formatRegionalCommunicationLogUrl, resetFormData } from '../../components/CommunicationLog/constants';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import UserContext from '../../UserContext';
-import Navigator from '../../components/Navigator';
 import pages from './pages';
 import {
   createRegionalCommunicationLog,
-  getCommunicationLogById,
   updateCommunicationLogById,
 } from '../../fetchers/communicationLog';
-import { LogProvider } from '../../components/CommunicationLog/LogContext';
+import LogFormNavigator from '../../components/CommunicationLog/components/LogFormNavigator';
 import AppLoadingContext from '../../AppLoadingContext';
+import UserContext from '../../UserContext';
 
-const shouldFetch = (
+const shouldFetch = ({
   communicationLogId,
   regionId,
   reportFetched,
   isAppLoading,
   currentPage,
-) => {
+}) => {
   if (
     !currentPage // we
       || !communicationLogId // need
@@ -48,33 +41,9 @@ const shouldFetch = (
 
 export default function RegionalCommunicationLog() {
   const { regionId, logId, currentPage } = useParams();
-
   const reportId = useRef(logId);
-
-  // for redirects if a page is not provided
-  const history = useHistory();
-
-  /* ============
-
-    * the following errors are a bit confusingly named, but
-    * I'm copying the pattern from the ActivityReport
-    */
-
-  // this is the error that appears in the sidebar
-  const [errorMessage, updateErrorMessage] = useState();
-
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
-
-  /* ============ */
-
-  const [lastSaveTime, updateLastSaveTime] = useState(null);
-  const [showSavedDraft, updateShowSavedDraft] = useState(false);
-
-  // this holds the key for the date pickers to force re-render
-  // as the truss component doesn't re-render when the default value changes
-  const [datePickerKey, setDatePickerKey] = useState(`i${Date.now().toString()}`);
-
-  /* ============ */
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -86,70 +55,15 @@ export default function RegionalCommunicationLog() {
     shouldUnregister: false,
   });
 
-  const formData = hookForm.getValues();
-
-  const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
+  const [error, setError] = useState();
   const [reportFetched, setReportFetched] = useState(false);
-
-  useEffect(() => {
-    // fetch communication log data
-    async function fetchLog() {
-      if (!shouldFetch(
-        reportId.current,
-        regionId,
-        reportFetched,
-        isAppLoading,
-        currentPage,
-      )) {
-        return;
-      }
-
-      try {
-        setIsAppLoading(true);
-        const log = await getCommunicationLogById(regionId, reportId.current);
-        resetFormData(hookForm.reset, log);
-      } catch (e) {
-        // setError('Error fetching communication log');
-      } finally {
-        setDatePickerKey(`f${Date.now().toString()}`);
-        setReportFetched(true);
-        setIsAppLoading(false);
-      }
-    }
-    fetchLog();
-  }, [
-    reportId,
-    hookForm.reset,
-    regionId,
-    reportFetched,
-    isAppLoading,
-    setIsAppLoading,
-    currentPage,
-  ]);
-
-  // hook to update the page state in the sidebar
-  useHookFormPageState(hookForm, pages, currentPage);
-
-  const updatePage = (position) => {
-    const state = {};
-    if (reportId.current) {
-      state.showLastUpdatedTime = true;
-    }
-
-    const page = pages.find((p) => p.position === position);
-    const newPath = `${formatRegionalCommunicationLogUrl(regionId, reportId.current)}${page.path}`;
-    history.push(newPath, state);
-  };
-
-  if (!currentPage) {
-    return (
-      <Redirect to={formatRegionalCommunicationLogUrl(regionId, reportId.current, 'log')} />
-    );
-  }
+  const [lastSaveTime, updateLastSaveTime] = useState(null);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   const onSave = async () => {
     try {
       // reset the error message
+      setError(null);
       setIsAppLoading(true);
       hookForm.clearErrors();
 
@@ -178,82 +92,27 @@ export default function RegionalCommunicationLog() {
       // update the sidebar message
       updateShowSavedDraft(true);
     } catch (err) {
-      // setError('There was an error saving the communication log. Please try again later.');
+      setError('There was an error saving the communication log. Please try again later.');
     } finally {
       setReportFetched(true);
       setIsAppLoading(false);
     }
   };
 
-  const onSaveAndContinue = async () => {
-    const valid = await hookForm.trigger();
-    if (!valid) {
-      return;
-    }
-    await onSave();
-    updateShowSavedDraft(false);
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
-    if (nextPage) {
-      updatePage(nextPage.position);
-    }
-  };
-
-  const preFlight = async () => {
-    /**
-       * if we're on the first page of the form (log)
-       * we need to trigger the validation for the date
-       * since we don't want to save the form if the date
-       * is invalid
-       */
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    if (whereWeAre.position === 1) {
-      return hookForm.trigger('communicationDate');
-    }
-    return true;
-  };
-
-  const onFormSubmit = async () => {
-    try {
-      const allPagesComplete = pages.every((page) => page.isPageComplete(hookForm));
-
-      if (!allPagesComplete) {
-        return;
-      }
-
-      // reset the error message
-      // setError('');
-      setIsAppLoading(true);
-
-      // grab the newest data from the form
-      const data = hookForm.getValues();
-
-      // PUT it to the backend
-      await updateCommunicationLogById(
-        reportId.current,
-        data,
-      );
-
-      // todo: send us back to the new regional communication log view
-      // (once we have it)
-      // history.push(
-      //   `${(recipientId, regionId)}/communication`,
-      //   { message: 'You successfully saved the communication log.' },
-      // );
-    } catch (err) {
-      // setError('There was an error saving the communication log. Please try again later.');
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
-
-  const reportCreator = { name: user.name, roles: user.roles };
-
-  // retrieve the last time the data was saved to local storage
-  const savedToStorageTime = formData ? formData.savedToStorageTime : null;
+  if (!currentPage) {
+    return (
+      <Redirect to={formatRegionalCommunicationLogUrl(regionId, reportId.current, 'log')} />
+    );
+  }
 
   return (
     <div className="smart-hub-communication-log--form maxw-widescreen">
+      { error
+          && (
+          <Alert type="warning">
+            {error}
+          </Alert>
+          )}
       <Helmet titleTemplate="%s - New Communication | TTA Hub" defaultTitle="Communication Log - New Communication | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
@@ -267,46 +126,25 @@ export default function RegionalCommunicationLog() {
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <LogProvider regionId={regionId}>
-            <Navigator
-              shouldAutoSave={reportId !== 'new'}
-              datePickerKey={datePickerKey}
-              socketMessageStore={{}}
-              key={currentPage}
-              editable
-              updatePage={updatePage}
-              reportCreator={reportCreator}
-              lastSaveTime={lastSaveTime}
-              updateLastSaveTime={updateLastSaveTime}
-              reportId={reportId.current}
-              currentPage={currentPage}
-              additionalData={{}}
-              formData={formData}
-              pages={pages}
-              onFormSubmit={onFormSubmit}
-              onSave={onSave}
-              onResetToDraft={() => {}}
-              isApprover={false}
-              isPendingApprover={false}
-              onReview={() => {}}
-              errorMessage={errorMessage}
-              updateErrorMessage={updateErrorMessage}
-              savedToStorageTime={savedToStorageTime}
-              onSaveDraft={onSave}
-              onSaveAndContinue={onSaveAndContinue}
-              showSavedDraft={showSavedDraft}
-              updateShowSavedDraft={updateShowSavedDraft}
-              formDataStatusProp="status"
-              preFlightForNavigation={preFlight}
-            />
-          </LogProvider>
+          <LogFormNavigator
+            shouldFetch={shouldFetch}
+            reportFetched={reportFetched}
+            setReportFetched={setReportFetched}
+            pages={pages}
+            currentPage={currentPage}
+            regionId={regionId}
+            onSave={onSave}
+            redirectPathOnSave={() => formatRegionalCommunicationLogUrl(regionId, reportId.current)}
+            redirectToOnSubmit={formatRegionalCommunicationLogUrl(regionId, logId, 'log')}
+            lastSaveTime={lastSaveTime}
+            updateLastSaveTime={updateLastSaveTime}
+            showSavedDraft={showSavedDraft}
+            updateShowSavedDraft={updateShowSavedDraft}
+            reportId={reportId}
+            setError={setError}
+          />
         </FormProvider>
       </NetworkContext.Provider>
     </div>
   );
 }
-
-RegionalCommunicationLog.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-  recipientName: PropTypes.string.isRequired,
-};

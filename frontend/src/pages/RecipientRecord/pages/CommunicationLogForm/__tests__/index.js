@@ -13,7 +13,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
-import { LogProvider } from '../../../../../components/CommunicationLog/LogContext';
+import { LogProvider } from '../../../../../components/CommunicationLog/components/LogContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -65,6 +65,7 @@ describe('CommunicationLogForm', () => {
       regionalUsers: [{ value: 1, label: 'One' }],
       standardGoals: [{ value: 1, label: 'One' }],
       recipients: [],
+      groups: [],
     });
   });
 

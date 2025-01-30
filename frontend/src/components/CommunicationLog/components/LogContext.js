@@ -5,7 +5,7 @@ import React, {
   useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
-import { getAdditionalCommunicationLogData } from '../../fetchers/communicationLog';
+import { getAdditionalCommunicationLogData } from '../../../fetchers/communicationLog';
 
 const LogContext = createContext();
 
@@ -61,4 +61,4 @@ const useLogContext = () => {
   return useContext(LogContext);
 };
 
-export { LogProvider, useLogContext };
+export { LogProvider, useLogContext, LogContext };
