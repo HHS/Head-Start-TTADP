@@ -627,10 +627,17 @@ describe('communicationLog handlers', () => {
       userById.mockResolvedValue(authorizedToReadOnly);
       User.findAll.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
+      Recipient.findAll.mockResolvedValue([]);
       Group.findAll.mockResolvedValue([]);
       await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       // eslint-disable-next-line max-len
-      expect(statusJson).toHaveBeenCalledWith({ regionalUsers: mockUsers, standardGoals: mockGoals, groups: [] });
+      expect(statusJson).toHaveBeenCalledWith({
+        regionalUsers: mockUsers,
+        standardGoals:
+        mockGoals,
+        groups: [],
+        recipients: [],
+      });
     });
   });
 });

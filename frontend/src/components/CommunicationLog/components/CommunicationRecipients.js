@@ -106,7 +106,6 @@ export default function CommunicationRecipients() {
       <FormItem
         label="Recipients"
         name="recipients"
-        htmlFor="recipients"
       >
         <MultiSelect
           control={control}
