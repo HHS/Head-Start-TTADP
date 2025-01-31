@@ -546,13 +546,13 @@ describe('Resources dashboard', () => {
 
       expect(topicUseResult).toStrictEqual([
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
         },
         {
-          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4', date: '2021-01-01',
         },
         {
           name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
@@ -606,9 +606,9 @@ describe('Resources dashboard', () => {
       // Percent of HeadStart reports.
       expect(pctOfHeadStartResources).toStrictEqual([
         {
-          headStartCount: '2',
-          allCount: '3',
-          headStartPct: '66.67',
+          headStartCount: '3',
+          allCount: '4',
+          headStartPct: '75.00',
         },
       ]);
     });

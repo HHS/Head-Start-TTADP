@@ -46,6 +46,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'goalTemplateId',
         as: 'goalTemplates',
       });
+      Resource.hasMany(models.Resource, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromResource',
+      });
+      Resource.belongsTo(models.Resource, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToResource',
+      });
     }
   }
   Resource.init({
