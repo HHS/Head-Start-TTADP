@@ -15,6 +15,7 @@ import {
   createLog,
   orderLogsBy,
   formatCommunicationDateWithJsonData,
+  COMMUNICATION_LOG_SORT_KEYS,
 } from './communicationLog';
 import { createRecipient, createUser } from '../testUtils';
 
@@ -132,54 +133,50 @@ describe('communicationLog services', () => {
   });
 
   describe('orderLogsBy', () => {
-    it('should return the correct result when sortBy is authorName', () => {
-      const sortBy = 'authorName';
+    it('should return the correct result when sortBy is AUTHOR', () => {
+      const sortBy = COMMUNICATION_LOG_SORT_KEYS.AUTHOR;
       const sortDir = 'asc';
 
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
         [sequelize.literal('author.name asc')],
-        // eslint-disable-next-line @typescript-eslint/quotes
-        [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE asc`)],
+        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')],
       ]);
     });
 
-    it('should return the correct result when sortBy is purpose', () => {
-      const sortBy = 'purpose';
+    it('should return the correct result when sortBy is PURPOSE', () => {
+      const sortBy = COMMUNICATION_LOG_SORT_KEYS.PURPOSE;
       const sortDir = 'desc';
 
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
         ['data.purpose', 'desc'],
-        // eslint-disable-next-line @typescript-eslint/quotes
-        [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE desc`)],
+        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE desc')],
       ]);
     });
 
-    it('should return the correct result when sortBy is result', () => {
-      const sortBy = 'result';
+    it('should return the correct result when sortBy is RESULT', () => {
+      const sortBy = COMMUNICATION_LOG_SORT_KEYS.RESULT;
       const sortDir = 'asc';
 
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
         ['data.result', 'asc'],
-        // eslint-disable-next-line @typescript-eslint/quotes
-        [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE asc`)],
+        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')],
       ]);
     });
 
-    it('should return the correct result when sortBy is communicationDate', () => {
-      const sortBy = 'communicationDate';
+    it('should return the correct result when sortBy is DATE', () => {
+      const sortBy = COMMUNICATION_LOG_SORT_KEYS.DATE;
       const sortDir = 'desc';
 
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual(
-        // eslint-disable-next-line @typescript-eslint/quotes
-        [[sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE desc`)]],
+        [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE desc')]],
       );
     });
 
@@ -189,8 +186,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(undefined, sortDir);
 
       expect(result).toEqual(
-        // eslint-disable-next-line @typescript-eslint/quotes
-        [[sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE asc`)]],
+        [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')]],
       );
     });
   });
