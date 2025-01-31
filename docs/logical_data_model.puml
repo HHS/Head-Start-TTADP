@@ -976,12 +976,12 @@ class RequestErrors{
 
 class Resources{
  * id : integer : <generated>
+!issue='column reference does not match model: "Resources".id !== "Resource".id' mapsTo : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
  * domain : text
  * updatedAt : timestamp with time zone
  * url : text
  lastStatusCode : integer
- mapsTo : integer
  metadata : jsonb
  metadataUpdatedAt : timestamp with time zone
  mimeType : varchar(255)
@@ -2677,5 +2677,8 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+Resources o--[#yellow,bold,thickness=2]--o Resources : <color:#2491FF>missing-from-model</color>
 
 @enduml
