@@ -50,17 +50,24 @@ export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogD
 
 const COMMUNICATION_LOGS_PER_PAGE = 10;
 
+export const COMMUNICATION_LOG_SORT_KEYS = {
+  AUTHOR: 'Creator_name',
+  PURPOSE: 'Purpose',
+  RESULT: 'Result',
+  DATE: 'Date',
+};
+
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   let result = [];
   switch (sortBy) {
-    case 'Creator_name':
+    case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
       result = [[
         sequelize.literal(`author.name ${sortDir}`),
       ], [
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
-    case 'Purpose':
+    case COMMUNICATION_LOG_SORT_KEYS.PURPOSE:
       result = [[
         'data.purpose',
         sortDir,
@@ -69,7 +76,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
-    case 'Result':
+    case COMMUNICATION_LOG_SORT_KEYS.RESULT:
       result = [[
         'data.result',
         sortDir,
@@ -78,7 +85,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
-    case 'Date':
+    case COMMUNICATION_LOG_SORT_KEYS.DATE:
     default:
       result = [[
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
