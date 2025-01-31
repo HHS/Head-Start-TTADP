@@ -1,5 +1,18 @@
+/* eslint-disable import/first */
+const mockQueueConstructor = jest.fn(() => ({
+  on: jest.fn(), // Mock the `.on` method
+  close: jest.fn().mockResolvedValue(undefined), // Mock the `.close` method
+}));
+jest.mock('bull', () => jest.fn((...args) => mockQueueConstructor(...args)));
+
 import { auditLogger } from '../logger';
-import { generateRedisConfig, increaseListeners, setRedisConnectionName } from './queue';
+import {
+  generateRedisConfig,
+  increaseListeners,
+  setRedisConnectionName,
+  // eslint-disable-next-line import/no-named-default
+  default as newQueue,
+} from './queue';
 
 describe('increaseListeners', () => {
   const MAX_LISTENERS = 20;
@@ -7,6 +20,7 @@ describe('increaseListeners', () => {
   let redisClient;
 
   beforeEach(() => {
+    mockQueueConstructor.mockClear();
     redisClient = {
       getMaxListeners: jest.fn().mockReturnValue(10),
       setMaxListeners: jest.fn(),
@@ -48,6 +62,7 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
+    mockQueueConstructor.mockClear();
     jest.resetModules();
     process.env = { ...originalEnv };
   });
@@ -120,6 +135,10 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 });
 
 describe('setRedisConnectionName', () => {
+  beforeEach(() => {
+    mockQueueConstructor.mockClear();
+  });
+
   it('logs an error if setting the Redis connection name fails', async () => {
     const mockQueue = {
       client: {
@@ -129,5 +148,45 @@ describe('setRedisConnectionName', () => {
     const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
     await setRedisConnectionName(mockQueue, 'testConnectionName');
     expect(auditLoggerSpy).toHaveBeenCalledWith('Failed to set Redis connection name:', expect.any(Error));
+  });
+});
+
+describe('newQueue', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    mockQueueConstructor.mockClear();
+    jest.resetModules();
+    process.env = { ...originalEnv };
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  it('creates a queue with default timeout when none is provided', () => {
+    const queue = newQueue('test-queue');
+    expect(mockQueueConstructor).toHaveBeenCalledWith(
+      'test-queue',
+      expect.stringMatching(/^redis:\/\/.+$/),
+      expect.objectContaining({
+        settings: {
+          stalledInterval: 30000, // Default timeout
+        },
+      }),
+    );
+  });
+
+  it('creates a queue with custom timeout when specified', () => {
+    const queue = newQueue('test-queue', 60000); // Custom timeout
+    expect(mockQueueConstructor).toHaveBeenCalledWith(
+      'test-queue',
+      expect.stringMatching(/^redis:\/\/.+$/),
+      expect.objectContaining({
+        settings: {
+          stalledInterval: 60000, // Custom timeout
+        },
+      }),
+    );
   });
 });

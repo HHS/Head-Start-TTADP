@@ -291,16 +291,16 @@ const enqueueDBMaintenanceJob = async (
   type,
   data,
   percent = null, // optional parameter with default value of null
-) => enqueueMaintenanceJob(
-  MAINTENANCE_CATEGORY.DB, // constant representing the category of maintenance
-  {
+) => enqueueMaintenanceJob({
+  category: MAINTENANCE_CATEGORY.DB, // constant representing the category of maintenance
+  data: {
     type, // shorthand property notation for type: type
     ...(!data // spread operator used to merge properties of two objects
       // if data is not provided, call nextBlock function and merge its result
       ? await nextBlock(type, percent)
       : data), // otherwise, merge the provided data object
   },
-);
+});
 
 // This code adds a queue processor for database maintenance tasks.
 // The MAINTENANCE_CATEGORY.DB is used to identify the category of maintenance task.
