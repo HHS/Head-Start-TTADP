@@ -26,12 +26,6 @@ interface CommLogData {
   userId: number;
 }
 
-interface CommunicationLogRecipientInterface {
-  id: number;
-  communicationLogId: number;
-  recipientId: number;
-}
-
 export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogData => {
   if (data.communicationDate) {
     const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format('MM/DD/YYYY');
@@ -59,14 +53,14 @@ const COMMUNICATION_LOGS_PER_PAGE = 10;
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   let result = [];
   switch (sortBy) {
-    case 'authorName':
+    case 'Creator_name':
       result = [[
         sequelize.literal(`author.name ${sortDir}`),
       ], [
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
-    case 'purpose':
+    case 'Purpose':
       result = [[
         'data.purpose',
         sortDir,
@@ -75,7 +69,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
-    case 'result':
+    case 'Result':
       result = [[
         'data.result',
         sortDir,
@@ -84,7 +78,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
       ]];
       break;
-    case 'communicationDate':
+    case 'Date':
     default:
       result = [[
         sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
@@ -224,21 +218,23 @@ const logsByRecipientAndScopes = async (
   scopes: WhereOptions[] = [],
 ) => {
   const logs = await CommunicationLog
-    .findAndCountAll({
+    .findAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
       where: {
         [Op.and]: [
           ...scopes,
+          {
+            id: {
+              [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
+            },
+          },
         ],
       },
       include: [
         {
           model: db.Recipient,
           as: 'recipients',
-          required: true,
-          where: {
-            id: recipientId,
-          },
+          required: false,
         },
         {
           model: db.File,
@@ -260,7 +256,12 @@ const logsByRecipientAndScopes = async (
       subQuery: false,
     });
 
-  return logs;
+  return {
+    // using the sequelize literal in the where clause above causes the count to be incorrect
+    // given the outer join, so we have to manually count the rows
+    count: logs.length,
+    rows: logs,
+  };
 };
 
 const deleteLog = async (id: number) => CommunicationLog.destroy({
@@ -279,7 +280,6 @@ const updateLog = async (id: number, logData: CommLogData) => {
     recipients,
     ...data
   } = logData;
-  const log = await logById(id);
 
   const recipientIds = recipients.map((recipient) => Number(recipient.value));
 
@@ -302,7 +302,15 @@ const updateLog = async (id: number, logData: CommLogData) => {
     },
   );
 
-  return log.update({ data: formatCommunicationDateWithJsonData(data as CommLogData) });
+  await CommunicationLog.update({
+    data: formatCommunicationDateWithJsonData(data as CommLogData),
+  }, {
+    where: {
+      id,
+    },
+  });
+
+  return logById(id);
 };
 
 export {

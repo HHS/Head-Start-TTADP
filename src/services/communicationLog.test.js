@@ -25,18 +25,20 @@ const { sequelize } = db;
 describe('communicationLog services', () => {
   let user;
   let recipient;
+  let secondRecipient;
   let log;
 
   beforeAll(async () => {
     user = await createUser();
     recipient = await createRecipient({});
+    secondRecipient = await createRecipient({});
     log = await createLog([recipient.id], user.id, {});
   });
 
   afterAll(async () => {
     await CommunicationLogRecipient.destroy({ where: { communicationLogId: log.id } });
     await CommunicationLog.destroy({ where: { userId: user.id } });
-    await Recipient.destroy({ where: { id: recipient.id } });
+    await Recipient.destroy({ where: { id: [recipient.id, secondRecipient.id] } });
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
@@ -53,6 +55,37 @@ describe('communicationLog services', () => {
     const result = await logsByRecipientAndScopes(recipient.id);
     expect(result.count).toEqual(1);
     expect(result.rows[0].id).toEqual(log.id);
+  });
+
+  it('gets mulitrecipient logs by recipient Id', async () => {
+    await CommunicationLogRecipient.create(
+      { communicationLogId: log.id, recipientId: secondRecipient.id },
+    );
+    const result = await logsByRecipientAndScopes(recipient.id);
+    expect(result.count).toEqual(1);
+    expect(result.rows[0].id).toEqual(log.id);
+    expect(result.rows[0].recipients.length).toEqual(2);
+    await CommunicationLogRecipient.destroy({
+      where: { communicationLogId: log.id, recipientId: secondRecipient.id },
+    });
+  });
+
+  it('does not include recipients who have been removed', async () => {
+    await CommunicationLogRecipient.create(
+      { communicationLogId: log.id, recipientId: secondRecipient.id },
+    );
+    let result = await logsByRecipientAndScopes(recipient.id);
+    expect(result.count).toEqual(1);
+    expect(result.rows[0].id).toEqual(log.id);
+    expect(result.rows[0].recipients.length).toEqual(2);
+    await CommunicationLogRecipient.destroy({
+      where: { communicationLogId: log.id, recipientId: secondRecipient.id },
+    });
+    result = await logsByRecipientAndScopes(recipient.id);
+    expect(result.count).toEqual(1);
+    expect(result.rows[0].id).toEqual(log.id);
+    expect(result.rows[0].recipients.length).toEqual(1);
+    expect(result.rows[0].recipients[0].id).toEqual(recipient.id);
   });
 
   it('gets logs by recipient Id with params', async () => {
