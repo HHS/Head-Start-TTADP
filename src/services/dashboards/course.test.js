@@ -284,7 +284,7 @@ describe('Course dashboard', () => {
     aroNoCourses = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: reportThree.id,
-      ttaProvided: 'course resource widget 3',
+      ttaProvided: 'course resource widget 4',
       status: 'In Progress',
     });
 
@@ -298,7 +298,7 @@ describe('Course dashboard', () => {
     // Report 4 ARO 1.
     aroOnlyCourseOne = await ActivityReportObjective.create({
       objectiveId: objective.id,
-      activityReportId: reportThree.id,
+      activityReportId: reportFour.id,
       ttaProvided: 'course resource widget 3',
       status: 'In Progress',
     });
