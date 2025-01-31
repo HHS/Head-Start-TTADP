@@ -372,7 +372,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       LEFT JOIN "Resources" r2 -- Mapped resource.
         ON r."mapsTo" = r2.id
       JOIN ${tblNames.createdAroResourcesTempTableName} dr
-        ON COALESCE(r2.id, r.id) = dr."resourceId";
+        ON r.id = dr."resourceId";
 
       -- 4.) Create ARO Topics temp table. **** Revisit
       DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
@@ -445,8 +445,6 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
           )::date AS "date"
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
-
-  // console.log('\n\n\n---- Flat sql: ', flatResourceSql, '\n\n\n');
 
   // Execute the flat table sql.
   await sequelize.query(
@@ -629,27 +627,27 @@ function getOverview(tblNames, totalReportCount) {
     type: QueryTypes.SELECT,
   });
 
-  // - Number of Reports with ECLKC Resources Pct -
-  const pctOfECKLKCResources = sequelize.query(/* sql */`
-    WITH eclkc AS (
+  // - Number of Reports with HeadStart Resources Pct -
+  const pctOfHeadStartResources = sequelize.query(/* sql */`
+    WITH headstart AS (
       SELECT
-    COUNT(DISTINCT url) AS "eclkcCount"
+    COUNT(DISTINCT url) AS "headStartCount"
     FROM  ${tblNames.createdFlatResourceTempTableName}
-    WHERE domain = 'eclkc.ohs.acf.hhs.gov'
+    WHERE domain = 'headstart.gov'
     ), allres AS (
     SELECT
     COUNT(DISTINCT url) AS "allCount"
     FROM ${tblNames.createdFlatResourceTempTableName}
     )
     SELECT
-      e."eclkcCount",
+      e."headStartCount",
     r."allCount",
       CASE WHEN
     r."allCount" = 0
     THEN 0
-    ELSE  (e."eclkcCount" / r."allCount"::decimal * 100)::decimal(5,2)
-    END AS "eclkcPct"
-    FROM eclkc e
+    ELSE  (e."headStartCount" / r."allCount"::decimal * 100)::decimal(5,2)
+    END AS "headStartPct"
+    FROM headstart e
     CROSS JOIN allres r;
   `, {
     type: QueryTypes.SELECT,
@@ -668,7 +666,7 @@ function getOverview(tblNames, totalReportCount) {
     numberOfRecipients,
     pctOfReportsWithResources,
     pctOfReportsWithCourses,
-    pctOfECKLKCResources,
+    pctOfHeadStartResources,
     dateHeaders,
   };
 }
@@ -744,7 +742,7 @@ export async function resourceFlatData(scopes) {
     numberOfRecipients,
     pctOfReportsWithResources,
     pctOfReportsWithCourses,
-    pctOfECKLKCResources,
+    pctOfHeadStartResources,
     dateHeaders,
   } = getOverview(tempTableNames, totalReportCount);
 
@@ -756,7 +754,7 @@ export async function resourceFlatData(scopes) {
     numberOfRecipients,
     pctOfReportsWithResources,
     pctOfReportsWithCourses,
-    pctOfECKLKCResources,
+    pctOfHeadStartResources,
     dateHeaders,
   ] = await Promise.all(
     [
@@ -766,14 +764,14 @@ export async function resourceFlatData(scopes) {
       numberOfRecipients,
       pctOfReportsWithResources,
       pctOfReportsWithCourses,
-      pctOfECKLKCResources,
+      pctOfHeadStartResources,
       dateHeaders,
     ],
   );
 
   // 5.) Restructure Overview.
   const overView = {
-    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources, pctOfReportsWithCourses,
+    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfHeadStartResources, pctOfReportsWithCourses,
   };
 
   // 6.) Return the data.
@@ -1623,13 +1621,13 @@ const generateResourcesDashboardOverview = (allData) => {
   data.reportIntermediate
     .reportsWithResources = new Set(resources.flatMap((r) => r.reports).map((r) => r.id));
   // data.reportIntermediate
-  //   .allRecipientIdsWithEclkcResources = new Set(resources
-  //     .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
+  //   .allRecipientIdsWithheadstartResources = new Set(resources
+  //     .filter((d) => d.domain === RESOURCE_DOMAIN.HEAD_START)
   //     .flatMap((r) => r.reports)
   //     .map((r) => r.id));
   // data.reportIntermediate
-  //   .allRecipientIdsWithNonEclkcResources = new Set(resources
-  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
+  //   .allRecipientIdsWithNonheadstartResources = new Set(resources
+  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.HEAD_START)
   //     .flatMap((r) => r.reports)
   //     .map((r) => r.id));
 
@@ -1642,11 +1640,11 @@ const generateResourcesDashboardOverview = (allData) => {
   data.report.numNoResources = data.report.num - data.report.numResources;
   data.report.percentNoResources = (data.report.numNoResources / data.report.num) * 100.0;
 
-  // data.report.numHeadStart = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
+  // data.report.numHeadStart = data.reportIntermediate.allRecipientIdsWithheadstartResources.size;
   // data.report.percentHeadStart = (data.report.numHeadStart / data.report.num) * 100.0;
 
-  // data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  // data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
+  // data.report.numNonheadstart = data.reportIntermediate.allRecipientIdsWithNonheadstartResources.size;
+  // data.report.percentNonheadstart = (data.report.numNonheadstart / data.report.num) * 100.0;
 
   delete data.reportIntermediate;
   // recipient based intermediate data
@@ -1655,9 +1653,9 @@ const generateResourcesDashboardOverview = (allData) => {
     .allRecipientIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
   data.recipientIntermediate
     .allRecipientIdsWithResources = reduceRecipients([], resources.flatMap((r) => r.recipients));
-  // data.recipientIntermediate.allRecipientIdsWithEclkcResources = resources
-  //   // filter to ECLKC
-  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
+  // data.recipientIntermediate.allRecipientIdsWithheadstartResources = resources
+  //   // filter to headstart
+  //   .filter((r) => r.domain === RESOURCE_DOMAIN.HEAD_START)
   //   // Collect recipients
   //   .flatMap((r) => r.recipients)
   //   // collect distinct recipients ( or other entities)
@@ -1673,9 +1671,9 @@ const generateResourcesDashboardOverview = (allData) => {
   //       recipient,
   //     ];
   //   }, []);
-  // data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = resources
-  //   // filter to Non-ECLKC
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
+  // data.recipientIntermediate.allRecipientIdsWithNonheadstartResources = resources
+  //   // filter to Non-headstart
+  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.HEAD_START)
   //   // Collect recipients
   //   .flatMap((r) => r.recipients)
   //   // collect distinct recipients ( or other entities)
@@ -1702,32 +1700,32 @@ const generateResourcesDashboardOverview = (allData) => {
   data.recipient.numNoResources = data.recipient.num - data.recipient.numResources;
   data.recipient.percentNoResources = (data.recipient.numNoResources / data.recipient.num) * 100.0;
 
-  // data.recipient.numHeadStart = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
+  // data.recipient.numHeadStart = data.recipientIntermediate.allRecipientIdsWithheadstartResources.size;
   // data.recipient.percentHeadStart = (data.recipient.numHeadStart / data.recipient.num) * 100.0;
 
-  // data.recipient.numNonEclkc = data
-  //   .recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  // data.recipient.percentNonEclkc = (data.recipient.numNonEclkc / data.recipient.num) * 100.0;
+  // data.recipient.numNonheadstart = data
+  //   .recipientIntermediate.allRecipientIdsWithNonheadstartResources.size;
+  // data.recipient.percentNonheadstart = (data.recipient.numNonheadstart / data.recipient.num) * 100.0;
 
   delete data.recipientIntermediate;
   // resource based intermediate data
   data.resourceIntermediate = {};
   data.resourceIntermediate
     .allResources = resources;
-  data.resourceIntermediate.allEclkcResources = resources
-    .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC);
-  // data.resourceIntermediate.allNonEclkcResources = resources
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC);
+  data.resourceIntermediate.allheadstartResources = resources
+    .filter((r) => r.domain === RESOURCE_DOMAIN.HEAD_START);
+  // data.resourceIntermediate.allNonheadstartResources = resources
+  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.HEAD_START);
 
   // resource based stats
   data.resource = {};
   data.resource.num = data.resourceIntermediate.allResources.length;
 
-  data.resource.numHeadStart = data.resourceIntermediate.allEclkcResources.length;
+  data.resource.numHeadStart = data.resourceIntermediate.allheadstartResources.length;
   data.resource.percentHeadStart = (data.resource.numHeadStart / data.resource.num) * 100.0;
 
-  // data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.length;
-  // data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
+  // data.resource.numNonheadstart = data.resourceIntermediate.allNonheadstartResources.length;
+  // data.resource.percentNonheadstart = (data.resource.numNonheadstart / data.resource.num) * 100.0;
   delete data.resourceIntermediate;
 
   data.participant = {};
@@ -1738,7 +1736,7 @@ const generateResourcesDashboardOverview = (allData) => {
     }))
     .reduce((partialSum, r) => partialSum + r.participants, 0);
   // data.participant.numHeadStart = resources
-  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
+  //   .filter((r) => r.domain === RESOURCE_DOMAIN.HEAD_START)
   //   .flatMap((r) => r.reports)
   //   .reduce((rs, report) => {
   //     const exists = rs.find((r) => r.id === report.id);
@@ -1749,7 +1747,7 @@ const generateResourcesDashboardOverview = (allData) => {
   //   }, [])
   //   .reduce((partialSum, r) => partialSum + r.participants, 0);
   // data.participant.numHeadStart = resources
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
+  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.HEAD_START)
   //   .flatMap((r) => r.reports)
   //   .reduce((rs, report) => {
   //     const exists = rs.find((r) => r.id === report.id);
@@ -1769,15 +1767,15 @@ const generateResourcesDashboardOverview = (allData) => {
       // percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
       // numHeadStart: formatNumber(data.report.numHeadStart),
       // percentHeadStart: `${formatNumber(data.report.percentHeadStart, 2)}%`,
-      // numNonEclkc: formatNumber(data.report.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
+      // numNonheadstart: formatNumber(data.report.numNonheadstart),
+      // percentNonheadstart: `${formatNumber(data.report.percentNonheadstart, 2)}%`,
     },
     resource: {
       num: formatNumber(data.resource.num),
       numHeadStart: formatNumber(data.resource.numHeadStart),
       percentHeadStart: `${formatNumber(data.resource.percentHeadStart, 2)}%`,
-      // numNonEclkc: formatNumber(data.resource.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
+      // numNonheadstart: formatNumber(data.resource.numNonheadstart),
+      // percentNonheadstart: `${formatNumber(data.resource.percentNonheadstart, 2)}%`,
     },
     recipient: {
       num: formatNumber(data.recipient.num),
@@ -1787,8 +1785,8 @@ const generateResourcesDashboardOverview = (allData) => {
       // percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
       // numHeadStart: formatNumber(data.recipient.numHeadStart),
       // percentHeadStart: `${formatNumber(data.recipient.percentHeadStart, 2)}%`,
-      // numNonEclkc: formatNumber(data.recipient.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
+      // numNonheadstart: formatNumber(data.recipient.numNonheadstart),
+      // percentNonheadstart: `${formatNumber(data.recipient.percentNonheadstart, 2)}%`,
     },
     participant: {
       numParticipants: formatNumber(data.participant.num),
@@ -2139,9 +2137,9 @@ export function restructureOverview(data) {
       numResources: formatNumber(data.overView.numberOfRecipients[0].recipients),
     },
     resource: {
-      numHeadStart: formatNumber(data.overView.pctOfECKLKCResources[0].eclkcCount),
-      num: formatNumber(data.overView.pctOfECKLKCResources[0].allCount),
-      percentHeadStart: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
+      numHeadStart: formatNumber(data.overView.pctOfHeadStartResources[0].headStartCount),
+      num: formatNumber(data.overView.pctOfHeadStartResources[0].allCount),
+      percentHeadStart: `${formatNumber(data.overView.pctOfHeadStartResources[0].headStartPct, 2)}%`,
     },
     ipdCourses: {
       percentReports: `${formatNumber(data.overView.pctOfReportsWithCourses[0].coursesPct, 2)}%`,
