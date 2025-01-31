@@ -52,6 +52,7 @@ const LogFormNavigator = ({
   const {
     getValues,
     reset,
+    register,
   } = hookForm;
 
   const formData = getValues();
@@ -75,7 +76,13 @@ const LogFormNavigator = ({
       try {
         setIsAppLoading(true);
         const log = await getCommunicationLogById(regionId, reportId.current);
-        resetFormData(reset, log);
+        resetFormData(reset, {
+          ...log,
+          data: {
+            ...log.data,
+            isEditing: true,
+          },
+        });
       } catch (e) {
         setError('Error fetching communication log');
       } finally {
@@ -178,6 +185,7 @@ const LogFormNavigator = ({
 
   return (
     <LogProvider regionId={regionId}>
+      <input type="hidden" name="isEditing" ref={register()} />
       <Navigator
         shouldAutoSave={reportId !== 'new'}
         datePickerKey={datePickerKey}

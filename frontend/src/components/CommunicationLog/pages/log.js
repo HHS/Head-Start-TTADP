@@ -26,7 +26,6 @@ const fields = Object.keys(defaultLogValues);
 const Log = ({
   datePickerKey,
   multiGrant,
-  reportId,
 }) => {
   const {
     register,
@@ -38,6 +37,7 @@ const Log = ({
   const { regionalUsers, standardGoals } = useLogContext();
   const communicationDate = watch('communicationDate');
   const authorName = watch('author.name');
+  const isEditing = watch('isEditing');
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
@@ -45,9 +45,9 @@ const Log = ({
   return (
     <>
       <IndicatesRequiredField />
-      {(reportId !== 'new' && multiGrant) && (
+      {(isEditing && multiGrant) && (
         <Alert type="info">
-          All of the recipients on the communication log will receive
+          All of the recipients on this Communication log will receive
           the same updates once edits are saved.
         </Alert>
       )}
@@ -220,7 +220,6 @@ const Log = ({
 Log.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   multiGrant: PropTypes.bool,
-  reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 Log.defaultProps = {
@@ -242,7 +241,7 @@ const createLogPage = (multiGrantLog = false) => ({
   render: (
     _additionalData,
     _formData,
-    reportId,
+    _reportId,
     isAppLoading,
     onContinue,
     _onSaveDraft,
@@ -253,7 +252,7 @@ const createLogPage = (multiGrantLog = false) => ({
     BAlert,
   ) => (
     <div className="padding-x-1">
-      <Log datePickerKey={datePickerKey} multiGrant={multiGrantLog} reportId={reportId} />
+      <Log datePickerKey={datePickerKey} multiGrant={multiGrantLog} />
       <BAlert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>

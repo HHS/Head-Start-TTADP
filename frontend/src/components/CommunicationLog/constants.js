@@ -76,7 +76,7 @@ const resetFormData = (reset, updatedLog) => {
     ...defaultValues,
     ...data,
     ...fields,
-    recipients: recipients.map((r) => ({ value: r.id, label: r.name })),
+    recipients: recipients.map((r) => ({ value: String(r.id), label: r.name })),
   };
 
   reset(form);

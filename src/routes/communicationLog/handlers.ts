@@ -94,6 +94,10 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
       ['id', 'value'],
       ['name', 'label'],
     ],
+    where: {
+      // what
+      deleted: false,
+    },
     include: [
       {
         model: Grant,

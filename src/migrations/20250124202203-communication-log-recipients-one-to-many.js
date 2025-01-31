@@ -48,7 +48,7 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         INSERT INTO "CommunicationLogRecipients" ("recipientId", "communicationLogId", "createdAt", "updatedAt")
-        SELECT "recipientId", id, NOW(), NOW() FROM "CommunicationLogs";
+        SELECT "recipientId", id, "createdAt", "updatedAt" FROM "CommunicationLogs";
       `, { transaction });
 
       await queryInterface.sequelize.query(`
