@@ -131,6 +131,14 @@ const SiteNav = ({
                   <li>
                     <NavLink
                       withinDisclosure
+                      to="/regional-communication-log"
+                    >
+                      Communication Log
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      withinDisclosure
                       to="/training-reports/not-started"
                     >
                       Training Reports
@@ -166,14 +174,6 @@ const SiteNav = ({
                       </NavLink>
                     </li>
                   </FeatureFlag>
-                  <li>
-                    <NavLink
-                      withinDisclosure
-                      to="/regional-communication-log"
-                    >
-                      Regional Communication Log Dashboard
-                    </NavLink>
-                  </li>
                   <li>
                     <NavLink
                       withinDisclosure
