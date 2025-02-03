@@ -106,7 +106,7 @@ const getMimeType = async (url) => {
 const getMetadataValuesFrommJson = async (url) => {
   let result;
   try {
-    // Attempt to get the resource metadata (if valid ECLKC resource).
+    // Attempt to get the resource metadata (if valid HeadStart or ECLKC resource).
     // Sample: https://headstart.gov/mental-health/article/head-start-heals-campaign?_format=json
     let metadataUrl;
 
@@ -420,7 +420,7 @@ const getResourceMetaDataJob = async (job) => {
         return { status: statusCode || 500, data: { url: resourceUrl } };
       }
     } else {
-      // If it is not an ECLKC resource, scrape the page title.
+      // If it is not an HeadStart resource, scrape the page title.
       ({ title, statusCode } = await getPageScrapeValues(resourceUrl));
       if (statusCode !== httpCodes.OK) {
         auditLogger.error(`Resource Queue: Warning, unable to retrieve resource TITLE for resource '${resourceUrl}', received status code '${statusCode || 500}'.`);

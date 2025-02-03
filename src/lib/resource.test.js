@@ -18,10 +18,9 @@ const urlReturn = `
 <meta name="national-centers" content="Health, Behavioral Health, and Safety" />
 <meta name="node-id" content="7858" />
 <meta name="exclude-from-dynamic-view" content="False" />
-<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
 <link rel="canonical" href="https://headstart.gov/" />
 <link rel="image_src" href="https://headstart.gov/themes/gesso/images/site-logo.png" />
-<title>Head Start | ECLKC</title>
+<title>Head Start | Head Start</title>
 <body>
 test
 </body>
@@ -67,7 +66,7 @@ describe('resource worker tests', () => {
     jest.clearAllMocks();
   });
 
-  it('non-eclkc clean resource title get', async () => {
+  it('non-headstart clean resource title get', async () => {
     // Mock TITLE get.
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosCleanResponse));
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
@@ -92,7 +91,6 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toHaveBeenNthCalledWith(
       1,
       {
-        // title: 'Head Start | ECLKC',
         lastStatusCode: 200,
         mimeType: axiosCleanResponse.headers['content-type'],
       },
@@ -104,7 +102,7 @@ describe('resource worker tests', () => {
 
     expect(mockUpdate).toHaveBeenLastCalledWith(
       {
-        title: 'Head Start | ECLKC',
+        title: 'Head Start | Head Start',
         lastStatusCode: 200,
         mimeType: axiosCleanResponse.headers['content-type'],
         metadata: {
@@ -114,7 +112,7 @@ describe('resource worker tests', () => {
           'national-centers': 'Health, Behavioral Health, and Safety',
           'node-id': '7858',
           'exclude-from-dynamic-view': 'False',
-          title: 'Head Start | ECLKC',
+          title: 'Head Start | Head Start',
         },
         metadataUpdatedAt: expect.anything(),
       },
@@ -122,7 +120,7 @@ describe('resource worker tests', () => {
     );
   });
 
-  it('non-eclkc error on resource title get', async () => {
+  it('non-headstart error on resource title get', async () => {
     // Mock TITLE get.
     const axiosHtmlScrapeError = new Error();
     axiosHtmlScrapeError.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
@@ -148,6 +146,7 @@ describe('resource worker tests', () => {
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
+
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov' });
 
@@ -217,6 +216,7 @@ describe('resource worker tests', () => {
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
 
@@ -463,7 +463,7 @@ describe('resource worker tests', () => {
     expect(auditLogger.error).toBeCalledTimes(3);
   });
 
-  it('eclkc resource we get metadata but no title', async () => {
+  it('headstart resource we get metadata but no title', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockAxios.mockImplementationOnce(() => Promise.resolve({
       status: 200,
@@ -548,7 +548,7 @@ describe('resource worker tests', () => {
     );
   });
 
-  it('non-eclkc resource missing title', async () => {
+  it('non-headstart resource missing title', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
@@ -559,7 +559,7 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toBeCalled();
   });
 
-  it('non-eclkc resource url not found', async () => {
+  it('non-headstart resource url not found', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
@@ -570,7 +570,7 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toBeCalled();
   });
 
-  it('eclkc resource url not found', async () => {
+  it('headstart resource url not found', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
