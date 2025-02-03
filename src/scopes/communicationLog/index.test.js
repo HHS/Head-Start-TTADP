@@ -21,6 +21,7 @@ describe('communicationLog filtersToScopes', () => {
   let region;
 
   let communicationLogs;
+  let logForIgnoredRecipient;
 
   beforeAll(async () => {
     region = await db.Region.create({
@@ -35,7 +36,6 @@ describe('communicationLog filtersToScopes', () => {
 
     const defaultLog = {
       userId: user.id,
-      recipientId: recipient.id,
     };
 
     const defaultData = {
@@ -73,18 +73,40 @@ describe('communicationLog filtersToScopes', () => {
         userId: secondUser.id,
         data: defaultData,
       }),
-      db.CommunicationLog.create({
-        ...defaultLog,
-        recipientId: ignoredRecipient.id,
-        data: defaultData,
-      }),
     ]);
+
+    await db.CommunicationLogRecipient.bulkCreate(communicationLogs.map((log) => ({
+      recipientId: recipient.id,
+      communicationLogId: log.id,
+    })));
+
+    logForIgnoredRecipient = await db.CommunicationLog.create({
+      ...defaultLog,
+      data: defaultData,
+    });
+
+    await db.CommunicationLogRecipient.create({
+      recipientId: ignoredRecipient.id,
+      communicationLogId: logForIgnoredRecipient.id,
+    });
   });
 
   afterAll(async () => {
+    await db.CommunicationLogRecipient.destroy({
+      where: {
+        communicationLogId: [
+          ...communicationLogs.map((log) => log.id),
+          logForIgnoredRecipient.id,
+        ],
+      },
+    });
+
     await db.CommunicationLog.destroy({
       where: {
-        id: communicationLogs.map((log) => log.id),
+        id: [
+          ...communicationLogs.map((log) => log.id),
+          logForIgnoredRecipient.id,
+        ],
       },
     });
     await db.Recipient.destroy({

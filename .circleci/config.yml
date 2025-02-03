@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.20.4-browsers
+      - image: cimg/node:18.20.6-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.20.4-browsers
+      - image: cimg/node:18.20.6-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: cimg/postgres:15.6
@@ -787,7 +787,7 @@ parameters:
     default: "TTAHUB-3542/TTAHUB-3544/s3Queue-scanQueue-coverage"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "TTAHUB-3772/TTAHUB-3773/TTAHUB-3774/TTAHUB-3775/commlog"
+    default: "mb/TTAHUB-3808/communication-log-frontend"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

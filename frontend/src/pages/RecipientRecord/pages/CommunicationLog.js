@@ -182,10 +182,8 @@ export default function CommunicationLog({ regionId, recipientId }) {
           isUrl: true,
           isInternalLink: true,
           link: `/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`,
-          // TODO: Multi-recipient support isn't implemented yet, so data.recipients may not exactly
-          // be correct here, and may need to be changed when MR support is in.
           suffixContent:
-            log.data.recipients && log.data.recipients.length > 0 ? <UsersIcon /> : null,
+            log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose },
