@@ -4,17 +4,13 @@ import { sequelize } from '../../models';
 const constructLiteral = (regions) => {
   const sql = `
     (SELECT DISTINCT "communicationLogId"
-     FROM "CommunicationLogRecipients"
-     WHERE "recipientId" IN (
-       SELECT "id"
-       FROM "Recipients"
-       WHERE "deleted" = false
-         AND "id" IN (
-           SELECT "recipientId"
-           FROM "Grants"
-           WHERE "regionId" IN (${regions.map((regionId) => sequelize.escape(regionId)).join(',')})
-         )
-     )
+    FROM "CommunicationLogRecipients" clr
+    JOIN "Recipients" r
+    ON clr."recipientId" = r."id"
+    JOIN "Grants" gr
+    ON r.id = gr."recipientId"
+    WHERE r."deleted" = false
+    AND gr."regionId" IN (${regions.map((regionId) => sequelize.escape(regionId)).join(',')})
     )
   `;
 
