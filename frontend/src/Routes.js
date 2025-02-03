@@ -44,7 +44,7 @@ import SomethingWentWrong from './components/SomethingWentWrong';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
-import RegionalCommunicationLog from './pages/RegionalCommunicationLogDashboard';
+import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 
 export default function Routes({
   alert,
@@ -310,7 +310,7 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="regional_communication_log" renderNotFound>
-                <RegionalCommunicationLog />
+                <RegionalCommunicationLogDashboard />
               </FeatureFlag>
             </AppWrapper>
           )}
