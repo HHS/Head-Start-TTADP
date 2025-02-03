@@ -268,7 +268,7 @@ describe('recipient record page', () => {
     memoryHistory.push('/recipient-tta-records/45/region/1/communication');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await screen.findByText(/There are no communication logs for this recipient/i);
+    await screen.findByText(/You haven't logged any communication yet./i);
   });
 
   describe('PageWithHeading', () => {

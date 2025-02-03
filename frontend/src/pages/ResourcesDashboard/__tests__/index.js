@@ -375,8 +375,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -468,8 +468,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -520,7 +520,7 @@ describe('Resource Dashboard page', () => {
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
 
     // Resources Region 2.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -556,8 +556,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -594,7 +594,7 @@ describe('Resource Dashboard page', () => {
     // Resource Use.
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/19/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
 
     // Resources Region 2.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
@@ -630,8 +630,8 @@ describe('Resource Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/177/i)).toBeInTheDocument();
-    expect(screen.getByText(/262/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/177/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
     expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();

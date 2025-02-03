@@ -303,47 +303,50 @@ const EventSummary = ({
         { adminCanEdit ? (
           <>
             <div className="margin-top-2">
-              <Label htmlFor="pocIds">
-                Event region point of contact
-                <Req />
-              </Label>
-              <Controller
-                render={({ onChange: controllerOnChange, value, onBlur }) => (
-                  <Select
-                    value={pointOfContact.filter((option) => (
-                      value.includes(option.id)
-                    ))}
-                    inputId="pocIds"
-                    name="pocIds"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.map((option) => option.id));
-                    }}
-                    inputRef={register({ required: 'Select at least one event region point of contact' })}
-                    getOptionLabel={(option) => option.fullName}
-                    getOptionValue={(option) => option.id}
-                    options={pointOfContact}
-                    onBlur={onBlur}
-                    required
-                    isMulti
-                  />
-                )}
-                control={control}
-                rules={{
-                  validate: (value) => {
-                    if (!value || value.length === 0) {
-                      return 'Select at least one event region point of contact';
-                    }
-                    return true;
-                  },
-                }}
+              <FormItem
+                label="Event region point of contact "
                 name="pocIds"
-                defaultValue={[]}
-              />
+                required
+              >
+
+                <Controller
+                  render={({ onChange: controllerOnChange, value, onBlur }) => (
+                    <Select
+                      value={pointOfContact.filter((option) => (
+                        value.includes(option.id)
+                      ))}
+                      inputId="pocIds"
+                      name="pocIds"
+                      className="usa-select"
+                      styles={selectOptionsReset}
+                      components={{
+                        DropdownIndicator: null,
+                      }}
+                      onChange={(s) => {
+                        controllerOnChange(s.map((option) => option.id));
+                      }}
+                      inputRef={register({ required: 'Select at least one event region point of contact' })}
+                      getOptionLabel={(option) => option.fullName}
+                      getOptionValue={(option) => option.id}
+                      options={pointOfContact}
+                      onBlur={onBlur}
+                      required
+                      isMulti
+                    />
+                  )}
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (!value || value.length === 0) {
+                        return 'Select at least one event region point of contact';
+                      }
+                      return true;
+                    },
+                  }}
+                  name="pocIds"
+                  defaultValue={[]}
+                />
+              </FormItem>
             </div>
             <Fieldset>
               <div className="margin-top-2">
