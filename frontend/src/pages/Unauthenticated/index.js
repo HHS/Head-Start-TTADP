@@ -5,8 +5,8 @@ import {
   Link,
 } from '@trussworks/react-uswds';
 
-import logo1x from '../../images/eclkc-blocks-logo-78.png';
-import logo2x from '../../images/eclkc-blocks-logo-156.png';
+import logo1x from '../../images/headstart-blocks-logo-78.png';
+import logo2x from '../../images/headstart-blocks-logo-156.png';
 
 import HubIdentifier from '../../components/HubIdentifier';
 
