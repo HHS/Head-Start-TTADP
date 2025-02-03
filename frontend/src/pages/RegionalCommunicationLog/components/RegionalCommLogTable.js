@@ -1,7 +1,6 @@
 import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useHistory } from 'react-router';
 import Modal from '../../../components/Modal';
 import WidgetContainer from '../../../components/WidgetContainer';
 import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
@@ -82,7 +81,6 @@ export default function RegionalCommLogTable({ filters }) {
   const [tabularData, setTabularData] = useState([]);
   const [logToDelete, setLogToDelete] = useState(null);
   const modalRef = useRef();
-  const history = useHistory();
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -151,6 +149,7 @@ export default function RegionalCommLogTable({ filters }) {
         setError(null);
         setIsAppLoading(true);
 
+        // TODO: Fetch with filters
         const response = {
           count: 1,
           rows: [

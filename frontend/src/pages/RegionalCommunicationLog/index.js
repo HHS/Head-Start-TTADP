@@ -2,18 +2,18 @@ import React, { useContext, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
-import { Grid } from '@trussworks/react-uswds';
+import { Grid, Link } from '@trussworks/react-uswds';
 import { getUserRegions } from '../../permissions';
 import UserContext from '../../UserContext';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-import { expandFilters, formatDateRange } from '../../utils';
+import { formatDateRange } from '../../utils';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
-import WidgetContainer from '../../components/WidgetContainer';
 import RegionalCommLogTable from './components/RegionalCommLogTable';
+import { regionFilter } from '../../components/filter/communicationLogFilters';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -21,8 +21,39 @@ const defaultDate = formatDateRange({
   withSpaces: false,
 });
 
-const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'regional-communication-log-filters';
+
+const createDefaultFilters = (
+  hasCentralOffice,
+  userHasOnlyOneRegion,
+  defaultRegion,
+  allRegionsFilters,
+) => {
+  const dateFilter = {
+    id: uuidv4(),
+    topic: 'communicationDate',
+    condition: 'is within',
+    query: defaultDate,
+  };
+
+  if (hasCentralOffice) {
+    return [...allRegionsFilters, dateFilter];
+  }
+
+  if (userHasOnlyOneRegion) {
+    return [dateFilter];
+  }
+
+  return [
+    {
+      id: uuidv4(),
+      topic: 'region',
+      condition: 'is',
+      query: defaultRegion,
+    },
+    dateFilter,
+  ];
+};
 
 export default function RegionalCommunicationLog() {
   const { user } = useContext(UserContext);
@@ -33,45 +64,28 @@ export default function RegionalCommunicationLog() {
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
 
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+  // eslint-disable-next-line max-len
+  const allRegionsFilters = useMemo(() => (userHasOnlyOneRegion ? [] : buildDefaultRegionFilters(regions)), [regions, userHasOnlyOneRegion]);
 
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    filtersWithAllRegions.push({
-      id: uuidv4(),
-      topic: 'communicationDate',
-      condition: 'is within',
-      query: defaultDate,
-    });
-    return filtersWithAllRegions;
-  };
+  const filterConfig = useMemo(() => [
+    // This is just the communicationDate filter for now.
+    ...DASHBOARD_FILTER_CONFIG,
+    // When they have multiple regions, we want to show the region filter.
+    ...(userHasOnlyOneRegion ? [] : [regionFilter]),
+  ], [userHasOnlyOneRegion]);
 
-  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
+  const defaultFilters = useMemo(() => createDefaultFilters(
+    hasCentralOffice,
+    userHasOnlyOneRegion,
+    defaultRegion,
+    allRegionsFilters,
+  ), [hasCentralOffice, userHasOnlyOneRegion, defaultRegion, allRegionsFilters]);
 
-  const defaultFilters = useMemo(() => {
-    if (hasCentralOffice) {
-      return centralOfficeWithAllRegionFilters;
-    }
+  const [filtersToApply, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
+    defaultFilters,
+  );
 
-    return [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'communicationDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
-
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
-
-  // Apply filters.
   const onApplyFilters = (newFilters, addBackDefaultRegions) => {
     if (addBackDefaultRegions) {
       // We always want the regions to appear in the URL.
@@ -86,7 +100,7 @@ export default function RegionalCommunicationLog() {
 
   // Remove Filters.
   const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
+    const newFilters = [...filtersToApply];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
@@ -99,39 +113,47 @@ export default function RegionalCommunicationLog() {
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const filtersToApply = expandFilters(filters);
-
   return (
     <div className="ttahub-dashboard">
       <Helmet>
         <title>Regional Communication Log</title>
       </Helmet>
       <RegionPermissionModal
-        filters={filters}
+        filters={filtersToApply}
         user={user}
         showFilterWithMyRegions={
-          () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
+          () => showFilterWithMyRegions(allRegionsFilters, filtersToApply, setFiltersInHook)
         }
       />
-      <h1 className="landing margin-top-0 margin-bottom-3">
-        {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
-        {' '}
-        Communication Log Dashboard
-      </h1>
+      <div className="display-flex">
+        <h1 className="landing margin-top-0 margin-bottom-3">
+          Communication logs -
+          {userHasOnlyOneRegion ? 'your region' : `regions ${regions.join(', ')}`}
+        </h1>
+        <div>
+          <Link
+            to="/regional-communication-log/communication/new"
+            className="usa-button smart-hub--new-report-btn margin-left-4"
+          >
+            <span className="smart-hub--plus">+</span>
+            <span className="smart-hub--new-report">Add communication</span>
+          </Link>
+        </div>
+      </div>
+
       <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for regional communication log dashboard"
-          filters={filters}
+          filters={filtersToApply}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
-          filterConfig={DASHBOARD_FILTER_CONFIG}
+          filterConfig={filterConfig}
           allUserRegions={regions}
         />
       </FilterPanelContainer>
       <Grid row gap="lg">
         <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }} className="display-flex flex-align-stretch">
-          <RegionalCommLogTable filters={filters} />
+          <RegionalCommLogTable filters={filtersToApply} />
         </Grid>
       </Grid>
     </div>
