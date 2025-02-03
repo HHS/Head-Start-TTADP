@@ -186,8 +186,6 @@ export default function RegionalCommLogTable({ filters }) {
             { title: 'Creator name', value: log.authorName },
             { title: 'Other TTA staff', value: (log.data.otherStaff || []).map((u) => u.label).join(', '), tooltip: true },
             { title: 'Result', value: log.data.result },
-            { title: 'Recipient next steps', value: log.data.recipientNextSteps.map((s) => s.note).join(', '), hidden: true },
-            { title: 'Specialist next steps', value: log.data.specialistNextSteps.map((s) => s.note).join(', '), hidden: true },
           ],
           actions: log.userId === user.id ? [
             { label: 'View', onClick: () => handleRowActionClick('View', log) },
