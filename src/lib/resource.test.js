@@ -18,7 +18,6 @@ const urlReturn = `
 <meta name="national-centers" content="Health, Behavioral Health, and Safety" />
 <meta name="node-id" content="7858" />
 <meta name="exclude-from-dynamic-view" content="False" />
-<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"HeadStart","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
 <link rel="canonical" href="https://headstart.gov/" />
 <link rel="image_src" href="https://headstart.gov/themes/gesso/images/site-logo.png" />
 <title>Head Start | Head Start</title>
@@ -92,7 +91,6 @@ describe('resource worker tests', () => {
     expect(mockUpdate).toHaveBeenNthCalledWith(
       1,
       {
-        // title: 'Head Start | Head Start',
         lastStatusCode: 200,
         mimeType: axiosCleanResponse.headers['content-type'],
       },
