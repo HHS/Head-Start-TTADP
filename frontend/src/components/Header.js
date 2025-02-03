@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import HeaderUserMenu from './HeaderUserMenu';
-import logo1x from '../images/eclkc-blocks-logo-43x56.png';
-import logo2x from '../images/eclkc-blocks-logo-86x111.png';
+import logo1x from '../images/headstart-blocks-logo-43x56.png';
+import logo2x from '../images/headstart-blocks-logo-86x111.png';
 import ReadOnlyEditor from './ReadOnlyEditor';
 import SiteAlert from './SiteAlert';
 
