@@ -5,6 +5,7 @@ import {
 import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import RegionalCommunicationLog from '..';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 describe('RegionalCommunicationLog', () => {
   const userCentralOffice = {
@@ -18,9 +19,15 @@ describe('RegionalCommunicationLog', () => {
   const renderComm = (u) => {
     const user = u || userCentralOffice;
     render(
-      <UserContext.Provider value={{ user }}>
-        <RegionalCommunicationLog />
-      </UserContext.Provider>,
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
+        <UserContext.Provider value={{ user }}>
+          <RegionalCommunicationLog />
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>,
     );
   };
 
