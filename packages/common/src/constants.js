@@ -56,6 +56,7 @@ const TOPICS = [
   'Disabilities Services',
   'ERSEA',
   'Environmental Health and Safety / EPRR',
+  'Equity',
   'Facilities',
   'Family Support Services',
   'Fatherhood / Male Caregiving',
@@ -156,6 +157,7 @@ const TARGET_POPULATIONS = [
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
 const EVENT_TARGET_POPULATIONS = [
+  'Children/Families affected by systemic discrimination/bias/exclusion',
   'Children/Families affected by traumatic events',
   'Parents/Families impacted by health disparities',
 ];
