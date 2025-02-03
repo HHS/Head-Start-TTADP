@@ -280,11 +280,11 @@ const csvLogsByScopes = async (
   const logs = await CommunicationLog
     .findAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
-      // where: {
-      //   [Op.and]: [
-      //     ...scopes,
-      //   ],
-      // },
+      where: {
+        [Op.and]: [
+          ...scopes,
+        ],
+      },
       include: [
         {
           model: db.Recipient,
@@ -336,11 +336,11 @@ const logsByScopes = async (
   const logs = await CommunicationLog
     .findAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
-      // where: {
-      //   [Op.and]: [
-      //     ...scopes,
-      //   ],
-      // },
+      where: {
+        [Op.and]: [
+          ...scopes,
+        ],
+      },
       include: [
         {
           model: db.Recipient,
