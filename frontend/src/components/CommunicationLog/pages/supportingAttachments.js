@@ -3,8 +3,8 @@ import {
   Button,
 } from '@trussworks/react-uswds';
 import { pageComplete } from '../constants';
-import { deleteLogFile } from '../../../../../fetchers/File';
-import SupportingAttachmentsSessionOrCommunication from '../../../../../components/SupportAttachmentsSessionOrCommunication';
+import { deleteLogFile } from '../../../fetchers/File';
+import SupportingAttachmentsSessionOrCommunication from '../../SupportAttachmentsSessionOrCommunication';
 
 const path = 'supporting-attachments';
 const position = 2;
