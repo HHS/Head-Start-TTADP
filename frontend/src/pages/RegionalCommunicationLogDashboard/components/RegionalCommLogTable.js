@@ -1,5 +1,6 @@
 import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { useHistory } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import Modal from '../../../components/Modal';
 import WidgetContainer from '../../../components/WidgetContainer';
@@ -8,7 +9,7 @@ import UserContext from '../../../UserContext';
 import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting from '../../../hooks/useWidgetSorting';
 import { EMPTY_ARRAY } from '../../../Constants';
-import { deleteCommunicationLogById } from '../../../fetchers/communicationLog';
+import { deleteCommunicationLogById, getCommunicationLogs } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { UsersIcon } from '../../../components/icons';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
@@ -22,7 +23,7 @@ const DEFAULT_SORT_CONFIG = {
 };
 
 const headers = ['Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
-const headersForExporting = [...headers, 'Recipient next steps', 'Specialist next steps', 'Files'];
+const headersForExporting = [...headers, 'Region', 'Recipient next steps', 'Specialist next steps', 'Files'];
 
 const DeleteLogModal = ({
   modalRef,
@@ -81,6 +82,7 @@ export default function RegionalCommLogTable({ filters }) {
   const [tabularData, setTabularData] = useState([]);
   const [logToDelete, setLogToDelete] = useState(null);
   const modalRef = useRef();
+  const history = useHistory();
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -135,9 +137,9 @@ export default function RegionalCommLogTable({ filters }) {
     setSortConfig({ ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE });
   };
 
-  const handleRowActionClick = (action, row) => {
+  const handleRowActionClick = (action, row, regionId, recipientId) => {
     if (action === 'View') {
-      // TODO
+      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${row.id}/view`);
     } else if (action === 'Delete') {
       handleDelete(row);
     }
@@ -149,36 +151,45 @@ export default function RegionalCommLogTable({ filters }) {
         setError(null);
         setIsAppLoading(true);
 
+        const response = await getCommunicationLogs(
+          sortConfig.sortBy,
+          sortConfig.direction,
+          sortConfig.offset || 0,
+          COMMUNICATION_LOG_PER_PAGE,
+          filters,
+        );
+
         // TODO: Fetch with filters
-        const response = {
-          count: 1,
-          rows: [
-            {
-              id: 1,
-              displayId: 'R01-CL-0001',
-              authorName: 'oswald cobblepot',
-              userId: user.id,
-              data: {
-                communicationDate: '2023-01-01',
-                purpose: 'waffles',
-                goals: [],
-                otherStaff: [],
-                result: '',
-                recipientNextSteps: [],
-                specialistNextSteps: [],
-              },
-            },
-          ],
-        };
+        // const response = {
+        //   count: 1,
+        //   rows: [
+        //     {
+        //       id: 1,
+        //       displayId: 'R01-CL-0001',
+        //       authorName: 'oswald cobblepot',
+        //       userId: user.id,
+        //       data: {
+        //         communicationDate: '2023-01-01',
+        //         purpose: 'waffles',
+        //         goals: [],
+        //         otherStaff: [],
+        //         result: '',
+        //         recipientNextSteps: [],
+        //         specialistNextSteps: [],
+        //       },
+        //     },
+        //   ],
+        // };
 
         const data = response.rows.map((log) => ({
+          ...log,
           heading: log.displayId,
           id: log.id,
           isUrl: true,
           isInternalLink: true,
-          link: '',
+          link: `/recipient-tta-records/${log.recipients[0].id}/region/${log.data.regionId}/communication/${log.id}/view`,
           suffixContent:
-            log.data.recipients && log.data.recipients.length > 0 ? <UsersIcon /> : null,
+            log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose },
@@ -188,10 +199,10 @@ export default function RegionalCommLogTable({ filters }) {
             { title: 'Result', value: log.data.result },
           ],
           actions: log.userId === user.id ? [
-            { label: 'View', onClick: () => handleRowActionClick('View', log) },
-            { label: 'Delete', onClick: () => handleRowActionClick('Delete', log) },
+            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId), log.recipients[0] && log.recipients[0].id) },
+            { label: 'Delete', onClick: () => handleRowActionClick('Delete', log, Number(log.data.regionId), log.recipients[0] && log.recipients[0].id) },
           ] : [
-            { label: 'View', onClick: () => handleRowActionClick('View', log) },
+            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId), log.recipients[0] && log.recipients[0].id) },
           ],
         }));
 

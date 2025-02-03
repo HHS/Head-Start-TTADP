@@ -271,6 +271,110 @@ const logsByRecipientAndScopes = async (
   };
 };
 
+const csvLogsByScopes = async (
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  scopes: WhereOptions[] = [],
+) => {
+  const logs = await CommunicationLog
+    .findAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      // where: {
+      //   [Op.and]: [
+      //     ...scopes,
+      //   ],
+      // },
+      include: [
+        {
+          model: db.Recipient,
+          as: 'recipients',
+          required: false,
+        },
+        {
+          model: db.File,
+          as: 'files',
+          required: false,
+        },
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+      offset,
+      subQuery: false,
+    });
+
+  // convert to csv
+  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
+
+  // base options
+  const options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+  };
+
+  return stringify(
+    data,
+    options,
+  );
+};
+
+const logsByScopes = async (
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  limit = COMMUNICATION_LOGS_PER_PAGE || false,
+  scopes: WhereOptions[] = [],
+) => {
+  const logs = await CommunicationLog
+    .findAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      // where: {
+      //   [Op.and]: [
+      //     ...scopes,
+      //   ],
+      // },
+      include: [
+        {
+          model: db.Recipient,
+          as: 'recipients',
+          required: false,
+        },
+        {
+          model: db.File,
+          as: 'files',
+          required: false,
+        },
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+      limit: limit || undefined,
+      offset,
+      subQuery: false,
+    });
+
+  return {
+    // using the sequelize literal in the where clause above causes the count to be incorrect
+    // given the outer join, so we have to manually count the rows
+    count: logs.length,
+    rows: logs,
+  };
+};
+
 const deleteLog = async (id: number) => CommunicationLog.destroy({
   where: {
     id,
@@ -324,6 +428,8 @@ export {
   logById,
   logsByRecipientAndScopes,
   csvLogsByRecipientAndScopes,
+  logsByScopes,
+  csvLogsByScopes,
   deleteLog,
   updateLog,
   createLog,

@@ -128,7 +128,7 @@ export default function RegionalCommunicationLog() {
       <div className="display-flex">
         <h1 className="landing margin-top-0 margin-bottom-3">
           Communication logs -
-          {userHasOnlyOneRegion ? 'your region' : `regions ${regions.join(', ')}`}
+          {userHasOnlyOneRegion ? 'your region' : 'your regions'}
         </h1>
         <div>
           <Link
