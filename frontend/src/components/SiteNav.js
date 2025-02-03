@@ -169,6 +169,14 @@ const SiteNav = ({
                   <li>
                     <NavLink
                       withinDisclosure
+                      to="/regional-communication-log"
+                    >
+                      Regional Communication Log Dashboard
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      withinDisclosure
                       to="/dashboards/resources-dashboard"
                     >
                       Resource Dashboard
