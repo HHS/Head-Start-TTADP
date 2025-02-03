@@ -1640,8 +1640,8 @@ const generateResourcesDashboardOverview = (allData) => {
   data.report.numNoResources = data.report.num - data.report.numResources;
   data.report.percentNoResources = (data.report.numNoResources / data.report.num) * 100.0;
 
-  // data.report.numEclkc = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
-  // data.report.percentEclkc = (data.report.numEclkc / data.report.num) * 100.0;
+  // data.report.numHeadStart = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
+  // data.report.percentHeadStart = (data.report.numHeadStart / data.report.num) * 100.0;
 
   // data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
   // data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
@@ -1700,8 +1700,8 @@ const generateResourcesDashboardOverview = (allData) => {
   data.recipient.numNoResources = data.recipient.num - data.recipient.numResources;
   data.recipient.percentNoResources = (data.recipient.numNoResources / data.recipient.num) * 100.0;
 
-  // data.recipient.numEclkc = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
-  // data.recipient.percentEclkc = (data.recipient.numEclkc / data.recipient.num) * 100.0;
+  // data.recipient.numHeadStart = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
+  // data.recipient.percentHeadStart = (data.recipient.numHeadStart / data.recipient.num) * 100.0;
 
   // data.recipient.numNonEclkc = data
   //   .recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
@@ -1721,8 +1721,8 @@ const generateResourcesDashboardOverview = (allData) => {
   data.resource = {};
   data.resource.num = data.resourceIntermediate.allResources.length;
 
-  data.resource.numEclkc = data.resourceIntermediate.allEclkcResources.length;
-  data.resource.percentEclkc = (data.resource.numEclkc / data.resource.num) * 100.0;
+  data.resource.numHeadStart = data.resourceIntermediate.allEclkcResources.length;
+  data.resource.percentHeadStart = (data.resource.numHeadStart / data.resource.num) * 100.0;
 
   // data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.length;
   // data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
@@ -1735,7 +1735,7 @@ const generateResourcesDashboardOverview = (allData) => {
       participants: r.numberOfParticipants,
     }))
     .reduce((partialSum, r) => partialSum + r.participants, 0);
-  // data.participant.numEclkc = resources
+  // data.participant.numHeadStart = resources
   //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
   //   .flatMap((r) => r.reports)
   //   .reduce((rs, report) => {
@@ -1746,7 +1746,7 @@ const generateResourcesDashboardOverview = (allData) => {
   //     return [...rs, report];
   //   }, [])
   //   .reduce((partialSum, r) => partialSum + r.participants, 0);
-  // data.participant.numEclkc = resources
+  // data.participant.numHeadStart = resources
   //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
   //   .flatMap((r) => r.reports)
   //   .reduce((rs, report) => {
@@ -1765,15 +1765,15 @@ const generateResourcesDashboardOverview = (allData) => {
       percentResources: `${formatNumber(data.report.percentResources, 2)}%`,
       // numNoResources: formatNumber(data.report.numNoResources),
       // percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
-      // numEclkc: formatNumber(data.report.numEclkc),
-      // percentEclkc: `${formatNumber(data.report.percentEclkc, 2)}%`,
+      // numHeadStart: formatNumber(data.report.numHeadStart),
+      // percentHeadStart: `${formatNumber(data.report.percentHeadStart, 2)}%`,
       // numNonEclkc: formatNumber(data.report.numNonEclkc),
       // percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
     },
     resource: {
       num: formatNumber(data.resource.num),
-      numEclkc: formatNumber(data.resource.numEclkc),
-      percentEclkc: `${formatNumber(data.resource.percentEclkc, 2)}%`,
+      numHeadStart: formatNumber(data.resource.numHeadStart),
+      percentHeadStart: `${formatNumber(data.resource.percentHeadStart, 2)}%`,
       // numNonEclkc: formatNumber(data.resource.numNonEclkc),
       // percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
     },
@@ -1783,8 +1783,8 @@ const generateResourcesDashboardOverview = (allData) => {
       percentResources: `${formatNumber(data.recipient.percentResources, 2)}%`,
       // numNoResources: formatNumber(data.recipient.numNoResources),
       // percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
-      // numEclkc: formatNumber(data.recipient.numEclkc),
-      // percentEclkc: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
+      // numHeadStart: formatNumber(data.recipient.numHeadStart),
+      // percentHeadStart: `${formatNumber(data.recipient.percentHeadStart, 2)}%`,
       // numNonEclkc: formatNumber(data.recipient.numNonEclkc),
       // percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
     },
@@ -1804,9 +1804,9 @@ Expected JSON (we have this now):
     percentResources: '40.85%',
   },
   resource: {
-    numEclkc: '1,819',
+    numHeadStart: '1,819',
     num: '2,365',
-    percentEclkc: '79.91%',
+    percentHeadStart: '79.91%',
   },
   recipient: {
     numResources: '248',
@@ -2137,9 +2137,9 @@ export function restructureOverview(data) {
       numResources: formatNumber(data.overView.numberOfRecipients[0].recipients),
     },
     resource: {
-      numEclkc: formatNumber(data.overView.pctOfECKLKCResources[0].eclkcCount),
+      numHeadStart: formatNumber(data.overView.pctOfECKLKCResources[0].eclkcCount),
       num: formatNumber(data.overView.pctOfECKLKCResources[0].allCount),
-      percentEclkc: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
+      percentHeadStart: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
     },
     ipdCourses: {
       percentReports: `${formatNumber(data.overView.pctOfReportsWithCourses[0].coursesPct, 2)}%`,

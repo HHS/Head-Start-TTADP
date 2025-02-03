@@ -21,9 +21,9 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
-## 2.1.10
+## 2.2.2
 
-Add new invalid headstart.gov urls.
+Change ECLKC to headstart.gov.
 
 ## 2.1.6
 
