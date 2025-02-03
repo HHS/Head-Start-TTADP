@@ -852,7 +852,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
-    
+
     await ActivityReport.findAll({
       attributes: [
         'id',
