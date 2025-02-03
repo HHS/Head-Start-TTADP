@@ -12,6 +12,8 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
+import WidgetContainer from '../../components/WidgetContainer';
+import RegionalCommLogTable from './components/RegionalCommLogTable';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -19,6 +21,7 @@ const defaultDate = formatDateRange({
   withSpaces: false,
 });
 
+const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'regional-communication-log-filters';
 
 export default function RegionalCommunicationLog() {
@@ -114,11 +117,11 @@ export default function RegionalCommunicationLog() {
       <h1 className="landing margin-top-0 margin-bottom-3">
         {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
         {' '}
-        Communication Log
+        Communication Log Dashboard
       </h1>
       <FilterPanelContainer>
         <FilterPanel
-          applyButtonAria="apply filters for regional dashboard"
+          applyButtonAria="apply filters for regional communication log dashboard"
           filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
@@ -127,8 +130,8 @@ export default function RegionalCommunicationLog() {
         />
       </FilterPanelContainer>
       <Grid row gap="lg">
-        <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }} className="display-flex flex-align-stretch">
-          &nbsp;
+        <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }} className="display-flex flex-align-stretch">
+          <RegionalCommLogTable filters={filters} />
         </Grid>
       </Grid>
     </div>
