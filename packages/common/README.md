@@ -21,6 +21,9 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+# 2.2.7
+Additional variations of disallowed ECLKC and HeadStart URLS.
+
 # 2.2.3
 Target population and reason changes
 
