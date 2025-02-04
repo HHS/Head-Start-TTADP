@@ -197,7 +197,7 @@ describe('Maintenance Queue', () => {
       const processor = jest.fn();
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
-      await enqueueMaintenanceJob(category);
+      await enqueueMaintenanceJob({ category });
       // the merged object will be {} (from default data and {} from referenceData)
       expect(maintenanceQueue.add).toHaveBeenCalledWith(
         category,
@@ -549,7 +549,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
   });
 
   it('executes action when requiredLaunchScript is not provided', async () => {
-    await enqueueMaintenanceJob(testCategory, testData);
+    await enqueueMaintenanceJob({ category: testCategory, data: testData });
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
@@ -557,7 +557,11 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
   });
 
   it('executes action when requiredLaunchScript is provided and matches', async () => {
-    await enqueueMaintenanceJob(testCategory, testData, 'testScript');
+    await enqueueMaintenanceJob({
+      category: testCategory,
+      data: testData,
+      requiredLaunchScript: 'testScript',
+    });
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
@@ -566,14 +570,24 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
 
   it('does not execute action when requiredLaunchScript is provided and does not match', async () => {
     process.argv[1] = '/path/to/differentScript.js';
-    await enqueueMaintenanceJob(testCategory, testData, 'testScript');
+    await enqueueMaintenanceJob({
+      category: testCategory,
+      data: testData,
+      requiredLaunchScript: 'testScript',
+    });
     expect(maintenanceQueue.add).not.toHaveBeenCalled();
   });
 
   it('executes action with lock when requiresLock is true', async () => {
     // eslint-disable-next-line global-require
     const LockManager = require('../lockManager').default;
-    await enqueueMaintenanceJob(testCategory, testData, 'testScript', true, false);
+    await enqueueMaintenanceJob({ 
+      category: testCategory,
+      data: testData,
+      requiredLaunchScript: 'testScript',
+      requiresLock: true,
+      holdLock: false,
+    });
     // Verify that LockManager was instantiated with the correct lock name.
     expect(LockManager).toHaveBeenCalledWith(`maintenanceLock-${testCategory}-${testData?.type}`);
     // Grab the lock manager instance and check that its executeWithLock was called.
