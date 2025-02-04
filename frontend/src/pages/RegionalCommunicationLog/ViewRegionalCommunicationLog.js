@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { useParams, useHistory, Link } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import moment from 'moment';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -12,15 +12,15 @@ import LogLine from '../RecipientRecord/pages/ViewCommunicationLog/components/Lo
 import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/components/DisplayNextSteps';
 import Container from '../../components/Container';
 
-export default function ViewRegionalCommunicationLog() {
-  const { regionId, logId } = useParams();
+export default function ViewRegionalCommunicationLog({ match }) {
+  // const { regionId, logId } = useParams();
+  const { params: { regionId, logId } } = match;
   const history = useHistory();
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
   const [log, setLog] = useState();
 
   const isAuthor = log && log.author && log.author.id === user.id;
-  console.log(log.author, user, isAuthor);
 
   useEffect(() => {
     async function fetchLog() {
