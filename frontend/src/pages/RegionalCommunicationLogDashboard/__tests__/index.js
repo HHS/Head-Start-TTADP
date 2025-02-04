@@ -33,6 +33,6 @@ describe('RegionalCommunicationLog', () => {
 
   it('renders the page', async () => {
     act(renderComm);
-    expect(await screen.findByRole('heading', { name: /region 1 communication log/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Communication logs - your region/i })).toBeInTheDocument();
   });
 });
