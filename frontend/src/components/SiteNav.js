@@ -131,7 +131,7 @@ const SiteNav = ({
                   <li>
                     <NavLink
                       withinDisclosure
-                      to="/regional-communication-log"
+                      to="/communication-log"
                     >
                       Communication Log
                     </NavLink>

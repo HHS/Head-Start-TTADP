@@ -63,7 +63,7 @@ describe('RegionalCommunicationLogDashboard', () => {
         }}
         >
           <UserContext.Provider value={{ user }}>
-            <Route path="/regional-communication-log">
+            <Route path="/communication-log">
               <RegionalCommunicationLog />
             </Route>
           </UserContext.Provider>
@@ -105,51 +105,51 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('renders the page - user with one region', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     expect(await screen.findByRole('heading', { name: /Communication logs - your region/i })).toBeInTheDocument();
   });
 
   it('renders the page - user with two regions', async () => {
-    act(() => renderComm(userWithTwoRegions, '/regional-communication-log'));
+    act(() => renderComm(userWithTwoRegions, '/communication-log'));
     expect(await screen.findByRole('heading', { name: /Communication logs - your regions/i })).toBeInTheDocument();
   });
 
   // Really just for coverage purposes (see @createDefaultFilters)
   it('renders the page - user with one region and no central office', async () => {
-    act(() => renderComm(userOneRegionNoCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userOneRegionNoCentralOffice, '/communication-log'));
     expect(await screen.findByRole('heading', { name: /Communication logs - your region/i })).toBeInTheDocument();
   });
 
   // Really just for coverage purposes (see @createDefaultFilters)
   it('renders the page - user with two regions and no central office', async () => {
-    act(() => renderComm(userWithTwoRegionsAndNoCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userWithTwoRegionsAndNoCentralOffice, '/communication-log'));
     expect(await screen.findByRole('heading', { name: /Communication logs - your regions/i })).toBeInTheDocument();
   });
 
   it('tries to fetch data', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     expect(fetchMock.called(defaultURL)).toBe(true);
   });
 
   it('shows the table, and the table has data', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
   });
 
   it('has the communication date filter applied by default', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter: communication date is within 07\/01\/2022-02\/04\/2025/i })).toBeInTheDocument());
   });
 
   it('shows an empty state for no logs', async () => {
     fetchMock.get(defaultURL, { count: 0, rows: [] }, { overwriteRoutes: true });
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByText(/you haven't logged any communication yet\./i)).toBeInTheDocument());
   });
 
   it('has an actions menu with View and Delete', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
 
@@ -177,7 +177,7 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('lets you apply a filter', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
     await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
@@ -207,7 +207,7 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('does not show the region filter when the user has only one region', async () => {
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
     await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
@@ -217,7 +217,7 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('does show the region filter when the user has two regions', async () => {
-    act(() => renderComm(userWithTwoRegions, '/regional-communication-log'));
+    act(() => renderComm(userWithTwoRegions, '/communication-log'));
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
     await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
@@ -227,7 +227,7 @@ describe('RegionalCommunicationLogDashboard', () => {
   });
 
   it('allows you to remove a filter', async () => {
-    act(() => renderComm(userWithTwoRegions, '/regional-communication-log'));
+    act(() => renderComm(userWithTwoRegions, '/communication-log'));
     await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter: communication date is 01\/01\/2025-02\/04\/2025/i })).toBeInTheDocument());
     const remove = screen.getByRole('button', { name: /this button removes the filter: communication date is 01\/01\/2025-02\/04\/2025/i });
     act(() => userEvent.click(remove));
@@ -236,7 +236,7 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('shows an error message if the fetch fails', async () => {
     fetchMock.get(defaultURL, 404, { overwriteRoutes: true });
-    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByText(/error fetching communication logs/i)).toBeInTheDocument());
   });
 });
