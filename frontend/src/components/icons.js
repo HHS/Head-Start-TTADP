@@ -10,6 +10,7 @@ import {
   faTimesCircle,
   faPencil,
   faTrash,
+  faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
@@ -72,6 +73,9 @@ PendingApprovalIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 const NeedsActionIcon = ({ size }) => <Icon size={size} color={colors.errorDark} icon={faExclamationCircle} />;
 NeedsActionIcon.propTypes = STATUS_ICON_PROP_TYPES;
 NeedsActionIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const UsersIcon = ({ size }) => <Icon size={size} color={colors.baseDarkest} icon={faUsers} />;
+UsersIcon.propTypes = STATUS_ICON_PROP_TYPES;
+UsersIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 
 export {
   InProgress,
@@ -84,4 +88,5 @@ export {
   PendingApprovalIcon,
   NeedsActionIcon,
   Trash,
+  UsersIcon,
 };

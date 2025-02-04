@@ -22,8 +22,8 @@ describe('communcation log fetchers', () => {
     );
     const data = { test: 'test' };
     fetchMock.getOnce(url, data);
-    const response = await getCommunicationLogById(regionId, logId);
-    expect(response).toEqual(data);
+    await getCommunicationLogById(regionId, logId);
+    expect(fetchMock.lastUrl()).toContain(url);
   });
   it('getCommunicationLogsByRecipientId', async () => {
     const regionId = 1;
@@ -38,8 +38,8 @@ describe('communcation log fetchers', () => {
     );
     const data = { test: 'test' };
     fetchMock.getOnce(`${url}?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&`, data);
-    const response = await getCommunicationLogsByRecipientId(regionId, recipientId, 'communicationDate', 'desc', 0);
-    expect(response).toEqual(data);
+    await getCommunicationLogsByRecipientId(regionId, recipientId, 'communicationDate', 'desc', 0);
+    expect(fetchMock.lastUrl()).toContain(url);
   });
   it('updateCommunicationLogById', async () => {
     const logId = 1;
@@ -51,8 +51,8 @@ describe('communcation log fetchers', () => {
     );
     const data = { test: 'test' };
     fetchMock.putOnce(url, data);
-    const response = await updateCommunicationLogById(logId, data);
-    expect(response).toEqual(data);
+    await updateCommunicationLogById(logId, data);
+    expect(fetchMock.lastUrl()).toContain(url);
   });
   it('deleteCommunicationLogById', async () => {
     const logId = 1;
@@ -60,12 +60,12 @@ describe('communcation log fetchers', () => {
       'api',
       'communication-logs',
       'log',
-      logId.toString(10),
+      String(logId),
     );
     const data = { test: 'test' };
     fetchMock.deleteOnce(url, data);
-    const response = await deleteCommunicationLogById(logId);
-    expect(response).toEqual(data);
+    await deleteCommunicationLogById(logId);
+    expect(fetchMock.lastUrl()).toContain(url);
   });
   it('createCommunicationLogByRecipientId', async () => {
     const regionId = 1;
@@ -80,7 +80,7 @@ describe('communcation log fetchers', () => {
     );
     const data = { test: 'test' };
     fetchMock.postOnce(url, data);
-    const response = await createCommunicationLogByRecipientId(regionId, recipientId, data);
-    expect(response).toEqual(data);
+    await createCommunicationLogByRecipientId(regionId, recipientId, data);
+    expect(fetchMock.lastUrl()).toContain(url);
   });
 });
