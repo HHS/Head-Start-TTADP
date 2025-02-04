@@ -204,4 +204,10 @@ describe('RegionalCommunicationLogDashboard', () => {
     act(() => userEvent.click(remove));
     await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter: communication date is 01\/01\/2025-02\/04\/2025/i })).not.toBeInTheDocument());
   });
+
+  it('shows an error message if the fetch fails', async () => {
+    fetchMock.get(defaultURL, 404, { overwriteRoutes: true });
+    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    await waitFor(() => expect(screen.getByText(/error fetching communication logs/i)).toBeInTheDocument());
+  });
 });
