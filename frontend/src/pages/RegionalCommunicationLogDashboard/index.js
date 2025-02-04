@@ -133,7 +133,7 @@ export default function RegionalCommunicationLog() {
         </h1>
         <div>
           <Link
-            to="/regional-communication-log/communication/new"
+            href={`/communication-log/region/${defaultRegion}/log/new`}
             className="usa-button smart-hub--new-report-btn margin-left-4"
           >
             <span className="smart-hub--plus">+</span>
