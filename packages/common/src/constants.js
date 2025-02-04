@@ -377,8 +377,16 @@ const DISALLOWED_URLS = [{
 }, {
   url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
   error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-},
-{
+},{
+  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
   url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
   error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
 }, {
@@ -387,7 +395,17 @@ const DISALLOWED_URLS = [{
 }, {
   url: 'https://headstart.gov/cas/login',
   error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}];
+},{
+  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://www.headstart.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}
+];
 
 exports.DISALLOWED_URLS = DISALLOWED_URLS;
 

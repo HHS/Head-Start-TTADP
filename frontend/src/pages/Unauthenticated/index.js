@@ -25,7 +25,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
     <div className="display-flex flex-column height-viewport">
       <div role="dialog" aria-labelledby="welcome-message" aria-describedby="login-description" className="position-relative margin-x-auto margin-top-7 z-top flex-1">
         <div className="maxw-mobile margin-x-auto padding-y-7">
-          <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="ECLKC Blocks Logo" className="smart-hub-logo display-block margin-x-auto" />
+          <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="Office of Head Start logo" className="smart-hub-logo display-block margin-x-auto" />
           <h1 id="welcome-message" className="font-serif-xl text-center margin-4">
             Welcome to the TTA Hub
           </h1>

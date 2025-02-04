@@ -29,6 +29,12 @@ describe('urlUtils', () => {
       'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
       'https://headstart.gov/cas/login',
       'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://www.headstart.gov/cas/login',
+      'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
     ];
 
     it('correctly validates resources', () => {
