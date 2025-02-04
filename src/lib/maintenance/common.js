@@ -119,23 +119,21 @@ const processMaintenanceQueue = () => {
 
 /**
  * Adds a maintenance job to the queue if a processor is defined for the given type.
- *
- * @param {string} category - The type of maintenance job to add to the queue.
- * @param {*} [data=null] - Optional data to include with the maintenance job.
  */
-const enqueueMaintenanceJob = async (
+const enqueueMaintenanceJob = async ({
   category,
   data = {},
   requiredLaunchScript = null,
   requiresLock = false,
   holdLock = false,
-) => {
+  jobSettings = {},
+}) => {
   const action = async () => {
     // Check if there is a processor defined for the given type
     if (category in maintenanceQueueProcessors) {
       try {
         // Add the job to the maintenance queue
-        maintenanceQueue.add(category, { ...data, ...referenceData() });
+        maintenanceQueue.add(category, { ...data, ...referenceData() }, jobSettings);
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
         auditLogger.error(err);
@@ -589,13 +587,15 @@ registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
     // The function to execute takes in the category, type, timezone, and schedule parameters
     (category, type, timezone, schedule) => new CronJob(
       schedule, // The schedule parameter specifies when the job should run
-      () => enqueueMaintenanceJob(
-        MAINTENANCE_CATEGORY.MAINTENANCE, // constant representing the category of maintenance
-        {
-          type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS, // shorthand property notation for type: type
+      () => enqueueMaintenanceJob({
+        // constant representing the category of maintenance
+        category: MAINTENANCE_CATEGORY.MAINTENANCE,
+        data: {
+          // shorthand property notation for type: type
+          type: MAINTENANCE_TYPE.CLEAR_MAINTENANCE_LOGS,
           dateOffSet: 90, // otherwise, merge the provided data object
         },
-      ),
+      }),
       null,
       true,
       timezone, // The timezone parameter specifies the timezone in which the job should run

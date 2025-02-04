@@ -190,9 +190,8 @@ describe('Maintenance Queue', () => {
       const processor = jest.fn();
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
-      await enqueueMaintenanceJob(category, data);
-      // Since referenceData returns {} by our mock, the merged object equals data
-      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data);
+      await  enqueueMaintenanceJob({ category, data });
+      expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, {});
     });
 
     it('should default data to {} if not provided', async () => {
@@ -210,10 +209,8 @@ describe('Maintenance Queue', () => {
 
     it('should log an error if no processor is defined for the given type', async () => {
       const category = 'non-existent-category';
-      await enqueueMaintenanceJob(category);
-      expect(auditLogger.error).toHaveBeenCalledWith(
-        new Error(`Maintenance Queue Error: no processor defined for ${category}`)
-      );
+      await enqueueMaintenanceJob({ category });
+      expect(auditLogger.error).toHaveBeenCalledWith(new Error(`Maintenance Queue Error: no processor defined for ${category}`));
     });
   });
 

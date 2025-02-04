@@ -51,26 +51,28 @@ describe('Import Module', () => {
     it('should enqueue a maintenance job with correct category and type when id is provided', async () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
       const id = 123;
-      await enqueueImportMaintenanceJob(type, id);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type, id },
-        undefined,
-        false,
-        false
-      );
+      await enqueueImportMaintenanceJob({ type, id });
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: { type, id },
+        requiredLaunchScript: undefined,
+        requiresLock: false,
+        holdLock: false,
+        jobSettings: {},
+      });
     });
 
     it('should enqueue a maintenance job with correct category and type when id is not provided', () => {
       const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
-      enqueueImportMaintenanceJob(type);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type, id: undefined },
-        undefined,
-        false,
-        false
-      );
+      enqueueImportMaintenanceJob({ type });
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: { type, id: undefined },
+        requiredLaunchScript: undefined,
+        requiresLock: false,
+        holdLock: false,
+        jobSettings: {},
+      });
     });
   });
 
@@ -108,14 +110,14 @@ describe('Import Module', () => {
       await importDownload(id);
       const fn = maintenanceCommand.mock.calls[0][0];
       await fn();
-
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
-        undefined,
-        false,
-        false
-      );
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+        requiredLaunchScript: undefined,
+        requiresLock: false,
+        holdLock: false,
+        jobSettings: { timeout: 4500 },
+      });
     });
 
     it('should not enqueue any job if no items to download or process', async () => {
@@ -181,13 +183,17 @@ describe('Import Module', () => {
       await importProcess(id);
       const fn = maintenanceCommand.mock.calls[0][0];
       await fn();
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
-        undefined,
-        false,
-        false
-      );
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: {
+          type: MAINTENANCE_TYPE.IMPORT_PROCESS,
+          id,
+        },
+        requiredLaunchScript: undefined,
+        requiresLock: false,
+        holdLock: false,
+        jobSettings: { timeout: 4500 },
+      });
     });
 
     it('should not enqueue a new job if no more items to process', async () => {
@@ -196,9 +202,17 @@ describe('Import Module', () => {
       moreToProcess.mockResolvedValue(false);
 
       await importProcess(id);
-      const fn = maintenanceCommand.mock.calls[0][0];
-      await fn();
-      expect(enqueueMaintenanceJob).not.toHaveBeenCalled();
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      await anonymousFunction();
+
+      expect(enqueueMaintenanceJob).not.toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.IMPORT,
+        data: {
+          type: MAINTENANCE_TYPE.IMPORT_PROCESS,
+          id,
+        },
+        jobSettings: { timeout: 4500 },
+      });
     });
 
     it('should return failure if processing fails', async () => {
