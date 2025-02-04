@@ -581,7 +581,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
   it('executes action with lock when requiresLock is true', async () => {
     // eslint-disable-next-line global-require
     const LockManager = require('../lockManager').default;
-    await enqueueMaintenanceJob({ 
+    await enqueueMaintenanceJob({
       category: testCategory,
       data: testData,
       requiredLaunchScript: 'testScript',
