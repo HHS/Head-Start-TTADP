@@ -203,7 +203,7 @@ export function setRedisConnectionName(queue, connectionName) {
   }
 }
 
-export default function newQueue(queName) {
+export default function newQueue(queName, timeout = 30000) {
   const queue = new Queue(queName, `redis://${host}:${port}`, {
     ...redisOpts,
     maxRetriesPerRequest: 15, // Adjust this value as needed
@@ -211,6 +211,11 @@ export default function newQueue(queName) {
       const delay = Math.min(times * 50, 2000);
       auditLogger.warn(`Redis retry attempt #${times}, retrying in ${delay}ms`);
       return delay;
+    },
+    // Safely merge the timeout into redisOpts.settings
+    settings: {
+      ...redisOpts.settings, // Preserve existing settings from redisOpts
+      stalledInterval: timeout, // Add or overwrite the timeout for stalled jobs
     },
   });
 
