@@ -5,6 +5,7 @@ import {
   addQueueProcessor,
   enqueueMaintenanceJob,
   maintenanceCommand,
+  registerCronEnrollmentFunction,
   addCronJob,
   runMaintenanceCronJobs,
 } from './common';
@@ -44,124 +45,6 @@ const enqueueImportMaintenanceJob = async (
   requiredLaunchScript,
   requiresLock,
   holdLock,
-);
-
-/**
- * Asynchronously sets up cron jobs for each import schedule retrieved from a data source.
- * It iterates over the list of import schedules and adds a cron job for each schedule
- * by calling the `addCronJob` function with the necessary parameters.
- *
- * @returns A promise that resolves to an object containing the list of import schedules.
- * @throws Will throw an error if retrieving import schedules or setting up cron jobs fails.
- */
-const scheduleImportCrons = async () => {
-  let imports;
-  auditLogger.log('info', 'import: scheduleImportCrons');
-  // eslint-disable-next-line no-console
-  console.log('import: scheduleImportCrons');
-
-  try {
-    // Retrieve a list of import schedules from a data source
-    auditLogger.log('info', 'import: scheduleImportCrons: pre - getImportSchedules');
-    // eslint-disable-next-line no-console
-    console.log('import: scheduleImportCrons: pre - getImportSchedules');
-    imports = await getImportSchedules();
-    auditLogger.log('info', `import: scheduleImportCrons: post - getImportSchedules: imports: ${imports?.length}`);
-    // eslint-disable-next-line no-console
-    console.log(`import: scheduleImportCrons: post - getImportSchedules: imports: ${imports?.length}`);
-
-    // Iterate over each import schedule to setup cron jobs
-    imports.forEach(({
-      id,
-      name,
-      schedule: importSchedule,
-    }) => {
-      auditLogger.log('info', `import: addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
-      // eslint-disable-next-line no-console
-      console.log(`import: addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
-      addCronJob(
-        // Add a new cron job for each import schedule
-        MAINTENANCE_CATEGORY.IMPORT,
-        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        // Define the function that creates a new CronJob instance
-        (category, type, timezone, schedule) => {
-          auditLogger.log('info', `import: new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
-          // eslint-disable-next-line no-console
-          console.log(`import: new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
-          return new CronJob(
-            schedule,
-            // Define the task to be executed by the cron job, which enqueues a maintenance job
-            () => {
-              auditLogger.log('info', `import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
-              // eslint-disable-next-line no-console
-              console.log(`import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
-              return enqueueImportMaintenanceJob(
-                type,
-                id,
-              );
-            },
-            null,
-            true,
-            timezone,
-          );
-        },
-        importSchedule,
-        name,
-      );
-    });
-    auditLogger.log('info', 'runMaintenanceCronJobs');
-    // eslint-disable-next-line no-console
-    console.log('infoimport:runMaintenanceCronJobs');
-    runMaintenanceCronJobs();
-  } catch (err) {
-    auditLogger.error(`Error: scheduleImportCrons: ${err.message}`, err);
-    // eslint-disable-next-line no-console
-    console.error(`Error: scheduleImportCrons: ${err.message}`, err);
-    return { imports, isSuccessful: false, error: err.message };
-  }
-
-  // Return the list of import schedules
-  return { imports, isSuccessful: true, scheduled: imports.map(({ name }) => name) };
-};
-
-/**
- * Asynchronously triggers the import schedule process by executing a maintenance command.
- * It attempts to schedule import cron jobs and returns the results of this operation.
- *
- * The function is wrapped in a higher-order function `maintenanceCommand` which takes
- * a callback with parameters for logging and the ID of the user who triggered the action.
- *
- * @returns A Promise that resolves to an object indicating the success status and any
- *          results or errors from the scheduling attempt. The object contains a boolean
- *          `isSuccessful` which is true if no errors occurred, and false otherwise. If
- *          an error occurs, the object will include an `error` property with error details.
- *
- * @throws If an exception occurs within the `maintenanceCommand` or `scheduleImportCrons`,
- *         it will be caught and the returned object will contain the error information.
- */
-const importSchedule = async () => maintenanceCommand(
-  // The callback provided to the maintenance command takes log functions and an ID.
-  async (logMessages, logBenchmarks, triggeredById) => {
-    auditLogger.log('info', `import: importSchedule->maintenanceCommand: logMessages: ${logMessages}, logBenchmarks: ${logBenchmarks}, triggeredById: ${triggeredById}`);
-    try {
-      // Attempt to import cron schedules and store the results.
-      const scheduleResults = await scheduleImportCrons();
-      auditLogger.log('info', `import: importSchedule->maintenanceCommand: scheduleResults: ${JSON.stringify(scheduleResults)}`);
-      // Return an object indicating success and include the schedule results.
-      // The operation is successful if the 'error' key is not present in the results.
-      return {
-        isSuccessful: !Object.keys(scheduleResults).includes('error'),
-        ...scheduleResults,
-        triggeredById,
-      };
-    } catch (err) {
-      // If an error occurs during import, return an object indicating failure and the error.
-      return { isSuccessful: false, error: err };
-    }
-  },
-  // Specify the maintenance category and type for this operation.
-  MAINTENANCE_CATEGORY.IMPORT,
-  MAINTENANCE_TYPE.IMPORT_SCHEDULE,
 );
 
 /**
@@ -307,9 +190,6 @@ const importMaintenance = async (job) => {
 
   // Use a switch statement to determine the action based on the job type
   switch (type) {
-    // If the job type is import schedule, call the importSchedule function
-    case MAINTENANCE_TYPE.IMPORT_SCHEDULE:
-      return importSchedule();
     // If the job type is import download, call the importDownload function with the provided id
     case MAINTENANCE_TYPE.IMPORT_DOWNLOAD:
       return importDownload(id);
@@ -323,26 +203,52 @@ const importMaintenance = async (job) => {
 };
 
 addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
-// TODO: commented out to prevent scheduled execution, as there is a concurrency issue that still
-// needs to be addressed
 
-const enqueue = () => {
-  if (!process.env.CI
-    && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
-    || process.env.NODE_ENV !== 'production')) {
-    enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', false);
-    return true;
+registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
+  if (env !== 'production') {
+    auditLogger.log('info', `Skipping import cron job enrollment in non-production environment (${env})`);
+    return;
   }
-  return false;
-};
 
-enqueue();
+  if (instanceId !== '0') {
+    auditLogger.log('info', `Skipping import cron job enrollment on instance ${instanceId} in environment ${env}`);
+    return;
+  }
+
+  if (contextId !== 0) {
+    auditLogger.log('info', `Skipping import cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`);
+    return;
+  }
+
+  auditLogger.log('info', `Registering import maintenance cron jobs for context ${contextId} in environment ${env} for instance ${instanceId}`);
+
+  try {
+    const imports = await getImportSchedules();
+
+    await Promise.all(imports.map(async ({ id, name, schedule: importSchedule }) => {
+      addCronJob(
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        (category, type, timezone, schedule) => new CronJob(
+          schedule,
+          async () => {
+            await enqueueImportMaintenanceJob(type, id);
+          },
+          null,
+          true,
+          timezone,
+        ),
+        importSchedule,
+        name,
+      );
+    }));
+  } catch (err) {
+    auditLogger.error(`Error registering import cron jobs: ${err.message}`, err);
+  }
+});
 
 export {
-  enqueue,
   enqueueImportMaintenanceJob,
-  scheduleImportCrons,
-  importSchedule,
   importDownload,
   importProcess,
   importMaintenance,

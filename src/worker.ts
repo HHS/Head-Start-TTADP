@@ -22,16 +22,19 @@ import {
 } from './lib/mailer';
 import {
   processMaintenanceQueue,
+  executeCronEnrollmentFunctions,
+  runMaintenanceCronJobs,
 } from './lib/maintenance';
 
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
+const timezone = 'America/New_York';
 
 // Wrap your process functions to use httpContext
 async function start(context: { id: number }) {
   registerEventListener();
 
-  httpContext.ns.run(() => {
+  httpContext.ns.run(async () => {
     httpContext.set('workerId', context.id);
 
     // File Scanning Queue
@@ -44,6 +47,16 @@ async function start(context: { id: number }) {
     processResourceQueue();
     // Notifications Queue
     processNotificationQueue();
+
+    // Ensure only instance zero and the first Throng worker run the maintenance jobs
+    if (process.env.CF_INSTANCE_INDEX === '0' && context.id === 1) {
+      await executeCronEnrollmentFunctions(
+        process.env.CF_INSTANCE_INDEX,
+        context.id,
+        process.env.NODE_ENV,
+      );
+      runMaintenanceCronJobs(timezone);
+    }
 
     // Maintenance Queue
     processMaintenanceQueue();
