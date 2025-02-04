@@ -181,7 +181,7 @@ describe('CommunicationLogForm', () => {
     userEvent.selectOptions(method, 'Phone');
 
     const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'Monitoring');
+    userEvent.selectOptions(purpose, 'General Check-In');
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
@@ -235,7 +235,7 @@ describe('CommunicationLogForm', () => {
     userEvent.selectOptions(method, 'Phone');
 
     const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'Monitoring');
+    userEvent.selectOptions(purpose, 'General Check-In');
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
@@ -266,7 +266,7 @@ describe('CommunicationLogForm', () => {
         communicationDate: '11/01/2023',
         result: 'Next Steps identified',
         method: 'Phone',
-        purpose: 'Monitoring',
+        purpose: 'General Check-In',
         duration: '1',
         notes: 'This is a note',
         goals: [{ label: 'CQI and Data', value: '1' }],
