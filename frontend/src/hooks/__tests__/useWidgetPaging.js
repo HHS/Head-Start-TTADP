@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-hooks';
-import useWidgetPaging from '../useWidgetPaging';
+import useWidgetPaging, { parseValue } from '../useWidgetPaging';
 
 describe('useWidgetPaging', () => {
   it('should initialize with default values', () => {
@@ -311,6 +311,18 @@ describe('useWidgetPaging', () => {
       sortBy: 'value_header',
       direction: 'asc',
       activePage: 1,
+    });
+  });
+
+  describe('parseValue', () => {
+    it('works', () => {
+      const value = parseValue('100,000');
+      expect(value).toEqual(100000);
+    });
+
+    it('returns the value is provided is NaN after parsing', () => {
+      const value = parseValue('nan');
+      expect(value).toEqual('nan');
     });
   });
 });
