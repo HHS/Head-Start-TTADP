@@ -341,7 +341,6 @@ export function mockTrainingReportData(data) {
       'Dual-Language Learners',
       'Infants and Toddlers (ages birth to 3)',
       'Parents/Families impacted by health disparities.',
-      'Pregnant Women / Pregnant Persons',
       'Preschool Children (ages 3-5)',
     ],
     eventIntendedAudience: 'recipients',

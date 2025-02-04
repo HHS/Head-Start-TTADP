@@ -91,7 +91,6 @@ const REASONS = [
   'Change in Scope',
   'Child Incident',
   'Complaint',
-  'COVID-19 response',
   'Full Enrollment',
   'New Recipient',
   'New Director or Management',
@@ -105,6 +104,12 @@ const REASONS = [
   'Monitoring | Deficiency',
 ];
 exports.REASONS = REASONS;
+
+const DEPRECATED_REASONS = [
+  'COVID-19 response'
+];
+
+exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
 
 const REPORT_STATUSES = {
   DRAFT: 'draft',
@@ -142,7 +147,7 @@ exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool Children (ages 3-5)',
-  'Pregnant Women / Pregnant Persons',
+  'Expectant families',
   'Affected by Child Welfare Involvement',
   'Affected by Disaster',
   'Affected by Substance Use',
