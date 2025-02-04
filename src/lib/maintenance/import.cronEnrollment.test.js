@@ -37,7 +37,7 @@ const { getImportSchedules } = require('../importSystem');
 
 // Import the module under test (in an isolated module context so that our mocks are used)
 jest.isolateModules(() => {
-  // eslint-disable-next-line global-requires
+  // eslint-disable-next-line global-require
   require('./import');
 });
 
