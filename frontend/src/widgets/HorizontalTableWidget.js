@@ -1,5 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useState, useEffect } from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Table, Checkbox } from '@trussworks/react-uswds';
@@ -8,6 +9,8 @@ import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
+import ContextMenu from '../components/ContextMenu';
+import Tooltip from '../components/Tooltip';
 
 export default function HorizontalTableWidget(
   {
@@ -187,20 +190,27 @@ export default function HorizontalTableWidget(
             }
             {
               enableSorting
-                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, `smarthub-horizontal-table-first-column ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, `smarthub-horizontal-table-first-column smarthub-horizontal-table-first-column-border ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
                 : (
-                  <th className={`smarthub-horizontal-table-first-column data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                  <th className={`smarthub-horizontal-table-first-column smarthub-horizontal-table-first-column-border data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     {firstHeading}
                   </th>
                 )
             }
             {
-            headers.map((h) => (<Header header={h} sortingEnabled={enableSorting} />))
+            headers.map((h) => (<Header header={h} key={`header-${uniqueId()}`} sortingEnabled={enableSorting} />))
+            }
+            {
+            data.some((r) => r.actions) && (
+              <th scope="col" aria-label="context menu" className="smarthub-horizontal-table-last-column fixed-th">
+                Actions
+              </th>
+            )
             }
             {
             showTotalColumn && (
               enableSorting
-                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'total', 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
                 : (
                   <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
                     {lastHeading}
@@ -223,21 +233,46 @@ export default function HorizontalTableWidget(
                 }
                 <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'} ${!hideFirstColumnBorder ? 'smarthub-horizontal-table-first-column-border' : ''}`}>
                   {
+                    // eslint-disable-next-line no-nested-ternary
                     r.isUrl
                       ? handleUrl(r)
-                      : r.heading
+                      : r.tooltip
+                        ? <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" />
+                        : r.heading
+                  }
+                  {
+                    r.suffixContent && (
+                      <span className="margin-left-2">
+                        {r.suffixContent}
+                      </span>
+                    )
                   }
                 </td>
-                {(r.data || []).map((d, cellIndex) => (
+                {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {
                       // eslint-disable-next-line no-nested-ternary
                       d.isUrl
                         ? handleUrl(d)
-                        : showDashForNullValue && !d.value ? '-' : d.value
+                        // eslint-disable-next-line no-nested-ternary
+                        : showDashForNullValue && !d.value
+                          ? '-'
+                          : d.tooltip
+                            ? <Tooltip displayText={d.value} tooltipText={d.value} buttonLabel="click to reveal" />
+                            : d.value
                     }
                   </td>
                 ))}
+                {r.actions && r.actions.length ? (
+                  <td data-label="Row actions" key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                    <ContextMenu
+                      fixed
+                      label="Actions for Communication Log"
+                      menuItems={r.actions}
+                      menuWidthOffset={110}
+                    />
+                  </td>
+                ) : null}
               </tr>
             ))
             }
@@ -264,6 +299,10 @@ HorizontalTableWidget.propTypes = {
         name: PropTypes.string,
         count: PropTypes.number,
         label: PropTypes.string,
+        actions: PropTypes.arrayOf(PropTypes.shape({
+          label: PropTypes.string,
+          onClick: PropTypes.func,
+        })),
       }),
     ), PropTypes.shape({}),
   ]),

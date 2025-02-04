@@ -49,21 +49,27 @@ export default function useWidgetSorting(
     let valuesToSort;
     switch (sortingBy) {
       case 'string':
-        valuesToSort = dataToUse.map((t) => ({
-          ...t,
-          sortBy: !t.heading
-            ? t[sortBy].toString().toLowerCase() // If we don't have heading data, use the value.
-            : t.heading.toString().toLowerCase(),
-        }));
+        valuesToSort = dataToUse.map((t) => {
+          const sortKey = sortBy;
+          return {
+            ...t,
+            sortBy: !t.data
+              ? t[sortKey].toString().toLowerCase() // If we don't have data, use the value.
+              // eslint-disable-next-line max-len
+              : t.data.find((tp) => (tp.sortKey || tp.title) === sortKey).value.toString().toLowerCase(),
+          };
+        });
         break;
       case 'date':
-        valuesToSort = dataToUse.map((t) => (
-          {
+        valuesToSort = dataToUse.map((t) => {
+          const sortKey = sortBy;
+          return {
             ...t,
             sortBy: !t.data
               ? new Date(t[sortBy]) // If we don't have data, use the value.
-              : new Date(t.data.find((tp) => (tp.sortKey || tp.title) === sortBy).value),
-          }));
+              : new Date(t.data.find((tp) => (tp.sortKey || tp.title) === sortKey || {}).value),
+          };
+        });
         break;
       case 'key':
         valuesToSort = dataToUse.map((t) => ({
@@ -72,14 +78,15 @@ export default function useWidgetSorting(
         }));
         break;
       default:
-        // Sort by value.
-        valuesToSort = dataToUse.map((t) => (
-          {
+        valuesToSort = dataToUse.map((t) => {
+          const sortKey = sortBy;
+          return {
             ...t,
             sortBy: !t.data
-              ? parseValue(t[sortBy]) // If we don't have data, use the value.
-              : parseValue(t.data.find((tp) => (tp.sortKey || tp.title) === sortBy).value),
-          }));
+              ? parseValue(t[sortKey]) // If we don't have data, use the value.
+              : parseValue((t.data.find((tp) => (tp.sortKey || tp.title) === sortKey) || {}).value),
+          };
+        });
         break;
     }
 
