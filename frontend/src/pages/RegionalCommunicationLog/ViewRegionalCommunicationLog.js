@@ -10,6 +10,7 @@ import ReadOnlyField from '../../components/ReadOnlyField';
 import BackLink from '../../components/BackLink';
 import LogLine from '../RecipientRecord/pages/ViewCommunicationLog/components/LogLine';
 import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/components/DisplayNextSteps';
+import Container from '../../components/Container';
 
 export default function ViewRegionalCommunicationLog() {
   const { regionId, logId } = useParams();
@@ -19,6 +20,7 @@ export default function ViewRegionalCommunicationLog() {
   const [log, setLog] = useState();
 
   const isAuthor = log && log.author && log.author.id === user.id;
+  console.log(log.author, user, isAuthor);
 
   useEffect(() => {
     async function fetchLog() {
@@ -58,7 +60,7 @@ export default function ViewRegionalCommunicationLog() {
           duration={log.data.duration}
           method={log.data.method}
         />
-        <div className="maxw-tablet-lg">
+        <Container paddingX={4} paddingY={2} className="maxw-tablet-lg" positionRelative>
           {isAuthor && (
             <Link
               className="position-absolute top-0 right-0 margin-top-4 margin-right-4"
@@ -93,7 +95,7 @@ export default function ViewRegionalCommunicationLog() {
             Date of entry:
             {moment(log.createdAt).format('MMM Do, YYYY')}
           </p>
-        </div>
+        </Container>
       </div>
     </>
   );
