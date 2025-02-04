@@ -1,7 +1,7 @@
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import { MemoryRouter, Route } from 'react-router';
+import { MemoryRouter, Route, useHistory } from 'react-router';
 import {
   render, waitFor, screen, act,
 } from '@testing-library/react';
@@ -10,6 +10,11 @@ import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import RegionalCommunicationLog from '..';
 import AppLoadingContext from '../../../AppLoadingContext';
+
+jest.mock('react-router', () => ({
+  ...jest.requireActual('react-router'),
+  useHistory: jest.fn(),
+}));
 
 describe('RegionalCommunicationLogDashboard', () => {
   const userCentralOffice = {
@@ -148,7 +153,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     await waitFor(() => expect(screen.getByText(/you haven't logged any communication yet\./i)).toBeInTheDocument());
   });
 
-  it('has an actions menu with View and Delete', async () => {
+  it('has an actions menu with View and Delete - can Delete', async () => {
     act(() => renderComm(userCentralOffice, '/communication-log'));
     await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
@@ -174,6 +179,26 @@ describe('RegionalCommunicationLogDashboard', () => {
     // confirm delete
     act(() => userEvent.click(confirmDeleteButton));
     await waitFor(() => expect(fetchMock.called(deleteURL)).toBe(true));
+  });
+
+  it('has an actions menu with View and Delete - can View', async () => {
+    const push = jest.fn();
+    useHistory.mockReturnValue({ push });
+
+    act(() => renderComm(userCentralOffice, '/communication-log'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+
+    const actions = screen.getByRole('button', { name: 'Actions for Communication Log' });
+    act(() => userEvent.click(actions));
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /view/i })[0]).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /delete/i })[0]).toBeInTheDocument());
+
+    const viewMenuItemButton = screen.getAllByRole('button', { name: /view/i })[0];
+    act(() => userEvent.click(viewMenuItemButton));
+
+    expect(push).toHaveBeenCalledWith('/communication-log/region/4/log/1/view');
   });
 
   it('lets you apply a filter', async () => {
