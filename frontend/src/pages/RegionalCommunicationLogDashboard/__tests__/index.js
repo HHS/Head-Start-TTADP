@@ -20,8 +20,27 @@ describe('RegionalCommunicationLogDashboard', () => {
     }],
   };
 
+  const userOneRegionNoCentralOffice = {
+    homeRegionId: 1,
+    permissions: [{
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }],
+  };
+
   const userWithTwoRegions = {
     homeRegionId: 14,
+    permissions: [{
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }, {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }],
+  };
+
+  const userWithTwoRegionsAndNoCentralOffice = {
+    homeRegionId: 1,
     permissions: [{
       regionId: 1,
       scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
@@ -91,6 +110,18 @@ describe('RegionalCommunicationLogDashboard', () => {
 
   it('renders the page - user with two regions', async () => {
     act(() => renderComm(userWithTwoRegions, '/regional-communication-log'));
+    expect(await screen.findByRole('heading', { name: /Communication logs - your regions/i })).toBeInTheDocument();
+  });
+
+  // Really just for coverage purposes (see @createDefaultFilters)
+  it('renders the page - user with one region and no central office', async () => {
+    act(() => renderComm(userOneRegionNoCentralOffice, '/regional-communication-log'));
+    expect(await screen.findByRole('heading', { name: /Communication logs - your region/i })).toBeInTheDocument();
+  });
+
+  // Really just for coverage purposes (see @createDefaultFilters)
+  it('renders the page - user with two regions and no central office', async () => {
+    act(() => renderComm(userWithTwoRegionsAndNoCentralOffice, '/regional-communication-log'));
     expect(await screen.findByRole('heading', { name: /Communication logs - your regions/i })).toBeInTheDocument();
   });
 
@@ -164,5 +195,13 @@ describe('RegionalCommunicationLogDashboard', () => {
 
     const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     expect(lastTopic.innerHTML).toContain('region');
+  });
+
+  it('allows you to remove a filter', async () => {
+    act(() => renderComm(userWithTwoRegions, '/regional-communication-log'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /this button removes the filter: communication date is 01\/01\/2025-02\/04\/2025/i })).toBeInTheDocument());
+    const remove = screen.getByRole('button', { name: /this button removes the filter: communication date is 01\/01\/2025-02\/04\/2025/i });
+    act(() => userEvent.click(remove));
+    await waitFor(() => expect(screen.queryByRole('button', { name: /this button removes the filter: communication date is 01\/01\/2025-02\/04\/2025/i })).not.toBeInTheDocument());
   });
 });
