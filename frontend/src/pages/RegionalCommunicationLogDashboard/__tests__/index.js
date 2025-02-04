@@ -5,6 +5,7 @@ import { MemoryRouter, Route } from 'react-router';
 import {
   render, waitFor, screen, act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import RegionalCommunicationLog from '..';
@@ -113,5 +114,55 @@ describe('RegionalCommunicationLogDashboard', () => {
     fetchMock.get(defaultURL, { count: 0, rows: [] }, { overwriteRoutes: true });
     act(() => renderComm(userCentralOffice, '/regional-communication-log'));
     await waitFor(() => expect(screen.getByText(/you haven't logged any communication yet\./i)).toBeInTheDocument());
+  });
+
+  it('lets you apply a filter', async () => {
+    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'communicationDate'));
+    const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'is'));
+
+    const select = screen.getByRole('combobox', { name: /date/i });
+    await userEvent.click(select);
+    act(() => userEvent.selectOptions(select, 'Year to date'));
+
+    const today = new Date();
+
+    const currentYear = today.getFullYear();
+    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const currentDay = String(today.getDate()).padStart(2, '0');
+
+    const filterURL = `/api/communication-logs/region?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&communicationDate.in[]=${currentYear}%2F01%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    fetchMock.get(filterURL, { count: 0, rows: [] });
+
+    const apply = screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i });
+    act(() => userEvent.click(apply));
+
+    expect(fetchMock.called(filterURL)).toBe(true);
+  });
+
+  it('does not show the region filter when the user has only one region', async () => {
+    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    expect(lastTopic.innerHTML).not.toContain('region');
+  });
+
+  it('does show the region filter when the user has two regions', async () => {
+    act(() => renderComm(userWithTwoRegions, '/regional-communication-log'));
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+    await waitFor(() => expect(screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i })).toBeInTheDocument());
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    expect(lastTopic.innerHTML).toContain('region');
   });
 });
