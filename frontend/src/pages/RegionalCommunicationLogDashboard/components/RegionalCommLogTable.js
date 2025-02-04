@@ -137,9 +137,9 @@ export default function RegionalCommLogTable({ filters }) {
     setSortConfig({ ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * COMMUNICATION_LOG_PER_PAGE });
   };
 
-  const handleRowActionClick = (action, row, regionId, recipientId) => {
+  const handleRowActionClick = (action, row, regionId) => {
     if (action === 'View') {
-      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${row.id}/view`);
+      history.push(`/communication-log/region/${regionId}/log/${row.id}/view`);
     } else if (action === 'Delete') {
       handleDelete(row);
     }
@@ -178,10 +178,10 @@ export default function RegionalCommLogTable({ filters }) {
             { title: 'Result', value: log.data.result },
           ],
           actions: log.userId === user.id ? [
-            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId), log.recipients[0] && log.recipients[0].id) },
-            { label: 'Delete', onClick: () => handleRowActionClick('Delete', log, Number(log.data.regionId), log.recipients[0] && log.recipients[0].id) },
+            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)) },
+            { label: 'Delete', onClick: () => handleRowActionClick('Delete', log, Number(log.data.regionId)) },
           ] : [
-            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId), log.recipients[0] && log.recipients[0].id) },
+            { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)) },
           ],
         }));
 

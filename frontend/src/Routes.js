@@ -46,6 +46,7 @@ import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWit
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
+import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 
 export default function Routes({
   alert,
@@ -307,7 +308,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/regional-communication-log"
+          path="/communication-log"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="regional_communication_log" renderNotFound>
@@ -362,6 +363,15 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/communication-log/region/:regionId/log/:logId/view"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <ViewRegionalCommunicationLog />
             </AppWrapper>
           )}
         />
