@@ -30,6 +30,7 @@ const { registerCronEnrollmentFunction, addCronJob } = require('./common');
 // Import the module under test inside an isolated module context
 // so that our mocks are used when the module is evaluated.
 jest.isolateModules(() => {
+  // eslint-disable-next-line global-require
   require('./db');
 });
 
@@ -40,6 +41,7 @@ beforeAll(() => {
   if (registerCronEnrollmentFunction.mock.calls.length === 0) {
     throw new Error('registerCronEnrollmentFunction was not called');
   }
+  // eslint-disable-next-line prefer-destructuring
   enrollmentCallback = registerCronEnrollmentFunction.mock.calls[0][0];
 });
 
@@ -52,7 +54,7 @@ describe('DB Cron Enrollment', () => {
     await enrollmentCallback('0', 0, 'development');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping DB cron job enrollment in non-production environment (development)')
+      expect.stringContaining('Skipping DB cron job enrollment in non-production environment (development)'),
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
@@ -63,7 +65,7 @@ describe('DB Cron Enrollment', () => {
     await enrollmentCallback('1', 0, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping DB cron job enrollment on instance 1 in environment production')
+      expect.stringContaining('Skipping DB cron job enrollment on instance 1 in environment production'),
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
@@ -74,7 +76,7 @@ describe('DB Cron Enrollment', () => {
     await enrollmentCallback('0', 1, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping DB cron job enrollment on context 1 in environment production instance 0')
+      expect.stringContaining('Skipping DB cron job enrollment on context 1 in environment production instance 0'),
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
@@ -85,21 +87,26 @@ describe('DB Cron Enrollment', () => {
     await enrollmentCallback('0', 0, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Registering DB maintenance cron jobs for context 0 in environment production instance 0')
+      expect.stringContaining('Registering DB maintenance cron jobs for context 0 in environment production instance 0'),
     );
     // Verify that addCronJob is called with the expected parameters.
     expect(addCronJob).toHaveBeenCalledWith(
       MAINTENANCE_CATEGORY.DB,
       MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE,
       expect.any(Function),
-      '0 23 * * *'
+      '0 23 * * *',
     );
 
     // (Optional) Verify that the provided job creator function returns a CronJob instance.
     const cronJobCreator = addCronJob.mock.calls[0][2];
     const testTimezone = 'UTC';
     const testSchedule = '0 23 * * *';
-    const job = cronJobCreator(MAINTENANCE_CATEGORY.DB, MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE, testTimezone, testSchedule);
+    const job = cronJobCreator(
+      MAINTENANCE_CATEGORY.DB,
+      MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE,
+      testTimezone,
+      testSchedule,
+    );
     expect(job).toBeInstanceOf(CronJob);
     // Verify that the cron job uses the schedule we provided.
     expect(job.cronTime.source).toBe(testSchedule);

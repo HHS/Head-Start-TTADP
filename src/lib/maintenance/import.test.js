@@ -88,7 +88,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        { id }
+        { id },
       );
       const fn = maintenanceCommand.mock.calls[0][0];
       const result = await fn();
@@ -164,7 +164,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_PROCESS,
-        { id }
+        { id },
       );
       const fn = maintenanceCommand.mock.calls[0][0];
       const result = await fn();
@@ -243,7 +243,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        { id: job.data.id }
+        { id: job.data.id },
       );
     });
 
@@ -256,7 +256,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_PROCESS,
-        { id: job.data.id }
+        { id: job.data.id },
       );
     });
 

@@ -1,5 +1,6 @@
-import { lastDayOfMonth, default as runCronJobs } from './cron';
 import { CronJob } from 'cron';
+// eslint-disable-next-line import/no-named-default
+import { lastDayOfMonth, default as runCronJobs } from './cron';
 import updateGrantsRecipients from './updateGrantsRecipients';
 import {
   approvedDigest,

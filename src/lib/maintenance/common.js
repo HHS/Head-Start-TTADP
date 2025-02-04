@@ -178,7 +178,8 @@ const registerCronEnrollmentFunction = (enrollFunction) => {
 };
 
 /**
- * Executes all registered async cron enrollment functions with the current instance, context, and env.
+ * Executes all registered async cron enrollment functions with the current instance,
+ * context, and env.
  * @param {string} instanceId - The Cloud Foundry instance ID
  * @param {number} contextId - A unique identifier for the deployment or environment
  * @param {string} env - The application environment (e.g., 'production', 'staging', 'development')
@@ -186,7 +187,7 @@ const registerCronEnrollmentFunction = (enrollFunction) => {
  */
 const executeCronEnrollmentFunctions = async (instanceId, contextId, env) => {
   auditLogger.log('info', `Executing cron enrollment functions for instance ${instanceId}, context ${contextId}, env ${env}`);
-  
+
   // Execute all registered functions asynchronously
   await Promise.all(cronEnrollmentFunctions.map(async (fn) => {
     try {
@@ -358,7 +359,6 @@ const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
 
   return categories;
 };
-
 
 /**
  * Asynchronous function that creates a maintenance log with the given category, type, and data.

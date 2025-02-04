@@ -60,13 +60,11 @@ jest.mock('../../workers/referenceData', () => ({
 }));
 
 // Mock LockManager for testing the locking branch of enqueueMaintenanceJob.
-jest.mock('../lockManager', () => {
-  return {
-    default: jest.fn().mockImplementation((lockName) => ({
-      executeWithLock: jest.fn(async (fn, holdLock) => await fn()),
-    })),
-  };
-});
+jest.mock('../lockManager', () => ({
+  default: jest.fn().mockImplementation(async (lockName) => ({
+    executeWithLock: jest.fn(async (fn, holdLock) => await fn()),
+  })),
+}));
 
 // ------------------------
 // Original Tests (updated)
@@ -83,7 +81,7 @@ describe('Maintenance Queue', () => {
       const error = new Error('test-error');
       onFailedMaintenance(job, error);
       expect(auditLogger.error).toHaveBeenCalledWith(
-        `job ${job.name} failed for ${job.data.type} with error ${error}`
+        `job ${job.name} failed for ${job.data.type} with error ${error}`,
       );
     });
   });
@@ -94,7 +92,7 @@ describe('Maintenance Queue', () => {
       const result = 'test-result';
       onCompletedMaintenance(job, result);
       expect(logger.info).toHaveBeenCalledWith(
-        `Successfully performed ${job.name} maintenance for ${job.data?.type}`
+        `Successfully performed ${job.name} maintenance for ${job.data?.type}`,
       );
     });
 
@@ -103,7 +101,7 @@ describe('Maintenance Queue', () => {
       const result = null;
       onCompletedMaintenance(job, result);
       expect(logger.error).toHaveBeenCalledWith(
-        `Failed to perform ${job.name} maintenance for ${job.data?.type}`
+        `Failed to perform ${job.name} maintenance for ${job.data?.type}`,
       );
     });
   });
@@ -151,22 +149,22 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category2, processor2);
       processMaintenanceQueue();
 
-      // Expect one call for the MAINTENANCE category (added on module load) plus one for each newly added
+      // Expect one call for the MAINTENANCE category plus one for each newly added
       expect(maintenanceQueue.process).toHaveBeenCalledTimes(3);
       expect(maintenanceQueue.process).toHaveBeenNthCalledWith(
         1,
         MAINTENANCE_CATEGORY.MAINTENANCE,
-        expect.any(Function)
+        expect.any(Function),
       );
       expect(maintenanceQueue.process).toHaveBeenNthCalledWith(
         2,
         category1,
-        expect.any(Function)
+        expect.any(Function),
       );
       expect(maintenanceQueue.process).toHaveBeenNthCalledWith(
         3,
         category2,
-        expect.any(Function)
+        expect.any(Function),
       );
     });
   });
@@ -190,7 +188,7 @@ describe('Maintenance Queue', () => {
       const processor = jest.fn();
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
-      await  enqueueMaintenanceJob({ category, data });
+      await enqueueMaintenanceJob({ category, data });
       expect(maintenanceQueue.add).toHaveBeenCalledWith(category, data, {});
     });
 
@@ -200,10 +198,10 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category, processor);
       maintenanceQueue.add = jest.fn();
       await enqueueMaintenanceJob(category);
-      // With no data provided, the merged object will be {} (from default data and {} from referenceData)
+      // the merged object will be {} (from default data and {} from referenceData)
       expect(maintenanceQueue.add).toHaveBeenCalledWith(
         category,
-        expect.objectContaining({})
+        expect.objectContaining({}),
       );
     });
 
@@ -220,10 +218,21 @@ describe('Maintenance Queue', () => {
       const type = 'test-type';
       const data = { test: 'createMaintenanceLog test' };
       const triggeredById = null;
-      const expectedLog = { id: 1, category, type, data, triggeredById };
+      const expectedLog = {
+        id: 1,
+        category,
+        type,
+        data,
+        triggeredById,
+      };
       MaintenanceLog.create.mockResolvedValue(expectedLog);
       const log = await createMaintenanceLog(category, type, data, triggeredById);
-      expect(MaintenanceLog.create).toHaveBeenCalledWith({ category, type, data, triggeredById });
+      expect(MaintenanceLog.create).toHaveBeenCalledWith({
+        category,
+        type,
+        data,
+        triggeredById,
+      });
       expect(log).toEqual(expectedLog);
     });
   });
@@ -236,13 +245,17 @@ describe('Maintenance Queue', () => {
       await updateMaintenanceLog(log, newData, isSuccessful);
       expect(MaintenanceLog.update).toHaveBeenCalledWith(
         { data: newData, isSuccessful },
-        { where: { id: log.id } }
+        { where: { id: log.id } },
       );
     });
   });
 
   describe('maintenanceCommand', () => {
-    let callback, category, type, data, triggeredById;
+    let callback;
+    let category;
+    let type;
+    let data;
+    let triggeredById;
     beforeEach(() => {
       callback = jest.fn();
       category = 'test-category';
@@ -257,7 +270,12 @@ describe('Maintenance Queue', () => {
 
     it('should create a new maintenance log', async () => {
       await maintenanceCommand(callback, category, type, data, triggeredById);
-      expect(MaintenanceLog.create).toHaveBeenCalledWith({ category, type, data, triggeredById });
+      expect(MaintenanceLog.create).toHaveBeenCalledWith({
+        category,
+        type,
+        data,
+        triggeredById,
+      });
     });
 
     it('should execute the callback and return the success status', async () => {
@@ -282,7 +300,7 @@ describe('Maintenance Queue', () => {
             errorMessage,
           }),
         }),
-        { where: { id: log.id } }
+        { where: { id: log.id } },
       );
     });
 
@@ -312,7 +330,7 @@ describe('Maintenance Queue', () => {
             errorMessage: 'Test error',
           }),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -328,7 +346,7 @@ describe('Maintenance Queue', () => {
         shiftedDate.getDate(),
         today.getHours(),
         today.getMinutes(),
-        today.getSeconds()
+        today.getSeconds(),
       );
       expect(backDate(dateOffSet)).toEqual(expected);
     });
@@ -344,7 +362,7 @@ describe('Maintenance Queue', () => {
           where: expect.objectContaining({
             createdAt: { [Op.lt]: olderThen },
           }),
-        })
+        }),
       );
     });
 
@@ -377,7 +395,7 @@ describe('Maintenance Queue', () => {
           where: expect.objectContaining({
             createdAt: { [Op.lt]: olderThen },
           }),
-        })
+        }),
       );
     });
 
@@ -416,7 +434,7 @@ describe('Cron Enrollment and Cron Jobs', () => {
     await executeCronEnrollmentFunctions('0', 0, 'production');
     expect(auditLogger.error).toHaveBeenCalledWith(
       expect.stringContaining('Error executing cron enrollment function: cron error'),
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 
@@ -452,7 +470,11 @@ describe('Cron Enrollment and Cron Jobs', () => {
     addCronJob(category, type, jobCommand, schedule, name);
     setCronJobSchedule(category, type, name, newSchedule);
     // Indirectly verify by creating a job with the updated schedule.
-    const dummyJobCommand = jest.fn((cat, typ, tz, sched) => ({ running: true, schedule: sched, start: jest.fn() }));
+    const dummyJobCommand = jest.fn((cat, typ, tz, sched) => ({
+      running: true,
+      schedule: sched,
+      start: jest.fn(),
+    }));
     const job = createJob(category, type, name, 'UTC', newSchedule, dummyJobCommand);
     expect(dummyJobCommand).toHaveBeenCalledWith(category, type, 'UTC', newSchedule);
   });
@@ -499,7 +521,7 @@ describe('createJob and createCategory', () => {
     // Set up the cron job entries as would be done via addCronJob:
     addCronJob(category, 'testType', dummyJobCommand, '* * * * *', 'testJob');
     addCronJob(category, 'testType', dummyJobCommand, '* * * * *', 'alreadyStarted');
-    
+
     // Now create typeJobs matching these entries.
     const typeJobs = {
       testType: {
@@ -530,7 +552,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     await enqueueMaintenanceJob(testCategory, testData);
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
-      expect.objectContaining(testData)
+      expect.objectContaining(testData),
     );
   });
 
@@ -538,7 +560,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     await enqueueMaintenanceJob(testCategory, testData, 'testScript');
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
-      expect.objectContaining(testData)
+      expect.objectContaining(testData),
     );
   });
 
@@ -549,6 +571,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
   });
 
   it('executes action with lock when requiresLock is true', async () => {
+    // eslint-disable-next-line global-require
     const LockManager = require('../lockManager').default;
     await enqueueMaintenanceJob(testCategory, testData, 'testScript', true, false);
     // Verify that LockManager was instantiated with the correct lock name.
@@ -558,7 +581,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(lockManagerInstance.executeWithLock).toHaveBeenCalled();
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
-      expect.objectContaining(testData)
+      expect.objectContaining(testData),
     );
   });
 });
