@@ -13,6 +13,7 @@ import AppLoadingContext from '../../../AppLoadingContext';
 
 describe('RegionalCommunicationLogDashboard', () => {
   const userCentralOffice = {
+    id: 1,
     homeRegionId: 14,
     permissions: [{
       regionId: 1,
@@ -145,6 +146,34 @@ describe('RegionalCommunicationLogDashboard', () => {
     fetchMock.get(defaultURL, { count: 0, rows: [] }, { overwriteRoutes: true });
     act(() => renderComm(userCentralOffice, '/regional-communication-log'));
     await waitFor(() => expect(screen.getByText(/you haven't logged any communication yet\./i)).toBeInTheDocument());
+  });
+
+  it('has an actions menu with View and Delete', async () => {
+    act(() => renderComm(userCentralOffice, '/regional-communication-log'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /log id\. activate to sort ascending/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('link', { name: 'R01-CL-0001' })).toBeInTheDocument());
+
+    const actions = screen.getByRole('button', { name: 'Actions for Communication Log' });
+    act(() => userEvent.click(actions));
+
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: /view/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /delete/i })[0]).toBeInTheDocument());
+
+    // click delete
+    const deleteMenuItemButton = screen.getAllByRole('button', { name: /delete/i })[0];
+    act(() => userEvent.click(deleteMenuItemButton));
+
+    // handle modal
+    await waitFor(() => expect(screen.getByRole('heading', { name: /are you sure you want to delete this log\?/i })).toBeInTheDocument());
+    const confirmDeleteButton = await screen.findByRole('button', { name: /confirm delete and reload page/i });
+    expect(confirmDeleteButton).toBeVisible();
+
+    const deleteURL = '/api/communication-logs/log/1';
+    fetchMock.delete(deleteURL, 204);
+
+    // confirm delete
+    act(() => userEvent.click(confirmDeleteButton));
+    await waitFor(() => expect(fetchMock.called(deleteURL)).toBe(true));
   });
 
   it('lets you apply a filter', async () => {
