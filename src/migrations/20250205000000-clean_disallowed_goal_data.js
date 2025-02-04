@@ -7,11 +7,12 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       return queryInterface.sequelize.query(`
-        -- Advances objectives to complete when they are on closed Goals with
-        -- EO-disallowed text in Goals.name, and soft-deletes 
+        -- If objectives are neither suspended nor complete and are on closed
+        -- Goals, this marks them 'Suspended'. It also soft-deletes Goals
+        -- with disallowed text that are not on any non-deleted AR.
 
         -- Create a table listing all Goals with text that was disallowed due
-        -- to the EO
+        -- to the EO.
         DROP TABLE IF EXISTS disallowed_goals;
         CREATE TEMP TABLE disallowed_goals
         AS
@@ -32,23 +33,27 @@ module.exports = {
           AND "deletedAt" IS NULL
         ;
 
-        -- Get a list of all the Objectives on disallowed Goals with a
-        -- status of 'Closed'
-        DROP TABLE IF EXISTS objectives_to_complete;
-        CREATE TEMP TABLE objectives_to_complete
+        -- Get a list of all the active Objectives on Goals with a status of
+        -- 'Closed'. Keeping this order after generelizing the logic to make
+        -- a less confusing diff from the previous version that only applied
+        -- to disallowed goals.
+        DROP TABLE IF EXISTS objectives_to_suspend;
+        CREATE TEMP TABLE objectives_to_suspend
         AS
         SELECT
-          id oid,
+          o.id oid,
           -- Other columns here for convenience when inspecting
-          status orig_ostatus,
-          LEFT(title, 30) short_otitle,
-          LEFT(gname, 50) short_gname
-        FROM "Objectives"
-        JOIN disallowed_goals
-          ON "goalId" = gid
-        WHERE gstatus = 'Closed'
-          AND status != 'Complete'
-          AND "deletedAt" IS NULL
+          o.status orig_ostatus,
+          o."createdAt" obj_createtime,
+          LEFT(o.title, 30) short_otitle,
+          LEFT(g.name, 50) short_gname
+        FROM "Objectives" o
+        JOIN "Goals" g
+          ON o."goalId" = g.id
+        WHERE g.status = 'Closed'
+          AND o.status NOT IN ('Complete', 'Suspended')
+          AND g."deletedAt" IS NULL
+          AND o."deletedAt" IS NULL
         ;
 
         -- Update the Objectives
@@ -60,8 +65,8 @@ module.exports = {
         UPDATE "Objectives"
         SET
           "updatedAt" = nowts,
-          status = 'Complete'
-        FROM objectives_to_complete
+          status = 'Suspended'
+        FROM objectives_to_suspend
         CROSS JOIN nowtime
         WHERE oid = id
         RETURNING id completed_oid
@@ -129,13 +134,13 @@ module.exports = {
         -- disallowed_goals is just for context but the other numbers should match up
         SELECT 1 ord,'disallowed_goals' item, COUNT(*) cnt FROM disallowed_goals
         UNION
-        SELECT 2, 'objectives_to_complete' , COUNT(*)  FROM objectives_to_complete
+        SELECT 2, 'objectives_to_suspend' , COUNT(*)  FROM objectives_to_suspend
         UNION
         SELECT 3, 'updated_obj', COUNT(*)  FROM updated_obj
         UNION
-        SELECT 4, 'mismatched completions', COUNT(*) FROM (
+        SELECT 4, 'mismatched suspensions', COUNT(*) FROM (
           (
-            SELECT oid FROM objectives_to_complete
+            SELECT oid FROM objectives_to_suspend
             EXCEPT
             SELECT completed_oid FROM updated_obj
           )
@@ -143,7 +148,7 @@ module.exports = {
           (
             SELECT completed_oid FROM updated_obj
             EXCEPT
-            SELECT oid FROM objectives_to_complete
+            SELECT oid FROM objectives_to_suspend
           )
         ) a
         UNION
