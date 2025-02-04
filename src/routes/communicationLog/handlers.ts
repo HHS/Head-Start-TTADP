@@ -196,11 +196,6 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
 };
 
 const communicationLogs = async (req: Request, res: Response) => {
-  console.log('--------------------');
-  console.log('--------------------');
-  console.log(req.query);
-  console.log('--------------------');
-  console.log('--------------------');
   try {
     const policy = await getAuthorizationByRegion(req, res);
     if (!policy.canReadLog()) {
