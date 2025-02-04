@@ -9,6 +9,7 @@ const {
   registerCronEnrollmentFunction,
   addCronJob,
 } = require('./common');
+const { auditLogger } = require('../../logger');
 
 const numOfModels = Object.values(sequelize.models).length;
 

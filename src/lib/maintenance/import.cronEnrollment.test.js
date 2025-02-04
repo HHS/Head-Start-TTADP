@@ -123,7 +123,12 @@ describe('Import Cron Enrollment', () => {
       const cronJobCreator = addCronJob.mock.calls[index][2];
       const testTimezone = 'UTC';
       // Create a CronJob via the creator function.
-      const job = cronJobCreator(MAINTENANCE_CATEGORY.IMPORT, MAINTENANCE_TYPE.IMPORT_DOWNLOAD, testTimezone, scheduleObj.schedule);
+      const job = cronJobCreator(
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        testTimezone,
+        scheduleObj.schedule,
+      );
       // Verify that a CronJob instance is returned and is configured correctly.
       expect(job).toBeInstanceOf(CronJob);
       expect(job.cronTime.source).toBe(scheduleObj.schedule);
@@ -138,7 +143,7 @@ describe('Import Cron Enrollment', () => {
 
     expect(global.auditLogger.error).toHaveBeenCalledWith(
       expect.stringContaining(`Error registering import cron jobs: ${error.message}`),
-      error
+      error,
     );
   });
 });
