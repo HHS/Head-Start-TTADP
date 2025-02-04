@@ -159,28 +159,6 @@ export default function RegionalCommLogTable({ filters }) {
           filters,
         );
 
-        // TODO: Fetch with filters
-        // const response = {
-        //   count: 1,
-        //   rows: [
-        //     {
-        //       id: 1,
-        //       displayId: 'R01-CL-0001',
-        //       authorName: 'oswald cobblepot',
-        //       userId: user.id,
-        //       data: {
-        //         communicationDate: '2023-01-01',
-        //         purpose: 'waffles',
-        //         goals: [],
-        //         otherStaff: [],
-        //         result: '',
-        //         recipientNextSteps: [],
-        //         specialistNextSteps: [],
-        //       },
-        //     },
-        //   ],
-        // };
-
         const data = response.rows.map((log) => ({
           ...log,
           heading: log.displayId,
