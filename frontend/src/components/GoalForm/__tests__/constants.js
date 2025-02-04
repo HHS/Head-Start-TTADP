@@ -30,6 +30,7 @@ describe('form constants', () => {
 
     it('returns false if the url is in the disallowed list', () => {
       badUrls.forEach((url) => {
+        console.log("\n\n\n---- url to check: ", url);
         expect(noDisallowedUrls([{ value: url }])).toBe('This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.');
       });
     });
