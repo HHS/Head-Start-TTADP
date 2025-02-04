@@ -369,9 +369,9 @@ export default function Routes({
         <Route
           exact
           path="/communication-log/region/:regionId/log/:logId/view"
-          render={() => (
+          render={({ match }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <ViewRegionalCommunicationLog />
+              <ViewRegionalCommunicationLog match={match} />
             </AppWrapper>
           )}
         />
