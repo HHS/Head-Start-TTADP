@@ -22,7 +22,7 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
-const headers = ['Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
+const headers = ['Recipient', 'Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
 const headersForExporting = [...headers, 'Region', 'Recipient next steps', 'Specialist next steps', 'Files'];
 
 const DeleteLogModal = ({
@@ -169,6 +169,7 @@ export default function RegionalCommLogTable({ filters }) {
           suffixContent:
             log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
+            { title: 'Recipient', value: log.recipients.map((r) => r.label).join(', '), tooltip: true },
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose },
             { title: 'Goals', value: (log.data.goals || []).map((g) => g.label).join(', '), tooltip: true },
