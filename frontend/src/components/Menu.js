@@ -114,10 +114,6 @@ function Menu({
   const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
 
   const onClick = () => {
-    // toggle the menu visibility using the Popover API
-    if (popoverRef.current) {
-      popoverRef.current.togglePopover();
-    }
     updateShown((previous) => !previous);
   };
 
