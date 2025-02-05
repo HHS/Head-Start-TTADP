@@ -8,6 +8,7 @@
 */
 import React, {
   useState, useEffect, useCallback, useRef,
+  useLayoutEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
@@ -29,7 +30,7 @@ function Menu({
   fixed,
 }) {
   const [shown, updateShown] = useState(false);
-  const [, updateMenuPosition] = useState({});
+  const [menuPosition, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
   const buttonRef = useRef(null);
   const popoverRef = useRef(null);
@@ -49,12 +50,10 @@ function Menu({
   }, [onEscape]);
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
-    // set initial postition
     if (!(fixed && buttonRef.current && buttonRef.current.getBoundingClientRect)) {
       return;
     }
 
-    // get the button's position
     const {
       x,
       y,
@@ -62,24 +61,16 @@ function Menu({
       width,
     } = buttonRef.current.getBoundingClientRect();
 
-    // we could be progratically calculating the height and width offset numbers
-    // but a little manual work up front will save on performance in the browser
-
     const leftPos = left ? x + width - menuWidthOffset : x + width;
 
     // top = the menu opens above the button instead of below
     const topPos = up ? y - height - menuHeightOffset : y + height;
 
-    // update the CSS
     updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px`, margin: 0 });
   }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
 
   // watch for window scroll
   useEffect(() => {
-    // the menu position is based on the button position, but because it is encased in a
-    // no-overflow div, we position it using "fixed"
-    // this means that it wouldn't scroll with the page, so we need to update the position
-    // when the user scrolls
     if (fixed) {
       window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
     }
@@ -88,6 +79,10 @@ function Menu({
       window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
     };
   }, [fixed, recordButtonPositionAndUpdateMenu]);
+
+  useLayoutEffect(() => {
+    recordButtonPositionAndUpdateMenu();
+  }, [recordButtonPositionAndUpdateMenu]);
 
   const onBlur = (e) => {
     const { currentTarget } = e;
@@ -126,27 +121,6 @@ function Menu({
     updateShown((previous) => !previous);
   };
 
-  const getPopoverPosition = () => {
-    if (buttonRef.current) {
-      const {
-        x,
-        y,
-        height,
-        width,
-      } = buttonRef.current.getBoundingClientRect();
-
-      // we could be progratically calculating the height and width offset numbers
-      // but a little manual work up front will save on performance in the browser
-
-      const leftPos = left ? x + width - menuWidthOffset : x + width;
-
-      // top = the menu opens above the button instead of below
-      const topPos = up ? y - height - menuHeightOffset : y + height;
-      return { top: `${topPos}px`, left: `${leftPos}px`, margin: 0 };
-    }
-    return {};
-  };
-
   return (
     <div
       onBlur={onBlur}
@@ -172,7 +146,7 @@ function Menu({
         popover="manual"
         data-testid="menu"
         className={menuClass}
-        style={{ backgroundColor, ...getPopoverPosition() }}
+        style={{ backgroundColor, ...menuPosition }}
       >
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
