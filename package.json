@@ -226,7 +226,6 @@
       "<rootDir>/src/index.ts",
       "<rootDir>/src/worker.ts",
       "<rootDir>/src/app.js",
-      "<rootDir>/src/lib/cron.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/*Cli.js",
       "<rootDir>/src/tools/populateLegacyResourceTitlesCli.js",
