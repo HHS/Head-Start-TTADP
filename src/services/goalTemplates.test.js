@@ -121,27 +121,23 @@ describe('goalTemplates services', () => {
       });
     });
 
-    it('returns only non-monitoring templates', async () => {
+    it('returns only regular templates', async () => {
       const templates = await getCuratedTemplates(
-        [monitoringGrant.id, regularGrant.id],
-        { id: 1, name: 'regular user', flags: [] },
+        [regularGrant.id],
       );
 
-      // Make sure the results contain the regular template and NOT the monitoring template.
       const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
       expect(regularTemplateToAssert).toBeTruthy();
 
       const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
-      expect(monitoringTemplateToAssert).toBeFalsy();
+      expect(monitoringTemplateToAssert).not.toBeTruthy();
     });
 
     it('returns both regular and only monitoring templates', async () => {
       const templates = await getCuratedTemplates(
         [monitoringGrant.id, regularGrant.id],
-        { id: 1, name: 'regular user', flags: ['monitoring_integration'] },
       );
 
-      // Make sure the results contain the regular template and NOT the monitoring template.
       const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
       expect(regularTemplateToAssert).toBeTruthy();
 
@@ -290,6 +286,7 @@ describe('goalTemplates services', () => {
   describe('getCuratedTemplates more coverage', () => {
     let grant;
     let recipient;
+    let template;
 
     beforeAll(async () => {
       recipient = await Recipient.create({
@@ -305,14 +302,14 @@ describe('goalTemplates services', () => {
         recipientId: recipient.id,
       });
 
-      await GoalTemplate.create({
+      template = await GoalTemplate.create({
         templateName: faker.lorem.sentence(5),
         creationMethod: AUTOMATIC_CREATION,
       });
     });
 
     afterAll(async () => {
-      await GoalTemplate.destroy({ where: {}, individualHooks: true });
+      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
     });

@@ -9,7 +9,7 @@ import BarGraph from './BarGraph';
 import DisplayTableToggle from '../components/DisplayTableToggleButton';
 import './FrequencyGraph.css';
 
-function sortData(data, isTabular = false) {
+function sortData(data, isTabular) {
   const sortedData = [...data];
   sortedData.sort((a, b) => b.count - a.count);
   if (!isTabular) {
