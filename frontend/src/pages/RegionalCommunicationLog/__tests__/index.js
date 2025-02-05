@@ -140,7 +140,7 @@ describe('RegionalCommunicationLog', () => {
     userEvent.selectOptions(method, 'Phone');
 
     const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'Monitoring');
+    userEvent.selectOptions(purpose, 'New TTA request');
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
