@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
 import { uniqBy, isEqual, uniq } from 'lodash';
@@ -7,23 +6,6 @@ import MultiSelect from '../../MultiSelect';
 import FormItem from '../../FormItem';
 import { useLogContext } from './LogContext';
 import GroupAlert from '../../GroupAlert';
-
-const GroupCheckbox = ({ register, useGroup }) => (
-  <div className="margin-top-1">
-    <Checkbox
-      id="use-group"
-      label="Use group"
-      name="useGroup"
-      defaultChecked={useGroup}
-      inputRef={register()}
-    />
-  </div>
-);
-
-GroupCheckbox.propTypes = {
-  register: PropTypes.func.isRequired,
-  useGroup: PropTypes.bool.isRequired,
-};
 
 export default function CommunicationRecipients() {
   const [showGroupAlert, setShowGroupAlert] = useState(false);
@@ -34,7 +16,7 @@ export default function CommunicationRecipients() {
     setValue,
     watch,
   } = useFormContext();
-  const useGroup = watch('useGroup');
+  const [useGroup, setUseGroup] = useState(false);
   const recipientsSelected = watch('recipients');
   const recipientGroup = watch('recipientGroup');
 
@@ -97,7 +79,6 @@ export default function CommunicationRecipients() {
 
   return (
     <div className="margin-top-2">
-      <span>{ useGroup ? 'USING GROUP' : 'NOT USING GROUP' }</span>
       {showGroupAlert && (<GroupAlert resetGroup={onResetGroup} />)}
       {useGroup ? (
         <div className="margin-top-2">
@@ -138,7 +119,18 @@ export default function CommunicationRecipients() {
         </FormItem>
       )}
 
-      <GroupCheckbox register={register} useGroup={useGroup} />
+      <div className="margin-top-1">
+        <Checkbox
+          id="use-group"
+          label="Use group"
+          name="useGroup"
+          checked={useGroup}
+          onChange={(e) => {
+            setValue('recipientGroup', '');
+            setUseGroup(e.target.checked);
+          }}
+        />
+      </div>
 
       {useGroup && (
       <FormItem
