@@ -128,7 +128,7 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
+                  <FeatureFlag flag="multirecipient_communication_log">
                     <li>
                       <NavLink
                         withinDisclosure
