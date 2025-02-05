@@ -4,6 +4,10 @@ module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
+      await queryInterface.sequelize.query(`
+        ALTER TYPE "enum_Users_flags" ADD VALUE IF NOT EXISTS 'multirecipient_communication_log';        
+     `);
+
       await queryInterface.createTable('CommunicationLogRecipients', {
         id: {
           type: Sequelize.INTEGER,
