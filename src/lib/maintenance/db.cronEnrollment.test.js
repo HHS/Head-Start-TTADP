@@ -4,7 +4,7 @@
 jest.resetModules();
 
 // Define a global auditLogger to satisfy the reference in db.js.
-global.auditLogger = { log: jest.fn() };
+global.auditLogger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 
 // --- Set up our mocks BEFORE importing the module under test ---
 
