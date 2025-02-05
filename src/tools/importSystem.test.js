@@ -45,10 +45,10 @@ describe('manuallyTriggerImportSystem', () => {
 
     await manuallyTriggerImportSystem(action, importIdStr, timeBoxStr);
 
-    expect(maintenanceLib.enqueueImportMaintenanceJob).toHaveBeenCalledWith(
-      MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-      123,
-    );
+    expect(maintenanceLib.enqueueImportMaintenanceJob).toHaveBeenCalledWith({
+      type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+      id: 123,
+    });
   });
 
   it('should call the enqueueImportMaintenanceJob when action is queueProcess', async () => {
@@ -58,10 +58,10 @@ describe('manuallyTriggerImportSystem', () => {
 
     await manuallyTriggerImportSystem(action, importIdStr, timeBoxStr);
 
-    expect(maintenanceLib.enqueueImportMaintenanceJob).toHaveBeenCalledWith(
-      MAINTENANCE_TYPE.IMPORT_PROCESS,
-      12,
-    );
+    expect(maintenanceLib.enqueueImportMaintenanceJob).toHaveBeenCalledWith({
+      type: MAINTENANCE_TYPE.IMPORT_PROCESS,
+      id: 12,
+    });
   });
 
   it('should throw an error for an unknown action', async () => {

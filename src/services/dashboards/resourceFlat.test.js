@@ -225,12 +225,6 @@ describe('Resources dashboard', () => {
       raw: true,
     });
 
-    const { topicId: equityTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Equity' },
-      raw: true,
-    });
-
     // Report 1 (Mixed Resources).
     const reportOne = await ActivityReport.create({
       ...regionOneReportA,
@@ -438,14 +432,6 @@ describe('Resources dashboard', () => {
       activityReportObjectiveDraft.id,
       [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
     );
-
-    // Draft Report 5 Topic 1.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveDraft.id,
-        topicId: equityTopicId,
-      },
-    });
 
     // Draft Report 5 Topic 2.
     await ActivityReportObjectiveTopic.findOrCreate({

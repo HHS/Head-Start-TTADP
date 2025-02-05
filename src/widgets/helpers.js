@@ -1,5 +1,10 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES, REASONS } from '@ttahub/common';
+import {
+  REPORT_STATUSES,
+  TRAINING_REPORT_STATUSES,
+  REASONS,
+  DEPRECATED_REASONS,
+} from '@ttahub/common';
 import {
   ActivityReport,
   Grant,
@@ -17,7 +22,7 @@ export const getAllTopicsForWidget = async () => Topic.findAll({
 });
 
 export function generateReasonList() {
-  const reasons = REASONS
+  const reasons = [...REASONS, ...DEPRECATED_REASONS]
     .map((reason) => ({ name: reason, count: 0 }))
     .sort((a, b) => {
       if (a.name < b.name) {
