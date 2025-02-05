@@ -3261,10 +3261,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@ttahub/common@^2.1.7":
-  version "2.1.7"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.1.7.tgz#739668720f08874b04ec21a428e7453737a5cfb3"
-  integrity sha512-LNV8DmklA2jwztAF8KOcK3/SFdJNzWCn+o6QquMxGztN8YIzsDoxik9zoygCVtVQwUQo7Y5XXPA9h3fwkUHjag==
+"@ttahub/common@2.2.6":
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.6.tgz#9a6793074e74edc7bf8050d170dd2e9dac0d8f16"
+  integrity sha512-utEnxaOARPcZU8hmg72jfVIi8PcWepM1lrrMvUJ0BRc9Jk79OQ7y1kwNHgWxoHc23WYw1ZIYiTkhuOMBqm4FAQ==
 
 "@types/argparse@1.0.38":
   version "1.0.38"
@@ -12842,9 +12842,9 @@ undici-types@~6.13.0:
   integrity sha512-xtFJHudx8S2DSoujjMd1WeWvn7KKWFRESZTMeL1RptAYERu29D6jphMjjY+vn96jvN3kVPDNxU/E13VTaXj6jg==
 
 undici@^5.10.0:
-  version "5.28.4"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-5.28.4.tgz#6b280408edb6a1a604a9b20340f45b422e373068"
-  integrity sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==
+  version "5.28.5"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-5.28.5.tgz#b2b94b6bf8f1d919bc5a6f31f2c01deb02e54d4b"
+  integrity sha512-zICwjrDrcrUE0pyyJc1I2QzBkLM8FINsgOrt6WjA+BgajVq9Nxu2PbFFXUrAggLfDXlZGZBVZYw7WNV5KiBiBA==
   dependencies:
     "@fastify/busboy" "^2.0.0"
 

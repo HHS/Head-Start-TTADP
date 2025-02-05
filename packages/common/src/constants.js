@@ -56,7 +56,6 @@ const TOPICS = [
   'Disabilities Services',
   'ERSEA',
   'Environmental Health and Safety / EPRR',
-  'Equity',
   'Facilities',
   'Family Support Services',
   'Fatherhood / Male Caregiving',
@@ -92,7 +91,6 @@ const REASONS = [
   'Change in Scope',
   'Child Incident',
   'Complaint',
-  'COVID-19 response',
   'Full Enrollment',
   'New Recipient',
   'New Director or Management',
@@ -106,6 +104,12 @@ const REASONS = [
   'Monitoring | Deficiency',
 ];
 exports.REASONS = REASONS;
+
+const DEPRECATED_REASONS = [
+  'COVID-19 response'
+];
+
+exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
 
 const REPORT_STATUSES = {
   DRAFT: 'draft',
@@ -143,7 +147,7 @@ exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool Children (ages 3-5)',
-  'Pregnant Women / Pregnant Persons',
+  'Expectant families',
   'Affected by Child Welfare Involvement',
   'Affected by Disaster',
   'Affected by Substance Use',
@@ -157,7 +161,6 @@ const TARGET_POPULATIONS = [
 exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
 const EVENT_TARGET_POPULATIONS = [
-  'Children/Families affected by systemic discrimination/bias/exclusion',
   'Children/Families affected by traumatic events',
   'Parents/Families impacted by health disparities',
 ];
@@ -277,9 +280,7 @@ const COMMUNICATION_METHODS = [
 exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
 
 const COMMUNICATION_PURPOSES = [
-  'CLASS',
-  'FEI',
-  'Monitoring',
+  'General Check-In',
   'New TTA request',
   'Program Specialist or Regional Office meeting',
   'Program Specialist\'s Monthly contact',
