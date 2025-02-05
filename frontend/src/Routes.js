@@ -311,7 +311,7 @@ export default function Routes({
           path="/communication-log"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="regional_communication_log" renderNotFound>
+              <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
                 <RegionalCommunicationLogDashboard />
               </FeatureFlag>
             </AppWrapper>
