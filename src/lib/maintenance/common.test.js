@@ -61,8 +61,8 @@ jest.mock('../../workers/referenceData', () => ({
 
 // Mock LockManager for testing the locking branch of enqueueMaintenanceJob.
 jest.mock('../lockManager', () => ({
-  default: jest.fn().mockImplementation(async (lockName) => ({
-    executeWithLock: jest.fn(async (fn, holdLock) => fn()),
+  default: jest.fn().mockImplementation((lockName) => ({
+    executeWithLock: jest.fn((fn, holdLock) => fn()),
   })),
 }));
 
@@ -567,6 +567,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
+      expect.objectContaining({}),
     );
   });
 
@@ -598,6 +599,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
+      expect.objectContaining({}),
     );
   });
 });
