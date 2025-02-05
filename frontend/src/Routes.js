@@ -371,7 +371,9 @@ export default function Routes({
           path="/communication-log/region/:regionId/log/:logId/view"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <ViewRegionalCommunicationLog match={match} />
+              <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
+                <ViewRegionalCommunicationLog match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
