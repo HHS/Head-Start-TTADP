@@ -27,7 +27,15 @@
     min-width: 90px;
   }
 
-  .smarthub-horizontal-table-widget .usa-table .smarthub-horizontal-table-last-column {
+  // Because putting the border on the sticky element doesn't work, and box-shadow
+  // isn't ideal because of z-indexing weirdness that happens when a ContextMenu
+  // is above the border.
+  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
     border-left: 1px solid black;
   }
 
