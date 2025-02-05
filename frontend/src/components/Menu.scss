@@ -14,13 +14,17 @@
 }
 
 .position-absolute.smart-hub--menu__left_and_up {
-  transform: translateY(-120%) translateX(-90%); 
+  transform: translateY(-120%) translateX(-90%);
 }
 
 .position-absolute.smart-hub--menu__left {
-  transform: translateX(-90%); 
+  transform: translateX(-90%);
 }
 
 .position-absolute.smart-hub--menu__up {
-  transform: translateY(-120%); 
+  transform: translateY(-120%);
+}
+
+[popover] {
+  border: 0;
 }

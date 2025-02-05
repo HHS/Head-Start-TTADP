@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 /*
   Context menu shows a list of actions the user can select to perform actions. The actions
   are hidden until the user opens the menu (the three dot icon). The menu is automatically
@@ -28,9 +29,10 @@ function Menu({
   fixed,
 }) {
   const [shown, updateShown] = useState(false);
-  const [menuPosition, updateMenuPosition] = useState({});
+  const [, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
   const buttonRef = useRef(null);
+  const popoverRef = useRef(null);
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
@@ -48,35 +50,28 @@ function Menu({
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
-    if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
-      // get the button's position
-      const {
-        top,
-        height,
-        left: l,
-        width,
-      } = buttonRef.current.getBoundingClientRect();
-
-      // we could be progratically calculating the height and width offset numbers
-      // but a little manual work up front will save on performance in the browser
-
-      let leftPos = l + width;
-
-      // left = the menu opens to the left of the button instead of the right
-      if (left) {
-        leftPos = l + width - menuWidthOffset;
-      }
-
-      // top = the menu opens above the button instead of below
-      let topPos = top + height;
-
-      if (up) {
-        topPos = top - height - menuHeightOffset;
-      }
-
-      // update the CSS
-      updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` });
+    if (!(fixed && buttonRef.current && buttonRef.current.getBoundingClientRect)) {
+      return;
     }
+
+    // get the button's position
+    const {
+      x,
+      y,
+      height,
+      width,
+    } = buttonRef.current.getBoundingClientRect();
+
+    // we could be progratically calculating the height and width offset numbers
+    // but a little manual work up front will save on performance in the browser
+
+    const leftPos = left ? x + width - menuWidthOffset : x + width;
+
+    // top = the menu opens above the button instead of below
+    const topPos = up ? y - height - menuHeightOffset : y + height;
+
+    // update the CSS
+    updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px`, margin: 0 });
   }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
 
   // watch for window scroll
@@ -124,11 +119,32 @@ function Menu({
   const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
 
   const onClick = () => {
-    // we don't need to check anything before calling this - if fixed is false, it won't do anything
-    recordButtonPositionAndUpdateMenu();
-
-    // toggle the menu visibility
+    // toggle the menu visibility using the Popover API
+    if (popoverRef.current) {
+      popoverRef.current.togglePopover();
+    }
     updateShown((previous) => !previous);
+  };
+
+  const getPopoverPosition = () => {
+    if (buttonRef.current) {
+      const {
+        x,
+        y,
+        height,
+        width,
+      } = buttonRef.current.getBoundingClientRect();
+
+      // we could be progratically calculating the height and width offset numbers
+      // but a little manual work up front will save on performance in the browser
+
+      const leftPos = left ? x + width - menuWidthOffset : x + width;
+
+      // top = the menu opens above the button instead of below
+      const topPos = up ? y - height - menuHeightOffset : y + height;
+      return { top: `${topPos}px`, left: `${leftPos}px`, margin: 0 };
+    }
+    return {};
   };
 
   return (
@@ -144,11 +160,20 @@ function Menu({
         type="button"
         data-testid={buttonTestId}
         ref={buttonRef}
+        popovertarget="menu-popover"
+        popovertargetaction="toggle"
       >
         {buttonText}
       </button>
       {shown && (
-      <div data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
+      <div
+        id="menu-popover"
+        ref={popoverRef}
+        popover="manual"
+        data-testid="menu"
+        className={menuClass}
+        style={{ backgroundColor, ...getPopoverPosition() }}
+      >
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
             <li key={item.label} role="menuitem">
