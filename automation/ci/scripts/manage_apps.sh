@@ -15,12 +15,13 @@ while [[ "$#" -gt 0 ]]; do
     --cg_org) cg_org="$2"; shift ;;
     --branch) branch="$2"; shift ;;
     --build) build="$2"; shift ;;
+    --job) job="$2"; shift ;;
     *) echo "Unknown parameter: $1"; exit 1 ;;
   esac
   shift
 done
 
-if [[ -z "${env_list:-}" || -z "${env_state:-}" || -z "${check_activity:-}" || -z "${cg_api:-}" || -z "${cg_org:-}" || -z "${branch:-}" || -z "${build:-}" ]]; then
+if [[ -z "${env_list:-}" || -z "${env_state:-}" || -z "${check_activity:-}" || -z "${cg_api:-}" || -z "${cg_org:-}" || -z "${branch:-}" || -z "${build:-}" || -z "${job:-}" ]]; then
   echo "Error: Missing required arguments."
   exit 1
 fi
@@ -70,7 +71,8 @@ for env in "${apps[@]}"; do
   ./automation/ci/scripts/acquire-lock.sh \
     "$env" \
     "$branch" \
-    "$build"
+    "$build" \
+    "$job"
 
   # Perform activity check only for the primary prefix (tta-smarthub)
   if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
@@ -83,7 +85,8 @@ for env in "${apps[@]}"; do
           ./automation/ci/scripts/release-lock.sh \
             "$env" \
             "$branch" \
-            "$build"
+            "$build" \
+            "$job"
       continue
     fi
 
@@ -173,7 +176,8 @@ for env in "${apps[@]}"; do
       ./automation/ci/scripts/release-lock.sh \
         "$env" \
         "$branch" \
-        "$build"
+        "$build" \
+        "$job"
       continue
     fi
   fi
@@ -219,7 +223,8 @@ for env in "${apps[@]}"; do
         ./automation/ci/scripts/release-lock.sh \
           "$env" \
           "$branch" \
-          "$build"
+          "$build" \
+          "$job"
 
         exit 1
         ;;
@@ -229,5 +234,6 @@ for env in "${apps[@]}"; do
   ./automation/ci/scripts/release-lock.sh \
     "$env" \
     "$branch" \
-    "$build"
+    "$build" \
+    "$job"
 done

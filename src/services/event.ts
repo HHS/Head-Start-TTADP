@@ -728,8 +728,8 @@ const toSplit = ['targetPopulations', 'reasons'];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
-  'Pregnant Women/Pregnant People': 'Pregnant Women / Pregnant Persons',
-  'Pregnant Women': 'Pregnant Women / Pregnant Persons',
+  'Pregnant Women/Pregnant People': 'Expectant families',
+  'Pregnant Women': 'Expectant families',
 };
 
 const applyReplacements = (value: string) => replacements[value] || value;

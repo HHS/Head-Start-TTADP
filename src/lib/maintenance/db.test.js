@@ -424,13 +424,13 @@ describe('maintenance', () => {
       await enqueueDBMaintenanceJob(type, data);
 
       expect(enqueueSpy).toHaveBeenCalledTimes(1);
-      expect(enqueueSpy).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.DB,
-        expect.objectContaining({
+      expect(enqueueSpy).toHaveBeenCalledWith({
+        category: MAINTENANCE_CATEGORY.DB,
+        data: expect.objectContaining({
           type,
           someKey: 'someValue',
         }),
-      );
+      });
     });
   });
 });
