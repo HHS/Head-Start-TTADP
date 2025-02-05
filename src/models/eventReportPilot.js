@@ -45,6 +45,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
   }, {
+    paranoid: true,
     sequelize,
     modelName: 'EventReportPilot',
     hooks: {

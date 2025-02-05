@@ -46,6 +46,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
+    paranoid: true,
     sequelize,
     modelName: 'SessionReportPilot',
     hooks: {
