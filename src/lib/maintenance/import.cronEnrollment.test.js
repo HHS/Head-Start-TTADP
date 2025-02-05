@@ -3,7 +3,7 @@ jest.resetModules();
 
 // Define a global auditLogger so that the module’s code (which uses auditLogger)
 // finds it defined.
-global.auditLogger = { log: jest.fn(), error: jest.fn() };
+global.auditLogger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 
 // --- Set up our mocks BEFORE importing the module under test ---
 
