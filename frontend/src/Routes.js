@@ -381,9 +381,11 @@ export default function Routes({
           exact
           path="/communication-log/region/:regionId/log/:logId/:currentPage?"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <RegionalCommunicationLog />
-            </AppWrapper>
+            <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
+              <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+                <RegionalCommunicationLog />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route
