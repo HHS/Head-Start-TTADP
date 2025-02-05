@@ -202,6 +202,7 @@ describe('Maintenance Queue', () => {
       expect(maintenanceQueue.add).toHaveBeenCalledWith(
         category,
         expect.objectContaining({}),
+        expect.objectContaining({}),
       );
     });
 
@@ -553,6 +554,7 @@ describe('enqueueMaintenanceJob with requiredLaunchScript and lock', () => {
     expect(maintenanceQueue.add).toHaveBeenCalledWith(
       testCategory,
       expect.objectContaining(testData),
+      expect.objectContaining({}),
     );
   });
 
