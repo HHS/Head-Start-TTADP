@@ -1620,7 +1620,8 @@ jobs:
               --cg_api "<< pipeline.parameters.cg_api >>" \
               --cg_org "<< pipeline.parameters.cg_org >>" \
               --branch "<< pipeline.git.branch >>" \
-              --build "<< pipeline.number >>"
+              --build "<< pipeline.number >>" \
+              --job "${CIRCLE_JOB}"
   restore_production_for_processing:
     docker:
       - image: cimg/base:2024.05
