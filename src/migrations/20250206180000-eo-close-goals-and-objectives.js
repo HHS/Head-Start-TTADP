@@ -10,36 +10,7 @@ module.exports = {
         -- This Completes any remaining equity Objectives and Closes any
         -- remaining equity Goals
 
-        -- Create a list of EO-impacted Objectives that are not yet closed
-        -- and are on a non-deleted Goal. 
-        DROP TABLE IF EXISTS equity_objectives;
-        CREATE TEMP TABLE equity_objectives
-        AS
-        SELECT
-          o.id oid,
-          "goalId" ogid,
-          title full_otitle,
-          LEFT(title, 30) short_otitle,
-          COALESCE(NULLIF(POSITION(' dei' IN LOWER(title)),0),POSITION(' equit' IN LOWER(title))) oissue_loc,
-          o.status o_status
-        FROM "Objectives" o
-        JOIN "Goals" g
-          ON o."goalId" = g.id
-        WHERE (
-            LOWER(title) LIKE '% dei%'
-            OR
-            LOWER(title) LIKE '% equit%'
-            OR
-            LOWER(title) LIKE 'dei%'
-            OR
-            LOWER(title) LIKE 'equit%'
-          )
-          AND o.status NOT IN ('Complete','Suspended')
-          AND o."deletedAt" IS NULL
-          AND g."deletedAt" IS NULL
-        ;
-
-        -- Create a list of EO-impacted Goals that are not yet close
+        -- Create a list of EO-impacted Goals that are not yet closed
         DROP TABLE IF EXISTS equity_goals;
         CREATE TEMP TABLE equity_goals
         AS
@@ -61,6 +32,42 @@ module.exports = {
             LOWER(name) LIKE 'equit%'
           )
           AND g.status != 'Closed'
+          AND g."deletedAt" IS NULL
+        ;
+
+        -- Create a list of EO-impacted Objectives that are not yet closed
+        -- and are on a non-deleted Goal. 
+        DROP TABLE IF EXISTS equity_objectives;
+        CREATE TEMP TABLE equity_objectives
+        AS
+        SELECT
+          o.id oid,
+          "goalId" ogid,
+          title full_otitle,
+          LEFT(title, 30) short_otitle,
+          COALESCE(NULLIF(POSITION(' dei' IN LOWER(title)),0),POSITION(' equit' IN LOWER(title))) oissue_loc,
+          o.status o_status
+        FROM "Objectives" o
+        JOIN "Goals" g
+          ON o."goalId" = g.id
+        LEFT JOIN equity_goals
+          ON gid = g.id
+        WHERE
+          (
+          gid IS NOT NULL -- Complete objectives on closing Goals
+          OR
+            ( -- Complete objectives with EO-impacted text
+              LOWER(title) LIKE '% dei%'
+              OR
+              LOWER(title) LIKE '% equit%'
+              OR
+              LOWER(title) LIKE 'dei%'
+              OR
+              LOWER(title) LIKE 'equit%'
+            )
+          )
+          AND o.status NOT IN ('Complete','Suspended')
+          AND o."deletedAt" IS NULL
           AND g."deletedAt" IS NULL
         ;
 
