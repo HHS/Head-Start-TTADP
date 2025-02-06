@@ -27,6 +27,7 @@ export default function ReadOnlyOtherEntityObjectives({
           !hideEdit
             ? (
               <ContextMenu
+                fixed
                 label="Actions for Objectives"
                 menuItems={menuItems}
                 menuClassName="width-card"

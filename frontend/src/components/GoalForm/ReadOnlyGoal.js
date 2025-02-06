@@ -68,6 +68,7 @@ export default function ReadOnlyGoal({
         <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
         <div className="position-absolute pin-top pin-right padding-4">
           <ContextMenu
+            fixed
             label={`Actions for Goal ${goal.id}`}
             menuItems={menuItems}
             menuClassName="width-card"
