@@ -6,7 +6,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(
-        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";'
+        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";',
       );
       await queryInterface.addColumn(
         'GoalTemplates',
@@ -29,7 +29,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(
-        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";'
+        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";',
       );
     });
   },
