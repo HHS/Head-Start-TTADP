@@ -102,7 +102,7 @@ export default function GoalNameForm({
 
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grant
-    if (possibleGrants.length === 1) { 
+    if (possibleGrants.length === 1) {
       hookForm.setValue('selectedGrant', possibleGrants[0]);
     }
   }, [possibleGrants]);
