@@ -10,19 +10,22 @@ module.exports = {
         -- This is an updated version of the ARO deduplication logic
         -- written to accommodate records without audit log entries
 
-        -- Create temporary table for dup_aro_sets
-        DROP TABLE IF EXISTS temp_dup_aro_sets;
-        CREATE TEMP TABLE temp_dup_aro_sets
+        -- Create temporary table for dupe_aro_pairs which is used to create
+        -- dup_aro_sets for DML work and also to use in the "before-after" test
+        DROP TABLE IF EXISTS dupe_aro_pairs;
+        CREATE TEMP TABLE dupe_aro_pairs
         AS
-        WITH dupe_aro_pairs AS (
         SELECT
           "activityReportId" arid,
           "objectiveId" oid
         FROM "ActivityReportObjectives"
         GROUP BY 1,2
         HAVING COUNT(id) > 1
-        ),
-        dupe_aros AS (
+        ;
+
+        -- Create temporary table for dup_aro_sets which is used
+        -- in the DML change logic
+        WITH dupe_aros AS (
         SELECT
           arid,
           oid,
@@ -34,6 +37,9 @@ module.exports = {
           ON "activityReportId" = arid
           AND "objectiveId" = oid
         )
+        DROP TABLE IF EXISTS temp_dup_aro_sets;
+        CREATE TEMP TABLE temp_dup_aro_sets
+        AS
         SELECT
           arid "activityReportId",
           oid "objectiveId",
@@ -46,6 +52,8 @@ module.exports = {
           ON zaro.data_id = aroid
         GROUP BY 1,2
         ORDER BY 3 DESC;
+
+        
 
         -- Create temporary table for reduced_arot
         DROP TABLE IF EXISTS temp_reduced_arot;
@@ -559,6 +567,29 @@ module.exports = {
             (SELECT COUNT(*) AS updated_count FROM temp_updated_aro) u,
             (SELECT COUNT(*) AS inserted_count FROM temp_inserted_aro) i,
             (SELECT COUNT(*) AS deleted_count FROM temp_deleted_aro) d;
+
+        -- Prepare additional test to make sure there are no duplicates remaining
+        DROP TABLE IF EXISTS dupe_aro_pairs_after;
+        CREATE TEMP TABLE dupe_aro_pairs_after
+        AS
+        SELECT
+          "activityReportId" arid,
+          "objectiveId" oid
+        FROM "ActivityReportObjectives"
+        GROUP BY 1,2
+        HAVING COUNT(id) > 1
+        ;
+
+        -- Manual check
+        SELECT 1, 'starting pairs', COUNT(*) FROM dupe_aro_pairs
+        UNION
+        SELECT 2, 'ending pairs', COUNT(*) FROM dupe_aro_pairs_after
+        ORDER BY 1;
+
+        -- Fails the transaction with
+        -- ERROR:  division by zero
+        -- if any dupe pairs remain
+        SELECT 1/ (LEAST(1,(SELECT COUNT(*) FROM dupe_aro_pairs_after)) - 1);
       `);
       await queryInterface.sequelize.query(`
         DROP INDEX IF EXISTS "activity_report_objectives_activity_report_id_objective_id";
