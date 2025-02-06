@@ -25,6 +25,9 @@ module.exports = {
 
         -- Create temporary table for dup_aro_sets which is used
         -- in the DML change logic
+        DROP TABLE IF EXISTS temp_dup_aro_sets;
+        CREATE TEMP TABLE temp_dup_aro_sets
+        AS
         WITH dupe_aros AS (
         SELECT
           arid,
@@ -37,9 +40,6 @@ module.exports = {
           ON "activityReportId" = arid
           AND "objectiveId" = oid
         )
-        DROP TABLE IF EXISTS temp_dup_aro_sets;
-        CREATE TEMP TABLE temp_dup_aro_sets
-        AS
         SELECT
           arid "activityReportId",
           oid "objectiveId",
