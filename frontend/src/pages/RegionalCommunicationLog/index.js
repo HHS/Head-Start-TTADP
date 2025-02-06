@@ -135,7 +135,7 @@ export default function RegionalCommunicationLog() {
             regionId={regionId}
             onSave={onSave}
             redirectPathOnSave={() => formatRegionalCommunicationLogUrl(regionId, reportId.current)}
-            redirectToOnSubmit={formatRegionalCommunicationLogUrl(regionId, logId, 'log')}
+            redirectToOnSubmit="/communication-log"
             lastSaveTime={lastSaveTime}
             updateLastSaveTime={updateLastSaveTime}
             showSavedDraft={showSavedDraft}
