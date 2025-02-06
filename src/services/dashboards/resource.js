@@ -350,32 +350,34 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
   SELECT
   DISTINCT
     ar.id AS "activityReportId",
-    aror."resourceId"
+    COALESCE(r2.id, r.id) AS "resourceId"
     INTO TEMP ${tblNames.createdAroResourcesTempTableName}
     FROM ${tblNames.createdArTempTableName} ar
     JOIN "ActivityReportObjectives" aro
       ON ar."id" = aro."activityReportId"
     JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
+    JOIN "Resources" r
+      ON aror."resourceId" = r.id
+    LEFT JOIN "Resources" r2
+      ON r."mapsTo" = r2.id
     WHERE aror."sourceFields" && '{resource}';
 
     -- 3.) Create Resources temp table (only what we need).
     DROP TABLE IF EXISTS ${tblNames.createdResourcesTempTableName};
     SELECT
     DISTINCT
-      r.id AS id, -- We need the original id to join on aro resourceId.
-      COALESCE(r2.domain, r.domain) AS domain,
-      COALESCE(r2.url, r.url) AS url,
-      COALESCE(r2.title, r.title) AS title
+      id,
+      domain,
+      url,
+      title
       INTO TEMP ${tblNames.createdResourcesTempTableName}
-      FROM "Resources" r
-      LEFT JOIN "Resources" r2 -- Mapped resource.
-        ON r."mapsTo" = r2.id
+      FROM "Resources"
       JOIN ${tblNames.createdAroResourcesTempTableName} dr
-        ON r.id = dr."resourceId";
+        ON "Resources".id = dr."resourceId";
 
       -- 4.) Create ARO Topics temp table. **** Revisit
-      DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
+      DROP TABLE IF EXISTS  ${tblNames.createdAroTopicsTempTableName};
       SELECT
       ar.id AS "activityReportId",
       arot."topicId",
