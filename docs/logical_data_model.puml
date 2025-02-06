@@ -274,6 +274,7 @@ class EventReportPilots{
  * ownerId : integer
  * regionId : integer
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ deletedAt : timestamp with time zone
  imported : jsonb
  pocIds : integer[]
 }
@@ -1036,6 +1037,7 @@ class SessionReportPilots{
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ deletedAt : timestamp with time zone
 }
 
 class SimScoreGoalCaches{
