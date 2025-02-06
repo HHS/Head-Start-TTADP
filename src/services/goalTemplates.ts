@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Sequelize, Op } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
@@ -59,15 +58,27 @@ specified region.
 */
 export async function getCuratedTemplates(
   grantIds: number[] | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
+
+  let monitoringGoalIds = [];
+  const monitoringGoals = await GoalModel.findAll({
+    attributes: ['id'],
+    where: {
+      createdVia: 'monitoring',
+      grantId: grantIds,
+    },
+  });
+  monitoringGoalIds = monitoringGoals.map((goal) => goal.id);
 
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
       'source',
       'isSourceEditable',
+      'standard',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
@@ -121,9 +132,23 @@ export async function getCuratedTemplates(
     ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
-      [Op.or]: [
-        { '$"region.grants"."id"$': { [Op.not]: null } },
-        { regionId: null },
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { '$"region.grants"."id"$': { [Op.not]: null } },
+            { regionId: null },
+          ],
+        },
+        {
+          [Op.or]: [
+            { '$goals.id$': monitoringGoalIds },
+            {
+              standard: {
+                [Op.not]: 'Monitoring',
+              },
+            },
+          ],
+        },
       ],
     },
     order: [['templateName', 'ASC']],

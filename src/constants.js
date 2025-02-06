@@ -211,7 +211,7 @@ const SOURCE_FIELD = {
 };
 
 const RESOURCE_DOMAIN = {
-  ECLKC: 'eclkc.ohs.acf.hhs.gov',
+  HEAD_START: 'headstart.gov',
 };
 
 const GRANT_INACTIVATION_REASONS = {
@@ -249,7 +249,7 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'monitoring'];
 
 const CURRENT_GOAL_SIMILARITY_VERSION = 5;
 

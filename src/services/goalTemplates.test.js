@@ -28,6 +28,124 @@ describe('goalTemplates services', () => {
     await sequelize.close();
   });
 
+  describe('getCuratedTemplates', () => {
+    // Recipients.
+    let monitoringRecipient;
+    let regularRecipient;
+    // Grants.
+    let monitoringGrant;
+    let regularGrant;
+
+    // Templates.
+    let monitoringTemplate;
+    let regularTemplate;
+
+    beforeAll(async () => {
+      // Create recipient.
+      monitoringRecipient = await Recipient.create({
+        id: faker.datatype.number({ min: 56000 }),
+        name: faker.datatype.string(20),
+      });
+
+      regularRecipient = await Recipient.create({
+        id: faker.datatype.number({ min: 56000 }),
+        name: faker.datatype.string(20),
+      });
+
+      // Create grants.
+      monitoringGrant = await Grant.create({
+        regionId: 1,
+        status: 'Active',
+        id: faker.datatype.number({ min: 56000 }),
+        number: faker.datatype.string(255),
+        recipientId: monitoringRecipient.id,
+      });
+
+      regularGrant = await Grant.create({
+        regionId: 1,
+        status: 'Active',
+        id: faker.datatype.number({ min: 56000 }),
+        number: faker.datatype.string(255),
+        recipientId: regularRecipient.id,
+      });
+
+      // Get the monitoring template.
+      monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
+
+      // Get the regular template.
+      regularTemplate = await GoalTemplate.findOne({ where: { standard: 'FEI' } });
+
+      // Create goals.
+      await Goal.create({
+        grantId: monitoringGrant.id,
+        goalTemplateId: monitoringTemplate.id,
+        createdVia: 'monitoring',
+        name: 'Monitoring goal for template test',
+        status: 'In Progress',
+      });
+
+      await Goal.create({
+        grantId: regularGrant.id,
+        goalTemplateId: regularTemplate.id,
+        createdVia: 'activityReport',
+        name: 'Regular goal for template test',
+        status: 'In Progress',
+      });
+    });
+
+    afterAll(async () => {
+      // Delete the goals.
+      await Goal.destroy({
+        where: {
+          goalTemplateId: [monitoringTemplate.id, regularTemplate.id],
+        },
+        force: true,
+        paranoid: true,
+        individualHooks: true,
+      });
+
+      // Delete the grants.
+      await Grant.destroy({
+        where: {
+          id: [monitoringGrant.id, regularGrant.id],
+        },
+        individualHooks: true,
+      });
+
+      // Delete the recipients.
+      await Recipient.destroy({
+        where: {
+          id: [monitoringRecipient.id, regularRecipient.id],
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('returns only regular templates', async () => {
+      const templates = await getCuratedTemplates(
+        [regularGrant.id],
+      );
+
+      const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
+      expect(regularTemplateToAssert).toBeTruthy();
+
+      const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
+      expect(monitoringTemplateToAssert).not.toBeTruthy();
+    });
+
+    it('returns both regular and only monitoring templates', async () => {
+      const templates = await getCuratedTemplates(
+        [monitoringGrant.id, regularGrant.id],
+      );
+
+      const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
+      expect(regularTemplateToAssert).toBeTruthy();
+
+      const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
+      expect(monitoringTemplateToAssert).toBeTruthy();
+    });
+  });
+
   describe('getSourceFromTemplate', () => {
     let template;
     let templateTwo;
@@ -165,9 +283,10 @@ describe('goalTemplates services', () => {
     });
   });
 
-  describe('getCuratedTemplates', () => {
+  describe('getCuratedTemplates more coverage', () => {
     let grant;
     let recipient;
+    let template;
 
     beforeAll(async () => {
       recipient = await Recipient.create({
@@ -183,14 +302,14 @@ describe('goalTemplates services', () => {
         recipientId: recipient.id,
       });
 
-      await GoalTemplate.create({
+      template = await GoalTemplate.create({
         templateName: faker.lorem.sentence(5),
         creationMethod: AUTOMATIC_CREATION,
       });
     });
 
     afterAll(async () => {
-      await GoalTemplate.destroy({ where: {}, individualHooks: true });
+      await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
     });

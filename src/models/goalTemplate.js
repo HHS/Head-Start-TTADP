@@ -67,6 +67,10 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.STRING,
     },
+    standard: {
+      allowNull: true,
+      type: DataTypes.TEXT,
+    },
     isSourceEditable: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -82,6 +86,7 @@ export default (sequelize, DataTypes) => {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
+    paranoid: true,
   });
   return GoalTemplate;
 };

@@ -67,9 +67,18 @@ interface ICourse {
   name: string;
 }
 
+interface ICitation {
+  citation: string;
+}
+
 interface ICourseModelInstance extends ICourse {
   dataValues?: ICourse;
   toJSON?: () => ICourse;
+}
+
+interface ICitationModelInstance extends ICourse {
+  dataValues?: ICitation;
+  toJSON?: () => ICitation;
 }
 
 interface IActivityReportObjective {
@@ -101,6 +110,12 @@ interface IActivityReportObjective {
   }[];
   activityReportObjectiveCourses: {
     course: ICourse;
+  }[];
+  activityReportObjectiveCitations: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dataValues: any;
+    citation: string;
+    monitoringReferences: JSON;
   }[];
 }
 
@@ -339,6 +354,7 @@ export {
   IActivityReportObjective,
   IObjective,
   IGoal,
+  ICitation,
   // -- model version of the above -- //
   IGoalModelInstance,
   IGrantModelInstance,
@@ -348,6 +364,7 @@ export {
   IFileModelInstance,
   IObjectiveModelInstance,
   IActivityReportObjectivesModelInstance,
+  ICitationModelInstance,
   // -- after going through reduceGoals -- //
   IReducedObjective,
   IReducedGoal,

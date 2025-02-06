@@ -133,7 +133,7 @@ describe('eventSummary', () => {
       expect(await screen.findByText('Select at least one collaborator')).toBeInTheDocument();
 
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
-      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women / Pregnant Persons']);
+      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Expectant families']);
       await selectEvent.select(screen.getByLabelText(/reasons/i), ['Complaint']);
       await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
 

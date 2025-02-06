@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -25,6 +25,7 @@ import ViewGoals from './pages/ViewGoals';
 import GoalNameForm from '../../components/GoalNameForm';
 import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
+import AppLoadingContext from '../../AppLoadingContext';
 
 export function PageWithHeading({
   children,
@@ -34,6 +35,7 @@ export function PageWithHeading({
   recipientNameWithRegion,
   backLink,
   slug,
+  inlineHeadingChildren,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
   return (
@@ -50,9 +52,14 @@ export function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
-                  {recipientNameWithRegion}
-                </h1>
+                <div className="display-flex">
+                  <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
+                    {recipientNameWithRegion}
+                  </h1>
+                  <div>
+                    {inlineHeadingChildren}
+                  </div>
+                </div>
                 {children}
               </>
             )
@@ -69,19 +76,21 @@ PageWithHeading.propTypes = {
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
   slug: PropTypes.string,
+  inlineHeadingChildren: PropTypes.node,
 };
 
 PageWithHeading.defaultProps = {
   error: '',
   backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
+  inlineHeadingChildren: null,
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
   const history = useHistory();
   const { recipientId, regionId } = match.params;
 
-  const [loading, setLoading] = useState(true);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -117,7 +126,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
   useDeepCompareEffect(() => {
     async function fetchRecipient() {
       try {
-        setLoading(true);
+        setIsAppLoading(true);
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({
@@ -127,7 +136,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
       } finally {
-        setLoading(false);
+        setIsAppLoading(false);
       }
     }
 
@@ -143,10 +152,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
-
-  if (loading) {
-    return <div>loading...</div>;
-  }
 
   return (
     <>
@@ -339,6 +344,15 @@ export default function RecipientRecord({ match, hasAlerts }) {
               recipientId={recipientId}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
+              inlineHeadingChildren={(
+                <Link
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
+                  className="usa-button smart-hub--new-report-btn margin-left-4"
+                >
+                  <span className="smart-hub--plus">+</span>
+                  <span className="smart-hub--new-report">Add communication</span>
+                </Link>
+              )}
             >
               <CommunicationLog
                 regionId={regionId}

@@ -17,33 +17,50 @@ import {
 } from '../importSystem';
 import LockManager from '../lockManager';
 import { auditLogger } from '../../logger';
+import handlePostProcessing from '../importSystem/postProcess';
 
 /**
- * Enqueues a maintenance job for imports with a specified type and optional id.
+ * Enqueues a maintenance job for imports with a specified type and optional parameters.
  *
- * @param type - The type of maintenance job to enqueue, must be a value from MAINTENANCE_TYPE.
- * @param id - An optional numeric identifier for the job.
+ * @param {Object} params - The parameters for the maintenance job.
+ * @param {typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE]} params.type - The type of
+ *        maintenance job to enqueue, must be a value from MAINTENANCE_TYPE.
+ * @param {number} [params.id] - An optional numeric identifier for the job.
+ * @param {string} [params.requiredLaunchScript] - An optional launch script required for the job.
+ * @param {boolean} [params.requiresLock=false] - Whether the job requires a lock to execute.
+ * @param {boolean} [params.holdLock=false] - Whether the job should hold the lock after execution.
+ * @param {number} [params.timeout] - An optional timeout (in milliseconds) for the job. If not
+ *        provided, `jobSettings` will be empty.
  *
- * @returns The result of the enqueueMaintenanceJob function, which is not specified here.
+ * @returns {Promise<any>} The result of the enqueueMaintenanceJob function.
  *
- * @throws Will throw an error if enqueueMaintenanceJob throws.
+ * @throws {Error} Will throw an error if enqueueMaintenanceJob throws.
  */
-const enqueueImportMaintenanceJob = async (
-  type: typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE],
-  id?: number,
-  requiredLaunchScript?: string,
+const enqueueImportMaintenanceJob = async ({
+  type,
+  id,
+  requiredLaunchScript,
   requiresLock = false,
   holdLock = false,
-) => enqueueMaintenanceJob(
-  MAINTENANCE_CATEGORY.IMPORT,
-  {
+  timeout,
+}: {
+  type: typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE];
+  id?: number;
+  requiredLaunchScript?: string;
+  requiresLock?: boolean;
+  holdLock?: boolean;
+  timeout?: number; // Optional timeout
+}) => enqueueMaintenanceJob({
+  category: MAINTENANCE_CATEGORY.IMPORT,
+  data: {
     type,
     id,
   },
   requiredLaunchScript,
   requiresLock,
   holdLock,
-);
+  jobSettings: timeout !== undefined ? { timeout } : {},
+});
 
 /**
  * Asynchronously sets up cron jobs for each import schedule retrieved from a data source.
@@ -94,10 +111,11 @@ const scheduleImportCrons = async () => {
               auditLogger.log('info', `import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
               // eslint-disable-next-line no-console
               console.log(`import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
-              return enqueueImportMaintenanceJob(
+              return enqueueImportMaintenanceJob({
                 type,
                 id,
-              );
+                timeout: 6000, // 10 min
+              });
             },
             null,
             true,
@@ -197,17 +215,19 @@ const importDownload = async (id) => maintenanceCommand(
 
       // If there are more items to download, enqueue a job to download the next batch.
       if (downloadMore) {
-        await enqueueImportMaintenanceJob(
-          MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        await enqueueImportMaintenanceJob({
+          type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
           id,
-        );
+          timeout: 6000, // 10 min
+        });
       }
       // If the download results have a length, enqueue a job to process the downloaded data.
       if (processMore) {
-        await enqueueImportMaintenanceJob(
-          MAINTENANCE_TYPE.IMPORT_PROCESS,
+        await enqueueImportMaintenanceJob({
+          type: MAINTENANCE_TYPE.IMPORT_PROCESS,
           id,
-        );
+          timeout: 4500, // 7.5 min
+        });
       }
       // Return an object indicating the success status and include the download results.
       return {
@@ -252,15 +272,21 @@ const importProcess = async (id) => maintenanceCommand(
         // Process the import and await the results.
         const processResults = await processImport(id);
         auditLogger.log('info', `import: importProcess->maintenanceCommand: ${JSON.stringify({ processResults })}`);
+
+        // Post process.
+        // Uses the object set on the import.postProcessingActions field in the database.
+        await handlePostProcessing(id);
+
         // Check if there are more items to process after the current import.
         const more = await moreToProcess(id);
         auditLogger.log('info', `import: importProcess->maintenanceCommand: ${JSON.stringify({ more })}`);
         if (more) {
           // If more items need processing, enqueue a new import maintenance job.
-          await enqueueImportMaintenanceJob(
-            MAINTENANCE_TYPE.IMPORT_PROCESS,
+          await enqueueImportMaintenanceJob({
+            type: MAINTENANCE_TYPE.IMPORT_PROCESS,
             id,
-          );
+            timeout: 4500, // 7.5 min
+          });
         }
         // Return the process results along with a success flag indicating the absence of
         // an 'error' key.
@@ -324,7 +350,10 @@ const enqueue = () => {
   if (!process.env.CI
     && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
     || process.env.NODE_ENV !== 'production')) {
-    enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', false);
+    enqueueImportMaintenanceJob({
+      type: MAINTENANCE_TYPE.IMPORT_SCHEDULE,
+      requiredLaunchScript: 'index',
+    });
     return true;
   }
   return false;

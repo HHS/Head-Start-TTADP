@@ -183,12 +183,15 @@ describe('iPD Courses Associated with Activity Reports', () => {
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
+
       expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
       expect(tableCells[2]).toHaveTextContent(/2/i);
       expect(tableCells[3]).toHaveTextContent(/4/i);
+      expect(tableCells[4]).toHaveTextContent('');
       expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
       expect(tableCells[6]).toHaveTextContent(/1/i);
       expect(tableCells[7]).toHaveTextContent(/3/i);
+      expect(tableCells[8]).toHaveTextContent('');
       expect(tableCells[9]).toHaveTextContent(/Sample Course 3/i);
       expect(tableCells[10]).toHaveTextContent(/2/i);
       expect(tableCells[11]).toHaveTextContent(/5/i);

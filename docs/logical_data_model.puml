@@ -86,6 +86,15 @@ class ActivityReportGoals{
  timeframe : text
 }
 
+class ActivityReportObjectiveCitations{
+ * id : integer : <generated>
+ * activityReportObjectiveId : integer
+ * citation : text
+ * createdAt : timestamp with time zone : now()
+ * monitoringReferences : jsonb
+ * updatedAt : timestamp with time zone : now()
+}
+
 class ActivityReportObjectiveCourses{
  * id : integer : <generated>
  * activityReportObjectiveId : integer : REFERENCES "ActivityReportObjectives".id
@@ -401,8 +410,10 @@ class GoalTemplates{
  * templateName : text
  * templateNameModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
  lastUsed : timestamp with time zone
  source : varchar(255)
+ standard : text
 }
 
 class Goals{
@@ -965,6 +976,7 @@ class RequestErrors{
 
 class Resources{
  * id : integer : <generated>
+ mapsTo : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
  * domain : text
  * updatedAt : timestamp with time zone
@@ -1229,6 +1241,20 @@ class ZALActivityReportGoalResources{
 }
 
 class ZALActivityReportGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALActivityReportObjectiveCitations{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2483,6 +2509,7 @@ Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNum
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
+ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : activityReportObjective, activityReportObjectiveCitations
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : activityReportObjective, activityReportObjectiveCourses
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : activityReportObjective, activityReportObjectiveFiles
 ActivityReportObjectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : activityReportObjective, activityReportObjectiveResources
@@ -2559,8 +2586,8 @@ MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReview
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
-MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : statusLink, monitoringFindingStandards
-MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandardes, statusLink
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : standardLink, monitoringFindingStandards
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandards, standardLink
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
@@ -2590,6 +2617,7 @@ Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : re
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : resource, goalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : resource, goalTemplateResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : resource, nextStepResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" Resources : mapsFromResource, mapsToResource
 Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collaboratorRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role

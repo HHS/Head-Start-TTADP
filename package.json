@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "18.20.4"
+    "node": "18.20.6"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -105,7 +105,9 @@
     "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish",
     "merge-coverage": "node ./src/tools/merge-coverage.js",
-    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true"
+    "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true",
+    "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
+    "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js"
   },
   "repository": {
     "type": "git",
@@ -320,7 +322,7 @@
     "@babel/runtime": "^7.12.1",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "^2.1.7",
+    "@ttahub/common": "2.2.8",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",
