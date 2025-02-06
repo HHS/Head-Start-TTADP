@@ -5,6 +5,9 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
+      await queryInterface.sequelize.query(
+        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";'
+      );
       await queryInterface.addColumn(
         'GoalTemplates',
         'deletedAt',
@@ -21,7 +24,13 @@ module.exports = {
     });
   },
 
-  async down() {
-    // no rollbacks
+  async down(queryInterface, Sequelize) {
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      const sessionSig = __filename;
+      await prepMigration(queryInterface, transaction, sessionSig);
+      await queryInterface.sequelize.query(
+        'ALTER TABLE "GoalTemplates" DROP COLUMN IF EXISTS "deletedAt";'
+      );
+    });
   },
 };
