@@ -46,6 +46,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'goalTemplateId',
         as: 'goalTemplates',
       });
+      Resource.hasMany(models.Resource, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromResource',
+      });
+      Resource.belongsTo(models.Resource, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToResource',
+      });
     }
   }
   Resource.init({
@@ -76,6 +84,16 @@ export default (sequelize, DataTypes) => {
     metadataUpdatedAt: {
       allowNull: true,
       type: DataTypes.DATE,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'Resource',
+        },
+        key: 'id',
+      },
     },
   }, {
     hooks: {

@@ -211,7 +211,7 @@ const SOURCE_FIELD = {
 };
 
 const RESOURCE_DOMAIN = {
-  ECLKC: 'eclkc.ohs.acf.hhs.gov',
+  HEAD_START: 'headstart.gov',
 };
 
 const GRANT_INACTIVATION_REASONS = {
