@@ -165,7 +165,7 @@ export default function RegionalCommLogTable({ filters }) {
           id: log.id,
           isUrl: true,
           isInternalLink: true,
-          link: `/recipient-tta-records/${log.recipients[0].id}/region/${log.data.regionId}/communication/${log.id}/view`,
+          link: `/communication-log/region/${log.data.regionId}/log/${log.id}/view`,
           suffixContent:
             log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
