@@ -85,6 +85,7 @@ export default function GoalNameForm({
           hookForm.setValue('goalName', goal.name);
           hookForm.setValue('goalStatus', goal.status);
           hookForm.setValue('goalIds', goal.goalIds);
+          hookForm.setValue('selectedGrant', goal.grant);
         }
       } catch (err) {
         history.push('/something-went-wrong/500');
@@ -101,7 +102,7 @@ export default function GoalNameForm({
 
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grant
-    if (possibleGrants.length === 1) {
+    if (possibleGrants.length === 1) { 
       hookForm.setValue('selectedGrant', possibleGrants[0]);
     }
   }, [possibleGrants]);
