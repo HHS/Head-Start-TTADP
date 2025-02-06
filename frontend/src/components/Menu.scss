@@ -1,11 +1,13 @@
 @use '../colors.scss' as *;
 
+.usa-form .usa-button.smart-hub--menu-button,
 .smart-hub--menu-button {
   display: block;
   text-decoration: none;
   width: max-content;
   height: 100%;
   color: $text-ink;
+  margin: 0;
 }
 
 .smart-hub--menu-button:hover {
