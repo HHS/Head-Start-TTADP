@@ -8,7 +8,6 @@
 */
 import React, {
   useState, useEffect, useCallback, useRef,
-  useLayoutEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
@@ -80,9 +79,11 @@ function Menu({
     };
   }, [fixed, recordButtonPositionAndUpdateMenu]);
 
-  useLayoutEffect(() => {
-    recordButtonPositionAndUpdateMenu();
-  }, [recordButtonPositionAndUpdateMenu]);
+  useEffect(() => {
+    if (shown) {
+      recordButtonPositionAndUpdateMenu();
+    }
+  }, [recordButtonPositionAndUpdateMenu, shown]);
 
   const onBlur = (e) => {
     const { currentTarget } = e;
