@@ -56,6 +56,24 @@ const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
 ];
 
+const handleEclkcMapping = async (url) => {
+  let matchingHeadStart = null;
+  if (url.includes('eclkc.ohs.acf.hhs.gov')) {
+    matchingHeadStart = await Resource.findOne({
+      where: {
+        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
+      },
+    });
+    if (!matchingHeadStart) {
+      matchingHeadStart = await Resource.create({
+        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
+        domain: 'headstart.gov',
+      });
+    }
+  }
+  return matchingHeadStart;
+};
+
 // -----------------------------------------------------------------------------
 // Resource Table
 // -----------------------------------------------------------------------------
@@ -64,7 +82,11 @@ const findOrCreateResource = async (url) => {
   if (url === undefined || url === null || typeof url !== 'string') return undefined;
   let resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
   if (!resource) {
-    const newResource = await Resource.create({ url });
+    const matchingHeadStart = await handleEclkcMapping(url);
+    const newResource = await Resource.create({
+      url,
+      mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+    });
     resource = await newResource.get({ plain: true });
   }
   return resource;
@@ -95,9 +117,14 @@ const findOrCreateResources = async (urls) => {
       .map((currentResource) => currentResource.url));
     newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
   }
+
   const resources = [
     ...await Promise.all(newURLs.map(async (url) => {
-      const resource = await Resource.create({ url });
+      const matchingHeadStart = await handleEclkcMapping(url);
+      const resource = await Resource.create({
+        url,
+        mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+      });
       return resource.get({ plain: true });
     })),
     ...(currentResources || []),

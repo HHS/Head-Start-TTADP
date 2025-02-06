@@ -25,6 +25,16 @@ describe('urlUtils', () => {
       'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
       'https://eclkc.ohs.acf.hhs.gov/cas/login',
       'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://headstart.gov/sites/default/files/pdf/healthy-children-ready-learn.pdf cf.hhs.gov/policy/45-cfr-chap-xiii/1302-subpart-d-health-program-services •\tHealth Competencies https://headstart.gov/sites/default/files/pdf/health-competencies.pdf Non-ECLKC resources\t https://nrckids.org/CFOC/ https://ufhealth.org/well-child-visits#:~:text=15%20months,2%201%2F2%20years",117689',
+      'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://headstart.gov/cas/login',
+      'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://www.headstart.gov/cas/login',
+      'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
     ];
 
     it('correctly validates resources', () => {
