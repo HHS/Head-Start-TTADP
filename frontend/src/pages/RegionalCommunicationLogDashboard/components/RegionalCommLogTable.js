@@ -169,7 +169,7 @@ export default function RegionalCommLogTable({ filters }) {
           suffixContent:
             log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
-            { title: 'Recipient', value: log.recipients.map((r) => r.label).join(', '), tooltip: true },
+            { title: 'Recipient', value: log.recipients.map((r) => r.name).join(', '), tooltip: true },
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose },
             { title: 'Goals', value: (log.data.goals || []).map((g) => g.label).join(', '), tooltip: true },
