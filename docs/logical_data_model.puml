@@ -983,6 +983,7 @@ class RequestErrors{
 
 class Resources{
  * id : integer : <generated>
+ mapsTo : integer : REFERENCES "Resources".id
  * createdAt : timestamp with time zone
  * domain : text
  * updatedAt : timestamp with time zone
@@ -2639,6 +2640,7 @@ Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : re
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : resource, goalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : resource, goalTemplateResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : resource, nextStepResources
+Resources "1" --[#black,dashed,thickness=2]--{  "n" Resources : mapsFromResource, mapsToResource
 Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collaboratorRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
