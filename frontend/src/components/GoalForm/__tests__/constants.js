@@ -19,6 +19,9 @@ describe('form constants', () => {
       'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
       'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
       'https://eclkc.ohs.acf.hhs.gov/cas/login',
+      'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://headstart.gov/cas/login',
     ];
 
     it('returns true if the url is not in the disallowed list', () => {
