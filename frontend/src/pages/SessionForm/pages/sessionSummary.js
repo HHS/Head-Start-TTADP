@@ -497,7 +497,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         <legend>
           Did you use any other TTA resources that are available as a link?
           <QuestionTooltip
-            text="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
+            text="Copy & paste web address of TTA resource you'll use for this objective. Usually a HeadStart.gov page."
           />
         </legend>
         <div className="ttahub-resource-repeater">
