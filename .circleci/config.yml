@@ -784,7 +784,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-3542/TTAHUB-3544/s3Queue-scanQueue-coverage"
+    default: "all-eclkc-to-headstart-resource-updates"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
     default: "TTAHUB-3772/TTAHUB-3773/TTAHUB-3774/TTAHUB-3775/commlog"
