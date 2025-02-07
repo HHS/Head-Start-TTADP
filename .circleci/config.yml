@@ -788,7 +788,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "all-eclkc-to-headstart-resource-updates"
+    default: "TTAHUB-3065/new-devs"
     type: string
   # TODO: need to figure out how to make/get more new relic ids
   prod_new_relic_app_id:
@@ -807,6 +807,10 @@ parameters:
     description: "List of environments to manage (start/stop)"
     type: string
     default: "DEV,SANDBOX"
+  dev_app_list:
+    description: "List of dev apps to manage (start/stop)"
+    type: string
+    defualt: "nimbus,cirrus,stratus,cumulus,lenticular,fog,clear"
   space_list:
     description: "List of Cloud Foundry spaces corresponding to each environment"
     type: string
@@ -1558,6 +1562,10 @@ jobs:
         type: string
         description: "Comma-separated list of environments to manage (both smarthub and similarity-api)"
         default: "<< pipeline.parameters.env_list >>"
+      dev_app_list:
+        type: string
+        description: "Comma-separated list of dev apps to manage (both smarthub and similarity-api)"
+        default: "<< pipeline.parameters.dev_app_list >>"
       env_state:
         type: string
         description: "Action to perform on apps (start, stop, restart, restage)"
@@ -1584,6 +1592,7 @@ jobs:
             chmod +x ./automation/ci/scripts/manage_apps.sh
             ./automation/ci/scripts/manage_apps.sh \
               --env_list "<< parameters.env_list >>" \
+              --dev_app_list "<< parameters.dev_app_list >>"
               --env_state "<< parameters.env_state >>" \
               --check_activity "<< parameters.check_activity >>" \
               --activity_timeout << parameters.activity_timeout >> \
@@ -1918,6 +1927,7 @@ workflows:
       - manage_env_apps:
           env_state: "stop"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
   start_lower_env_workflow:
     triggers:
       - schedule:
@@ -1930,6 +1940,7 @@ workflows:
       - manage_env_apps:
           env_state: "start"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
   manual_manage_env_workflow:
     when:
       equal: [true, << pipeline.parameters.manual-manage-env >>]
@@ -1937,6 +1948,7 @@ workflows:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
   monitor_and_shutdown_envs:
     triggers:
       # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
@@ -1960,6 +1972,7 @@ workflows:
       - manage_env_apps:
           env_state: "stop"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
           check_activity: true
   manual_restore_production:
     when:
