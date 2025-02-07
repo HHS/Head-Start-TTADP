@@ -810,7 +810,7 @@ parameters:
   dev_app_list:
     description: "List of dev apps to manage (start/stop)"
     type: string
-    defualt: "nimbus,cirrus,stratus,cumulus,lenticular,fog,clear"
+    default: "nimbus,cirrus,stratus,cumulus,lenticular,fog,clear"
   space_list:
     description: "List of Cloud Foundry spaces corresponding to each environment"
     type: string
