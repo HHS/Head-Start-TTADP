@@ -800,9 +800,6 @@ parameters:
   dev_new_relic_app_id:
     default: "867221900"
     type: string
-  sandbox_new_relic_app_id:
-    default: "867346799"
-    type: string
   manual-trigger:
     type: boolean
     default: false
@@ -1665,29 +1662,14 @@ jobs:
           cloudgov_username: CLOUDGOV_STAGING_USERNAME
           cloudgov_password: CLOUDGOV_STAGING_PASSWORD
           cloudgov_space: CLOUDGOV_STAGING_SPACE
-  restore_processed_to_sandbox:
-    docker:
-      - image: cimg/base:2024.05
-    steps:
-    - sparse_checkout:
-          directories: 'automation'
-          branch: << pipeline.git.branch >>
-    - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-sandbox
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-    - cf_migrate:
-          app_name: tta-smarthub-sandbox
-          cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
-          cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
-          cloudgov_space: CLOUDGOV_SANDBOX_SPACE
   restore_processed_to_dev:
     docker:
       - image: cimg/base:2024.05
+    parameters:
+      rds_service_name:
+        type: string
+      app_name:
+        type: string
     steps:
     - sparse_checkout:
           directories: 'automation'
@@ -1697,11 +1679,11 @@ jobs:
           cloudgov_username: CLOUDGOV_PROD_USERNAME
           cloudgov_password: CLOUDGOV_PROD_PASSWORD
           cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-dev
+          rds_service_name: << parameters.rds_service_name >>
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
     - cf_migrate:
-          app_name: tta-smarthub-dev
+          app_name: << parameters.app_name >>
           cloudgov_username: CLOUDGOV_DEV_USERNAME
           cloudgov_password: CLOUDGOV_DEV_PASSWORD
           cloudgov_space: CLOUDGOV_DEV_SPACE
@@ -1746,7 +1728,6 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-full-process >>]
         - equal: [false, << pipeline.parameters.manual-manage-env >>]
         - equal: [false, << pipeline.parameters.manual-restore-staging >>]
-        - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-nimbus >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-cirrus >>]
         - equal: [false, << pipeline.parameters.manual-restore-dev-stratus >>]
@@ -1871,27 +1852,49 @@ workflows:
       - restore_processed_to_staging:
           requires:
             - process_backup
-      - restore_processed_to_dev_nimbus:
+      # Now call the parameterized job multiple times using aliases:
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_nimbus
           requires:
             - restore_processed_to_staging
-      - restore_processed_to_dev_cirrus:
+          rds_service_name: ttahub-dev-nimbus
+          app_name: tta-smarthub-dev-nimbus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_cirrus
           requires:
             - restore_processed_to_dev_nimbus
-      - restore_processed_to_dev_stratus:
+          rds_service_name: ttahub-dev-cirrus
+          app_name: tta-smarthub-dev-cirrus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_stratus
           requires:
             - restore_processed_to_dev_cirrus
-      - restore_processed_to_dev_cumulus:
+          rds_service_name: ttahub-dev-stratus
+          app_name: tta-smarthub-dev-stratus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_cumulus
           requires:
             - restore_processed_to_dev_stratus
-      - restore_processed_to_dev_lenticular:
+          rds_service_name: ttahub-dev-cumulus
+          app_name: tta-smarthub-dev-cumulus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_lenticular
           requires:
             - restore_processed_to_dev_cumulus
-      - restore_processed_to_dev_fog:
+          rds_service_name: ttahub-dev-lenticular
+          app_name: tta-smarthub-dev-lenticular
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_fog
           requires:
             - restore_processed_to_dev_lenticular
-      - restore_processed_to_dev_clear:
+          rds_service_name: ttahub-dev-fog
+          app_name: tta-smarthub-dev-fog
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_clear
           requires:
             - restore_processed_to_dev_fog
+          rds_service_name: ttahub-dev-clear
+          app_name: tta-smarthub-dev-clear
       - retention_production:
           requires:
             - restore_processed_to_dev_clear
@@ -1996,37 +1999,51 @@ workflows:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-nimbus >>]
     jobs:
-      - restore_processed_to_dev_nimbus
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-nimbus"
+          app_name: "tta-smarthub-dev-nimbus"
   manual_restore_dev_cirrus:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-cirrus >>]
     jobs:
-      - restore_processed_to_dev_cirrus
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-cirrus"
+          app_name: "tta-smarthub-dev-cirrus"
   manual_restore_dev_stratus:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-stratus >>]
     jobs:
-      - restore_processed_to_dev_stratus
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-stratus"
+          app_name: "tta-smarthub-dev-stratus"
   manual_restore_dev_cumulus:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-cumulus >>]
     jobs:
-      - restore_processed_to_dev_cumulus
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-cumulus"
+          app_name: "tta-smarthub-dev-cumulus"
   manual_restore_dev_lenticular:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-lenticular >>]
     jobs:
-      - restore_processed_to_dev_lenticular
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-lenticular"
+          app_name: "tta-smarthub-dev-lenticular"
   manual_restore_dev_fog:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-fog >>]
     jobs:
-      - restore_processed_to_dev_fog
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-fog"
+          app_name: "tta-smarthub-dev-fog"
   manual_restore_dev_clear:
     when:
       equal: [true, << pipeline.parameters.manual-restore-dev-clear >>]
     jobs:
-      - restore_processed_to_dev_clear
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-clear"
+          app_name: "tta-smarthub-dev-clear"
   manual_retention_production:
     when:
       equal: [true, << pipeline.parameters.manual-retention-production >>]
