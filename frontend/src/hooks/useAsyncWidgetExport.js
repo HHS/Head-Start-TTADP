@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { IS } from '../Constants';
+import { blobToCsvDownload, checkboxesToIds } from '../utils';
 
 /*
 export const getCommunicationLogs = async (
@@ -18,13 +18,7 @@ export default function useAsyncWidgetExport(
     const filters = [];
 
     if (exportType === 'selected') {
-      const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
-      // Loop all selected rows and parseInt to an array of integers.
-      // If the ID isn't a number, keep it as a string.
-      const selectedRowsIds = selectedRowsStrings.map((s) => {
-        const parsedInt = parseInt(s, DECIMAL_BASE);
-        return s.includes('-') ? s : parsedInt;
-      });
+      const selectedRowsIds = checkboxesToIds(checkboxes);
       // Filter the recipients to export to only include the selected rows.
       filters.push({
         topic: 'id',
@@ -33,10 +27,8 @@ export default function useAsyncWidgetExport(
       });
     }
 
-    let url = null;
-
     try {
-      const logs = await fetcher(
+      const blob = await fetcher(
         sortConfig.sortBy,
         sortConfig.direction,
         0,
@@ -44,18 +36,10 @@ export default function useAsyncWidgetExport(
         filters,
         'csv',
       );
-      url = window.URL.createObjectURL(logs);
-      const a = document.createElement('a');
-      a.setAttribute('hidden', '');
-      a.setAttribute('href', url);
-      a.setAttribute('download', exportName);
-      document.body.appendChild(a);
-      a.click();
+      blobToCsvDownload(blob, exportName);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(error);
-    } finally {
-      window.URL.revokeObjectURL(url);
     }
   }, [checkboxes, exportName, fetcher, sortConfig.direction, sortConfig.sortBy]);
 

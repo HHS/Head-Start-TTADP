@@ -23,9 +23,6 @@ const DEFAULT_SORT_CONFIG = {
 };
 
 const headers = ['Recipient', 'Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
-// const headersForExporting = [
-// ...headers, 'Region', 'Recipient next steps', 'Specialist next steps', 'Files'
-// ];
 
 const DeleteLogModal = ({
   modalRef,
