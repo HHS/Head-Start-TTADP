@@ -16,6 +16,7 @@ const SupportingAttachmentsSessionOrCommunication = ({
   visitedFieldName,
   handleDelete,
   idKey,
+  children,
 }) => {
   const [fileError, setFileError] = useState();
   const { register } = useFormContext();
@@ -31,17 +32,7 @@ const SupportingAttachmentsSessionOrCommunication = ({
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>
           <div id="attachments" />
-          <Label className="margin-top-0" htmlFor="files">
-            Upload any relevant attachments, such as:
-            <ul className="margin-top-0 padding-left-4">
-              <li>meetings agendas</li>
-              <li>services plans</li>
-              <li>sign-in or attendance sheets</li>
-              <li>other items not available online</li>
-              <li>other non-resource items not available online</li>
-            </ul>
-          </Label>
-
+          {children}
           <span className="usa-hint font-sans-3xs">Example: .doc, .pdf, .txt, .csv (max size 30 MB)</span>
           { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
           <Controller
@@ -70,6 +61,21 @@ SupportingAttachmentsSessionOrCommunication.propTypes = {
   visitedFieldName: PropTypes.string.isRequired,
   handleDelete: PropTypes.func.isRequired,
   idKey: PropTypes.string.isRequired,
+  children: PropTypes.node,
+};
+
+SupportingAttachmentsSessionOrCommunication.defaultProps = {
+  children: (<Label className="margin-top-0" htmlFor="files">
+    Upload any relevant attachments, such as:
+    <ul className="margin-top-0 padding-left-4">
+      <li>meetings agendas</li>
+      <li>services plans</li>
+      <li>sign-in or attendance sheets</li>
+      <li>other items not available online</li>
+      <li>other non-resource items not available online</li>
+    </ul>
+    {/* eslint-disable-next-line react/jsx-closing-tag-location */}
+  </Label>),
 };
 
 export default SupportingAttachmentsSessionOrCommunication;
