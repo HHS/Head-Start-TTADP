@@ -29,8 +29,8 @@ const SupportingAttachmentsSessionOrCommunication = ({
         <title>Supporting Attachments</title>
       </Helmet>
       <input type="hidden" ref={register()} name={visitedFieldName} />
-      <Fieldset className="smart-hub--report-legend margin-top-4">
-        <FormGroup error={fileError}>
+      <Fieldset className="smart-hub--report-legend">
+        <FormGroup error={fileError} className="margin-top-0">
           <div id="attachments" />
           {children}
           <span className="usa-hint font-sans-3xs">Example: .doc, .pdf, .txt, .csv (max size 30 MB)</span>

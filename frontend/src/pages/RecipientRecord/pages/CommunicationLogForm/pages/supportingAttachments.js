@@ -6,6 +6,7 @@ import {
 import { pageComplete } from '../constants';
 import { deleteLogFile } from '../../../../../fetchers/File';
 import SupportingAttachmentsSessionOrCommunication from '../../../../../components/SupportAttachmentsSessionOrCommunication';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const path = 'supporting-attachments';
 const position = 2;
@@ -32,23 +33,26 @@ export default {
     _onFormSubmit,
     Alert,
   ) => (
-    <div className="padding-x-1">
-      <SupportingAttachmentsSessionOrCommunication
-        reportId={reportId}
-        visitedFieldName={visitedField}
-        handleDelete={deleteLogFile}
-        idKey="communicationLogId"
-      >
-        <Label className="margin-top-0" htmlFor="files">
-          Upload any relevant attachments
-        </Label>
-      </SupportingAttachmentsSessionOrCommunication>
-      <Alert />
-      <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+    <>
+      <IndicatesRequiredField />
+      <div className="padding-x-1">
+        <SupportingAttachmentsSessionOrCommunication
+          reportId={reportId}
+          visitedFieldName={visitedField}
+          handleDelete={deleteLogFile}
+          idKey="communicationLogId"
+        >
+          <Label className="margin-top-0" htmlFor="files">
+            Upload any relevant attachments
+          </Label>
+        </SupportingAttachmentsSessionOrCommunication>
+        <Alert />
+        <div className="display-flex">
+          <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+          <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+        </div>
       </div>
-    </div>
+    </>
   ),
   isPageComplete,
 };
