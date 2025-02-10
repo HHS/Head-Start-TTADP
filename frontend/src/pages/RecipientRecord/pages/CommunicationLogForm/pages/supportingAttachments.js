@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Button,
+  Label,
 } from '@trussworks/react-uswds';
 import { pageComplete } from '../constants';
 import { deleteLogFile } from '../../../../../fetchers/File';
@@ -37,7 +38,11 @@ export default {
         visitedFieldName={visitedField}
         handleDelete={deleteLogFile}
         idKey="communicationLogId"
-      />
+      >
+        <Label className="margin-top-0" htmlFor="files">
+          Upload any relevant attachments
+        </Label>
+      </SupportingAttachmentsSessionOrCommunication>
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
