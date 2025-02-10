@@ -4,6 +4,7 @@ import { Button } from '@trussworks/react-uswds';
 import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
 import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
 import SupportingAttachmentsSessionOrCommunication from '../../../components/SupportAttachmentsSessionOrCommunication';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 const path = 'supporting-attachments';
 const position = 3;
@@ -32,6 +33,7 @@ export default {
     Alert,
   ) => (
     <div className="padding-x-1">
+      <IndicatesRequiredField />
       <SupportingAttachmentsSessionOrCommunication
         reportId={reportId}
         visitedFieldName={supportingAttachmentsVisitedField}
