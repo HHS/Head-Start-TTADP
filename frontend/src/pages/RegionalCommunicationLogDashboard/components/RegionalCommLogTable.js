@@ -6,13 +6,13 @@ import Modal from '../../../components/Modal';
 import WidgetContainer from '../../../components/WidgetContainer';
 import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
 import UserContext from '../../../UserContext';
-import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting from '../../../hooks/useWidgetSorting';
 import { EMPTY_ARRAY } from '../../../Constants';
 import { deleteCommunicationLogById, getCommunicationLogs } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { UsersIcon } from '../../../components/icons';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import useAsyncWidgetExport from '../../../hooks/useAsyncWidgetExport';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
 
@@ -23,7 +23,9 @@ const DEFAULT_SORT_CONFIG = {
 };
 
 const headers = ['Recipient', 'Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
-const headersForExporting = [...headers, 'Region', 'Recipient next steps', 'Specialist next steps', 'Files'];
+// const headersForExporting = [
+// ...headers, 'Region', 'Recipient next steps', 'Specialist next steps', 'Files'
+// ];
 
 const DeleteLogModal = ({
   modalRef,
@@ -87,22 +89,6 @@ export default function RegionalCommLogTable({ filters }) {
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
-  const { exportRows } = useWidgetExport(
-    tabularData,
-    headersForExporting,
-    checkboxes,
-    'Log ID',
-    'Communication_Log_Export',
-  );
-
-  const menuItems = useWidgetMenuItems(
-    showTabularData,
-    setShowTabularData,
-    null, // capture function
-    checkboxes,
-    exportRows,
-  ).filter((m) => !m.label.includes('Display'));
-
   const {
     requestSort,
     sortConfig,
@@ -116,6 +102,21 @@ export default function RegionalCommLogTable({ filters }) {
     ['Date'], // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
+
+  const { exportRows } = useAsyncWidgetExport(
+    checkboxes,
+    'Communication_Log_Export',
+    sortConfig,
+    getCommunicationLogs,
+  );
+
+  const menuItems = useWidgetMenuItems(
+    showTabularData,
+    setShowTabularData,
+    null, // capture function
+    checkboxes,
+    exportRows,
+  ).filter((m) => !m.label.includes('Display'));
 
   const handleDelete = (log) => {
     setLogToDelete(log);
