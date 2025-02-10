@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom';
 import moment from 'moment';
 import {
-  queryStringToFilters, filtersToQueryString, formatDateRange, decodeQueryParam, isInternalGovernmentLink,
+  queryStringToFilters,
+  filtersToQueryString,
+  formatDateRange,
+  decodeQueryParam,
+  isInternalGovernmentLink,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
