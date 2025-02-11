@@ -455,7 +455,7 @@ function transformGoalsAndObjectives(report) {
   const { activityReportObjectives, activityReportGoals } = report;
 
   if (activityReportObjectives && activityReportObjectives.length) {
-    const objectiveRecords = activityReportObjectives.map((aro) => (
+    const objectiveRecords = activityReportObjectives.filter((aro) => aro.objective).map((aro) => (
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
