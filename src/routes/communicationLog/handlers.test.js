@@ -100,6 +100,7 @@ describe('communicationLog handlers', () => {
       json: statusJson,
       send: jest.fn(),
     })),
+    type: jest.fn(),
   };
 
   afterAll(() => sequelize.close());

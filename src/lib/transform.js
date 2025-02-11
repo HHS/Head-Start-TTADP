@@ -575,8 +575,8 @@ const logTransformers = [
   transformRelatedModelPropNested('data', 'goals'),
   transformRelatedModelPropNested('data', 'otherStaff'),
   transformRelatedModel('files', 'originalFileName'),
-  transformRelatedModel('recipientNextSteps', 'note'),
-  transformRelatedModel('specialistNextSteps', 'note'),
+  transformRelatedModelPropNested('data', 'recipientNextSteps', 'note'),
+  transformRelatedModelPropNested('data', 'specialistNextSteps', 'note'),
 ];
 
 /**
