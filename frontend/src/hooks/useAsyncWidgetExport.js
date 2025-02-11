@@ -2,12 +2,6 @@ import { useCallback } from 'react';
 import { IS } from '../Constants';
 import { blobToCsvDownload, checkboxesToIds } from '../utils';
 
-/*
-export const getCommunicationLogs = async (
-  sortBy, direction, offset, limit = 10, filters = [], format = 'json',
-) => {
-*/
-
 export default function useAsyncWidgetExport(
   checkboxes,
   exportName,
