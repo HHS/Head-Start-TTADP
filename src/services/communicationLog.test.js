@@ -115,6 +115,11 @@ describe('communicationLog services', () => {
         purpose: '',
         result: '',
         recipients: expect.any(String),
+        goals: '',
+        recipientNextSteps: '',
+        regionId: '',
+        specialistNextSteps: '',
+        otherStaff: '',
       },
     ], { header: true, quoted: true, quoted_empty: true });
   });
