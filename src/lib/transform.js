@@ -301,7 +301,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       supportType,
     } = objective;
     const goalId = goal ? goal.id : null;
-    const titleMd5 = md5(title || '');
+    const titleMd5 = md5(title);
 
     const existingObjectiveTitle = processedObjectivesTitles.get(titleMd5);
     const goalName = goal ? goal.name : null;
@@ -455,7 +455,7 @@ function transformGoalsAndObjectives(report) {
   const { activityReportObjectives, activityReportGoals } = report;
 
   if (activityReportObjectives && activityReportObjectives.length) {
-    const objectiveRecords = activityReportObjectives.map((aro) => (
+    const objectiveRecords = activityReportObjectives.filter((aro) => aro.objective).map((aro) => (
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
