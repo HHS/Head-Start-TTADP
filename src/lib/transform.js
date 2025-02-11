@@ -301,7 +301,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       supportType,
     } = objective;
     const goalId = goal ? goal.id : null;
-    const titleMd5 = md5(title);
+    const titleMd5 = md5(title || '');
 
     const existingObjectiveTitle = processedObjectivesTitles.get(titleMd5);
     const goalName = goal ? goal.name : null;
