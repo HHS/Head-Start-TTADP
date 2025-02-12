@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom';
 import moment from 'moment';
 import {
-  queryStringToFilters, filtersToQueryString, formatDateRange, decodeQueryParam,
+  queryStringToFilters,
+  filtersToQueryString,
+  formatDateRange,
+  decodeQueryParam,
+  isInternalGovernmentLink,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
@@ -20,6 +24,26 @@ describe('decodeQueryParam', () => {
     const param = 'a,b,c';
     const query = decodeQueryParam(param);
     expect(query).toStrictEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('isInternalGovernmentLink', () => {
+  it('correctly validates eclkc url', () => {
+    const url = 'https://eclkc.ohs.acf.hhs.gov';
+    const isValid = isInternalGovernmentLink(url);
+    expect(isValid).toBe(true);
+  });
+
+  it('correctly validates headstart url', () => {
+    const url = 'https://headstart.gov/fsafsafs/dsalkjf';
+    const isValid = isInternalGovernmentLink(url);
+    expect(isValid).toBe(true);
+  });
+
+  it('correctly validates non-government url', () => {
+    const url = 'https://google.com';
+    const isValid = isInternalGovernmentLink(url);
+    expect(isValid).toBe(false);
   });
 });
 

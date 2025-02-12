@@ -205,10 +205,11 @@ export async function topicFrequencyGraphViaGoals(scopes) {
   topicsAndParticipants?.forEach((goalData) => {
     goalData
       .get('topics')?.forEach(({ topic, reportIds }) => {
-        const topicResponce = topicsResponse
+        const topicResponse = topicsResponse
           .find((t) => t.topic === lookUpTopic.get(topic));
 
-        reportIds?.forEach((id) => topicResponce.reportIds.add(id));
+        if (!topicResponse) return;
+        reportIds?.forEach((id) => topicResponse.reportIds.add(id));
       });
   });
 
