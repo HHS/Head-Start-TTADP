@@ -36,12 +36,10 @@ export async function changeGoalStatusWithSystemUser({
       reason,
       context,
     });
+
+    await goal.reload();
   }
 
-  // Reload goal.
-  await goal.reload();
-
-  //  Return goal.
   return goal;
 }
 
@@ -87,9 +85,9 @@ export default async function changeGoalStatus({
       reason,
       context,
     });
-  }
 
-  await goal.reload();
+    await goal.reload();
+  }
 
   return goal;
 }
