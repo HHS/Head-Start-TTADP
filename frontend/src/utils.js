@@ -4,7 +4,8 @@ import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import {
-  GOVERNMENT_HOSTNAME_EXTENSION,
+  ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
+  HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
   WITHIN,
   QUERY_CONDITIONS,
   DATE_FMT,
@@ -34,7 +35,8 @@ export const isValidURL = (url) => {
  */
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
-  return newUrl.host.endsWith(GOVERNMENT_HOSTNAME_EXTENSION);
+  return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
+  || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
 };
 
 /**

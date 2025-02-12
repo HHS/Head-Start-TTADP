@@ -18,7 +18,7 @@ import {
 } from '../constants';
 import ReadOnlyField from '../../../../../components/ReadOnlyField';
 import UserContext from '../../../../../UserContext';
-import { mustBeQuarterHalfOrWhole } from '../../../../../Constants';
+import { mustBeQuarterHalfOrWhole, NOOP } from '../../../../../Constants';
 import MultiSelect from '../../../../../components/MultiSelect';
 import LogContext from '../LogContext';
 
@@ -55,6 +55,7 @@ const Log = ({ datePickerKey }) => {
           name="otherStaff"
           id="otherStaff-label"
           htmlFor="otherStaff"
+          required={false}
         >
           <MultiSelect
             control={control}
@@ -62,9 +63,9 @@ const Log = ({ datePickerKey }) => {
             name="otherStaff"
             id="otherStaff"
             options={otherStaffOptions}
-            required="Select at least one"
             placeholderText="- Select -"
-            onClick={() => {}}
+            onClick={NOOP}
+            required={false}
           />
         </FormItem>
       </div>
