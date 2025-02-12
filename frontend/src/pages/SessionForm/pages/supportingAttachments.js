@@ -4,6 +4,7 @@ import { Button } from '@trussworks/react-uswds';
 import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
 import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
 import SupportingAttachmentsSessionOrCommunication from '../../../components/SupportAttachmentsSessionOrCommunication';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 const path = 'supporting-attachments';
 const position = 3;
@@ -32,6 +33,7 @@ export default {
     Alert,
   ) => (
     <div className="padding-x-1">
+      <IndicatesRequiredField />
       <SupportingAttachmentsSessionOrCommunication
         reportId={reportId}
         visitedFieldName={supportingAttachmentsVisitedField}
@@ -40,7 +42,7 @@ export default {
       />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue'}</Button>
         {
           // if status is 'Completed' then don't show the save draft button.
           additionalData
@@ -48,7 +50,7 @@ export default {
           && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
             <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
           )
-        }
+}
         <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
     </div>
