@@ -375,7 +375,7 @@ const logsByScopes = async (
   return {
     // using the sequelize literal in the where clause above causes the count to be incorrect
     // given the outer join, so we have to manually count the rows
-    count: slice.length,
+    count: logs.length,
     rows: slice,
   };
 };
