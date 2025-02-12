@@ -43,7 +43,7 @@ export default {
           idKey="communicationLogId"
         >
           <Label className="margin-top-0" htmlFor="files">
-            Upload any relevant attachments
+            Upload any relevant attachments.
           </Label>
         </SupportingAttachmentsSessionOrCommunication>
         <Alert />

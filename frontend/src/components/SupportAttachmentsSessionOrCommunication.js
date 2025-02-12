@@ -33,7 +33,10 @@ const SupportingAttachmentsSessionOrCommunication = ({
         <FormGroup error={fileError} className="margin-top-0">
           <div id="attachments" />
           {children}
-          <span className="usa-hint font-sans-3xs">Example: .doc, .pdf, .txt, .csv (max size 30 MB)</span>
+          <span className="usa-hint font-sans-3xs">
+            File types accepted:
+            images, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv (max size 30 MB)
+          </span>
           { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
           <Controller
             name="files"
