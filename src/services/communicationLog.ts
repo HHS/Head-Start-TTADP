@@ -55,11 +55,18 @@ export const COMMUNICATION_LOG_SORT_KEYS = {
   PURPOSE: 'Purpose',
   RESULT: 'Result',
   DATE: 'Date',
+  ID: 'Log_ID',
 };
 
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   let result = [];
   switch (sortBy) {
+    case COMMUNICATION_LOG_SORT_KEYS.ID:
+      result = [[
+        'id',
+        sortDir,
+      ]];
+      break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
       result = [[
         sequelize.literal(`author.name ${sortDir}`),
@@ -101,7 +108,6 @@ const LOG_INCLUDE_ATTRIBUTES = {
       sequelize.col('author.name'), 'authorName',
     ],
   ],
-  exclude: ['recipientId'], // I don't fully understand why we have to do this, the column has been removed from the model and the DB but still Sequelize tries to give it to me
 };
 
 const LOG_WHERE_OPTIONS = (id: number) => ({
@@ -330,7 +336,7 @@ const logsByScopes = async (
   sortBy = 'communicationDate',
   offset = 0,
   direction = 'desc',
-  limit = COMMUNICATION_LOGS_PER_PAGE || false,
+  limit = COMMUNICATION_LOGS_PER_PAGE,
   scopes: WhereOptions[] = [],
 ) => {
   const logs = await CommunicationLog
@@ -362,16 +368,15 @@ const logsByScopes = async (
         },
       ],
       order: orderLogsBy(sortBy, direction),
-      limit: limit || undefined,
-      offset,
-      subQuery: false,
     });
+
+  const slice = logs.slice(offset, offset + limit);
 
   return {
     // using the sequelize literal in the where clause above causes the count to be incorrect
     // given the outer join, so we have to manually count the rows
-    count: logs.length,
-    rows: logs,
+    count: slice.length,
+    rows: slice,
   };
 };
 
