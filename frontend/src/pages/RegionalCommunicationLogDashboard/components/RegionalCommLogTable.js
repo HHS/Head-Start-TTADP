@@ -11,7 +11,7 @@ import useWidgetSorting from '../../../hooks/useWidgetSorting';
 import { EMPTY_ARRAY } from '../../../Constants';
 import { deleteCommunicationLogById, getCommunicationLogs } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
-import { UsersIcon } from '../../../components/icons';
+import { UserGroupIcon } from '../../../components/icons';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
@@ -167,7 +167,7 @@ export default function RegionalCommLogTable({ filters }) {
           isInternalLink: true,
           link: `/communication-log/region/${log.data.regionId}/log/${log.id}/view`,
           suffixContent:
-            log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
+            log.recipients && log.recipients.length > 1 ? <UserGroupIcon /> : null,
           data: [
             { title: 'Recipient', value: log.recipients.map((r) => r.name).join(', '), tooltip: true },
             { title: 'Date', value: log.data.communicationDate },
