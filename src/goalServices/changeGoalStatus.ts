@@ -24,17 +24,19 @@ export async function changeGoalStatusWithSystemUser({
     throw new Error('Goal not found');
   }
 
-  // Change goal status.
-  await db.GoalStatusChange.create({
-    goalId: goal.id,
-    userId: null, // For now we will use null to prevent FK constraint violation.
-    userName: 'system',
-    userRoles: null,
-    oldStatus: goal.status,
-    newStatus,
-    reason,
-    context,
-  });
+  // Only create status change if status is actually changing
+  if (goal.status !== newStatus) {
+    await db.GoalStatusChange.create({
+      goalId: goal.id,
+      userId: null, // For now we will use null to prevent FK constraint violation.
+      userName: 'system',
+      userRoles: null,
+      oldStatus: goal.status,
+      newStatus,
+      reason,
+      context,
+    });
+  }
 
   // Reload goal.
   await goal.reload();
@@ -74,16 +76,18 @@ export default async function changeGoalStatus({
 
   const oldStatus = goal.status;
 
-  await db.GoalStatusChange.create({
-    goalId,
-    userId,
-    userName: user.name,
-    userRoles: user.roles.map((role) => role.name),
-    oldStatus,
-    newStatus,
-    reason,
-    context,
-  });
+  if (oldStatus !== newStatus) {
+    await db.GoalStatusChange.create({
+      goalId,
+      userId,
+      userName: user.name,
+      userRoles: user.roles.map((role) => role.name),
+      oldStatus,
+      newStatus,
+      reason,
+      context,
+    });
+  }
 
   await goal.reload();
 
