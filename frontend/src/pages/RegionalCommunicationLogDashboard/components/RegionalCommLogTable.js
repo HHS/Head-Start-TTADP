@@ -17,7 +17,7 @@ import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 const COMMUNICATION_LOG_PER_PAGE = 10;
 
 const DEFAULT_SORT_CONFIG = {
-  sortBy: 'communicationDate',
+  sortBy: 'Log_ID',
   direction: 'desc',
   activePage: 1,
 };
