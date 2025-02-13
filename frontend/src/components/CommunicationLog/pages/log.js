@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
   Alert,
@@ -41,6 +42,7 @@ const Log = ({
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
+  const today = useMemo(() => moment().format('MM/DD/YYYY'), []);
 
   return (
     <>
@@ -102,6 +104,7 @@ const Log = ({
             name="communicationDate"
             value={communicationDate}
             inputId="communicationDate"
+            maxDate={today}
           />
         </FormItem>
       </div>
