@@ -147,8 +147,6 @@ const createLog = async (
   const log = await CommunicationLog.create({
     userId,
     data: formatCommunicationDateWithJsonData(data),
-  // I don't fully understand why we have to do this, the recipientId column has been removed from
-  // the model and the DB but still Sequelize tries to give it to me
   }, { returning: ['id'] });
 
   await CommunicationLogRecipient.bulkCreate(
@@ -159,177 +157,6 @@ const createLog = async (
   );
 
   return logById(log.id);
-};
-
-const csvLogsByRecipientAndScopes = async (
-  recipientId: number,
-  sortBy = 'communicationDate',
-  offset = 0,
-  direction = 'desc',
-  scopes: WhereOptions[] = [],
-) => {
-  const logs = await CommunicationLog
-    .findAll({
-      attributes: LOG_INCLUDE_ATTRIBUTES,
-      where: {
-        [Op.and]: [
-          ...scopes,
-        ],
-      },
-      include: [
-        {
-          model: db.Recipient,
-          as: 'recipients',
-          required: true,
-          where: {
-            id: recipientId,
-          },
-        },
-        {
-          model: db.User,
-          attributes: [
-            'name',
-            'id',
-          ],
-          as: 'author',
-        },
-        {
-          model: db.File,
-          as: 'files',
-          attributes: [
-            'id',
-            'originalFileName',
-          ],
-        },
-      ],
-      order: orderLogsBy(sortBy, direction),
-      offset,
-    });
-
-  // convert to csv
-  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
-
-  // base options
-  const options = {
-    header: true,
-    quoted: true,
-    quoted_empty: true,
-  };
-
-  return stringify(
-    data,
-    options,
-  );
-};
-
-const logsByRecipientAndScopes = async (
-  recipientId: number,
-  sortBy = 'communicationDate',
-  offset = 0,
-  direction = 'desc',
-  limit = COMMUNICATION_LOGS_PER_PAGE || false,
-  scopes: WhereOptions[] = [],
-) => {
-  const logs = await CommunicationLog
-    .findAll({
-      attributes: LOG_INCLUDE_ATTRIBUTES,
-      where: {
-        [Op.and]: [
-          ...scopes,
-          {
-            id: {
-              [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
-            },
-          },
-        ],
-      },
-      include: [
-        {
-          model: db.Recipient,
-          as: 'recipients',
-          required: false,
-        },
-        {
-          model: db.File,
-          as: 'files',
-          required: false,
-        },
-        {
-          model: db.User,
-          attributes: [
-            'name',
-            'id',
-          ],
-          as: 'author',
-        },
-      ],
-      order: orderLogsBy(sortBy, direction),
-      limit: limit || undefined,
-      offset,
-      subQuery: false,
-    });
-
-  return {
-    // using the sequelize literal in the where clause above causes the count to be incorrect
-    // given the outer join, so we have to manually count the rows
-    count: logs.length,
-    rows: logs,
-  };
-};
-
-const csvLogsByScopes = async (
-  sortBy = 'communicationDate',
-  offset = 0,
-  direction = 'desc',
-  scopes: WhereOptions[] = [],
-) => {
-  const logs = await CommunicationLog
-    .findAll({
-      attributes: LOG_INCLUDE_ATTRIBUTES,
-      where: {
-        [Op.and]: [
-          ...scopes,
-        ],
-      },
-      include: [
-        {
-          model: db.Recipient,
-          as: 'recipients',
-          required: false,
-        },
-        {
-          model: db.File,
-          as: 'files',
-          required: false,
-        },
-        {
-          model: db.User,
-          attributes: [
-            'name',
-            'id',
-          ],
-          as: 'author',
-        },
-      ],
-      order: orderLogsBy(sortBy, direction),
-      offset,
-      subQuery: false,
-    });
-
-  // convert to csv
-  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
-
-  // base options
-  const options = {
-    header: true,
-    quoted: true,
-    quoted_empty: true,
-  };
-
-  return stringify(
-    data,
-    options,
-  );
 };
 
 const logsByScopes = async (
@@ -379,6 +206,100 @@ const logsByScopes = async (
     rows: slice,
   };
 };
+
+const csvLogsByScopes = async (
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  scopes: WhereOptions[] = [],
+) => {
+  const { rows: logs } = await logsByScopes(
+    sortBy,
+    offset,
+    direction,
+    COMMUNICATION_LOGS_PER_PAGE,
+    scopes,
+  );
+
+  // convert to csv
+  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
+
+  // base options
+  const options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+  };
+
+  return stringify(
+    data,
+    options,
+  );
+};
+
+const csvLogsByRecipientAndScopes = async (
+  recipientId: number,
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  scopes: WhereOptions[] = [],
+) => {
+  const { rows: logs } = await logsByScopes(
+    sortBy,
+    offset,
+    direction,
+    COMMUNICATION_LOGS_PER_PAGE,
+    [
+      ...scopes,
+      {
+        id: {
+          // we do this instead of an inner join since we want to include other recipients
+          // not just the recipient with the specified ID
+          [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
+        },
+      },
+    ],
+  );
+
+  // convert to csv
+  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
+
+  // base options
+  const options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+  };
+
+  return stringify(
+    data,
+    options,
+  );
+};
+
+const logsByRecipientAndScopes = async (
+  recipientId: number,
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  limit = COMMUNICATION_LOGS_PER_PAGE,
+  scopes: WhereOptions[] = [],
+) => logsByScopes(
+  sortBy,
+  offset,
+  direction,
+  limit,
+  [
+    ...scopes,
+    {
+      id: {
+        // we do this instead of an inner join since we want to include other recipients
+        // not just the recipient with the specified ID
+        [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
+      },
+    },
+  ],
+);
 
 const deleteLog = async (id: number) => CommunicationLog.destroy({
   where: {
