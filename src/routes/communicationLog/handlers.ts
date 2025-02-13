@@ -167,7 +167,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const limitNumber = Number(limit) || false;
+    const limitNumber = Number(limit || 100);
 
     if (format === 'csv') {
       const logs = await csvLogsByRecipientAndScopes(
@@ -214,7 +214,7 @@ const communicationLogs = async (req: Request, res: Response) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const limitNumber = Number(limit || 0);
+    const limitNumber = Number(limit || 100);
 
     if (format === 'csv') {
       const logs = await csvLogsByScopes(

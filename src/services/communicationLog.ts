@@ -243,39 +243,21 @@ const csvLogsByRecipientAndScopes = async (
   offset = 0,
   direction = 'desc',
   scopes: WhereOptions[] = [],
-) => {
-  const { rows: logs } = await logsByScopes(
-    sortBy,
-    offset,
-    direction,
-    COMMUNICATION_LOGS_PER_PAGE,
-    [
-      ...scopes,
-      {
-        id: {
-          // we do this instead of an inner join since we want to include other recipients
-          // not just the recipient with the specified ID
-          [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
-        },
+) => csvLogsByScopes(
+  sortBy,
+  offset,
+  direction,
+  [
+    ...scopes,
+    {
+      id: {
+        // we do this instead of an inner join since we want to include other recipients
+        // not just the recipient with the specified ID
+        [Op.in]: sequelize.literal(`(SELECT "communicationLogId" FROM "CommunicationLogRecipients" WHERE "recipientId" = ${sequelize.escape(recipientId)})`),
       },
-    ],
-  );
-
-  // convert to csv
-  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
-
-  // base options
-  const options = {
-    header: true,
-    quoted: true,
-    quoted_empty: true,
-  };
-
-  return stringify(
-    data,
-    options,
-  );
-};
+    },
+  ],
+);
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
