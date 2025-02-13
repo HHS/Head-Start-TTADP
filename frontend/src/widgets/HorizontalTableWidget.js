@@ -265,12 +265,15 @@ export default function HorizontalTableWidget(
                         : showDashForNullValue && !d.value
                           ? '-'
                           : d.tooltip
-                            ? <Tooltip
+                            ? (
+                              <Tooltip
                                 displayText={d.value}
                                 tooltipText={d.value}
                                 buttonLabel="click to reveal"
                                 position={index < 2 ? 'bottom' : 'top'}
                               />
+                            )
+
                             : d.value
                     }
                   </td>
