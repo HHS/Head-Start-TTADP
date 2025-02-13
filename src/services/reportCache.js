@@ -1,6 +1,7 @@
 import {
   processActivityReportObjectiveForResourcesById,
 } from './resource';
+import { auditLogger } from '../logger';
 
 const { Op } = require('sequelize');
 const {
@@ -107,7 +108,13 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => topic.id);
+  const topicIds = topics.map((topic) => {
+    if (!topic.id) {
+      auditLogger.error(`Error saving ARO topics: ${JSON.stringify(topics)} for objectiveId: ${objectiveId} and activityReportObjectiveId: ${activityReportObjectiveId}`);
+    }
+    return topic.id;
+  });
+
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
