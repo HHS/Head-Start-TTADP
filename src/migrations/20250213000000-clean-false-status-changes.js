@@ -7,7 +7,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       return queryInterface.sequelize.query(`
-        -- Remove extra GoalStatusChange entiries that:
+        -- Remove extra GoalStatusChange entries that:
         --  - were inserted when Goals didn't actually change status
         --  - are duplicate insertions of the same status change
         -- Also update Goals that have the incorrect "oldStatus" value.
@@ -36,7 +36,8 @@ module.exports = {
         ORDER BY "createdAt"
         ;
 
-        -- Complete the Objectives
+        -- Delete any Goal status changes that don't actually have a different
+        -- newStatus value than the preceding record.
         DROP TABLE IF EXISTS deleted_gsc;
         CREATE TEMP TABLE deleted_gsc
         AS
@@ -50,7 +51,7 @@ module.exports = {
         SELECT * FROM updater
         ;
 
-        -- Complete the Goals
+        -- Correct any real Goal status changes that have incorrect oldStatus values
         DROP TABLE IF EXISTS updated_gsc;
         CREATE TEMP TABLE updated_gsc
         AS
