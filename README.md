@@ -25,8 +25,8 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 #### Docker
 
-[!NOTE]
-If you run into issues during any of these steps, check the [troubleshooting](#notes-and-troubleshooting) section
+> [!NOTE]
+> If you run into issues during any of these steps, check the [troubleshooting](#notes-and-troubleshooting) section
 
 1. Install Docker. To check run `docker ps`.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
