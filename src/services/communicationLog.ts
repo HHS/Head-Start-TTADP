@@ -55,11 +55,18 @@ export const COMMUNICATION_LOG_SORT_KEYS = {
   PURPOSE: 'Purpose',
   RESULT: 'Result',
   DATE: 'Date',
+  ID: 'Log_ID',
 };
 
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   let result = [];
   switch (sortBy) {
+    case COMMUNICATION_LOG_SORT_KEYS.ID:
+      result = [[
+        'id',
+        sortDir,
+      ]];
+      break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
       result = [[
         sequelize.literal(`author.name ${sortDir}`),
@@ -101,7 +108,6 @@ const LOG_INCLUDE_ATTRIBUTES = {
       sequelize.col('author.name'), 'authorName',
     ],
   ],
-  exclude: ['recipientId'], // I don't fully understand why we have to do this, the column has been removed from the model and the DB but still Sequelize tries to give it to me
 };
 
 const LOG_WHERE_OPTIONS = (id: number) => ({
@@ -271,6 +277,109 @@ const logsByRecipientAndScopes = async (
   };
 };
 
+const csvLogsByScopes = async (
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  scopes: WhereOptions[] = [],
+) => {
+  const logs = await CommunicationLog
+    .findAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      where: {
+        [Op.and]: [
+          ...scopes,
+        ],
+      },
+      include: [
+        {
+          model: db.Recipient,
+          as: 'recipients',
+          required: false,
+        },
+        {
+          model: db.File,
+          as: 'files',
+          required: false,
+        },
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+      offset,
+      subQuery: false,
+    });
+
+  // convert to csv
+  const data = await Promise.all(logs.map((log) => communicationLogToCsvRecord(log)));
+
+  // base options
+  const options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+  };
+
+  return stringify(
+    data,
+    options,
+  );
+};
+
+const logsByScopes = async (
+  sortBy = 'communicationDate',
+  offset = 0,
+  direction = 'desc',
+  limit: number = COMMUNICATION_LOGS_PER_PAGE,
+  scopes: WhereOptions[] = [],
+) => {
+  const logs = await CommunicationLog
+    .findAll({
+      attributes: LOG_INCLUDE_ATTRIBUTES,
+      where: {
+        [Op.and]: [
+          ...scopes,
+        ],
+      },
+      include: [
+        {
+          model: db.Recipient,
+          as: 'recipients',
+          required: false,
+        },
+        {
+          model: db.File,
+          as: 'files',
+          required: false,
+        },
+        {
+          model: db.User,
+          attributes: [
+            'name',
+            'id',
+          ],
+          as: 'author',
+        },
+      ],
+      order: orderLogsBy(sortBy, direction),
+    });
+
+  const slice = logs.slice(offset, offset + limit);
+
+  return {
+    // using the sequelize literal in the where clause above causes the count to be incorrect
+    // given the outer join, so we have to manually count the rows
+    count: logs.length,
+    rows: slice,
+  };
+};
+
 const deleteLog = async (id: number) => CommunicationLog.destroy({
   where: {
     id,
@@ -324,6 +433,8 @@ export {
   logById,
   logsByRecipientAndScopes,
   csvLogsByRecipientAndScopes,
+  logsByScopes,
+  csvLogsByScopes,
   deleteLog,
   updateLog,
   createLog,

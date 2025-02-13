@@ -153,4 +153,46 @@ describe('RegionalCommunicationLog', () => {
 
     await waitFor(() => expect(fetchMock.calls()).toHaveLength(3));
   });
+
+  it('will save a log that is "new" and progress to supporting attachments', async () => {
+    fetchMock.get('/api/communication-logs/region/1/log/new', 404);
+    fetchMock.post('/api/communication-logs/log', completeLog);
+
+    act(() => {
+      renderComponent('/region/1/log/new/log');
+    });
+
+    expect(fetchMock.calls()).toHaveLength(1);
+
+    const view = screen.getByTestId('otherStaff-click-container');
+    const select = within(view).getByText(/- select -/i);
+    userEvent.click(select);
+    await act(async () => {
+      userEvent.type(select, 'One');
+      userEvent.type(select, '{enter}');
+    });
+
+    const communicationDate = document.querySelector('#communicationDate');
+    userEvent.type(communicationDate, '11/01/2023');
+
+    const duration = await screen.findByLabelText(/duration in hours/i);
+    userEvent.type(duration, '1');
+
+    const method = await screen.findByLabelText(/How was the communication conducted/i);
+    userEvent.selectOptions(method, 'Phone');
+
+    const purpose = await screen.findByLabelText(/purpose of communication/i);
+    userEvent.selectOptions(purpose, 'New TTA request');
+
+    const notes = await screen.findByLabelText(/notes/i);
+    userEvent.type(notes, 'This is a note');
+
+    const result = await screen.findByLabelText(/result/i);
+    userEvent.selectOptions(result, 'Next Steps identified');
+
+    const saveButton = screen.getByRole('button', { name: 'Save and continue' });
+    userEvent.click(saveButton);
+
+    await waitFor(() => expect(screen.getByText('Supporting attachments')).toBeInTheDocument());
+  });
 });

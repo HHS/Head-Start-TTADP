@@ -62,6 +62,28 @@ export const getCommunicationLogsByRecipientId = async (
   return response.json();
 };
 
+export const getCommunicationLogs = async (
+  sortBy, direction, offset, limit = 10, filters = [], format = 'json',
+) => {
+  const query = filtersToQueryString(filters);
+
+  const limitQuery = limit ? `&limit=${limit}` : '';
+  const queryString = `?sortBy=${sortBy}&direction=${direction}&offset=${offset}${limitQuery}&format=${format}&${query}`;
+
+  const response = await get(
+    `${join(
+      communicationLogUrl,
+      'region',
+    )}${queryString}`,
+  );
+
+  if (format === 'csv') {
+    return response.blob();
+  }
+
+  return response.json();
+};
+
 export const updateCommunicationLogById = async (logId, data) => {
   const response = await put(
     join(

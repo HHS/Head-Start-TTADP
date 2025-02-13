@@ -45,6 +45,8 @@ import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
+import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
+import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 
 export default function Routes({
   alert,
@@ -304,7 +306,17 @@ export default function Routes({
             </AppWrapper>
           )}
         />
-
+        <Route
+          exact
+          path="/communication-log"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
+                <RegionalCommunicationLogDashboard />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
         <Route
           exact
           path="/account"
@@ -351,6 +363,17 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/communication-log/region/:regionId/log/:logId/view"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
+                <ViewRegionalCommunicationLog match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />

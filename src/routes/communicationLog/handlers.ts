@@ -14,6 +14,8 @@ import {
   updateLog,
   createLog,
   csvLogsByRecipientAndScopes,
+  csvLogsByScopes,
+  logsByScopes,
 } from '../../services/communicationLog';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
@@ -193,6 +195,51 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
   }
 };
 
+const communicationLogs = async (req: Request, res: Response) => {
+  try {
+    const policy = await getAuthorizationByRegion(req, res);
+    if (!policy.canReadLog()) {
+      res.status(httpCodes.FORBIDDEN).send();
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const {
+      sortBy,
+      offset,
+      direction,
+      limit,
+      format,
+    } = req.query;
+    const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
+    const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
+
+    const limitNumber = Number(limit || 0);
+
+    if (format === 'csv') {
+      const logs = await csvLogsByScopes(
+        String(sortBy),
+        Number(offset),
+        String(direction),
+        scopes,
+      );
+      res.send(logs);
+      return;
+    }
+
+    const logs = await logsByScopes(
+      String(sortBy),
+      Number(offset),
+      String(direction),
+      limitNumber,
+      scopes,
+    );
+    res.status(httpCodes.OK).json(logs);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+};
+
 const updateLogById = async (req: Request, res: Response) => {
   try {
     const policy = await getAuthorizationByLogId(req, res);
@@ -273,6 +320,7 @@ export {
   communicationLogAdditionalData,
   communicationLogById,
   communicationLogsByRecipientId,
+  communicationLogs,
   updateLogById,
   deleteLogById,
   createLogByRecipientId,
