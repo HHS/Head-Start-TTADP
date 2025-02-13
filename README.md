@@ -21,7 +21,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 ## Development Setup
 
-### Run With Docker
+#### Run With Docker
 
 1. Install Docker. To check run `docker ps`.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
@@ -43,7 +43,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 > Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the [docs/openapi](docs/openapi) folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
-### Troubleshooting
+#### Troubleshooting
 
 If you see errors that the version of nodejs is incorrect, you may have older versions of the containers built.
 Delete those images and rerun ``yarn docker:reset`.
@@ -53,7 +53,7 @@ When using Docker to run either the full app or the backend services, PostgreSQL
 On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
 `brew install docker-compose`
 
-#### Apple Silicon & Chromium
+**Apple Silicon & Chromium**
 
 If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
 
@@ -71,7 +71,7 @@ export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
 
-### Run Natively
+#### Run Natively
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
