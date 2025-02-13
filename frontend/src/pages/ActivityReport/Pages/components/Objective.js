@@ -134,6 +134,7 @@ export default function Objective({
     rules: {
       validate: {
         notEmpty: (value) => (value && value.length) || OBJECTIVE_TOPICS,
+        noNullId: (value) => value.every((topic) => topic.id) || OBJECTIVE_TOPICS,
       },
     },
     defaultValue: objective.topics,

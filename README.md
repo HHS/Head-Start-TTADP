@@ -535,6 +535,10 @@ Our project includes four deployed Postgres databases, one to interact with each
    cf disallow-space-ssh ttahub-prod
    ```
 
+##### Example: Manual import of Monitoring data
+Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
+
+
 ### Taking a production backup via CircleCI
 
 We can quickly take a production backup via the CircleCI web interface. To do so, go to the `production` branch there and trigger a pipeline with the variable `manual-trigger` set to true. You can then retrieve this backup with the script `bin/latest_backup.sh`.
