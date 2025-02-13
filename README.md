@@ -21,32 +21,57 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 ## Getting Started
 
-### Set up
+### Local Setup
 
 #### Docker
 
-1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 18.20.6 installed.
+[!NOTE]
+If you run into issues during any of these steps, check the [troubleshooting](#notes-and-troubleshooting) section
+
+1. Install Docker. To check run `docker ps`.
+2. Install Node, matching the version in [.nvmrc](.nvmrc).
 3. Copy `.env.example` to `.env`.
 4. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
 5. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
-6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
+6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
 7. Run `yarn docker:start` to start the application.
 
-- The [frontend][frontend] will be available on `localhost:3000` \*
-- The [backend][backend] will run on `localhost:8080`
-- [API documentation][API documentation] will run on `localhost:5003`
-- [minio][minio] (used for file storage) will run on `localhost:9000`.
+   - The [frontend][frontend] will run on `localhost:3000`
+   - The [backend][backend] will run on `localhost:8080`
+   - [API documentation][API documentation] will run on `localhost:5003`
+   - [minio][minio] (S3-compatible file storage) will run on `localhost:9000`
 
 8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
-[!NOTE]
+#### Notes and Troubleshooting
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
 When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
+
+##### Apple Silicon & Chromium
+
+If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
+
+On a Mac with Apple Silicon, puppeteer install fails with the message:
+`"The chromium binary is not available for arm64"`
+
+See [docker-compose.override.yml](docker-compose.override.yml) and uncomment the relevant lines to skip downloading chromium and use the host's binary instead.
+
+You will need to have chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
+
+To ~/.zshrc (or your particular shell config), you'll need to add:
+
+```sh
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+```
+
+On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
+
+`brew install docker-compose`
 
 #### Import Current Production Data
 
@@ -74,26 +99,6 @@ create database ttasmarthub;
 
 On Windows
 TBD
-
-#### Apple Silicon & Chromium
-
-On a Mac with Apple Silicon, puppeteer install fails with the message:
-`"The chromium binary is not available for arm64"`
-
-See [docker-compose.override.yml](docker-compose.override.yml) and uncomment the relevant lines to skip downloading chromium and use the host's binary instead.
-
-You will need to have chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
-
-To ~/.zshrc (or your particular shell config), you'll need to add:
-
-```sh
-export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-export PUPPETEER_EXECUTABLE_PATH=`which chromium`
-```
-
-On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
-
-`brew install docker-compose`
 
 #### Local build
 
