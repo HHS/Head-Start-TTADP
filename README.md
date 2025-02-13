@@ -23,9 +23,6 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 ### Set up
 
-_Warning_ when using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of
-those services are already running on your machine.
-
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
@@ -33,13 +30,23 @@ those services are already running on your machine.
 3. Copy `.env.example` to `.env`.
 4. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
 5. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
-6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`. See the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
-7. Run `yarn docker:start` to start the application. The [frontend][frontend] will be available on `localhost:3000` and the [backend][backend] will run on `localhost:8080`, [API documentation][API documentation] will run on `localhost:5003`, and [minio][minio] will run on `localhost:9000`.
+6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
+7. Run `yarn docker:start` to start the application.
+
+- The [frontend][frontend] will be available on `localhost:3000` \*
+- The [backend][backend] will run on `localhost:8080`
+- [API documentation][API documentation] will run on `localhost:5003`
+- [minio][minio] (used for file storage) will run on `localhost:9000`.
+
 8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+
+[!NOTE]
+
+Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
-Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
 
 #### Import Current Production Data
 
@@ -103,10 +110,10 @@ If you are not using your own custom pre-commit hooks:
 - start from repo root directory
 - make the pre-commit file executable:
   `chmod 755 .githooks/pre-commit`
-- change your default hooks directory to [.githooks](.githooks)`:
-`git config core.hooksPath .githooks`
+- change your default hooks directory to [.githooks](.githooks):
+  `git config core.hooksPath .githooks`
 
-If you are already using git hooks, add the .githooks/pre-commit contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
+If you are already using git hooks, add the [.githooks/pre-commit](.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
 ### Building Tests
 
@@ -536,8 +543,8 @@ Our project includes four deployed Postgres databases, one to interact with each
    ```
 
 ##### Example: Manual import of Monitoring data
-Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
 
+Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
 
 ### Taking a production backup via CircleCI
 
