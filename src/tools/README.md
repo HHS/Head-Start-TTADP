@@ -24,6 +24,7 @@ and chose the production option (option 2 as of the writing of these instruction
 The download and process steps will need to be run once each per day that needs catchup, such as on a Monday after the weekend. Thus, the steps would go: 1,2,3,4,3,4,3,4,5.
 
 ### Adding validation via the prod database
+These are easiest to do in a separate terminal window alongside the one you're using to run the basic command sequence. Otherwise you would have to exit out of the basic command sequence, run these commands, then go exit out and rerun steps 1 and 2 above in order to resume where you were.
 
 1. `cf connect-to-service tta-smarthub-prod ttahub-prod` to connent to the production database console
 2. `SELECT "ftpFileInfo"->>'name' filename ,status, "createdAt" FROM "ImportFiles" ORDER BY 3 DESC LIMIT 4;` to inspect the progress of steps 3 and 4 above
