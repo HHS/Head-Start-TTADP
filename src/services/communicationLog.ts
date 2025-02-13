@@ -166,13 +166,34 @@ const logsByScopes = async (
   limit: number = COMMUNICATION_LOGS_PER_PAGE,
   scopes: WhereOptions[] = [],
 ) => {
+  const scopedLogs = await CommunicationLog.findAndCountAll({
+    attributes: [
+      'id',
+    ],
+    where: {
+      [Op.and]: [
+        ...scopes,
+      ],
+    },
+    include: [
+      {
+        model: db.User,
+        attributes: ['name'],
+        as: 'author',
+      },
+    ],
+    limit,
+    offset,
+    order: orderLogsBy(sortBy, direction),
+  });
+
+  const scopedIds = scopedLogs.rows.map((log) => log.id);
+
   const logs = await CommunicationLog
     .findAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
       where: {
-        [Op.and]: [
-          ...scopes,
-        ],
+        id: scopedIds,
       },
       include: [
         {
@@ -197,13 +218,11 @@ const logsByScopes = async (
       order: orderLogsBy(sortBy, direction),
     });
 
-  const slice = logs.slice(offset, offset + limit);
-
   return {
     // using the sequelize literal in the where clause above causes the count to be incorrect
     // given the outer join, so we have to manually count the rows
-    count: logs.length,
-    rows: slice,
+    count: scopedLogs.count,
+    rows: logs,
   };
 };
 
