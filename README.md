@@ -38,13 +38,12 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
-**Notes**
+> [!NOTE]
+> The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
-The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
+> Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the [docs/openapi](docs/openapi) folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
-Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
-
-**Troubleshooting**
+### Troubleshooting
 
 If you see errors that the version of nodejs is incorrect, you may have older versions of the containers built.
 Delete those images and rerun ``yarn docker:reset`.
@@ -54,7 +53,7 @@ When using Docker to run either the full app or the backend services, PostgreSQL
 On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
 `brew install docker-compose`
 
-**Apple Silicon & Chromium**
+#### Apple Silicon & Chromium
 
 If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
 
@@ -121,7 +120,7 @@ If you are already using git hooks, add the [.githooks/pre-commit](.githooks/pre
 
 ## Local Testing
 
-### Running Tests With Docker
+### Running Tests
 
 If switching branches for code review, run `yarn docker:reset` before running your tests.
 
