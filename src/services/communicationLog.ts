@@ -160,7 +160,7 @@ const createLog = async (
 };
 
 const logsByScopes = async (
-  sortBy = 'communicationDate',
+  sortBy = COMMUNICATION_LOG_SORT_KEYS.ID,
   offset = 0,
   direction = 'desc',
   limit: number = COMMUNICATION_LOGS_PER_PAGE,
@@ -280,7 +280,7 @@ const csvLogsByRecipientAndScopes = async (
 
 const logsByRecipientAndScopes = async (
   recipientId: number,
-  sortBy = 'communicationDate',
+  sortBy = COMMUNICATION_LOG_SORT_KEYS.ID,
   offset = 0,
   direction = 'desc',
   limit = COMMUNICATION_LOGS_PER_PAGE,
