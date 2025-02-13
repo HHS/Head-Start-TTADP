@@ -8,6 +8,7 @@ import {
   createLogByRecipientId,
   communicationLogAdditionalData,
   createLogByRegionId,
+  communicationLogs,
 } from './handlers';
 import {
   checkIdIdParam, checkRecipientIdParam, checkRegionIdParam,
@@ -37,6 +38,10 @@ router.get(
   checkRegionIdParam,
   checkRecipientIdParam,
   transactionWrapper(communicationLogsByRecipientId, `${context} /recipient/:recipientId`),
+);
+router.get(
+  '/region',
+  transactionWrapper(communicationLogs, `${context} /region`),
 );
 router.put(
   '/log/:id',
