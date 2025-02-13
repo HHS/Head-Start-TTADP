@@ -19,14 +19,9 @@ Welcome to the home of the OHS TTAHUB.
 
 For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
 
-## Getting Started
+## Development Setup
 
-### Local Setup
-
-#### Docker
-
-> [!NOTE]
-> If you run into issues during any of these steps, check the [troubleshooting](#notes-and-troubleshooting) section
+### Run With Docker
 
 1. Install Docker. To check run `docker ps`.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
@@ -43,17 +38,25 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
-#### Notes and Troubleshooting
-
-Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+**Notes**
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
+Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+
+#### Troubleshooting
+
+If you see errors that the version of nodejs is incorrect, you may have older versions of the containers built.
+Delete those images and rerun ``yarn docker:reset`.
+
 When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
 
-##### Apple Silicon & Chromium
+On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
+`brew install docker-compose`
 
-If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
+**Apple Silicon & Chromium**
+
+If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
 
 On a Mac with Apple Silicon, puppeteer install fails with the message:
 `"The chromium binary is not available for arm64"`
@@ -69,9 +72,11 @@ export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
 
-On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
+#### Run Natively
 
-`brew install docker-compose`
+You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
+
+You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
 #### Import Current Production Data
 
@@ -99,12 +104,6 @@ create database ttasmarthub;
 
 On Windows
 TBD
-
-#### Local build
-
-You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
-
-You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
 #### Precommit hooks
 
