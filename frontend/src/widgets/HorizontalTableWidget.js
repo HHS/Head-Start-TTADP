@@ -237,7 +237,14 @@ export default function HorizontalTableWidget(
                     r.isUrl
                       ? handleUrl(r)
                       : r.tooltip
-                        ? <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" />
+                        ? (
+                          <Tooltip
+                            displayText={r.heading || JSON.stringify(r)}
+                            tooltipText={r.heading || JSON.stringify(r)}
+                            buttonLabel="click to reveal"
+                            position={index < 2 ? 'bottom' : 'top'}
+                          />
+                        )
                         : r.heading
                   }
                   {
@@ -258,7 +265,12 @@ export default function HorizontalTableWidget(
                         : showDashForNullValue && !d.value
                           ? '-'
                           : d.tooltip
-                            ? <Tooltip displayText={d.value} tooltipText={d.value} buttonLabel="click to reveal" />
+                            ? <Tooltip
+                                displayText={d.value}
+                                tooltipText={d.value}
+                                buttonLabel="click to reveal"
+                                position={index < 2 ? 'bottom' : 'top'}
+                              />
                             : d.value
                     }
                   </td>
