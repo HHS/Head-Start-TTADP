@@ -96,17 +96,15 @@ You must also install and run minio locally to use the file upload functionality
 
 #### Precommit hooks
 
-Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in .gihooks/pre-commit, also contains code to auto-format our terraform files, which you can read more about [here](https://github.com/HHS/Head-Start-TTADP/tree/main/terraform#README.md).
+Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in .gihooks/pre-commit, also contains code to auto-format our terraform files, which you can read more about [here](terraform/README.md).
 
 If you are not using your own custom pre-commit hooks:
 
-- **start from repo root directory**
-
-- **make the pre-commit file executable**
-  chmod 755 .githooks/pre-commit
-
-- **change your default hooks directory to `.githooks`.**
-  git config core.hooksPath .githooks
+- start from repo root directory
+- make the pre-commit file executable:
+  `chmod 755 .githooks/pre-commit`
+- change your default hooks directory to `.githooks`:
+  `git config core.hooksPath .githooks`
 
 If you are already using git hooks, add the .githooks/pre-commit contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
@@ -224,31 +222,31 @@ This Uncovered lines on PR builds can be configured to fail builds by either per
 
 ## Yarn Commands
 
-| Docker Command                | Description                                                                                  | Host Command            | Local only Command |
-| ----------------------------- | -------------------------------------------------------------------------------------------- | ----------------------- | ------------------ | --- |
-| `yarn docker:deps`            | Install dependencies for the frontend and backend                                            | `yarn deps`             | `yarn deps:local`  |
-| `yarn docker:start`           | Starts the backend and frontend                                                              |                         | `yarn start:local` |
-| `yarn docker:stop`            | Stops the backend and frontend                                                               |                         |                    |
-| `yarn docker:dbs:start`       | Start only the supporting services                                                           |                         |                    |
-| `yarn docker:dbs:stop`        | Stop only the supporting services                                                            |                         |                    |
-| `yarn docker:test`            | Runs tests for the frontend and backend                                                      |                         |                    |
-| `yarn docker:lint`            | Runs the linter for the frontend and backend                                                 |                         |                    |
-| `yarn docker:db:migrate`      | Run migrations in docker containers                                                          | `yarn db:migrate`       |                    |
-| `yarn docker:db:migrate:undo` | Undo migrations in docker containers                                                         | `yarn db:migrate:undo`  |                    |
-| `yarn docker:db:seed`         | Run all seeders located in `src/seeders`                                                     | `yarn db:seed`          |                    |
-| `yarn docker:db:seed:undo`    | Undo all seeders located in `src/seeders`                                                    | `yarn db:seed:undo`     |                    |
-|                               | Starts the backend web process                                                               | `yarn start:web`        | `yarn server`      |     |
-|                               | Starts the worker process                                                                    | `yarn start:worker`     | `yarn worker`      |     |
-|                               | Start the frontend                                                                           |                         | `yarn client`      |
-|                               | Run tests for only the backend                                                               | `yarn test`             |                    |
-|                               | Run tests for the backend with coverage and output results to xml files                      | `yarn test:ci`          |                    |
-|                               | Run `yarn test:ci` for both the frontend and backend                                         | `yarn test:all`         |                    |
-|                               | Run the linter only for the backend                                                          | `yarn lint`             |                    |
-|                               | Run the linter for the the backend with results output to xml files                          | `yarn lint:ci`          |                    |
-|                               | Run `yarn lint:ci` for both the frontend and backend                                         | `yarn lint:all`         |                    |
-|                               | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve`       |                    |
-|                               | Run cucumber tests                                                                           | `yarn cucumber`         |                    |
-|                               | Collect backend coverage report                                                              | `yarn coverage:backend` |                    |
+| Docker Command | Description| Host Command | Local only Command |
+| :-------- | :---------- | :---------- | :---------- |
+| `yarn docker:deps` | Install dependencies for the frontend and backend | `yarn deps` | `yarn deps:local` |
+| `yarn docker:start` | Starts the backend and frontend | | `yarn start:local` |
+| `yarn docker:stop` | Stops the backend and frontend | | |
+| `yarn docker:dbs:start` | Start only the supporting services | | |
+| `yarn docker:dbs:stop` | Stop only the supporting services | | |
+| `yarn docker:test` | Runs tests for the frontend and backend | | |
+| `yarn docker:lint` | Runs the linter for the frontend and backend | | |
+| `yarn docker:db:migrate` | Run migrations in docker containers | `yarn db:migrate` | |
+| `yarn docker:db:migrate:undo` | Undo migrations in docker containers | `yarn db:migrate:undo` | |
+| `yarn docker:db:seed` | Run all seeders located in `src/seeders` | `yarn db:seed` | |
+| `yarn docker:db:seed:undo` | Undo all seeders located in `src/seeders` | `yarn db:seed:undo` | |
+| | Starts the backend web process | `yarn start:web` | `yarn server` | |
+| | Starts the worker process | `yarn start:worker` | `yarn worker` | |
+| | Start the frontend | | `yarn client` |
+| | Run tests for only the backend | `yarn test`| |
+| | Run tests for the backend with coverage and output results to xml files|  `yarn test:ci`| |
+| | Run `yarn test:ci` for both the frontend and backend | `yarn test:all`| |
+| | Run the linter only for the backend | `yarn lint` | |
+| | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
+| | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
+| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve` | |
+| | Run cucumber tests | `yarn cucumber` | |
+| | Collect backend coverage report | `yarn coverage:backend` ||
 
 ## Infrastructure
 
