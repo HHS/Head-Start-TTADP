@@ -14,6 +14,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionalCommLogTable from './components/RegionalCommLogTable';
 import { regionFilter } from '../../components/filter/communicationLogFilters';
+import './index.scss';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -125,8 +126,8 @@ export default function RegionalCommunicationLog() {
           () => showFilterWithMyRegions(allRegionsFilters, filtersToApply, setFiltersInHook)
         }
       />
-      <div className="display-flex">
-        <h1 className="landing margin-top-0 margin-bottom-3">
+      <div className="comm-log-header flex-align-center margin-top-0 margin-bottom-3">
+        <h1 className="landing">
           Communication logs -
           {' '}
           {userHasOnlyOneRegion ? 'your region' : 'your regions'}
@@ -134,7 +135,7 @@ export default function RegionalCommunicationLog() {
         <div>
           <Link
             href={`/communication-log/region/${defaultRegion}/log/new`}
-            className="usa-button smart-hub--new-report-btn margin-left-4"
+            className="usa-button smart-hub--new-report-btn"
           >
             <span className="smart-hub--plus">+</span>
             <span className="smart-hub--new-report">Add communication</span>
