@@ -8,6 +8,10 @@
     margin-bottom: 0;
   }
 
+  div {
+    margin-top: 16px;
+  }
+
   @media (min-width: 84em) {
     flex-direction: row;
     align-items: center;
@@ -15,6 +19,10 @@
 
     h1 {
       margin: .67em 0;
+    }
+
+    div {
+      margin-top: 0;
     }
   }
 }
