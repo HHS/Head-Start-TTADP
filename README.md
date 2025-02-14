@@ -21,9 +21,9 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 ## Getting Started
 
-#### Run With Docker
+### Run With Docker
 
-You can run the application stack with Docker by following these steps:
+If you run into issues, check the [troubleshooting](#troubleshooting) section.
 
 1. Install Docker. To check run `docker ps`.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
@@ -32,23 +32,21 @@ You can run the application stack with Docker by following these steps:
 5. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
 6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
 7. Run `yarn docker:start` to start the application.
-
    - The [frontend][frontend] will run on `localhost:3000`
    - The [backend][backend] will run on `localhost:8080`
    - [API documentation][API documentation] will run on `localhost:5003`
    - [minio][minio] (S3-compatible file storage) will run on `localhost:9000`
-
 8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
-> [!NOTE]
-> The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
+**Notes:**
 
-> Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the [docs/openapi](docs/openapi) folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+- The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
+- Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the [docs/openapi](docs/openapi) folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
 #### Troubleshooting
 
 If you see errors that the version of nodejs is incorrect, you may have older versions of the containers built.
-Delete those images and rerun ``yarn docker:reset`.
+Delete those images and rerun `yarn docker:reset`.
 
 When using Docker to run either the full app or the backend services, PostgreSQL (5432) and Redis (6379) are both configured to bind to their well-known ports. This will fail if any other instances of those services are already running on your machine.
 
@@ -95,7 +93,7 @@ On a Mac
 8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
 9. Restart docker
 
-bounce.sql
+_bounce.sql_
 
 ```sh
 select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
@@ -233,31 +231,32 @@ describe("Individual Test Isolation", () => {
 
 ## Yarn Commands
 
-| Docker Command                | Description                                                                                  | Host Command            | Local only Command |
-| :---------------------------- | :------------------------------------------------------------------------------------------- | :---------------------- | :----------------- | --- |
-| `yarn docker:deps`            | Install dependencies for the frontend and backend                                            | `yarn deps`             | `yarn deps:local`  |
-| `yarn docker:start`           | Starts the backend and frontend                                                              |                         | `yarn start:local` |
-| `yarn docker:stop`            | Stops the backend and frontend                                                               |                         |                    |
-| `yarn docker:dbs:start`       | Start only the supporting services                                                           |                         |                    |
-| `yarn docker:dbs:stop`        | Stop only the supporting services                                                            |                         |                    |
-| `yarn docker:test`            | Runs tests for the frontend and backend                                                      |                         |                    |
-| `yarn docker:lint`            | Runs the linter for the frontend and backend                                                 |                         |                    |
-| `yarn docker:db:migrate`      | Run migrations in docker containers                                                          | `yarn db:migrate`       |                    |
-| `yarn docker:db:migrate:undo` | Undo migrations in docker containers                                                         | `yarn db:migrate:undo`  |                    |
-| `yarn docker:db:seed`         | Run all seeders located in `src/seeders`                                                     | `yarn db:seed`          |                    |
-| `yarn docker:db:seed:undo`    | Undo all seeders located in `src/seeders`                                                    | `yarn db:seed:undo`     |                    |
-|                               | Starts the backend web process                                                               | `yarn start:web`        | `yarn server`      |     |
-|                               | Starts the worker process                                                                    | `yarn start:worker`     | `yarn worker`      |     |
-|                               | Start the frontend                                                                           |                         | `yarn client`      |
-|                               | Run tests for only the backend                                                               | `yarn test`             |                    |
-|                               | Run tests for the backend with coverage and output results to xml files                      | `yarn test:ci`          |                    |
-|                               | Run `yarn test:ci` for both the frontend and backend                                         | `yarn test:all`         |                    |
-|                               | Run the linter only for the backend                                                          | `yarn lint`             |                    |
-|                               | Run the linter for the the backend with results output to xml files                          | `yarn lint:ci`          |                    |
-|                               | Run `yarn lint:ci` for both the frontend and backend                                         | `yarn lint:all`         |                    |
-|                               | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve`       |                    |
-|                               | Run cucumber tests                                                                           | `yarn cucumber`         |                    |
-|                               | Collect backend coverage report                                                              | `yarn coverage:backend` |                    |
+// prettier-ignore
+| Description | Docker Command | Host Command | Local only Command |
+|-|-|-|-|
+| Install dependencies for the frontend and backend | `yarn docker:deps` |`yarn deps` | `yarn deps:local` |
+| Starts the backend and frontend | `yarn docker:start` | | `yarn start:local` |
+| Stops the backend and frontend | `yarn docker:stop` | | |
+| Start only the supporting services | | `yarn docker:dbs:start` | |
+| Stop only the supporting services | `yarn docker:dbs:stop` || |
+| Runs tests for the frontend and backend | `yarn docker:test` | | |
+| Runs the linter for the frontend and backend | `yarn docker:lint` | | |
+| Run migrations in docker containers | `yarn docker:db:migrate` | `yarn db:migrate` | |
+| Undo migrations in docker containers | `yarn docker:db:migrate:undo` | `yarn db:migrate:undo` | |
+| Run all seeders located in `src/seeders` | `yarn docker:db:seed` | `yarn db:seed` | |
+| Undo all seeders located in `src/seeders` | `yarn docker:db:seed:undo` | `yarn db:seed:undo` | |
+| Starts the backend web process | | `yarn start:web` | `yarn server` | |
+| Starts the worker process | | `yarn start:worker` | `yarn worker` | |
+| Start the frontend | | | `yarn client` |
+| Run tests for only the backend | | `yarn test`| |
+| Run tests for the backend with coverage and output results to xml files| | `yarn test:ci`| |
+| Run `yarn test:ci` for both the frontend and backend | | `yarn test:all`| |
+| Run the linter only for the backend | | `yarn lint` | |
+| Run the linter for the the backend with results output to xml files | | `yarn lint:ci`| |
+| Run `yarn lint:ci` for both the frontend and backend | | `yarn lint:all`| |
+| Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | | `yarn docs:serve` | |
+| Run cucumber tests | | `yarn cucumber` | |
+| Collect backend coverage report | | `yarn coverage:backend` ||
 
 ## Infrastructure
 
