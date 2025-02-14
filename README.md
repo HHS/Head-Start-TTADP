@@ -21,7 +21,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 
 ## Getting Started
 
-### Run With Docker
+### Running With Docker
 
 If you run into issues, check the [troubleshooting](#troubleshooting) section.
 
@@ -71,7 +71,7 @@ export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
 
-#### Run Natively
+#### Running Natively
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
