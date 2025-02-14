@@ -204,7 +204,7 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
 
       // eslint-disable-next-line consistent-return
       return grant.update({ recipientId, regionId });
-    }).filter(Boolean);
+    });
 
     await Promise.all(updates);
   } catch (error) {
