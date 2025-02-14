@@ -1,17 +1,16 @@
 /* eslint-disable max-len */
 import { renderHook, act } from '@testing-library/react-hooks';
 import useAsyncWidgetExport from '../useAsyncWidgetExport';
-import { blobToCsvDownload, checkboxesToIds } from '../../utils';
+import { blobToCsvDownload } from '../../utils';
 import { IS, NOOP } from '../../Constants';
 
 jest.mock('../../utils', () => ({
   blobToCsvDownload: jest.fn(),
-  checkboxesToIds: jest.fn(),
 }));
 
 describe('useAsyncWidgetExport', () => {
   const mockFetcher = jest.fn();
-  const mockCheckboxes = [{ id: 1 }, { id: 2 }];
+  const mockCheckboxes = { 1: true, 2: true, 3: false };
   const mockExportName = 'test-export';
   const mockSortConfig = { sortBy: 'name', direction: 'asc' };
 
@@ -20,7 +19,6 @@ describe('useAsyncWidgetExport', () => {
   });
 
   it('should call fetcher with correct parameters when exportType is "selected"', async () => {
-    checkboxesToIds.mockReturnValue([1, 2]);
     const { result } = renderHook(() => useAsyncWidgetExport(mockCheckboxes, mockExportName, mockSortConfig, mockFetcher));
 
     await act(async () => {
@@ -32,7 +30,18 @@ describe('useAsyncWidgetExport', () => {
       'asc',
       0,
       false,
-      [{ topic: 'id', condition: IS, query: [1, 2] }],
+      [
+        {
+          topic: 'id',
+          condition: IS,
+          query: '1',
+        },
+        {
+          topic: 'id',
+          condition: IS,
+          query: '2',
+        },
+      ],
       'csv',
     );
     expect(blobToCsvDownload).toHaveBeenCalled();
