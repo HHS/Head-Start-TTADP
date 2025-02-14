@@ -1,23 +1,27 @@
 import { useCallback } from 'react';
 import { IS } from '../Constants';
-import { blobToCsvDownload, checkboxesToIds } from '../utils';
+import { blobToCsvDownload } from '../utils';
 
 export default function useAsyncWidgetExport(
   checkboxes,
   exportName,
   sortConfig,
   fetcher,
+  filters = [],
 ) {
   const exportRows = useCallback(async (exportType) => {
-    const filters = [];
+    // Clone the filters to avoid mutating the original array
+    const fs = filters.map((filter) => ({ ...filter }));
 
     if (exportType === 'selected') {
-      const selectedRowsIds = checkboxesToIds(checkboxes);
-      // Filter the recipients to export to only include the selected rows.
-      filters.push({
-        topic: 'id',
-        condition: IS,
-        query: selectedRowsIds,
+      const selectedRowsIds = Object.keys(checkboxes).filter((key) => Number(checkboxes[key]));
+
+      selectedRowsIds.forEach((id) => {
+        fs.push({
+          topic: 'id',
+          condition: IS,
+          query: id,
+        });
       });
     }
 
@@ -27,7 +31,7 @@ export default function useAsyncWidgetExport(
         sortConfig.direction,
         0,
         false,
-        filters,
+        fs,
         'csv',
       );
       blobToCsvDownload(blob, exportName);
@@ -35,7 +39,7 @@ export default function useAsyncWidgetExport(
       // eslint-disable-next-line no-console
       console.error(error);
     }
-  }, [checkboxes, exportName, fetcher, sortConfig.direction, sortConfig.sortBy]);
+  }, [checkboxes, exportName, fetcher, filters, sortConfig.direction, sortConfig.sortBy]);
 
   return {
     exportRows,

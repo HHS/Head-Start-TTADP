@@ -105,6 +105,7 @@ export default function RegionalCommLogTable({ filters }) {
     'Communication_Log_Export',
     sortConfig,
     getCommunicationLogs,
+    filters,
   );
 
   const menuItems = useWidgetMenuItems(
