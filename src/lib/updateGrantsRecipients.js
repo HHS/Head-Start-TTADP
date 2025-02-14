@@ -199,8 +199,13 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
       const [regionId] = uniq(validOldGrants.map((g) => g.regionId));
       const [recipientId] = uniq(validOldGrants.map((g) => g.recipientId));
 
-      if (!regionId || !recipientId || validOldGrants.length !== replacedGrants.length) {
+      if (!regionId || !recipientId) {
         throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
+      }
+
+      // Ensure allValidOldGrants have the same recipient and region.
+      if (!validOldGrants.every((g) => g.regionId === regionId && g.recipientId === recipientId)) {
+        throw new Error(`Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}`);
       }
 
       // eslint-disable-next-line consistent-return
