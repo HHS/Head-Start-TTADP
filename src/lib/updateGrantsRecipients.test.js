@@ -1165,9 +1165,9 @@ describe('Update grants, program personnel, and recipients', () => {
       // spy on logger.error.
       jest.spyOn(logger, 'error').mockImplementation(() => {});
       jest.spyOn(logger, 'info').mockImplementation(() => {});
-      const newGrant = await Grant.create({
+      const newGrant = {
         id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
-      });
+      };
 
       await updateCDIGrantsWithOldGrantData([newGrant]);
 
