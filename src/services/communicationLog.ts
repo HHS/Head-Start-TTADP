@@ -165,8 +165,9 @@ const logsByScopes = async (
   direction = 'desc',
   limit: number = COMMUNICATION_LOGS_PER_PAGE,
   scopes: WhereOptions[] = [],
+  format:'json' | 'csv' = 'json',
 ) => {
-  const scopedLogs = await CommunicationLog.findAndCountAll({
+  const queryParams = {
     attributes: [
       'id',
     ],
@@ -182,13 +183,23 @@ const logsByScopes = async (
         as: 'author',
       },
     ],
-    limit,
-    offset,
     order: orderLogsBy(sortBy, direction),
-  });
+  } as {
+    attributes: string[];
+    where: WhereOptions;
+    include: WhereOptions[];
+    offset?: number;
+    order: string[];
+    limit?: number;
+  };
 
+  if (format === 'json') {
+    queryParams.offset = offset;
+    queryParams.limit = limit;
+  }
+
+  const scopedLogs = await CommunicationLog.findAndCountAll(queryParams);
   const scopedIds = scopedLogs.rows.map((log) => log.id);
-
   const logs = await CommunicationLog
     .findAll({
       attributes: LOG_INCLUDE_ATTRIBUTES,
@@ -238,6 +249,7 @@ const csvLogsByScopes = async (
     direction,
     COMMUNICATION_LOGS_PER_PAGE,
     scopes,
+    'csv',
   );
 
   // convert to csv
