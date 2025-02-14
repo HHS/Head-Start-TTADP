@@ -185,6 +185,13 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
     const updates = grantsToUpdate.map(async (grant) => {
       // eslint-disable-next-line max-len
       const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
+
+      // If we don't have any replaced grants replacements we have nothing to do for this grant.
+      // Prevent confusion of throwing exception below.
+      if (!replacedGrants.length) {
+        return;
+      }
+
       // eslint-disable-next-line max-len
       const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
 
@@ -195,8 +202,9 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
         throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
       }
 
+      // eslint-disable-next-line consistent-return
       return grant.update({ recipientId, regionId });
-    });
+    }).filter(Boolean);
 
     await Promise.all(updates);
   } catch (error) {
