@@ -1941,6 +1941,8 @@ workflows:
           env_state: "<< pipeline.parameters.env_state >>"
           env_list: "<< pipeline.parameters.env_list >>"
   monitor_and_shutdown_envs:
+    when:
+      equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - manage_env_apps:
           env_state: "stop"
