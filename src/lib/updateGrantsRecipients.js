@@ -203,7 +203,6 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
         throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
       }
 
-      // eslint-disable-next-line consistent-return
       return grant.update({ recipientId, regionId });
     });
 
