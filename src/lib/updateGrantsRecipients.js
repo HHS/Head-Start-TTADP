@@ -189,6 +189,7 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
       // If we don't have any replaced grants replacements we have nothing to do for this grant.
       // Prevent confusion of throwing exception below.
       if (!replacedGrants.length) {
+        logger.info(`updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: ${grant.id}, skipping`);
         return Promise.resolve();
       }
 
