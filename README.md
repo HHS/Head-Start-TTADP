@@ -19,9 +19,11 @@ Welcome to the home of the OHS TTAHUB.
 
 For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
 
-## Development Setup
+## Getting Started
 
 #### Run With Docker
+
+You can run the application stack with Docker by following these steps:
 
 1. Install Docker. To check run `docker ps`.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
