@@ -14,8 +14,7 @@ export default function useAsyncWidgetExport(
     const fs = filters.map((filter) => ({ ...filter }));
 
     if (exportType === 'selected') {
-      const selectedRowsIds = Object.keys(checkboxes).filter((key) => Number(checkboxes[key]));
-
+      const selectedRowsIds = Object.keys(checkboxes).filter((key) => checkboxes[key]);
       selectedRowsIds.forEach((id) => {
         fs.push({
           topic: 'id',
