@@ -1161,7 +1161,7 @@ describe('Update grants, program personnel, and recipients', () => {
       expect(updatedGrant2.regionId).toEqual(2);
     });
 
-    it('shouldn\'t throw an error if there are no grant replacements found' , async () => {
+    it('shouldn\'t throw an error if there are no grant replacements found', async () => {
       // spy on logger.error.
       jest.spyOn(logger, 'error').mockImplementation(() => {});
       const newGrant = await Grant.create({
