@@ -1164,6 +1164,7 @@ describe('Update grants, program personnel, and recipients', () => {
     it('shouldn\'t throw an error if there are no grant replacements found', async () => {
       // spy on logger.error.
       jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(logger, 'info').mockImplementation(() => {});
       const newGrant = await Grant.create({
         id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
       });
@@ -1172,6 +1173,9 @@ describe('Update grants, program personnel, and recipients', () => {
 
       // Ensure logger.error wasn't called.
       expect(logger.error).not.toHaveBeenCalled();
+
+      // Expect logger.info to display the message that no replacements were found.
+      expect(logger.info).toHaveBeenCalledWith('updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: 8546, skipping');
     });
   });
 });
