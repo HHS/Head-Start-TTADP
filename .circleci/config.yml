@@ -95,7 +95,7 @@ commands:
     description: "Notify new relic of a deploy"
     parameters:
       env_name:
-        description: "Name of the environment. Ex. sandbox, dev, staging, prod"
+        description: "Name of the environment. Ex. prod, staging, and dev-*"
         type: string
       new_relic_app_id:
         description: "App ID used in New Relic"
@@ -198,11 +198,26 @@ commands:
           command: |
             # Determine the environment URL
             case "<< parameters.environment_name >>" in
-                sandbox)
-                    ENV_URL="https://tta-smarthub-sandbox.app.cloud.gov/"
+                dev-nimbus)
+                    ENV_URL="https://tta-smarthub-dev-nimbus.app.cloud.gov/"
                     ;;
-                dev)
-                    ENV_URL="https://tta-smarthub-dev.app.cloud.gov/"
+                dev-cirrus)
+                    ENV_URL="https://tta-smarthub-dev-cirrus.app.cloud.gov/"
+                    ;;
+                dev-stratus)
+                    ENV_URL="https://tta-smarthub-dev-stratus.app.cloud.gov/"
+                    ;;
+                dev-cumulus)
+                    ENV_URL="https://tta-smarthub-dev-cumulus.app.cloud.gov/"
+                    ;;
+                dev-lenticular)
+                    ENV_URL="https://tta-smarthub-dev-lenticular.app.cloud.gov/"
+                    ;;
+                dev-fog)
+                    ENV_URL="https://tta-smarthub-dev-fog.app.cloud.gov/"
+                    ;;
+                dev-clear)
+                    ENV_URL="https://tta-smarthub-dev-clear.app.cloud.gov/"
                     ;;
                 staging)
                     ENV_URL="https://tta-smarthub-staging.app.cloud.gov/"
@@ -235,16 +250,17 @@ commands:
             else
                 COMMIT_MESSAGE=$(git log -1 --pretty=%B)
                 if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
-                  PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                  PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
-                  MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
-                  if [ ! -z "${JIRA_URLS}" ]; then
-                      MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                  fi
+                    PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
+                    PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
+                    if [ ! -z "${JIRA_URLS}" ]; then
+                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                    fi
                 else
                     MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
                 fi
             fi
+
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
 
       - notify_slack:
@@ -758,20 +774,8 @@ parameters:
     description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
     default: "https://api.fr.cloud.gov"
     type: string
-  prod_git_url:
-    description: "URL of github repo that will deploy to prod"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  staging_git_url:
-    description: "URL of github repo that will deploy to staging"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  dev_git_url:
-    description: "URL of github repo that will deploy to dev"
-    default: "https://github.com/HHS/Head-Start-TTADP"
-    type: string
-  sandbox_git_url:
-    description: "URL of github repo that will deploy to sandbox"
+  git_url:
+    description: "URL of github repo"
     default: "https://github.com/HHS/Head-Start-TTADP"
     type: string
   prod_git_branch:
@@ -784,11 +788,9 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "all-eclkc-to-headstart-resource-updates"
+    default: "TTAHUB-3065/new-devs"
     type: string
-  sandbox_git_branch: # change to feature branch to test deployment
-    default: "TTAHUB-3772/TTAHUB-3773/TTAHUB-3774/TTAHUB-3775/commlog"
-    type: string
+  # TODO: need to figure out how to make/get more new relic ids
   prod_new_relic_app_id:
     default: "877570491"
     type: string
@@ -798,9 +800,6 @@ parameters:
   dev_new_relic_app_id:
     default: "867221900"
     type: string
-  sandbox_new_relic_app_id:
-    default: "867346799"
-    type: string
   manual-trigger:
     type: boolean
     default: false
@@ -808,6 +807,10 @@ parameters:
     description: "List of environments to manage (start/stop)"
     type: string
     default: "DEV,SANDBOX"
+  dev_app_list:
+    description: "List of dev apps to manage (start/stop)"
+    type: string
+    default: "nimbus,cirrus,stratus,cumulus,lenticular,fog,clear"
   space_list:
     description: "List of Cloud Foundry spaces corresponding to each environment"
     type: string
@@ -834,10 +837,25 @@ parameters:
   manual-restore-staging:
     type: boolean
     default: false
-  manual-restore-sandbox:
+  manual-restore-dev-nimbus:
     type: boolean
     default: false
-  manual-restore-dev:
+  manual-restore-dev-cirrus:
+    type: boolean
+    default: false
+  manual-restore-dev-stratus:
+    type: boolean
+    default: false
+  manual-restore-dev-cumulus:
+    type: boolean
+    default: false
+  manual-restore-dev-lenticular:
+    type: boolean
+    default: false
+  manual-restore-dev-fog:
+    type: boolean
+    default: false
+  manual-restore-dev-clear:
     type: boolean
     default: false
   fail-on-modified-lines:
@@ -1274,7 +1292,7 @@ jobs:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.prod_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1296,81 +1314,13 @@ jobs:
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
 
-      - when: # sandbox: for short-term feature development, see README.md
-          condition:
-            and:
-              - equal:
-                  [
-                    << pipeline.project.git_url >>,
-                    << pipeline.parameters.sandbox_git_url >>,
-                  ]
-              - equal:
-                  [
-                    << pipeline.git.branch >>,
-                    << pipeline.parameters.sandbox_git_branch >>,
-                  ]
-          steps:
-            - run:
-                name: Build frontend assets
-                command: yarn --cwd frontend run build
-                environment:
-                  REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
-                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-                  REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
-                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
-            - cf_deploy:
-                app_name: tta-smarthub-sandbox
-                auth_client_id: SANDBOX_AUTH_CLIENT_ID
-                auth_client_secret: SANDBOX_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
-                cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
-                cloudgov_space: CLOUDGOV_SANDBOX_SPACE
-                deploy_config_file: deployment_config/sandbox_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: SANDBOX_SESSION_SECRET
-                jwt_secret: SANDBOX_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                smtp_password: SMTP_PASSWORD
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
-            - run:
-                name: Migrate database
-                command: |
-                  cf run-task tta-smarthub-sandbox \
-                    --command "yarn db:migrate:prod" \
-                    --name "Reset DB"
-            - notify_new_relic:
-                env_name: sandbox
-                new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
-                new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack_deploy:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-head-start-github"
-                environment_name: "sandbox"
-
       - when: # dev
           condition:
             and:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.dev_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1378,6 +1328,54 @@ jobs:
                     << pipeline.parameters.dev_git_branch >>,
                   ]
           steps:
+            - run:
+                name: Determine target app for deployment
+                command: |
+                  TARGET_APP=""
+                  FALLBACK_APP=""
+                  LEAST_RECENTLY_DEPLOYED=""
+                  APPS=$(cf apps | awk 'NR>4 {print $1}')
+
+                  # Check for an app with matching BUILD_BRANCH
+                  for APP in $APPS; do
+                    echo "Checking $APP..."
+                    BUILD_BRANCH=$(cf env "$APP" | grep "BUILD_BRANCH" | awk -F'"' '{print $2}')
+                    if [ "$BUILD_BRANCH" == "<< pipeline.git.branch >>" ]; then
+                      echo "Match found: $APP"
+                      TARGET_APP=$APP
+                      break
+                    fi
+                  done
+
+                  # If no app matches, find a suitable fallback app
+                  if [ -z "$TARGET_APP" ]; then
+                    echo "No app found with BUILD_BRANCH matching << pipeline.git.branch >>"
+                    echo "Looking for a fallback app..."
+                    
+                    for APP in $APPS; do
+                      APP_STATE=$(cf app "$APP" | grep "state:" | awk '{print $2}')
+                      if [ "$APP_STATE" == "stopped" ]; then
+                        LAST_DEPLOYED=$(cf events "$APP" | grep "audit.app.create" -B 1 | head -n 1 | awk '{print $1}')
+                        if [ -z "$LEAST_RECENTLY_DEPLOYED" ] || [ "$LAST_DEPLOYED" -lt "$LEAST_RECENTLY_DEPLOYED" ]; then
+                          LEAST_RECENTLY_DEPLOYED="$LAST_DEPLOYED"
+                          FALLBACK_APP="$APP"
+                        fi
+                      fi
+                    done
+
+                    if [ -n "$FALLBACK_APP" ]; then
+                      echo "Using fallback app: $FALLBACK_APP"
+                      TARGET_APP="$FALLBACK_APP"
+                    else
+                      echo "No suitable fallback app found. Exiting."
+                      exit 1
+                    fi
+                  fi
+
+                  echo "Deploying to $TARGET_APP"
+                  echo "TARGET_APP=$TARGET_APP" >> target_app.env
+                  ENVIRONMENT=$(echo "$TARGET_APP" | sed -E 's/^tta-smarthub-(dev-.*)$/\1/')
+                   echo "ENVIRONMENT=$ENVIRONMENT" >> target_app.env
             - run:
                 name: Build frontend assets
                 command: yarn --cwd frontend run build
@@ -1388,39 +1386,16 @@ jobs:
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
                   REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
-            - cf_deploy:
-                app_name: tta-smarthub-dev
-                auth_client_id: DEV_AUTH_CLIENT_ID
-                auth_client_secret: DEV_AUTH_CLIENT_SECRET
-                cloudgov_username: CLOUDGOV_DEV_USERNAME
-                cloudgov_password: CLOUDGOV_DEV_PASSWORD
-                cloudgov_space: CLOUDGOV_DEV_SPACE
-                deploy_config_file: deployment_config/dev_vars.yml
-                new_relic_license: NEW_RELIC_LICENSE_KEY
-                session_secret: DEV_SESSION_SECRET
-                jwt_secret: DEV_JWT_SECRET
-                hses_data_file_url: HSES_DATA_FILE_URL
-                hses_data_username: HSES_DATA_USERNAME
-                hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: STAGING_SMTP_HOST
-                smtp_port: STAGING_SMTP_PORT
-                smtp_host_test: SMTP_HOST_TEST
-                smtp_port_test: SMTP_PORT_TEST
-                smtp_secure: SMTP_SECURE
-                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-                from_email_address: FROM_EMAIL_ADDRESS
-                smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
-                suppress_error_logging: SUPPRESS_ERROR_LOGGING
-                itams_md_host: ITAMS_MD_HOST
-                itams_md_port: ITAMS_MD_PORT
-                itams_md_username: ITAMS_MD_USERNAME
-                itams_md_password: ITAMS_MD_PASSWORD
-                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
+            - run:
+                name: Deploy application
+                command: |
+                  source target_app.env
+                  cf push "$TARGET_APP" -f deployment_config/dev_vars.yml
             - run:
                 name: Migrate database
                 command: |
-                  cf run-task tta-smarthub-dev \
+                  source target_app.env
+                  cf run-task "$TARGET_APP" \
                     --command "yarn db:migrate:prod" \
                     --name "Reset DB"
             - notify_new_relic:
@@ -1438,7 +1413,7 @@ jobs:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.staging_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1504,7 +1479,7 @@ jobs:
               - equal:
                   [
                     << pipeline.project.git_url >>,
-                    << pipeline.parameters.prod_git_url >>,
+                    << pipeline.parameters.git_url >>,
                   ]
               - equal:
                   [
@@ -1587,6 +1562,10 @@ jobs:
         type: string
         description: "Comma-separated list of environments to manage (both smarthub and similarity-api)"
         default: "<< pipeline.parameters.env_list >>"
+      dev_app_list:
+        type: string
+        description: "Comma-separated list of dev apps to manage (both smarthub and similarity-api)"
+        default: "<< pipeline.parameters.dev_app_list >>"
       env_state:
         type: string
         description: "Action to perform on apps (start, stop, restart, restage)"
@@ -1613,6 +1592,7 @@ jobs:
             chmod +x ./automation/ci/scripts/manage_apps.sh
             ./automation/ci/scripts/manage_apps.sh \
               --env_list "<< parameters.env_list >>" \
+              --dev_app_list "<< parameters.dev_app_list >>"
               --env_state "<< parameters.env_state >>" \
               --check_activity "<< parameters.check_activity >>" \
               --activity_timeout << parameters.activity_timeout >> \
@@ -1691,29 +1671,14 @@ jobs:
           cloudgov_username: CLOUDGOV_STAGING_USERNAME
           cloudgov_password: CLOUDGOV_STAGING_PASSWORD
           cloudgov_space: CLOUDGOV_STAGING_SPACE
-  restore_processed_to_sandbox:
-    docker:
-      - image: cimg/base:2024.05
-    steps:
-    - sparse_checkout:
-          directories: 'automation'
-          branch: << pipeline.git.branch >>
-    - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-sandbox
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-    - cf_migrate:
-          app_name: tta-smarthub-sandbox
-          cloudgov_username: CLOUDGOV_SANDBOX_USERNAME
-          cloudgov_password: CLOUDGOV_SANDBOX_PASSWORD
-          cloudgov_space: CLOUDGOV_SANDBOX_SPACE
   restore_processed_to_dev:
     docker:
       - image: cimg/base:2024.05
+    parameters:
+      rds_service_name:
+        type: string
+      app_name:
+        type: string
     steps:
     - sparse_checkout:
           directories: 'automation'
@@ -1723,11 +1688,11 @@ jobs:
           cloudgov_username: CLOUDGOV_PROD_USERNAME
           cloudgov_password: CLOUDGOV_PROD_PASSWORD
           cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-dev
+          rds_service_name: << parameters.rds_service_name >>
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
     - cf_migrate:
-          app_name: tta-smarthub-dev
+          app_name: << parameters.app_name >>
           cloudgov_username: CLOUDGOV_DEV_USERNAME
           cloudgov_password: CLOUDGOV_DEV_PASSWORD
           cloudgov_space: CLOUDGOV_DEV_SPACE
@@ -1772,8 +1737,13 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-full-process >>]
         - equal: [false, << pipeline.parameters.manual-manage-env >>]
         - equal: [false, << pipeline.parameters.manual-restore-staging >>]
-        - equal: [false, << pipeline.parameters.manual-restore-sandbox >>]
-        - equal: [false, << pipeline.parameters.manual-restore-dev >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-nimbus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-cirrus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-stratus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-cumulus >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-lenticular >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-fog >>]
+        - equal: [false, << pipeline.parameters.manual-restore-dev-clear >>]
         - equal: [false, << pipeline.parameters.manual-retention-production >>]
         - equal: [false, << pipeline.parameters.manual-retention-processed >>]
     jobs:
@@ -1831,7 +1801,6 @@ workflows:
           filters:
             branches:
               only:
-                - << pipeline.parameters.sandbox_git_branch >>
                 - << pipeline.parameters.dev_git_branch >>
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
@@ -1892,15 +1861,52 @@ workflows:
       - restore_processed_to_staging:
           requires:
             - process_backup
-      - restore_processed_to_sandbox:
+      # Now call the parameterized job multiple times using aliases:
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_nimbus
           requires:
             - restore_processed_to_staging
+          rds_service_name: ttahub-dev-nimbus
+          app_name: tta-smarthub-dev-nimbus
       - restore_processed_to_dev:
+          name: restore_processed_to_dev_cirrus
           requires:
-            - restore_processed_to_sandbox
+            - restore_processed_to_dev_nimbus
+          rds_service_name: ttahub-dev-cirrus
+          app_name: tta-smarthub-dev-cirrus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_stratus
+          requires:
+            - restore_processed_to_dev_cirrus
+          rds_service_name: ttahub-dev-stratus
+          app_name: tta-smarthub-dev-stratus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_cumulus
+          requires:
+            - restore_processed_to_dev_stratus
+          rds_service_name: ttahub-dev-cumulus
+          app_name: tta-smarthub-dev-cumulus
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_lenticular
+          requires:
+            - restore_processed_to_dev_cumulus
+          rds_service_name: ttahub-dev-lenticular
+          app_name: tta-smarthub-dev-lenticular
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_fog
+          requires:
+            - restore_processed_to_dev_lenticular
+          rds_service_name: ttahub-dev-fog
+          app_name: tta-smarthub-dev-fog
+      - restore_processed_to_dev:
+          name: restore_processed_to_dev_clear
+          requires:
+            - restore_processed_to_dev_fog
+          rds_service_name: ttahub-dev-clear
+          app_name: tta-smarthub-dev-clear
       - retention_production:
           requires:
-            - restore_processed_to_dev
+            - restore_processed_to_dev_clear
       - retention_processed:
           requires:
             - retention_production
@@ -1921,6 +1927,7 @@ workflows:
       - manage_env_apps:
           env_state: "stop"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
   start_lower_env_workflow:
     triggers:
       - schedule:
@@ -1933,6 +1940,7 @@ workflows:
       - manage_env_apps:
           env_state: "start"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
   manual_manage_env_workflow:
     when:
       equal: [true, << pipeline.parameters.manual-manage-env >>]
@@ -1940,6 +1948,7 @@ workflows:
       - manage_env_apps:
           env_state: "<< pipeline.parameters.env_state >>"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
   monitor_and_shutdown_envs:
     triggers:
       # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
@@ -1963,6 +1972,7 @@ workflows:
       - manage_env_apps:
           env_state: "stop"
           env_list: "<< pipeline.parameters.env_list >>"
+          dev_app_list: "<< pipeline.parameters.dev_app_list >>"
           check_activity: true
   manual_restore_production:
     when:
@@ -1998,16 +2008,55 @@ workflows:
       equal: [true, << pipeline.parameters.manual-restore-staging >>]
     jobs:
       - restore_processed_to_staging
-  manual_restore_sandbox:
+  manual_restore_dev_nimbus:
     when:
-      equal: [true, << pipeline.parameters.manual-restore-sandbox >>]
+      equal: [true, << pipeline.parameters.manual-restore-dev-nimbus >>]
     jobs:
-      - restore_processed_to_sandbox
-  manual_restore_dev:
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-nimbus"
+          app_name: "tta-smarthub-dev-nimbus"
+  manual_restore_dev_cirrus:
     when:
-      equal: [true, << pipeline.parameters.manual-restore-dev >>]
+      equal: [true, << pipeline.parameters.manual-restore-dev-cirrus >>]
     jobs:
-      - restore_processed_to_dev
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-cirrus"
+          app_name: "tta-smarthub-dev-cirrus"
+  manual_restore_dev_stratus:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-stratus >>]
+    jobs:
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-stratus"
+          app_name: "tta-smarthub-dev-stratus"
+  manual_restore_dev_cumulus:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-cumulus >>]
+    jobs:
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-cumulus"
+          app_name: "tta-smarthub-dev-cumulus"
+  manual_restore_dev_lenticular:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-lenticular >>]
+    jobs:
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-lenticular"
+          app_name: "tta-smarthub-dev-lenticular"
+  manual_restore_dev_fog:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-fog >>]
+    jobs:
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-fog"
+          app_name: "tta-smarthub-dev-fog"
+  manual_restore_dev_clear:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore-dev-clear >>]
+    jobs:
+      - restore_processed_to_dev:
+          rds_service_name: "ttahub-dev-clear"
+          app_name: "tta-smarthub-dev-clear"
   manual_retention_production:
     when:
       equal: [true, << pipeline.parameters.manual-retention-production >>]
