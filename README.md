@@ -19,6 +19,11 @@ Welcome to the home of the OHS TTAHUB.
 
 For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
 
+[Local Development](#getting-started)
+[Testing](#getting-started)
+[Infrastructure](#infrastructure)
+[Reference](#reference)
+
 ## Getting Started
 
 ### Running With Docker
@@ -118,7 +123,7 @@ If you are not using your own custom pre-commit hooks:
 
 If you are already using git hooks, add the [.githooks/pre-commit](.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
-## Local Testing
+## Testing
 
 ### Running Tests
 
@@ -228,35 +233,6 @@ describe("Individual Test Isolation", () => {
   });
 });
 ```
-
-## Yarn Commands
-
-// prettier-ignore
-| Description | Docker Command | Host Command | Local only Command |
-|-|-|-|-|
-| Install dependencies for the frontend and backend | `yarn docker:deps` |`yarn deps` | `yarn deps:local` |
-| Starts the backend and frontend | `yarn docker:start` | | `yarn start:local` |
-| Stops the backend and frontend | `yarn docker:stop` | | |
-| Start only the supporting services | | `yarn docker:dbs:start` | |
-| Stop only the supporting services | `yarn docker:dbs:stop` || |
-| Runs tests for the frontend and backend | `yarn docker:test` | | |
-| Runs the linter for the frontend and backend | `yarn docker:lint` | | |
-| Run migrations in docker containers | `yarn docker:db:migrate` | `yarn db:migrate` | |
-| Undo migrations in docker containers | `yarn docker:db:migrate:undo` | `yarn db:migrate:undo` | |
-| Run all seeders located in `src/seeders` | `yarn docker:db:seed` | `yarn db:seed` | |
-| Undo all seeders located in `src/seeders` | `yarn docker:db:seed:undo` | `yarn db:seed:undo` | |
-| Starts the backend web process | | `yarn start:web` | `yarn server` | |
-| Starts the worker process | | `yarn start:worker` | `yarn worker` | |
-| Start the frontend | | | `yarn client` |
-| Run tests for only the backend | | `yarn test`| |
-| Run tests for the backend with coverage and output results to xml files| | `yarn test:ci`| |
-| Run `yarn test:ci` for both the frontend and backend | | `yarn test:all`| |
-| Run the linter only for the backend | | `yarn lint` | |
-| Run the linter for the the backend with results output to xml files | | `yarn lint:ci`| |
-| Run `yarn lint:ci` for both the frontend and backend | | `yarn lint:all`| |
-| Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | | `yarn docs:serve` | |
-| Run cucumber tests | | `yarn cucumber` | |
-| Collect backend coverage report | | `yarn coverage:backend` ||
 
 ## Infrastructure
 
@@ -605,7 +581,38 @@ Ex.
 
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
-## Updating node
+## Reference
+
+### Yarn Commands
+
+// prettier-ignore
+| Description | Docker Command | Host Command | Local only Command |
+|-|-|-|-|
+| Install dependencies for the frontend and backend | `yarn docker:deps` |`yarn deps` | `yarn deps:local` |
+| Starts the backend and frontend | `yarn docker:start` | | `yarn start:local` |
+| Stops the backend and frontend | `yarn docker:stop` | | |
+| Start only the supporting services | | `yarn docker:dbs:start` | |
+| Stop only the supporting services | `yarn docker:dbs:stop` || |
+| Runs tests for the frontend and backend | `yarn docker:test` | | |
+| Runs the linter for the frontend and backend | `yarn docker:lint` | | |
+| Run migrations in docker containers | `yarn docker:db:migrate` | `yarn db:migrate` | |
+| Undo migrations in docker containers | `yarn docker:db:migrate:undo` | `yarn db:migrate:undo` | |
+| Run all seeders located in `src/seeders` | `yarn docker:db:seed` | `yarn db:seed` | |
+| Undo all seeders located in `src/seeders` | `yarn docker:db:seed:undo` | `yarn db:seed:undo` | |
+| Starts the backend web process | | `yarn start:web` | `yarn server` | |
+| Starts the worker process | | `yarn start:worker` | `yarn worker` | |
+| Start the frontend | | | `yarn client` |
+| Run tests for only the backend | | `yarn test`| |
+| Run tests for the backend with coverage and output results to xml files| | `yarn test:ci`| |
+| Run `yarn test:ci` for both the frontend and backend | | `yarn test:all`| |
+| Run the linter only for the backend | | `yarn lint` | |
+| Run the linter for the the backend with results output to xml files | | `yarn lint:ci`| |
+| Run `yarn lint:ci` for both the frontend and backend | | `yarn lint:all`| |
+| Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | | `yarn docs:serve` | |
+| Run cucumber tests | | `yarn cucumber` | |
+| Collect backend coverage report | | `yarn coverage:backend` ||
+
+### Updating node
 
 To update the version of node the project uses, the version number needs to be specified in a few places. Cloud.gov only supports certain versions of node; you can find supported versions [on the repo for their buildpack](https://github.com/cloudfoundry/nodejs-buildpack/releases).
 
@@ -622,7 +629,7 @@ You should also update it where it is specified this README file.
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run `yarn docker:deps` to rebuild your dependencies.
 If you are using NVM, you can set intall a new node version with `nvm install VERSION` and set it to be the default version of node via `nvm alias default VERSION`.
 
-## Removing, creating and binding a service from the command line
+### Removing, creating and binding a service from the command line
 
 In the past, we've needed to destroy and recreate particular services (for example, redis). This can be done through the Cloud.gov UI, through the Terraform architecture, and through the cloud foundry command line interface. The following are instructions for using the cloud foundry CLI (`cf`) for this.
 
