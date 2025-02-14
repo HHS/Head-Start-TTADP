@@ -464,7 +464,7 @@ test.describe('Activity Report', () => {
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g1', { exact: true }).locator('..').locator('..')
+    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
@@ -482,7 +482,7 @@ test.describe('Activity Report', () => {
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g2', { exact: true }).locator('..').locator('..')
+    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
