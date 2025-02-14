@@ -13,7 +13,6 @@ import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/comp
 import Container from '../../components/Container';
 
 export default function ViewRegionalCommunicationLog({ match }) {
-  // const { regionId, logId } = useParams();
   const { params: { regionId, logId } } = match;
   const history = useHistory();
   const { setIsAppLoading } = useContext(AppLoadingContext);

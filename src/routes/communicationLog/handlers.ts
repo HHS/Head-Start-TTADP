@@ -167,7 +167,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const limitNumber = Number(limit) || false;
+    const limitNumber = Number(limit || 100);
 
     if (format === 'csv') {
       const logs = await csvLogsByRecipientAndScopes(
@@ -198,12 +198,6 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
 
 const communicationLogs = async (req: Request, res: Response) => {
   try {
-    const policy = await getAuthorizationByRegion(req, res);
-    if (!policy.canReadLog()) {
-      res.status(httpCodes.FORBIDDEN).send();
-      return;
-    }
-
     const userId = await currentUserId(req, res);
     const {
       sortBy,
@@ -215,7 +209,7 @@ const communicationLogs = async (req: Request, res: Response) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const limitNumber = Number(limit) || false;
+    const limitNumber = Number(limit || 100);
 
     if (format === 'csv') {
       const logs = await csvLogsByScopes(

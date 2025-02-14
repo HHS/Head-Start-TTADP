@@ -49,6 +49,7 @@
   min-width: 44px;
   position: sticky;
   left: 0;
+  z-index: 1;
 }
 
 .smarthub-horizontal-table-widget thead .checkbox-column {
@@ -59,6 +60,7 @@
 
 .smarthub-horizontal-table-widget .usa-table .data-header {
   min-width: 90px;
+  white-space: nowrap;
 }
 
 .smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
