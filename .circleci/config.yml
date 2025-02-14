@@ -1941,24 +1941,6 @@ workflows:
           env_state: "<< pipeline.parameters.env_state >>"
           env_list: "<< pipeline.parameters.env_list >>"
   monitor_and_shutdown_envs:
-    triggers:
-      # Every 15 minutes from 11 AM to 11:59 PM UTC (6 AM to 6:59 PM EST, 3 AM to 3:59 PM PST), Monday to Friday
-      - schedule:
-          cron: "0,15,30,45 11-23 * * 1-5"
-          filters:
-            branches:
-              only:
-                - main
-                - TTAHUB-3071/shutdown-unutilized-envs
-
-      # Every 15 minutes from 12 AM to 12:45 AM UTC (7 PM to 8:45 PM EST, 4 PM to 5:45 PM PST), Monday to Friday
-      - schedule:
-          cron: "0,15,30,45 0-3 * * 2-6"
-          filters:
-            branches:
-              only:
-                - main
-                - TTAHUB-3071/shutdown-unutilized-envs
     jobs:
       - manage_env_apps:
           env_state: "stop"
