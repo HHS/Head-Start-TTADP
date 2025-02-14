@@ -16,8 +16,7 @@ import {
 } from '../models';
 
 export const getAllTopicsForWidget = async () => Topic.findAll({
-  attributes: ['id', 'name', 'deletedAt'],
-  where: { deletedAt: null },
+  attributes: ['id', 'name'],
   order: [['name', 'ASC']],
 });
 

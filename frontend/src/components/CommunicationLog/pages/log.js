@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import {
   Alert,
@@ -16,7 +17,7 @@ import ControlledDatePicker from '../../ControlledDatePicker';
 import { pageComplete, defaultLogValues } from '../constants';
 import ReadOnlyField from '../../ReadOnlyField';
 import UserContext from '../../../UserContext';
-import { mustBeQuarterHalfOrWhole } from '../../../Constants';
+import { mustBeQuarterHalfOrWhole, NOOP } from '../../../Constants';
 import MultiSelect from '../../MultiSelect';
 import { useLogContext } from '../components/LogContext';
 import CommunicationRecipients from '../components/CommunicationRecipients';
@@ -41,6 +42,7 @@ const Log = ({
 
   const otherStaffOptions = regionalUsers.map((u) => ({ ...u, value: String(u.value) }));
   const standardGoalsOptions = standardGoals.map((g) => ({ ...g, value: String(g.value) }));
+  const today = useMemo(() => moment().format('MM/DD/YYYY'), []);
 
   return (
     <>
@@ -64,6 +66,7 @@ const Log = ({
           name="otherStaff"
           id="otherStaff-label"
           htmlFor="otherStaff"
+          required={false}
         >
           <MultiSelect
             control={control}
@@ -71,9 +74,9 @@ const Log = ({
             name="otherStaff"
             id="otherStaff"
             options={otherStaffOptions}
-            required="Select at least one"
             placeholderText="- Select -"
-            onClick={() => {}}
+            onClick={NOOP}
+            required={false}
           />
         </FormItem>
       </div>
@@ -101,6 +104,7 @@ const Log = ({
             name="communicationDate"
             value={communicationDate}
             inputId="communicationDate"
+            maxDate={today}
           />
         </FormItem>
       </div>

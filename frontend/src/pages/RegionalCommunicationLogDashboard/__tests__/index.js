@@ -81,7 +81,7 @@ describe('RegionalCommunicationLogDashboard', () => {
   const currentYear = today.getFullYear();
   const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
   const currentDay = String(today.getDate()).padStart(2, '0');
-  const defaultURL = `/api/communication-logs/region?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+  const defaultURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&communicationDate.win=2022%2F07%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
 
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -220,7 +220,7 @@ describe('RegionalCommunicationLogDashboard', () => {
     await userEvent.click(select);
     act(() => userEvent.selectOptions(select, 'Year to date'));
 
-    const filterURL = `/api/communication-logs/region?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&communicationDate.in[]=${currentYear}%2F01%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
+    const filterURL = `/api/communication-logs/region?sortBy=Log_ID&direction=desc&offset=0&limit=10&format=json&communicationDate.in[]=${currentYear}%2F01%2F01-${currentYear}%2F${currentMonth}%2F${currentDay}`;
     fetchMock.get(filterURL, { count: 0, rows: [] });
 
     const apply = screen.getByRole('button', { name: /apply filters for regional communication log dashboard/i });
