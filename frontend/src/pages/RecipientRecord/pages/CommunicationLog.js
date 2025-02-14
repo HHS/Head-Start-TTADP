@@ -1,9 +1,11 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, {
+  useState, useContext, useRef, useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useHistory } from 'react-router-dom';
-import { deleteCommunicationLogById, getCommunicationLogs, getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
+import { deleteCommunicationLogById, getCommunicationLogsByRecipientId } from '../../../fetchers/communicationLog';
 import AppLoadingContext from '../../../AppLoadingContext';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
@@ -135,7 +137,24 @@ export default function CommunicationLog({ regionId, recipientId }) {
     checkboxes,
     'Communication_Log_Export',
     sortConfig,
-    getCommunicationLogs,
+    useCallback(async (
+      sortBy,
+      direction,
+      limit,
+      offset,
+      dataFilters,
+      format,
+    ) => getCommunicationLogsByRecipientId(
+      String(regionId),
+      String(recipientId),
+      sortBy,
+      direction,
+      offset,
+      limit,
+      dataFilters,
+      format,
+    ), [recipientId, regionId]),
+    filters,
   );
 
   const menuItems = useWidgetMenuItems(
