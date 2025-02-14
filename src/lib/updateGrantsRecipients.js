@@ -189,7 +189,7 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
       // If we don't have any replaced grants replacements we have nothing to do for this grant.
       // Prevent confusion of throwing exception below.
       if (!replacedGrants.length) {
-        return;
+        return Promise.resolve();
       }
 
       // eslint-disable-next-line max-len
