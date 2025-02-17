@@ -177,6 +177,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
         String(direction),
         scopes,
       );
+      res.type('text/csv');
       res.send(logs);
       return;
     }
@@ -217,6 +218,7 @@ const communicationLogs = async (req: Request, res: Response) => {
         String(direction),
         scopes,
       );
+      res.type('text/csv');
       res.send(logs);
       return;
     }
