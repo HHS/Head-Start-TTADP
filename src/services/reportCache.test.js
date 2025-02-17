@@ -29,6 +29,7 @@ import {
   cacheGoalMetadata,
   cacheCourses,
   cacheCitations,
+  cacheTopics,
 } from './reportCache';
 import {
   createReport,
@@ -38,6 +39,7 @@ import {
   createGoal,
 } from '../testUtils';
 import { GOAL_STATUS } from '../constants';
+import { auditLogger } from '../logger';
 
 describe('cacheCourses', () => {
   let courseOne;
@@ -115,6 +117,21 @@ describe('cacheCourses', () => {
 
     expect(aroCourses).toHaveLength(1);
     expect(aroCourses[0].courseId).toEqual(courseTwo.id);
+  });
+});
+
+describe('cacheTopics', () => {
+  let mockAuditLoggerError;
+  beforeAll(() => {
+    mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
+  });
+  afterAll(() => {
+    mockAuditLoggerError.mockRestore();
+  });
+
+  it('logs and error when topics are missing ids', async () => {
+    await expect(cacheTopics(1, 1, [{ name: 'Topic 1', id: null }])).rejects.toThrow();
+    expect(mockAuditLoggerError).toHaveBeenCalledWith('Error saving ARO topics: [{"name":"Topic 1","id":null}] for objectiveId: 1 and activityReportObjectiveId: 1');
   });
 });
 
