@@ -6,8 +6,13 @@ import { withResult, withoutResult } from './result';
 import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDate } from './communicationDate';
 import { withPurpose, withoutPurpose } from './purpose';
 import { withoutRegion, withRegion } from './region';
+import { withIds, withoutIds } from './id';
 
 export const topicToQuery = {
+  id: {
+    in: (query: string[]) => withIds(query),
+    nin: (query: string[]) => withoutIds(query),
+  },
   creator: {
     ctn: (query: string[]) => withCreator(query),
     nctn: (query: string[]) => withoutCreator(query),

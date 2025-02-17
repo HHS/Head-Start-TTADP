@@ -806,17 +806,17 @@ describe('communicationLogToCsvRecord', () => {
       purpose: 'Inquiry',
       notes: 'Lorem ipsum',
       result: 'Successful',
+      recipientNextSteps: [{
+        note: 'Follow up with client',
+      }],
+      specialistNextSteps: [{
+        note: 'Schedule a meeting',
+      }],
     },
     files: [
       { originalFileName: 'file1.txt' },
       { originalFileName: 'file2.txt' },
     ],
-    recipientNextSteps: {
-      note: 'Follow up with client',
-    },
-    specialistNextSteps: {
-      note: 'Schedule a meeting',
-    },
   };
 
   it('should transform the log into a CSV record', () => {
@@ -832,6 +832,9 @@ describe('communicationLogToCsvRecord', () => {
       files: 'file1.txt\nfile2.txt',
       recipientNextSteps: 'Follow up with client',
       specialistNextSteps: 'Schedule a meeting',
+      otherStaff: '',
+      goals: '',
+      regionId: '',
     };
 
     expect(communicationLogToCsvRecord(log)).toEqual(expectedRecord);
@@ -859,6 +862,11 @@ describe('communicationLogToCsvRecord', () => {
       notes: '',
       purpose: '',
       result: '',
+      goals: '',
+      otherStaff: '',
+      recipientNextSteps: '',
+      specialistNextSteps: '',
+      regionId: '',
     });
   });
 });
