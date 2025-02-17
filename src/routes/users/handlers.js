@@ -1,14 +1,24 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import UserPolicy from '../../policies/user';
+import EventPolicy from '../../policies/event';
 import SCOPES from '../../middleware/scopeConstants';
-import { userById, usersWithPermissions, statisticsByUser } from '../../services/users';
+import {
+  userById,
+  usersWithPermissions,
+  statisticsByUser,
+  setFlag,
+  getTrainingReportUsersByRegion,
+  getUserNamesByIds,
+} from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
-import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
+import getCachedResponse from '../../lib/cache';
+import { FEATURE_FLAGS } from '../../constants';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -34,7 +44,14 @@ export async function getUserStatistics(req, res) {
     const authorization = new UserPolicy(user);
     // Get regions user can write.
     const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
-    const statistics = await statisticsByUser(user, regions, !canWrite);
+    const key = `statisticsByUser?userId=${user.id}`;
+
+    const statistics = await getCachedResponse(
+      key,
+      async () => JSON.stringify(await statisticsByUser(user, regions, !canWrite)),
+      JSON.parse,
+    );
+
     res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
@@ -110,5 +127,79 @@ export async function getActiveUsers(req, res) {
     usersStream.pipe(res);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:ACTIVEUSERS' });
+  }
+}
+
+/**
+ * Handler setting of a feature flag.
+ *
+ * @param {import('express').Request} req - request
+ * @param {import('express').Response} res - response
+ * @returns {*} - empty array and a number of users affected
+ */
+export async function setFeatureFlag(req, res) {
+  try {
+    const { flag, on } = req.body;
+
+    const user = await userById(await currentUserId(req, res));
+    const authorization = new UserPolicy(user);
+
+    if (!authorization.isAdmin()) {
+      auditLogger.warn(`User ${user.id} without permissions attempted to set feature flags`);
+      res.sendStatus(403);
+      return;
+    }
+    const result = await setFlag(flag, on);
+
+    res.json(result);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getFeatureFlags(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+    const authorization = new UserPolicy(user);
+
+    res.json(authorization.isAdmin()
+      ? FEATURE_FLAGS
+      : user.flags);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getTrainingReportUsers(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+
+    const authorization = new EventPolicy(user, {});
+    const { regionId, eventId } = req.query;
+
+    const region = parseInt(regionId, DECIMAL_BASE);
+    const event = parseInt(eventId, DECIMAL_BASE);
+
+    if (!authorization.canGetTrainingReportUsersInRegion(region)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    res.json(await getTrainingReportUsersByRegion(region, event));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getNamesByIds(req, res) {
+  try {
+    const { ids } = req.query;
+    if (!ids) {
+      res.sendStatus(400);
+      return;
+    }
+    res.json(await getUserNamesByIds(ids));
+  } catch (err) {
+    await handleErrors(req, res, err, { namespace: 'SERVICE:USERS' });
   }
 }

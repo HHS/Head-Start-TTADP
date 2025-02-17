@@ -153,7 +153,7 @@ _Tip: You run terraform files from the directory in which they are stored. For e
     ```
 1. **Bind the infrastructure to the application**
 
-    CloudFoundry/cloud.gov requires that some "services" (e.g. AWS infrastructure) be "bound" to the application instance. S3, Redis, and Elasticsearch are all services that require this "binding" step. See the [cloud.gov documentation][cloudgov-bind] for more direction on this. Also, check out [PR#71][PR#71] for an example of how this was done for the RDS instances.
+    CloudFoundry/cloud.gov requires that some "services" (e.g. AWS infrastructure) be "bound" to the application instance. S3, and Redis are all services that require this "binding" step. See the [cloud.gov documentation][cloudgov-bind] for more direction on this. Also, check out [PR#71][PR#71] for an example of how this was done for the RDS instances.
 
 <!-- Links -->
 

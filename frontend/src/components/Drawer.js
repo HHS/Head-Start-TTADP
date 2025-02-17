@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
+import FocusTrap from 'focus-trap-react';
 import './Drawer.scss';
 import useOnClickOutside from '../hooks/useOnOutsideClick';
 
@@ -32,6 +33,7 @@ export default function Drawer({
 
   useEffect(() => {
     const triggerElement = triggerRef.current;
+
     if (triggerElement) triggerElement.addEventListener('click', () => setIsOpen(true));
     return () => {
       if (triggerElement) triggerElement.removeEventListener('click', () => setIsOpen(true));
@@ -65,51 +67,72 @@ export default function Drawer({
     };
   }, [onEscape]);
 
-  if (!isOpen) return null;
+  const classNames = [
+    'smart-hub-drawer',
+    'bg-white',
+    'position-fixed',
+    'pin-right',
+    'pin-bottom',
+    'z-100',
+    'overflow-y-auto',
+    'shadow-3',
+    'flex-column',
+    'flex-justify',
+  ];
+
+  if (isOpen) {
+    classNames.push('display-flex');
+    classNames.push('slide-in-right');
+  }
 
   return (
     <div
-      className="smart-hub-drawer slide-in-right bg-white position-fixed pin-right pin-bottom z-100 overflow-y-auto shadow-3 display-flex flex-column flex-justify"
+      hidden={!isOpen}
+      className={classNames.join(' ')}
       ref={elementRef}
       style={{
         top: headerHeight,
       }}
     >
-      <div>
-        {title && (
-          <div
-            className={`bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
-          >
-            <span className="text-bold font-serif-lg">{title}</span>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="usa-button usa-button--outline smart-hub-button--no-margin"
+      <FocusTrap active={isOpen}>
+        <div>
+          <div>
+            {title && (
+            <div
+              className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
             >
-              Close
-            </button>
-          </div>
-        )}
+              <span className="text-bold font-serif-lg">{title}</span>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="usa-button usa-button--outline smart-hub-button--no-margin"
+              >
+                Close
+              </button>
+            </div>
+            )}
 
-        <div
-          className="overflow-y-auto padding-1 margin-1"
+            <div
+              className="overflow-y-auto padding-1 margin-1"
           // eslint-disable-next-line
           tabIndex="0"
-        >
-          {children}
-        </div>
-      </div>
+            >
+              {children}
+            </div>
+          </div>
 
-      {footer && (
-      <div
-        className={`bg-base-lightest padding-105 ${
-          stickyFooter ? 'position-sticky pin-bottom' : ''
-        }`}
-      >
-        {footer}
-      </div>
-      )}
+          {footer && (
+          <div
+            className={`bg-base-lightest padding-105 ${
+              stickyFooter ? 'position-sticky pin-bottom' : ''
+            }`}
+          >
+            {footer}
+          </div>
+          )}
+        </div>
+      </FocusTrap>
     </div>
   );
 }

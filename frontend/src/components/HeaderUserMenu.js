@@ -3,22 +3,27 @@ import PropTypes from 'prop-types';
 import { Link, Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
+import AvatarGroup from './AvatarGroup';
 import DropdownMenu from './DropdownMenu';
 import './HeaderUserMenu.scss';
 import NavLink from './NavLink';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import colors from '../colors';
-import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import Pill from './Pill';
+import { SESSION_STORAGE_IMPERSONATION_KEY, SUPPORT_LINK } from '../Constants';
 import { storageAvailable } from '../hooks/helpers';
 
 function UserMenuNav({ items }) {
   return (
     <div>
       <ul className="user-menu-nav">
-        {items.map(({ key, element }) => (
-          <li key={key}>
+        {items.map(({
+          key, element, liClass, presentation,
+        }) => (
+          <li key={key} className={liClass} role={presentation ? 'presentation' : 'listitem'}>
             {element}
           </li>
         ))}
@@ -31,10 +36,11 @@ UserMenuNav.propTypes = {
   items: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.number,
     element: PropTypes.element,
+    presentation: PropTypes.bool,
   })).isRequired,
 };
 
-function HeaderUserMenu() {
+function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifications }) {
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
@@ -52,30 +58,42 @@ function HeaderUserMenu() {
     );
   };
 
+  const location = useLocation();
+
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
     {
       key: 2,
+      label: 'Notifications',
+      to: `/notifications?referrer=${encodeURIComponent(location.pathname)}`,
+      badge: areThereUnreadNotifications ? <Pill type="success" className="margin-left-1">new</Pill> : <></>,
+      fn: () => {
+        setAreThereUnreadNotifications(false);
+        onItemClick();
+      },
+    },
+    {
+      key: 3,
       label: 'User guide',
       to: 'https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/',
       external: true,
     },
     {
-      key: 3,
+      key: 4,
       label: 'Contact support',
-      to: 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a',
+      to: SUPPORT_LINK,
       external: true,
     },
-    { key: 4, space: true },
+    { key: 5, space: true },
     {
-      key: 5,
+      key: 6,
       label: 'Admin',
       to: '/admin',
       showIfAdmin: true,
     },
-    { key: 6, divider: true, showIfAdmin: false },
+    { key: 7, divider: true, showIfAdmin: false },
     {
-      key: 7,
+      key: 8,
       label: 'Log out',
       to: '/logout',
     },
@@ -87,24 +105,45 @@ function HeaderUserMenu() {
     divider = false,
     space = false,
     showIfAdmin = false,
+    badge = <></>,
     fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
-    if (divider) return { key, element: <hr /> };
-    if (space) return { key, element: <div className="height-6" /> };
+    if (divider) return { key, presentation: true, element: <hr /> };
+    if (space) return { key, presentation: true, element: <div aria-hidden="true" className="height-6" /> };
+
     if (external) {
       return {
         key,
+        presentation: false,
         element: (
           <Link key={key} className="usa-nav__link" href={to} target="_blank" rel="noopener noreferrer">
-            {label}
+            <span>{label}</span>
             <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
+            {badge}
           </Link>
         ),
       };
     }
-    return { key, element: <NavLink key={key} to={to} fn={fn}>{label}</NavLink> };
-  }).filter(Boolean), [userIsAdmin]);
+
+    return {
+      key,
+      presentation: false,
+      element: (
+        <>
+          <NavLink key={key} to={to} fn={fn}>
+            <span>{label}</span>
+            {badge}
+          </NavLink>
+        </>
+      ),
+    };
+  }).filter(Boolean), [
+    areThereUnreadNotifications,
+    location.pathname,
+    setAreThereUnreadNotifications,
+    userIsAdmin,
+  ]);
 
   /** If we don't have a user context, don't show the user menu. */
   if (!user) {
@@ -116,16 +155,14 @@ function HeaderUserMenu() {
   const Av = ({
     onClick,
     disabled,
-    buttonAriaLabel,
     clickOutsideRef,
   }) => (
     <button
       disabled={disabled}
-      aria-label={buttonAriaLabel}
-      alt={buttonAriaLabel}
+      aria-label={areThereUnreadNotifications ? 'You have unread notifications. Show user menu' : 'Show user menu'}
       type="button"
       data-testid="header-avatar"
-      className="unstyled-btn display-flex flex-align-center flex-justify-center"
+      className={`unstyled-btn display-flex flex-align-center flex-justify-center position-relative ${areThereUnreadNotifications ? 'header-avatar-button__with-unread' : ''}`}
       onClick={onClick}
       ref={clickOutsideRef}
     >
@@ -136,7 +173,6 @@ function HeaderUserMenu() {
   Av.propTypes = {
     onClick: PropTypes.func,
     disabled: PropTypes.bool,
-    buttonAriaLabel: PropTypes.string,
     clickOutsideRef: PropTypes.oneOfType([
       PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
       PropTypes.func,
@@ -146,7 +182,6 @@ function HeaderUserMenu() {
   Av.defaultProps = {
     onClick: () => {},
     disabled: false,
-    buttonAriaLabel: 'Show user menu',
     clickOutsideRef: () => {},
   };
 
@@ -166,12 +201,7 @@ function HeaderUserMenu() {
       className="no-print"
     >
       <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
-        <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">
-          <Avatar name={user.name} />
-          <span className="margin-left-2">
-            {user.name}
-          </span>
-        </h4>
+        <AvatarGroup userName={user.name} />
         {isImpersonating && (
           <div className="display-flex flex-justify-center margin-top-2">
             <Button type="button" onClick={stopImpersonating}>
@@ -184,5 +214,14 @@ function HeaderUserMenu() {
     </DropdownMenu>
   );
 }
+
+HeaderUserMenu.propTypes = {
+  areThereUnreadNotifications: PropTypes.bool,
+  setAreThereUnreadNotifications: PropTypes.func.isRequired,
+};
+
+HeaderUserMenu.defaultProps = {
+  areThereUnreadNotifications: false,
+};
 
 export default HeaderUserMenu;

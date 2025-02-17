@@ -11,21 +11,9 @@ export default (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      ObjectiveTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
-      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources' });
-      ObjectiveTemplate.belongsToMany(models.Topic, {
-        through: models.ObjectiveTemplateTopic,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'topicId',
-        as: 'topics',
-      });
       ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
-      ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
-        through: models.GoalTemplateObjectiveTemplate,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'goalTemplateId',
-        as: 'goalTemplates',
-      });
     }
   }
   ObjectiveTemplate.init({
@@ -49,7 +37,7 @@ export default (sequelize, DataTypes) => {
     },
     creationMethod: {
       allowNull: false,
-      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+      type: DataTypes.ENUM(Object.values(CREATION_METHOD)),
     },
     lastUsed: {
       allowNull: true,

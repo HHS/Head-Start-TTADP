@@ -1,25 +1,43 @@
-import { filterAssociation } from './utils';
+import { Op, WhereOptions } from 'sequelize';
+import { sequelize } from '../../models';
 
-const goalIds = `
-  SELECT DISTINCT
-    "ActivityReportGoals"."goalId"
-  FROM "ActivityReportGoals"
-  INNER JOIN "ActivityReports"
-  ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
-  WHERE "ActivityReports"."endDate"`;
+function getDateSql(dates: string[], operator: string) {
+  const dateClause = (operator === 'BETWEEN')
+    ? `${dates[0]} AND ${dates[1]}`
+    : dates[0];
 
-export function beforeEndDate(date) {
-  return filterAssociation(goalIds, date, false, '<=');
+  return sequelize.literal(`(
+    SELECT DISTINCT "goalId"
+    FROM "ActivityReportGoals"
+    INNER JOIN "ActivityReports"
+    ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
+    WHERE "ActivityReports"."endDate" ${operator} ${dateClause}
+  )`);
 }
 
-export function afterEndDate(date) {
-  return filterAssociation(goalIds, date, false, '>=');
+export function beforeEndDate(date: string): WhereOptions {
+  return {
+    id: {
+      [Op.in]: getDateSql([`'${new Date(date).toISOString()}'`], '<='),
+    },
+  };
 }
 
-export function withinEndDates(dates: string[]) {
-  // got: [ '2022/11/23-2023/02/22' ]
-  // need: [ '2022/11/23', '2023/02/22']
-  const escapedDateStrings = dates[0].split('-').map((d) => `'${d}'`);
-  // now: "'2022/11/23'", "'2023/02/22'"
-  return filterAssociation(goalIds, escapedDateStrings, false, 'BETWEEN');
+export function afterEndDate(date: string): WhereOptions {
+  return {
+    id: {
+      [Op.in]: getDateSql([`'${new Date(date).toISOString()}'`], '>='),
+    },
+  };
+}
+
+export function withinEndDates(dates: string[]): WhereOptions {
+  const escapedDates = dates[0]
+    .split('-')
+    .map((d) => `'${new Date(d).toISOString()}'`);
+  return {
+    id: {
+      [Op.in]: getDateSql(escapedDates, 'BETWEEN'),
+    },
+  };
 }

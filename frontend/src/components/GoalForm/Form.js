@@ -1,15 +1,14 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { uniq } from 'lodash';
 import {
   Alert,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
-import GoalText from './GoalText';
 import GoalDate from './GoalDate';
-import GoalRttapa from './GoalRttapa';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -17,42 +16,50 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
+import RTRGoalSource from './RTRGoalSource';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
+import RTRGoalPrompts from './RTRGoalPrompts';
+import ReadOnlyGoalCollaborators from '../ReadOnlyGoalCollaborators';
+import GoalFormTitleGroup from '../SharedGoalComponents/GoalFormTitleGroup';
+import ReadOnlyField from '../ReadOnlyField';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
+  validatePrompts,
   selectedGrants,
   setSelectedGrants,
   goalName,
-  setGoalName,
+  prompts,
+  setPrompts,
   endDate,
   setEndDate,
-  isRttapa,
-  initialRttapa,
-  setIsRttapa,
   errors,
-  validateGoalName,
   validateEndDate,
   validateGrantNumbers,
   validateGoalNameAndRecipients,
   objectives,
   setObjectives,
   setObjectiveError,
-  topicOptions,
   isOnApprovedReport,
   isOnReport,
+  isCurated,
+  isSourceEditable,
   status,
   datePickerKey,
   fetchError,
   goalNumbers,
   clearEmptyObjectiveError,
-  onUploadFiles,
   userCanEdit,
+  source,
+  setSource,
+  validateGoalSource,
+  collaborators,
+  goalTemplateId,
+  isReopenedGoal,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
-
-  const onUpdateText = (e) => setGoalName(e.target.value);
 
   const onAddNewObjectiveClick = () => {
     // first we validate the goal text and the recipients
@@ -87,26 +94,16 @@ export default function Form({
   };
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
-
-  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
-
   const showAlert = isOnReport && status !== 'Closed';
-
+  const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
-        <h2 className="margin-0">{formTitle}</h2>
-        { status.toLowerCase() === 'draft'
-        && (
-          <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
-        )}
-      </div>
-      <div>
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-        {' '}
-        indicates required field
-      </div>
+      <GoalFormTitleGroup
+        goalNumbers={goalNumbers}
+        status={status}
+        isReopenedGoal={isReopenedGoal}
+      />
 
       {
         showAlert ? (
@@ -117,40 +114,75 @@ export default function Form({
           : null
       }
 
-      <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
-
-      <GrantSelect
-        selectedGrants={selectedGrants}
-        isOnReport={isOnReport}
-        setSelectedGrants={setSelectedGrants}
-        possibleGrants={possibleGrants}
-        validateGrantNumbers={validateGrantNumbers}
-        error={errors[FORM_FIELD_INDEXES.GRANTS]}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
+      <ReadOnlyGoalCollaborators
+        collaborators={collaborators}
       />
 
-      <GoalText
-        error={errors[FORM_FIELD_INDEXES.NAME]}
-        goalName={goalName}
-        isOnReport={isOnReport}
-        validateGoalName={validateGoalName}
-        onUpdateText={onUpdateText}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          status !== 'Closed',
+          userCanEdit,
+          possibleGrants.length > 1,
+          !isOnReport,
+        ]}
+        label="Recipient grant numbers"
+        value={selectedGrants.map((grant) => grant.numberWithProgramTypes).join(', ')}
+      >
+        <GrantSelect
+          selectedGrants={selectedGrants}
+          setSelectedGrants={setSelectedGrants}
+          possibleGrants={possibleGrants}
+          validateGrantNumbers={validateGrantNumbers}
+          error={errors[FORM_FIELD_INDEXES.GRANTS]}
+          isLoading={isAppLoading}
+        />
+      </FormFieldThatIsSometimesReadOnly>
+
+      <ReadOnlyField
+        label="Recipient's goal"
+      >
+        {goalName}
+      </ReadOnlyField>
+
+      <RTRGoalPrompts
+        isCurated={isCurated || false}
+        value={prompts}
+        onChange={setPrompts}
+        validate={validatePrompts}
+        errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
+        userCanEdit={notClosedWithEditPermission}
+        selectedGrants={selectedGrants || []}
+        goalTemplateId={goalTemplateId}
       />
 
-      <GoalRttapa
-        error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
-        isRttapa={isRttapa}
-        onChange={setIsRttapa}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        isOnApprovedReport={isOnApprovedReport || false}
-        initial={initialRttapa}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={
+          isCurated ? [
+            isSourceEditable,
+            status !== 'Closed',
+            userCanEdit,
+            !isOnApprovedReport,
+          ] : [
+            status !== 'Closed',
+            userCanEdit,
+            !isOnApprovedReport,
+          ]
+        }
+        label="Goal source"
+        value={uniq(Object.values(source || {})).join(', ') || ''}
+      >
+        <RTRGoalSource
+          source={source}
+          onChangeGoalSource={setSource}
+          error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
+          isOnReport={isOnApprovedReport}
+          goalStatus={status}
+          userCanEdit={userCanEdit}
+          validateGoalSource={validateGoalSource}
+          isCurated={isCurated}
+          selectedGrants={selectedGrants}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
@@ -176,14 +208,12 @@ export default function Form({
           // that way we don't get the white screen of death
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
-          topicOptions={topicOptions}
-          onUploadFiles={onUploadFiles}
           goalStatus={status}
           userCanEdit={userCanEdit}
         />
       ))}
 
-      { (status !== 'Closed' && userCanEdit) && (
+      { (notClosedWithEditPermission) && (
         <div className="margin-top-4">
           {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
           <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
@@ -196,12 +226,15 @@ export default function Form({
 Form.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
-  validateGoalName: PropTypes.func.isRequired,
+  isCurated: PropTypes.bool,
+  errors: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.shape({}),
+      PropTypes.node,
+    ]),
+  ).isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
-  isRttapa: PropTypes.string.isRequired,
-  setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
@@ -217,24 +250,9 @@ Form.propTypes = {
   ).isRequired,
   setSelectedGrants: PropTypes.func.isRequired,
   goalName: PropTypes.string.isRequired,
-  setGoalName: PropTypes.func.isRequired,
-  recipient: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    grants: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        numberWithProgramTypes: PropTypes.string,
-      }),
-    ),
-  }).isRequired,
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
@@ -250,15 +268,42 @@ Form.propTypes = {
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
-  goalNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  goalNumbers: PropTypes.oneOfType(
+    [PropTypes.string, PropTypes.arrayOf(PropTypes.string)],
+  ).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
-  onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
-  initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
+  prompts: PropTypes.shape({
+    [PropTypes.string]: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string.isRequired,
+        response: PropTypes.arrayOf(PropTypes.string).isRequired,
+      }),
+    ),
+  }).isRequired,
+  setPrompts: PropTypes.func.isRequired,
+  validatePrompts: PropTypes.func.isRequired,
+  source: PropTypes.shape({
+    [PropTypes.string]: PropTypes.string,
+  }).isRequired,
+  setSource: PropTypes.func.isRequired,
+  validateGoalSource: PropTypes.func.isRequired,
+  collaborators: PropTypes.arrayOf(PropTypes.shape({
+    goalNumber: PropTypes.string,
+    goalCreator: PropTypes.shape({}),
+    goalCreatorName: PropTypes.string,
+    goalCreatorRoles: PropTypes.string,
+  })).isRequired,
+  goalTemplateId: PropTypes.number,
+  isReopenedGoal: PropTypes.bool.isRequired,
+  isSourceEditable: PropTypes.bool,
 };
 
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
+  isCurated: false,
+  isSourceEditable: true,
+  goalTemplateId: null,
 };

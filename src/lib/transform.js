@@ -1,5 +1,6 @@
 import moment from 'moment';
 import md5 from 'md5';
+import { uniq } from 'lodash';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
@@ -31,11 +32,38 @@ function transformSimpleValue(instance, field) {
     value = value.sort().join('\n');
   }
   const obj = {};
+
   Object.defineProperty(obj, field, {
     value,
     enumerable: true,
   });
   return obj;
+}
+
+/*
+ * Generates a function that can transform values of a related model
+ * @param {string} field The field of the related model
+ * @param {string} prop The key on the related model to transform
+ * @returns {function} A function that will perform the transformation
+ */
+function transformRelatedModelProp(field, prop) {
+  function transformer(instance) {
+    const obj = {};
+    let records = instance[field];
+    if (records) {
+      if (!Array.isArray(records)) {
+        records = [records];
+      }
+      // we sort the values
+      const value = records.map((r) => (r[prop] || '')).sort().join('\n');
+      Object.defineProperty(obj, prop, {
+        value,
+        enumerable: true,
+      });
+    }
+    return obj;
+  }
+  return transformer;
 }
 
 /*
@@ -54,13 +82,42 @@ function transformRelatedModel(field, prop) {
       }
       // we sort the values
       const value = records.map((r) => (r[prop] || '')).sort().join('\n');
-      Object.defineProperty(obj, field, {
+      Object.defineProperty(obj, `${field}`, {
         value,
         enumerable: true,
       });
     }
     return obj;
   }
+  return transformer;
+}
+
+/**
+ *
+ * @param {string} field
+ * @param {Array} fieldDefs expected [{ subfield: string, label: string }]
+ * @param {*} prop
+ * @returns () => ({})
+ */
+function transformRelatedModelWithMultiFields(field, fieldDefs) {
+  function transformer(instance) {
+    const obj = {};
+    fieldDefs.forEach((fieldDef) => {
+      let records = instance[field];
+      if (records) {
+        if (!Array.isArray(records)) {
+          records = [records];
+        }
+        const value = records.map((r) => r[fieldDef.subfield]).join('\n');
+        Object.defineProperty(obj, fieldDef.label, {
+          value,
+          enumerable: true,
+        });
+      }
+    });
+    return obj;
+  }
+
   return transformer;
 }
 
@@ -105,8 +162,8 @@ function transformApproversModel(prop) {
       const distinctValues = [
         ...new Set(
           values.filter(
-            (approver) => approver.User && approver.User[prop] !== null,
-          ).map((r) => r.User[prop]).flat(),
+            (approver) => approver.user && approver.user[prop] !== null,
+          ).map((r) => r.user[prop]).flat(),
         ),
       ];
       const approversList = distinctValues.sort().join('\n');
@@ -170,6 +227,54 @@ function sortObjectives(a, b) {
   return -1;
 }
 
+/**
+ *
+ * @param {Object[]} goalRecords
+ * @returns {Object} { goals: [], objectives: []}
+ */
+function makeGoalsObjectFromActivityReportGoals(goalRecords) {
+  let goalCsvRecordNumber = 1;
+  const goals = {};
+  goalRecords.forEach((goal) => {
+    const {
+      id = null,
+      name = null,
+      status = null,
+      createdVia = null,
+      source = null,
+    } = goal || {};
+    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
+    if (goalNameIndex === -1) {
+      goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
+      goals[`goal-${goalCsvRecordNumber}`] = name;
+      goals[`goal-${goalCsvRecordNumber}-status`] = status;
+      goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
+      goals[`goal-${goalCsvRecordNumber}-source`] = source;
+      goalCsvRecordNumber += 1;
+      return;
+    }
+    const goalNameKey = Object.keys(goals)[goalNameIndex];
+    const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
+    const field = `goal-${goalNumber}-id`;
+    goals[field] = `${goals[field]}\n${id}`;
+  });
+  return goals;
+}
+
+function updateObjectiveWithRelatedModelData(
+  relation,
+  relationLabel,
+  relationKey,
+  accum,
+  objectiveId,
+) {
+  const relatedSimple = (relation || []).map((t) => t[relationKey]);
+  Object.defineProperty(accum, `objective-${objectiveId}-${relationLabel}`, {
+    value: relatedSimple.join('\n'),
+    enumerable: true,
+  });
+}
+
 /*
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
@@ -185,7 +290,15 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
     const {
-      goal, title, status, ttaProvided, topics, files, resources,
+      goal,
+      title,
+      status,
+      ttaProvided,
+      topics,
+      files,
+      resources,
+      courses,
+      supportType,
     } = objective;
     const goalId = goal ? goal.id : null;
     const titleMd5 = md5(title);
@@ -217,6 +330,21 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         enumerable: true,
       });
 
+      Object.defineProperty(accum, `goal-${goalNum}-source`, {
+        value: goal.source,
+        enumerable: true,
+      });
+
+      Object.defineProperty(accum, `goal-${goalNum}-standard-ohs-goal`, {
+        value: goal.isCurated ? 'Yes' : 'No',
+        enumerable: true,
+      });
+
+      Object.defineProperty(accum, `goal-${goalNum}-fei-root-causes`, {
+        value: goal.responses.map((response) => response.response).join('\n'),
+        enumerable: true,
+      });
+
       // Created From.
       Object.defineProperty(accum, `goal-${goalNum}-created-from`, {
         value: goal.createdVia,
@@ -228,6 +356,14 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       // Make sure its not another objective for the same goal.
       if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
         accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
+        if (accum[`goal-${goalNum}-source`]) {
+          accum[`goal-${goalNum}-source`] = uniq([...(accum[`goal-${goalNum}-source`]).split('\n'), goal.source]).join('\n');
+        } else {
+          accum[`goal-${goalNum}-source`] = goal.source;
+        }
+        if (goal.isCurated) {
+          accum[`goal-${goalNum}-fei-root-causes`] = uniq([...accum[`goal-${goalNum}-fei-root-causes`].split('\n'), ...goal.responses.map((response) => response.response)]).join('\n');
+        }
         goalIds[goalName].push(goalId);
       }
       return accum;
@@ -237,8 +373,6 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     if (!goalNum) {
       goalNum = 1;
     }
-
-    // same with objective num
 
     /**
      * this will start other entity objectives at 1.1, which will prevent the creation
@@ -255,32 +389,50 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
 
-    // Activity Report Objective: Topics.
-    const objTopics = topics.map((t) => t.name);
-    Object.defineProperty(accum, `objective-${objectiveId}-topics`, {
-      value: objTopics.join('\n'),
-      enumerable: true,
-    });
+    updateObjectiveWithRelatedModelData(
+      topics,
+      'topics',
+      'name',
+      accum,
+      objectiveId,
+    );
 
-    // Activity Report Objective: Resources Links.
-    const objResources = resources.map((r) => r.userProvidedUrl);
-    Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
-      value: objResources.join('\n'),
-      enumerable: true,
-    });
+    updateObjectiveWithRelatedModelData(
+      courses,
+      'courses',
+      'name',
+      accum,
+      objectiveId,
+    );
 
-    // Activity Report Objective: Non-Resource Links (Files).
-    const objFiles = files.map((f) => f.originalFileName);
-    Object.defineProperty(accum, `objective-${objectiveId}-nonResourceLinks`, {
-      value: objFiles.join('\n'),
-      enumerable: true,
-    });
-    Object.defineProperty(accum, `objective-${objectiveId}-status`, {
-      value: status,
-      enumerable: true,
-    });
+    updateObjectiveWithRelatedModelData(
+      resources,
+      'resourcesLinks',
+      'url',
+      accum,
+      objectiveId,
+    );
+
+    updateObjectiveWithRelatedModelData(
+      files,
+      'nonResourceLinks',
+      'originalFileName',
+      accum,
+      objectiveId,
+    );
+
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
       value: convert(ttaProvided),
+      enumerable: true,
+    });
+
+    Object.defineProperty(accum, `objective-${objectiveId}-supportType`, {
+      value: supportType,
+      enumerable: true,
+    });
+
+    Object.defineProperty(accum, `objective-${objectiveId}-status`, {
+      value: status,
       enumerable: true,
     });
 
@@ -300,20 +452,28 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 */
 function transformGoalsAndObjectives(report) {
   let obj = {};
-  const { activityReportObjectives } = report;
-  if (activityReportObjectives) {
-    const objectiveRecords = activityReportObjectives.map((aro) => (
+  const { activityReportObjectives, activityReportGoals } = report;
+
+  if (activityReportObjectives && activityReportObjectives.length) {
+    const objectiveRecords = activityReportObjectives.filter((aro) => aro.objective).map((aro) => (
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
         topics: aro.topics,
         files: aro.files,
-        resources: aro.activityReportObjectiveResources,
+        resources: aro.resources,
+        courses: aro.courses,
+        supportType: aro.supportType,
       }
     ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
+  } else if (activityReportGoals && activityReportGoals.length) {
+    const goals = activityReportGoals.map((arg) => (
+      { ...(arg.goal.dataValues || arg.goal), status: arg.status }
+    ));
+    obj = makeGoalsObjectFromActivityReportGoals(goals);
   }
 
   return obj;
@@ -332,6 +492,7 @@ const arTransformers = [
   'participants',
   'topics',
   'ttaType',
+  'language',
   'numberOfParticipants',
   'deliveryMethod',
   'duration',
@@ -344,8 +505,20 @@ const arTransformers = [
   'nonECLKCResourcesUsed',
   transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformRelatedModel('recipientNextSteps', 'note'),
-  transformRelatedModel('specialistNextSteps', 'note'),
+  transformRelatedModelWithMultiFields('recipientNextSteps', [{
+    subfield: 'note',
+    label: 'recipientNextSteps',
+  }, {
+    subfield: 'completeDate',
+    label: 'recipientNextStepsCompleteDate',
+  }]),
+  transformRelatedModelWithMultiFields('specialistNextSteps', [{
+    subfield: 'note',
+    label: 'specialistNextSteps',
+  }, {
+    subfield: 'completeDate',
+    label: 'specialistNextStepsCompleteDate',
+  }]),
   transformHTML('context'),
   transformHTML('additionalNotes'),
   'lastSaved',
@@ -355,6 +528,20 @@ const arTransformers = [
   transformGrantModel('programSpecialistName'),
   transformGrantModel('recipientInfo'),
   transformGrantModel('stateCode', 'recipientInfo'),
+];
+
+const logTransformers = [
+  'id',
+  transformRelatedModel('author', 'name'),
+  transformRelatedModelProp('data', 'communicationDate'),
+  transformRelatedModelProp('data', 'duration'),
+  transformRelatedModelProp('data', 'method'),
+  transformRelatedModelProp('data', 'purpose'),
+  transformRelatedModelProp('data', 'notes'),
+  transformRelatedModelProp('data', 'result'),
+  transformRelatedModel('files', 'originalFileName'),
+  transformRelatedModel('recipientNextSteps', 'note'),
+  transformRelatedModel('specialistNextSteps', 'note'),
 ];
 
 /**
@@ -417,7 +604,7 @@ function extractListOfGoalsAndObjectives(csvRows) {
   return goalsAndObjectives;
 }
 
-function activityReportToCsvRecord(report, transformers = arTransformers) {
+function toCSVRecord(report, transformers) {
   const callFunctionOrValueGetter = (x) => {
     if (typeof x === 'function') {
       return x(report);
@@ -433,7 +620,16 @@ function activityReportToCsvRecord(report, transformers = arTransformers) {
   return record;
 }
 
+function activityReportToCsvRecord(report, transformers = arTransformers) {
+  return toCSVRecord(report, transformers);
+}
+
+function communicationLogToCsvRecord(log) {
+  return toCSVRecord(log, logTransformers);
+}
+
 export {
+  communicationLogToCsvRecord,
   activityReportToCsvRecord,
   arTransformers,
   makeGoalsAndObjectivesObject,

@@ -3,7 +3,11 @@ import PropTypes from 'prop-types';
 import IdleModal from './IdleModal';
 
 export default function AppWrapper({
-  padded, authenticated, children, logout, hasAlerts,
+  padded,
+  authenticated,
+  children,
+  logout,
+  hasAlerts,
 }) {
   const appWrapperRef = useRef(null);
 
@@ -11,6 +15,7 @@ export default function AppWrapper({
   useEffect(() => {
     if (hasAlerts && appWrapperRef.current) {
       const header = document.querySelector('.smart-hub-header.has-alerts');
+
       if (header) {
         appWrapperRef.current.style.marginTop = `${appWrapperRef.current.style.marginTop + header.offsetHeight}px`;
       }
@@ -35,22 +40,18 @@ export default function AppWrapper({
 
   if (padded) {
     return (
-      <div ref={appWrapperRef} id="appWrapper" className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav desktop:margin-top-9 margin-top-6 margin-right-5">
-        <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
-          <section className="usa-section padding-top-3">
-            {content}
-          </section>
+      <div ref={appWrapperRef} id="appWrapper" className="maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav desktop:margin-top-9 margin-top-6">
+        <div className="padding-3 tablet:padding-5">
+          {content}
         </div>
       </div>
     );
   }
 
   return (
-    <div ref={appWrapperRef} id="appWrapper" className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav desktop:margin-top-9 margin-top-6">
-      <div className="grid-col-12">
-        <section className="usa-section padding-top-0">
-          {content}
-        </section>
+    <div ref={appWrapperRef} id="appWrapper" className="flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav desktop:margin-top-9 margin-top-6">
+      <div className="padding-x-3 padding-bottom-3 tablet:padding-x-5 tablet:padding-bottom-5">
+        {content}
       </div>
     </div>
   );
@@ -60,7 +61,7 @@ AppWrapper.propTypes = {
   authenticated: PropTypes.bool,
   padded: PropTypes.bool,
   children: PropTypes.node.isRequired,
-  logout: PropTypes.func.isRequired,
+  logout: PropTypes.func,
   hasAlerts: PropTypes.bool,
 };
 
@@ -68,4 +69,5 @@ AppWrapper.defaultProps = {
   authenticated: false,
   padded: true,
   hasAlerts: false,
+  logout: () => {},
 };

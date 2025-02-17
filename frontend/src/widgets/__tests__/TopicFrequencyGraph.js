@@ -9,7 +9,6 @@ import {
 import userEvent from '@testing-library/user-event';
 import {
   TopicFrequencyGraphWidget,
-  topicsWithLineBreaks,
   sortData,
   SORT_ORDER,
 } from '../TopicFrequencyGraph';
@@ -49,14 +48,13 @@ describe('Topic & Frequency Graph Widget', () => {
   it('shows the correct data', async () => {
     renderArGraphOverview({ data: TEST_DATA });
     const graphTitle = screen.getByRole('heading', { name: /number of activity reports by topic/i });
-    await expect(graphTitle).toBeInTheDocument();
-    await expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(graphTitle).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
   });
 
   it('correctly sorts data by count', () => {
-    const data = [...TEST_DATA];
+    let data = [...TEST_DATA];
     sortData(data, SORT_ORDER.DESC);
-
     expect(data).toStrictEqual([
       {
         topic: 'Community and Self-Assessment',
@@ -82,7 +80,35 @@ describe('Topic & Frequency Graph Widget', () => {
         topic: 'Human Resources',
         count: 0,
       },
+    ].reverse());
 
+    data = [...TEST_DATA];
+    sortData(data, SORT_ORDER.DESC, true);
+    expect(data).toStrictEqual([
+      {
+        topic: 'Community and Self-Assessment',
+        count: 155,
+      },
+      {
+        topic: 'Family Support Services',
+        count: 53,
+      },
+      {
+        topic: 'Five-Year Grant',
+        count: 33,
+      },
+      {
+        topic: 'CLASS: Instructional Support',
+        count: 12,
+      },
+      {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+      {
+        topic: 'Human Resources',
+        count: 0,
+      },
     ]);
   });
 
@@ -116,7 +142,7 @@ describe('Topic & Frequency Graph Widget', () => {
         topic: 'Human Resources',
         count: 0,
       },
-    ]);
+    ].reverse());
   });
 
   it('handles undefined data', async () => {
@@ -124,16 +150,6 @@ describe('Topic & Frequency Graph Widget', () => {
     renderArGraphOverview({ data });
 
     expect(await screen.findByText('Number of Activity Reports by Topic')).toBeInTheDocument();
-  });
-
-  it('handles loading', async () => {
-    renderArGraphOverview({ loading: true });
-    expect(await screen.findByText('Loading')).toBeInTheDocument();
-  });
-
-  it('correctly inserts line breaks', () => {
-    const formattedtopic = topicsWithLineBreaks('Equity, Culture &amp; Language');
-    expect(formattedtopic).toBe(' Equity,<br />Culture<br />&amp;<br />Language');
   });
 
   it('the sort control works', async () => {
@@ -144,33 +160,20 @@ describe('Topic & Frequency Graph Widget', () => {
     act(() => userEvent.click(aZ));
     const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
-    const point1 = document.querySelector('g.xtick');
+    // this won't change because we sort count and then alphabetically
+    // and this is always last in that case
+    const firstPoint = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point1.__data__.text).toBe(' Community<br />and<br />Self-Assessment');
+    expect(firstPoint.__data__.text).toBe('Human Resources');
+
+    const point1 = Array.from(document.querySelectorAll('g.ytick')).pop();
+    // eslint-disable-next-line no-underscore-dangle
+    expect(point1.__data__.text).toBe('Community and Self-Assessment');
+
     act(() => userEvent.click(apply));
 
-    const point2 = document.querySelector('g.xtick');
+    const point2 = Array.from(document.querySelectorAll('g.ytick')).pop();
     // eslint-disable-next-line no-underscore-dangle
-    expect(point2.__data__.text).toBe(' CLASS:<br />Instructional<br />Support');
-  });
-
-  it('handles switching display contexts', async () => {
-    renderArGraphOverview({ data: [...TEST_DATA] });
-    const button = await screen.findByRole('button', { name: 'display number of activity reports by topic data as table' });
-    act(() => userEvent.click(button));
-
-    const firstRowHeader = await screen.findByRole('cell', {
-      name: /community and self-assessment/i,
-    });
-    expect(firstRowHeader).toBeInTheDocument();
-
-    const firstTableCell = await screen.findByRole('cell', { name: /155/i });
-    expect(firstTableCell).toBeInTheDocument();
-
-    const viewGraph = await screen.findByRole('button', { name: 'display number of activity reports by topic data as graph' });
-    act(() => userEvent.click(viewGraph));
-
-    expect(firstRowHeader).not.toBeInTheDocument();
-    expect(firstTableCell).not.toBeInTheDocument();
+    expect(point2.__data__.text).toBe('CLASS: Instructional Support');
   });
 });

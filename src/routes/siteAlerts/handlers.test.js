@@ -1,7 +1,7 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
+import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '@ttahub/common';
 import { SiteAlert, User, sequelize } from '../../models';
-import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '../../constants';
 import { getSiteAlerts } from './handlers';
 
 describe('site alerts', () => {
@@ -15,6 +15,7 @@ describe('site alerts', () => {
       email: faker.internet.email(),
       homeRegionId: 1,
       hsesUsername: faker.internet.userName(),
+      lastLogin: new Date(),
     });
 
     // Create a published alert
@@ -50,6 +51,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.DRAFT,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     }));
 
     // create an alert that's already ended

@@ -8,7 +8,8 @@ import join from 'url-join';
 
 import ExternalLink from '../ExternalResourceModal';
 import { isExternalURL, isValidURL } from '../../utils';
-import { GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
+import { HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
+import { mockWindowProperty } from '../../testHelpers';
 
 let windowSpy;
 describe('External Resources', () => {
@@ -96,7 +97,7 @@ describe('External Resources', () => {
 
   it('shows internal goverment link when ok is pressed', async () => {
     windowSpy.mockReturnValue();
-    const url = `https://shrek${GOVERNMENT_HOSTNAME_EXTENSION}`;
+    const url = `https://shrek${HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION}`;
 
     // Given an external link
     render(<ExternalLink to={url}>something</ExternalLink>);
@@ -125,21 +126,9 @@ describe('External Resources', () => {
   });
 });
 
-// For mocking `process.env`, I got it from https://stackoverflow.com/a/48042799
 describe('utility functions', () => {
-  const OLD_WINDOW = global.window;
-
-  beforeEach(() => {
-    jest.resetModules(); // it clears the cache
-    delete global.window.location;
-    global.window = Object.create(window);
-    global.window.location = {
-      host: 'government.gov',
-    };
-  });
-
-  afterAll(() => {
-    global.window.location = OLD_WINDOW;
+  mockWindowProperty('location', {
+    host: 'government.gov',
   });
 
   it('utility function correctly assumes external URLs', () => {
@@ -174,7 +163,7 @@ describe('utility functions', () => {
 
     // Given an internal url
     urls.forEach((url) => {
-      const internal = join(`${url}${GOVERNMENT_HOSTNAME_EXTENSION}`, 'some-internal', 'url');
+      const internal = join(`${url}${HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION}`, 'some-internal', 'url');
       // When we check if its valid
       // Then we see it is
       expect(isExternalURL(internal)).not.toBeTruthy();

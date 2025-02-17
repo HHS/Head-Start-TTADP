@@ -1,13 +1,15 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
   render, screen, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import { REPORT_STATUSES } from '../../../../../Constants';
+import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
+import UserContext from '../../../../../UserContext';
 
 // eslint-disable-next-line react/prop-types
 const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] }) => {
@@ -39,32 +41,45 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   const topicOptions = [
     {
       value: 1,
-      label: 'Fencing',
+      name: 'Fencing',
     },
     {
       value: 2,
-      label: 'Boating',
+      name: 'Boating',
     },
   ];
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...hookForm}>
-      <Objectives
-        objectiveOptions={objectiveOptions}
-        topicOptions={topicOptions}
-        goalId={goalId}
-        noObjectiveError={<></>}
-        goalStatus="In Progress"
-        reportId={12}
-        onSaveDraft={jest.fn()}
-      />
-      <button type="button">blur me</button>
-    </FormProvider>
+    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+      <FormProvider {...hookForm}>
+        <Objectives
+          objectiveOptions={objectiveOptions}
+          topicOptions={topicOptions}
+          goalId={goalId}
+          noObjectiveError={<></>}
+          goalStatus="In Progress"
+          reportId={12}
+          onSaveDraft={jest.fn()}
+        />
+        <button type="button">blur me</button>
+      </FormProvider>
+    </UserContext.Provider>
   );
 };
 
 describe('Objectives', () => {
+  beforeAll(() => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+  });
+
+  afterAll(() => {
+    fetchMock.restore();
+  });
+
   it('you can create a new objective', async () => {
     const objectiveOptions = [];
     const collabs = [{ role: 'Snake charmer' }, { role: 'lion tamer' }];
@@ -80,11 +95,13 @@ describe('Objectives', () => {
       label: 'Test objective 1',
       title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
       id: 3,
+      objectiveCreatedHere: false,
     },
     {
       id: 4,
@@ -92,10 +109,12 @@ describe('Objectives', () => {
       label: 'Test objective 2',
       title: 'Test objective 2',
       ttaProvided: '<p>hello 2</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
@@ -120,11 +139,13 @@ describe('Objectives', () => {
       label: 'Test objective 1',
       title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'In Progress',
       id: 3,
+      objectiveCreatedHere: false,
     },
     {
       id: 4,
@@ -132,10 +153,12 @@ describe('Objectives', () => {
       label: 'Test objective 2',
       title: 'Test objective 2',
       ttaProvided: '<p>hello 2</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
@@ -168,10 +191,12 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: true,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.queryByText(/objective status/i)).toBeNull();
@@ -186,10 +211,12 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.queryByText(/objective status/i)).toBeNull();
@@ -213,37 +240,18 @@ describe('Objectives', () => {
     expect(screen.queryByRole('button', { name: /Add new objective/i })).toBeNull();
   });
 
-  it('is on approved reports hides options', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      activityReports: [{
-        status: REPORT_STATUSES.APPROVED,
-      }],
-      resources: [],
-      topics: [],
-      status: 'Not Started',
-    }];
-    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
-    const select = await screen.findByLabelText(/Select TTA objective/i);
-    expect(screen.queryByText(/objective status/i)).toBeNull();
-    await selectEvent.select(select, ['Test objective']);
-    const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
-    expect(role.tagName).toBe('P');
-  });
-
   it('handles a "new" goal', async () => {
     const objectiveOptions = [{
       value: 3,
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
 

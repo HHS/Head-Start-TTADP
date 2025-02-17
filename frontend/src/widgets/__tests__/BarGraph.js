@@ -1,8 +1,9 @@
-/* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { createRef } from 'react';
 import {
   render,
+  waitFor,
+  act,
   screen,
 } from '@testing-library/react';
 import BarGraph from '../BarGraph';
@@ -20,28 +21,38 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async () => (
-  render(<BarGraph data={TEST_DATA} xAxisLabel="xaxis" yAxisLabel="yaxis" />)
-);
+const renderBarGraph = (data = TEST_DATA) => {
+  act(() => {
+    render(<BarGraph data={data} widgetRef={createRef()} />);
+  });
+};
 
 describe('Bar Graph', () => {
+  it('handles null data', () => {
+    renderBarGraph(null);
+    expect(document.querySelector('svg')).toBe(null);
+  });
   it('is shown', async () => {
     renderBarGraph();
-    await screen.findByText('xaxis');
-    const point1 = document.querySelector('g.xtick');
+
+    await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
+
+    const point1 = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point1.__data__.text).toBe(' one');
+    expect(point1.__data__.text).toBe('one');
+
+    const point2 = document.querySelector('g.xtick');
+    // eslint-disable-next-line no-underscore-dangle
+    expect(point2.__data__.text).toBe('0');
   });
 
-  it('has the correct x axis label', async () => {
-    renderBarGraph();
-    const axis = await screen.findByText('xaxis');
-    expect(axis).toBeInTheDocument();
-  });
+  it('shows no results found', async () => {
+    renderBarGraph([]);
 
-  it('has the correct y axis label', async () => {
-    renderBarGraph();
-    const axis = await screen.findByText('yaxis');
-    expect(axis).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /no results found\./i })).toBeDefined();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeDefined();
+      expect(screen.getByText('Get help using filters')).toBeDefined();
+    });
   });
 });

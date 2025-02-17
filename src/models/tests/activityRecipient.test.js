@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -6,7 +7,6 @@ import db, {
   OtherEntity,
   Grant,
 } from '..';
-import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 
 const mockUser = {
@@ -79,6 +79,7 @@ const sampleReport = {
     role: 'Grants Specialist',
     homeRegionId: 1,
   },
+  version: 2,
 };
 
 describe('Activity Reports model', () => {
@@ -89,30 +90,25 @@ describe('Activity Reports model', () => {
   let report;
   let activityRecipients;
   beforeAll(async () => {
-    try {
-      user = await User.create({ ...mockUser });
-      recipient = await Recipient.create({ ...mockRecipient });
-      otherEntity = await OtherEntity.create({ ...mockOtherEntity });
-      await Grant.create({
-        ...mockGrant,
-        recipientId: recipient.id,
-        programSpecialistName: user.name,
-        programSpecialistEmail: user.email,
-      });
-      grant = await Grant.findOne({ where: { id: mockGrant.id } });
-      report = await ActivityReport.create({ ...sampleReport });
-      activityRecipients = await Promise.all([
-        await ActivityRecipient.create({ activityReportId: report.id, grantId: grant.id }),
-        await ActivityRecipient.create({
-          activityReportId: report.id,
-          otherEntityId: otherEntity.id,
-        }),
-        await ActivityRecipient.create({ activityReportId: report.id }, { validation: false }),
-      ]);
-    } catch (e) {
-      auditLogger.error(JSON.stringify(e));
-      throw e;
-    }
+    user = await User.create({ ...mockUser });
+    recipient = await Recipient.create({ ...mockRecipient });
+    otherEntity = await OtherEntity.create({ ...mockOtherEntity });
+    await Grant.create({
+      ...mockGrant,
+      recipientId: recipient.id,
+      programSpecialistName: user.name,
+      programSpecialistEmail: user.email,
+    });
+    grant = await Grant.findOne({ where: { id: mockGrant.id } });
+    report = await ActivityReport.create({ ...sampleReport });
+    activityRecipients = await Promise.all([
+      await ActivityRecipient.create({ activityReportId: report.id, grantId: grant.id }),
+      await ActivityRecipient.create({
+        activityReportId: report.id,
+        otherEntityId: otherEntity.id,
+      }),
+      await ActivityRecipient.create({ activityReportId: report.id }, { validation: false }),
+    ]);
   });
   afterAll(async () => {
     if (activityRecipients) {
@@ -125,7 +121,7 @@ describe('Activity Reports model', () => {
           },
         })));
       await ActivityReport.destroy({ where: { id: report.id } });
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
       await User.destroy({ where: { id: user.id } });
@@ -139,21 +135,16 @@ describe('Activity Reports model', () => {
     expect(activityRecipients[2].activityRecipientId).toEqual(null);
   });
   it('name', async () => {
-    try {
-      const arr = await Promise.all(activityRecipients
-        .map(async (activityRecipient) => ActivityRecipient.findOne({
-          where: {
-            activityReportId: activityRecipient.activityReportId,
-            grantId: activityRecipient.grantId,
-            otherEntityId: activityRecipient.otherEntityId,
-          },
-        })));
-      expect(arr[0].name).toEqual(grant.name);
-      expect(arr[1].name).toEqual(otherEntity.name);
-      expect(arr[2].name).toEqual(null);
-    } catch (e) {
-      auditLogger.error(JSON.stringify(e));
-      throw e;
-    }
+    const arr = await Promise.all(activityRecipients
+      .map(async (activityRecipient) => ActivityRecipient.findOne({
+        where: {
+          activityReportId: activityRecipient.activityReportId,
+          grantId: activityRecipient.grantId,
+          otherEntityId: activityRecipient.otherEntityId,
+        },
+      })));
+    expect(arr[0].name).toEqual(grant.name);
+    expect(arr[1].name).toEqual(otherEntity.name);
+    expect(arr[2].name).toEqual(null);
   });
 });

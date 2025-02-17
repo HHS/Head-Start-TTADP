@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -8,7 +9,6 @@ import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import FilterStateSelect from '../FilterStateSelect';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 
 const { findByText } = screen;
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
@@ -41,7 +41,7 @@ describe('FilterStateSelect', () => {
 
     renderStateSelect(user, onApply);
 
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Massachusetts (MA)']);
     expect(onApply).toHaveBeenCalledWith(['MA']);
   });
@@ -59,7 +59,7 @@ describe('FilterStateSelect', () => {
     };
 
     renderStateSelect(user, onApply);
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Puerto Rico (PR)', 'FC']);
     const options = document.querySelectorAll('div[class$="-option"]');
     expect(options.length).toBe(3);
@@ -80,7 +80,7 @@ describe('FilterStateSelect', () => {
     };
 
     renderStateSelect(user, onApply);
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Guam (GU)']);
     const options = document.querySelectorAll('div[class$="-option"]');
     expect(options.length).toBe(2);
@@ -100,7 +100,7 @@ describe('FilterStateSelect', () => {
     };
 
     renderStateSelect(user, onApply);
-    const select = await findByText(/Select state to filter by/i);
+    const select = await findByText(/Select state or territory to filter by/i);
     await selectEvent.select(select, ['Guam (GU)']);
     const options = document.querySelectorAll('div[class$="-option"]');
     expect(options.length).toBe(59);

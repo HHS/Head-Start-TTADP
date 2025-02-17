@@ -1,0 +1,9 @@
+@use '../../../mixins.scss';
+
+.ttahub-resource-repeater .ttahub-session-form--objective-form-group {
+    margin-top: 0;
+}
+
+.ttahub-session-form--objective-form-group.usa-form-group--error input[type="url"] {
+ @include mixins.error;   
+}

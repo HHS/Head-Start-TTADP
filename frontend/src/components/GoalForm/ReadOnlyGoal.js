@@ -1,8 +1,39 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId, uniq } from 'lodash';
 import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
+
+const formatPrompts = (prompts) => {
+  const ps = Array.isArray(prompts) ? prompts : Object.values(prompts);
+  return ps.filter((prompt) => (
+    prompt.response && prompt.response.length)).map((prompt) => ({
+    key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
+    title: prompt.title,
+    response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
+  }));
+};
+
+export const parseObjectValuesOrString = (d) => {
+  try {
+  // if null or undefined, return empty string
+    if (!d) {
+      return '';
+    }
+
+    if (typeof d === 'string') {
+      return d;
+    }
+
+    // this gets arrays and numbers
+    // (although numbers are not expected
+    // and will be converted to empty arrays by Object.values)
+    return uniq(Object.values(d)).join(', ');
+  } catch (e) {
+    return ''; // honestly, try breaking this function now, you can't
+  }
+};
 
 export default function ReadOnlyGoal({
   onEdit,
@@ -47,7 +78,7 @@ export default function ReadOnlyGoal({
           ? (
             <div className="margin-bottom-2">
               <h4 className="margin-0">Recipient grant numbers</h4>
-              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.label).join(', ')}</p>
+              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
             </div>
           )
           : null }
@@ -55,10 +86,20 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
-        <div className="margin-bottom-2">
-          <h4 className="margin-0">Goal type</h4>
-          <p className="usa-prose margin-0">{goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}</p>
-        </div>
+        {(goal.source) ? (
+          <div className="margin-bottom-2" key={uniqueId('goal-source-read-only-')}>
+            <h4 className="margin-0">Goal source</h4>
+            <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
+          </div>
+        ) : null}
+        {(goal.prompts) && (
+          formatPrompts(goal.prompts).map((prompt) => (
+            <div className="margin-bottom-2" key={prompt.key}>
+              <h4 className="margin-0">{prompt.title}</h4>
+              <p className="usa-prose margin-0">{prompt.response}</p>
+            </div>
+          ))
+        )}
         {goal.endDate ? (
           <div className="margin-bottom-4">
             <h4 className="margin-0">Anticipated close date</h4>
@@ -79,6 +120,16 @@ ReadOnlyGoal.propTypes = {
   hideEdit: PropTypes.bool,
   index: PropTypes.number.isRequired,
   goal: PropTypes.shape({
+    prompts: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string,
+        response: PropTypes.oneOfType([
+          PropTypes.arrayOf(PropTypes.string),
+          PropTypes.string,
+        ]),
+      }),
+    ),
+    source: PropTypes.string,
     id: PropTypes.number,
     grants: PropTypes.arrayOf(
       PropTypes.shape({

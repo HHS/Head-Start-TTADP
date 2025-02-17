@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import { act } from 'react-dom/test-utils';
-import { useForm } from 'react-hook-form/dist/index.ie11';
+import { useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import { Label } from '@trussworks/react-uswds';
 
@@ -15,14 +15,14 @@ const options = [
 ];
 
 const customOptions = [
-  { id: 1, name: 'Approver 1', User: { id: 1, fullName: 'Approver 1' } },
-  { id: 2, name: 'Approver 2', User: { id: 2, fullName: 'Approver 2' } },
-  { id: 3, name: 'Approver 3', User: { id: 3, fullName: 'Approver 3' } },
+  { id: 1, name: 'Approver 1', user: { id: 1, fullName: 'Approver 1' } },
+  { id: 2, name: 'Approver 2', user: { id: 2, fullName: 'Approver 2' } },
+  { id: 3, name: 'Approver 3', user: { id: 3, fullName: 'Approver 3' } },
 ];
 
 describe('MultiSelect', () => {
   // eslint-disable-next-line react/prop-types
-  const TestMultiSelect = ({ onSubmit }) => {
+  const TestMultiSelect = ({ onSubmit, disabled = false }) => {
     const { control, handleSubmit } = useForm({
       defaultValues: { name: [] },
       mode: 'all',
@@ -41,6 +41,8 @@ describe('MultiSelect', () => {
             name="name"
             options={options}
             required={false}
+            onClick={() => {}}
+            disabled={disabled}
           />
           <button data-testid="submit" type="submit">submit</button>
         </Label>
@@ -111,12 +113,12 @@ describe('MultiSelect', () => {
 
   it('expects multi select to maintain original options structure', async () => {
     const onSubmit = jest.fn();
-    render(<CustomOptionMultiSelect onSubmit={onSubmit} valueLabel="User.fullName" valueProperty="User.id" />);
+    render(<CustomOptionMultiSelect onSubmit={onSubmit} valueLabel="user.fullName" valueProperty="user.id" />);
     await selectEvent.select(screen.getByLabelText('label'), ['Approver 1']);
     await act(async () => {
       userEvent.click(screen.getByTestId('submit'));
     });
-    expect(onSubmit).toHaveBeenCalledWith({ name: [{ value: 1, label: 'Approver 1', User: { id: 1, fullName: 'Approver 1' } }] });
+    expect(onSubmit).toHaveBeenCalledWith({ name: [{ value: 1, label: 'Approver 1', user: { id: 1, fullName: 'Approver 1' } }] });
   });
 
   it('sorts correctly!', () => {
@@ -158,5 +160,33 @@ describe('MultiSelect', () => {
         label: 'spinach',
       },
     ]);
+  });
+
+  describe('the div wrapper', () => {
+    it('forwards space to the Selector, expanding the multiselect', async () => {
+      render(<TestMultiSelect />);
+      const container = screen.getByTestId('name-click-container');
+      container.focus();
+      await act(async () => {
+        userEvent.type(container, '{space}');
+      });
+      expect(await screen.findByText('one')).toBeVisible();
+    });
+    it('forwards enter to the Selector, giving it focus', async () => {
+      render(<TestMultiSelect disabled onSubmit={() => {}} />);
+      const container = screen.getByTestId('name-click-container');
+      container.focus();
+      await act(async () => {
+        userEvent.type(container, '{enter}');
+      });
+      const selector = container.querySelector('input');
+      expect(selector).toHaveFocus();
+    });
+    it('hides the Selector with aria-hidden when disabled', async () => {
+      render(<TestMultiSelect disabled />);
+      const container = screen.getByTestId('name-click-container');
+      const div = container.querySelector('div');
+      expect(div).toHaveAttribute('aria-hidden', 'true');
+    });
   });
 });

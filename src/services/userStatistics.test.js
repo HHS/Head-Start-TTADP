@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -16,6 +16,7 @@ import db, {
   ActivityReportApprover,
 } from '../models';
 import { statisticsByUser } from './users';
+import { formatNumber } from '../widgets/helpers';
 
 jest.mock('bull');
 
@@ -27,6 +28,7 @@ const mockUser = {
   hsesUsername: 'user1134265161',
   hsesUserId: 'statisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 // Other user.
@@ -37,6 +39,7 @@ const otherMockUser = {
   hsesUsername: 'otheruser1134265161',
   hsesUserId: 'otherstatisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 // Extra user.
@@ -47,6 +50,7 @@ const extraMockUser = {
   hsesUsername: 'extrauser1134265161',
   hsesUserId: 'extrastatisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 // Outside Region user.
@@ -57,6 +61,7 @@ const outsideRegionMockUser = {
   hsesUsername: 'outsideRegionuser1134265161',
   hsesUserId: 'outsideRegiontatisticsuser1234',
   createdAt: '2023-01-01T21:29:31.727Z',
+  lastLogin: new Date(),
 };
 
 const report = {
@@ -79,6 +84,7 @@ const report = {
   ECLKCResourcesUsed: ['test'],
   objectivesWithoutGoals: [],
   goals: [],
+  version: 2,
 };
 
 describe('statisticsByUser', () => {
@@ -163,6 +169,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientOne.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
     grantTwo = await Grant.create({
       id: faker.datatype.number(),
@@ -170,6 +178,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientTwo.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
     grantThree = await Grant.create({
       id: faker.datatype.number(),
@@ -177,6 +187,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientThree.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     grantFour = await Grant.create({
@@ -185,6 +197,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 1,
       recipientId: recipientFour.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     grantOutsideRegion = await Grant.create({
@@ -193,6 +207,8 @@ describe('statisticsByUser', () => {
       cdi: false,
       regionId: 2,
       recipientId: recipientOutsideRegion.id,
+      startDate: new Date(),
+      endDate: new Date(),
     });
 
     // Goals.
@@ -200,28 +216,24 @@ describe('statisticsByUser', () => {
       name: 'Statistics Goal 1',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
     });
 
     goal1b = await Goal.create({
       name: 'Statistics Goal 1b',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
     });
 
     goal2 = await Goal.create({
       name: 'Statistics Goal 2',
       status: 'In Progress',
       grantId: grantTwo.id,
-      previousStatus: 'Not Started',
     });
 
     goal3 = await Goal.create({
       name: 'Statistics Goal 2',
       status: 'In Progress',
       grantId: grantThree.id,
-      previousStatus: 'Not Started',
     });
 
     // Objectives.
@@ -608,10 +620,10 @@ describe('statisticsByUser', () => {
 
     // Delete objectives.
     await Objective.destroy({
-      where:
-      {
+      where: {
         id: [obj1.id, obj2.id, obj3.id, obj4.id, obj5.id],
       },
+      force: true,
     });
 
     // Delete goals.
@@ -619,6 +631,7 @@ describe('statisticsByUser', () => {
       where: {
         grantId: [grantOne.id, grantTwo.id, grantThree.id],
       },
+      force: true,
     });
 
     // Delete Grants.
@@ -626,6 +639,7 @@ describe('statisticsByUser', () => {
       where: {
         id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id, grantOutsideRegion.id],
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.
@@ -690,32 +704,32 @@ describe('statisticsByUser', () => {
     const todaysDate = new Date();
     const createdDate = new Date(user.createdAt);
     const totalHours = Math.abs(todaysDate - createdDate) / 36e5;
-    const totalDaysSinceJoined = Math.floor(totalHours / 24);
+    const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
-    expect(response.arsCreated).toBe(9);
+    expect(response.arsCreated).toBe('9');
 
     // Collaborator reports.
-    expect(response.arsCollaboratedOn).toBe(0);
+    expect(response.arsCollaboratedOn).toBe('0');
 
     // TTA provided.
     expect(response.ttaProvided).toBe('7 days 2 hrs');
 
     // Recipients.
-    expect(response.recipientsReached).toBe(4);
+    expect(response.recipientsReached).toBe('4');
 
     // Grants.
-    expect(response.grantsServed).toBe(4);
+    expect(response.grantsServed).toBe('4');
 
     // Participants.
-    expect(response.participantsReached).toBe(10);
+    expect(response.participantsReached).toBe('10');
 
     // Goals.
-    expect(response.goalsApproved).toBe(4);
+    expect(response.goalsApproved).toBe('4');
 
     // Objectives.
-    expect(response.objectivesApproved).toBe(5);
+    expect(response.objectivesApproved).toBe('5');
   });
   /*
   User Statistics:
@@ -737,31 +751,31 @@ describe('statisticsByUser', () => {
     const todaysDate = new Date();
     const createdDate = new Date(user.createdAt);
     const totalHours = Math.abs(todaysDate - createdDate) / 36e5;
-    const totalDaysSinceJoined = Math.floor(totalHours / 24);
+    const totalDaysSinceJoined = formatNumber(Math.floor(totalHours / 24));
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
-    expect(response.arsCreated).toBe(5);
+    expect(response.arsCreated).toBe('5');
 
     // Collaborator reports.
-    expect(response.arsCollaboratedOn).toBe(2);
+    expect(response.arsCollaboratedOn).toBe('2');
 
     // TTA provided.
     expect(response.ttaProvided).toBe('3 days 18 hrs');
 
     // Recipients.
-    expect(response.recipientsReached).toBe(3);
+    expect(response.recipientsReached).toBe('3');
 
     // Grants.
-    expect(response.grantsServed).toBe(3);
+    expect(response.grantsServed).toBe('3');
 
     // Participants.
-    expect(response.participantsReached).toBe(8);
+    expect(response.participantsReached).toBe('8');
 
     // Goals.
-    expect(response.goalsApproved).toBe(4);
+    expect(response.goalsApproved).toBe('4');
 
     // Objectives.
-    expect(response.objectivesApproved).toBe(5);
+    expect(response.objectivesApproved).toBe('5');
   });
 });

@@ -1,12 +1,4 @@
-export const REPORT_STATUSES = {
-  DRAFT: 'draft',
-  DELETED: 'deleted',
-  SUBMITTED: 'submitted',
-  APPROVED: 'approved',
-  NEEDS_ACTION: 'needs_action',
-};
-
-export const FILE_STATUSES = {
+const FILE_STATUSES = {
   UPLOADING: 'UPLOADING',
   UPLOADED: 'UPLOADED',
   UPLOAD_FAILED: 'UPLOAD_FAILED',
@@ -18,157 +10,42 @@ export const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
-// note that if this list is changed,
-// it also needs to be changed in frontend/src/Constants.js
-export const ALERT_STATUSES = {
-  UNPUBLISHED: 'Unpublished',
-  PUBLISHED: 'Published',
+const IMPORT_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  COLLECTING: 'COLLECTING',
+  COLLECTED: 'COLLECTED',
+  COLLECTION_FAILED: 'COLLECTION_FAILED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
 };
 
-export const ALERT_VARIANTS = {
-  INFO: 'info',
-  EMERGENCY: 'emergency',
+const IMPORT_DATA_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
+  WILL_NOT_PROCESS: 'WILL_NOT_PROCESS',
 };
 
-export const ALERT_SIZES = {
-  STANDARD: 'standard',
-  SLIM: 'slim',
-  LARGE: 'large',
+const DATE_FORMAT = 'MM/DD/YYYY';
+
+const REPORTS_PER_PAGE = 10;
+const RECIPIENTS_PER_PAGE = 12;
+const GOALS_PER_PAGE = 5;
+
+const SEARCH_RESULTS_PER_PAGE = 23;
+
+const AUTOMATIC_CREATION = 'Automatic';
+const CURATED_CREATION = 'Curated';
+const SYSTEM_GENERATED = 'System Generated';
+const CREATION_METHOD = {
+  AUTOMATIC: AUTOMATIC_CREATION,
+  CURATED: CURATED_CREATION,
+  SYSTEM_GENERATED,
 };
 
-export const DATE_FORMAT = 'MM/DD/YYYY';
-
-export const DECIMAL_BASE = 10;
-
-export const REPORTS_PER_PAGE = 10;
-export const RECIPIENTS_PER_PAGE = 12;
-export const GOALS_PER_PAGE = 5;
-
-export const SEARCH_RESULTS_PER_PAGE = 23;
-
-export const APPROVER_STATUSES = {
-  APPROVED: 'approved',
-  NEEDS_ACTION: 'needs_action',
-};
-
-// copied from /frontend/src/pages/ActivityReports/constants.js
-export const TOPICS = [
-  'Behavioral / Mental Health / Trauma',
-  'Child Screening and Assessment',
-  'CLASS: Classroom Organization',
-  'CLASS: Emotional Support',
-  'CLASS: Instructional Support',
-  'Coaching',
-  'Communication',
-  'Community and Self-Assessment',
-  'Culture & Language',
-  'Curriculum (Instructional or Parenting)',
-  'Data and Evaluation',
-  'Disabilities Services',
-  'ERSEA',
-  'Environmental Health and Safety / EPRR',
-  'Equity',
-  'Facilities',
-  'Family Support Services',
-  'Fatherhood / Male Caregiving',
-  'Fiscal / Budget',
-  'Five-Year Grant',
-  'Home Visiting',
-  'Human Resources',
-  'Leadership / Governance',
-  'Learning Environments',
-  'Nutrition',
-  'Ongoing Monitoring and Continuous Improvement',
-  'Oral Health',
-  'Parent and Family Engagement',
-  'Partnerships and Community Engagement',
-  'Physical Health and Screenings',
-  'Pregnancy Services / Expectant Families',
-  'Program Planning and Services',
-  'Quality Improvement Plan / QIP',
-  'Recordkeeping and Reporting',
-  'Safety Practices',
-  'Staff Wellness',
-  'Teaching / Caregiving Practices',
-  'Technology and Information Systems',
-  'Training and Professional Development',
-  'Transition Practices',
-  'Transportation',
-];
-
-// copied from /frontend/src/pages/ActivityReports/constants.js
-export const REASONS = [
-  'Below Competitive Threshold (CLASS)',
-  'Below Quality Threshold (CLASS)',
-  'Change in Scope',
-  'Child Incidents',
-  'Complaint',
-  'COVID-19 response',
-  'Full Enrollment',
-  'New Recipient',
-  'New Director or Management',
-  'New Program Option',
-  'New Staff / Turnover',
-  'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
-  'School Readiness Goals',
-  'Monitoring | Area of Concern',
-  'Monitoring | Noncompliance',
-  'Monitoring | Deficiency',
-];
-
-// copied from /frontend/src/pages/ActivityReports/constants.js
-export const TARGET_POPULATIONS = [
-  'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
-  'Affected by Child Welfare Involvement',
-  'Affected by Disaster',
-  'Affected by Substance Use',
-  'Children Experiencing Homelessness',
-  'Children with Disabilities',
-  'Children with Special Health Care Needs',
-  'Dual-Language Learners',
-];
-
-export const USER_ROLES = [
-  'Regional Program Manager',
-  'COR',
-  'Supervisory Program Specialist',
-  'Program Specialist',
-  'Grants Specialist',
-  'Central Office',
-  'TTAC',
-  'Admin. Assistant',
-  'Early Childhood Manager',
-  'Early Childhood Specialist',
-  'Family Engagement Specialist',
-  'Grantee Specialist Manager',
-  'Grantee Specialist',
-  'Health Specialist',
-  'System Specialist',
-  'National Center',
-  'Customer Service Contract',
-  'Other Federal Staff',
-];
-
-export const CLOSE_SUSPEND_REASONS = [
-  'Duplicate goal',
-  'Recipient request',
-  'TTA complete',
-  'Key staff turnover / vacancies',
-  'Recipient is not responding',
-  'Regional Office request',
-];
-
-export const AUTOMATIC_CREATION = 'Automatic';
-export const CURATED_CREATION = 'Curated';
-export const CREATION_METHOD = [
-  AUTOMATIC_CREATION,
-  CURATED_CREATION,
-];
-
-export const GOAL_STATUS = {
+const GOAL_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
@@ -176,7 +53,24 @@ export const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
-export const OBJECTIVE_STATUS = {
+const GOAL_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a goal
+  EDITOR: 'Editor', // The user(s) who edits the text of a goal
+  LINKER: 'Linker', // The user who links the goal to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
+};
+
+const GRANT_PERSONNEL_ROLES = [
+  'auth_official_contact',
+  'ceo',
+  'cfo',
+  'policy_council',
+  'director',
+];
+
+const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
@@ -184,50 +78,36 @@ export const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
-/*
-  Please keep in sync with:
-  frontend > src > constants.js
-  frontend > src > pages > ActivityReport > constants.js
-*/
-export const RECIPIENT_PARTICIPANTS = [
-  'CEO / CFO / Executive',
-  'Center Director / Site Director',
-  'Coach',
-  'Direct Service: Other',
-  'Family Service Worker / Case Manager',
-  'Fiscal Manager/Team',
-  'Governing Body / Tribal Council / Policy Council',
-  'Home Visitor',
-  'Manager / Coordinator / Specialist',
-  'Parent / Guardian',
-  'Program Director (HS / EHS)',
-  'Program Support / Administrative Assistant',
-  'Teacher / Infant-Toddler Caregiver',
-  'Volunteer',
-];
+const OBJECTIVE_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a objective
+  EDITOR: 'Editor', // The user(s) who edits the text of a objective
+  LINKER: 'Linker', // The user who links the objective to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
+};
 
-export const OTHER_ENTITY_RECIPIENTS = [
-  'HSCO',
-  'Local/State Agency(ies)',
-  'OCC Regional Office',
-  'OHS Regional Office',
-  'Regional Head Start Association',
-  'Regional TTA Team / Specialists',
-  'State Early Learning System',
-  'State Head Start Association',
-  'Other',
-];
+const NEXTSTEP_NOTETYPE = {
+  SPECIALIST: 'SPECIALIST',
+  RECIPIENT: 'RECIPIENT',
+};
 
-export const ALL_PARTICIPANTS = [
-  ...RECIPIENT_PARTICIPANTS,
-  ...OTHER_ENTITY_RECIPIENTS,
-];
+const RESOURCE_ACTIONS = {
+  GET_METADATA: 'getMetaData',
+};
+
+const GROUP_COLLABORATORS = {
+  CREATOR: 'Creator',
+  CO_OWNER: 'Co-Owner',
+  SHARED_WITH: 'SharedWith',
+  EDITOR: 'Editor',
+};
 
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
  */
-export const USER_SETTINGS = {
+const USER_SETTINGS = {
   EMAIL: {
     KEYS: {
       // Email you when an activity report is submitted for your approval.
@@ -251,7 +131,7 @@ export const USER_SETTINGS = {
   },
 };
 
-export const EMAIL_ACTIONS = {
+const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
   NEEDS_ACTION: 'changesRequested',
   SUBMITTED: 'approverAssigned',
@@ -262,26 +142,154 @@ export const EMAIL_ACTIONS = {
   APPROVED_DIGEST: 'reportApprovedDigest',
   RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
+  TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
+  TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
 };
 
-export const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
+const S3_ACTIONS = {
+  DELETE_FILE: 'deleteFile',
 };
 
-export const EMAIL_DIGEST_FREQ = {
+const EMAIL_DIGEST_FREQ = {
   DAILY: 'today',
   WEEKLY: 'this week',
   MONTHLY: 'this month',
 };
 
-export const DIGEST_SUBJECT_FREQ = {
+const DIGEST_SUBJECT_FREQ = {
   DAILY: 'daily',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
 };
 
-export const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
+const PROMPT_FIELD_TYPE = {
+  MULTISELECT: 'multiselect',
+};
+
+const SOURCE_FIELD = {
+  REPORT: {
+    NONECLKC: 'nonECLKCResourcesUsed',
+    ECLKC: 'ECLKCResourcesUsed',
+    CONTEXT: 'context',
+    NOTES: 'additionalNotes',
+    RESOURCE: 'resource',
+  },
+  NEXTSTEPS: {
+    NOTE: 'note',
+    RESOURCE: 'resource',
+  },
+  GOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  GOALTEMPLATE: {
+    NAME: 'name',
+    RESOURCE: 'resource',
+  },
+  REPORTGOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVETEMPLATE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  REPORTOBJECTIVE: {
+    TITLE: 'title',
+    TTAPROVIDED: 'ttaProvided',
+    RESOURCE: 'resource',
+  },
+};
+
+const RESOURCE_DOMAIN = {
+  HEAD_START: 'headstart.gov',
+};
+
+const GRANT_INACTIVATION_REASONS = {
+  REPLACED: 'Replaced',
+  TERMINATED: 'Terminated',
+  RELINQUISHED: 'Relinquished',
+  UNKNOWN: 'Unknown',
+};
+
+const MAINTENANCE_TYPE = {
+  VACUUM_ANALYZE: 'VACUUM ANALYZE',
+  REINDEX: 'REINDEX',
+  VACUUM_TABLES: 'VACUUM TABLES',
+  REINDEX_TABLES: 'REINDEX TABLES',
+  DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
+  CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
+  IMPORT_SCHEDULE: 'IMPORT_SCHEDULE',
+  IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
+  IMPORT_PROCESS: 'IMPORT_PROCESS',
+};
+
+const FEATURE_FLAGS = [
+  'anv_statistics',
+  'regional_goal_dashboard',
+  'closed_goal_merge_override',
+  'training_reports_dashboard',
+  'quality_assurance_dashboard',
+  'manual_mark_goals_similar',
+  'monitoring_integration',
+];
+
+const MAINTENANCE_CATEGORY = {
+  DB: 'DB',
+  MAINTENANCE: 'MAINTENANCE',
+  IMPORT: 'IMPORT',
+};
+
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'monitoring'];
+
+const CURRENT_GOAL_SIMILARITY_VERSION = 5;
+
+const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
+const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
+
+module.exports = {
+  CURRENT_GOAL_SIMILARITY_VERSION,
+  FEI_PROD_GOAL_TEMPLATE_ID,
+  CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
+  FILE_STATUSES,
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
+  DATE_FORMAT,
+  REPORTS_PER_PAGE,
+  RECIPIENTS_PER_PAGE,
+  GOALS_PER_PAGE,
+  GOAL_CREATED_VIA,
+  SEARCH_RESULTS_PER_PAGE,
+  AUTOMATIC_CREATION,
+  CURATED_CREATION,
+  CREATION_METHOD,
+  GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  GRANT_PERSONNEL_ROLES,
+  OBJECTIVE_STATUS,
+  OBJECTIVE_COLLABORATORS,
+  GROUP_COLLABORATORS,
+  NEXTSTEP_NOTETYPE,
+  RESOURCE_ACTIONS,
+  USER_SETTINGS,
+  EMAIL_ACTIONS,
+  S3_ACTIONS,
+  EMAIL_DIGEST_FREQ,
+  DIGEST_SUBJECT_FREQ,
+  PROMPT_FIELD_TYPE,
+  SOURCE_FIELD,
+  RESOURCE_DOMAIN,
+  GRANT_INACTIVATION_REASONS,
+  MAINTENANCE_TYPE,
+  MAINTENANCE_CATEGORY,
+  FEATURE_FLAGS,
 };

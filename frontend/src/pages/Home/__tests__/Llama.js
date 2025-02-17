@@ -2,10 +2,9 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import Llama from '../Llama';
-import { SCOPE_IDS } from '../../../Constants';
 
 const mockResponse = {
   daysSinceJoined: '123 days',
@@ -32,10 +31,20 @@ describe('Llama', () => {
       render(<Llama user={{ id: 1, permissions: [] }} />);
     });
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    const img = screen.getByAltText('hey folks, it\'s me, llawrence the llama, and I\'m just here to tell you that you\'ve done a great job here on the ttahub');
+    const img = screen.getByAltText('You\'ve done a great job on the ttahub!');
     expect(img).toBeInTheDocument();
-    userEvent.click(img.parentElement);
-    expect(img).toHaveClass('the-wiggler');
+  });
+
+  it('handles an error the llama', async () => {
+    const url = '/api/users/statistics';
+    fetchMock.get(url, 500);
+
+    act(() => {
+      render(<Llama user={{ id: 1, permissions: [] }} />);
+    });
+    await waitFor(() => expect(fetchMock.called(url)).toBe(true));
+    const img = screen.getByAltText('You\'ve done a great job on the ttahub!');
+    expect(img).toBeInTheDocument();
   });
 
   it('shows the extra fields when the user can write', async () => {

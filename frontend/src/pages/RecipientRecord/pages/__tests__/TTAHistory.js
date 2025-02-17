@@ -8,9 +8,9 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import TTAHistory from '../TTAHistory';
 import { formatDateRange } from '../../../../utils';
-import { SCOPE_IDS } from '../../../../Constants';
 import UserContext from '../../../../UserContext';
 
 const memoryHistory = createMemoryHistory();
@@ -65,7 +65,7 @@ describe('Recipient Record - TTA History', () => {
 
   it('renders the TTA History page appropriately', async () => {
     act(() => renderTTAHistory());
-    const overview = document.querySelector('.smart-hub--dashboard-overview');
+    const overview = document.querySelector('.smart-hub--dashboard-overview-container');
     expect(overview).toBeTruthy();
   });
 

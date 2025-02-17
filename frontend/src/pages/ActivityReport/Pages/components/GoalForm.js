@@ -1,29 +1,36 @@
 import React, {
-  useEffect, useMemo, useContext, useRef, useState,
+  useEffect, useMemo, useContext, useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useController, useFormContext } from 'react-hook-form';
+import { DECIMAL_BASE } from '@ttahub/common';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
+import ConditionalFields from './ConditionalFieldsForHookForm';
 import {
   GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,
-  GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import { DECIMAL_BASE } from '../../../../Constants';
-import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import { combinePrompts } from '../../../../components/condtionalFieldConstants';
+import GoalSource from '../../../../components/GoalForm/GoalSource';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function GoalForm({
   goal,
   topicOptions,
   reportId,
   datePickerKey,
+  templatePrompts,
+  isMultiRecipientReport,
+  citationOptions,
+  rawCitations,
+  isMonitoringGoal,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -41,6 +48,7 @@ export default function GoalForm({
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
+  const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -83,18 +91,19 @@ export default function GoalForm({
 
   const {
     field: {
-      onChange: onUpdateRttapa,
-      value: isRttapa,
-      name: goalIsRttapaInputName,
+      onChange: onUpdateGoalSource,
+      onBlur: onBlurGoalSource,
+      value: goalSource,
+      name: goalSourceInputName,
     },
   } = useController({
-    name: 'goalIsRttapa',
-    rules: {
+    name: 'goalSource',
+    rules: activityRecipientType === 'recipient' ? {
       required: {
         value: true,
-        message: GOAL_RTTAPA_ERROR,
+        message: 'Select a goal source',
       },
-    },
+    } : {},
     defaultValue: '',
   });
 
@@ -108,16 +117,13 @@ export default function GoalForm({
     onUpdateText,
   ]);
 
-  const initialRttapa = useRef(goal.initialRttapa);
-
-  useEffect(() => {
-    onUpdateRttapa(goal.isRttapa ? goal.isRttapa : '');
-    initialRttapa.current = goal.initialRttapa;
-  }, [goal.initialRttapa, goal.isRttapa, onUpdateRttapa]);
-
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
+
+  useEffect(() => {
+    onUpdateGoalSource(goal.source ? goal.source : defaultSource);
+  }, [goal.source, onUpdateGoalSource, defaultSource]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -145,30 +151,58 @@ export default function GoalForm({
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
+  const prompts = combinePrompts(templatePrompts, goal.prompts);
+  const isCurated = goal.isCurated || false;
+  const { isSourceEditable } = goal;
+
   return (
     <>
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !(goal.onApprovedAR),
+          !isCurated,
+        ]}
+        label="Recipient's goal"
+        value={goalText}
+      >
+        <GoalText
+          error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
+          goalName={goalText}
+          validateGoalName={onBlurGoalText}
+          onUpdateText={onUpdateText}
+          inputName={goalTextInputName}
+          isOnReport={goal.onApprovedAR || false}
+          goalStatus={status}
+          isLoading={isAppLoading}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
-      <GoalText
-        error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-        goalName={goalText}
-        validateGoalName={onBlurGoalText}
-        onUpdateText={onUpdateText}
-        inputName={goalTextInputName}
-        isOnReport={goal.onApprovedAR || false}
-        goalStatus={status}
-        isLoading={isAppLoading}
+      <ConditionalFields
+        prompts={prompts}
+        isMultiRecipientReport={isMultiRecipientReport}
         userCanEdit
       />
 
-      <GoalRttapa
-        error={errors.goalIsRttapa ? ERROR_FORMAT(errors.goalIsRttapa.message) : NO_ERROR}
-        isRttapa={isRttapa}
-        onChange={onUpdateRttapa}
-        inputName={goalIsRttapaInputName}
-        goalStatus={status}
-        isOnApprovedReport={goal.onApprovedAR || false}
-        initial={initialRttapa.current}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={isCurated ? [
+          isSourceEditable,
+          !goal.onApprovedAR || !goal.source,
+          !isMonitoringGoal,
+        ] : [!goal.onApprovedAR || !goal.source]}
+        label="Goal source"
+        value={goalSource}
+      >
+        <GoalSource
+          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
+          source={goalSource}
+          validateGoalSource={onBlurGoalSource}
+          onChangeGoalSource={onUpdateGoalSource}
+          inputName={goalSourceInputName}
+          goalStatus={status}
+          isLoading={isAppLoading}
+          isMultiRecipientGoal={isMultiRecipientReport}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
@@ -189,6 +223,9 @@ export default function GoalForm({
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         reportId={parseInt(reportId, DECIMAL_BASE)}
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
+        isMonitoringGoal={isMonitoringGoal}
       />
     </>
   );
@@ -201,20 +238,62 @@ GoalForm.propTypes = {
       PropTypes.number,
       PropTypes.string,
     ]),
-    isRttapa: PropTypes.string,
-    initialRttapa: PropTypes.string,
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
+    isCurated: PropTypes.bool,
+    isSourceEditable: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
+    source: PropTypes.string,
+    createdVia: PropTypes.string,
+    prompts: PropTypes.arrayOf(PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      prompt: PropTypes.string.isRequired,
+      options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    }.isRequired)),
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  isMonitoringGoal: PropTypes.bool,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
+  templatePrompts: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.arrayOf(PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      prompt: PropTypes.string.isRequired,
+      options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    })).isRequired,
+  ]).isRequired,
+  isMultiRecipientReport: PropTypes.bool,
+};
+
+GoalForm.defaultProps = {
+  isMultiRecipientReport: false,
+  citationOptions: [],
+  rawCitations: [],
+  isMonitoringGoal: false,
 };

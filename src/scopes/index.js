@@ -1,44 +1,17 @@
-/* eslint-disable @typescript-eslint/dot-notation */
-/* eslint-disable dot-notation */
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
-import { AWS_ELASTIC_SEARCH_INDEXES, DECIMAL_BASE } from '../constants';
-import { search } from '../lib/awsElasticSearch/index';
-import { auditLogger } from '../logger';
 
 const models = {
   activityReport,
   grant,
   goal,
+  trainingReport,
+  communicationLog,
 };
-
-async function checkForSearchItems(filters) {
-  let propertyName = '';
-  if (_.has(filters, 'reportText.ctn')) {
-    propertyName = 'reportText.ctn';
-  } else if (_.has(filters, 'reportText.nctn')) {
-    propertyName = 'reportText.nctn';
-  }
-  if (propertyName) {
-    try {
-    // Do AWS Elasticsearch.
-      const searchResult = await search(
-        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-        [], // Search all document fields.
-        filters[propertyName][0],
-      );
-      const reportIds = searchResult.hits.map((r) => parseInt(r['_id'], DECIMAL_BASE));
-      const updatedFilters = { ...filters, [propertyName]: reportIds };
-      return updatedFilters;
-    } catch (err) {
-      auditLogger.error('AWS Elasticsearch Filter Search Error: ', err);
-      return { ...filters, [propertyName]: [] };
-    }
-  }
-  return filters;
-}
 
 /**
  * For each model listed, we apply the passed in filters from the express query and
@@ -46,9 +19,9 @@ async function checkForSearchItems(filters) {
  *
  * an object roughly like this
  * {
- *   activityReport: SEQUELIZE OP,
- *   grant: SEQUELIZE OP,
- *   recipient: SEQUELIZE OP,
+ *   activityReport: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   grant: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   recipient: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
  * }
  *
  * options is right now only {
@@ -73,14 +46,36 @@ async function checkForSearchItems(filters) {
  * @returns {obj} scopes
  */
 export default async function filtersToScopes(filters, options) {
-  // Check for AWS Elasticsearch filters.
-  const updatedFilters = await checkForSearchItems(filters);
-
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](updatedFilters, options && options[model], options && options.userId),
+      [model]: models[model](filters, options && options[model], options && options.userId),
     });
     return scopes;
   }, {});
 }
+
+/**
+ * Merges the provided includes with the required includes, ensuring no duplicates.
+ * It is considered duplicate if it has the same value for `as`.
+ *
+ * @param {Array} includes - The initial array of Sequelize includes.
+ * @param {Array} requiredIncludes - The array of required Sequelize includes
+ *                                   that must be present.
+ * @returns {Array} - The merged array of includes.
+ */
+export const mergeIncludes = (includes, requiredIncludes) => {
+  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+    return requiredIncludes;
+  }
+
+  const outIncludes = [...includes];
+
+  requiredIncludes.forEach((requiredInclude) => {
+    if (!outIncludes.some((include) => include.as && include.as === requiredInclude.as)) {
+      outIncludes.push(requiredInclude);
+    }
+  });
+
+  return outIncludes;
+};

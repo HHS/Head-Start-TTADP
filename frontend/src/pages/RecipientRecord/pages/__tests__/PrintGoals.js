@@ -7,9 +7,9 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
+import { SCOPE_IDS } from '@ttahub/common';
 import PrintGoals from '../PrintGoals';
 import UserContext from '../../../../UserContext';
-import { SCOPE_IDS } from '../../../../Constants';
 import { filtersToQueryString } from '../../../../utils';
 import FilterContext from '../../../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
@@ -88,7 +88,7 @@ describe('PrintGoals', () => {
 
     render(
       <Router history={memoryHistory}>
-        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID) }}>
           <UserContext.Provider value={{ user }}>
             <PrintGoals
               location={location}

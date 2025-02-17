@@ -3,14 +3,12 @@ import { screen, act } from '@testing-library/react';
 import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   formData, renderActivityReport, recipients,
 } from '../testHelpers';
-
 import { mockWindowProperty } from '../../../testHelpers';
-
 import { storageAvailable } from '../../../hooks/helpers';
-import { REPORT_STATUSES } from '../../../Constants';
 
 jest.mock('../../../hooks/helpers');
 
@@ -26,6 +24,7 @@ describe('Local storage fallbacks', () => {
     },
     collaborators: [],
     availableApprovers: [],
+    groups: [],
   };
 
   mockWindowProperty('localStorage', {
@@ -38,6 +37,8 @@ describe('Local storage fallbacks', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
+    fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
+    fetchMock.get('/api/activity-reports/groups?region=1', []);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     const savedToStorage = moment().toISOString();

@@ -114,7 +114,6 @@ export default function FilterMenu({
        */
       const f = filterConfig.find(((config) => config.id === toUpdate.topic));
       const defaultQuery = f.defaultValues[value];
-
       if (defaultQuery) {
         toUpdate.query = defaultQuery;
       } else {
@@ -129,7 +128,6 @@ export default function FilterMenu({
       toUpdate.condition = '';
       toUpdate.query = defaultQuery;
     }
-
     setItems(newItems);
 
     if (index !== -1) {
@@ -192,7 +190,6 @@ export default function FilterMenu({
       AlternateActionButton={ClearAllButton}
       onOpen={onOpen}
     >
-
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2" data-testid="filters">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
@@ -207,7 +204,12 @@ export default function FilterMenu({
                 ))
                 // return a new array of option elements
                 .map(({ id: filterId, display }) => (
-                  <option key={filterId} value={filterId}>{display}</option>
+                  <option
+                    key={filterId}
+                    value={filterId}
+                  >
+                    {display}
+                  </option>
                 ));
 
               const newTopic = {

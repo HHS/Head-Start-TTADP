@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import {
   Label, FormGroup, ErrorMessage, Fieldset,
 } from '@trussworks/react-uswds';
+import Req from './Req';
 
 import './FormItem.scss';
 
@@ -62,18 +63,26 @@ LabelWrapper.defaultProps = {
 };
 
 function FormItem({
-  label, children, required, name, fieldSetWrapper, className, htmlFor,
+  label,
+  hint,
+  children,
+  required,
+  name,
+  fieldSetWrapper,
+  className,
+  htmlFor,
 }) {
   const { formState: { errors } } = useFormContext();
+
   const fieldErrors = errors[name];
   const labelWithRequiredTag = (
     <>
       {label}
       {required && (
-      <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-        {' '}
-        *
-      </span>
+        <>
+          {' '}
+          <Req announce />
+        </>
       )}
     </>
   );
@@ -83,6 +92,13 @@ function FormItem({
   return (
     <FormGroup error={fieldErrors}>
       <LabelType htmlFor={htmlFor} label={labelWithRequiredTag} className={className}>
+        {hint && (
+        <>
+          <br />
+          <span className="usa-hint">{hint}</span>
+          <br />
+        </>
+        )}
         <ReactHookFormError
           errors={errors}
           name={name}
@@ -95,13 +111,14 @@ function FormItem({
 }
 
 FormItem.propTypes = {
-  label: PropTypes.string.isRequired,
+  label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,
   required: PropTypes.bool,
   className: PropTypes.string,
   htmlFor: PropTypes.string,
+  hint: PropTypes.string,
 };
 
 FormItem.defaultProps = {
@@ -109,6 +126,7 @@ FormItem.defaultProps = {
   fieldSetWrapper: false,
   className: '',
   htmlFor: '',
+  hint: '',
 };
 
 export default FormItem;

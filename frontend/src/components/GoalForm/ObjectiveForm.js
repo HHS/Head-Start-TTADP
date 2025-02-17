@@ -1,22 +1,15 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
-import ObjectiveTopics from './ObjectiveTopics';
-import ResourceRepeater from './ResourceRepeater';
-import ObjectiveFiles from './ObjectiveFiles';
 import {
-  OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
+  OBJECTIVE_FORM_FIELD_INDEXES,
+  OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
-import { REPORT_STATUSES } from '../../Constants';
-import ObjectiveStatus from './ObjectiveStatus';
 import AppLoadingContext from '../../AppLoadingContext';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
-const [
-  objectiveTitleError,
-  objectiveTopicsError,
-  objectiveResourcesError,
-] = OBJECTIVE_ERROR_MESSAGES;
+const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
   index,
@@ -25,36 +18,20 @@ export default function ObjectiveForm({
   objective,
   setObjective,
   errors,
-  topicOptions,
-  onUploadFiles,
-  goalStatus,
   userCanEdit,
+  goalStatus,
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status, files,
+    title,
+    status,
+    onAR,
   } = objective;
-
-  const isOnReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.length > 0
-  ), [objective.activityReports]);
-
-  const isOnApprovedReport = useMemo(() => (
-    (objective.activityReports && objective.activityReports.some((report) => (
-      report.status === REPORT_STATUSES.APPROVED
-    )))
-  ), [objective.activityReports]);
 
   const { isAppLoading } = useContext(AppLoadingContext);
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
-  const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
-  const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
-  const onChangeFiles = (e) => {
-    setObjective({ ...objective, files: e });
-  };
-  const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -69,111 +46,52 @@ export default function ObjectiveForm({
     }
   };
 
-  const validateObjectiveTopics = () => {
-    if (!topics.length) {
-      const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <span className="usa-error-message">{objectiveTopicsError}</span>);
-      setObjectiveError(index, newErrors);
-    } else {
-      const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <></>);
-      setObjectiveError(index, newErrors);
-    }
-  };
-  const validateResources = () => {
-    let error = <></>;
-
-    const validated = validateListOfResources(resources);
-
-    if (!validated) {
-      error = <span className="usa-error-message">{objectiveResourcesError}</span>;
-    }
-
-    const newErrors = [...errors];
-    newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES, 1, error);
-    setObjectiveError(index, newErrors);
-  };
-
   return (
     <div className="margin-top-5 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
         <h3 className="margin-bottom-0">Objective summary</h3>
-        { !isOnReport
+        { !onAR && userCanEdit
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
 
-      <ObjectiveTitle
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-        isOnApprovedReport={isOnApprovedReport || false}
-        isOnReport={isOnReport || false}
-        title={title}
-        onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={validateObjectiveTitle}
-        status={status}
-        isLoading={isAppLoading}
-        userCanEdit={userCanEdit}
-      />
-
-      <ObjectiveTopics
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
-        topicOptions={topicOptions}
-        validateObjectiveTopics={validateObjectiveTopics}
-        topics={topics}
-        onChangeTopics={onChangeTopics}
-        goalStatus={goalStatus}
-        isOnReport={isOnReport || false}
-        isLoading={isAppLoading}
-        userCanEdit={userCanEdit}
-      />
-
-      <ResourceRepeater
-        resources={resources}
-        setResources={setResources}
-        validateResources={validateResources}
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
-        isOnReport={isOnReport || false}
-        goalStatus={goalStatus}
-        isLoading={isAppLoading}
-        userCanEdit={userCanEdit}
-        toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
-      />
-      { title && (
-      <ObjectiveFiles
-        files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
-        onChangeFiles={onChangeFiles}
-        objective={objective}
-        isOnReport={isOnReport || false}
-        isLoading={isAppLoading}
-        onUploadFiles={onUploadFiles}
-        index={index}
-        goalStatus={goalStatus}
-        userCanEdit={userCanEdit}
-        selectedObjectiveId={objective.id}
-      />
-      )}
-
-      <ObjectiveStatus
-        status={status}
-        goalStatus={goalStatus}
-        onChangeStatus={onChangeStatus}
-        inputName={`objective-status-${index}`}
-        isLoading={isAppLoading}
-        userCanEdit={userCanEdit}
-      />
-
+      <FormFieldThatIsSometimesReadOnly
+        label="TTA objective"
+        permissions={[
+          userCanEdit,
+          status !== 'Closed',
+          status !== 'Suspended',
+          !onAR,
+          goalStatus !== 'Closed',
+          goalStatus !== 'Suspended',
+        ]}
+        value={title}
+      >
+        <ObjectiveTitle
+          error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
+          title={title}
+          onChangeTitle={onChangeTitle}
+          validateObjectiveTitle={validateObjectiveTitle}
+          isLoading={isAppLoading}
+          userCanEdit={userCanEdit}
+        />
+      </FormFieldThatIsSometimesReadOnly>
     </div>
   );
 }
 
 ObjectiveForm.propTypes = {
-  goalStatus: PropTypes.string.isRequired,
   index: PropTypes.number.isRequired,
   removeObjective: PropTypes.func.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
+    onAR: PropTypes.bool.isRequired,
+    onApprovedAR: PropTypes.bool.isRequired,
+    closeSuspendReason: PropTypes.string,
+    closeSuspendContext: PropTypes.string,
     isNew: PropTypes.bool,
+    supportType: PropTypes.string,
     id: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
@@ -204,12 +122,8 @@ ObjectiveForm.propTypes = {
     })),
     status: PropTypes.string,
   }),
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
-  onUploadFiles: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 ObjectiveForm.defaultProps = {
@@ -221,5 +135,6 @@ ObjectiveForm.defaultProps = {
     resources: [],
     files: [],
     status: '',
+    supportType: '',
   },
 };

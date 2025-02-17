@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import fetchMock from 'fetch-mock';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -15,12 +17,17 @@ import {
   recipientFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
   myReportsFilter,
   reportTextFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
+  domainClassroomOrganizationFilter,
+  domainEmotionalSupportFilter,
+  domainInstructionalSupportFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -28,8 +35,15 @@ import {
   statusFilter,
   topicsFilter as goalTopicsFilter,
 } from '../goalFilters';
+import {
+  creatorFilter,
+  eventIdFilter,
+  collaboratorsFilter,
+  startDateFilter,
+  regionFilter,
+} from '../trainingReportFilters';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
+
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
@@ -37,6 +51,14 @@ const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 describe('Filter Menu', () => {
   afterAll(() => {
     jest.restoreAllMocks();
+  });
+
+  beforeEach(() => {
+    fetchMock.get('api/topic', [{ id: 58, name: 'Behavioral / Mental Health / Trauma' }, { id: 60, name: 'CLASS: Classroom Organization' }, { id: 61, name: 'CLASS: Emotional Support' }, { id: 62, name: 'CLASS: Instructional Support' }, { id: 63, name: 'Coaching' }, { id: 64, name: 'Communication' }, { id: 65, name: 'Community and Self-Assessment' }, { id: 66, name: 'Culture & Language' }, { id: 67, name: 'Curriculum (Instructional or Parenting)' }, { id: 68, name: 'Data and Evaluation' }, { id: 69, name: 'ERSEA' }, { id: 70, name: 'Environmental Health and Safety / EPRR' }, { id: 72, name: 'Facilities' }, { id: 73, name: 'Family Support Services' }, { id: 74, name: 'Fiscal / Budget' }, { id: 75, name: 'Five-Year Grant' }, { id: 76, name: 'Home Visiting' }, { id: 77, name: 'Human Resources' }, { id: 78, name: 'Leadership / Governance' }, { id: 79, name: 'Learning Environments' }, { id: 80, name: 'Nutrition' }, { id: 81, name: 'Oral Health' }, { id: 82, name: 'Parent and Family Engagement' }, { id: 83, name: 'Partnerships and Community Engagement' }, { id: 84, name: 'Physical Health and Screenings' }, { id: 85, name: 'Pregnancy Services / Expectant Families' }, { id: 86, name: 'Program Planning and Services' }, { id: 87, name: 'Quality Improvement Plan / QIP' }, { id: 88, name: 'Recordkeeping and Reporting' }, { id: 89, name: 'Safety Practices' }, { id: 90, name: 'Staff Wellness' }, { id: 92, name: 'Technology and Information Systems' }, { id: 93, name: 'Transition Practices' }, { id: 94, name: 'Transportation' }, { id: 124, name: 'Child Screening and Assessment' }, { id: 125, name: 'Teaching / Caregiving Practices' }, { id: 126, name: 'Disabilities Services' }, { id: 128, name: 'Training and Professional Development' }, { id: 129, name: 'Fatherhood / Male Caregiving' }, { id: 130, name: 'Ongoing Monitoring and Continuous Improvement' }]);
+  });
+
+  afterEach(() => {
+    fetchMock.restore();
   });
 
   const renderFilterMenu = (
@@ -105,7 +127,9 @@ describe('Filter Menu', () => {
     const condition = screen.getByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'is on or after');
 
-    const del = screen.getByRole('button', { name: /remove date started is on or after/i });
+    const del = screen.getByRole('button', {
+      name: /remove date started \(ar\) is on or after filter\. click apply filters to make your changes/i,
+    });
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
@@ -391,7 +415,9 @@ describe('Filter Menu', () => {
       otherEntitiesFilter,
       myReportsFilter,
       reportTextFilter,
+      singleOrMultiRecipientsFilter,
       endDateFilter,
+      activityReportGoalResponseFilter,
     ];
 
     const filters = [];
@@ -419,7 +445,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Date ended');
+    userEvent.selectOptions(topics, 'Date ended (AR)');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
@@ -439,7 +465,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 
-    userEvent.selectOptions(topics, 'State');
+    userEvent.selectOptions(topics, 'State or territory');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 
@@ -447,7 +473,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Date ended');
+    userEvent.selectOptions(topics, 'Date ended (AR)');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
@@ -479,7 +505,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 
-    userEvent.selectOptions(topics, 'State');
+    userEvent.selectOptions(topics, 'State or territory');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 
@@ -528,7 +554,7 @@ describe('Filter Menu', () => {
     let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Created on');
+    userEvent.selectOptions(topics, 'Created on (goal)');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is within');
 
@@ -536,11 +562,11 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Goal topics');
+    userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Created on');
+    userEvent.selectOptions(topics, 'Created on (goal)');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is within');
 
@@ -548,7 +574,60 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Goal topics');
+    userEvent.selectOptions(topics, 'Topics');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
+  });
+
+  it('renders training report filters', async () => {
+    const config = [
+      creatorFilter,
+      eventIdFilter,
+      collaboratorsFilter,
+      startDateFilter,
+      regionFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+
+    // Create mock for fetch.
+    fetchMock.get('/api/national-center', { centers: [{ id: 1, name: 'NC 1' }, { id: 2, name: 'NC 2' }], users: [] });
+
+    // all the filters work
+    userEvent.selectOptions(topics, 'Collaborators');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Creator');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Date started');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is within');
+
+    userEvent.selectOptions(topics, 'Event ID');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Creator');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Region');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
@@ -565,5 +644,38 @@ describe('Filter Menu', () => {
     ];
     renderFilterMenu(filters);
     expect(screen.getByText(/filters \(4\)/i)).toBeVisible();
+  });
+
+  it('renders domain result filters', async () => {
+    const config = [
+      domainEmotionalSupportFilter,
+      domainClassroomOrganizationFilter,
+      domainInstructionalSupportFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+    userEvent.selectOptions(topics, 'Domain: Emotional support');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Domain: Classroom organization');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Domain: Instructional support');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
   });
 });

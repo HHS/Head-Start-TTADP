@@ -81,14 +81,10 @@ export default function TTAHistory({
   return (
     <>
       <Helmet>
-        <title>
-          Recipient TTA History -
-          {' '}
-          {recipientName}
-        </title>
+        <title>TTA History</title>
       </Helmet>
-      <div className="margin-x-2 maxw-widescreen">
-        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
+      <div className="maxw-widescreen">
+        <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             filters={filters}
             onApplyFilters={onApply}
@@ -103,7 +99,7 @@ export default function TTAHistory({
             'Activity reports',
             'Hours of TTA',
             'Participants',
-            'In-person activities',
+            'In person activities',
           ]}
           showTooltips
           filters={filtersToApply}

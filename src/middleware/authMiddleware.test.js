@@ -31,6 +31,7 @@ describe('authMiddleware', () => {
       regionId: 14,
       scopeId: SCOPES.SITE_ACCESS,
     }],
+    lastLogin: new Date(),
   };
 
   const unAuthdUser = {
@@ -39,6 +40,7 @@ describe('authMiddleware', () => {
     hsesUserId: '663491',
     hsesUsername: 'unauth.middleware',
     permissions: [],
+    lastLogin: new Date(),
   };
 
   const setupUser = async (user) => {
@@ -51,6 +53,17 @@ describe('authMiddleware', () => {
   const destroyUser = async (user) => (
     User.destroy({ where: { id: user.id } })
   );
+
+  afterAll(async () => {
+    await User.destroy({
+      where: {
+        id: [mockUser.id, unAuthdUser.id],
+      },
+      individualHooks: true,
+    });
+
+    await db.sequelize.close();
+  });
 
   it('should allow access if user data is present', async () => {
     await setupUser(mockUser);
@@ -114,6 +127,22 @@ describe('authMiddleware', () => {
     };
     login(mockRequest, mockResponse);
     expect(mockResponse.redirect).not.toHaveBeenCalledWith(process.env.TTA_SMART_HUB_URI);
+  });
+
+  it('login should set referrerPath to empty string if referrer is undefined', () => {
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/login',
+      session: mockSession,
+      headers: {},
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    login(mockRequest, mockResponse);
+    expect(mockRequest.session.referrerPath).toBe('');
   });
 
   it('bypass authorization if variables are set for UAT or accessibility testing', async () => {
@@ -187,5 +216,24 @@ describe('authMiddleware', () => {
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(FORBIDDEN);
 
     await destroyUser(mockUser);
+  });
+
+  it('should return immediately if headers are already sent', async () => {
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      headersSent: true,
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockResponse.sendStatus).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
   });
 });

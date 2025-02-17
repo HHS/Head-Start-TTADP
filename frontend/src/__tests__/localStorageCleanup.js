@@ -6,17 +6,23 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
-import { mockWindowProperty } from '../testHelpers';
+import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../testHelpers';
 
 const cleanupUrl = '/api/activity-reports/storage-cleanup';
+const feedsUrl = '/api/feeds/whats-new';
 
 describe('localStorageCleanup', () => {
   const removeItem = jest.fn();
+
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
 
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
   const alertsUrl = join('api', 'alerts');
+  const groupsUrl = join('api', 'groups');
 
   describe('when authenticated, local storage is queried', () => {
     mockWindowProperty('localStorage', {
@@ -41,7 +47,9 @@ describe('localStorageCleanup', () => {
       });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
+      fetchMock.get(feedsUrl, mockRSSData());
       fetchMock.get(alertsUrl, null);
+      fetchMock.get(groupsUrl, []);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
@@ -51,12 +59,12 @@ describe('localStorageCleanup', () => {
 
       const calls = [
         '__storage_test__',
-        'ar-form-data-2-0.2',
-        'ar-additional-data-2-0.2',
-        'ar-can-edit-2-0.2',
-        'ar-form-data-3-0.2',
-        'ar-additional-data-3-0.2',
-        'ar-can-edit-3-0.2',
+        'ar-form-data-2-0.4',
+        'ar-additional-data-2-0.4',
+        'ar-can-edit-2-0.4',
+        'ar-form-data-3-0.4',
+        'ar-additional-data-3-0.4',
+        'ar-can-edit-3-0.4',
       ];
 
       calls.forEach((call) => {
@@ -90,6 +98,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
       fetchMock.get(alertsUrl, null);
+      fetchMock.get(groupsUrl, []);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
@@ -124,6 +133,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, 500);
       fetchMock.get(alertsUrl, null);
+      fetchMock.get(groupsUrl, []);
       render(<App />);
     });
 

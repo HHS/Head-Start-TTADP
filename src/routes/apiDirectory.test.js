@@ -29,7 +29,11 @@ const mockUser = {
       scopeId: SCOPES.SITE_ACCESS,
     },
   ],
+  lastLogin: new Date(),
 };
+
+jest.mock('axios');
+jest.mock('smartsheet');
 
 describe('apiDirectory tests', () => {
   beforeAll(async () => {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { SCOPE_IDS } from '@ttahub/common';
 import RecipientTabs from '../RecipientTabs';
 import UserContext from '../../../../UserContext';
-import { SCOPE_IDS } from '../../../../Constants';
 
 const DEFAULT_USER = {
   name: 'test@test.com',
@@ -45,18 +45,5 @@ describe('RecipientTabs', () => {
   it('shows the icon if the backlink is a <Link>', () => {
     renderRecipientTabs(<a href="/">Back</a>);
     expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
-  });
-
-  it('hides the RTTAPA history if there is no feature flag', () => {
-    renderRecipientTabs(<a href="/">Back</a>);
-    expect(screen.queryByText(/RTTAPA History/i)).not.toBeInTheDocument();
-  });
-
-  it('shows the RTTAPA history if there is a feature flag', () => {
-    renderRecipientTabs(<a href="/">Back</a>, {
-      ...DEFAULT_USER,
-      flags: ['rttapa_form'],
-    });
-    expect(screen.queryByText(/RTTAPA History/i)).toBeInTheDocument();
   });
 });
