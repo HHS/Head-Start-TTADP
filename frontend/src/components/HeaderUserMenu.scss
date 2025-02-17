@@ -28,13 +28,17 @@ ul.user-menu-nav {
   }
 
   & > li > a.usa-nav__link {
-    width: 100%;
-    display: block;
+    align-items: center;
+    display: flex;
     padding: 0.75rem 1rem;
-    text-decoration: underline;
+    text-decoration: none;
     cursor: pointer;
     border-left: 4px solid transparent;
     color: $ttahub-medium-blue;
+
+    span:first-child {
+      text-decoration: underline;
+    }
 
     &:hover {
       background-color: $gray-two;
@@ -45,4 +49,17 @@ ul.user-menu-nav {
       text-decoration: none;
     }
   }
+}
+
+.header-avatar-button__with-unread::after {
+  background-color: $success;
+  border: 1px solid white;
+  border-radius: 50%;
+  content: '';
+  display: inline-block;
+  height: 12px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 12px;
 }

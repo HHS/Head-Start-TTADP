@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES, TARGET_POPULATIONS } from '@ttahub/common';
 import { ActivityReport } from '../models';
-import { REPORT_STATUSES, TARGET_POPULATIONS } from '../constants';
 import { countBySingleKey } from './helpers';
 
 export default async function targetPopulationTable(scopes) {

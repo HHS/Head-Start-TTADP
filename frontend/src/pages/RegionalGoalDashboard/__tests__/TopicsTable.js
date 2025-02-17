@@ -67,13 +67,13 @@ describe('Topics Table', () => {
     const firstHeader = screen.getAllByRole('columnheader')[0];
     expect(firstHeader).toHaveAttribute('aria-sort', 'descending');
 
-    const firstHeaderButton = firstHeader.querySelector('a');
+    const firstHeaderButton = firstHeader.querySelector('button');
     firstHeaderButton.click();
     expect(firstHeader).toHaveAttribute('aria-sort', 'ascending');
 
     const secondHeader = screen.getAllByRole('columnheader')[1];
     expect(secondHeader).toHaveAttribute('aria-sort', 'none');
-    const secondHeaderButton = secondHeader.querySelector('a');
+    const secondHeaderButton = secondHeader.querySelector('button');
     secondHeaderButton.click();
     expect(secondHeader).toHaveAttribute('aria-sort', 'descending');
   });

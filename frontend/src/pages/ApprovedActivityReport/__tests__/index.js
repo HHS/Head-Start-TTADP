@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { Router } from 'react-router';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   fireEvent,
   render,
@@ -10,10 +12,12 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
+import { createMemoryHistory } from 'history';
 import ApprovedActivityReport from '../index';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('Activity report print and share view', () => {
+  const history = createMemoryHistory();
+
   const report = {
     version: 1,
     regionId: 45,
@@ -36,14 +40,15 @@ describe('Activity report print and share view', () => {
       }],
     approvers: [
       {
-        id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
+        id: 1, status: '', note: '', user: { id: 1, fullName: 'John Q Fullname' },
       },
 
       {
-        id: 2, status: '', note: 'note', User: { id: 2, fullName: 'John Smith' },
+        id: 2, status: '', note: 'note', user: { id: 2, fullName: 'John Smith' },
       },
     ],
     targetPopulations: ['Mid size sedans'],
+    language: [],
     activityRecipientType: 'recipient',
     specialistNextSteps: [],
     recipientNextSteps: [],
@@ -112,7 +117,11 @@ describe('Activity report print and share view', () => {
       },
     };
 
-    render(<ApprovedActivityReport user={passedUser} match={match} />);
+    render(
+      <Router history={history}>
+        <ApprovedActivityReport user={passedUser} match={match} />
+      </Router>,
+    );
   }
   afterEach(() => fetchMock.restore());
 
@@ -146,7 +155,7 @@ describe('Activity report print and share view', () => {
       }],
       requester: 'chud',
     });
-    fetchMock.get('/api/activity-reports/5002', 500);
+    fetchMock.get('/api/activity-reports/5002', { status: 500 });
 
     fetchMock.get('/api/activity-reports/5003', {
       ...report,
@@ -202,6 +211,8 @@ describe('Activity report print and share view', () => {
       ...report,
       version: null,
     });
+
+    fetchMock.get('/api/activity-reports/5007', { status: 401 });
   });
 
   it('renders an activity report in clean view', async () => {
@@ -221,19 +232,26 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
-    act(() => renderApprovedActivityReport(4999));
+    const spy = jest.spyOn(history, 'push');
+    act(() => renderApprovedActivityReport(5007, user));
 
     await waitFor(() => {
-      expect(screen.getByText(/sorry, you are not allowed to view this report/i)).toBeInTheDocument();
+      expect(fetchMock.called('/api/activity-reports/5007')).toBeTruthy();
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/401');
   });
 
   it('handles data errors', async () => {
-    act(() => renderApprovedActivityReport(5002));
+    const spy = jest.spyOn(history, 'push');
+
+    act(() => renderApprovedActivityReport(5002, user));
 
     await waitFor(() => {
-      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+      expect(fetchMock.called('/api/activity-reports/5002')).toBeTruthy();
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('copies a url to clipboard', async () => {
@@ -303,17 +321,15 @@ describe('Activity report print and share view', () => {
     });
   });
 
-  it('renders a version 2 report with goals', async () => {
-    act(() => renderApprovedActivityReport(5005));
-    await waitFor(() => {
-      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
-    });
-  });
-
   it('handles a malformed url', async () => {
-    act(() => renderApprovedActivityReport('butter-lover'));
+    const spy = jest.spyOn(history, 'push');
+    fetchMock.get('/api/activity-reports/butter-lover', {});
+    act(async () => {
+      renderApprovedActivityReport('butter-lover', user);
+    });
+
     await waitFor(() => {
-      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
     });
   });
 
@@ -334,5 +350,12 @@ describe('Activity report print and share view', () => {
     });
 
     global.localStorage = oldLocalStorage;
+  });
+
+  it('renders a version 2 report with goals', async () => {
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
   });
 });

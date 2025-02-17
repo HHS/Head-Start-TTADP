@@ -6,29 +6,60 @@ import { ActivityReportApprover, User } from '../models';
  * @param {*} values - object containing Approver properties to create or update
  */
 export async function upsertApprover(values) {
-  // Create approver, on unique constraint violation do update
-  let [approver] = await ActivityReportApprover.upsert(values, {
-    returning: true,
+  const {
+    activityReportId,
+    userId,
+    status,
+    note,
+  } = values;
+
+  let approver = await ActivityReportApprover.findOne({
+    where: {
+      activityReportId,
+      userId,
+    },
+    paranoid: false,
   });
 
-  // Upsert returns null when trying to upsert soft deleted record.
-  // If soft deleted record, restore instead.
-  if (approver.deletedAt) {
-    return ActivityReportApprover.restore({
-      where: values,
+  if (approver) {
+    // we always want to recalculate updatedAt
+    // so we trigger the hooks, since we are no longer
+    // using upsert
+    approver.changed('updatedAt', true);
+    approver.set('updatedAt', new Date());
+
+    if (status) {
+      approver.set('status', status);
+    }
+
+    if (note) {
+      approver.set('note', values.note);
+    }
+
+    await approver.save({
       individualHooks: true,
     });
   }
 
-  if (approver) {
-    approver = approver.get({ plain: true });
-    const user = await User.findOne({
-      attributes: ['email', 'name', 'fullName'],
-      where: { id: approver.userId },
+  if (!approver) {
+    approver = await ActivityReportApprover.create(values, { individualHooks: true });
+  }
+
+  // If soft deleted record, restore instead.
+  if (approver.deletedAt) {
+    return ActivityReportApprover.restore({
+      where: { id: approver.id },
+      individualHooks: true,
     });
-    if (user) {
-      approver.User = user.get({ plain: true });
-    }
+  }
+
+  approver = approver.get({ plain: true });
+  const user = await User.findOne({
+    attributes: ['email', 'name', 'fullName'],
+    where: { id: approver.userId },
+  });
+  if (user) {
+    approver.user = user.get({ plain: true });
   }
 
   return approver;
@@ -83,6 +114,7 @@ export async function syncApprovers(activityReportId, userIds = []) {
     include: [
       {
         model: User,
+        as: 'user',
         attributes: ['id', 'name', 'email'],
         raw: true,
       },

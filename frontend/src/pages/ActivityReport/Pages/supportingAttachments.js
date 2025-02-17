@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Controller, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Helmet } from 'react-helmet';
 import {
   ErrorMessage,
-  Fieldset, FormGroup, Label,
+  Fieldset,
+  FormGroup,
+  Label,
 } from '@trussworks/react-uswds';
 import Section from './Review/ReviewSection';
 import FileReviewItem from './Review/FileReviewItem';
 import { reportIsEditable } from '../../../utils';
 import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
 const SupportingAttachments = ({
   reportId,
 }) => {
   const [fileError, setFileError] = useState();
-  const { control } = useFormContext();
 
   return (
     <>
       <Helmet>
-        <title>Supporting attachments</title>
+        <title>Supporting Attachments</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>
@@ -40,7 +42,6 @@ const SupportingAttachments = ({
           <Controller
             name="files"
             defaultValue={[]}
-            control={control}
             render={({ onChange, value }) => (
               <ActivityReportFileUploader setErrorMessage={setFileError} files={value} onChange={onChange} reportId={reportId} id="files" />
             )}
@@ -95,9 +96,32 @@ export default {
   path: 'supporting-attachments',
   reviewSection: () => <ReviewSection />,
   review: false,
-  render: (_additionalData, _formData, reportId) => (
-    <SupportingAttachments
-      reportId={reportId}
-    />
+  render: (
+    _additionalData,
+    _formData,
+    reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
+  ) => (
+    <>
+      <SupportingAttachments
+        reportId={reportId}
+      />
+      <Alert />
+      <NavigatorButtons
+        isAppLoading={isAppLoading}
+        onContinue={onContinue}
+        onSaveDraft={onSaveDraft}
+        onUpdatePage={onUpdatePage}
+        path="supporting-attachments"
+        position={3}
+      />
+    </>
   ),
 };

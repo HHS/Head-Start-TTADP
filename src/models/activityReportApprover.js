@@ -1,18 +1,19 @@
 const { Model } = require('sequelize');
+const { APPROVER_STATUSES } = require('@ttahub/common');
 const {
   afterCreate,
   afterDestroy,
   afterRestore,
   afterUpdate,
-  afterUpsert,
+  beforeCreate,
+  beforeUpdate,
 } = require('./hooks/activityReportApprover');
-const { APPROVER_STATUSES } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportApprover extends Model {
     static associate(models) {
       ActivityReportApprover.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
-      ActivityReportApprover.belongsTo(models.User, { foreignKey: 'userId' });
+      ActivityReportApprover.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
   ActivityReportApprover.init({
@@ -40,11 +41,12 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
+      beforeCreate: async (instance) => beforeCreate(sequelize, instance),
+      beforeUpdate: async (instance) => beforeUpdate(sequelize, instance),
       afterCreate: async (instance) => afterCreate(sequelize, instance),
       afterDestroy: async (instance) => afterDestroy(sequelize, instance),
       afterRestore: async (instance) => afterRestore(sequelize, instance),
       afterUpdate: async (instance) => afterUpdate(sequelize, instance),
-      afterUpsert: async (instance) => afterUpsert(sequelize, instance),
     },
     indexes: [{
       unique: true,

@@ -4,16 +4,15 @@ import {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
-  ObjectiveResource,
   Objective,
   File,
   ActivityReport,
   Topic,
 } from '..';
-
 import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy } from './activityReportObjective';
+import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 describe('activityReportObjective hooks', () => {
   let ar;
@@ -21,7 +20,6 @@ describe('activityReportObjective hooks', () => {
   let objective;
   let aro;
   let file;
-  let or;
 
   beforeAll(async () => {
     ar = await ActivityReport.create({ ...draftObject });
@@ -45,16 +43,7 @@ describe('activityReportObjective hooks', () => {
       topicId: topic.id,
     });
 
-    or = await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'https://gnarlyfootbaths.com',
-    });
-
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aro.id,
-      objectiveResourceId: or.id,
-      userProvidedUrl: 'https://gnarlyfootbaths.com',
-    });
+    await processActivityReportObjectiveForResourcesById(aro.id, ['https://gnarlyfootbaths.com']);
 
     file = await File.create({
       originalFileName: 'the-last-spreadsheet-anyone-will-ever-need.xlsx',
@@ -82,16 +71,14 @@ describe('activityReportObjective hooks', () => {
       where: { activityReportObjectiveId: aro.id },
     });
 
-    await ObjectiveResource.destroy({
-      where: { id: or.id },
-    });
-
     await ActivityReportObjectiveTopic.destroy({
       where: { activityReportObjectiveId: aro.id },
     });
 
     await Topic.destroy({
       where: { id: topic.id },
+      individualHooks: true,
+      force: true,
     });
 
     await ActivityReportObjective.destroy({
@@ -100,6 +87,7 @@ describe('activityReportObjective hooks', () => {
 
     await Objective.destroy({
       where: { id: objective.id },
+      force: true,
     });
 
     await ActivityReport.destroy({
@@ -135,6 +123,7 @@ describe('activityReportObjective hooks', () => {
       expect(aroFiles.length).toBe(0);
       expect(aroResources.length).toBe(0);
       expect(aroTopics.length).toBe(0);
+      expect(transaction.finished).toBe('commit');
     });
   });
 });

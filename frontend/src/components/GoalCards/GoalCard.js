@@ -1,28 +1,70 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useMemo } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useContext,
+  useEffect,
+} from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlag } from '@fortawesome/free-solid-svg-icons';
-import StatusDropdown from './components/StatusDropdown';
+import GoalStatusDropdown from './components/GoalStatusDropdown';
 import ContextMenu from '../ContextMenu';
-import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
-import ObjectiveButton from './components/ObjectiveButton';
-import Topics from './components/Topics';
+import FlagStatus from './FlagStatus';
+import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
-import colors from '../../colors';
 import { goalPropTypes } from './constants';
+import colors from '../../colors';
+import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
+import UserContext from '../../UserContext';
+import { deleteGoal } from '../../fetchers/goals';
+import AppLoadingContext from '../../AppLoadingContext';
+import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
+import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
+import DataCard from '../DataCard';
+import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 
-function GoalCard({
+export const ObjectiveSwitch = ({
+  objective,
+  objectivesExpanded,
+  regionId,
+  goalStatus,
+  dispatchStatusChange,
+  isMonitoringGoal,
+}) => (
+  <ObjectiveCard
+    objective={objective}
+    objectivesExpanded={objectivesExpanded}
+    goalStatus={goalStatus}
+    regionId={regionId}
+    dispatchStatusChange={dispatchStatusChange}
+    isMonitoringGoal={isMonitoringGoal}
+  />
+);
+
+ObjectiveSwitch.propTypes = {
+  objective: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    type: PropTypes.string,
+  }).isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
+  regionId: PropTypes.number.isRequired,
+  goalStatus: PropTypes.string.isRequired,
+  dispatchStatusChange: PropTypes.func.isRequired,
+  isMonitoringGoal: PropTypes.bool.isRequired,
+};
+
+export default function GoalCard({
   goal,
   recipientId,
   regionId,
   showCloseSuspendGoalModal,
+  showReopenGoalModal,
   performGoalStatusUpdate,
   handleGoalCheckboxSelect,
   isChecked,
@@ -37,20 +79,64 @@ function GoalCard({
     goalStatus,
     createdOn,
     goalText,
-    goalTopics,
     objectiveCount,
     reasons,
     objectives,
     previousStatus,
-    isRttapa,
+    createdVia,
+    collaborators,
+    onAR,
+    isReopenedGoal,
   } = goal;
 
-  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
+  // Check for monitoring goal.
+  const reasonsToMonitor = [...reasons];
+  let isMonitoringGoal = false;
+  if (goal.createdVia === 'monitoring') {
+    reasonsToMonitor.push('Monitoring Goal');
+    isMonitoringGoal = true;
+  }
+
+  const { user } = useContext(UserContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
+  const sortedObjectives = [...objectives];
+  sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+  const {
+    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    dispatchStatusChange,
+  } = useObjectiveStatusMonitor(objectives);
+
+  useEffect(() => {
+    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
+      setInvalidStatusChangeAttempted(false);
+    }
+  }, [atLeastOneObjectiveIsNotCompletedOrSuspended, invalidStatusChangeAttempted]);
+
+  const [deleteError, setDeleteError] = useState(false);
+  const isMerged = createdVia === 'merge';
+
+  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
-  const goalNumbers = goal.goalNumbers.join(', ');
+  const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
+
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join('&id[]=')}`;
+  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?${ids.map((d) => `id[]=${d}`).join('&')}`;
 
   const onUpdateGoalStatus = (newStatus) => {
+    const statusesThatNeedObjectivesFinished = [
+      'Closed',
+      'Suspended',
+    ];
+
+    if (statusesThatNeedObjectivesFinished.includes(newStatus)
+        && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+      setInvalidStatusChangeAttempted(true);
+      return;
+    }
+    setInvalidStatusChangeAttempted(false);
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
       showCloseSuspendGoalModal(newStatus, ids, goalStatus);
@@ -61,62 +147,119 @@ function GoalCard({
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
 
-  const determineFlagStatus = () => {
-    const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
-    if (reasonsToWatch) {
-      return (
-        <>
-          <Tooltip
-            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
-            screenReadDisplayText={false}
-            buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`}
-            tooltipText="Related to monitoring"
-            hideUnderline
-          />
-        </>
-      );
-    }
-    return null;
-  };
-
   const closeOrOpenObjectives = () => {
     setObjectivesExpanded(!objectivesExpanded);
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const menuItems = [
-    {
-      label: goalStatus === 'Closed' ? 'View' : 'Edit',
+
+  const menuItems = [];
+
+  if (goalStatus === 'Closed' && hasEditButtonPermissions) {
+    menuItems.push({
+      label: 'Reopen',
       onClick: () => {
-        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
+        showReopenGoalModal(id);
       },
-    },
-  ];
+    });
+    menuItems.push({
+      label: 'View',
+      onClick: () => {
+        history.push(viewLink);
+      },
+    });
+  } else if (hasEditButtonPermissions) {
+    menuItems.push({
+      label: 'Edit',
+      onClick: () => {
+        history.push(editLink);
+      },
+    });
+  } else {
+    menuItems.push({
+      label: 'View',
+      onClick: () => {
+        history.push(viewLink);
+      },
+    });
+  }
 
-  const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
+  const canDeleteQualifiedGoals = (() => {
+    if (isAdmin(user)) {
+      return true;
+    }
 
-  const border = erroneouslySelected ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+    return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+  })();
+
+  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(goalStatus)) {
+    menuItems.push({
+      label: 'Delete',
+      onClick: async () => {
+        try {
+          setDeleteError(false);
+          setIsAppLoading(true);
+          await deleteGoal(ids, regionId);
+          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+        } catch (e) {
+          setDeleteError(true);
+        } finally {
+          setIsAppLoading(false);
+        }
+      },
+    });
+  }
+
+  const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
+
+  const getResponses = () => {
+    const responses = goal.responses.length ? goal.responses[0].response : [];
+    return responses.map((r) => r).join(', ');
+  };
+
+  const renderEnteredBy = () => {
+    if (isMonitoringGoal) {
+      return (
+        <SpecialistTags
+          specialists={[{
+            name: 'System-generated',
+            roles: ['OHS'],
+          }]}
+        />
+      );
+    }
+    return (
+      <SpecialistTags
+        specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
+          name: c.goalCreatorName,
+          roles: [c.goalCreatorRoles].flat(),
+        }))}
+      />
+    );
+  };
 
   return (
-    <article
-      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full`}
-      data-testid="goalCard"
+    <DataCard
+      testId="goalCard"
+      className="ttahub-goal-card"
+      errorBorder={erroneouslySelected || deleteError}
     >
+
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
           { !hideCheckbox && (
-          <Checkbox
-            id={`goal-select-${id}`}
-            label=""
-            value={id}
-            checked={isChecked}
-            onChange={handleGoalCheckboxSelect}
-            aria-label={`Select goal ${goalText}`}
-            className="margin-right-1"
-            data-testid="selectGoalTestId"
-          />
+            <Checkbox
+              id={`goal-select-${id}`}
+              label=""
+              value={id}
+              checked={isChecked}
+              onChange={handleGoalCheckboxSelect}
+              aria-label={`Select goal ${goalText}`}
+              className="margin-right-1"
+              data-testid="selectGoalTestId"
+            />
           )}
-          <StatusDropdown
+          <GoalStatusDropdown
             showReadOnlyStatus={showReadOnlyStatus}
             goalId={id}
             status={goalStatus}
@@ -126,29 +269,56 @@ function GoalCard({
           />
         </div>
         { !hideGoalOptions && (
-        <ContextMenu
-          label={contextMenuLabel}
-          menuItems={menuItems}
-        />
+          <ContextMenu
+            label={contextMenuLabel}
+            menuItems={menuItems}
+            menuWidthOffset={100}
+          />
         )}
       </div>
+      <GoalStatusChangeAlert
+        internalLeftMargin={internalLeftMargin}
+        editLink={editLink}
+        invalidStatusChangeAttempted={invalidStatusChangeAttempted}
+      />
       <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
             Goal
             {' '}
             {goalNumbers}
-            { isRttapa === 'Yes' ? <Tag className="margin-left-1 text-ink" background={colors.baseLighter}>RTTAPA</Tag> : null }
+            {isMerged && (
+              <Tag className="usa-tag--merged-goal border margin-left-1 text-ink text-normal radius-sm" background={colors.baseLightest}>
+                Merged
+              </Tag>
+            )}
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}
             {' '}
-            {determineFlagStatus()}
+            <FlagStatus
+              reasons={reasonsToMonitor}
+              goalNumbers={goalNumbers}
+            />
           </p>
+          {
+              goal.isFei
+                ? (
+                  <div className="grid-row">
+                    <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
+                      Root cause:
+                    </p>
+                    <p className="usa-prose margin-bottom-0 margin-top-1">
+                      { getResponses() }
+                    </p>
+                  </div>
+                )
+                : null
+          }
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Topics</p>
-          <Topics topics={goalTopics} />
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Goal source</p>
+          <p className="usa-prose margin-y-0">{goal.source}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
@@ -158,28 +328,35 @@ function GoalCard({
           <p className="usa-prose text-bold margin-y-0">Last TTA</p>
           <p className="usa-prose margin-y-0">{lastTTA}</p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Last reviewed</p>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Entered by</p>
+          {
+            renderEnteredBy()
+          }
         </div>
       </div>
 
       <div className={internalLeftMargin}>
-        <ObjectiveButton
-          closeOrOpenObjectives={closeOrOpenObjectives}
-          objectiveCount={objectiveCount}
-          objectivesExpanded={objectivesExpanded}
-          goalNumber={goal.goalNumbers.join('')}
+        <ExpanderButton
+          type="objective"
+          ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
+          closeOrOpen={closeOrOpenObjectives}
+          count={objectiveCount}
+          expanded={objectivesExpanded}
         />
       </div>
-      {objectives.map((obj) => (
-        <ObjectiveCard
-          key={`objective_${obj.id}`}
+      {sortedObjectives.map((obj) => (
+        <ObjectiveSwitch
+          key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
+          goalStatus={goalStatus}
+          regionId={parseInt(regionId, DECIMAL_BASE)}
+          dispatchStatusChange={dispatchStatusChange}
+          isMonitoringGoal={isMonitoringGoal}
         />
       ))}
-
-    </article>
+    </DataCard>
   );
 }
 
@@ -188,6 +365,7 @@ GoalCard.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   showCloseSuspendGoalModal: PropTypes.func.isRequired,
+  showReopenGoalModal: PropTypes.func.isRequired,
   performGoalStatusUpdate: PropTypes.func.isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
@@ -203,5 +381,3 @@ GoalCard.defaultProps = {
   hideGoalOptions: false,
   erroneouslySelected: false,
 };
-
-export default GoalCard;

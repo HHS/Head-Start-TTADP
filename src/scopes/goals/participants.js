@@ -1,9 +1,7 @@
+import { ALL_PARTICIPANTS } from '@ttahub/common';
 import filterArray, { filterAssociation } from './utils';
-import {
-  ALL_PARTICIPANTS,
-} from '../../constants';
 
-function onlyValidParticipants(query) {
+export function onlyValidParticipants(query) {
   if (!Array.isArray(query)) {
     return [query].filter((participant) => ALL_PARTICIPANTS.includes(participant));
   }

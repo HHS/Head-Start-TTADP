@@ -1,19 +1,20 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
-import { Redirect } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { Redirect, Link } from 'react-router-dom';
+import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
-import IncompletePages from '../IncompletePages';
+import IncompletePages from '../../../../../components/IncompletePages';
+import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
-import ConnectionError from '../../components/ConnectionError';
+import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
@@ -27,14 +28,40 @@ const Draft = ({
   approverStatusList,
   lastSaveTime,
   creatorRole,
+  grantsMissingMonitoring,
+  grantsMissingCitations,
 }) => {
   const {
-    watch, handleSubmit, register,
+    watch,
+    handleSubmit,
+    register,
+    getValues,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const { connectionActive, localStorageAvailable } = useContext(NetworkContext);
+  const promptsMissingResponses = [];
+  const goalsMissingResponses = [];
+
+  const regionId = watch('regionId');
+
+  const allGoalsHavePromptResponses = (() => {
+    const goalsAndObjectives = getValues('goalsAndObjectives');
+    const curatedGoals = (goalsAndObjectives || []).filter((goal) => goal.isCurated);
+
+    if (!curatedGoals.length) return true;
+
+    return curatedGoals.every((goal) => goal.prompts
+      .every((prompt) => {
+        if (!prompt.allGoalsHavePromptResponse) {
+          promptsMissingResponses.push(prompt.title);
+          goalsMissingResponses.push(goal);
+        }
+
+        return prompt.allGoalsHavePromptResponse;
+      }));
+  })();
 
   const { user } = useContext(UserContext);
 
@@ -50,8 +77,13 @@ const Draft = ({
     return completeRoleList.sort();
   };
 
+  const canSubmitReport = allGoalsHavePromptResponses
+  && !hasIncompletePages
+  && !grantsMissingMonitoring.length
+  && !grantsMissingCitations.length;
+
   const onSubmit = (e) => {
-    if (!hasIncompletePages) {
+    if (canSubmitReport) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
@@ -130,13 +162,68 @@ const Draft = ({
           >
             <ApproverSelect
               name="approvers"
-              valueProperty="User.id"
-              labelProperty="User.fullName"
+              valueProperty="user.id"
+              labelProperty="user.fullName"
               options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
             />
           </FormItem>
         </Fieldset>
+        {
+          grantsMissingMonitoring.length > 0 && (
+            <Alert validation slim type="error">
+              {
+                grantsMissingMonitoring.length > 1
+                  ? 'These grants do not have the standard monitoring goal:'
+                  : 'This grant does not have the standard monitoring goal:'
+              }
+              <ul>
+                {grantsMissingMonitoring.map((grant) => <li key={grant}>{grant}</li>)}
+              </ul>
+              You can either:
+              <ul>
+                <li>Add a different goal to the report</li>
+                <li>
+                  Remove the grant from the
+                  {' '}
+                  <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                </li>
+              </ul>
+            </Alert>
+          )
+        }
+        {
+          grantsMissingCitations.length > 0 && (
+            <Alert validation slim type="error">
+              {
+                grantsMissingCitations.length > 1
+                  ? 'These grants do not have any of the citations selected:'
+                  : 'This grant does not have any of the citations selected:'
+              }
+              <ul>
+                {grantsMissingCitations.map((grant) => <li key={grant}>{grant}</li>)}
+              </ul>
+              You can either:
+              <ul>
+                <li>Add a citation for this grant under an objective for the monitoring goal</li>
+                <li>
+                  Remove the grant from the
+                  {' '}
+                  <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                </li>
+                <li>Add another goal to the report</li>
+              </ul>
+            </Alert>
+          )
+        }
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        {!allGoalsHavePromptResponses && (
+        <SomeGoalsHaveNoPromptResponse
+          regionId={regionId}
+          promptsMissingResponses={promptsMissingResponses}
+          goalsMissingResponses={goalsMissingResponses}
+          onSaveDraft={onSaveForm}
+        />
+        )}
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
@@ -198,6 +285,8 @@ Draft.propTypes = {
   })).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
   creatorRole: PropTypes.string.isRequired,
+  grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
+  grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 Draft.defaultProps = {

@@ -24,7 +24,7 @@ describe('FilterReasonSelect', () => {
     renderProgramTypeSelect(onApply);
 
     const select = await findByText(/select reasons to filter by/i);
-    await selectEvent.select(select, ['Child Incidents']);
+    await selectEvent.select(select, ['Child Incident']);
     expect(onApply).toHaveBeenCalled();
   });
 });

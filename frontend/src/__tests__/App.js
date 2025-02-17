@@ -9,12 +9,22 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
+import { mockDocumentProperty } from '../testHelpers';
 
 const storageCleanup = join('api', 'activity-reports', 'storage-cleanup');
+const whatsNew = join('api', 'feeds', 'whats-new');
+
 describe('App', () => {
   const loginText = 'Log In with HSES';
 
-  beforeEach(async () => fetchMock.get(storageCleanup, []));
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
+
+  beforeEach(async () => {
+    fetchMock.get(storageCleanup, []);
+    fetchMock.get(whatsNew, '');
+  });
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
 
@@ -62,11 +72,17 @@ describe('App', () => {
 
       const alertsUrl = join('api', 'alerts');
       fetchMock.get(alertsUrl, []);
+      const groupsUrl = join('api', 'groups');
+      fetchMock.get(groupsUrl, []);
 
       const renderApp = () => render(<App />);
-      act(renderApp);
+
+      act(() => {
+        renderApp();
+      });
 
       await waitFor(() => expect(fetchMock.called(alertsUrl)).toBe(true));
+      await waitFor(() => expect(fetchMock.called(whatsNew)).toBe(true));
     });
   });
 });

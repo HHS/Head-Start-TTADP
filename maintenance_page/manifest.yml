@@ -2,5 +2,5 @@
 applications:
   - name: tta-smarthub-maintenance-page-((env))
     buildpacks:
-      - staticfile_buildpack
+      - https://github.com/cloudfoundry/staticfile-buildpack
     memory: 64M

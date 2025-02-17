@@ -1,19 +1,33 @@
 import waitFor from 'wait-for-expect';
+import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   ActivityRecipient,
   ActivityReport,
   User,
   Objective,
   ActivityReportObjective,
+  ActivityReportObjectiveFile,
+  ActivityReportObjectiveResource,
+  File,
+  Resource,
   sequelize,
   Grant,
   Goal,
   Recipient,
   OtherEntity,
 } from '../models';
-import { REPORT_STATUSES } from '../constants';
+import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import {
+  saveObjectivesForReport,
+  getObjectiveById,
+  getObjectivesByReportId,
+  updateObjectiveStatusByIds,
+  getObjectiveRegionAndGoalStatusByIds,
+  verifyObjectiveStatusTransition,
+} from './objectives';
+import { createGrant, createRecipient } from '../testUtils';
 
-import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
+jest.mock('bull');
 
 const mockUser = {
   id: 8088,
@@ -21,6 +35,7 @@ const mockUser = {
   name: 'user8000',
   hsesUsername: 'user8000',
   hsesUserId: '8000',
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -29,6 +44,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
+  version: 2,
 };
 
 const mockGrant = {
@@ -58,8 +74,16 @@ const mockOtherEntity = {
 describe('Objectives DB service', () => {
   let report;
   let objective;
+  let keepAro;
+  let file;
+  let keepFile;
+  let resource;
+  let keepResource;
 
   let secondObjective;
+
+  let thirdObjective;
+  let thirdAro;
 
   let objectiveInfo;
   let grantInfo;
@@ -112,31 +136,116 @@ describe('Objectives DB service', () => {
       title: 'second title',
       status: 'Draft',
       otherEntityId: 1,
+      createdVia: 'activityReport',
     });
 
-    await ActivityReportObjective.create({
+    thirdObjective = await Objective.create({
+      title: 'third title',
+      status: 'Draft',
+      otherEntityId: 1,
+      createdVia: 'activityReport',
+    });
+
+    keepAro = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: report.id,
       ttaProvided: 'tta provided',
       status: objective.status,
+      supportType: SUPPORT_TYPES[2],
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: report.id,
       status: secondObjective.status,
+      supportType: SUPPORT_TYPES[2],
     });
 
-    await sequelize.transaction(async () => {
-      await saveObjectivesForReport([...objectives, {
-        id: objective.id,
-        title: objective.title,
-        ttaProvided: 'tta provided',
-        status: objective.status,
-        recipientIds: [1],
-        ids: [objective.id],
-      }], report);
+    thirdAro = await ActivityReportObjective.create({
+      objectiveId: thirdObjective.id,
+      activityReportId: report.id,
+      status: secondObjective.status,
+      supportType: SUPPORT_TYPES[2],
     });
+
+    // Create objective files.
+    file = await File.create({
+      originalFileName: 'second-objective-file.txt',
+      key: 'second-objective-file.key',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 1234,
+    });
+    keepFile = await File.create({
+      originalFileName: 'keep-objective-file.txt',
+      key: 'keep-objective-file.key',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 1234,
+    });
+
+    await ActivityReportObjectiveFile.create({
+      activityReportObjectiveId: thirdAro.id,
+      fileId: file.id,
+    });
+
+    await ActivityReportObjectiveFile.create({
+      activityReportObjectiveId: thirdAro.id,
+      fileId: keepFile.id,
+    });
+
+    await ActivityReportObjectiveFile.create({
+      activityReportObjectiveId: keepAro.id,
+      fileId: keepFile.id,
+    });
+
+    // Create resources.
+    resource = await Resource.create({ url: 'https://second-obj-resource.gov' });
+    keepResource = await Resource.create({ url: 'https://keep-obj-resource.gov' });
+
+    await ActivityReportObjectiveResource.create({
+      activityReportObjectiveId: thirdAro.id,
+      resourceId: resource.id,
+      sourceFields: ['resource'],
+    });
+    await ActivityReportObjectiveResource.create({
+      activityReportObjectiveId: thirdAro.id,
+      resourceId: keepResource.id,
+      sourceFields: ['resource'],
+    });
+
+    await ActivityReportObjectiveResource.create({
+      activityReportObjectiveId: keepAro.id,
+      resourceId: keepResource.id,
+      sourceFields: ['resource'],
+    });
+
+    let checkARO = await ActivityReportObjective.findOne({
+      where: { objectiveId: objective.id },
+    });
+
+    await ActivityReportObjectiveResource.findOne({
+      where: { activityReportObjectiveId: checkARO.id },
+    });
+
+    await saveObjectivesForReport([...objectives, {
+      id: objective.id,
+      title: objective.title,
+      ttaProvided: 'tta provided',
+      status: objective.status,
+      recipientIds: [1],
+      ids: [objective.id],
+      files: [{ id: keepFile.id }],
+      resources: [{ value: 'https://keep-obj-resource.gov' }],
+      supportType: SUPPORT_TYPES[3],
+    }], report);
+
+    checkARO = await ActivityReportObjective.findOne({
+      where: { objectiveId: objective.id },
+    });
+
+    await ActivityReportObjectiveResource.findOne({
+      where: { activityReportObjectiveId: checkARO.id },
+    });
+
     otherEntity = await OtherEntity.create({ ...mockOtherEntity, id: 685497 });
     recipientInfo = await Recipient.create({ ...mockRecipient });
     grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
@@ -159,23 +268,46 @@ describe('Objectives DB service', () => {
   afterAll(async () => {
     const aros = await ActivityReportObjective.findAll({ where: { activityReportId: report.id } });
     const objectiveIds = aros.map((aro) => aro.objectiveId);
+    const aroIds = aros.map((aro) => aro.id);
+
+    // Destroy objective file.
+    await ActivityReportObjectiveFile.destroy({
+      where: { activityReportObjectiveId: aroIds, fileId: [file.id, keepFile.id] },
+    });
+    await File.destroy({
+      where: { id: [file.id, keepFile.id] },
+      individualHooks: true,
+    });
+
+    // Destroy objective resource.
+    await ActivityReportObjectiveResource.destroy({
+      where: { activityReportObjectiveId: aroIds, resourceId: [resource.id, keepResource.id] },
+    });
+    await Resource.destroy({
+      where: { id: [resource.id, keepResource.id] },
+      individualHooks: true,
+    });
+
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
     await Objective.destroy({
       where: {
         id:
-      [...objectiveIds,
-        objective.id,
-        secondObjective.id,
-        findObjectiveById.id,
-        findObjectiveByTitle.id],
+          [...objectiveIds,
+            objective.id,
+            secondObjective.id,
+            thirdObjective.id,
+            findObjectiveById.id,
+            findObjectiveByTitle.id,
+          ],
       },
+      force: true,
     });
     await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
 
-    await Objective.destroy({ where: { id: objectiveInfo.id } });
-    await Goal.destroy({ where: { id: goalInfo.id } });
-    await Grant.destroy({ where: { id: grantInfo.id } });
+    await Objective.destroy({ where: { id: objectiveInfo.id }, force: true });
+    await Goal.destroy({ where: { id: goalInfo.id }, force: true });
+    await Grant.destroy({ where: { id: grantInfo.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientInfo.id } });
     await OtherEntity.destroy({ where: { id: otherEntity.id } });
     await User.destroy({ where: { id: mockUser.id } });
@@ -210,6 +342,58 @@ describe('Objectives DB service', () => {
         },
       });
       expect(found).toBeNull();
+    });
+
+    it('deletes orphaned objective file', async () => {
+      // Check ARO keep file wasn't deleted.
+      const checkAROF = await ActivityReportObjectiveFile.findOne({
+        where: { activityReportObjectiveId: keepAro.id },
+      });
+      expect(checkAROF).not.toBeNull();
+
+      // Check keep file wasn't deleted.
+      const keepFileExists = await File.findOne({
+        where: { id: keepFile.id },
+      });
+      expect(keepFileExists).not.toBeNull();
+
+      // Check ARO file was deleted.
+      const deletedActivityObjectiveFile = await ActivityReportObjectiveFile.findOne({
+        where: { activityReportObjectiveId: thirdAro.id },
+      });
+      expect(deletedActivityObjectiveFile).toBeNull();
+
+      // Check file was deleted.
+      const deletedFile = await File.findOne({
+        where: { id: file.id },
+      });
+      expect(deletedFile).toBeNull();
+    });
+
+    it('deletes orphaned objective resource', async () => {
+      // Check ARO keep resource wasn't deleted.
+      const checkAROR = await ActivityReportObjectiveResource.findOne({
+        where: { activityReportObjectiveId: keepAro.id },
+      });
+      expect(checkAROR).not.toBeNull();
+
+      // Check keep resource wasn't deleted.
+      const keepResourceExists = await Resource.findOne({
+        where: { id: keepResource.id },
+      });
+      expect(keepResourceExists).not.toBeNull();
+
+      // Check ARO resource was deleted.
+      const deletedActivityObjectiveResource = await ActivityReportObjectiveResource.findOne({
+        where: { activityReportObjectiveId: thirdAro.id },
+      });
+      expect(deletedActivityObjectiveResource).toBeNull();
+
+      // Check resource was deleted.
+      const deletedResource = await Resource.findOne({
+        where: { id: resource.id },
+      });
+      expect(deletedResource).toBeNull();
     });
 
     it('creates new objectives and activityReportObjectives', async () => {
@@ -259,6 +443,153 @@ describe('Objectives DB service', () => {
       const foundObj = await getObjectiveById(findObjectiveByTitle.id);
       expect(foundObj.title).toBe('there are many titles but this one is mine');
       expect(foundObj.status).toBe('Not Started');
+    });
+  });
+
+  describe('updateObjectiveStatusByIds', () => {
+    let objective1;
+    let objective2;
+
+    beforeAll(async () => {
+      objective1 = await Objective.create({
+        title: 'objective 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        otherEntityId: 1,
+      });
+
+      objective2 = await Objective.create({
+        title: 'objective 2',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        otherEntityId: 1,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: {
+          id: [objective1.id, objective2.id],
+        },
+        force: true,
+      });
+    });
+
+    it('updates status of objectives', async () => {
+      await updateObjectiveStatusByIds(
+        [objective1.id, objective2.id],
+        OBJECTIVE_STATUS.COMPLETE,
+      );
+
+      await objective1.reload();
+      await objective2.reload();
+
+      expect(objective1.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+      expect(objective2.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+    });
+  });
+
+  describe('getObjectiveRegionAndGoalStatusByIds', () => {
+    let objective1;
+    let objective2;
+    let goal;
+    let grant;
+    let recipient;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      grant = await createGrant({ recipientId: recipient.id });
+      goal = await Goal.create({
+        name: 'goal',
+        grantId: grant.id,
+      });
+
+      objective1 = await Objective.create({
+        title: 'objective 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: goal.id,
+      });
+
+      objective2 = await Objective.create({
+        title: 'objective 2',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: goal.id,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: {
+          id: [objective1.id, objective2.id],
+        },
+        force: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goal.id,
+        },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+        force: true,
+        individualHooks: true,
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+        force: true,
+      });
+    });
+
+    it('retrieves region and goal status of objectives', async () => {
+      const x = await getObjectiveRegionAndGoalStatusByIds([
+        objective1.id,
+        objective2.id,
+      ]);
+
+      expect(x.length).toBe(2);
+      expect(x[0].goal.grant.regionId).toBe(grant.regionId);
+      expect(x[0].goal.status).toBe(goal.status);
+
+      expect(x[1].goal.grant.regionId).toBe(grant.regionId);
+      expect(x[1].goal.status).toBe(goal.status);
+    });
+  });
+
+  describe('verifyObjectiveStatusTransition', () => {
+    it('returns true if status transition is valid', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.IN_PROGRESS,
+        },
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }, OBJECTIVE_STATUS.COMPLETE);
+      expect(result).toBe(true);
+    });
+
+    it('returns false if status transition is invalid', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.IN_PROGRESS,
+        },
+        status: OBJECTIVE_STATUS.COMPLETE,
+      }, OBJECTIVE_STATUS.NOT_STARTED);
+      expect(result).toBe(false);
+    });
+
+    it('returns false if the goal is closed', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.CLOSED,
+        },
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }, OBJECTIVE_STATUS.COMPLETE);
+      expect(result).toBe(false);
     });
   });
 });

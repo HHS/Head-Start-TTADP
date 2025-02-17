@@ -4,6 +4,21 @@ import { isArray } from 'lodash';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
+import useSubFilters from '../../hooks/useSubFilters';
+
+const REGION = 'region';
+
+const determineRegionalFilters = (filters, allUserRegions) => {
+  const passedRegionFilters = filters.filter((f) => f.topic === REGION).map((r) => {
+    if (isArray(r.query)) {
+      return parseInt(r.query[0], 10);
+    }
+    return r.query;
+  });
+
+  const containsAllRegions = allUserRegions.every((region) => passedRegionFilters.includes(region));
+  return containsAllRegions ? filters.filter((f) => f.topic !== REGION) : filters;
+};
 
 export default function FilterPanel({
   onRemoveFilter,
@@ -12,34 +27,25 @@ export default function FilterPanel({
   onApplyFilters,
   applyButtonAria,
   allUserRegions,
+  manageRegions,
+  allowedSubfilters,
 }) {
-  const [filtersToShow, setFiltersToShow] = useState([]);
+  // eslint-disable-next-line max-len
+  const [filtersToShow, setFiltersToShow] = useState(determineRegionalFilters(filters, allUserRegions));
+  const {
+    subFilters,
+    filteredFilterConfig,
+  } = useSubFilters(filtersToShow, filterConfig, allowedSubfilters);
 
   useEffect(() => {
-    // Determine if filters contain all regions.
-    const passedRegionFilters = filters.filter((f) => f.topic === 'region').map((r) => {
-      if (isArray(r.query)) {
-        return parseInt(r.query[0], 10);
-      }
-      return r.query;
-    });
-
-    let containsAllRegions = true;
-    if (allUserRegions) {
-      allUserRegions.forEach((r) => {
-        if (!passedRegionFilters.includes(r)) {
-          containsAllRegions = false;
-        }
-      });
-    }
     // Hide or Show Region Filters.
-    setFiltersToShow(containsAllRegions ? filters.filter((f) => f.topic !== 'region') : filters);
+    setFiltersToShow(determineRegionalFilters(filters, allUserRegions));
   }, [filters, allUserRegions]);
 
   const onApply = (items) => {
     // Check for region filters.
     const regionFilters = items.filter((f) => f.topic === 'region');
-    onApplyFilters(items, regionFilters.length === 0);
+    onApplyFilters(items, (regionFilters.length === 0 && manageRegions));
   };
 
   const onRemoveFilterPill = (id) => {
@@ -59,14 +65,14 @@ export default function FilterPanel({
   return (
     <>
       <FilterMenu
-        filters={filtersToShow}
+        filters={subFilters}
         onApplyFilters={onApply}
         applyButtonAria={applyButtonAria}
-        filterConfig={filterConfig}
+        filterConfig={filteredFilterConfig}
       />
       <FilterPills
-        filterConfig={filterConfig}
-        filters={filtersToShow}
+        filterConfig={filteredFilterConfig}
+        filters={subFilters}
         onRemoveFilter={onRemoveFilterPill}
       />
     </>
@@ -80,4 +86,11 @@ FilterPanel.propTypes = {
   applyButtonAria: PropTypes.string.isRequired,
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
   allUserRegions: PropTypes.arrayOf(PropTypes.number).isRequired,
+  manageRegions: PropTypes.bool,
+  allowedSubfilters: PropTypes.arrayOf(PropTypes.string),
+};
+
+FilterPanel.defaultProps = {
+  manageRegions: true,
+  allowedSubfilters: [],
 };

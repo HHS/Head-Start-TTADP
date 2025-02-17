@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 import Container from '../components/Container';
 import './TableWidget.css';
+import WidgetH2 from '../components/WidgetH2';
 
 export default function TableWidget(
   {
@@ -15,14 +16,16 @@ export default function TableWidget(
   },
 ) {
   return (
-    <Container className="smarthub-table-widget shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel={loadingLabel}>
+    <Container className="smarthub-table-widget shadow-2" loading={loading} loadingLabel={loadingLabel}>
       {/* a scrollable element must be keyboard accessible */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
         <Table fullWidth striped bordered={false}>
           <caption className="smart-hub--table-widget-caption">
             <div className="display-flex flex-wrap flex-align-center">
-              <h2 className="smart-hub--table-widget-heading ttahub--dashboard-widget-heading margin-0">{title}</h2>
+              <WidgetH2>
+                {title}
+              </WidgetH2>
             </div>
           </caption>
           <thead>

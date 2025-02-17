@@ -1,5 +1,6 @@
 import axios from 'axios';
 import httpCodes from 'http-codes';
+import httpContext from 'express-http-context';
 import isEmail from 'validator/lib/isEmail';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,6 +8,12 @@ import { logger, auditLogger } from '../logger';
 import findOrCreateUser from './findOrCreateUser';
 import handleErrors from '../lib/apiErrorHandler';
 import { validateUserAuthForAdmin } from './accessValidation';
+
+const namespace = 'MIDDLEWARE:CURRENT USER';
+
+const logContext = {
+  namespace,
+};
 
 /**
  * Get Current User ID
@@ -26,9 +33,11 @@ import { validateUserAuthForAdmin } from './accessValidation';
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
     if (req.session && req.session.userId) {
+      httpContext.set('impersonationUserId', Number(req.session.userId));
       return Number(req.session.userId);
     }
     if (res.locals && res.locals.userId) {
+      httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
     // bypass authorization, used for cucumber UAT and axe accessibility testing
@@ -39,15 +48,10 @@ export async function currentUserId(req, res) {
         req.session.userId = userId;
         req.session.uuid = uuidv4();
       }
+      httpContext.set('impersonationUserId', Number(userId));
       return Number(userId);
     }
     return null;
-  }
-
-  // TODO: When we figure out how/if we want to do this in production, we can
-  // remove this early return.
-  if (process.env.NODE_ENV === 'production') {
-    return idFromSessionOrLocals();
   }
 
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
@@ -59,7 +63,13 @@ export async function currentUserId(req, res) {
         // Verify admin access.
         try {
           const userId = idFromSessionOrLocals();
-          if (!(await validateUserAuthForAdmin(userId))) {
+
+          if (userId === null) {
+            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.');
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
+
+          if (!(await validateUserAuthForAdmin(Number(userId)))) {
             auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
@@ -69,15 +79,30 @@ export async function currentUserId(req, res) {
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
         } catch (e) {
-          return handleErrors(req, res, e);
+          return handleErrors(req, res, e, logContext);
         }
 
+        httpContext.set('impersonationUserId', Number(impersonatedUserId));
         return Number(impersonatedUserId);
       }
     } catch (e) {
       auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
-      return handleErrors(req, res, e);
+      return handleErrors(req, res, e, logContext);
     }
+  }
+
+  if (
+    process.env.NODE_ENV !== 'production'
+    && process.env.BYPASS_AUTH === 'true'
+    && req.headers && req.headers['playwright-user-id']
+  ) {
+    const userId = req.headers['playwright-user-id'];
+    auditLogger.warn(`Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`);
+    if (req.session) {
+      req.session.userId = userId;
+      req.session.uuid = uuidv4();
+    }
+    return Number(userId);
   }
 
   return idFromSessionOrLocals();
@@ -86,7 +111,7 @@ export async function currentUserId(req, res) {
 /**
  * Retrieve User Details
  *
- * This method retrives the current user details from HSES and finds or creates the TTA Hub user
+ * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
 export async function retrieveUserDetails(accessToken) {
   const requestObj = accessToken.sign({

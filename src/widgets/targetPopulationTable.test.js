@@ -1,6 +1,6 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
 import targetPopulationTable from './targetPopulationTable';
-import { REPORT_STATUSES } from '../constants';
 import { createReport, destroyReport } from '../testUtils';
 
 const reportObject = {
@@ -21,6 +21,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 let report;

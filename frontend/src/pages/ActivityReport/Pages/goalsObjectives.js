@@ -1,37 +1,95 @@
 /* eslint-disable react/jsx-props-no-spreading */
 // disabling prop spreading to use the "register" function from react hook form the same
-// way they did in thier examples
-/* eslint-disable arrow-body-style */
-import React, { useState, useContext } from 'react';
+// way they did in their examples
+import React, {
+  useState, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Fieldset } from '@trussworks/react-uswds';
+import { Alert, Fieldset, Button } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useController } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
 import { IN_PROGRESS } from '../../../components/Navigator/constants';
 import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
-import { validateGoals } from './components/goalValidator';
+import { validateGoals, validatePrompts } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
-import ConnectionError from './components/ConnectionError';
+import ConnectionError from '../../../components/ConnectionError';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import { getGoalTemplates } from '../../../fetchers/goalTemplates';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import { NOOP } from '../../../Constants';
+import useFormGrantData, { calculateFormGrantData } from '../../../hooks/useFormGrantData';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
-const GoalsObjectives = ({
-  reportId,
-  onSaveDraftOetObjectives,
+const Buttons = ({
+  formData,
+  isAppLoading,
+  onContinue,
+  onSaveDraft,
+  onUpdatePage,
+  weAreAutoSaving,
 }) => {
   const {
-    watch, setValue, getValues, setError,
+    isGoalFormClosed,
+    isObjectivesFormClosed,
+  } = useContext(GoalFormContext);
+
+  const { activityRecipientType } = formData;
+  const isOtherEntityReport = activityRecipientType === 'other-entity';
+
+  const showSaveGoalsAndObjButton = (
+    !isGoalFormClosed
+    && !isObjectivesFormClosed
+  );
+
+  if (showSaveGoalsAndObjButton) {
+    return (
+      <>
+        <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+        <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={() => onSaveDraft(false)}>Save draft</Button>
+        <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
+      </>
+    );
+  }
+
+  return (
+    <NavigatorButtons
+      isAppLoading={isAppLoading}
+      onContinue={onContinue}
+      onSaveDraft={onSaveDraft}
+      onUpdatePage={onUpdatePage}
+      path="goals-objectives"
+      position={2}
+    />
+  );
+};
+
+Buttons.propTypes = {
+  formData: PropTypes.shape({
+    activityRecipientType: PropTypes.string,
+  }).isRequired,
+  isAppLoading: PropTypes.bool.isRequired,
+  onContinue: PropTypes.func.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
+  onUpdatePage: PropTypes.func.isRequired,
+  weAreAutoSaving: PropTypes.bool.isRequired,
+};
+
+const GoalsObjectives = ({
+  reportId,
+}) => {
+  const {
+    watch, setValue, getValues, setError, trigger,
   } = useFormContext();
 
   const {
@@ -44,21 +102,23 @@ const GoalsObjectives = ({
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
+  const startDate = watch('startDate');
   const pageState = getValues('pageState');
-  const isRecipientReport = activityRecipientType === 'recipient';
-  const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const grantIds = isRecipientReport ? activityRecipients.map((r) => {
-    if (r.grant) {
-      return r.grant.id;
-    }
+  const goalForEditing = watch('goalForEditing');
 
-    return r.activityRecipientId;
-  }) : [];
+  const {
+    isRecipientReport,
+    grantIds,
+    hasMultipleGrants,
+    hasGrant,
+  } = useFormGrantData(activityRecipientType, activityRecipients);
+
+  const isOtherEntityReport = activityRecipientType === 'other-entity';
   const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
-  const hasGrants = grantIds.length > 0;
+  const [goalTemplates, setGoalTemplates] = useState([]);
 
   const {
     field: {
@@ -76,9 +136,36 @@ const GoalsObjectives = ({
   });
 
   useDeepCompareEffect(() => {
+    const fetchGoalTemplates = async () => {
+      if (isRecipientReport && hasGrant) {
+        try {
+          const fetchedGoalTemplates = await getGoalTemplates(grantIds);
+
+          // format goalTemplates
+          const formattedGoalTemplates = fetchedGoalTemplates.map((gt) => ({
+            ...gt,
+            isCurated: true,
+            goalIds: gt.goals.map((g) => g.id),
+            goalTemplateId: gt.id,
+            isNew: gt.goals.length === 0,
+            objectives: [],
+          }));
+
+          setGoalTemplates(formattedGoalTemplates);
+        } catch (err) {
+        // eslint-disable-next-line no-console
+          console.error(err);
+        }
+      }
+    };
+
+    fetchGoalTemplates();
+  }, [grantIds, hasGrant, isRecipientReport]);
+
+  useDeepCompareEffect(() => {
     const fetch = async () => {
       try {
-        if (isRecipientReport && hasGrants) {
+        if (isRecipientReport && hasGrant) {
           const fetchedGoals = await getGoals(grantIds);
           const formattedGoals = fetchedGoals.map((g) => {
             // if the goal is on an "old" grant, we should
@@ -91,6 +178,7 @@ const GoalsObjectives = ({
 
             return { ...g, isNew, grantIds };
           });
+
           updateAvailableGoals(formattedGoals);
         }
 
@@ -100,9 +188,9 @@ const GoalsObjectives = ({
       }
     };
     fetch();
-  }, [grantIds]);
+  }, [grantIds, hasGrant, isRecipientReport]);
 
-  const showGoals = isRecipientReport && hasGrants;
+  const showGoals = isRecipientReport && hasGrant;
 
   const addNewGoal = () => {
     toggleGoalForm(false);
@@ -125,12 +213,13 @@ const GoalsObjectives = ({
     onUpdateGoals(copyOfSelectedGoals);
 
     // if we have no goals, open the form up via the
-    // hander provided by the context
-    if (copyOfSelectedGoals.length === 0) {
+    // handler provided by the context
+    // Unless we are currently editing a goal and removing at the same time.
+    if (copyOfSelectedGoals.length === 0 && !goalForEditing) {
       setValue('goalForEditing', '');
       setValue('goalName', '');
       setValue('goalEndDate', '');
-      setValue('goalIsRttapa', '');
+      setValue('goalSource', '');
       toggleGoalForm(false);
     }
   };
@@ -148,19 +237,27 @@ const GoalsObjectives = ({
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
-      const isRttapa = getValues('goalIsRttapa');
+      const source = getValues('goalSource');
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
           name,
           endDate,
-          isRttapa,
+          source,
           objectives: goalForEditingObjectives,
         }],
         setError,
+        hasMultipleGrants,
       );
 
       if (areGoalsValid !== true) {
+        return;
+      }
+
+      const promptTitles = getValues('goalPrompts');
+
+      const arePromptsValid = await validatePrompts(promptTitles, trigger);
+      if (!arePromptsValid) {
         return;
       }
     }
@@ -168,14 +265,14 @@ const GoalsObjectives = ({
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
+    setValue('goalPrompts', []);
 
     // make this goal the editable goal
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
+    setValue('goalSource', goal.source);
     setValue('goalName', goal.name);
 
-    const rttapaValue = goal.isRttapa;
-    setValue('goalIsRttapa', rttapaValue);
     toggleGoalForm(false);
     setValue(
       'pageState',
@@ -186,24 +283,22 @@ const GoalsObjectives = ({
     );
 
     let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    // add the goal that was being edited to the "selected goals"
     if (currentlyEditing) {
       copyOfSelectedGoals.push(currentlyEditing);
     }
 
-    // remove the goal from the "selected goals"
+    // remove the goal we are now editing from the "selected goals"
     copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
-
     onUpdateGoals(copyOfSelectedGoals);
-  };
+  }; // end onEdit
 
   // the read only component expects things a little differently
-  const goalsForReview = selectedGoals.map((goal) => {
-    return {
-      ...goal,
-      goalName: goal.name,
-      grants: [],
-    };
-  });
+  const goalsForReview = selectedGoals.map((goal) => ({
+    ...goal,
+    goalName: goal.name,
+    grants: [],
+  }));
 
   const oeObjectiveEdit = (objectives) => {
     const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);
@@ -222,23 +317,55 @@ const GoalsObjectives = ({
     isOtherEntityReport && !isObjectivesFormClosed
   );
 
+  const startDateHasValue = startDate && startDate !== 'Invalid date';
+
+  const alertIsDisplayed = (!isOtherEntityReport && !isRecipientReport)
+    || !startDateHasValue
+    || (isRecipientReport && !showGoals);
+  const determineReportTypeAlert = () => {
+    const messages = [];
+
+    // Check that the report type is set.
+    if ((!isOtherEntityReport && !isRecipientReport)
+    || (isRecipientReport && !showGoals)) {
+      messages.push('Who the activity was for');
+    }
+    // Check the startDate is set.
+    if (!startDateHasValue) {
+      messages.push('Start date of the activity');
+    }
+
+    if (messages.length > 0) {
+      return (
+        <Alert className="maxw-desktop" type="info">
+          To add goals and objectives, indicate in the
+          {' '}
+          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
+          :
+          {' '}
+          <ul>
+            {messages.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       <Helmet>
-        <title>Goals and objectives</title>
+        <title>Goals and Objectives</title>
       </Helmet>
-      { isFormOpen && (
+      { isFormOpen && !alertIsDisplayed && (
       <IndicatesRequiredField />
       ) }
 
-      {(!isOtherEntityReport && !isRecipientReport) && (
-        <Alert noIcon type="info">
-          To add goals and objectives, indicate who the activity was for in
-          {' '}
-          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
-          .
-        </Alert>
-      )}
+      {
+        determineReportTypeAlert()
+      }
 
       {/**
         * on non-recipient reports, only objectives are shown
@@ -247,7 +374,6 @@ const GoalsObjectives = ({
       && (
       <OtherEntity
         recipientIds={activityRecipientIds}
-        onSaveDraft={onSaveDraftOetObjectives}
         reportId={reportId}
       />
       )}
@@ -266,12 +392,6 @@ const GoalsObjectives = ({
         )
         : null}
 
-      {(isRecipientReport && !showGoals) && (
-      <Alert type="info" noIcon>
-        <p className="usa-prose">To create goals, first select a recipient.</p>
-      </Alert>
-      )}
-
       {/**
         * all goals for review
       */}
@@ -287,7 +407,7 @@ const GoalsObjectives = ({
         * conditionally show the goal picker
       */}
 
-      {showGoals && !isGoalFormClosed
+      {showGoals && !isGoalFormClosed && startDateHasValue
         ? (
           <>
             <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>
@@ -297,6 +417,7 @@ const GoalsObjectives = ({
                 grantIds={grantIds}
                 availableGoals={availableGoals}
                 reportId={reportId}
+                goalTemplates={goalTemplates}
               />
             </Fieldset>
           </>
@@ -320,7 +441,6 @@ const GoalsObjectives = ({
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  onSaveDraftOetObjectives: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => {
@@ -354,7 +474,9 @@ export default {
   path: 'goals-objectives',
   review: false,
   isPageComplete: (formData) => {
-    const { activityRecipientType } = formData;
+    const { activityRecipientType, activityRecipients } = formData;
+
+    const { hasMultipleGrants } = calculateFormGrantData(activityRecipientType, activityRecipients);
 
     if (!activityRecipientType) {
       return false;
@@ -370,13 +492,35 @@ export default {
       return false;
     }
 
-    return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
+    return activityRecipientType === 'recipient' && validateGoals(formData.goals, NOOP, hasMultipleGrants) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: (_additionalData, _formData, reportId, _onSaveDraftGoal, onSaveDraftOetObjectives) => (
-    <GoalsObjectives
-      reportId={reportId}
-      onSaveDraftOetObjectives={onSaveDraftOetObjectives}
-    />
+  render: (
+    _additionalData,
+    formData,
+    reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    DraftAlert,
+  ) => (
+    <>
+      <GoalsObjectives
+        reportId={reportId}
+      />
+      <DraftAlert />
+      <Buttons
+        formData={formData}
+        isAppLoading={isAppLoading || false}
+        onContinue={onContinue}
+        onSaveDraft={onSaveDraft}
+        onUpdatePage={onUpdatePage}
+        weAreAutoSaving={weAreAutoSaving}
+      />
+    </>
   ),
 };

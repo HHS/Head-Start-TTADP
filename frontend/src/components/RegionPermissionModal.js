@@ -2,10 +2,11 @@ import React, {
   useEffect, useRef, useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import Modal from './Modal';
-import { DECIMAL_BASE } from '../Constants';
 import { getUserRegions } from '../permissions';
 import './RegionPermissionModal.css';
+import { SUPPORT_LINK } from '../Constants';
 
 function RegionPermissionModal({
   filters, user, showFilterWithMyRegions,
@@ -17,10 +18,10 @@ function RegionPermissionModal({
     && f.condition !== 'is not'
     && !userRegions
       .includes(parseInt(f.query, DECIMAL_BASE)))
-    .map((m) => m.query), [filters, userRegions]);
+    .map((m) => Number(m.query)), [filters, userRegions]);
 
   const showMultipleRegions = missingRegions && missingRegions.length > 1 ? 's' : '';
-  const missingRegionsList = missingRegions && missingRegions.length > 0 ? missingRegions.sort().join(', ') : '';
+  const missingRegionsList = missingRegions && missingRegions.length > 0 ? missingRegions.sort((a, b) => a - b).join(', ') : '';
 
   useEffect(() => {
     if (missingRegions
@@ -41,8 +42,7 @@ function RegionPermissionModal({
     modalRef.current.toggleModal(false);
   };
 
-  const smartSheetAccessLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
-  const openSmartSheetRequest = () => <a href={smartSheetAccessLink} className="usa-button usa-button--primary" target="_blank" rel="noreferrer" onClick={requestSmartSheetAccess}>Request access via Smartsheet</a>;
+  const openSmartSheetRequest = () => <a href={SUPPORT_LINK} className="usa-button usa-button--primary" target="_blank" rel="noreferrer" onClick={requestSmartSheetAccess}>Request access via Smartsheet</a>;
   return (
     <div className="smart-hub--region-permission-modal">
       <Modal

@@ -66,12 +66,9 @@ const ObjectiveFileUploader = ({
       objectives,
       index: objectiveIndex,
       objectiveIds,
-      ...data
     } = updatedInfo;
 
-    const values = Object.values(data);
-
-    const allFilesIncludingTheNewOnes = [...files, ...values];
+    const allFilesIncludingTheNewOnes = [...files, ...(newFiles || [])];
 
     // on the goals and objectives form, we have this extra step to update the objectives
     if (objectives && setObjectives) {

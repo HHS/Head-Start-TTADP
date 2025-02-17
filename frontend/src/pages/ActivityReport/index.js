@@ -16,36 +16,35 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import pages from './Pages';
-import Navigator from '../../components/Navigator';
+import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  REPORT_STATUSES,
-  DECIMAL_BASE,
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
-import useSocket from '../../hooks/useSocket';
+import useSocket, { publishLocation } from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
-
 import {
   submitReport,
   saveReport,
   getReport,
-  getRecipients,
+  getRecipientsForExistingAR,
   createReport,
   getCollaborators,
   getApprovers,
   reviewReport,
   resetToDraft,
+  getGroupsForActivityReport,
+  getRecipients,
 } from '../../fetchers/activityReports';
-import useLocalStorage from '../../hooks/useLocalStorage';
+import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
@@ -78,10 +77,60 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
+  recipientGroup: null,
+  language: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
+
+export const formatReportWithSaveBeforeConversion = async (
+  data,
+  formData,
+  user,
+  userHasOneRole,
+  reportId,
+  approverIds,
+  forceUpdate,
+) => {
+  // if it isn't a new report, we compare it to the last response from the backend (formData)
+  // and pass only the updated to save report
+  const creatorRole = !data.creatorRole && userHasOneRole
+    ? user.roles[0].fullName
+    : data.creatorRole;
+
+  const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
+  const isEmpty = Object.keys(updatedFields).length === 0;
+
+  // save report returns dates in YYYY-MM-DD format, so we need to parse them
+  // formData stores them as MM/DD/YYYY so we are good in that instance
+  const thereIsANeedToParseDates = !isEmpty;
+
+  const updatedReport = isEmpty && !forceUpdate
+    ? { ...formData }
+    : await saveReport(
+      reportId.current, {
+        ...updatedFields,
+        version: 2,
+        approverUserIds: approverIds,
+        pageState: data.pageState,
+      }, {},
+    );
+
+  let reportData = {
+    ...updatedReport,
+  };
+
+  if (thereIsANeedToParseDates) {
+    reportData = {
+      ...reportData,
+      startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+      endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+    };
+  }
+
+  return reportData;
+};
 
 export function cleanupLocalStorage(id, replacementKey) {
   try {
@@ -109,30 +158,7 @@ export function cleanupLocalStorage(id, replacementKey) {
   }
 }
 
-function setConnectionActiveWithError(e, setConnectionActive) {
-  let connection = false;
-  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
-  // display the "network is unavailable" message
-  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
-    connection = true;
-  }
-  setConnectionActive(connection);
-  return connection;
-}
-
 const INTERVAL_DELAY = 10000; // TEN SECONDS
-
-const publishLocation = (socket, socketPath, user, lastSaveTime) => {
-  // we have to check to see if the socket is open before we send a message
-  // since the interval could be called while the socket is open but is about to close
-  if (socket && socket.readyState === socket.OPEN) {
-    socket.send(JSON.stringify({
-      user: user.name,
-      lastSaveTime,
-      channel: socketPath,
-    }));
-  }
-};
 
 function ActivityReport({
   match, location, region,
@@ -160,6 +186,7 @@ function ActivityReport({
       },
       collaborators: [],
       availableApprovers: [],
+      groups: [],
     },
   );
   const [isApprover, updateIsApprover] = useState(false);
@@ -230,7 +257,13 @@ function ActivityReport({
         reportId.current = activityReportId;
 
         if (activityReportId !== 'new') {
-          const fetchedReport = await getReport(activityReportId);
+          let fetchedReport;
+          try {
+            fetchedReport = await getReport(activityReportId);
+          } catch (e) {
+            // If error retrieving the report show the "something went wrong" page.
+            history.push('/something-went-wrong/500');
+          }
           report = convertReportToFormData(fetchedReport);
         } else {
           report = {
@@ -243,14 +276,22 @@ function ActivityReport({
           };
         }
 
+        const getRecips = async () => {
+          if (reportId.current && reportId.current !== 'new') {
+            return getRecipientsForExistingAR(reportId.current);
+          }
+
+          return getRecipients(report.regionId);
+        };
+
         const apiCalls = [
-          getRecipients(report.regionId),
+          getRecips(),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+          getGroupsForActivityReport(report.regionId),
         ];
 
-        const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
-
+        const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
@@ -258,7 +299,7 @@ function ActivityReport({
 
         // The report can be edited if its in draft OR needs_action state.
 
-        const isMatchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
+        const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
@@ -268,6 +309,13 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
+        // Add recipientIds to groups.
+        const groupsWithRecipientIds = groups.map((group) => ({
+          ...group,
+          // Match groups to grants as recipients could have multiple grants.
+          recipients: group.grants.map((g) => g.id),
+        }));
+
         updateAdditionalData({
           recipients: recipients || {
             grants: [],
@@ -275,6 +323,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
+          groups: groupsWithRecipientIds || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -391,19 +440,19 @@ function ActivityReport({
 
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage && editable && isPendingApprover) {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/review`} />
+      <Redirect to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage) {
     return (
-      <Redirect push to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 
@@ -422,28 +471,15 @@ function ActivityReport({
     history.push(newPath, state);
   };
 
-  const onSave = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+  const onSave = async (data, forceUpdate = false) => {
+    const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
-        const { startDate, endDate, ...fields } = data;
-        let startDateToSave = startDate;
-        if (startDateToSave === 'Invalid date' || startDateToSave === '' || !moment(startDateToSave, 'MM/DD/YYYY').isValid()) {
-          startDateToSave = null;
-        }
-
-        let endDateToSave = endDate;
-        if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
-          endDateToSave = null;
-        }
-
         const savedReport = await createReport(
           {
-            ...fields,
+            ...data,
             ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
-            startDate: startDateToSave,
-            endDate: endDateToSave,
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,
@@ -463,27 +499,17 @@ function ActivityReport({
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
       } else {
-        // if it isn't a new report, we compare it to the last response from the backend (formData)
-        // and pass only the updated to save report
-        const creatorRole = !data.creatorRole && userHasOneRole
-          ? user.roles[0].fullName
-          : data.creatorRole;
-        const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
-        const updatedReport = await saveReport(
-          reportId.current, {
-            ...updatedFields,
-            version: 2,
-            approverUserIds:
-            approverIds,
-            pageState: data.pageState,
-          }, {},
+        const updatedReport = await formatReportWithSaveBeforeConversion(
+          data,
+          formData,
+          user,
+          userHasOneRole,
+          reportId,
+          approverIds,
+          forceUpdate,
         );
 
-        let reportData = {
-          ...updatedReport,
-          startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-          endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-        };
+        let reportData = updatedReport;
 
         // if we are dealing with a recipient report, we need to do a little magic to
         // format the goals and objectives appropriately, as well as divide them
@@ -495,7 +521,7 @@ function ActivityReport({
           );
 
           reportData = {
-            ...reportData,
+            ...updatedReport,
             goalForEditing,
             goals,
           };
@@ -510,7 +536,7 @@ function ActivityReport({
   };
 
   const onFormSubmit = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approverIds = data.approvers.map((a) => a.user.id);
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       approverUserIds: approverIds,
@@ -565,7 +591,7 @@ function ActivityReport({
         {error}
       </Alert>
       )}
-      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
+      <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
@@ -590,7 +616,7 @@ function ActivityReport({
         }
       }
       >
-        <Navigator
+        <ActivityReportNavigator
           socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}

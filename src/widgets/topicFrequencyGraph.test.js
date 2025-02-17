@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -16,8 +17,7 @@ import db, {
   Topic,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { REPORT_STATUSES } from '../constants';
-import topicFrequencyGraph from './topicFrequencyGraph';
+import { topicFrequencyGraph } from './topicFrequencyGraph';
 
 jest.mock('bull');
 
@@ -31,6 +31,7 @@ const mockUser = {
   hsesUsername: 'user9945620',
   hsesUserId: '9945620',
   role: ['Grants Specialist'],
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -40,6 +41,7 @@ const mockUserTwo = {
   hsesUsername: 'user2245942',
   hsesUserId: 'user2245942',
   role: ['System Specialist'],
+  lastLogin: new Date(),
 };
 
 const mockUserThree = {
@@ -49,6 +51,7 @@ const mockUserThree = {
   hsesUsername: 'user33068305',
   hsesUserId: 'user33068305',
   role: ['Grants Specialist'],
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -72,6 +75,7 @@ const reportObject = {
   participants: ['participants', 'genies'],
   topics: ['Program Planning and Services', 'Child Assessment, Development, Screening'], // One to be mapped from legacy.
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 const regionOneReport = {
@@ -186,6 +190,7 @@ describe('Topics and frequency graph widget', () => {
       regionId: 17,
       status: 'Active',
       startDate: new Date('2000/01/01'),
+      endDate: new Date(),
     });
 
     // Create Goals.
@@ -193,7 +198,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'First Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -201,7 +205,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'Second Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -209,7 +212,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'Third Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -383,13 +385,14 @@ describe('Topics and frequency graph widget', () => {
           thirdGoalObjA.id,
         ],
       },
+      force: true,
     });
-    await Goal.destroy({ where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] } });
+    await Goal.destroy({ where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] }, force: true });
     await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
-      where:
-      { id: [GRANT_ID] },
+      where: { id: [GRANT_ID] },
+      individualHooks: true,
     });
     await Recipient.destroy({
       where:
@@ -434,7 +437,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 3, // 1 from AR 3 from ARO's.
+        count: 2, // 1 from AR 3 from ARO's.
       },
       {
         topic: 'Communication',
@@ -462,10 +465,6 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
-        count: 0,
-      },
-      {
-        topic: 'Equity',
         count: 0,
       },
       {
@@ -638,10 +637,6 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Equity',
-        count: 0,
-      },
-      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -780,7 +775,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 3,
+        count: 2,
       },
       {
         topic: 'Communication',
@@ -808,10 +803,6 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
-        count: 0,
-      },
-      {
-        topic: 'Equity',
         count: 0,
       },
       {
@@ -952,7 +943,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 2,
+        count: 1,
       },
       {
         topic: 'Communication',
@@ -980,10 +971,6 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
-        count: 0,
-      },
-      {
-        topic: 'Equity',
         count: 0,
       },
       {
@@ -1095,5 +1082,11 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
     ]);
+  });
+
+  it('doesn\'t throw when likely no results (TTAHUB-2172)', async () => {
+    const query = { 'region.in': [100], 'startDate.win': '2222/01/01-3000/01/01' };
+    const scopes = await filtersToScopes(query);
+    expect(() => topicFrequencyGraph(scopes)).not.toThrow();
   });
 });

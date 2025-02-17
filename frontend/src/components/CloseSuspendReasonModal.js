@@ -1,11 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import {
   Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 
 const CloseSuspendReasonModal = ({
   modalRef, goalIds, newStatus, onSubmit, resetValues, oldGoalStatus,
@@ -72,10 +72,10 @@ const CloseSuspendReasonModal = ({
         >
           <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
-              {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
-              {
-                generateReasonRadioButtons()
-              }
+              <ErrorMessage>
+                { showValidationError ? `Please select a reason for ${reasonDisplayStatus} goal.` : ''}
+              </ErrorMessage>
+              {generateReasonRadioButtons()}
             </Fieldset>
           </FormGroup>
           <FormGroup>

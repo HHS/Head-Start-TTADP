@@ -1,5 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { DECIMAL_BASE } from '@ttahub/common';
 import {
   Checkbox, Button, Dropdown, Alert,
 } from '@trussworks/react-uswds';
@@ -8,9 +9,10 @@ import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
-import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
+import { similarity } from '../../fetchers/goals';
+import { markSimilarGoals } from '../../fetchers/recipient';
 import FeatureFlag from '../FeatureFlag';
 
 export default function GoalCardsHeader({
@@ -30,29 +32,107 @@ export default function GoalCardsHeader({
   allGoalsChecked,
   selectAllGoalCheckboxSelect,
   selectAllGoals,
-  selectedGoalIds,
+  pageSelectedGoalIds,
   perPageChange,
   pageGoalIds,
-  createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
-  nonRttapaSelectedRttapa,
+  canMergeGoals,
+  shouldDisplayMergeSuccess,
+  dismissMergeSuccess,
+  allSelectedGoalIds,
+  goalBuckets,
 }) {
+  const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
+  const [goalMergeGroups, setGoalMergeGroups] = useState([]);
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
+  useEffect(() => {
+    async function getSimilarGoals() {
+      try {
+        const data = await similarity(regionId, recipientId);
+        /*
+        * expecting a response in the below format
+        * @returns {
+        *  goals: [{
+        *    name: string,
+        *    source: string,
+        *    status: string,
+        *    responsesForComparison: string,
+        *    ids: number[],
+        *  }],
+        *  ids: number[]
+        * }[]
+        */
+
+        setGoalMergeGroups(data.filter((g) => g.goals.length > 1));
+      } catch (err) {
+        setGoalMergeGroups([]);
+      }
+    }
+
+    if (canMergeGoals) {
+      getSimilarGoals();
+    }
+  }, [canMergeGoals, recipientId, regionId, retrieveSimilarGoals]);
+
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
-      sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
+    // See if we have goals selected.
+    let goalsToPrint = Object.keys(allSelectedGoalIds).filter(
+      (key) => allSelectedGoalIds[key],
+    ).map((key) => parseInt(key, DECIMAL_BASE));
+
+    // If we don't just print the page.
+    if (!goalsToPrint.length) {
+      goalsToPrint = pageGoalIds;
+    }
+    // Get all the goals and associated goals from the buckets.
+    goalsToPrint = goalBuckets.filter(
+      (bucket) => goalsToPrint.includes(bucket.id),
+    ).map((bucket) => bucket.goalIds).flat();
+
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
+      sortConfig, selectedGoalIds: goalsToPrint,
     });
+  };
+
+  const onMarkSimilarGoals = async () => {
+    let similarGoals = Object.keys(allSelectedGoalIds).filter(
+      (key) => allSelectedGoalIds[key],
+    ).map((key) => parseInt(key, DECIMAL_BASE));
+
+    // If we don't just print the page.
+    if (!similarGoals.length) {
+      similarGoals = pageGoalIds;
+    }
+    // Get all the goals and associated goals from the buckets.
+    similarGoals = goalBuckets.filter(
+      (bucket) => similarGoals.includes(bucket.id),
+    ).map((bucket) => bucket.goalIds).flat();
+
+    await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
+    selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
+    setRetrieveSimilarGoals(!retrieveSimilarGoals);
   };
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
+
+  const mergedGoals = (() => {
+    if (history.location && history.location.state) {
+      return history.location.state.mergedGoals;
+    }
+
+    return null;
+  })();
+
+  const hasGoalsSelected = pageSelectedGoalIds ? pageSelectedGoalIds.length > 0 : false;
+  const showClearAllAlert = numberOfSelectedGoals === count;
 
   return (
     <div className="padding-x-3 position-relative">
@@ -104,8 +184,31 @@ export default function GoalCardsHeader({
           />
         </div>
         )}
-
       </div>
+      {(canMergeGoals && goalMergeGroups.length > 0) && (
+      <div className="usa-alert usa-alert--info" data-testid="alert">
+        <div className="usa-alert__body">
+          <div className="usa-alert__text">
+            <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
+            <ul className="usa-list">
+              {goalMergeGroups.map((group) => (
+                <li key={`mergeGroup${group.id}`}>
+                  <Link
+                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge/${group.id}`}
+                  >
+                    Review
+                    {' '}
+                    {group.goals.length}
+                    {' '}
+                    similar goals
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+      )}
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
@@ -136,23 +239,25 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
-        <FeatureFlag flag="rttapa_form">
-          <Button
-            unstyled
-            className="display-flex flex-align-center margin-left-3 margin-y-0"
-            onClick={createRttapa}
-            type="button"
-          >
-            Create RTTAPA
-          </Button>
-        </FeatureFlag>
         <Button
           unstyled
           className="display-flex flex-align-center margin-left-3 margin-y-0"
           onClick={onPrint}
         >
-          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
+          {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
+        { numberOfSelectedGoals > 1
+          && (
+            <FeatureFlag flag="manual_mark_goals_similar">
+              <Button
+                unstyled
+                className="display-flex flex-align-center margin-left-3 margin-y-0"
+                onClick={onMarkSimilarGoals}
+              >
+                Mark goals as similar
+              </Button>
+            </FeatureFlag>
+          )}
       </div>
       <div>
         {showRttapaValidation && (
@@ -170,34 +275,47 @@ export default function GoalCardsHeader({
                   , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
                 </p>
               ) : null}
-              { nonRttapaSelectedRttapa.length ? (
-                <p className="usa-prose margin-top-0">
-                  <strong>{nonRttapaSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
-                  {' '}
-                  {nonRttapaSelectedRttapa.length === 1 ? 'is a' : 'are'}
-                  {' '}
-                  non-Rttapa
-                  {' '}
-                  {nonRttapaSelectedRttapa.length === 1 ? 'goal' : 'goals'}
-                  .
-                  Any goals added to a regional agreement must be RTTAPA goals.
-                  Deselect any non-RTTAPA goals.
-                </p>
-              ) : null}
             </div>
           </Alert>
         )}
         {
-          !showRttapaValidation && allGoalsChecked && (numberOfSelectedGoals !== count)
+          !showRttapaValidation && allGoalsChecked
             ? (
               <Alert className="margin-top-3" type="info" slim>
-                {`All ${numberOfSelectedGoals} goals on this page are selected.`}
+                {showClearAllAlert
+                  ? `All ${count} goals are selected.`
+                  : `All ${pageSelectedGoalIds.length} goals on this page are selected.`}
                 <button
                   type="button"
                   className="usa-button usa-button--unstyled margin-left-1"
-                  onClick={selectAllGoals}
+                  onClick={() => selectAllGoals(showClearAllAlert)}
                 >
-                  {`Select all ${count} goals`}
+                  {showClearAllAlert
+                    ? 'Clear selection'
+                    : `Select all ${count} goals`}
+                </button>
+              </Alert>
+            )
+            : null
+            }
+        {
+          (shouldDisplayMergeSuccess && mergedGoals)
+            ? (
+              <Alert className="margin-top-3" type="success">
+                Goal
+                {mergedGoals.length === 1 ? ' ' : 's '}
+                {' '}
+                {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
+                {' '}
+                {mergedGoals.length === 1 ? 'has' : 'have'}
+                {' '}
+                been merged.
+                <button
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-left-1"
+                  onClick={() => dismissMergeSuccess()}
+                >
+                  Reset goal sort order
                 </button>
               </Alert>
             )
@@ -230,13 +348,21 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
-  selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   perPageChange: PropTypes.func.isRequired,
-  pageGoalIds: PropTypes.number.isRequired,
-  createRttapa: PropTypes.func.isRequired,
+  pageGoalIds: PropTypes.oneOfType(
+    [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
+  ).isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
-  nonRttapaSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
+  dismissMergeSuccess: PropTypes.func.isRequired,
+  allSelectedGoalIds: PropTypes.shape({ id: PropTypes.bool }).isRequired,
+  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    goals: PropTypes.arrayOf(PropTypes.number),
+  })).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
@@ -250,4 +376,5 @@ GoalCardsHeader.defaultProps = {
   selectAllGoalCheckboxSelect: () => { },
   selectAllGoals: () => { },
   numberOfSelectedGoals: 0,
+  shouldDisplayMergeSuccess: false,
 };

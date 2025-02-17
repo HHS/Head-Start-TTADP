@@ -1,9 +1,9 @@
 import { isEqual } from 'lodash';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
-  REPORT_STATUSES,
 } from '../../Constants';
 
 const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
@@ -21,7 +21,7 @@ export const findWhatsChanged = (object, base) => {
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
       if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
-        accumulator[current] = null;
+        delete accumulator[current];
         return accumulator;
       }
     }
@@ -46,11 +46,44 @@ export const findWhatsChanged = (object, base) => {
       // we do hit recipients first, so if they were somehow both changed before the API was hit
       // (unlikely since they are on different parts of the form)
       // the goals that were changed would overwrite the next line
-      accumulator.goals = base.goals.map((goal) => ({ ...goal, grantIds }));
+
+      let currentlyEditing = false;
+
+      accumulator.goals = [
+        (base.goalForEditing || null),
+        ...(base.goals || []),
+      ].filter((g) => g).map((goal) => ({
+        ...goal,
+        grantIds,
+        isActivelyEdited: (() => {
+          // we only want one to be currently editing, so if we've already set this variable,
+          // then we return true
+          if (currentlyEditing) {
+            return false;
+          }
+
+          // otherwise, we if the goal has activityReportGoals, and any of them are actively edited
+          // we affirm this as the case when we send it to the DB.
+          if (goal.activityReportGoals
+            && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
+          ) {
+            currentlyEditing = true;
+          }
+
+          return true;
+        })(),
+        // no multigrant/multirecipient reports should have prompts or source
+        prompts: grantIds.length < 2 ? goal.prompts : [],
+        source: grantIds.length < 2 ? goal.source : '',
+      }));
     }
 
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
+    }
+
+    if (Number.isNaN(accumulator[current])) {
+      delete accumulator[current];
     }
 
     return accumulator;
@@ -67,6 +100,80 @@ export const unflattenResourcesUsed = (array) => {
   }
 
   return array.map((value) => ({ value }));
+};
+
+export const packageGoals = (goals, goal, grantIds, prompts) => {
+  const packagedGoals = [
+    // we make sure to mark all the read only goals as "ActivelyEdited: false"
+    ...goals.map((g) => ({
+      goalIds: g.goalIds,
+      status: g.status,
+      endDate: g.endDate,
+      onApprovedAR: g.onApprovedAR,
+      source: g.source,
+      name: g.name,
+      grantIds,
+      id: g.id,
+      createdVia: g.createdVia,
+      goalTemplateId: g.goalTemplateId,
+      isActivelyBeingEditing: false,
+      prompts: grantIds.length < 2 ? g.prompts : [],
+      objectives: g.objectives.map((objective) => ({
+        id: objective.id,
+        isNew: objective.isNew,
+        ttaProvided: objective.ttaProvided,
+        title: objective.title,
+        status: objective.status,
+        resources: objective.resources,
+        topics: objective.topics,
+        citations: objective.citations,
+        files: objective.files,
+        supportType: objective.supportType,
+        courses: objective.courses,
+        closeSuspendReason: objective.closeSuspendReason,
+        closeSuspendContext: objective.closeSuspendContext,
+        createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: g.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
+      })),
+    })),
+  ];
+
+  if (goal && goal.name) {
+    packagedGoals.push({
+      goalIds: goal.goalIds,
+      status: goal.status,
+      endDate: goal.endDate,
+      onApprovedAR: goal.onApprovedAR,
+      source: goal.source,
+      name: goal.name,
+      createdVia: goal.createdVia,
+      isActivelyBeingEditing: goal.isActivelyBeingEditing,
+      goalTemplateId: goal.goalTemplateId,
+      objectives: goal.objectives.map((objective) => ({
+        id: objective.id,
+        isNew: objective.isNew,
+        ttaProvided: objective.ttaProvided,
+        title: objective.title,
+        status: objective.status,
+        resources: objective.resources,
+        topics: objective.topics,
+        citations: objective.citations,
+        files: objective.files,
+        supportType: objective.supportType,
+        courses: objective.courses,
+        closeSuspendReason: objective.closeSuspendReason,
+        closeSuspendContext: objective.closeSuspendContext,
+        createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: goal.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
+      })),
+      grantIds,
+      prompts: grantIds.length < 2 ? prompts : [],
+    });
+  }
+
+  return packagedGoals;
 };
 
 // this function takes goals returned from the API and parses them appropriately,
@@ -90,17 +197,27 @@ export const convertGoalsToFormData = (
   if (
     // if any of the goals ids are included in the activelyEditedGoals id array
     goal.activityReportGoals
-    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited
+    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
     && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
-    && !accumulatedData.goalForEditing)
-  ) {
+    && !accumulatedData.goalForEditing) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = { ...goal, grantIds, objectives: goal.objectives };
+    accumulatedData.goalForEditing = {
+      ...goal,
+      grantIds,
+      objectives: goal.objectives,
+      source: grantIds.length < 2 ? goal.source : '',
+      prompts: grantIds.length < 2 ? goal.prompts : [],
+    };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
     // grant ids
-    accumulatedData.goals.push({ ...goal, grantIds });
+    accumulatedData.goals.push({
+      ...goal,
+      grantIds,
+      source: grantIds.length < 2 ? goal.source : '',
+      prompts: grantIds.length < 2 ? goal.prompts : [],
+    });
   }
 
   return accumulatedData;
@@ -149,3 +266,5 @@ export const convertReportToFormData = (fetchedReport) => {
     objectivesWithoutGoals,
   };
 };
+
+export const formatTitleForHtmlAttribute = (title) => title.replace(/\s/g, '-').toLowerCase();

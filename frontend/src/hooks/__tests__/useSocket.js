@@ -4,7 +4,20 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useSocket from '../useSocket';
+import useSocket, { publishLocation } from '../useSocket';
+
+describe('publishLocation', () => {
+  it('sends a message when the socket is open', () => {
+    const socket = {
+      readyState: 1,
+      send: jest.fn(),
+      OPEN: 1,
+    };
+
+    publishLocation(socket, 'test', { name: 'test' }, 1234);
+    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ user: 'test', lastSaveTime: 1234, channel: 'test' }));
+  });
+});
 
 describe('useSocket', () => {
   let sock;

@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { Router } from 'react-router';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, within,
 } from '@testing-library/react';
@@ -10,7 +11,6 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import moment from 'moment';
 import Users, { setFeatureFromURL } from '../users';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('User Page', () => {
   beforeEach(async () => {

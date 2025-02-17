@@ -64,16 +64,16 @@ export function Pill({
   };
 
   return (
-    <span className="filter-pill text-middle margin-right-05 padding-top-1 margin-bottom-105">
-      {isFirst ? null : <strong> AND </strong>}
-      <span className="margin-right-05">
+    <span className="filter-pill text-middle">
+      <span className="display-inline-block margin-bottom-05 margin-right-05">
+        {isFirst ? null : <strong> AND </strong>}
         <strong>
           {filterName}
         </strong>
         {' '}
         {determineConditionText()}
       </span>
-      <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+      <span className="filter-pill-container display-inline-block smart-hub-border-blue-primary border-2px radius-pill padding-right-1 padding-left-2 padding-y-05">
         <span aria-label={queryValue}>
           {' '}
           {

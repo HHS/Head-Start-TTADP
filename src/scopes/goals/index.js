@@ -6,7 +6,6 @@ import { withReasons, withoutReasons } from './reasons';
 import { withRecipientName, withoutRecipientName } from './recipient';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
-import { withRoles, withoutRoles } from './role';
 import {
   containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber,
 } from './grantNumber';
@@ -22,6 +21,12 @@ import withStateCode from './stateCode';
 import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withGoalType, withoutGoalType } from './goalType';
+import { withGroup, withoutGroup } from './group';
+import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
+import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
+import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
+import { withGoalName, withoutGoalName } from './goalName';
+import { withGoalResponse, withoutGoalResponse } from './goalResponse';
 
 export const topicToQuery = {
   createDate: {
@@ -58,6 +63,10 @@ export const topicToQuery = {
     in: (query, options) => withReasons(query, options),
     nin: (query, options) => withoutReasons(query, options),
   },
+  enteredByRole: {
+    in: (query, options) => withEnteredByRole(query, options),
+    nin: (query, options) => withoutEnteredByRole(query, options),
+  },
   recipientId: {
     ctn: (query) => withRecipientId(query),
   },
@@ -65,9 +74,9 @@ export const topicToQuery = {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
   },
-  role: {
-    in: (query) => withRoles(query),
-    nin: (query) => withoutRoles(query),
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
   },
   grantNumber: {
     in: (query) => withGrantNumber(query),
@@ -103,6 +112,14 @@ export const topicToQuery = {
     ctn: (query) => withReportText(query),
     nctn: (query) => withoutReportText(query),
   },
+  resourceUrl: {
+    ctn: (query) => withResourceUrl(query),
+    nctn: (query) => withoutResourceUrl(query),
+  },
+  resourceAttachment: {
+    ctn: (query) => withResourceAttachment(query),
+    nctn: (query) => withoutResourceAttachment(query),
+  },
   targetPopulations: {
     in: (query) => withTargetPopulations(query),
     nin: (query) => withoutTargetPopulations(query),
@@ -113,6 +130,14 @@ export const topicToQuery = {
   },
   stateCode: {
     ctn: (query) => withStateCode(query),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
+  },
+  goalResponse: {
+    in: (query) => withGoalResponse(query),
+    nin: (query) => withoutGoalResponse(query),
   },
 };
 

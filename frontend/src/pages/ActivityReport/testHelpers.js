@@ -1,13 +1,14 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
 import React from 'react';
 import { Router } from 'react-router';
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import {
   render,
 } from '@testing-library/react';
 import moment from 'moment';
 import ActivityReport from './index';
-import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 
@@ -34,7 +35,7 @@ export const formData = () => ({
     3: 'in-progress',
     4: 'in-progress',
   },
-  endDate: moment().format('MM/DD/YYYY'),
+  endDate: moment().format('YYYY-MM-DD'),
   activityRecipients: ['Recipient Name 1'],
   numberOfParticipants: '1',
   reason: ['reason 1'],
@@ -45,7 +46,7 @@ export const formData = () => ({
   calculatedStatus: REPORT_STATUSES.DRAFT,
   submissionStatus: REPORT_STATUSES.DRAFT,
   resourcesUsed: 'eclkcurl',
-  startDate: moment().format('MM/DD/YYYY'),
+  startDate: moment().format('YYYY-MM-DD'),
   targetPopulations: ['target 1'],
   author: { name: 'test', roles: { fullName: 'Reporter' } },
   topics: 'first',
@@ -57,27 +58,42 @@ export const formData = () => ({
   files: [],
   creatorNameWithRole: 'test',
   objectivesWithoutGoals: [],
+  recipientGroup: null,
 });
+
+export const ReportComponent = ({
+  id,
+  currentPage = 'activity-summary',
+  showLastUpdatedTime = null,
+  userId = 1,
+}) => (
+  <Router history={history}>
+    <AppLoadingContext.Provider value={{
+      setIsAppLoading: jest.fn(),
+      setAppLoadingText: jest.fn(),
+    }}
+    >
+      <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
+        <ActivityReport
+          match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
+          location={{
+            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+          }}
+          region={1}
+        />
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>
+  </Router>
+);
 
 export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{
-        setIsAppLoading: jest.fn(),
-        setAppLoadingText: jest.fn(),
-      }}
-      >
-        <UserContext.Provider value={{ user: { ...user, id: userId } }}>
-          <ActivityReport
-            match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
-            location={{
-              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-            }}
-            region={1}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
+    <ReportComponent
+      id={id}
+      currentPage={currentPage}
+      showLastUpdatedTime={showLastUpdatedTime}
+      userId={userId}
+    />,
   );
 };
 
@@ -94,24 +110,12 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
     timeframe: null,
     isFromSmartsheetTtaPlan: null,
     endDate: '2022-12-06',
-    closeSuspendReason: null,
-    closeSuspendContext: null,
     grantId: 12539,
     goalTemplateId: null,
-    previousStatus: null,
     onApprovedAR: false,
     isRttapa: 'Yes',
-    firstNotStartedAt: null,
-    lastNotStartedAt: null,
-    firstInProgressAt: null,
-    lastInProgressAt: null,
-    firstCeasedSuspendedAt: null,
-    lastCeasedSuspendedAt: null,
-    firstClosedAt: null,
-    lastClosedAt: null,
-    firstCompletedAt: null,
-    lastCompletedAt: null,
     createdVia: 'activityReport',
+    statusChanges: [],
     createdAt: '2022-12-01T21:59:28.231Z',
     updatedAt: '2022-12-01T21:59:28.431Z',
     activityReportGoals: [

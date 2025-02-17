@@ -46,8 +46,8 @@ Container.propTypes = {
 
 Container.defaultProps = {
   className: '',
-  paddingX: 5,
-  paddingY: 5,
+  paddingX: 3,
+  paddingY: 3,
   skipTopPadding: false,
   skipBottomPadding: false,
   loading: false,

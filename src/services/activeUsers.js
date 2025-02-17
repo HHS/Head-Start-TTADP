@@ -11,6 +11,10 @@ const arrayFields = [
   'READ_REPORTS regions',
   'APPROVE_REPORTS regions',
   'UNLOCK_APPROVED_REPORTS regions',
+  'READ_WRITE_TRAINING_REPORTS',
+  'READ_WRITE_TRAINING_REPORTS regions',
+  'POC_TRAINING_REPORTS',
+  'POC_TRAINING_REPORTS regions',
   'Flags',
 ];
 
@@ -111,6 +115,10 @@ SELECT
     array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'READ_REPORTS') AS "READ_REPORTS regions",
     MIN(CASE WHEN "ActiveUsers"."scope" = 'APPROVE_REPORTS' THEN 'Yes' END) AS "APPROVE_REPORTS",
     array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'APPROVE_REPORTS') AS "APPROVE_REPORTS regions",
+    MIN(CASE WHEN "ActiveUsers"."scope" = 'READ_WRITE_TRAINING_REPORTS' THEN 'Yes' END) AS "READ_WRITE_TRAINING_REPORTS",
+    array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'READ_WRITE_TRAINING_REPORTS') AS "READ_WRITE_TRAINING_REPORTS regions",
+    MIN(CASE WHEN "ActiveUsers"."scope" = 'POC_TRAINING_REPORTS' THEN 'Yes' END) AS "POC_TRAINING_REPORTS",
+    array_agg(DISTINCT "ActiveUsers"."regionId") filter (WHERE "ActiveUsers"."scope" = 'POC_TRAINING_REPORTS') AS "POC_TRAINING_REPORTS regions",
     "ActiveUsers"."flags" AS "Flags"
 FROM
     "ActiveUsers"

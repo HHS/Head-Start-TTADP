@@ -35,12 +35,12 @@ export default function ObjectiveTta(
       <Label className="ttahub-objective-tta" error={error.props.children}>
         TTA provided
         {' '}
-        <Req />
+        <Req announce />
         {error}
         <div className="smart-hub--text-area__resize-vertical margin-top-1">
           <input type="hidden" name={inputName} value={ttaProvided} />
           <RichEditor
-            ariaLabel="TTA provided for objective"
+            ariaLabel="TTA provided for objective, required"
             defaultValue={ttaProvided}
             value={ttaProvided}
             onChange={onChangeTTA}

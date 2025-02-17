@@ -10,6 +10,8 @@ const grants = [
     number: 'zz123',
     cdi: true,
     regionId: 13,
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 91,
@@ -17,6 +19,8 @@ const grants = [
     number: 'zz456',
     cdi: true,
     regionId: 13,
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 92,
@@ -24,6 +28,8 @@ const grants = [
     number: 'zz789',
     cdi: false,
     regionId: 13,
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 278,
@@ -32,6 +38,8 @@ const grants = [
     cdi: false,
     regionId: 129129,
     stateCode: null,
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 279,
@@ -40,6 +48,8 @@ const grants = [
     cdi: false,
     regionId: 129129,
     stateCode: 'FM',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 280,
@@ -48,6 +58,8 @@ const grants = [
     cdi: false,
     regionId: 129129,
     stateCode: 'GA',
+    startDate: new Date(),
+    endDate: new Date(),
   },
   {
     id: 281,
@@ -56,6 +68,8 @@ const grants = [
     cdi: false,
     regionId: 129130,
     stateCode: 'RI',
+    startDate: new Date(),
+    endDate: new Date(),
   },
 ];
 
@@ -78,13 +92,16 @@ describe('Grant DB service', () => {
   });
 
   afterAll(async () => {
-    await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
+    await Grant.unscoped().destroy({
+      where: { id: grants.map((g) => g.id) },
+      individualHooks: true,
+    });
     await Region.destroy({
       where: {
         id: [129129, 129130],
       },
     });
-    await Recipient.destroy({ where: { id: 129130 } });
+    await Recipient.unscoped().destroy({ where: { id: 129129 } });
     await db.sequelize.close();
   });
 

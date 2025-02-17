@@ -1,0 +1,54 @@
+get:
+  tags:
+    - session report
+  summary: Get a single session report by its ID
+  parameters:
+    - name: id
+      in: path
+      description: ID of the session report to retrieve
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '../../../index.yaml#/components/schemas/sessionReport'
+put:
+  tags:
+    - session report
+  summary: Update a session report by its ID
+  parameters:
+    - name: id
+      in: path
+      description: ID of the session report to update
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            eventId:
+              type: integer
+            data:
+              type: object
+delete:
+  tags:
+    - session report
+  summary: Delete a session report by ID
+  parameters:
+    - name: eventId
+      in: path
+      description: ID of the session report to delete
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: OK

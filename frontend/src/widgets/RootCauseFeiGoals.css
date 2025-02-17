@@ -1,0 +1,9 @@
+.tta-qa-dashboard-percentage-ars-by-role {
+  height: 500px;
+}
+
+@media (min-width: 1070px) {
+  .tta-qa-dashboard-percentage-ars-by-role {
+    height: 475px;
+  }
+}

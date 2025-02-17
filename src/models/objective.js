@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
@@ -26,23 +27,19 @@ export default (sequelize, DataTypes) => {
       Objective.hasMany(models.ActivityReportObjective, {
         foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'originalObjectiveId', as: 'reassignedActivityReportObjectives',
+      });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
-      Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics' });
-      Objective.belongsToMany(models.Topic, {
-        through: models.ObjectiveTopic,
-        foreignKey: 'objectiveId',
-        otherKey: 'topicId',
-        as: 'topics',
-      });
       Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', onDelete: 'cascade' });
-      Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
-      Objective.belongsToMany(models.File, {
-        through: models.ObjectiveFile,
-        foreignKey: 'objectiveId',
-        otherKey: 'fileId',
-        as: 'files',
+      Objective.belongsTo(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'parentObjective',
+      });
+      Objective.hasMany(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'childObjectives',
       });
     }
   }
@@ -70,11 +67,13 @@ export default (sequelize, DataTypes) => {
     },
     onAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+      allowNull: false,
     },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      defaultValue: false,
+      allowNull: false,
     },
     createdVia: {
       type: DataTypes.ENUM(['activityReport', 'rtr']),
@@ -115,9 +114,29 @@ export default (sequelize, DataTypes) => {
     rtrOrder: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 1,
+    },
+    closeSuspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
+    },
+    closeSuspendContext: {
+      type: DataTypes.TEXT,
+    },
+    mapsToParentObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,
+    paranoid: true,
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),

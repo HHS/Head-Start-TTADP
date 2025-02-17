@@ -2,6 +2,7 @@ export const reasonsToMonitor = [
   'Monitoring | Deficiency',
   'Monitoring | Noncompliance',
   'Monitoring | Area of Concern',
+  'Monitoring Goal',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in
@@ -10,7 +11,7 @@ export const reasons = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
-  'Child Incidents',
+  'Child Incident',
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
@@ -19,7 +20,7 @@ export const reasons = [
   'New Program Option',
   'New Staff / Turnover',
   'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
+  'Planning/Coordination',
   'School Readiness Goals',
   ...reasonsToMonitor,
 ];
@@ -48,7 +49,7 @@ export const recipientParticipants = [
 
 export const otherEntityParticipants = [
   'HSCO',
-  'Local/State Agency(ies)',
+  'Local or State Agency',
   'OCC Regional Office',
   'OHS Regional Office',
   'Regional Head Start Association',

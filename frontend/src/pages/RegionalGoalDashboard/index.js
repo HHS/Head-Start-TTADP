@@ -16,6 +16,7 @@ import GoalsPercentage from '../../widgets/RegionalGoalDashboard/GoalsPercentage
 import GoalStatusChart from '../../widgets/RegionalGoalDashboard/GoalStatusChart';
 import TotalHrsAndRecipientGraphWidget from '../../widgets/TotalHrsAndRecipientGraph';
 import TopicsTable from '../../widgets/RegionalGoalDashboard/TopicsTable';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -106,7 +107,9 @@ export default function RegionalGoalDashboard() {
 
   return (
     <div className="ttahub-dashboard">
-      <Helmet titleTemplate="%s - Goal Dashboard - TTA Hub" defaultTitle="TTA Hub - Dashboard" />
+      <Helmet>
+        <title>Goal Dashboard</title>
+      </Helmet>
       <RegionPermissionModal
         filters={filters}
         user={user}
@@ -114,12 +117,12 @@ export default function RegionalGoalDashboard() {
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
         }
       />
-      <h1 className="landing">
+      <h1 className="landing margin-top-0 margin-bottom-3">
         {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
         {' '}
         Goal Dashboard
       </h1>
-      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+      <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for regional dashboard"
           filters={filters}
@@ -128,8 +131,8 @@ export default function RegionalGoalDashboard() {
           filterConfig={DASHBOARD_FILTER_CONFIG}
           allUserRegions={regions}
         />
-      </Grid>
-      <GridContainer className="margin-bottom-3 padding-0">
+      </FilterPanelContainer>
+      <GridContainer className="margin-0 padding-0">
         <GoalsPercentage
           filters={filtersToApply}
         />

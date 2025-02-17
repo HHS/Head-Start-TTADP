@@ -4,15 +4,40 @@ import {
   render, screen, within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ReadOnlyGoal from '../ReadOnlyGoal';
+import ReadOnlyGoal, { parseObjectValuesOrString } from '../ReadOnlyGoal';
 
 describe('ReadOnlyGoal', () => {
+  describe('parseObjectValuesOrString', () => {
+    it('is invincible', () => {
+      const obj = {
+        a: 'a',
+        b: 'b',
+      };
+      expect(parseObjectValuesOrString(obj)).toBe('a, b');
+      expect(parseObjectValuesOrString('a')).toBe('a');
+      expect(parseObjectValuesOrString(1)).toBe('');
+      expect(parseObjectValuesOrString(null)).toBe('');
+      expect(parseObjectValuesOrString(undefined)).toBe('');
+      expect(parseObjectValuesOrString()).toBe('');
+
+      expect(parseObjectValuesOrString({})).toBe('');
+      expect(parseObjectValuesOrString(['a', 'b'])).toBe('a, b');
+      expect(parseObjectValuesOrString([])).toBe('');
+      expect(parseObjectValuesOrString(() => {})).toBe('');
+    });
+  });
+
   const createdGoal = {
     name: 'Sample goal',
     grant: {},
     objectives: [],
     endDate: null,
     id: 1,
+    prompts: [{
+      title: 'All about this goal',
+      ordinal: 1,
+      response: ['vivid', 'ambitious', 'specific'],
+    }],
   };
 
   const renderReadOnlyGoal = (hideEdit = false, onRemove = jest.fn()) => {
@@ -57,7 +82,16 @@ describe('ReadOnlyGoal', () => {
     userEvent.click(removeButton);
 
     expect(onRemove).toHaveBeenCalledWith({
-      endDate: null, grant: {}, id: 1, name: 'Sample goal', objectives: [],
+      endDate: null,
+      grant: {},
+      id: 1,
+      name: 'Sample goal',
+      objectives: [],
+      prompts: [{
+        title: 'All about this goal',
+        ordinal: 1,
+        response: ['vivid', 'ambitious', 'specific'],
+      }],
     });
   });
 });

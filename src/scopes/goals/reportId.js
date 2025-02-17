@@ -1,5 +1,3 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
 import { filterAssociation } from './utils';
 
 const baseQuery = `

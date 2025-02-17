@@ -38,10 +38,10 @@ describe('File Scanner tests', () => {
     const got = await processFile(fileKey);
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ Status: 'OK', Description: '' });
-    expect(mockS3).toBeCalled();
-    expect(mockAxios).toBeCalled();
-    expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
-    expect(mockUpdate).toBeCalledWith(
+    expect(mockS3).toHaveBeenCalled();
+    expect(mockAxios).toHaveBeenCalled();
+    expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
+    expect(mockUpdate).toHaveBeenCalledWith(
       { status: FILE_STATUSES.APPROVED },
       { where: { id: 1 }, individualHooks: true },
     );
@@ -51,10 +51,10 @@ describe('File Scanner tests', () => {
     const got = await processFile(fileKey);
     expect(got.status).toBe(406);
     expect(got.data).toStrictEqual({ Status: 'FOUND', Description: 'Eicar-Test-Signature' });
-    expect(mockS3).toBeCalled();
-    expect(mockAxios).toBeCalled();
-    expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
-    expect(mockUpdate).toBeCalledWith(
+    expect(mockS3).toHaveBeenCalled();
+    expect(mockAxios).toHaveBeenCalled();
+    expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
+    expect(mockUpdate).toHaveBeenCalledWith(
       { status: FILE_STATUSES.REJECTED },
       { where: { id: 1 }, individualHooks: true },
     );
@@ -63,5 +63,13 @@ describe('File Scanner tests', () => {
     mockAxios.mockImplementationOnce(() => Promise.reject(axiosServerError));
     const got = processFile(fileKey);
     await expect(got).rejects.toBe(axiosServerError);
+  });
+  it('resolves with an error message when the key could not be found', async () => {
+    mockFindOne.mockImplementationOnce(() => Promise.resolve(null));
+    const got = await processFile(fileKey);
+    expect(got).toHaveProperty('status', 'File with key not found.');
+    expect(got).toHaveProperty('data', fileKey);
+    expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });

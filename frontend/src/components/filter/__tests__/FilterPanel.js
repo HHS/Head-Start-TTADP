@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render,
   screen,
@@ -8,10 +9,10 @@ import userEvent from '@testing-library/user-event';
 import FilterPanel from '../FilterPanel';
 import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
-import { LANDING_FILTER_CONFIG_WITH_REGIONS } from '../../../pages/Landing/constants';
-import { SCOPE_IDS } from '../../../Constants';
+import { LANDING_FILTER_CONFIG } from '../../../pages/Landing/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
+const LANDING_FILTER_CONFIG_WITH_REGIONS = LANDING_FILTER_CONFIG(true);
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -178,7 +179,7 @@ describe('Filter Panel', () => {
     renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
 
     // Date filter pill exists.
-    expect(await screen.findByRole('button', { name: /this button removes the filter: date started is within/i })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i })).toBeVisible();
 
     // Region filter pills are hidden.
     expect(screen.queryByRole('button', { name: /this button removes the filter: region is 1/i })).toBeNull();
@@ -234,5 +235,21 @@ describe('Filter Panel', () => {
     renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
     // If this pill exists we know it parsed the region correctly.
     expect(await screen.findByRole('button', { name: /this button removes the filter: region is 1/i })).toBeVisible();
+  });
+
+  it('Using a shared singleOrMultiRecipient link renders correctly', async () => {
+    const filters = [
+      {
+        id: 1,
+        topic: 'singleOrMultiRecipients',
+        condition: 'is',
+        query: ['multi-recipients'],
+      },
+    ];
+    const onRemovePill = jest.fn();
+    const onApplyFilters = jest.fn();
+    const userAllRegions = [1];
+    renderFilterPanel(filters, userAllRegions, onApplyFilters, onRemovePill);
+    expect(screen.queryAllByText('Multiple recipient reports').length).toBe(2);
   });
 });
