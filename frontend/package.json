@@ -103,7 +103,6 @@
     "path-to-regexp": "^1.9.0",
     "postcss": "^8.4.31",
     "semver": "^7.5.3",
-    "send": "^1.1.0",
     "serialize-javascript": "^6.0.2",
     "tar": "^6.2.1",
     "tough-cookie": "^4.0.0",
