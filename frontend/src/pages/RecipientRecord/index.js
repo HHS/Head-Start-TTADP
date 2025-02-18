@@ -339,13 +339,8 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication"
           render={() => (
-            <PageWithHeading
-              regionId={regionId}
-              recipientId={recipientId}
-              recipientNameWithRegion=""
-              hasAlerts={hasAlerts}
-              inlineHeadingChildren={null}
-            >
+            <>
+              <RecipientTabs region={regionId} recipientId={recipientId} />
               <div className="recipient-comm-log-header">
                 <h1>{recipientNameWithRegion}</h1>
                 <div>
@@ -363,7 +358,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipientName={recipientName}
                 recipientId={recipientId}
               />
-            </PageWithHeading>
+            </>
           )}
         />
         <Route
