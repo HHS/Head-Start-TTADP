@@ -185,6 +185,14 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
     const updates = grantsToUpdate.map(async (grant) => {
       // eslint-disable-next-line max-len
       const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
+
+      // If we don't have any replaced grants replacements we have nothing to do for this grant.
+      // Prevent confusion of throwing exception below.
+      if (!replacedGrants.length) {
+        logger.info(`updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: ${grant.id}, skipping`);
+        return Promise.resolve();
+      }
+
       // eslint-disable-next-line max-len
       const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
 
