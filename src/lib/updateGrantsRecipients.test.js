@@ -17,6 +17,7 @@ import db, {
   ActivityRecipient,
   ProgramPersonnel,
 } from '../models';
+import { logger } from '../logger';
 
 jest.mock('axios');
 const mockZip = jest.fn();
@@ -130,6 +131,7 @@ describe('Update grants, program personnel, and recipients', () => {
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -1157,6 +1159,23 @@ describe('Update grants, program personnel, and recipients', () => {
       expect(updatedGrant1.regionId).toEqual(1);
       expect(updatedGrant2.recipientId).toEqual(11);
       expect(updatedGrant2.regionId).toEqual(2);
+    });
+
+    it('shouldn\'t throw an error if there are no grant replacements found', async () => {
+      // spy on logger.error.
+      jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const newGrant = {
+        id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
+      };
+
+      await updateCDIGrantsWithOldGrantData([newGrant]);
+
+      // Ensure logger.error wasn't called.
+      expect(logger.error).not.toHaveBeenCalled();
+
+      // Expect logger.info to display the message that no replacements were found.
+      expect(logger.info).toHaveBeenCalledWith('updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: 8546, skipping');
     });
   });
 });
