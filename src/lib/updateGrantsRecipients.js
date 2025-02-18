@@ -183,38 +183,45 @@ async function getProgramPersonnel(grantId, programId, program) {
 export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   try {
     const updates = grantsToUpdate.map(async (grant) => {
-      // eslint-disable-next-line max-len
-      const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
+      try {
+        // eslint-disable-next-line max-len
+        const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
 
-      // If we don't have any replaced grants replacements we have nothing to do for this grant.
-      // Prevent confusion of throwing exception below.
-      if (!replacedGrants.length) {
-        logger.info(`updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: ${grant.id}, skipping`);
-        return Promise.resolve();
+        // If we don't have any replaced grants replacements we have nothing to do for this grant.
+        // Prevent confusion of throwing exception below.
+        if (!replacedGrants.length) {
+          logger.info(`updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: ${grant.id}, skipping`);
+          return await Promise.resolve();
+        }
+
+        // eslint-disable-next-line max-len
+        const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
+
+        const [regionId] = uniq(validOldGrants.map((g) => g.regionId));
+        const [recipientId] = uniq(validOldGrants.map((g) => g.recipientId));
+
+        if (!regionId || !recipientId) {
+          throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
+        }
+
+        // Ensure allValidOldGrants have the same recipient and region.
+        if (!validOldGrants.every(
+          (g) => g.regionId === regionId && g.recipientId === recipientId,
+        )) {
+          throw new Error(`Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}`);
+        }
+
+        // eslint-disable-next-line consistent-return
+        return grant.update({ recipientId, regionId });
+      } catch (error) {
+        logger.error(`updateCDIGrantsWithOldGrantData: Error processing grant ${grant.id}, skipping:`, error);
+        return await Promise.resolve();
       }
-
-      // eslint-disable-next-line max-len
-      const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
-
-      const [regionId] = uniq(validOldGrants.map((g) => g.regionId));
-      const [recipientId] = uniq(validOldGrants.map((g) => g.recipientId));
-
-      if (!regionId || !recipientId) {
-        throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
-      }
-
-      // Ensure allValidOldGrants have the same recipient and region.
-      if (!validOldGrants.every((g) => g.regionId === regionId && g.recipientId === recipientId)) {
-        throw new Error(`Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}`);
-      }
-
-      // eslint-disable-next-line consistent-return
-      return grant.update({ recipientId, regionId });
     });
 
     await Promise.all(updates);
   } catch (error) {
-    logger.error('updateGrantsRecipients: Error updating grants:', error);
+    logger.error('updateGrantsRecipients: Fatal Error updating grants:', error);
   }
 };
 
