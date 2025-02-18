@@ -50,8 +50,6 @@ module.exports = {
         )
         SELECT * FROM updater
         ;
-        
-        
 
         -- These should match
         SELECT 1 ord,'dupes to delete' item, SUM(nullid_cnt) cnt FROM dupe_grant_replacement_sets
