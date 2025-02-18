@@ -65,8 +65,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   switch (sortBy) {
     case COMMUNICATION_LOG_SORT_KEYS.ID:
       result = [[
-        'id',
-        sortDir,
+        sequelize.literal(`CONCAT('R', LPAD(CAST((data->>'regionId') AS TEXT), 2, '0'), '-CL-', LPAD(CAST("CommunicationLog".id AS TEXT), 5, '0')) ${sortDir}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RECIPIENT:
