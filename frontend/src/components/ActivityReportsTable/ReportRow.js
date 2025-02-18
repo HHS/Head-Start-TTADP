@@ -23,25 +23,26 @@ function ReportRow({
     displayId,
     activityRecipients,
     startDate,
-    topics,
-    collaborators,
+    sortedTopics: topics,
     lastSaved,
     calculatedStatus,
     approvedAt,
     createdAt,
     legacyId,
     creatorName,
+    activityReportCollaborators,
   } = report;
 
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
   const recipients = activityRecipients && activityRecipients.map((ar) => (
-    ar.grant ? ar.grant.recipient.name : ar.name
+    ar.name
   ));
 
-  const collaboratorNames = collaborators && collaborators.map((collaborator) => (
-    collaborator.fullName));
+  const collaboratorNames = activityReportCollaborators
+    ? activityReportCollaborators.map((collaborator) => (
+      collaborator.fullName)) : [];
 
   const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
   const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
@@ -94,7 +95,7 @@ function ReportRow({
 
   return (
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`landing_${id}`}>
-      <td className="width-8">
+      <td className="width-8" data-label="Select report">
         <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
         { numberOfSelectedReports > 0 && (
         <button
@@ -110,18 +111,18 @@ function ReportRow({
         </button>
         ) }
       </td>
-      <th scope="row" className="smart-hub--blue">
+      <th data-label="Report ID" scope="row" className="smart-hub--blue">
         <Link
           to={linkTarget}
         >
           {displayId}
         </Link>
       </th>
-      <td>
-        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+      <td data-label="Recipients">
+        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} position={openMenuUp ? 'top' : 'bottom'} />
       </td>
-      <td>{startDate}</td>
-      <td>
+      <td data-label="Date started">{startDate}</td>
+      <td data-label="Creator">
         {creatorName ? (
           <Tooltip
             displayText={creatorName}
@@ -130,17 +131,17 @@ function ReportRow({
           />
         ) : '' }
       </td>
-      <td>{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
-      <td>
+      <td data-label="Created date">{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
+      <td data-label="Topics">
         <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
       </td>
-      <td>
+      <td data-label="Collaborators">
         <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
       </td>
-      <td>{lastSaved}</td>
-      <td>{approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}</td>
-      <td>
-        <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} />
+      <td data-label="Last saved">{lastSaved}</td>
+      <td data-label="Approved at">{approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}</td>
+      <td data-label="Context menu">
+        <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} fixed />
       </td>
     </tr>
   );
@@ -160,10 +161,12 @@ export const reportPropTypes = PropTypes.shape({
   approvedAt: PropTypes.string,
   createdAt: PropTypes.string,
   startDate: PropTypes.string.isRequired,
-  topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-  collaborators: PropTypes.arrayOf(
+  sortedTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
+  activityReportCollaborators: PropTypes.arrayOf(
     PropTypes.shape({
-      fullName: PropTypes.string,
+      user: PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
     }),
   ),
   lastSaved: PropTypes.string,

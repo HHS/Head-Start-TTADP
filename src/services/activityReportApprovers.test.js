@@ -1,15 +1,16 @@
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  ActivityReport, ActivityReportApprover, User, sequelize,
+  ActivityRecipient, ActivityReport, ActivityReportApprover, User, sequelize,
 } from '../models';
 import { upsertApprover, syncApprovers } from './activityReportApprovers';
-import { activityReportById } from './activityReports';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
+import { activityReportAndRecipientsById } from './activityReports';
 
 const mockUser = {
   id: 11184161,
   homeRegionId: 1,
   hsesUsername: 'user11184161',
   hsesUserId: 'user11184161',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -17,6 +18,7 @@ const mockUserTwo = {
   homeRegionId: 1,
   hsesUsername: 'user22261035',
   hsesUserId: 'user22261035',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -24,6 +26,7 @@ const mockManager = {
   homeRegionId: 1,
   hsesUsername: 'user22284981',
   hsesUserId: 'user22284981',
+  lastLogin: new Date(),
 };
 
 const secondMockManager = {
@@ -31,6 +34,7 @@ const secondMockManager = {
   homeRegionId: 1,
   hsesUsername: 'user33384616',
   hsesUserId: 'user33384616',
+  lastLogin: new Date(),
 };
 
 const submittedReport = {
@@ -49,6 +53,7 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  version: 2,
 };
 
 const draftReport = {
@@ -72,6 +77,7 @@ describe('activityReportApprovers services', () => {
       where: { activityReportId: reportIds },
       force: true,
     });
+    await ActivityRecipient.destroy({ where: { activityReportId: reportIds } });
     await ActivityReport.destroy({ where: { id: reportIds } });
     await User.destroy({
       where: { id: [mockUser.id, mockUserTwo.id, mockManager.id, secondMockManager.id] },
@@ -95,16 +101,17 @@ describe('activityReportApprovers services', () => {
           userId: secondMockManager.id,
         });
         // Works with managed transaction
-        await sequelize.transaction(async (transaction) => {
+        await sequelize.transaction(async () => {
           // Pending updated to needs_action
           const approver = await upsertApprover({
             status: APPROVER_STATUSES.NEEDS_ACTION,
             activityReportId: report1.id,
             userId: secondMockManager.id,
-          }, transaction);
+          });
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+          expect(approver.user).toBeDefined();
         });
-        const updatedReport = await activityReportById(report1.id);
+        const [updatedReport] = await activityReportAndRecipientsById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
@@ -123,7 +130,7 @@ describe('activityReportApprovers services', () => {
           status: APPROVER_STATUSES.APPROVED,
         });
         expect(approver.status).toEqual(APPROVER_STATUSES.APPROVED);
-        const updatedReport = await activityReportById(report2.id);
+        const [updatedReport] = await activityReportAndRecipientsById(report2.id);
         expect(updatedReport.approvedAt).toBeTruthy();
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -142,7 +149,7 @@ describe('activityReportApprovers services', () => {
           userId: secondMockManager.id,
         });
         expect(approver.status).toBeNull();
-        const updatedReport = await activityReportById(report3.id);
+        const [updatedReport] = await activityReportAndRecipientsById(report3.id);
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
       });
@@ -161,15 +168,15 @@ describe('activityReportApprovers services', () => {
           activityReportId: report4.id,
           userId: secondMockManager.id,
         });
-        const updatedReport = await activityReportById(report4.id);
+        const [updatedReport] = await activityReportAndRecipientsById(report4.id);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
         // Soft delete needs_action
         await ActivityReportApprover.destroy({ where: needsActionApproval, individualHooks: true });
-        const afterDeleteReport = await activityReportById(report4.id);
+        const [afterDeleteReport] = await activityReportAndRecipientsById(report4.id);
         expect(afterDeleteReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         // Upsert restores needs_action
         await upsertApprover(needsActionApproval);
-        const afterRestoreReport = await activityReportById(report4.id);
+        const [afterRestoreReport] = await activityReportAndRecipientsById(report4.id);
         expect(afterRestoreReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });
     });
@@ -181,7 +188,7 @@ describe('activityReportApprovers services', () => {
           activityReportId: report.id,
           userId: mockManager.id,
         });
-        const updatedReport = await activityReportById(report.id);
+        const [updatedReport] = await activityReportAndRecipientsById(report.id);
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
@@ -204,7 +211,7 @@ describe('activityReportApprovers services', () => {
         userId: secondMockManager.id,
         status: APPROVER_STATUSES.NEEDS_ACTION,
         note: 'do x, y, x',
-      }]);
+      }], { validate: true, individualHooks: true });
       // remove mockManager
       const afterRemove = await syncApprovers(report.id);
       // check removed
@@ -216,7 +223,8 @@ describe('activityReportApprovers services', () => {
       const approverIds = afterRestore.map((a) => a.userId);
       expect(approverIds).toContain(secondMockManager.id);
       expect(approverIds).toContain(mockManager.id);
-      expect(afterRestore[0].status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+      const mgrWithStatus = afterRestore.find((manager) => manager.userId === secondMockManager.id);
+      expect(mgrWithStatus.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
     });
   });
 });

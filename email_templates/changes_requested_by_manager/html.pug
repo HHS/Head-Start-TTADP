@@ -1,0 +1,12 @@
+style
+  include ../email.css
+p Hello,
+p 
+p #{managerName} requested changes to report #{displayId}. 
+if comments
+  p #{managerName} provided the following comments:
+  blockquote !{comments} 
+a(href=reportPath) Make changes and resubmit this report in the TTA Hub.
+p Best wishes,
+  br
+  | The TTA Hub team

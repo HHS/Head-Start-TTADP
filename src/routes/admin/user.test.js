@@ -1,9 +1,19 @@
+import faker from '@faker-js/faker';
 import db, {
-  User, Permission,
+  User,
+  Permission,
+  Role,
+  UserRole,
 } from '../../models';
-import { featureFlags } from '../../models/user';
+import { FEATURE_FLAGS } from '../../constants';
 import {
-  getUsers, getUser, deleteUser, createUser, updateUser, getFeatures,
+  getUsers,
+  getUser,
+  deleteUser,
+  createUser,
+  updateUser,
+  getFeatures,
+  createUserRoles,
 } from './user';
 import handleErrors from '../../lib/apiErrorHandler';
 
@@ -12,7 +22,6 @@ jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Pro
 const mockUser = {
   id: 49,
   name: 'Joe Green',
-  role: null,
   phoneNumber: '555-555-554',
   hsesUserId: '49',
   hsesUsername: 'test49@test.com',
@@ -20,6 +29,7 @@ const mockUser = {
   email: 'test49@test.com',
   homeRegionId: 1,
   lastLogin: new Date('2021-02-09T15:13:00.000Z'),
+  createdAt: new Date('2021-02-09T15:13:00.000Z'),
   permissions: [
     {
       userId: 49,
@@ -33,6 +43,8 @@ const mockUser = {
     },
   ],
   flags: [],
+  roles: [],
+  validationStatus: [],
 };
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
@@ -81,7 +93,6 @@ describe('User route handler', () => {
 
     // Verify that once the user exists, it will be retrieved
     await getUser(mockRequest, mockResponse);
-
     expect(mockResponse.json).toHaveBeenCalledWith(mockUser);
   });
 
@@ -108,7 +119,7 @@ describe('User route handler', () => {
 
   it('properly fetches features', async () => {
     await getFeatures(mockRequest, mockResponse);
-    expect(mockResponse.json).toHaveBeenCalledWith(featureFlags);
+    expect(mockResponse.json).toHaveBeenCalledWith(FEATURE_FLAGS);
   });
 
   it('Creates a new user', async () => {
@@ -160,6 +171,8 @@ describe('User route handler', () => {
           scopeId: 1,
         },
       ],
+      roles: [],
+      lastLogin: new Date(),
     };
 
     mockRequest.body = testUpdateUser;
@@ -256,5 +269,113 @@ describe('User route handler', () => {
     await createUser(mockRequest, mockResponse);
 
     expect(handleErrors).toHaveBeenCalledTimes(2);
+  });
+
+  describe('createUserRoles', () => {
+    const mockUserTheFirst = {
+      id: faker.datatype.number({ min: 10000, max: 99999 }),
+      name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      phoneNumber: '555-555-554',
+      hsesUserId: `${faker.datatype.number({ min: 10000, max: 99999 })}`,
+      hsesUsername: faker.internet.email(),
+      hsesAuthorities: ['ROLE_FEDERAL'],
+      email: faker.internet.email(),
+      homeRegionId: 1,
+      lastLogin: new Date('2021-02-09T15:13:00.000Z'),
+      permissions: [],
+      flags: [],
+      roles: [],
+      validationStatus: [],
+    };
+
+    const mockRole = {
+      id: faker.datatype.number({ min: 10000, max: 99999 }),
+      name: faker.random.alpha(100),
+      fullName: faker.name.jobTitle(),
+      isSpecialist: false,
+      mapsTo: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    };
+
+    let u;
+    let r;
+
+    beforeAll(async () => {
+      r = await Role.create(mockRole);
+      u = await User.create(mockUserTheFirst);
+    });
+
+    afterAll(async () => {
+      await UserRole.destroy({ where: { userId: u.id } });
+      await User.destroy({ where: { id: u.id } });
+      await Role.destroy({ where: { id: r.id } });
+    });
+
+    it('does not create a role when the role doesn\'t exist', async () => {
+      await createUserRoles({
+        roles: [{ fullName: 'does not exist' }],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(0);
+    });
+
+    it('Creates a user role', async () => {
+      await createUserRoles({
+        roles: [r],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(1);
+      expect(userRoles[0].roleId).toBe(r.id);
+    });
+
+    it('Does nothing if user roles haven\'t changed', async () => {
+      await UserRole.findOrCreate({
+        where: {
+          roleId: r.id,
+          userId: u.id,
+        },
+      });
+
+      await createUserRoles({
+        roles: [r],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(1);
+      expect(userRoles[0].roleId).toBe(r.id);
+    });
+
+    it('removes a user role if it exists', async () => {
+      await UserRole.findOrCreate({
+        where: {
+          roleId: r.id,
+          userId: u.id,
+        },
+      });
+
+      await createUserRoles({
+        roles: [],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(0);
+    });
+
+    it('doesn\'t throw when requestUser has no roles', async () => {
+      await expect(createUserRoles({ roles: [] }, u.id)).resolves.not.toThrow();
+      await expect(createUserRoles({}, u.id)).resolves.not.toThrow();
+    });
+
+    it('when there is no requestUser, it still works', async () => {
+      await expect(createUserRoles(undefined, u.id)).resolves.not.toThrow();
+    });
   });
 });

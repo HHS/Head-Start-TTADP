@@ -20,39 +20,66 @@ const Modal = ({
   okButtonCss,
   cancelButtonCss,
   showTitleRequired,
+  SecondaryActionButton,
+  hideCancelButton,
+  forceAction,
 }) => (
-  <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
+  <>
     <TrussWorksModal
       ref={modalRef}
       id={`${modalId}`}
       isLarge={isLarge}
       aria-labelledby={`${modalId}-heading`}
+      forceAction={forceAction}
+      className={`ttahub-modal ${showCloseX ? 'show-close-x' : ''}`}
     >
-      <ModalHeading className="font-sans" id={`${modalId}-heading`}>
-        {title}
-        {showTitleRequired ? <span className="smart-hub--form-required"> (required)</span> : null }
-      </ModalHeading>
+      <div className="display-flex">
+        <ModalHeading className="font-sans margin-0 display-flex" id={`${modalId}-heading`}>
+          {title}
+        </ModalHeading>
+        {showTitleRequired ? (
+          <span className="display-flex smart-hub--form-required padding-left-1">(required)</span>
+        ) : null }
+      </div>
       <div>
         {children}
       </div>
       <ModalFooter>
         <ButtonGroup>
-          <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
-            {cancelButtonText}
-          </ModalToggleButton>
           {
-            showOkButton
+            showOkButton && onOk
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} type="button" aria-label={okButtonAriaLabel} modalRef={modalRef} onClick={onOk}>
+                <Button
+                  className={okButtonCss || 'usa-button usa-button--secondary'}
+                  data-focus={hideCancelButton}
+                  type="button"
+                  aria-label={okButtonAriaLabel}
+                  onClick={onOk}
+                  style={{ marginRight: '8px' }}
+                >
                   {okButtonText}
                 </Button>
+              )
+              : null
+          }
+          {
+            SecondaryActionButton
+              ? <span style={{ marginRight: '8px' }}><SecondaryActionButton /></span>
+              : null
+            }
+          {
+            !hideCancelButton
+              ? (
+                <ModalToggleButton className={cancelButtonCss} data-focus="true" type="button" modalRef={modalRef} closer>
+                  {cancelButtonText}
+                </ModalToggleButton>
               )
               : null
           }
         </ButtonGroup>
       </ModalFooter>
     </TrussWorksModal>
-  </div>
+  </>
 );
 
 Modal.propTypes = {
@@ -61,7 +88,7 @@ Modal.propTypes = {
     PropTypes.shape(),
   ]).isRequired,
   modalId: PropTypes.string.isRequired,
-  onOk: PropTypes.func,
+  onOk: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]).isRequired,
   title: PropTypes.string.isRequired,
   okButtonText: PropTypes.string,
   okButtonAriaLabel: PropTypes.string,
@@ -73,10 +100,12 @@ Modal.propTypes = {
   okButtonCss: PropTypes.string,
   cancelButtonCss: PropTypes.string,
   showTitleRequired: PropTypes.bool,
+  SecondaryActionButton: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
+  hideCancelButton: PropTypes.bool,
+  forceAction: PropTypes.bool,
 };
 
 Modal.defaultProps = {
-  onOk: () => { },
   okButtonAriaLabel: null,
   okButtonText: '',
   showCloseX: false,
@@ -86,6 +115,9 @@ Modal.defaultProps = {
   okButtonCss: null,
   cancelButtonCss: null,
   showTitleRequired: false,
+  SecondaryActionButton: false,
+  hideCancelButton: false,
+  forceAction: false,
 };
 
 export default Modal;

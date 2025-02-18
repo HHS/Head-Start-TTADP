@@ -6,7 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { DATE_DISPLAY_FORMAT } from '../Constants';
-import './DatePicker.css';
+import './DatePicker.scss';
 
 export const DATE_PICKER_DATE_FORMAT = 'YYYY-MM-DD';
 

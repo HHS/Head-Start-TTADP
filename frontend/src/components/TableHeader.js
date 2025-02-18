@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import ReportMenu from '../pages/Landing/ReportMenu';
+import colors from '../colors';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -38,6 +39,7 @@ export default function TableHeader({
   downloadAllButtonRef,
   downloadSelectedButtonRef,
   paginationName,
+  exportIdPrefix,
 }) {
   return (
     <div className="desktop:display-flex">
@@ -60,7 +62,7 @@ export default function TableHeader({
                   }}
                 >
                   <FontAwesomeIcon
-                    color="blue"
+                    color={colors.ttahubMediumBlue}
                     inverse
                     icon={faTimesCircle}
                   />
@@ -79,6 +81,7 @@ export default function TableHeader({
               isDownloading={isDownloading}
               downloadAllButtonRef={downloadAllButtonRef}
               downloadSelectedButtonRef={downloadSelectedButtonRef}
+              exportIdPrefix={exportIdPrefix}
             />
           )}
         </span>
@@ -119,6 +122,7 @@ export default function TableHeader({
 }
 
 TableHeader.propTypes = {
+  exportIdPrefix: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   numberOfSelected: PropTypes.number,
   toggleSelectAll: PropTypes.func,
@@ -148,21 +152,21 @@ TableHeader.propTypes = {
 
 TableHeader.defaultProps = {
   numberOfSelected: 0,
-  toggleSelectAll: () => { },
+  toggleSelectAll: null,
   hidePagination: false,
-  handleDownloadAll: () => { },
-  handleDownloadClick: () => { },
+  handleDownloadAll: null,
+  handleDownloadClick: null,
   count: 0,
   activePage: 0,
   offset: 0,
   perPage: 10,
-  handlePageChange: () => { },
+  handlePageChange: null,
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
-  setDownloadError: () => {},
+  setDownloadError: null,
   isDownloading: false,
-  downloadAllButtonRef: () => {},
-  downloadSelectedButtonRef: () => {},
+  downloadAllButtonRef: null,
+  downloadSelectedButtonRef: null,
   paginationName: 'activity reports',
 };

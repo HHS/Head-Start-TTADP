@@ -1,7 +1,8 @@
 const { Model } = require('sequelize');
 const { getPresignedURL } = require('../lib/s3');
+const { afterDestroy } = require('./hooks/file');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class File extends Model {
     /**
      * Helper method for defining associations.
@@ -9,14 +10,45 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      File.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles' });
+      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
+      File.hasMany(models.SessionReportPilotFile, { foreignKey: 'fileId', as: 'sessionFiles' });
+      File.hasMany(models.CommunicationLogFile, { foreignKey: 'fileId', as: 'communicationLogFiles' });
+      File.hasMany(models.SessionReportPilotSupportingAttachment, { foreignKey: 'fileId', as: 'supportingAttachments' });
+
+      File.belongsToMany(models.ActivityReport, {
+        through: models.ActivityReportFile,
+        foreignKey: 'fileId',
+        otherKey: 'activityReportId',
+        as: 'reports',
+      });
+      File.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveFile,
+        foreignKey: 'fileId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'reportObjectives',
+      });
+      File.belongsToMany(models.SessionReportPilot, {
+        through: models.SessionReportPilotFile,
+        foreignKey: 'fileId',
+        otherKey: 'sessionReportPilotId',
+        as: 'sessions',
+      });
+      File.belongsToMany(models.CommunicationLog, {
+        through: models.CommunicationLogFile,
+        foreignKey: 'fileId',
+        otherKey: 'communicationLogId',
+        as: 'logs',
+      });
+      File.belongsToMany(models.SessionReportPilot, {
+        through: models.SessionReportPilotSupportingAttachment,
+        foreignKey: 'fileId',
+        otherKey: 'sessionReportPilotId',
+        as: 'sessionsWithSupportingAttachments',
+      });
     }
   }
   File.init({
-    activityReportId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
     originalFileName: {
       allowNull: false,
       type: DataTypes.STRING,
@@ -54,6 +86,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'File',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return File;
 };

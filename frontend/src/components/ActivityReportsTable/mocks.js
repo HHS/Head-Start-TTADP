@@ -6,9 +6,10 @@ const activityReports = [
     displayId: 'R14-AR-1',
     regionId: 14,
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+    sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
     pendingApprovals: '1 of 3',
-    approvers: [{ User: { fullName: 'Approver Manager 1' } }, { User: { fullName: 'Approver Manager 2' } }, { User: { fullName: 'Approver Manager 3' } }],
+    approvers: [{ user: { fullName: 'Approver Manager 1' } }, { user: { fullName: 'Approver Manager 2' } }, { user: { fullName: 'Approver Manager 3' } }],
     activityRecipients: [
       {
         activityRecipientId: 5,
@@ -56,16 +57,22 @@ const activityReports = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Orange, GS',
-        name: 'Orange',
-        role: 'Grants Specialist',
+        user: {
+          fullName: 'Orange, GS',
+          name: 'Orange',
+          role: 'Grants Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -76,8 +83,9 @@ const activityReports = [
     displayId: 'R14-AR-2',
     regionId: 14,
     topics: [],
+    sortedTopics: [],
     pendingApprovals: '2 of 2',
-    approvers: [{ User: { fullName: 'Approver Manager 4' } }, { User: { fullName: 'Approver Manager 5' } }],
+    approvers: [{ user: { fullName: 'Approver Manager 4' } }, { user: { fullName: 'Approver Manager 5' } }],
     calculatedStatus: 'needs_action',
     activityRecipients: [
       {
@@ -99,16 +107,22 @@ const activityReports = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Cucumber User, GS',
-        name: 'Cucumber User',
-        role: 'Recipient Specialist',
+        user: {
+          fullName: 'Cucumber User, GS',
+          name: 'Cucumber User',
+          role: 'Recipient Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -122,6 +136,7 @@ export const activityReportsSorted = [
     displayId: 'R14-AR-2',
     regionId: 14,
     topics: [],
+    sortedTopics: [],
     calculatedStatus: 'needs_action',
     creatorName: 'Kiwi, GS',
     activityRecipients: [
@@ -144,16 +159,22 @@ export const activityReportsSorted = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Cucumber User, GS',
-        name: 'Cucumber User',
-        role: 'Recipient Specialist',
+        user: {
+          fullName: 'Cucumber User, GS',
+          name: 'Cucumber User',
+          role: 'Recipient Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -164,6 +185,7 @@ export const activityReportsSorted = [
     displayId: 'R14-AR-1',
     regionId: 14,
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+    sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
     creatorName: 'Kiwi, TTAC',
     activityRecipients: [
@@ -213,16 +235,22 @@ export const activityReportsSorted = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Orange, GS',
-        name: 'Orange',
-        role: 'Grants Specialist',
+        user: {
+          fullName: 'Orange, GS',
+          name: 'Orange',
+          role: 'Grants Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -239,6 +267,7 @@ export const generateXFakeReports = (count, status = []) => {
         displayId: 'R14-AR-1',
         regionId: 14,
         topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+        sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
         calculatedStatus: status[i] || 'draft',
         activityRecipients: [
           {
@@ -287,16 +316,22 @@ export const generateXFakeReports = (count, status = []) => {
           role: 'Grants Specialist',
           homeRegionId: 14,
         },
-        collaborators: [
+        activityReportCollaborators: [
           {
             fullName: 'Orange, GS',
-            name: 'Orange',
-            role: 'Grants Specialist',
+            user: {
+              fullName: 'Orange, GS',
+              name: 'Orange',
+              role: 'Grants Specialist',
+            },
           },
           {
             fullName: 'Hermione Granger, SS',
-            name: 'Hermione Granger',
-            role: 'System Specialist',
+            user: {
+              fullName: 'Hermione Granger, SS',
+              name: 'Hermione Granger',
+              role: 'System Specialist',
+            },
           },
         ],
       },

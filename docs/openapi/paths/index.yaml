@@ -3,7 +3,11 @@
 '/user':
   $ref: './user.yaml'
 '/users/collaborators':
-  $ref: './collaborators.yaml'
+  $ref: './users/collaborators.yaml'
+'/users/send-verification-email':
+  $ref: './users/send-verification-email.yaml'
+'/users/verify-email/{token}':
+  $ref: './users/verify-email.yaml'
 '/logout':
   $ref: './logout.yaml'
 '/login':
@@ -52,7 +56,7 @@
   $ref: './recipient/recipient-search.yaml'
 '/recipient/goals/{recipientId}':
   $ref: './recipient/recipient-goals.yaml'
-'/goals/{goalId}/changeStatus':
+'/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
@@ -60,5 +64,31 @@
   $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
+'/settings':
+  $ref: './settings/index.yaml'
+'/settings/email':
+  $ref: './settings/email/index.yaml'
+'/settings/email/unsubscribe':
+  $ref: './settings/email/unsubscribe.yaml'
+'/settings/email/subscribe':
+  $ref: './settings/email/subscribe.yaml'
 
+'/event':
+  $ref: './event/index.yaml'
+'/event/id/${eventId}':
+  $ref: './event/id/eventId.yaml'
+'/event/regionId/${regionId}':
+  $ref: './event/regionId/regionId.yaml'
+'/event/ownerId/${ownerId}':
+  $ref: './event/ownerId/ownerId.yaml'
+'/event/pocId/${pocId}':
+  $ref: './event/pocId/pocId.yaml'
+'/event/collaboratorId/${collaboratorId}':
+  $ref: './event/collaboratorId/collaboratorId.yaml'
 
+'/sessioon-reports':
+  $ref: './sessioon-reports/index.yaml'
+'/sessioon-reports/id/${id}':
+  $ref: './sessioon-reports/id/id.yaml'
+'/sessioon-reports/eventId/${eventId}':
+  $ref: './sessioon-reports/eventId/eventId.yaml'

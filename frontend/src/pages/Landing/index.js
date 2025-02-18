@@ -5,6 +5,7 @@ import React, {
   useContext,
   useMemo,
   useRef,
+  useCallback,
 } from 'react';
 import {
   Alert, Grid, Button,
@@ -19,23 +20,24 @@ import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
-import './index.css';
+import './index.scss';
 import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
-import { ALERTS_PER_PAGE } from '../../Constants';
-import { filtersToQueryString, expandFilters, formatDateRange } from '../../utils';
+import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
+import {
+  ALERTS_PER_PAGE,
+} from '../../Constants';
+import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
+import { LANDING_FILTER_CONFIG } from './constants';
 import FilterContext from '../../FilterContext';
-
-const defaultDate = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import colors from '../../colors';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -51,15 +53,25 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   return `${from}-${to} of ${reportsCount}`;
 }
 
+export function getAppliedRegion(filters) {
+  const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
+  if (regionFilters && regionFilters.length > 0) {
+    return regionFilters[0];
+  }
+  return null;
+}
+
 function Landing() {
   const { user } = useContext(UserContext);
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user);
+  const regions = allRegionsUserHasActivityReportPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
       && defaultRegion !== 0
@@ -69,19 +81,8 @@ function Landing() {
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
       }]
-      : [{
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      }],
+      : allRegionsFilters,
   );
 
   const history = useHistory();
@@ -89,6 +90,7 @@ function Landing() {
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
   const [showAlert, updateShowAlert] = useState(true);
+  const [resetPagination, setResetPagination] = useState(false);
 
   const [alertsSortConfig, setAlertsSortConfig] = React.useState({
     sortBy: 'startDate',
@@ -99,18 +101,10 @@ function Landing() {
   const [alertsActivePage, setAlertsActivePage] = useState(1);
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
-  const [downloadAlertsError, setDownloadAlertsError] = useState('');
+  const [downloadAlertsError, setDownloadAlertsError] = useState(false);
   const downloadAllAlertsButtonRef = useRef();
 
-  function getAppliedRegion() {
-    const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
-    if (regionFilters && regionFilters.length > 0) {
-      return regionFilters[0];
-    }
-    return null;
-  }
-
-  const appliedRegionNumber = getAppliedRegion();
+  const appliedRegionNumber = getAppliedRegion(filters);
 
   const ariaLiveContext = useContext(AriaLiveContext);
 
@@ -144,6 +138,16 @@ function Landing() {
       downloadAllAlertsButtonRef.current.focus();
     }
   };
+
+  const setFilters = useCallback((newFilters) => {
+    // pass through
+    setFiltersInHook(newFilters);
+
+    // reset pagination
+    setAlertsActivePage(1);
+    setAlertsOffset(0);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -198,59 +202,73 @@ function Landing() {
   }
 
   const regionLabel = () => {
-    if (defaultRegion === 14) {
-      return 'All regions';
+    if (defaultRegion === 14 || hasMultipleRegions) {
+      return 'your regions';
     }
-    if (defaultRegion > 0) {
-      return `Region ${defaultRegion.toString()}`;
-    }
-    return '';
+    return 'your region';
   };
 
   // Apply filters.
-  const onApply = (newFilters) => {
-    setFilters([
-      ...newFilters,
-    ]);
+  const onApply = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters([
+        ...newFilters,
+      ]);
+    }
+
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
   };
 
   // Remove Filters.
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     if (index !== -1) {
       newFilters.splice(index, 1);
-      setFilters(newFilters);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
     }
   };
 
-  const dateRangeOptions = [
-    {
-      label: 'Last 30 days',
-      value: 1,
-      range: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    },
-    {
-      label: 'Custom date range',
-      value: 2,
-      range: '',
-    },
-  ];
+  const filtersToUse = useMemo(() => {
+    const filterConfig = LANDING_FILTER_CONFIG(hasMultipleRegions);
 
-  const filterConfig = hasMultipleRegions
-    ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
+    // If user has approve activity report permission add 'Specialist name' filter.
+    if (hasApproveActivityReport(user)) {
+      filterConfig.push(specialistNameFilter);
+      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+    }
+    return filterConfig;
+  }, [hasMultipleRegions, user]);
 
   return (
     <>
       <Helmet>
-        <title>Landing</title>
+        <title>Activity Reports</title>
       </Helmet>
       <>
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
         {showAlert && message && (
           <Alert
             type="success"
             role="alert"
+            className="margin-bottom-2"
             noIcon
             cta={(
               <Button
@@ -260,7 +278,7 @@ function Landing() {
                 onClick={() => updateShowAlert(false)}
               >
                 <span className="fa-sm margin-right-2">
-                  <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
                 </span>
               </Button>
             )}
@@ -269,24 +287,24 @@ function Landing() {
           </Alert>
         )}
         <Grid row gap>
-          <Grid>
-            <h1 className="landing">{`Activity reports - ${regionLabel()}`}</h1>
-          </Grid>
-          <Grid className="grid-col-2 flex-align-self-center">
-            {reportAlerts
+          <Grid col={12} className="display-flex flex-wrap">
+            <h1 className="landing margin-top-0 margin-bottom-3 margin-right-2">{`Activity reports - ${regionLabel()}`}</h1>
+            <div className="margin-bottom-2">
+              {reportAlerts
               && reportAlerts.length > 0
               && hasReadWrite(user)
               && appliedRegionNumber !== 14
               && <NewReport />}
+            </div>
           </Grid>
-          <Grid col={12} className="display-flex flex-wrap margin-bottom-2">
+          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
             <FilterPanel
               applyButtonAria="apply filters for activity reports"
               filters={filters}
               onApplyFilters={onApply}
-              dateRangeOptions={dateRangeOptions}
               onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
+              filterConfig={filtersToUse}
+              allUserRegions={regions}
             />
           </Grid>
         </Grid>
@@ -330,6 +348,9 @@ function Landing() {
             filters={filtersToApply}
             showFilter={false}
             tableCaption="Approved activity reports"
+            exportIdPrefix="ar-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
       </>

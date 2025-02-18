@@ -1,23 +1,23 @@
-.popup-modal h2 {
+.ttahub-modal h2 {
     font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, 'Roboto, Arial', sans-serif;
 }
 
-.popup-modal .usa-button--secondary {
-    margin-left: 8px;
+.ttahub-modal .smart-hub--form-required {
+    line-height: 1.85;
 }
 
-.popup-modal .usa-modal__main {
+.ttahub-modal.usa-modal__main {
     margin: 0px;
 }
 
-.popup-modal button {
-    margin-left: 0px;
-    margin-right: 14px;
-    padding: 9px 38px 9px 38px;
-    font-size: medium;
-    font-weight: 600;
+.ttahub-modal .usa-button-group__item:empty {
+    display: none;
 }
 
-.popup-modal:not(.show-close-x) .usa-modal__close {
+.ttahub-modal .usa-button-group__item .usa-button--unstyled {
+  padding: .75rem 1.25rem
+}
+
+.ttahub-modal:not(.show-close-x) .usa-modal__close {
     display: none;
 }

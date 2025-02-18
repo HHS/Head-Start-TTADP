@@ -1,0 +1,14 @@
+@use '../../colors.scss' as colors;
+
+.ttahub-similar-goals {
+  left: 0;
+  right: 0;
+  width: 30rem;
+}
+.ttahub-similar-goals--legend {
+  border-bottom: 1px solid colors.$base-lighter;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;  
+}
+

@@ -1,0 +1,5 @@
+@use '../mixins.scss';
+
+.usa-error-message + .usa-date-picker .usa-date-picker__external-input {
+    @include mixins.error;
+}

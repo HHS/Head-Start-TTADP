@@ -1,0 +1,14 @@
+@media print {
+    .ttahub-recipient-record--heading.print-goals {
+        font-size: 22px;
+        margin: 1rem 1rem;
+    }
+
+    .ttahub-print-goals h2 {
+        font-size: 16pt;
+    }
+   
+    .ttahub-printable-goal .no-break-within{
+        padding-left: 0 !important;
+    }
+}

@@ -5,6 +5,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Tooltip from '../Tooltip';
 import { filterConfigProp, filterProp } from './props';
 import './FilterPills.css';
+import colors from '../../colors';
 
 /* Pill */
 export function Pill({
@@ -17,7 +18,15 @@ export function Pill({
     query,
   } = filter;
 
-  const filterName = filterConfig.find((f) => f.id === topic).display;
+  const determineFilterName = () => {
+    const filterConfigToUse = filterConfig.find((f) => f.id === topic);
+    if (filterConfigToUse) {
+      return filterConfigToUse.display;
+    }
+    return topic === 'region' ? 'Region' : null;
+  };
+
+  const filterName = determineFilterName();
 
   let showToolTip = false;
 
@@ -44,17 +53,27 @@ export function Pill({
   const ariaButtonText = `This button removes the filter: ${filterName} ${condition} ${queryValue}`;
   const queryShortValue = determineQuery(false);
 
+  const determineConditionText = () => {
+    if (!condition) {
+      return null;
+    }
+    if (topic === 'myReports') {
+      return condition;
+    }
+    return condition.toLowerCase();
+  };
+
   return (
-    <span className="filter-pill text-middle margin-right-05 padding-top-1 margin-bottom-105">
-      {isFirst ? null : <strong> AND </strong>}
-      <span className="margin-right-05">
+    <span className="filter-pill text-middle">
+      <span className="display-inline-block margin-bottom-05 margin-right-05">
+        {isFirst ? null : <strong> AND </strong>}
         <strong>
           {filterName}
         </strong>
         {' '}
-        {condition ? condition.toLowerCase() : null}
+        {determineConditionText()}
       </span>
-      <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+      <span className="filter-pill-container display-inline-block smart-hub-border-blue-primary border-2px radius-pill padding-right-1 padding-left-2 padding-y-05">
         <span aria-label={queryValue}>
           {' '}
           {
@@ -80,7 +99,7 @@ export function Pill({
             onRemoveFilter(id);
           }}
         >
-          <FontAwesomeIcon className="margin-left-1 margin-top-2px  filter-pills-cursor" color="#0166ab" icon={faTimesCircle} />
+          <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
         </button>
       </span>
     </span>

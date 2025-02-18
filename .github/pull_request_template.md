@@ -7,7 +7,7 @@
 
 ## Issue(s)
 
-* https://ocio-jira.acf.hhs.gov/browse/TTAHUB-0
+* https://jira.acf.gov/browse/TTAHUB-0
 
 
 ## Checklists
@@ -23,6 +23,13 @@
 - [ ] Boundary diagram updated
 - [ ] Logical Data Model updated
 - [ ] [Architectural Decision Records](https://adr.github.io/) written for major infrastructure decisions
+- [ ] UI review complete
+- [ ] QA review complete
+
+### Before merge to main
+
+- [ ] OHS demo complete
+- [ ] Ready to create production PR
 
 ### Production Deploy
 

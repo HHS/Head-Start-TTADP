@@ -1,0 +1,44 @@
+@use '../colors.scss' as *;
+
+.smart-hub--button-select-menu-label:not(.sr-only) {
+    display: block;
+    margin-top: 1em;
+    max-width: 240px;
+    padding: 0 1rem;
+}
+
+.smart-hub--button-select-range-button {
+    background: white;
+    border: 0;
+    display: block;
+    outline: 0.25rem transparent;
+    outline-offset: 0;
+    padding: 1rem;    
+    text-align: left;    
+    width: 100%;
+}
+
+.smart-hub--button-select-range-button:hover{
+    background: $gray-two; 
+}
+
+.smart-hub--button-select-range-button[aria-pressed="true"] {
+    color: $blue-vivid-focus;
+    font-weight: bold;
+}
+
+.smart-hub--button-select-checkmark {
+    float: right;
+}
+
+/**
+* The styles for the "style as select" prop
+*/
+.smart-hub--button-select-toggle-btn.usa-select {
+    border: 1px solid $text-ink;
+    box-shadow: none;
+    color: $text-ink;
+    padding: 0.5em 1em 0.5em 0.5em;
+    -webkit-appearance: none;
+    appearance: none;
+}

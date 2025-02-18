@@ -9,6 +9,7 @@ import FilterItem from './FilterItem';
 import usePrevious from '../../hooks/usePrevious';
 import { filterProp, filterConfigProp } from './props';
 import FilterErrorContext from './FilterErrorContext';
+import './FilterMenu.css';
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
@@ -48,6 +49,11 @@ export default function FilterMenu({
   }, [itemLength, items.length]);
 
   const totalValidation = () => {
+    // If we don't have any filter's no need to validate.
+    if (!items.length) {
+      return true;
+    }
+
     const hasErrors = errors.reduce((acc, curr) => {
       if (acc || curr) {
         return true;
@@ -108,7 +114,6 @@ export default function FilterMenu({
        */
       const f = filterConfig.find(((config) => config.id === toUpdate.topic));
       const defaultQuery = f.defaultValues[value];
-
       if (defaultQuery) {
         toUpdate.query = defaultQuery;
       } else {
@@ -123,7 +128,6 @@ export default function FilterMenu({
       toUpdate.condition = '';
       toUpdate.query = defaultQuery;
     }
-
     setItems(newItems);
 
     if (index !== -1) {
@@ -165,6 +169,7 @@ export default function FilterMenu({
     // this will add an empty item into the list if there
     // are no filters, to cut down on user clicking
     if (!items.length) {
+      setErrors([]); // Reset errors.
       onAddFilter();
     }
   };
@@ -185,7 +190,6 @@ export default function FilterMenu({
       AlternateActionButton={ClearAllButton}
       onOpen={onOpen}
     >
-
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2" data-testid="filters">
         <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
         <div>
@@ -200,7 +204,12 @@ export default function FilterMenu({
                 ))
                 // return a new array of option elements
                 .map(({ id: filterId, display }) => (
-                  <option key={filterId} value={filterId}>{display}</option>
+                  <option
+                    key={filterId}
+                    value={filterId}
+                  >
+                    {display}
+                  </option>
                 ));
 
               const newTopic = {

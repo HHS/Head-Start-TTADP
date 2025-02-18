@@ -2,13 +2,22 @@ const {
   Model,
 } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Scope extends Model {
     static associate(models) {
-      Scope.belongsToMany(models.Region, { through: models.Permission, foreignKey: 'regionId', timestamps: false });
-      Scope.belongsToMany(models.User, {
-        through: models.Permission, foreignKey: 'scopeId', as: 'scopes', timestamps: false,
+      Scope.belongsToMany(models.Region, {
+        through: models.Permission,
+        foreignKey: 'regionId',
+        as: 'regions',
+        timestamps: false,
       });
+      Scope.belongsToMany(models.User, {
+        through: models.Permission,
+        foreignKey: 'scopeId',
+        as: 'users',
+        timestamps: false,
+      });
+      Scope.hasMany(models.Permission, { foreignKey: 'scopeId', as: 'permissions' });
     }
   }
   Scope.init({

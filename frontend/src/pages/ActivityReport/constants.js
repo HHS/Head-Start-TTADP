@@ -2,6 +2,7 @@ export const reasonsToMonitor = [
   'Monitoring | Deficiency',
   'Monitoring | Noncompliance',
   'Monitoring | Area of Concern',
+  'Monitoring Goal',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in
@@ -10,7 +11,7 @@ export const reasons = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
-  'Child Incidents',
+  'Child Incident',
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
@@ -19,11 +20,16 @@ export const reasons = [
   'New Program Option',
   'New Staff / Turnover',
   'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
+  'Planning/Coordination',
   'School Readiness Goals',
   ...reasonsToMonitor,
 ];
 
+/*
+  Please keep in sync with:
+  frontend > src > constants.js
+  src > constants.js
+*/
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
@@ -42,8 +48,8 @@ export const recipientParticipants = [
 ];
 
 export const otherEntityParticipants = [
-  'Local/State Agency(ies)',
   'HSCO',
+  'Local or State Agency',
   'OCC Regional Office',
   'OHS Regional Office',
   'Regional Head Start Association',
@@ -57,7 +63,7 @@ export const otherEntityParticipants = [
 // - src/constants.js
 export const topics = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -67,11 +73,13 @@ export const topics = [
   'Culture & Language',
   'Curriculum (Instructional or Parenting)',
   'Data and Evaluation',
+  'Disabilities Services',
   'ERSEA',
   'Environmental Health and Safety / EPRR',
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -79,6 +87,7 @@ export const topics = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -89,8 +98,9 @@ export const topics = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
+  'Training and Professional Development',
   'Transition Practices',
   'Transportation',
 ];

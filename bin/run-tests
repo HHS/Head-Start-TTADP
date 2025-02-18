@@ -9,7 +9,7 @@ log() {
 
 check_exit() {
     if [[ "$1" -ne 0 ]]; then
-        echo "$lr last docker-compose command failed"
+        echo "$lr last docker compose command failed"
         ((exit_code++))
     fi
 }
@@ -42,15 +42,19 @@ main() {
       esac
     done
 
+    docker compose \
+        -f 'docker-compose.test.yml' \
+        down --volumes --remove-orphans
+
     log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
     if [[ $docker == "true" ]]; then
-      docker-compose -f 'docker-compose.test.yml' up -d
+      docker compose -f 'docker-compose.test.yml' up -d
       check_exit "$?"
     else
-      docker-compose -f 'docker-compose.test.yml' up -d test-db
+      docker compose -f 'docker-compose.test.yml' up -d test-db
       check_exit "$?"
-      IFS=: read host port <<< "$(docker-compose -f 'docker-compose.test.yml' port test-db 5432)"
+      IFS=: read host port <<< "$(docker compose -f 'docker-compose.test.yml' port test-db 5432)"
       echo "Postgres is running on port $port"
       export POSTGRES_PORT=$port
     fi
@@ -76,19 +80,82 @@ main() {
     fi
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
-        # Test backend
-        command="yarn test:ci --colors"
-        if [ $verbose == "false" ]; then
-          command="yarn test:ci --silent --colors"
-        fi
-        echo
-        log "Running backend tests"
-        if [[ $docker == "true" ]]; then
-          docker exec test-backend bash -c "$command"
-        else
-          $command
-        fi
-        check_exit "$?"
+      # Test backend
+      echo
+      log "Running backend tests"
+
+      # first get the tests in the root directory
+      command="node_modules/.bin/cross-env \
+      JEST_JUNIT_OUTPUT_DIR=reports \
+      JEST_JUNIT_OUTPUT_NAME=unit.xml \
+      POSTGRES_USERNAME=postgres \
+      POSTGRES_DB=ttasmarthub \
+      CURRENT_USER_ID=5 \
+      CI=true \
+      node \
+      --expose-gc \
+      ./node_modules/.bin/jest \
+      src/*.js \
+      --coverage \
+      --colors \
+      --reporters=jest-junit \
+      --reporters=default \
+      --runInBand \
+      --silent \
+      --colors \
+      --logHeapUsage \
+      --coverageDirectory=\$(pwd)/coverage/src/root \
+      --collectCoverageFrom=src/*.js \
+      --forceExit"
+
+      if [[ $docker == "true" ]]; then
+        docker exec test-backend bash -c "$command"
+      else
+        $command
+      fi
+
+      check_exit "$?"
+
+      # then list through the folders and run the tests
+      targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
+
+       for target in "${targets[@]}"; do
+
+        # jest command to
+        # - run tests in the target folder
+        # - collect coverage from the target folder
+        # - output coverage relative to the target folder
+        # - some other useful flags
+        command="node_modules/.bin/cross-env \
+          JEST_JUNIT_OUTPUT_DIR=reports \
+          JEST_JUNIT_OUTPUT_NAME=unit.xml \
+          POSTGRES_USERNAME=postgres \
+          POSTGRES_DB=ttasmarthub \
+          CURRENT_USER_ID=5 \
+          CI=true \
+          node \
+          --expose-gc \
+          ./node_modules/.bin/jest \
+          src/$target \
+          --coverage \
+          --colors \
+          --reporters=jest-junit \
+          --reporters=default \
+          --runInBand \
+          --silent \
+          --colors \
+          --logHeapUsage \
+          --coverageDirectory=\$(pwd)/coverage/src/$target \
+          --collectCoverageFrom=src/$target/**/*.js \
+          --forceExit"
+
+          if [[ $docker == "true" ]]; then
+            docker exec test-backend bash -c "$command"
+          else
+            $command
+          fi
+          check_exit "$?"
+      done
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then
@@ -110,7 +177,7 @@ main() {
     # Cleanup
     echo
     log "Cleaning up test containers"
-    docker-compose \
+    docker compose \
         -f 'docker-compose.test.yml' \
         down --volumes --remove-orphans
     check_exit "$?"

@@ -1,0 +1,5 @@
+@use '../../../../colors.scss' as *;
+
+.smart-hub--dark-placeholder ::placeholder {
+  color: $text-ink;
+}

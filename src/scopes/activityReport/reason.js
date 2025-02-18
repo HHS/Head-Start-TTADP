@@ -1,5 +1,5 @@
+import { REASONS } from '@ttahub/common';
 import filterArray from './utils';
-import { REASONS } from '../../constants';
 
 function onlyValidReasons(query) {
   if (!Array.isArray(query)) {
@@ -15,7 +15,7 @@ export function withReason(query) {
     return {};
   }
 
-  return filterArray('ARRAY_TO_STRING(reason, \',\')', reason, false);
+  return filterArray('ARRAY_TO_STRING("reason", \',\')', reason, false);
 }
 
 export function withoutReason(query) {
@@ -23,5 +23,5 @@ export function withoutReason(query) {
   if (!reason.length) {
     return {};
   }
-  return filterArray('ARRAY_TO_STRING(reason, \',\')', reason, true);
+  return filterArray('ARRAY_TO_STRING("reason", \',\')', reason, true);
 }

@@ -46,7 +46,7 @@ describe('Filter Pills', () => {
       expect(await screen.findByText(/date started/i)).toBeVisible();
       expect(await screen.findByText(/is within/i)).toBeVisible();
       expect(await screen.findByText(/10\/01\/2021-10\/31\/2021/i)).toBeVisible();
-      expect(await screen.findByRole('button', { name: /this button removes the filter: date started is within/i })).toBeVisible();
+      expect(await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is within/i })).toBeVisible();
     });
 
     it('removes filters', async () => {
@@ -76,7 +76,7 @@ describe('Filter Pills', () => {
       expect(await screen.findByText(/date started/i)).toBeVisible();
 
       // Remove filter pill.
-      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date started is on or after /i });
+      const remoteButton = await screen.findByRole('button', { name: /this button removes the filter: date started \(ar\) is on or after /i });
       userEvent.click(remoteButton);
       expect(onRemoveFilter).toHaveBeenCalledWith('2');
     });
@@ -94,6 +94,22 @@ describe('Filter Pills', () => {
 
       renderFilterMenu(filters);
       expect((await screen.findAllByText(/specialist 1, specialist 2, specialist 3\.\.\./i)).length).toBe(2);
+    });
+
+    it('shows correct condition text for my reports filter', async () => {
+      const filters = [{
+        id: '1',
+        topic: 'myReports',
+        condition: 'where I\'m the',
+        query: ['Creator'],
+        displayQuery: (q) => q.join(', '),
+        display: 'My reports',
+      },
+      ];
+
+      renderFilterMenu(filters);
+      // Check we keep the correct case for I'm.
+      expect(await screen.findByText('where I\'m the')).toBeVisible();
     });
   });
 });

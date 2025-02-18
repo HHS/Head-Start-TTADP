@@ -1,0 +1,42 @@
+.ttahub-simple-sortable-table th {
+    vertical-align: bottom;
+    position: sticky;
+    top: 0;
+    background-color: white;
+}
+
+.ttahub-simple-sortable-table thead th[aria-sort] {
+    background: white;
+}
+
+.ttahub-simple-sortable-table th>.sortable::after {
+    display: none;
+}
+
+.ttahub-simple-sortable-table th>.sortable span::after {
+    content: "";
+    background-image: url(../images/sort_both.png);
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    display: inline-block;
+    position: absolute;
+    height: 100%;
+    right: -12px;
+    bottom: 0;
+    width: 10px;
+    height: 20px;
+}
+
+@media(max-width: 1160px) and (min-width: 40em) {
+    .ttahub-simple-sortable-table th>.sortable span::after {
+        right: auto
+    }
+}
+
+.ttahub-simple-sortable-table th>.sortable.asc span::after {
+    background-image: url(../images/sort_asc.png);
+}
+
+.ttahub-simple-sortable-table th>.sortable.desc span::after {
+    background-image: url(../images/sort_desc.png);
+}

@@ -50,7 +50,7 @@ const Submitted = ({
       </div>
       <NotEditableAlert />
       <div className="margin-top-3">
-        <Button type="button" onClick={resetToDraft}>Reset to Draft</Button>
+        <Button className="margin-bottom-3" type="button" onClick={resetToDraft}>Reset to Draft</Button>
       </div>
     </>
   );

@@ -1,129 +1,155 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
-
+import NoResultsFound from '../components/NoResultsFound';
+import colors from '../colors';
 import './BarGraph.css';
 
 const Plot = createPlotlyComponent(Plotly);
-const WIDGET_PER_CATEGORY = 180;
+const BottomAxis = createPlotlyComponent(Plotly);
 
-/**
- *
- * Takes a string, a reason (or topic, if you prefer)
- * provided for an activity report and intersperses it with line breaks
- * depending on the length
- *
- * @param {string} topic
- * @returns string with line breaks
- */
-function topicsWithLineBreaks(reason) {
-  const arrayOfTopics = reason.split(' ');
+function BarGraph({
+  data,
+  xAxisConfig,
+  leftMargin,
+  topMargin,
+  barHeightMultiplier,
+  barGraphTopHeight,
+  widgetRef,
+}) {
+  const parentRef = useRef(null);
+  const [width, setWidth] = useState(850);
 
-  return arrayOfTopics.reduce((accumulator, currentValue) => {
-    const lineBreaks = accumulator.match(/<br>/g);
-    const allowedLength = lineBreaks ? lineBreaks.length * 6 : 6;
-
-    // we don't want slashes on their own lines
-    if (currentValue === '/' || currentValue === '|' || currentValue === '&') {
-      return `${accumulator} ${currentValue}`;
+  // more nightmarish stuff here
+  // fires when screen is repainted
+  useLayoutEffect(() => {
+    function updateSize() {
+      // if we have a parent DOM element, set the width to the width of that element
+      // minus the padding
+      if (parentRef.current) {
+        setWidth(parentRef.current.offsetWidth - 24);
+      }
     }
+    // dispatches the updateSize function when the window is resized
+    window.addEventListener('resize', updateSize);
+    updateSize();
 
-    if (accumulator.length > allowedLength) {
-      return `${accumulator}<br>${currentValue}`;
-    }
-
-    return `${accumulator} ${currentValue}`;
-  }, '');
-}
-
-function BarGraph({ data, yAxisLabel, xAxisLabel }) {
-  const [plot, updatePlot] = useState({});
-
-  useEffect(() => {
-    if (!data || !Array.isArray(data)) {
-      return;
-    }
-
-    const categories = [];
-    const counts = [];
-
-    data.forEach((dataPoint) => {
-      categories.push(dataPoint.category);
-      counts.push(dataPoint.count);
-    });
-
-    const trace = {
-      type: 'bar',
-      x: categories.map((category) => topicsWithLineBreaks(category)),
-      y: counts,
-      hoverinfo: 'y',
-    };
-
-    const width = categories.length * WIDGET_PER_CATEGORY;
-
-    const layout = {
-      bargap: 0.5,
-      height: 300,
-      hoverlabel: {
-        bgcolor: '#000',
-        bordercolor: '#000',
-        font: {
-          color: '#fff',
-          size: 16,
-        },
-      },
-      font: {
-        color: '#1b1b1b',
-      },
-      width,
-      margin: {
-        l: 80,
-        pad: 20,
-        t: 24,
-      },
-      xaxis: {
-        automargin: true,
-        fixedrange: true,
-        tickangle: 0,
-      },
-      yaxis: {
-        tickformat: ',.0d',
-        fixedrange: true,
-      },
-      hovermode: 'none',
-    };
-
-    updatePlot({
-      data: [trace],
-      layout,
-      config: {
-        responsive: true, displayModeBar: false, hovermode: 'none',
-      },
-    });
+    // removes the event listener when the component is unmounted
+    return () => window.removeEventListener('resize', updateSize);
   }, [data]);
 
+  if (!data || !Array.isArray(data)) {
+    return null;
+  }
+
+  const categories = [];
+  const counts = [];
+
+  data.forEach((dataPoint) => {
+    categories.push(dataPoint.category);
+    counts.push(dataPoint.count);
+  });
+
+  const range = [Math.min(...counts), Math.max(...counts)];
+
+  const trace = {
+    type: 'bar',
+    orientation: 'h',
+    x: counts,
+    y: categories,
+    marker: {
+      color: colors.ttahubMediumBlue,
+    },
+    width: 0.75,
+    hovertemplate: '%{x}<extra></extra>',
+  };
+
+  const bottomPlotXaxisConfig = {
+    range,
+    ...xAxisConfig,
+  };
+
+  const layout = {
+    bargap: 0.5,
+    height: barHeightMultiplier * data.length,
+    width,
+    hoverlabel: {
+      bgcolor: '#000',
+      bordercolor: '#000',
+      font: {
+        color: '#fff',
+        size: 16,
+      },
+    },
+    font: {
+      color: colors.textInk,
+    },
+    margin: {
+      l: leftMargin,
+      r: 0,
+      t: topMargin,
+      b: 0,
+    },
+    xaxis: {
+      range,
+    },
+    yaxis: {
+      zeroline: false,
+      autotick: false,
+      ticks: 'outside',
+      tick0: 0,
+      ticklen: 4,
+      tickwidth: 1,
+      tickcolor: 'transparent',
+    },
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: false,
+    hovermode: 'none',
+  };
+
+  if (data.length === 0) {
+    return <NoResultsFound />;
+  }
+
   return (
-    <>
-      <div className="display-flex flex-align-center">
-        <div className="margin-right-1 smart-hub--vertical-text">
-          { yAxisLabel }
-        </div>
+    <div ref={widgetRef}>
+      <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div className="overflow-x-scroll" tabIndex={0}>
+        <div className="ttahub-bar-graph--bars-top" style={{ height: barGraphTopHeight }} tabIndex={0}>
           <span className="sr-only">Use the arrow keys to scroll graph</span>
           <Plot
-            data={plot.data}
-            layout={plot.layout}
-            config={plot.config}
+            data={[trace]}
+            layout={layout}
+            config={config}
           />
         </div>
       </div>
-      <div className="display-flex flex-justify-center margin-top-1">
-        { xAxisLabel }
+      <div className="height-5 width-full">
+        <BottomAxis
+          data={[{ mode: 'bar' }]}
+          layout={{
+            width,
+            height: 60,
+            margin: {
+              l: leftMargin,
+              t: 0,
+              r: 0,
+            },
+            yaxis: { tickmode: 'array', tickvals: [] },
+            xaxis: bottomPlotXaxisConfig,
+          }}
+          config={{
+            displayModeBar: false,
+            responsive: true,
+          }}
+        />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -134,12 +160,31 @@ BarGraph.propTypes = {
       count: PropTypes.number,
     }),
   ),
-  yAxisLabel: PropTypes.string.isRequired,
-  xAxisLabel: PropTypes.string.isRequired,
+  leftMargin: PropTypes.number,
+  topMargin: PropTypes.number,
+  barHeightMultiplier: PropTypes.number,
+  barGraphTopHeight: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]),
+  widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  xAxisConfig: PropTypes.shape({
+    title: PropTypes.shape({
+      text: PropTypes.string,
+      standoff: PropTypes.number,
+    }),
+    ticksuffix: PropTypes.string,
+  }),
 };
 
 BarGraph.defaultProps = {
   data: [],
+  leftMargin: 320,
+  topMargin: 0,
+  barHeightMultiplier: 25,
+  barGraphTopHeight: 400,
+  widgetRef: { current: null },
+  xAxisConfig: {},
 };
 
 export default BarGraph;

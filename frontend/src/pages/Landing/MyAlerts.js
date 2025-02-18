@@ -1,24 +1,61 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
-import './index.css';
+import './index.scss';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
+import { cleanupLocalStorage } from '../ActivityReport';
+import UserContext from '../../UserContext';
+import {
+  PendingApprovalIcon,
+  Closed as ApprovedIcon,
+  NeedsActionIcon,
+} from '../../components/icons';
+
+const isCollaborator = (report, user) => {
+  if (!report.activityReportCollaborators) return false;
+  return report.activityReportCollaborators.find((u) => u.userId === user.id);
+};
+
+const isCreator = (report, user) => report.userId === user.id;
+
+const ProperIcon = ({ approvalStatus }) => {
+  switch (approvalStatus) {
+    case APPROVER_STATUSES.APPROVED:
+      return <ApprovedIcon />;
+    case APPROVER_STATUSES.NEEDS_ACTION:
+      return <NeedsActionIcon />;
+    case APPROVER_STATUSES.PENDING:
+    default:
+      return <PendingApprovalIcon />;
+  }
+};
+
+ProperIcon.propTypes = {
+  approvalStatus: PropTypes.string,
+};
+
+ProperIcon.defaultProps = {
+  approvalStatus: APPROVER_STATUSES.PENDING,
+};
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
+  const { user } = useContext(UserContext);
 
   const onDelete = async (reportId) => {
     if (modalRef && modalRef.current) {
@@ -26,6 +63,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     }
     await deleteReport(reportId);
     removeAlert(reportId);
+    cleanupLocalStorage(reportId);
   };
 
   const tableRows = reports.map((report, index, { length }) => {
@@ -34,45 +72,87 @@ export function ReportsRow({ reports, removeAlert, message }) {
       displayId,
       activityRecipients,
       startDate,
-      collaborators,
       calculatedStatus,
-      pendingApprovals,
       approvers,
       createdAt,
       creatorName,
+      activityReportCollaborators,
     } = report;
 
-    const justSubmitted = message && message.reportId === id;
-
     const recipients = activityRecipients.map((ar) => (
-      ar.grant ? ar.grant.recipient.name : ar.name
+      ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
 
-    const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
+    const approverNames = approvers ? approvers.sort((a, b) => (
+      a.user.fullName.localeCompare(b.user.fullName)
+    )).map((a) => (
+      <span key={a.id}>
+        <ProperIcon approvalStatus={a.status} />
+        {a.user.fullName}
+      </span>
+    )) : [];
 
-    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
-      collaborator.fullName));
+    const collaboratorNames = activityReportCollaborators
+      ? activityReportCollaborators.map((collaborator) => (
+        collaborator.fullName)) : [];
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
     let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
-    let displayStatus = calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus;
+    let displayStatus = calculatedStatus;
 
-    if (justSubmitted && message.status !== calculatedStatus) {
-      displayStatus = message.status === 'unlocked' ? 'Needs action' : message.status;
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? 'needs_action' : message.status}`;
+    const justSubmitted = message && Number(message.reportId) === id;
+    if (justSubmitted) {
+      displayStatus = 'Submitted';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
     }
+
+    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    }
+
+    if (
+      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      displayStatus = 'Reviewed';
+      statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
+    }
+
+    if (
+      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
+    ) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    }
+
+    if (
+      calculatedStatus !== REPORT_STATUSES.APPROVED
+      && approvers && approvers.length > 0
+      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      displayStatus = REPORT_STATUSES.APPROVED;
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;
+    }
+
     const menuItems = [
       {
         label: 'View',
         onClick: () => { history.push(idLink); },
       },
-      {
+    ];
+
+    if (isCollaborator(report, user) || isCreator(report, user)) {
+      menuItems.push({
         label: 'Delete',
         onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
-      },
-    ];
+      });
+    }
 
     return (
       <tr key={idKey}>
@@ -103,16 +183,10 @@ export function ReportsRow({ reports, removeAlert, message }) {
         <td>
           <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
-        <td>
-          {approversToolTipText.length > 0
-            ? (
-              <Tooltip
-                displayText={pendingApprovals}
-                tooltipText={approversToolTipText.join('\n')}
-                buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
-              />
-            )
-            : ''}
+        <td className="ttahub-approver-cell">
+          <div className="display-flex flex-column flex-justify">
+            {approverNames}
+          </div>
         </td>
         <td>
           <Tag
@@ -122,7 +196,14 @@ export function ReportsRow({ reports, removeAlert, message }) {
           </Tag>
         </td>
         <td>
-          <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={index + 1 === length} />
+          <ContextMenu
+            label={contextMenuLabel}
+            menuItems={menuItems}
+            menuWidthOffset={110}
+            menuHeightOffset={80}
+            up={index + 1 === length}
+            fixed
+          />
         </td>
       </tr>
     );
@@ -154,11 +235,12 @@ export function ReportsRow({ reports, removeAlert, message }) {
 }
 
 ReportsRow.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
   message: PropTypes.shape({
     time: PropTypes.string,
-    reportId: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
@@ -188,12 +270,12 @@ function MyAlerts(props) {
     setAlertReportsCount,
     handleDownloadAllAlerts,
     loading,
-    message,
     isDownloadingAlerts,
     downloadAlertsError,
     setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
+    message,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -244,7 +326,7 @@ function MyAlerts(props) {
   return (
     <>
       {reports && reports.length === 0 && (
-        <Container className="landing" padding={0} loading={loading}>
+        <Container className="landing" paddingX={0} paddingY={0} loading={loading}>
           <div className="text-center padding-10">
             <div>
               <h2>You&apos;re all caught up!</h2>
@@ -260,7 +342,7 @@ function MyAlerts(props) {
       )}
 
       {reports && (reports.length > 0) && (
-        <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="My activity report alerts loading">
+        <Container className="landing inline-size-auto maxw-full" paddingX={0} paddingY={0} loading={loading} loadingLabel="My activity report alerts loading">
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
@@ -277,6 +359,7 @@ function MyAlerts(props) {
             setDownloadError={setDownloadAlertsError}
             downloadAllButtonRef={downloadAllAlertsButtonRef}
             downloadSelectedButtonRef={downloadSelectedAlertsButtonRef}
+            exportIdPrefix="my-alerts-"
           />
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
@@ -290,8 +373,8 @@ function MyAlerts(props) {
                   {renderColumnHeader('Date started', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
-                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                  {renderColumnHeader('Approvers(s)', 'approvals', true)}
+                  {renderColumnHeader('Collaborators', 'collaborators')}
+                  {renderColumnHeader('Approvers', 'approvals', true)}
                   {renderColumnHeader('Status', 'calculatedStatus')}
                   <th scope="col" aria-label="..." />
                 </tr>
@@ -308,6 +391,7 @@ function MyAlerts(props) {
 }
 
 MyAlerts.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object),
   newBtn: PropTypes.bool.isRequired,
   alertsSortConfig: PropTypes.shape({ sortBy: PropTypes.string, direction: PropTypes.string }),
@@ -321,12 +405,6 @@ MyAlerts.propTypes = {
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
-  message: PropTypes.shape({
-    time: PropTypes.string,
-    reportId: PropTypes.string,
-    displayId: PropTypes.string,
-    status: PropTypes.string,
-  }),
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
   setDownloadAlertsError: PropTypes.func.isRequired,
@@ -338,6 +416,12 @@ MyAlerts.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
 };
 
 MyAlerts.defaultProps = {
@@ -347,16 +431,16 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
+  isDownloadingAlerts: false,
+  downloadAlertsError: false,
+  downloadAllAlertsButtonRef: () => {},
+  downloadSelectedAlertsButtonRef: () => {},
   message: {
     time: '',
     reportId: '',
     displayId: '',
     status: '',
   },
-  isDownloadingAlerts: false,
-  downloadAlertsError: false,
-  downloadAllAlertsButtonRef: () => {},
-  downloadSelectedAlertsButtonRef: () => {},
 };
 
 export default MyAlerts;

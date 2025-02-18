@@ -1,4 +1,6 @@
-import React from 'react';
+import React, {
+  useMemo, useContext, useState, useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -11,8 +13,9 @@ import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { expandFilters, formatDateRange } from '../../../utils';
 import FilterContext from '../../../FilterContext';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
+import UserContext from '../../../UserContext';
+import { getUserRegions } from '../../../permissions';
 
-import './TTAHistory.css';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 
 const defaultDate = formatDateRange({
@@ -22,9 +25,12 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   recipientName, recipientId, regionId,
 }) {
+  const [resetPagination, setResetPagination] = useState(false);
   const filterKey = `ttahistory-filters-${recipientId}`;
+  const { user } = useContext(UserContext);
+  const regions = useMemo(() => getUserRegions(user), [user]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     filterKey,
     [
       {
@@ -35,6 +41,11 @@ export default function TTAHistory({
       },
     ],
   );
+
+  const setFilters = useCallback((newFilters) => {
+    setFiltersInHook(newFilters);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   if (!recipientName) {
     return null;
@@ -57,10 +68,8 @@ export default function TTAHistory({
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      setFilters(newFilters);
-    }
+    newFilters.splice(index, 1);
+    setFilters(newFilters);
   };
 
   const onApply = (newFilters) => {
@@ -72,20 +81,17 @@ export default function TTAHistory({
   return (
     <>
       <Helmet>
-        <title>
-          Recipient TTA History -
-          {' '}
-          {recipientName}
-        </title>
+        <title>TTA History</title>
       </Helmet>
-      <div className="margin-x-2 maxw-widescreen">
-        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
+      <div className="maxw-widescreen">
+        <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             filters={filters}
             onApplyFilters={onApply}
             onRemoveFilter={onRemoveFilter}
             filterConfig={TTAHISTORY_FILTER_CONFIG}
             applyButtonAria="Apply filters to recipient record data"
+            allUserRegions={regions}
           />
         </div>
         <Overview
@@ -93,7 +99,7 @@ export default function TTAHistory({
             'Activity reports',
             'Hours of TTA',
             'Participants',
-            'In-person activities',
+            'In person activities',
           ]}
           showTooltips
           filters={filtersToApply}
@@ -112,7 +118,10 @@ export default function TTAHistory({
           <ActivityReportsTable
             filters={filtersToApply}
             showFilter={false}
-            tableCaption="Activity Reports"
+            tableCaption="Approved activity reports"
+            exportIdPrefix="tta-history-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
       </div>

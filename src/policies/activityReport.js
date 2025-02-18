@@ -7,13 +7,17 @@
   or get the report.
 */
 import _ from 'lodash';
+import { REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 export default class ActivityReport {
   constructor(user, activityReport) {
     this.user = user;
     this.activityReport = activityReport;
+  }
+
+  isApproverAndCreator() {
+    return this.isApprovingManager() && this.isAuthor();
   }
 
   canReview() {
@@ -26,9 +30,15 @@ export default class ActivityReport {
   }
 
   canUpdate() {
-    return (this.isAuthor() || this.isCollaborator())
+    const canUpdateAsAuthorAndCollaborator = (this.isAuthor() || this.isCollaborator())
       && this.canWriteInRegion()
       && this.reportHasEditableStatus();
+
+    const canUpdateAsApprover = (this.canReview()
+      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
+
+    return canUpdateAsAuthorAndCollaborator
+      || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
   }
 
   canReset() {
@@ -58,6 +68,11 @@ export default class ActivityReport {
     }
 
     if (this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // TTAHUB-1817: Admins should be allowed to read an approved report.
+      if (this.isAdmin()) {
+        return true;
+      }
+
       return this.canReadInRegion();
     }
 
@@ -65,35 +80,53 @@ export default class ActivityReport {
   }
 
   canApproveInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.APPROVE_REPORTS
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.READ_WRITE_REPORTS
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
 
   canReadInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         (permission.scopeId === SCOPES.READ_REPORTS
           || permission.scopeId === SCOPES.APPROVE_REPORTS
           || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
+  }
+
+  hasBeenMarkedByApprover() {
+    return (
+      this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+      || this.activityReport.approvers.some((approver) => (
+        approver.status === REPORT_STATUSES.APPROVED
+      ))
+    );
   }
 
   isAdmin() {
@@ -115,19 +148,37 @@ export default class ActivityReport {
   }
 
   isCollaborator() {
-    return this.activityReport.collaborators.some((user) => user.id === this.user.id);
+    if (!this.activityReport.activityReportCollaborators
+      || this.activityReport.activityReportCollaborators.length === 0) {
+      return false;
+    }
+
+    return this.activityReport
+      .activityReportCollaborators.some((collab) => collab.user.id === this.user.id);
   }
 
   isApprovingManager() {
     if (!this.activityReport.approvers) {
       return false;
     }
-    const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
+    const approverUserIds = this.activityReport.approvers.map((approval) => approval.user.id);
     return approverUserIds.includes(this.user.id);
   }
 
+  // This is a helper function to determine if the report is in a state where it can be edited
   reportHasEditableStatus() {
-    return this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
-      || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+    // if the report is in draft, it's editable
+    if (this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
+      || this.activityReport.calculatedStatus === REPORT_STATUSES.DRAFT) {
+      return true;
+    }
+
+    // if the report is in needs action, it's editable,
+    // regardless of whether the report is submitted
+    if (this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      return true;
+    }
+
+    return false;
   }
 }

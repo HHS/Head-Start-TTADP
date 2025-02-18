@@ -1,0 +1,11 @@
+style
+  include ../email.css
+p Hello,
+p This is a reminder that Training Report #{displayId} is ready for your review.
+p Select the link below to review and complete the event in the TTA Hub:
+ul
+  li 
+    a(href=reportPath)= displayId
+p Best Regards,
+  br
+  | Your TTA Hub team

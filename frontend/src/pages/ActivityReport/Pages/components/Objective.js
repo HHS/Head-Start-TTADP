@@ -1,199 +1,681 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useContext,
+  useRef,
+  useMemo,
+} from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { Editor } from 'react-draft-wysiwyg';
+import { v4 as uuidv4 } from 'uuid';
+import { Link } from 'react-router-dom';
 import {
-  Tag, Label, Button, TextInput, Dropdown, Grid,
+  useController, useFormContext, useWatch,
+} from 'react-hook-form';
+import {
+  Alert,
 } from '@trussworks/react-uswds';
+import ObjectiveTitle from './ObjectiveTitle';
+import GenericSelectWithDrawer from '../../../../components/GoalForm/GenericSelectWithDrawer';
+import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
+import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
+import ObjectiveTta from './ObjectiveTta';
+import ObjectiveStatus from './ObjectiveStatus';
+import ObjectiveSelect from './ObjectiveSelect';
+import ObjectiveSupportType from '../../../../components/ObjectiveSupportType';
+import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
+import { uploadObjectivesFile } from '../../../../fetchers/File';
+import {
+  OBJECTIVE_TITLE,
+  OBJECTIVE_TTA,
+  OBJECTIVE_TOPICS,
+  OBJECTIVE_CITATIONS,
+} from './goalValidator';
+import { validateListOfResources, noDisallowedUrls } from '../../../../components/GoalForm/constants';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import './Objective.scss';
+import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
+import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import CitationDrawerContent from '../../../../components/CitationDrawerContent';
 
-import ObjectiveFormItem from './ObjectiveFormItem';
-import ContextMenu from '../../../../components/ContextMenu';
-import RichEditor from '../../../../components/RichEditor';
-import { getEditorState } from '../../../../utils';
-import './Objective.css';
-
-const statuses = [
-  'Not Started',
-  'In Progress',
-  'Complete',
-];
-
-const EMPTY_TEXT_BOX = '<p></p>';
-
-const Objective = ({
-  objectiveAriaLabel,
+export default function Objective({
   objective,
-  onRemove,
-  onUpdate,
-  parentLabel,
-}) => {
-  const firstInput = useRef();
-  const { errors, trigger } = useFormContext();
-  const isValid = !errors[parentLabel];
-  const [oldObjective, updateOldObjective] = useState(objective);
+  topicOptions,
+  options,
+  index,
+  remove,
+  fieldArrayName,
+  errors,
+  onObjectiveChange,
+  parentGoal,
+  initialObjectiveStatus,
+  reportId,
+  citationOptions,
+  rawCitations,
+  isMonitoringGoal,
+}) {
+  const modalRef = useRef();
 
-  useEffect(() => {
-    if (firstInput.current) {
-      firstInput.current.focus();
-    }
-  }, []);
+  const citationNames = useMemo(() => rawCitations.map((rawCitation) => rawCitation.citation),
+    [rawCitations]);
 
-  const onChange = (e) => {
-    onUpdate({
-      ...objective,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // the below is a concession to the fact that the objective may
+  // exist pre-migration to the new UI, and might not have complete data
+  const initialObjective = (() => ({
+    ...objective,
+    id: objective.id || objective.value,
+    value: objective.value || objective.id,
+    label: objective.label || objective.title,
+  }))();
+  const [selectedObjective, setSelectedObjective] = useState(initialObjective);
+  const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
+  const {
+    getValues, setError, clearErrors, watch,
+  } = useFormContext();
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+  const { objectiveCreatedHere } = initialObjective;
+  const [onApprovedAR, setOnApprovedAR] = useState(initialObjective.onApprovedAR);
+  const [citationWarnings, setCitationWarnings] = useState([]);
+  const activityRecipients = watch('activityRecipients');
+  const selectedGoals = useWatch({ name: 'goals' });
 
-  const { title, ttaProvided, status } = objective;
-  const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
-  const [showEdit, updateShowEdit] = useState(defaultShowEdit);
-
-  const updateEdit = (isEditing) => {
-    if (isEditing) {
-      updateShowEdit(true);
-    } else if (title && ttaProvided !== EMPTY_TEXT_BOX) {
-      updateShowEdit(false);
-      updateOldObjective(objective);
-    } else {
-      trigger(parentLabel);
-    }
-
-    if (!isValid) {
-      trigger(parentLabel);
-    }
-  };
-
-  const onCancel = () => {
-    if (objective.title || objective.ttaProvided !== EMPTY_TEXT_BOX) {
-      updateShowEdit(false);
-      onUpdate(oldObjective);
-    } else {
-      onRemove();
-    }
-  };
-
-  const menuItems = [
-    {
-      label: 'Edit',
-      onClick: () => { updateEdit(true); },
+  /**
+   * add controllers for all the controlled fields
+   * react hook form uses uncontrolled fields by default
+   * but we want to keep the logic in one place for the AR/RTR
+   * if at all possible
+   */
+  const {
+    field: {
+      onChange: onChangeCitations,
+      onBlur: onBlurCitations,
+      value: objectiveCitations,
+      name: objectiveCitationsInputName,
     },
-    {
-      label: 'Delete',
-      onClick: onRemove,
+  } = useController({
+    name: `${fieldArrayName}[${index}].citations`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
+      },
     },
-  ];
+    // If citations are not available, set citations to null
+    defaultValue: objective.citations,
+  });
 
-  const contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
+  const {
+    field: {
+      onChange: onChangeTitle,
+      onBlur: onBlurTitle,
+      value: objectiveTitle,
+      name: objectiveTitleInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].title`,
+    rules: {
+      required: {
+        value: true,
+        message: OBJECTIVE_TITLE,
+      },
+    },
+    defaultValue: objective.title,
+  });
+
+  const {
+    field: {
+      onChange: onChangeTopics,
+      onBlur: onBlurTopics,
+      value: objectiveTopics,
+      name: objectiveTopicsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].topics`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_TOPICS,
+        noNullId: (value) => value.every((topic) => topic.id) || OBJECTIVE_TOPICS,
+      },
+    },
+    defaultValue: objective.topics,
+  });
+
+  const {
+    field: {
+      onChange: onChangeResources,
+      onBlur: onBlurResources,
+      value: objectiveResources,
+      name: objectiveResourcesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].resources`,
+    rules: {
+      validate: {
+        noDisallowedUrls,
+        allResourcesAreValid: (value) => validateListOfResources(value) || 'Enter one resource per field. Valid resource links must start with http:// or https://',
+      },
+    },
+    defaultValue: objective.resources,
+  });
+
+  const {
+    field: {
+      onChange: onChangeFiles,
+      onBlur: onBlurFiles,
+      value: objectiveFiles,
+      name: objectiveFilesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].files`,
+    defaultValue: objective.files || [],
+  });
+
+  const {
+    field: {
+      onChange: onChangeUseIpdCourses,
+      onBlur: onBlurUseIpdCourses,
+      value: objectiveUseIpdCourses,
+      name: objectiveUseIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].useIpdCourses`,
+    defaultValue: !!(objective.courses && objective.courses.length) || false,
+  });
+
+  const {
+    field: {
+      onChange: onChangeIpdCourses,
+      onBlur: onBlurIpdCourses,
+      value: objectiveIpdCourses,
+      name: objectiveIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].courses`,
+    defaultValue: objective.courses || [],
+    rules: {
+      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+    },
+  });
+
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].ttaProvided`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => (value && value.trim() !== '<p></p>') || OBJECTIVE_TTA,
+      },
+    },
+    defaultValue: objective.ttaProvided ? objective.ttaProvided : '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSupportType,
+      onBlur: onBlurSupportType,
+      value: supportType,
+      name: supportTypeInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].supportType`,
+    rules: {
+      required: 'Please select a support type',
+    },
+    defaultValue: objective.supportType || '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeStatus,
+      onBlur: onBlurStatus,
+      value: objectiveStatus,
+      name: objectiveStatusInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].status`,
+    rules: { required: true },
+    defaultValue: objective.status || 'Not Started',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSuspendReason,
+      value: objectiveSuspendReason,
+      name: objectiveSuspendInputName,
+    },
+  } = useController({
+    rules: {
+      required: objective.status === 'Suspended',
+    },
+    name: `${fieldArrayName}[${index}].closeSuspendReason`,
+    defaultValue: objective.closeSuspendReason || '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSuspendContext,
+      value: objectiveSuspendContext,
+      name: objectiveSuspendContextInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].closeSuspendContext`,
+    rules: { required: true },
+    defaultValue: objective.closeSuspendContext || '',
+  });
+
+  const {
+    field: {
+      value: createdHere,
+      onChange: onChangeCreatedHere,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].createdHere`,
+    defaultValue: objectiveCreatedHere || null,
+  });
+
+  const isOnReport = objective.onAR;
+
+  const onChangeObjective = (newObjective) => {
+    setSelectedObjective(newObjective);
+    onChangeResources(newObjective.resources);
+    onChangeTitle(newObjective.title);
+
+    // we only want to set the tta provided if it already exists, otherwise
+    // we don't want to clear the value in the field
+    if (newObjective.ttaProvided && newObjective.ttaProvided !== '<p></p>') {
+      onChangeTta(newObjective.ttaProvided);
+    }
+
+    onChangeStatus(newObjective.status);
+    onChangeSupportType(newObjective.supportType);
+    onChangeTopics(newObjective.topics);
+    onChangeFiles(newObjective.files || []);
+    onObjectiveChange(newObjective, index); // Call parent on objective change.
+
+    // set a new initial status, which we went to preserve separately from the dropdown
+    // this determines if the title is read only or not
+    setStatusForCalculations(newObjective.status);
+
+    // ipd course
+    onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
+    onChangeIpdCourses(newObjective.courses);
+
+    // was objective created on this report?
+    onChangeCreatedHere(newObjective.objectiveCreatedHere);
+
+    // keep track of whether the objective is on an approved report
+    setOnApprovedAR(newObjective.onApprovedAR);
+  };
+
+  const onUploadFile = async (files, _objective, setUploadError) => {
+    // we need to access the updated form data to
+    // get the correct objective ids to attach to our API post
+    const objectivesField = getValues(fieldArrayName);
+    let objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
+
+    if (!objectiveToAttach) {
+      objectiveToAttach = selectedObjective;
+    }
+
+    // handle file upload
+    try {
+      setIsAppLoading(true);
+      setAppLoadingText('Uploading');
+      const data = new FormData();
+      data.append('reportId', JSON.stringify(reportId));
+      data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
+      files.forEach((file) => {
+        data.append('file', file);
+      });
+
+      const response = await uploadObjectivesFile(data);
+      return response;
+    } catch (error) {
+      setUploadError('There was an error uploading your file(s).');
+      return null;
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
+  const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
+  const onRemove = () => remove(index);
+
+  const onUpdateStatus = (event) => {
+    const { value: updatedStatus } = event.target;
+
+    if (updatedStatus === 'Suspended') {
+      modalRef.current.toggleModal();
+      return;
+    }
+
+    onChangeSuspendContext('');
+    onChangeSuspendReason('');
+    onChangeStatus(updatedStatus);
+  };
+
+  const setStatusReasonError = (on) => {
+    if (on) {
+      setError(`${fieldArrayName}[${index}].closeSuspendReason`, {
+        type: 'required',
+        message: 'Reason for suspension is required',
+      });
+    } else {
+      clearErrors(`${fieldArrayName}[${index}].closeSuspendReason`);
+    }
+  };
+
+  // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
+  const selectedCitationsChanged = (newCitations) => {
+    const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
+    // From rawCitations get all the raw citations with the same standardId as the newCitations.
+    const newCitationsObjects = rawCitations.filter(
+      (rawCitation) => newCitationStandardIds.includes(rawCitation.standardId),
+    ).map((rawCitation) => (
+      {
+        ...rawCitation,
+        id: rawCitation.standardId,
+        name: newCitations.find(
+          (newCitation) => newCitation.id === rawCitation.standardId,
+        ).name,
+        monitoringReferences:
+        [
+          ...rawCitation.grants.map((grant) => ({
+            ...grant,
+            standardId: rawCitation.standardId,
+            name: newCitations.find(
+              (newCitation) => newCitation.id === rawCitation.standardId,
+            ).name,
+          })),
+        ],
+      }));
+
+    onChangeCitations([...newCitationsObjects]);
+  };
+
+  useDeepCompareEffect(() => {
+    // Get a distinct list of grantId's from the citation.grants array.
+    if ((!objectiveCitations || !objectiveCitations.length)
+        || (selectedGoals && selectedGoals.length > 0)) {
+      if (citationWarnings.length > 0) {
+        setCitationWarnings([]);
+      }
+      return;
+    }
+    const grantIdsWithCitations = Array.from(objectiveCitations.reduce((acc, citation) => {
+      const grantsToAdd = citation.monitoringReferences.map((grant) => grant.grantId);
+      return new Set([...acc, ...grantsToAdd]);
+    }, new Set()));
+
+    // Find all the grantIds not in grantIdsWithCitations.
+    const missingRecipientGrantNames = (activityRecipients || []).filter(
+      (recipient) => !grantIdsWithCitations.includes(recipient.activityRecipientId),
+    ).map((recipient) => recipient.name);
+
+    setCitationWarnings(missingRecipientGrantNames);
+  }, [objectiveCitations, activityRecipients, selectedGoals, citationWarnings]);
 
   return (
-    <div className="smart-hub--objective">
-      {showEdit && (
-        <>
-          <ObjectiveFormItem
-            showErrors={!isValid}
-            className="margin-top-0"
-            message="Please enter the title for this objective"
-            label="Objective"
-            value={title}
-          >
-            <TextInput
-              name="title"
-              aria-label={`title for objective ${objectiveAriaLabel}`}
-              onChange={onChange}
-              inputRef={firstInput}
-              value={title}
-              spellCheck="true"
-            />
-          </ObjectiveFormItem>
-          <ObjectiveFormItem
-            showErrors={!isValid}
-            message="Please enter the TTA provided for this objective"
-            label="TTA Provided"
-            value={ttaProvided}
-          >
-            <div className="smart-hub--text-area__resize-vertical">
-              <RichEditor
-                value={ttaProvided}
-                ariaLabel={`TTA provided for objective ${objectiveAriaLabel}`}
-                defaultValue={ttaProvided}
-                onChange={(content) => {
-                  onUpdate({
-                    ...objective,
-                    ttaProvided: content,
-                  });
-                }}
-              />
-            </div>
-          </ObjectiveFormItem>
-          <Grid row gap>
-            <Grid col={4}>
-              <Label>
-                Status
-                <Dropdown
-                  name="status"
-                  onChange={onChange}
-                  value={status}
-                  aria-label={`Status for objective ${objectiveAriaLabel}`}
-                >
-                  {statuses.map((possibleStatus) => (
-                    <option
-                      key={possibleStatus}
-                      value={possibleStatus}
-                    >
-                      {possibleStatus}
-                    </option>
+    <>
+      <ObjectiveSelect
+        onChange={onChangeObjective}
+        selectedObjectives={selectedObjective}
+        options={options}
+        onRemove={onRemove}
+      />
+      <FormFieldThatIsSometimesReadOnly
+        label="TTA Objective"
+        value={objectiveTitle}
+        permissions={[
+          createdHere,
+          statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+          !onApprovedAR,
+        ]}
+      >
+        <ObjectiveTitle
+          error={errors.title
+            ? ERROR_FORMAT(errors.title.message)
+            : NO_ERROR}
+          title={objectiveTitle}
+          onChangeTitle={onChangeTitle}
+          validateObjectiveTitle={onBlurTitle}
+          inputName={objectiveTitleInputName}
+          initialObjectiveStatus={statusForCalculations}
+        />
+      </FormFieldThatIsSometimesReadOnly>
+      {
+        isMonitoringGoal && citationWarnings.length > 0 && (
+          <Alert type="warning" className="margin-bottom-2">
+            <span>
+              <span className="margin-top-0">
+                {citationWarnings.length > 1
+                  ? 'These grants do not have any of the citations selected:'
+                  : 'This grant does not have any of the citations selected:'}
+                <ul className="margin-top-2">
+                  {citationWarnings.map((grant) => (
+                    <li key={grant}>{grant}</li>
                   ))}
-                </Dropdown>
-              </Label>
-            </Grid>
-            <Grid col={8} className="display-flex flex-align-end">
-              <Button aria-label={`Save objective ${objectiveAriaLabel}`} type="button" onClick={() => { updateEdit(false); }}>Save Objective</Button>
-              <Button aria-label={`Cancel update of objective ${objectiveAriaLabel}`} secondary type="button" onClick={() => { onCancel(); }}>Cancel</Button>
-            </Grid>
-          </Grid>
-        </>
-      )}
-      {!showEdit
-      && (
-        <>
-          <div className="display-flex flex-align-end">
-            <div className="margin-top-0 margin-left-auto">
-              <ContextMenu
-                label={contextMenuLabel}
-                menuItems={menuItems}
+                </ul>
+              </span>
+              <span className="margin-top-2 margin-bottom-0">
+                To avoid errors when submitting the report, you can either:
+                <ul className="margin-top-2 margin-bottom-0">
+                  <li>
+                    Add a citation for this grant under an objective for the monitoring goal
+                  </li>
+                  <li>
+                    Remove the grant from the
+                    {' '}
+                    <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                  </li>
+                  <li>
+                    Add another goal to the report
+                  </li>
+                </ul>
+              </span>
+            </span>
+          </Alert>
+        )
+      }
+      {
+        isMonitoringGoal && (
+          <GenericSelectWithDrawer
+            error={errors.citations
+              ? ERROR_FORMAT(errors.citations.message)
+              : NO_ERROR}
+            name="Citation"
+            options={citationOptions}
+            validateValues={onBlurCitations}
+            values={objectiveCitations}
+            onChangeValues={selectedCitationsChanged}
+            inputName={objectiveCitationsInputName}
+            drawerTitle="Citation guidance"
+            drawerContent={(
+              <CitationDrawerContent
+                citations={citationNames}
               />
-            </div>
-          </div>
-          <p className="smart-hub--objective-title margin-top-0">
-            <span className="text-bold">Objective: </span>
-            {title}
-          </p>
-          <p>
-            <span className="text-bold">TTA Provided: </span>
-          </p>
-          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(ttaProvided)} />
-          <Tag className="smart-hub--objective-tag">{status}</Tag>
-        </>
-      )}
-    </div>
+            )}
+          />
+        )
+      }
+
+      <GenericSelectWithDrawer
+        error={errors.topics
+          ? ERROR_FORMAT(errors.topics.message)
+          : NO_ERROR}
+        name="Topic"
+        options={topicOptions}
+        validateValues={onBlurTopics}
+        values={objectiveTopics}
+        onChangeValues={onChangeTopics}
+        inputName={objectiveTopicsInputName}
+        drawerTitle="Topic guidance"
+        drawerContent={useMemo(() => <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />, [])}
+      />
+
+      <IpdCourseSelect
+        error={errors.courses
+          ? ERROR_FORMAT(errors.courses.message)
+          : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-top-3"
+      />
+
+      <ResourceRepeater
+        resources={resourcesForRepeater}
+        isOnReport={isOnReport || false}
+        setResources={onChangeResources}
+        error={errors.resources ? errors.resources.message : ''}
+        validateResources={onBlurResources}
+        inputName={objectiveResourcesInputName}
+        userCanEdit
+      />
+
+      <ObjectiveFiles
+        objective={objective}
+        files={objectiveFiles}
+        onChangeFiles={onChangeFiles}
+        isOnReport={isOnReport || false}
+        onUploadFiles={onUploadFile}
+        index={index}
+        onBlur={onBlurFiles}
+        inputName={objectiveFilesInputName}
+        reportId={reportId}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        label="Did you use any other TTA resources that aren't available as link?"
+        selectedObjectiveId={selectedObjective.id}
+        userCanEdit
+        editingFromActivityReport
+      />
+      <ObjectiveTta
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
+        status={objectiveStatus}
+        isOnApprovedReport={false}
+        error={errors.ttaProvided
+          ? ERROR_FORMAT(errors.ttaProvided.message)
+          : NO_ERROR}
+        validateTta={onBlurTta}
+      />
+      <ObjectiveSupportType
+        onBlurSupportType={onBlurSupportType}
+        supportType={supportType}
+        onChangeSupportType={onChangeSupportType}
+        inputName={supportTypeInputName}
+        error={errors.supportType
+          ? ERROR_FORMAT(errors.supportType.message)
+          : NO_ERROR}
+      />
+
+      <ObjectiveSuspendModal
+        objectiveId={selectedObjective.id}
+        modalRef={modalRef}
+        objectiveSuspendReason={objectiveSuspendReason}
+        onChangeSuspendReason={onChangeSuspendReason}
+        objectiveSuspendInputName={objectiveSuspendInputName}
+        objectiveSuspendContextInputName={objectiveSuspendContextInputName}
+        objectiveSuspendContext={objectiveSuspendContext}
+        onChangeSuspendContext={onChangeSuspendContext}
+        onChangeStatus={onChangeStatus}
+        setError={setStatusReasonError}
+        error={errors.closeSuspendReason}
+      />
+
+      <ObjectiveStatus
+        onBlur={onBlurStatus}
+        inputName={objectiveStatusInputName}
+        status={objectiveStatus}
+        onChangeStatus={onUpdateStatus}
+        userCanEdit
+        closeSuspendContext={objectiveSuspendContext}
+        closeSuspendReason={objectiveSuspendReason}
+      />
+    </>
   );
-};
+}
 
 Objective.propTypes = {
-  objective: PropTypes.shape({
-    title: PropTypes.string,
-    ttaProvided: PropTypes.string,
+  index: PropTypes.number.isRequired,
+  objective: OBJECTIVE_PROP.isRequired,
+  errors: PropTypes.shape({
+    supportType: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    ttaProvided: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    title: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    resources: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    courses: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    roles: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    topics: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    citations: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    closeSuspendReason: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+  }).isRequired,
+  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })).isRequired,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  isMonitoringGoal: PropTypes.bool,
+  options: PropTypes.arrayOf(
+    OBJECTIVE_PROP,
+  ).isRequired,
+  remove: PropTypes.func.isRequired,
+  fieldArrayName: PropTypes.string.isRequired,
+  onObjectiveChange: PropTypes.func.isRequired,
+  parentGoal: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     status: PropTypes.string,
   }).isRequired,
-  onRemove: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired,
-  parentLabel: PropTypes.string.isRequired,
-  objectiveAriaLabel: PropTypes.string,
+  initialObjectiveStatus: PropTypes.string.isRequired,
+  reportId: PropTypes.number.isRequired,
 };
 
 Objective.defaultProps = {
-  objectiveAriaLabel: '',
+  citationOptions: [],
+  rawCitations: [],
+  isMonitoringGoal: false,
 };
-
-export default Objective;

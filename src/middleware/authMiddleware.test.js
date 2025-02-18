@@ -1,6 +1,6 @@
 import {} from 'dotenv/config';
-import { UNAUTHORIZED } from 'http-codes';
-import db, { User, Permission, sequelize } from '../models';
+import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
+import db, { User, Permission } from '../models';
 import authMiddleware, { login } from './authMiddleware';
 import SCOPES from './scopeConstants';
 
@@ -31,21 +31,39 @@ describe('authMiddleware', () => {
       regionId: 14,
       scopeId: SCOPES.SITE_ACCESS,
     }],
+    lastLogin: new Date(),
   };
 
-  const setupUser = async (user) => (
-    sequelize.transaction(async (transaction) => {
-      await User.destroy({ where: { id: user.id } }, { transaction });
-      await User.create(user, {
-        include: [{ model: Permission, as: 'permissions' }],
-        transaction,
-      });
-    })
-  );
+  const unAuthdUser = {
+    id: 663491,
+    name: 'unAuth Middleware',
+    hsesUserId: '663491',
+    hsesUsername: 'unauth.middleware',
+    permissions: [],
+    lastLogin: new Date(),
+  };
+
+  const setupUser = async (user) => {
+    await User.destroy({ where: { id: user.id } });
+    await User.create(user, {
+      include: [{ model: Permission, as: 'permissions' }],
+    });
+  };
 
   const destroyUser = async (user) => (
     User.destroy({ where: { id: user.id } })
   );
+
+  afterAll(async () => {
+    await User.destroy({
+      where: {
+        id: [mockUser.id, unAuthdUser.id],
+      },
+      individualHooks: true,
+    });
+
+    await db.sequelize.close();
+  });
 
   it('should allow access if user data is present', async () => {
     await setupUser(mockUser);
@@ -111,6 +129,22 @@ describe('authMiddleware', () => {
     expect(mockResponse.redirect).not.toHaveBeenCalledWith(process.env.TTA_SMART_HUB_URI);
   });
 
+  it('login should set referrerPath to empty string if referrer is undefined', () => {
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/login',
+      session: mockSession,
+      headers: {},
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    login(mockRequest, mockResponse);
+    expect(mockRequest.session.referrerPath).toBe('');
+  });
+
   it('bypass authorization if variables are set for UAT or accessibility testing', async () => {
     // auth is bypassed if non-prod NODE_ENV and BYPASS_AUTH = 'true', needed for cucumber and axe
     const user = {
@@ -157,6 +191,49 @@ describe('authMiddleware', () => {
     await authMiddleware(mockRequest, mockResponse, mockNext);
     expect(mockResponse.redirect).not.toHaveBeenCalled();
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 if user does not have permission to access endpoint', async () => {
+    await setupUser(unAuthdUser);
+    process.env.CURRENT_USER_ID = unAuthdUser.id;
+
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = unAuthdUser.id;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(FORBIDDEN);
+
+    await destroyUser(mockUser);
+  });
+
+  it('should return immediately if headers are already sent', async () => {
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = undefined;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      headersSent: true,
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockResponse.sendStatus).not.toHaveBeenCalled();
     expect(mockNext).not.toHaveBeenCalled();
   });
 });

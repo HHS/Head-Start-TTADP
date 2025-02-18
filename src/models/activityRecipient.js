@@ -1,14 +1,27 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityRecipient extends Model {
     static associate(models) {
-      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
+
+      ActivityRecipient.addScope('defaultScope', {
+        include: [
+          { model: models.Grant, as: 'grant' },
+          { model: models.OtherEntity, as: 'otherEntity' },
+        ],
+      });
     }
   }
   ActivityRecipient.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     activityReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
@@ -36,7 +49,10 @@ module.exports = (sequelize, DataTypes) => {
         if (this.grant) {
           return this.grant.name;
         }
-        return this.otherEntity.name;
+        if (this.otherEntity) {
+          return this.otherEntity.name;
+        }
+        return null;
       },
     },
   }, {

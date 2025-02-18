@@ -1,3 +1,6 @@
+import { isNaN } from 'lodash';
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
+
 export class HTTPError extends Error {
   constructor(statusCode, message, ...params) {
     super(message, ...params);
@@ -7,13 +10,29 @@ export class HTTPError extends Error {
   }
 }
 
-export const get = async (url) => {
+const impersonationHeader = () => {
+  if (!window.sessionStorage) return {};
+
+  const impersonationId = window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY);
+
+  if (isNaN(impersonationId) || typeof impersonationId === 'undefined') {
+    return {};
+  }
+
+  return {
+    'Auth-Impersonation-Id': impersonationId,
+  };
+};
+
+export const get = async (url, signal = null) => {
   const res = await fetch(url, {
     credentials: 'same-origin',
     headers: {
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
+      ...impersonationHeader(),
     },
+    ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new HTTPError(res.status, res.statusText);
@@ -27,6 +46,7 @@ export const put = async (url, data) => {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      ...impersonationHeader(),
     },
     body: JSON.stringify(data),
   });
@@ -42,6 +62,7 @@ export const post = async (url, data) => {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      ...impersonationHeader(),
     },
     body: JSON.stringify(data),
   });
@@ -54,13 +75,15 @@ export const post = async (url, data) => {
 /*
  * Note: Due to `delete` being a keyword, we'll settle with `destroy`
  */
-export const destroy = async (url) => {
+export const destroy = async (url, data) => {
   const res = await fetch(url, {
     method: 'DELETE',
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      ...impersonationHeader(),
     },
+    body: data ? JSON.stringify(data) : '',
   });
 
   if (!res.ok) {

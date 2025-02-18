@@ -1,7 +1,13 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
-const regionQuery = 'SELECT "Goals"."id" FROM "Goals" INNER JOIN "GrantGoals" ON "GrantGoals"."goalId" = "Goals"."id" INNER JOIN "Grants" ON "Grants"."id" = "GrantGoals"."grantId" WHERE "Grants"."regionId"';
+const regionQuery = `
+SELECT
+  "Goals"."id"
+FROM "Goals" "Goals"
+INNER JOIN "Grants" "Grants"
+ON "Goals"."grantId" = "Grants"."id"
+WHERE "Grants"."regionId"`;
 
 export function withRegion(ids) {
   return {

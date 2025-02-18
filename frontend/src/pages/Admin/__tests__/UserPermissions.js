@@ -1,11 +1,10 @@
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { SCOPE_IDS, DECIMAL_BASE } from '@ttahub/common';
 import { render, screen, within } from '@testing-library/react';
-
 import UserPermissions from '../UserPermissions';
 import { withText } from '../../../testHelpers';
-import { SCOPE_IDS, DECIMAL_BASE } from '../../../Constants';
 
 const {
   READ_ACTIVITY_REPORTS,
@@ -59,14 +58,14 @@ describe('UserPermissions', () => {
     });
 
     it('displays the current regional permissions', () => {
-      expect(screen.getByText(withText('READ_ACTIVITY_REPORTS: Region 1'))).toBeVisible();
+      expect(screen.getByText(withText('READ_REPORTS: Region 1'))).toBeVisible();
     });
 
     describe('when a region is selected', () => {
       it('the correct regional scopes are shown as checked', () => {
         userEvent.selectOptions(screen.getByLabelText('Region'), '1');
         const fieldset = screen.getByRole('group', { name: 'Regional Permissions' });
-        const checkbox = within(fieldset).getByRole('checkbox', { name: 'READ_ACTIVITY_REPORTS : Can view reports activity in the region' });
+        const checkbox = within(fieldset).getByRole('checkbox', { name: 'READ_REPORTS : Can view reports in the region' });
         expect(checkbox).toBeChecked();
       });
     });

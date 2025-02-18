@@ -19,21 +19,22 @@ const renderReasonList = (data) => {
   return null;
 };
 
-function ReasonList({ data, dateTime, loading }) {
+export function ReasonListTable({
+  data, loading, title,
+}) {
   return (
     <TableWidget
       data={data}
-      headings={['Reason', '# of Activities']}
-      dateTime={dateTime}
+      headings={['Reason', 'Number of activities']}
       loading={loading}
       loadingLabel="Reason list loading"
-      title="Reasons in Activity Reports"
+      title={title}
       renderData={renderReasonList}
     />
   );
 }
 
-ReasonList.propTypes = {
+ReasonListTable.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -42,19 +43,13 @@ ReasonList.propTypes = {
       }),
     ), PropTypes.shape({}),
   ]),
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string,
-    label: PropTypes.string,
-  }),
   loading: PropTypes.bool.isRequired,
+  title: PropTypes.string,
 };
 
-ReasonList.defaultProps = {
-  dateTime: {
-    timestamp: '',
-    label: '',
-  },
+ReasonListTable.defaultProps = {
   data: [],
+  title: 'Reasons in Activity Reports',
 };
 
-export default withWidgetData(ReasonList, 'reasonList');
+export default withWidgetData(ReasonListTable, 'reasonList');

@@ -1,11 +1,13 @@
 const {
   Model,
 } = require('sequelize');
+const { formatDate } = require('../lib/modelHelpers');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Program extends Model {
     static associate(models) {
       Program.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      Program.hasMany(models.ProgramPersonnel, { foreignKey: 'programId', as: 'programPersonnel' });
     }
   }
   Program.init({
@@ -22,8 +24,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     programType: DataTypes.STRING,
     startYear: DataTypes.STRING,
-    startDate: DataTypes.STRING,
-    endDate: DataTypes.STRING,
+    startDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
     status: DataTypes.STRING,
     name: DataTypes.STRING,
   }, {

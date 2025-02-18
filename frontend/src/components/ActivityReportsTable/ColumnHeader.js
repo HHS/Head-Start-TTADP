@@ -2,11 +2,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+export const getClassNamesFor = (n, sortBy, sortDirection) => (sortBy === n ? sortDirection : '');
+
 function ColumnHeader({
-  displayName, name, sortBy, sortDirection, onUpdateSort,
+  displayName,
+  name,
+  sortBy,
+  sortDirection,
+  onUpdateSort,
 }) {
-  const getClassNamesFor = (n) => (sortBy === n ? sortDirection : '');
-  const sortClassName = getClassNamesFor(name);
+  const sortClassName = getClassNamesFor(name, sortBy, sortDirection);
   let fullAriaSort;
   switch (sortClassName) {
     case 'asc':

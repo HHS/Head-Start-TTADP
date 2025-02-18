@@ -8,16 +8,39 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Topic extends Model {
     static associate(models) {
+      Topic.hasMany(models.RoleTopic, { foreignKey: 'topicId', as: 'roleTopics' });
       Topic.belongsToMany(models.Role, {
-        through: models.RoleTopic, foreignKey: 'topicId', as: 'roles',
+        through: models.RoleTopic,
+        foreignKey: 'topicId',
+        otherKey: 'roleId',
+        as: 'roles',
       });
-      Topic.belongsToMany(models.Goal, {
-        through: models.TopicGoal, foreignKey: 'topicId', as: 'goals',
+      Topic.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'topicId', as: 'activityReportObjectiveTopics' });
+      Topic.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveTopic,
+        foreignKey: 'topicId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'activityReportObjectives',
       });
-      Topic.belongsToMany(models.Objective, { through: models.ObjectiveTopic, foreignKey: 'objectiveId', as: 'objectives' });
+
+      models.Topic.belongsTo(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsToTopic',
+        },
+      );
+
+      models.Topic.hasMany(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsFromTopics',
+        },
+      );
     }
   }
   Topic.init({
@@ -25,6 +48,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     sequelize,

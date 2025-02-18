@@ -1,22 +1,9 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
-const { USER_ROLES } = require('../constants');
+const generateFullName = require('./helpers/generateFullName');
+const { FEATURE_FLAGS } = require('../constants');
 
-const featureFlags = [
-  'recipient_goals_objectives',
-];
-
-const generateFullName = (name, role) => {
-  const combinedRoles = Array.isArray(role) ? role.reduce((result, val) => {
-    if (val) {
-      return val === 'TTAC' || val === 'COR' ? `${result}, ${val}` : `${result}, ${val.split(' ').map((word) => word[0]).join('')}`;
-    }
-    return '';
-  }, []) : [];
-  return combinedRoles.length > 0 ? `${name}${combinedRoles}` : name;
-};
-
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
@@ -24,6 +11,24 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.hasMany(models.UserRole, { foreignKey: 'userId', as: 'userRoles' });
+      User.belongsToMany(models.Role, {
+        through: models.UserRole,
+        otherKey: 'roleId',
+        foreignKey: 'userId',
+        as: 'roles',
+      });
+      User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
+      User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
+      User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
+      User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
+      User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
+      User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
+      User.hasMany(models.CommunicationLog, { foreignKey: 'userId', as: 'communicationLogs' });
+
+      // User can belong to a national center through a national center user.
+      User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
+      User.belongsToMany(models.NationalCenter, { through: models.NationalCenterUser, foreignKey: 'userId', as: 'nationalCenters' });
     }
   }
   User.init({
@@ -42,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     hsesUserId: {
       type: DataTypes.STRING,
       unique: true,
-      allowNull: false,
+      allowNull: true,
     },
     hsesUsername: {
       type: DataTypes.STRING,
@@ -67,25 +72,31 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
     },
-    role: DataTypes.ARRAY(DataTypes.ENUM(USER_ROLES)),
-    flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+    flags: {
+      type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
+      defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
+    },
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return generateFullName(this.name, this.role);
+        return generateFullName(this.name, this.roles);
       },
     },
-    lastLogin: DataTypes.DATE,
-  }, {
-    defaultScope: {
-      order: [
-        [sequelize.fn('CONCAT', sequelize.col('name'), sequelize.col('email')), 'ASC'],
-      ],
+    nameWithNationalCenters: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const centers = `, ${(this.nationalCenters || []).map((center) => center.name).join(', ')}`;
+        return `${this.name}${centers}`;
+      },
     },
+    lastLogin: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: sequelize.literal('now()'),
+    },
+  }, {
     sequelize,
     modelName: 'User',
   });
   return User;
 };
-
-module.exports.featureFlags = featureFlags;

@@ -10,6 +10,7 @@ describe('Home Page', () => {
   beforeEach(() => {
     const user = {
       name: 'test@test.com',
+      permissions: [],
     };
 
     render(
@@ -22,6 +23,6 @@ describe('Home Page', () => {
   });
 
   test('displays welcome message', () => {
-    expect(screen.getByText('Welcome to the TTA Hub test@test.com')).toBeVisible();
+    expect(screen.getByText('Welcome to the TTA Hub, test@test.com')).toBeVisible();
   });
 });

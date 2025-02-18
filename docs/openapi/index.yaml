@@ -60,19 +60,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/grant"
-    goal:
-      type: object
-      description: >
-        A goal for a grant
-      properties:
-        id:
-          type: number
-        name:
-          type: string
-        grants:
-          type: array
-          items:
-            $ref: "#/components/schemas/grant"
     activityReport:
       type: object
       description: >
@@ -277,6 +264,19 @@ components:
           type: number
         regionId:
           type: number
+    settings:
+      type: array
+      description: An array of key value pairs that are used to store user-specific settings.
+      items:
+        $ref: '#/components/schemas/setting'
+    setting:
+      type: object
+      description: A key value pair that is used to store user-specific settings.
+      properties:
+        key:
+          type: string
+        value:
+          type: string
     user:
       type: object
       description: A TTA Smart Hub user
@@ -366,6 +366,51 @@ components:
           description: |
             Manager feedback relating to the approval
           type: string
+    event:
+      type: object
+      description: A training event
+      properties:
+        id:
+          type: integer
+        ownerId:
+          type: integer
+        pocIds:
+          type: array
+          items:
+            type: integer
+        collaboratorIds:
+          type: array
+          items:
+            type: integer
+        regionId:
+          type: integer
+        data:
+          type: object
+      required:
+        - eventId
+        - ownerId
+        - pocId
+        - collaboratorIds
+        - regionId
+        - data
+    sessionReport:
+      type: object
+      description: A session report
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        data:
+          type: object
+      required:
+        - eventId
+        - ownerId
+        - pocId
+        - collaboratorIds
+        - regionId
+        - data
+
   parameters:
     reportId.in:
       in: query

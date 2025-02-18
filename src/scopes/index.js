@@ -1,4 +1,7 @@
+import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
 
@@ -6,6 +9,8 @@ const models = {
   activityReport,
   grant,
   goal,
+  trainingReport,
+  communicationLog,
 };
 
 /**
@@ -14,9 +19,9 @@ const models = {
  *
  * an object roughly like this
  * {
- *   activityReport: SEQUELIZE OP,
- *   grant: SEQUELIZE OP,
- *   recipient: SEQUELIZE OP,
+ *   activityReport: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   grant: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   recipient: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
  * }
  *
  * options is right now only {
@@ -31,7 +36,7 @@ const models = {
  * that the scopes returned should be to produce a total subset based on which model is
  * specified. that feels like a bit of word salad, so hopefully that makes sense.
  *
- * In the current use case for this option, we are somtimes query for activity reports
+ * In the current use case for this option, we are sometimes query for activity reports
  * as the main model but in the overview widgets we also need a matching subset of grants
  * so this specifies that the grant query should be returned as a subset based on the activity
  * report filters. I'm not sure about the naming here.
@@ -40,12 +45,37 @@ const models = {
  * @param {} options
  * @returns {obj} scopes
  */
-export default function filtersToScopes(filters, options) {
+export default async function filtersToScopes(filters, options) {
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](filters, options && options[model] && options[model].subset),
+      [model]: models[model](filters, options && options[model], options && options.userId),
     });
     return scopes;
   }, {});
 }
+
+/**
+ * Merges the provided includes with the required includes, ensuring no duplicates.
+ * It is considered duplicate if it has the same value for `as`.
+ *
+ * @param {Array} includes - The initial array of Sequelize includes.
+ * @param {Array} requiredIncludes - The array of required Sequelize includes
+ *                                   that must be present.
+ * @returns {Array} - The merged array of includes.
+ */
+export const mergeIncludes = (includes, requiredIncludes) => {
+  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+    return requiredIncludes;
+  }
+
+  const outIncludes = [...includes];
+
+  requiredIncludes.forEach((requiredInclude) => {
+    if (!outIncludes.some((include) => include.as && include.as === requiredInclude.as)) {
+      outIncludes.push(requiredInclude);
+    }
+  });
+
+  return outIncludes;
+};

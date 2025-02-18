@@ -1,20 +1,20 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
+  waitFor,
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
-import { SCOPE_IDS } from '../../Constants';
 
 const { ADMIN } = SCOPE_IDS;
 
 describe('feature flag', () => {
+  const history = createMemoryHistory();
   const renderFeatureFlag = (flag, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
@@ -63,7 +63,7 @@ describe('feature flag', () => {
     expect(screen.getByText('This is a test')).toBeVisible();
   });
 
-  it('renders not found where appropriate', () => {
+  it('renders not found where appropriate', async () => {
     const flag = 'tell_your_children';
     const user = {
       flags: [],
@@ -71,6 +71,8 @@ describe('feature flag', () => {
     };
     const renderNotFound = true;
     renderFeatureFlag(flag, user, renderNotFound);
-    expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
+    await waitFor(() => {
+      expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
+    });
   });
 });

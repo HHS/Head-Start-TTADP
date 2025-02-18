@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# WARNING: This will wipe the current data and load only the seed data
+
+# no more tables
+export $(grep POSTGRES_PASSWORD   ./.env)
+export $(grep POSTGRES_USERNAME   ./.env)
+export PGPASSWORD=${POSTGRES_PASSWORD}
+psql -U ${POSTGRES_USERNAME} -h localhost -p 5432 -d ttasmarthub -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+# run migrations
+yarn docker:db:migrate && yarn docker:db:seed

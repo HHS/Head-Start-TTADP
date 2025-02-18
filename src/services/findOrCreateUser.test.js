@@ -63,7 +63,7 @@ describe('findOrCreateUser', () => {
     expect(noUser).toBeNull();
 
     // Create a user
-    const createdUser = await User.create(user);
+    const createdUser = await User.create({ ...user, lastLogin: new Date() });
     expect(createdUser).toBeInstanceOf(User);
 
     // Change user's hsesUserId
@@ -137,7 +137,7 @@ describe('findOrCreateUser', () => {
     };
     // Verify that user 35 is set up as we expect
     await User.destroy({ where: { id: userId } });
-    await User.create({ ...user, id: userId });
+    await User.create({ ...user, id: userId, lastLogin: new Date() });
 
     const retrievedUser = await findOrCreateUser({
       ...user,
@@ -151,7 +151,7 @@ describe('findOrCreateUser', () => {
   });
 
   it('Throws when there is something wrong', async () => {
-    await expect(() => findOrCreateUser(undefined)).rejects.toBeInstanceOf(Error);
+    await expect(() => findOrCreateUser({ id: -1 })).rejects.toBeInstanceOf(Error);
   });
 
   it('Logs an error message on error', async () => {
