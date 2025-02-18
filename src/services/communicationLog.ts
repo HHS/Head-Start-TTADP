@@ -52,7 +52,9 @@ const COMMUNICATION_LOGS_PER_PAGE = 10;
 
 export const COMMUNICATION_LOG_SORT_KEYS = {
   AUTHOR: 'Creator_name',
+  RECIPIENT: 'Recipient',
   PURPOSE: 'Purpose',
+  GOALS: 'Goals',
   RESULT: 'Result',
   DATE: 'Date',
   ID: 'Log_ID',
@@ -67,6 +69,24 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sortDir,
       ]];
       break;
+    case COMMUNICATION_LOG_SORT_KEYS.RECIPIENT:
+      result = [[
+        sequelize.literal(`(
+          SELECT MIN(r.name)
+          FROM "Recipients" r
+          JOIN "CommunicationLogRecipients" clr ON r.id = clr."recipientId"
+          WHERE clr."communicationLogId" = "CommunicationLog".id
+        ) ${sortDir}`),
+      ]];
+      break;
+    case COMMUNICATION_LOG_SORT_KEYS.GOALS:
+      result = [[
+        sequelize.literal(`(
+          SELECT MIN(g->>'label')
+          FROM jsonb_array_elements(data->'goals') g
+        ) ${sortDir}`),
+      ]];
+      break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
       result = [[
         sequelize.literal(`author.name ${sortDir}`),
@@ -76,20 +96,12 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
       break;
     case COMMUNICATION_LOG_SORT_KEYS.PURPOSE:
       result = [[
-        'data.purpose',
-        sortDir,
-      ],
-      [
-        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
+        sequelize.literal(`data->>'purpose' ${sortDir}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RESULT:
       result = [[
-        'data.result',
-        sortDir,
-      ],
-      [
-        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
+        sequelize.literal(`data->>'result' ${sortDir}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.DATE:
