@@ -342,18 +342,22 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              recipientNameWithRegion={recipientNameWithRegion}
+              recipientNameWithRegion=""
               hasAlerts={hasAlerts}
-              inlineHeadingChildren={(
-                <Link
-                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
-                  className="usa-button smart-hub--new-report-btn margin-left-4"
-                >
-                  <span className="smart-hub--plus">+</span>
-                  <span className="smart-hub--new-report">Add communication</span>
-                </Link>
-              )}
+              inlineHeadingChildren={null}
             >
+              <div className="recipient-comm-log-header">
+                <h1>{recipientNameWithRegion}</h1>
+                <div>
+                  <Link
+                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
+                    className="usa-button smart-hub--new-report-btn"
+                  >
+                    <span className="smart-hub--plus">+</span>
+                    <span className="smart-hub--new-report">Add communication</span>
+                  </Link>
+                </div>
+              </div>
               <CommunicationLog
                 regionId={regionId}
                 recipientName={recipientName}
