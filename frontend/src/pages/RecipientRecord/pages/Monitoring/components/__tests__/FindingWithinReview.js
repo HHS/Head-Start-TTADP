@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import React from 'react';
 import { render } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 import { MemoryRouter } from 'react-router';
 import FindingWithinReview from '../FindingWithinReview';
 import UserContext from '../../../../../../UserContext';
