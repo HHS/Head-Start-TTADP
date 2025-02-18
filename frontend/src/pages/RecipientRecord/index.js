@@ -342,7 +342,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <>
               <RecipientTabs region={regionId} recipientId={recipientId} />
               <div className="recipient-comm-log-header">
-                <h1>{recipientNameWithRegion}</h1>
+                <h1 className="page-heading">{recipientNameWithRegion}</h1>
                 <div>
                   <Link
                     to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
