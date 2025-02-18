@@ -157,8 +157,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
-        ['data.purpose', 'desc'],
-        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE desc')],
+        [sequelize.literal("data->>'purpose' desc")],
       ]);
     });
 
@@ -169,8 +168,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
-        ['data.result', 'asc'],
-        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')],
+        [sequelize.literal("data->>'result' asc")],
       ]);
     });
 
