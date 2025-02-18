@@ -1,12 +1,4 @@
-export const REPORT_STATUSES = {
-  DRAFT: 'draft',
-  DELETED: 'deleted',
-  SUBMITTED: 'submitted',
-  APPROVED: 'approved',
-  NEEDS_ACTION: 'needs_action',
-};
-
-export const FILE_STATUSES = {
+const FILE_STATUSES = {
   UPLOADING: 'UPLOADING',
   UPLOADED: 'UPLOADED',
   UPLOAD_FAILED: 'UPLOAD_FAILED',
@@ -18,118 +10,286 @@ export const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
-export const DATE_FORMAT = 'MM/DD/YYYY';
-
-export const DECIMAL_BASE = 10;
-
-export const REPORTS_PER_PAGE = 10;
-export const RECIPIENTS_PER_PAGE = 12;
-export const GOALS_PER_PAGE = 5;
-
-export const APPROVER_STATUSES = {
-  APPROVED: 'approved',
-  NEEDS_ACTION: 'needs_action',
+const IMPORT_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  COLLECTING: 'COLLECTING',
+  COLLECTED: 'COLLECTED',
+  COLLECTION_FAILED: 'COLLECTION_FAILED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
 };
 
-// copied from /frontend/src/pages/ActivityReports/constants.js
-export const TOPICS = [
-  'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
-  'CLASS: Classroom Organization',
-  'CLASS: Emotional Support',
-  'CLASS: Instructional Support',
-  'Coaching',
-  'Communication',
-  'Community and Self-Assessment',
-  'Culture & Language',
-  'Curriculum (Instructional or Parenting)',
-  'Data and Evaluation',
-  'ERSEA',
-  'Environmental Health and Safety / EPRR',
-  'Equity',
-  'Facilities',
-  'Family Support Services',
-  'Fiscal / Budget',
-  'Five-Year Grant',
-  'Home Visiting',
-  'Human Resources',
-  'Leadership / Governance',
-  'Learning Environments',
-  'Nutrition',
-  'Oral Health',
-  'Parent and Family Engagement',
-  'Partnerships and Community Engagement',
-  'Physical Health and Screenings',
-  'Pregnancy Services / Expectant Families',
-  'Program Planning and Services',
-  'Quality Improvement Plan / QIP',
-  'Recordkeeping and Reporting',
-  'Safety Practices',
-  'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
-  'Technology and Information Systems',
-  'Transition Practices',
-  'Transportation',
+const IMPORT_DATA_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
+  WILL_NOT_PROCESS: 'WILL_NOT_PROCESS',
+};
+
+const DATE_FORMAT = 'MM/DD/YYYY';
+
+const REPORTS_PER_PAGE = 10;
+const RECIPIENTS_PER_PAGE = 12;
+const GOALS_PER_PAGE = 5;
+
+const SEARCH_RESULTS_PER_PAGE = 23;
+
+const AUTOMATIC_CREATION = 'Automatic';
+const CURATED_CREATION = 'Curated';
+const SYSTEM_GENERATED = 'System Generated';
+const CREATION_METHOD = {
+  AUTOMATIC: AUTOMATIC_CREATION,
+  CURATED: CURATED_CREATION,
+  SYSTEM_GENERATED,
+};
+
+const GOAL_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  CLOSED: 'Closed',
+};
+
+const GOAL_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a goal
+  EDITOR: 'Editor', // The user(s) who edits the text of a goal
+  LINKER: 'Linker', // The user who links the goal to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
+};
+
+const GRANT_PERSONNEL_ROLES = [
+  'auth_official_contact',
+  'ceo',
+  'cfo',
+  'policy_council',
+  'director',
 ];
 
-// copied from /frontend/src/pages/ActivityReports/constants.js
-export const REASONS = [
-  'Below Competitive Threshold (CLASS)',
-  'Below Quality Threshold (CLASS)',
-  'Change in Scope',
-  'Child Incidents',
-  'Complaint',
-  'COVID-19 response',
-  'Full Enrollment',
-  'New Recipient',
-  'New Director or Management',
-  'New Program Option',
-  'New Staff / Turnover',
-  'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
-  'School Readiness Goals',
-  'Monitoring | Area of Concern',
-  'Monitoring | Noncompliance',
-  'Monitoring | Deficiency',
+const OBJECTIVE_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};
+
+const OBJECTIVE_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a objective
+  EDITOR: 'Editor', // The user(s) who edits the text of a objective
+  LINKER: 'Linker', // The user who links the objective to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
+};
+
+const NEXTSTEP_NOTETYPE = {
+  SPECIALIST: 'SPECIALIST',
+  RECIPIENT: 'RECIPIENT',
+};
+
+const RESOURCE_ACTIONS = {
+  GET_METADATA: 'getMetaData',
+};
+
+const GROUP_COLLABORATORS = {
+  CREATOR: 'Creator',
+  CO_OWNER: 'Co-Owner',
+  SHARED_WITH: 'SharedWith',
+  EDITOR: 'Editor',
+};
+
+/**
+ * Stored in `UserSettings` table, e.g.:
+ * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
+ */
+const USER_SETTINGS = {
+  EMAIL: {
+    KEYS: {
+      // Email you when an activity report is submitted for your approval.
+      SUBMITTED_FOR_REVIEW: 'emailWhenReportSubmittedForReview',
+      // Email you when an activity report you created or are a collaborator on needs an action.
+      CHANGE_REQUESTED: 'emailWhenChangeRequested',
+      // Email you when an activity report you created or are a collaborator on is approved.
+      APPROVAL: 'emailWhenReportApproval',
+      // Email you when you are added as a collaborator to an activity report.
+      COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+      // As a Program Specialist, email you when an AR for one of your grants is approved.
+      RECIPIENT_APPROVAL: 'emailWhenRecipientReportApprovedProgramSpecialist',
+    },
+    VALUES: {
+      NEVER: 'never',
+      IMMEDIATELY: 'immediately',
+      DAILY_DIGEST: 'today',
+      WEEKLY_DIGEST: 'this week',
+      MONTHLY_DIGEST: 'this month',
+    },
+  },
+};
+
+const EMAIL_ACTIONS = {
+  COLLABORATOR_ADDED: 'collaboratorAssigned',
+  NEEDS_ACTION: 'changesRequested',
+  SUBMITTED: 'approverAssigned',
+  APPROVED: 'reportApproved',
+  COLLABORATOR_DIGEST: 'collaboratorDigest',
+  NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
+  SUBMITTED_DIGEST: 'approverAssignedDigest',
+  APPROVED_DIGEST: 'reportApprovedDigest',
+  RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
+  RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
+  TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
+  TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
+};
+
+const S3_ACTIONS = {
+  DELETE_FILE: 'deleteFile',
+};
+
+const EMAIL_DIGEST_FREQ = {
+  DAILY: 'today',
+  WEEKLY: 'this week',
+  MONTHLY: 'this month',
+};
+
+const DIGEST_SUBJECT_FREQ = {
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+};
+
+const PROMPT_FIELD_TYPE = {
+  MULTISELECT: 'multiselect',
+};
+
+const SOURCE_FIELD = {
+  REPORT: {
+    NONECLKC: 'nonECLKCResourcesUsed',
+    ECLKC: 'ECLKCResourcesUsed',
+    CONTEXT: 'context',
+    NOTES: 'additionalNotes',
+    RESOURCE: 'resource',
+  },
+  NEXTSTEPS: {
+    NOTE: 'note',
+    RESOURCE: 'resource',
+  },
+  GOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  GOALTEMPLATE: {
+    NAME: 'name',
+    RESOURCE: 'resource',
+  },
+  REPORTGOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVETEMPLATE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  REPORTOBJECTIVE: {
+    TITLE: 'title',
+    TTAPROVIDED: 'ttaProvided',
+    RESOURCE: 'resource',
+  },
+};
+
+const RESOURCE_DOMAIN = {
+  HEAD_START: 'headstart.gov',
+};
+
+const GRANT_INACTIVATION_REASONS = {
+  REPLACED: 'Replaced',
+  TERMINATED: 'Terminated',
+  RELINQUISHED: 'Relinquished',
+  UNKNOWN: 'Unknown',
+};
+
+const MAINTENANCE_TYPE = {
+  VACUUM_ANALYZE: 'VACUUM ANALYZE',
+  REINDEX: 'REINDEX',
+  VACUUM_TABLES: 'VACUUM TABLES',
+  REINDEX_TABLES: 'REINDEX TABLES',
+  DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
+  CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
+  IMPORT_SCHEDULE: 'IMPORT_SCHEDULE',
+  IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
+  IMPORT_PROCESS: 'IMPORT_PROCESS',
+};
+
+const FEATURE_FLAGS = [
+  'anv_statistics',
+  'regional_goal_dashboard',
+  'closed_goal_merge_override',
+  'training_reports_dashboard',
+  'quality_assurance_dashboard',
+  'manual_mark_goals_similar',
+  'monitoring_integration',
 ];
 
-// copied from /frontend/src/pages/ActivityReports/constants.js
-export const TARGET_POPULATIONS = [
-  'Infants and Toddlers (ages birth to 3)',
-  'Preschool (ages 3-5)',
-  'Pregnant Women',
-  'Affected by Child Welfare Involvement',
-  'Affected by Disaster',
-  'Affected by Substance Use',
-  'Children Experiencing Homelessness',
-  'Children with Disabilities',
-  'Children with Special Health Care Needs',
-  'Dual-Language Learners',
-];
+const MAINTENANCE_CATEGORY = {
+  DB: 'DB',
+  MAINTENANCE: 'MAINTENANCE',
+  IMPORT: 'IMPORT',
+};
 
-export const USER_ROLES = [
-  'Regional Program Manager',
-  'COR',
-  'Supervisory Program Specialist',
-  'Program Specialist',
-  'Grants Specialist',
-  'Central Office',
-  'TTAC',
-  'Admin. Assistant',
-  'Early Childhood Manager',
-  'Early Childhood Specialist',
-  'Family Engagement Specialist',
-  'Grantee Specialist Manager',
-  'Grantee Specialist',
-  'Health Specialist',
-  'System Specialist',
-];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'monitoring'];
 
-export const CLOSE_SUSPEND_REASONS = [
-  'Duplicate goal',
-  'Recipient request',
-  'TTA complete',
-  'Key staff turnover',
-  'Recipient is not responding',
-  'Other',
-];
+const CURRENT_GOAL_SIMILARITY_VERSION = 5;
+
+const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
+const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
+
+module.exports = {
+  CURRENT_GOAL_SIMILARITY_VERSION,
+  FEI_PROD_GOAL_TEMPLATE_ID,
+  CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
+  FILE_STATUSES,
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
+  DATE_FORMAT,
+  REPORTS_PER_PAGE,
+  RECIPIENTS_PER_PAGE,
+  GOALS_PER_PAGE,
+  GOAL_CREATED_VIA,
+  SEARCH_RESULTS_PER_PAGE,
+  AUTOMATIC_CREATION,
+  CURATED_CREATION,
+  CREATION_METHOD,
+  GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  GRANT_PERSONNEL_ROLES,
+  OBJECTIVE_STATUS,
+  OBJECTIVE_COLLABORATORS,
+  GROUP_COLLABORATORS,
+  NEXTSTEP_NOTETYPE,
+  RESOURCE_ACTIONS,
+  USER_SETTINGS,
+  EMAIL_ACTIONS,
+  S3_ACTIONS,
+  EMAIL_DIGEST_FREQ,
+  DIGEST_SUBJECT_FREQ,
+  PROMPT_FIELD_TYPE,
+  SOURCE_FIELD,
+  RESOURCE_DOMAIN,
+  GRANT_INACTIVATION_REASONS,
+  MAINTENANCE_TYPE,
+  MAINTENANCE_CATEGORY,
+  FEATURE_FLAGS,
+};

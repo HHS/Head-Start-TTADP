@@ -1,0 +1,7 @@
+post:
+  tags:
+    - email-verification
+  summary: Send an email with a verification token included in the body.
+  responses:
+    200:
+      description: The email was sent.

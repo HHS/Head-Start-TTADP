@@ -4,32 +4,32 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, { useEffect, useState } from 'react';
+import React, {
+  useState,
+  useContext,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import {
   Form,
-  Button,
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
-import useDeepCompareEffect from 'use-deep-compare-effect';
-import useInterval from '@use-it/interval';
 import moment from 'moment';
-
+import useInterval from '@use-it/interval';
 import Container from '../Container';
-
+import SocketAlert from '../SocketAlert';
 import {
   IN_PROGRESS, COMPLETE,
 } from './constants';
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
+import AppLoadingContext from '../../AppLoadingContext';
 
-function Navigator({
-  editable,
+const Navigator = ({
   formData,
-  updateFormData,
   pages,
   onFormSubmit,
   onReview,
@@ -44,73 +44,51 @@ function Navigator({
   updatePage,
   reportCreator,
   lastSaveTime,
-  updateLastSaveTime,
-  showValidationErrors,
-  updateShowValidationErrors,
   errorMessage,
-  updateErrorMessage,
-}) {
-  const [showSavedDraft, updateShowSavedDraft] = useState(false);
-  const page = pages.find((p) => p.path === currentPage);
+  savedToStorageTime,
+  socketMessageStore,
+  onSaveDraft,
+  onSaveAndContinue,
+  showSavedDraft,
+  updateShowSavedDraft,
+  datePickerKey,
+  formDataStatusProp,
+  shouldAutoSave,
+  preFlightForNavigation,
+  hideSideNav,
+}) => {
+  const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
+  const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
 
-  const hookForm = useForm({
-    mode: 'onChange',
-    defaultValues: formData,
-    shouldUnregister: false,
-  });
-  const pageState = hookForm.watch('pageState');
+  const context = useFormContext();
 
-  const {
-    formState,
-    getValues,
-    reset,
-    trigger,
-  } = hookForm;
+  const { watch, formState } = context;
 
-  const { isDirty, errors, isValid } = formState;
-  const hasErrors = Object.keys(errors).length > 0;
+  const pageState = watch('pageState');
 
-  const newNavigatorState = () => {
-    if (page.review) {
-      return pageState;
-    }
-
-    const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
-    const newPageState = { ...pageState };
-
-    if (isComplete) {
-      newPageState[page.position] = COMPLETE;
-    } else if (currentPageState === COMPLETE) {
-      newPageState[page.position] = IN_PROGRESS;
-    } else {
-      newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
-    }
-    return newPageState;
-  };
-
-  const onSaveForm = async () => {
-    if (!editable) {
-      return;
-    }
-    const { status, ...values } = getValues();
-    const data = { ...formData, ...values, pageState: newNavigatorState() };
-
-    updateFormData(data);
-    try {
-      // Always clear the previous error message before a save.
-      updateErrorMessage();
-      await onSave(data);
-      updateLastSaveTime(moment());
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log(error);
-      updateErrorMessage('Unable to save activity report');
+  const setSavingLoadScreen = (isAutoSave = false) => {
+    if (!isAutoSave && !isAppLoading) {
+      setAppLoadingText('Saving');
+      setIsAppLoading(true);
     }
   };
+
+  const { isDirty } = formState;
 
   const onUpdatePage = async (index) => {
-    await onSaveForm();
+    // run the preflight check
+    const preFlightResult = await preFlightForNavigation();
+    if (!preFlightResult) return;
+
+    // name the parameters for clarity
+    const isAutoSave = false;
+    const isNavigation = true;
+
+    // save the current page
+    await onSaveDraft(isAutoSave, isNavigation);
+
+    // navigate to the next page
     if (index !== page.position) {
       updatePage(index);
       updateShowSavedDraft(false);
@@ -118,26 +96,28 @@ function Navigator({
   };
 
   const onContinue = () => {
+    if (onSaveAndContinue) {
+      onSaveAndContinue();
+      return;
+    }
+    setSavingLoadScreen();
     onUpdatePage(page.position + 1);
   };
 
-  useInterval(() => {
-    onSaveForm();
-  }, autoSaveInterval);
-
-  // A new form page is being shown so we need to reset `react-hook-form` so validations are
-  // reset and the proper values are placed inside inputs
-  useDeepCompareEffect(() => {
-    reset(formData);
-  }, [currentPage, reset, formData]);
-
-  useEffect(() => {
-    if (showValidationErrors && !page.review) {
-      setTimeout(() => {
-        trigger();
-      });
+  useInterval(async () => {
+    if (!shouldAutoSave) return;
+    // Don't auto save if we are already saving, or if the form hasn't been touched
+    try {
+      if (!isAppLoading && isDirty && !weAreAutoSaving) {
+        // this is used to disable the save buttons
+        // (we don't use the overlay on auto save)
+        setWeAreAutoSaving(true);
+        await onSaveDraft(true);
+      }
+    } finally {
+      setWeAreAutoSaving(false); // enable the save buttons
     }
-  }, [page.path, page.review, trigger, showValidationErrors]);
+  }, autoSaveInterval);
 
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
@@ -147,7 +127,7 @@ function Navigator({
       stateOfPage = current ? IN_PROGRESS : pageState[p.position];
     }
 
-    const state = p.review ? formData.calculatedStatus : stateOfPage;
+    const state = p.review ? formData[formDataStatusProp] : stateOfPage;
     return {
       label: p.label,
       onNavigation: () => {
@@ -159,36 +139,56 @@ function Navigator({
     };
   });
 
+  const DraftAlert = () => (
+    <DismissingComponentWrapper
+      shown={showSavedDraft}
+      updateShown={updateShowSavedDraft}
+      hideFromScreenReader={false}
+    >
+      {lastSaveTime && (
+      <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
+        Draft saved on
+        {' '}
+        {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+      </Alert>
+      )}
+    </DismissingComponentWrapper>
+  );
+
+  const newLocal = 'smart-hub-sidenav-wrapper no-print';
   return (
     <Grid row gap>
-      <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
+      { !hideSideNav && (
+      <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: 4 }}>
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
           pages={navigatorPages}
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
+          savedToStorageTime={savedToStorageTime}
         />
       </Grid>
+      )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <FormProvider {...hookForm}>
-          <div id="navigator-form">
-            {page.review
-            && page.render(
-              formData,
-              onFormSubmit,
-              additionalData,
-              onReview,
-              isApprover,
-              isPendingApprover,
-              onResetToDraft,
-              onSaveForm,
-              navigatorPages,
-              reportCreator,
-              updateShowValidationErrors,
-              lastSaveTime,
-            )}
-            {!page.review
+        <SocketAlert store={socketMessageStore} />
+
+        <div id="navigator-form">
+          {page.review && page.render(
+            formData,
+            onFormSubmit,
+            additionalData,
+            onReview,
+            isApprover,
+            isPendingApprover,
+            onResetToDraft,
+            onSave,
+            navigatorPages,
+            reportCreator,
+            lastSaveTime,
+            onUpdatePage,
+          )}
+          {!page.review
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
@@ -197,58 +197,44 @@ function Navigator({
                   titleOverride={page.titleOverride}
                   formData={formData}
                 />
-                {hasErrors
-                && (
-                  <Alert type="error" slim>
-                    Please complete all required fields before submitting this report.
-                  </Alert>
-                )}
                 <Form
-                  className="smart-hub--form-large"
+                  className="smart-hub--form-large smart-hub--form__activity-report-form"
                 >
-                  {page.render(additionalData, formData, reportId)}
-                  <div className="display-flex">
-                    <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
-                    <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
-                  </div>
-                </Form>
-                <DismissingComponentWrapper
-                  shown={showSavedDraft}
-                  updateShown={updateShowSavedDraft}
-                  hideFromScreenReader={false}
-                >
-                  {lastSaveTime && (
-                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
-                    Draft saved on
-                    {' '}
-                    {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
-                  </Alert>
+                  {page.render(
+                    additionalData,
+                    formData,
+                    reportId,
+                    isAppLoading,
+                    onContinue,
+                    onSaveDraft,
+                    onUpdatePage,
+                    weAreAutoSaving,
+                    datePickerKey,
+                    onFormSubmit,
+                    DraftAlert,
                   )}
-                </DismissingComponentWrapper>
+                </Form>
+
               </Container>
             )}
-          </div>
-        </FormProvider>
+        </div>
       </Grid>
     </Grid>
   );
-}
+};
 
 Navigator.propTypes = {
+  onSaveDraft: PropTypes.func.isRequired,
+  onSaveAndContinue: PropTypes.func,
   onResetToDraft: PropTypes.func.isRequired,
-  editable: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
+    regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
-  updateFormData: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
-  updateErrorMessage: PropTypes.func.isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-  updateLastSaveTime: PropTypes.func.isRequired,
-  showValidationErrors: PropTypes.bool.isRequired,
-  updateShowValidationErrors: PropTypes.func.isRequired,
+  savedToStorageTime: PropTypes.string,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
@@ -261,7 +247,7 @@ Navigator.propTypes = {
       position: PropTypes.number.isRequired,
       path: PropTypes.string.isRequired,
       render: PropTypes.func.isRequired,
-      label: PropTypes.isRequired,
+      label: PropTypes.string.isRequired,
     }),
   ).isRequired,
   currentPage: PropTypes.string.isRequired,
@@ -270,19 +256,46 @@ Navigator.propTypes = {
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
+    role: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string,
+    ]),
   }),
+  socketMessageStore: PropTypes.shape({
+    user: PropTypes.oneOfType([
+      PropTypes.shape({
+        name: PropTypes.string,
+      }),
+      PropTypes.string,
+    ]),
+  }),
+  showSavedDraft: PropTypes.bool,
+  updateShowSavedDraft: PropTypes.func.isRequired,
+  datePickerKey: PropTypes.string,
+  formDataStatusProp: PropTypes.string,
+  shouldAutoSave: PropTypes.bool,
+  preFlightForNavigation: PropTypes.func,
+  hideSideNav: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
+  onSaveAndContinue: null,
+  showSavedDraft: false,
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
+  savedToStorageTime: null,
   errorMessage: '',
+  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,
   },
+  datePickerKey: '',
+  formDataStatusProp: 'calculatedStatus',
+  shouldAutoSave: true,
+  preFlightForNavigation: () => Promise.resolve(true),
+  hideSideNav: false,
 };
 
 export default Navigator;

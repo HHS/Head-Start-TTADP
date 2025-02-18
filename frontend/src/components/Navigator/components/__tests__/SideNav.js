@@ -4,38 +4,62 @@ import userEvent from '@testing-library/user-event';
 import {
   render, screen,
 } from '@testing-library/react';
-
+import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import SideNav from '../SideNav';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../../constants';
-
-import { REPORT_STATUSES } from '../../../../Constants';
+import NetworkContext from '../../../../NetworkContext';
 
 describe('SideNav', () => {
-  const renderNav = (state, onNavigation = () => {}, current = false, errorMessage = null) => {
+  const saveDataDefaults = {
+    connectionActive: true,
+    savedToStorageTime: new Date().toISOString(),
+    lastSaveTime: moment(),
+  };
+
+  const renderNav = (
+    state,
+    onNavigation = () => {},
+    current = 'test',
+    errorMessage = null,
+    saveData = saveDataDefaults,
+  ) => {
     const pages = [
       {
         label: 'test',
         state,
-        current,
+        current: current === 'test',
         onNavigation,
       },
       {
         label: 'second',
         state: '',
-        current,
+        current: current === 'second',
+        onNavigation,
+      },
+      {
+        label: 'Goals and objectives',
+        current: current === 'Goals and objectives',
+        state: '',
         onNavigation,
       },
     ];
 
+    const { connectionActive, lastSaveTime, savedToStorageTime } = saveData;
+
     render(
-      <SideNav
-        pages={pages}
-        skipTo="skip"
-        skipToMessage="message"
-        errorMessage={errorMessage}
-      />,
+      <NetworkContext.Provider value={{ connectionActive }}>
+        <SideNav
+          pages={pages}
+          skipTo="skip"
+          skipToMessage="message"
+          errorMessage={errorMessage}
+          lastSaveTime={lastSaveTime}
+          savedToStorageTime={savedToStorageTime}
+        />
+      </NetworkContext.Provider>,
     );
   };
 
@@ -89,6 +113,66 @@ describe('SideNav', () => {
     expect(alert).toBeVisible();
   });
 
+  it('displays two success messages', async () => {
+    renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null);
+    const alert = await screen.findByTestId('alert');
+
+    expect(alert).toBeVisible();
+    const reggies = [
+      new RegExp('our network at', 'i'),
+      new RegExp('your computer at', 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0].length).toBe(1);
+    expect(reggiesMeasured[1].length).toBe(1);
+  });
+
+  it('displays success message for network save', async () => {
+    const saveData = {
+      connectionActive: true,
+      savedToStorageTime: null,
+      lastSaveTime: moment(),
+    };
+
+    renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null, saveData);
+    const alert = await screen.findByTestId('alert');
+
+    expect(alert).toBeVisible();
+    const reggies = [
+      new RegExp('our network at', 'i'),
+      new RegExp('your computer at', 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0].length).toBe(1);
+    expect(reggiesMeasured[1]).toBe(null);
+  });
+
+  it('displays success message for local storage save', async () => {
+    const saveData = {
+      connectionActive: true,
+      savedToStorageTime: new Date().toISOString(),
+      lastSaveTime: null,
+    };
+
+    renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null, saveData);
+    const alert = await screen.findByTestId('alert');
+
+    expect(alert).toBeVisible();
+    const reggies = [
+      new RegExp('our network at', 'i'),
+      new RegExp('your computer at', 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0]).toBe(null);
+    expect(reggiesMeasured[1].length).toBe(1);
+  });
+
   it('clicking a nav item calls onNavigation', () => {
     const onNav = jest.fn();
     renderNav(NOT_STARTED, onNav);
@@ -98,7 +182,7 @@ describe('SideNav', () => {
   });
 
   it('the currently selected page has the current class', () => {
-    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, true);
+    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, 'test');
     const submitted = screen.getByRole('button', { name: 'test Submitted' });
     expect(submitted).toHaveClass('smart-hub--navigator-link-active');
   });

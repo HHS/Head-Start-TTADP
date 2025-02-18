@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Button,
 } from '@trussworks/react-uswds';
-
+import { DECIMAL_BASE } from '@ttahub/common';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { DECIMAL_BASE } from '../../Constants';
+import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
+import { storageAvailable } from '../../hooks/helpers';
+import isAdmin from '../../permissions';
 
 const NUMBER_FIELDS = [
   'homeRegionId',
@@ -22,16 +24,23 @@ const NUMBER_FIELDS = [
  */
 function UserSection({ user, onSave, features }) {
   const [formUser, updateUser] = useState();
+  const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
 
   useEffect(() => {
     updateUser(user);
   }, [user]);
 
+  const impersonateUserId = () => {
+    if (!haveStorage || !formUser || typeof formUser.id !== 'number') return;
+    window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, formUser.id);
+    window.location.href = '/';
+  };
+
   const onUserChange = (e) => {
     if (Array.isArray(e)) {
       updateUser({
         ...formUser,
-        role: e.map((obj) => obj.value),
+        roles: e.map((obj) => ({ fullName: obj.value })),
       });
       return;
     }
@@ -64,13 +73,33 @@ function UserSection({ user, onSave, features }) {
     const region = parseInt(strRegion, DECIMAL_BASE);
     const { checked } = e.target;
 
-    if (checked) {
+    if (checked && region === ALL_REGIONS) {
+      updateUser({
+        ...formUser,
+        permissions: [
+          ...formUser.permissions,
+          { userId: user.id, scopeId: scope, regionId: region },
+          ...REGIONS.map((r) => (
+            { userId: user.id, scopeId: scope, regionId: r }
+          )),
+        ],
+      });
+    } else if (checked) {
       updateUser({
         ...formUser,
         permissions: [
           ...formUser.permissions,
           { userId: user.id, scopeId: scope, regionId: region },
         ],
+      });
+    } else if (region === ALL_REGIONS) {
+      updateUser({
+        ...formUser,
+        permissions: formUser.permissions.filter((permission) => (
+          // We are removing permissions (because checked is false). Only keep
+          // permissions that do not have the "unchecked" scope
+          !(permission.scopeId === scope)
+        )),
       });
     } else {
       updateUser({
@@ -109,6 +138,13 @@ function UserSection({ user, onSave, features }) {
         user={formUser}
         onUserChange={onUserChange}
       />
+      <Button
+        className="margin-bottom-6"
+        onClick={impersonateUserId}
+        disabled={isAdmin(user)}
+      >
+        Impersonate user
+      </Button>
       <UserPermissions
         userId={user.id}
         globalPermissions={userGlobalPermissions(formUser)}

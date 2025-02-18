@@ -1,0 +1,26 @@
+@use '../colors.scss' as *;
+
+.smart-hub--menu-button {
+  display: block;
+  text-decoration: none;
+  width: max-content;
+  height: 100%;
+  color: $text-ink;
+}
+
+.smart-hub--menu-button:hover {
+  text-decoration: none;
+  color: $text-ink;
+}
+
+.position-absolute.smart-hub--menu__left_and_up {
+  transform: translateY(-120%) translateX(-90%); 
+}
+
+.position-absolute.smart-hub--menu__left {
+  transform: translateX(-90%); 
+}
+
+.position-absolute.smart-hub--menu__up {
+  transform: translateY(-120%); 
+}

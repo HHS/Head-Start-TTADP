@@ -2,7 +2,7 @@ import ActivityReport from '../../../policies/activityReport';
 import ActivityReportsPresenter from '../../../serializers/activityReports';
 import { notFound, unauthorized } from '../../../serializers/errorResponses';
 import { userById } from '../../../services/users';
-import { activityReportById } from '../../../services/activityReports';
+import { activityReportAndRecipientsById } from '../../../services/activityReports';
 import handleErrors from '../../../lib/apiErrorHandler';
 import { currentUserId } from '../../../services/currentUser';
 
@@ -15,20 +15,24 @@ export async function getReportByDisplayId(req, res) {
   try {
     const { displayId } = req.params;
     const id = displayId.replace(/^R\d{2}-AR-/, '');
-    const report = await activityReportById(id);
+    const [report] = await activityReportAndRecipientsById(id);
+
     if (!report) {
       notFound(res, `Report ${displayId} could not be found`);
       return;
     }
-    const user = await userById(currentUserId(req, res));
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canGet()) {
       unauthorized(res, `User is not authorized to access ${displayId}`);
       return;
     }
+
     res.json(ActivityReportsPresenter.render(report));
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }

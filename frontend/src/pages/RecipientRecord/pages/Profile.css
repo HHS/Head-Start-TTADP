@@ -1,0 +1,11 @@
+.ttahub-recipient-record--profile-table .usa-table td,
+.ttahub-recipient-record--profile-table .usa-table th {
+  border: 0;
+  border-bottom: 0;
+}
+
+.ttahub-recipient-record--profile-table table {
+  font-size: 14px;
+  margin: 0;
+}
+

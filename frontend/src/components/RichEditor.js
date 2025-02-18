@@ -18,6 +18,8 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 import { getEditorState } from '../utils';
 
+const BASE_EDITOR_HEIGHT = '10rem';
+
 /**
  * Component that provides basic Rich Text Editor.
  *
@@ -27,7 +29,7 @@ import { getEditorState } from '../utils';
  * onChange: Called whenever there is a change typed in the editor
  */
 const RichEditor = ({
-  ariaLabel, value, onChange,
+  ariaLabel, value, onChange, onBlur,
 }) => {
   let defaultEditorState;
   if (value) {
@@ -38,15 +40,17 @@ const RichEditor = ({
     const html = draftToHtml(currentContentState);
     onChange(html);
   };
+
   return (
     <Editor
+      onBlur={onBlur}
       spellCheck
       defaultEditorState={defaultEditorState}
       onChange={onInternalChange}
       ariaLabel={ariaLabel}
       handlePastedText={() => false}
       tabIndex="0"
-      editorStyle={{ border: '1px solid #565c65', height: '10rem' }}
+      editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
       toolbar={{
         options: ['inline', 'blockType', 'list'],
         inline: {
@@ -73,10 +77,12 @@ RichEditor.propTypes = {
   value: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   ariaLabel: PropTypes.string.isRequired,
+  onBlur: PropTypes.func,
 };
 
 RichEditor.defaultProps = {
   value: '',
+  onBlur: () => {},
 };
 
 export default RichEditor;

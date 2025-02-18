@@ -1,0 +1,73 @@
+@use '../colors.scss' as *;
+
+.smart-hub-tooltip .smart-hub--ellipsis{
+    font-size: 15px;
+    position: relative;
+}
+
+.smart-hub-tooltip .ttahub-tooltip-underline {
+    position: absolute;
+    max-width: 100%;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.smart-hub-tooltip .usa-button,
+.smart-hub-tooltip .usa-button:hover {
+    margin-top: 0;
+    text-decoration: none;
+}
+
+.smart-hub--ellipsis {
+    color: $text-ink;
+    display: inline-block;
+    overflow-x: hidden;
+    overflow-y: visible;
+    max-width: 175px;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.smart-hub--ellipsis > span {
+    position: relative;
+}
+
+.smart-hub-tooltip {
+    display: inline-block;
+    position: relative;
+}
+
+.smart-hub-tooltip button {
+    line-height: 1.7;
+}
+
+.smart-hub-tooltip:hover .usa-tooltip__body,
+.smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+    animation: fadein 500ms forwards;
+    display: inline-block;
+    line-height: 1;
+    position: absolute;
+    transform: translateX(-25%);
+    white-space: normal;
+
+    &.usa-tooltip__body--top {
+        bottom: 2.25rem;
+        top: auto;
+    }
+
+    &.usa-tooltip__body--bottom {
+        top: 100%;
+        bottom: auto;
+    }
+}
+
+@keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

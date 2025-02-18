@@ -1,0 +1,457 @@
+@use 'colors.scss' as *;
+@use './Grid.scss';
+
+@use './widgets/widgets.scss';
+
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Regular.ttf') format('truetype');
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: bold;
+}
+
+
+
+a {
+  color: $text-link;
+}
+
+a:visited {
+  color: $text-visited
+}
+
+summary {
+  cursor: pointer;
+}
+
+/*|||||| Table resets |||||||*/
+
+.usa-table thead th a {
+  color: $text-ink;
+}
+
+.usa-table.usa-table--borderless td,
+.usa-table.usa-table--borderless th {
+  border-bottom: 1px solid $base-lighter;
+}
+
+.usa-skipnav:focus {
+  z-index: 999999;
+}
+
+.smart-hub-offset-nav {
+  margin-left: 8rem;
+}
+
+@media all and (min-width: 30em){
+  .tablet\:smart-hub-offset-nav {
+    margin-left: 7.5rem;
+  }
+}
+
+@media all and (min-width: 40em){
+  .tablet\:smart-hub-offset-nav {
+    margin-left: 10rem;
+  }
+}
+
+@media all and (min-width: 64em){
+  .desktop\:smart-hub-offset-nav {
+    margin-left: 15rem;
+  }
+}
+
+.smart-hub-bg-blue {
+  background-color: $ttahub-blue;
+}
+
+header > div {
+  height: 3em;
+}
+
+@media all and (min-width: 64em){
+  header > div {
+    height: 4.5em;
+  }
+  .smart-hub-title {
+    font-size: 1.25rem;
+  }
+}
+
+.smart-hub-cursor-pointer:hover {
+  cursor: pointer;
+}
+
+body {
+  background-color: $gray-two;
+}
+
+.text-ink {
+  color: $text-ink
+}
+
+.base-medium {
+  color: $base-medium;
+}
+
+.smart-hub-bg-blue-primary {
+  background-color: $ttahub-blue;
+}
+
+.smart-hub-border-blue-primary {
+  border-color: $ttahub-medium-blue;
+}
+
+.smart-hub-border-base-lighter {
+  border-color: $base-lighter;
+}
+
+.smart-hub-border-base-error {
+  border-width: 2px;
+  border-color: $error-dark;
+}
+
+.smart-hub-maxw-form-field {
+  max-width: 30rem;
+}
+
+.smart-hub-maxw-placard {
+  max-width: 34.25rem;
+}
+
+.height-12 {
+  height: 6.5em;
+}
+
+.usa-legend {
+  font-size: 2.13rem;
+  font-weight: bold;
+}
+
+.flex-gap-1 {
+  gap: 0.5em;
+}
+
+.flex-gap-2 {
+  gap: 1em;
+}
+
+/* ========== some form resets ========== */
+
+.usa-button:not(
+  .usa-button--outline, 
+  .usa-button--unstyled, 
+  .usa-button--secondary,
+  :disabled,
+  .usa-modal__close
+) {
+  background-color: $ttahub-medium-blue;
+}
+
+.usa-button--outline {
+  box-shadow: inset 0 0 0 2px $ttahub-medium-blue;
+  color: $ttahub-medium-blue;
+}
+
+.usa-button--unstyled {
+  color: $ttahub-medium-blue;
+}
+
+input:not([disabled]):focus, 
+select:not([disabled]):focus, 
+textarea:not([disabled]):focus, 
+button:not([disabled]):focus {
+  outline: .25rem solid $blue-vivid-focus;
+}
+
+.usa-checkbox__input:checked + .usa-checkbox__label::before {
+  background-color: $ttahub-medium-blue;
+  box-shadow: 0 0 0 2px $ttahub-medium-blue;
+}
+
+.usa-radio__input:checked + .usa-radio__label::before {
+  background-color: $ttahub-medium-blue;
+}
+
+/* ========== generic typography ========== */
+
+.smart-hub-serif {
+  font-family: Merriweather, serif;
+}
+
+.smart-hub-title-big-serif {
+  font-size: 30px;
+  font-family: Merriweather, serif;
+}
+
+/* =========== colors ================== */
+.base-dark {
+  color: $base-dark;
+}
+
+/* ========== page heading class to be shared ========== */
+.page-heading {
+  font-size: 40px;
+  font-family: "Merriweather", serif;
+  font-weight: 700;
+}
+
+
+/* ========== Table stripe overrride ========== */
+.usa-table--striped tbody tr:nth-child(2n+1) td, .usa-table--striped tbody tr:nth-child(2n+1) th {
+  background-color: $gray-two;
+}
+
+
+/* ========== Print Styles ========== */
+
+/* This is for elements that in the DOM that should appear only when printing */
+.print-only {
+  display: none;
+}
+
+@media print {
+  .smart-hub-header {
+    position: relative;
+  }
+
+ * {
+    color: #000 !important;
+    box-shadow: none !important;
+    font-size: 12pt;
+ }
+
+  body {
+    background: #fff !important;
+    font-size: 12pt;
+  }
+
+  .grid-container {
+    max-width: unset;
+    width: 100%;
+  }
+
+  .print\:grid-col-6 {
+    flex: 0 1 auto;
+    width: 50%;
+  }
+
+  .usa-header {
+    background: #fff !important;
+  }
+
+  .usa-nav-container {
+    padding: 0 !important;
+    margin: 0 0.125in !important;
+  }
+
+  .smart-hub-offset-nav {
+    margin-left: unset;
+  }
+
+  .print-only {
+    display: unset;
+  }
+
+  .no-break-within {
+    break-inside: avoid;
+  }
+
+  /* Hide things that don't need to be printed
+   * ':empty' doesn't work on <textarea>, so we need to check values and set 'no-print' if empty
+   * */
+  .usa-nav,
+  .usa-menu-btn,
+  .no-print,
+  input:empty,
+  button[type="submit"]
+  {
+    display: none !important;
+  }
+
+  .usa-alert {
+    background: none;
+    border: 1px solid #adadad;
+  }
+  /* .usa-alert uses a :before to create the left border, which we want to remove */
+  .usa-alert::before {
+    display: none;
+  }
+
+  .smart-hub-review-section--empty {
+    margin-bottom: 1in;
+  }
+
+  /* Show content that is hidden, e.g. collapsed accordions */
+  [hidden] {
+    display: unset;
+  }
+
+  .usa-section,
+  .usa-section > div
+  {
+    margin: 0;
+    padding: 0;
+  }
+
+  .new-activity-report {
+    font-size: 36pt;
+    margin: 0.25in 0;
+  }
+
+  .smart-hub-status-label {
+    background: none;
+    border: 1px solid #adadad;
+  }
+
+  .smart-hub-navigator-wrapper {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .smart-hub-review > div {
+    padding: 0 !important;
+  }
+
+  .usa-accordion__button {
+    background: none !important;
+  }
+
+  .usa-accordion__heading {
+    break-before: auto;
+    break-after: avoid-page;
+  }
+
+  .usa-accordion__heading .usa-accordion__button {
+    color: #454545 !important;
+    padding: 0;
+  }
+
+  .usa-accordion__content {
+    break-before: avoid-page;
+    break-after: auto;
+    display: block;
+    margin-bottom: 0.5in;
+    padding: 0;
+  }
+}
+
+.DayPickerNavigation_button {
+  border: 1px solid #71767A;
+  background-color: #fff;
+}
+
+.DayPickerNavigation_button:hover {
+  background-color: #F0F0F0;
+}
+
+.DayPickerNavigation_button:focus {
+  border: 1px solid #C4C4C4;
+}
+
+.DayPickerNavigation_button svg  {
+fill: #1B1B1B;
+}
+
+/* ========== plotly overrrides ========== */
+.plotly-notifier {
+  z-index: 99999;
+}
+
+
+
+/* ========== some color helpers ========== */
+
+.bg-success-darker {
+  background: $success-darker;
+}
+
+.text-ttahub-blue {
+  color: $ttahub-blue;
+}
+
+/* ========== pagination overrides ========== */
+
+/* Selected Page */
+.ttahub-app .usa-pagination .usa-current {
+  background-color: $ttahub-medium-blue;
+}
+
+/* Hover on Page Number Button */
+.ttahub-app .usa-pagination .usa-pagination__button:hover {
+  border-color: $ttahub-medium-blue;
+  border-bottom: 1px solid;
+}
+
+/* ========== button overrides ========== */
+
+/**
+  * reset for "unstyled" buttons, like we use in the table headers
+  * different from .usa-button--unstyled
+  */
+
+.ttahub-button--unstyled {
+  background: transparent;
+  border: none;
+}
+
+/* Like .usa-button--unstyled, but preserves spacing and
+ * radius so that it fits next to other styled buttons.
+ * e.g. <Button className="use-button--subtle" />
+ * Should look good in a modal.
+ */
+.usa-button.usa-button--subtle {
+  background: transparent;
+  color: $ttahub-medium-blue;
+  font-weight: normal;
+  text-decoration: underline;
+}
+
+@media all and (min-width: 64em){
+  .desktop\:maxw-6 {
+    max-width: 3rem;
+  }
+}
+
+.smart-hub--vertical-text {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+.text-overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lead-paragraph {
+  font-family: "Merriweather Web", Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
+}

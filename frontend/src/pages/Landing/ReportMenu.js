@@ -6,8 +6,9 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 import './ReportMenu.css';
 import Loader from '../../components/Loader';
+import colors from '../../colors';
 
-export const MAXIMUM_EXPORTED_REPORTS = 20000;
+export const MAXIMUM_EXPORTED_REPORTS = 2000;
 
 function ReportMenu({
   onExportAll,
@@ -20,6 +21,7 @@ function ReportMenu({
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
+  exportIdPrefix,
 }) {
   const [open, updateOpen] = useState(false);
 
@@ -62,6 +64,7 @@ function ReportMenu({
         className={`usa-button usa-button--outline font-sans-xs margin-left-1 ${openClass}`}
         aria-label={label}
         onClick={() => updateOpen((current) => !current)}
+        id={`${exportIdPrefix}export-button`}
       >
         Export reports
         {' '}
@@ -69,13 +72,13 @@ function ReportMenu({
           size="1x"
           className="margin-left-1"
           style={{ paddingBottom: '2px' }}
-          color="#005ea2"
+          color={colors.ttahubMediumBlue}
           icon={faSortDown}
         />
       </button>
       {open && (
         <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames}>
-          <Container padding={2} className="margin-bottom-0">
+          <Container paddingX={2} paddingY={2} className="margin-bottom-0">
             {downloadError && (
               <Alert
                 noIcon
@@ -146,6 +149,7 @@ function ReportMenu({
                     type="button"
                     disabled={downloadError || isDownloading}
                     className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
+                    id={`${exportIdPrefix}export-table`}
                   >
                     Export table data
                   </button>
@@ -160,6 +164,7 @@ function ReportMenu({
                 type="button"
                 disabled={isDownloading}
                 className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
+                id={`${exportIdPrefix}export-reports`}
               >
                 Export selected reports
               </button>
@@ -188,6 +193,7 @@ ReportMenu.propTypes = {
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
   setDownloadError: PropTypes.func.isRequired,
+  exportIdPrefix: PropTypes.string.isRequired,
 };
 
 ReportMenu.defaultProps = {

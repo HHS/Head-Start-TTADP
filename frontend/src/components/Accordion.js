@@ -39,19 +39,22 @@ export const AccordionItem = ({
   );
 };
 
-AccordionItem.propTypes = {
+const AccordionItemProp = {
   title: PropTypes.string.isRequired,
-  content: PropTypes.string.isRequired,
-  expanded: PropTypes.bool.isRequired,
+  content: PropTypes.node.isRequired,
+  expanded: PropTypes.bool,
   id: PropTypes.string.isRequired,
   className: PropTypes.string,
-  handleToggle: PropTypes.func,
-  headingSize: PropTypes.number.isRequired,
+  handleToggle: PropTypes.func.isRequired,
+  headingSize: PropTypes.number,
 };
 
+AccordionItem.propTypes = AccordionItemProp;
+
 AccordionItem.defaultProps = {
+  headingSize: 2,
   className: '',
-  handleToggle: () => { },
+  expanded: false,
 };
 
 export const Accordion = ({
@@ -109,7 +112,7 @@ export const Accordion = ({
 Accordion.propTypes = {
   bordered: PropTypes.bool,
   multiselectable: PropTypes.bool,
-  items: PropTypes.arrayOf(PropTypes.shape(AccordionItem)).isRequired,
+  items: PropTypes.arrayOf(PropTypes.shape(AccordionItemProp)).isRequired,
   headingSize: PropTypes.number,
 };
 

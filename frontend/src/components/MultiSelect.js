@@ -20,15 +20,16 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
-import { Controller } from 'react-hook-form/dist/index.ie11';
+import { Controller } from 'react-hook-form';
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
 import useSpellCheck from '../hooks/useSpellCheck';
+import colors from '../colors';
 
 export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
@@ -41,6 +42,51 @@ export function sortSelect(a, b) {
   return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
 }
 
+export const styles = (singleRowInput = null) => ({
+  container: (provided, state) => {
+    // To match the focus indicator provided by uswds
+    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+    return {
+      ...provided,
+      outline,
+    };
+  },
+  placeholder: (provided) => ({
+    ...provided,
+    color: '#1b1b1b',
+  }),
+  groupHeading: (provided) => ({
+    ...provided,
+    fontWeight: 'bold',
+    fontFamily: 'SourceSansPro',
+    textTransform: 'capitalize',
+    fontSize: '14px',
+    color: colors.smartHubTextInk,
+    lineHeight: '22px',
+  }),
+  control: (provided, state) => ({
+    height: singleRowInput ? '38px' : '',
+    ...provided,
+    borderColor: '#565c65',
+    backgroundColor: 'white',
+    borderRadius: '0',
+    '&:hover': {
+      borderColor: '#565c65',
+    },
+    // Match uswds disabled style
+    opacity: state.isDisabled ? '0.7' : '1',
+  }),
+  indicatorsContainer: (provided) => ({
+    ...provided,
+    // The arrow dropdown icon is too far to the right, this pushes it back to the left
+    marginRight: '4px',
+  }),
+  indicatorSeparator: () => ({ display: 'none' }),
+  menu: (provided) => ({
+    ...provided,
+    zIndex: 2,
+  }),
+});
 function MultiSelect({
   name,
   options,
@@ -56,9 +102,12 @@ function MultiSelect({
   singleRowInput,
   canCreate,
   onCreateOption,
+  placeholderText,
   components: componentReplacements,
+  onClick = () => {},
 }) {
   const inputId = `select-${uuidv4()}`;
+  const selectorRef = useRef(null);
 
   /**
    * unfortunately, given our support for ie11, we can't
@@ -67,48 +116,6 @@ function MultiSelect({
    * in it's stead.
   */
   useSpellCheck(inputId);
-
-  const styles = {
-    container: (provided, state) => {
-      // To match the focus indicator provided by uswds
-      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-      return {
-        ...provided,
-        outline,
-      };
-    },
-    groupHeading: (provided) => ({
-      ...provided,
-      fontWeight: 'bold',
-      fontFamily: 'SourceSansPro',
-      textTransform: 'capitalize',
-      fontSize: '14px',
-      color: '#21272d',
-      lineHeight: '22px',
-    }),
-    control: (provided, state) => ({
-      height: singleRowInput ? '38px' : '',
-      ...provided,
-      borderColor: '#565c65',
-      backgroundColor: 'white',
-      borderRadius: '0',
-      '&:hover': {
-        borderColor: '#565c65',
-      },
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
-    }),
-    indicatorsContainer: (provided) => ({
-      ...provided,
-      // The arrow dropdown icon is too far to the right, this pushes it back to the left
-      marginRight: '4px',
-    }),
-    indicatorSeparator: () => ({ display: 'none' }),
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 2,
-    }),
-  };
 
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -153,40 +160,61 @@ function MultiSelect({
     }
   };
 
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      selectorRef.current.focus();
+      onClick();
+    }
+  };
+
   const Selector = canCreate ? Creatable : Select;
 
   return (
     <Controller
-      render={({ onChange: controllerOnChange, value }) => {
+      render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
-          <Selector
-            className="margin-top-1"
-            id={name}
-            value={values}
-            onChange={(event) => {
-              if (onItemSelected) {
-                onItemSelected(event);
-              } else if (event) {
-                onChange(event, controllerOnChange);
-              } else {
-                controllerOnChange([]);
-              }
-            }}
-            inputId={inputId}
-            styles={styles}
-            components={{ ...componentReplacements, DropdownIndicator }}
-            options={options}
-            isDisabled={disabled}
-            tabSelectsValue={false}
-            isClearable={multiSelectOptions.isClearable}
-            closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
-            controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
-            hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-            placeholder=""
-            onCreateOption={onCreateOption}
-            isMulti
-          />
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            onClick={onClick}
+            onKeyDown={onKeyDown}
+            data-testid={`${name}-click-container`}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={disabled ? 0 : undefined}
+          >
+            <div aria-hidden={disabled}>
+              <Selector
+                ref={selectorRef}
+                className="ttahub-multi-select margin-top-1"
+                id={name}
+                value={values}
+                onBlur={onBlur}
+                onChange={(event) => {
+                  if (onItemSelected) {
+                    onItemSelected(event);
+                  } else if (event) {
+                    onChange(event, controllerOnChange);
+                  } else {
+                    controllerOnChange([]);
+                  }
+                }}
+                inputId={inputId}
+                styles={styles(singleRowInput)}
+                components={{ ...componentReplacements, DropdownIndicator }}
+                options={options}
+                isDisabled={disabled}
+                tabSelectsValue={false}
+                isClearable={multiSelectOptions.isClearable}
+                closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
+                controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+                hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
+                placeholder={placeholderText || ''}
+                onCreateOption={onCreateOption}
+                isMulti
+                required={!!(required)}
+              />
+            </div>
+          </div>
         );
       }}
       control={control}
@@ -200,6 +228,7 @@ function MultiSelect({
         ...rules,
       }}
       name={name}
+      defaultValue={[]}
     />
   );
 }
@@ -240,8 +269,12 @@ MultiSelect.propTypes = {
     hideSelectedOptions: PropTypes.bool,
   }),
   disabled: PropTypes.bool,
-  rules: PropTypes.shape({}),
+  rules: PropTypes.shape({
+    validate: PropTypes.func,
+  }),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  placeholderText: PropTypes.string,
+  onClick: PropTypes.func,
 };
 
 MultiSelect.defaultProps = {
@@ -257,6 +290,8 @@ MultiSelect.defaultProps = {
   rules: {},
   onItemSelected: null,
   onCreateOption: null,
+  placeholderText: null,
+  onClick: null,
 };
 
 export default MultiSelect;

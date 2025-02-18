@@ -1,26 +1,31 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
+import { sequelize } from '../../models';
 
-const reasonFilter = `
-SELECT DISTINCT g.id
-FROM "ActivityReports" ar
-INNER JOIN "ActivityReportObjectives" aro ON ar."id" = aro."activityReportId"
-INNER JOIN "Objectives" o ON aro."objectiveId" = o.id
-INNER JOIN "Goals" g ON o."goalId" = g.id
-WHERE ARRAY_TO_STRING(ar."reason", ',')`;
+const reasonFilter = (options) => {
+  const useRecipient = options && options.recipientId;
+  return `
+          SELECT DISTINCT g.id
+          FROM "ActivityReports" ar
+          INNER JOIN "ActivityReportGoals" arg ON ar.id = arg."activityReportId"
+          INNER JOIN "Goals" g ON arg."goalId" = g.id
+          INNER JOIN "Grants" gr ON g."grantId" = gr."id"
+          WHERE ${useRecipient ? `gr."recipientId" = ${sequelize.escape(options.recipientId)} AND ` : ''}
+          ARRAY_TO_STRING(ar."reason", ',')`;
+};
 
-export function withReasons(reasons) {
+export function withReasons(reasons, options) {
   return {
     [Op.or]: [
-      filterAssociation(reasonFilter, reasons, false),
+      filterAssociation(reasonFilter(options), reasons, false),
     ],
   };
 }
 
-export function withoutReasons(reasons) {
+export function withoutReasons(reasons, options) {
   return {
     [Op.and]: [
-      filterAssociation(reasonFilter, reasons, true),
+      filterAssociation(reasonFilter(options), reasons, true),
     ],
   };
 }

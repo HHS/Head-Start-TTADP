@@ -35,17 +35,61 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 16.13.1 installed.
-4. Copy `.env.example` to `.env`.
-6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
-7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
-3. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them.
-10. Run `yarn docker:start` to start the application. The frontend will be available on `localhost:3000` and the backend will run on `localhost:8080`, API documentation will run on `localhost:5000`, and minio will run on `localhost:9000`.
-11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+2. Make sure you have Node 18.20.6 installed.
+3. Copy `.env.example` to `.env`.
+4. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
+5. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
+6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: ```"The chromium binary is not available for arm64"```. See the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
+7. Run `yarn docker:start` to start the application. The [frontend][frontend] will be available on `localhost:3000`  and the [backend][backend] will run on `localhost:8080`, [API documentation][API documentation] will run on `localhost:5003`, and [minio][minio] will run on `localhost:9000`.
+8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
+
+#### Import Current Production Data
+
+Make sure you have access to all the necessary spaces on Cloud.gov
+
+On a Mac
+1. Login to cloud.gov: `cf login -a api.fr.cloud.gov  --sso`.
+2. Download latest data: `bash ./bin/latest_backup.sh -d` (file will be placed in current directory).
+3. Ensure you have `psql` (if not `brew install libpq`).
+4. Ensure ttahub docker container is running.
+5. Create bounce.sql in repo directory (see below)
+6. Load data: `psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql && psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql` (Where username:password are replaced with credentials from .env and db.sql is the file you downloaded and unzipped).
+7. Migrate data: `yarn docker:db:migrate`
+8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
+9. Restart docker 
+
+bounce.sql
+```sh
+select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
+drop database ttasmarthub;
+create database ttasmarthub;
+```
+
+On Windows
+TBD
+
+#### Apple Silicon & Chromium
+On a Mac with Apple Silicon, puppeteer install fails with the message:
+```"The chromium binary is not available for arm64"```
+
+See [docker-compose.override.yml](docker-compose.override.yml) and uncomment the relevant lines to skip downloading chromium and use the host's binary instead.
+
+You will need to have chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
+
+To ~/.zshrc (or your particular shell config), you'll need to add:
+
+```sh
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+```
+
+On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`).  To resolve:
+
+`brew install docker-compose` 
 
 #### Local build
 
@@ -69,6 +113,77 @@ git config core.hooksPath .githooks
 
 If you are already using git hooks, add the .githooks/pre-commit contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
+### Building Tests
+
+#### Helpful notes on writing (backend) tests
+It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary.
+
+With that in mind, there a few "gotchas" to remember to help write sanitary tests.
+- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete. Additionally, the hooks on destroy also update the materialized view (GrantRelationshipToActive).
+- When you call ```Model.destroy``` you should be adding  ```individualHooks: true``` to the Sequelize options. Often this is required for proper cleanup. There may be times when this is undesirable; this should be indicated with a comment.
+- Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped()
+- There are excellent helpers for creating and destroying common Model mocks in ```testUtils.js```. Be aware that they take a scorched earth approach to cleanup. For example, when debugging a flaky test, it was discovered that ```destroyReport``` was removing a commonly used region.
+- The next section details additional tools, found in `src/lib/programmaticTransaction.ts`, which make maintaining a clean database state when writing tests a breeze.
+
+#### Database State Management in Tests
+
+The guidance is on using the `captureSnapshot` and `rollbackToSnapshot` functions  from `src/lib/programmaticTransaction.ts` to manage database state during automated testing with Jest. These functions ensure that each test is executed in a clean state, preventing tests from affecting each other and improving test reliability.
+
+##### Functions Overview
+
+- **`captureSnapshot()`**: Captures the current state of the database, specifically the maximum IDs from specified tables, which is used to detect and revert changes.
+- **`rollbackToSnapshot(snapshot: MaxIdRecord[])`**: Uses the snapshot taken by `captureSnapshot()` to revert the database to its state at the time of the snapshot. This is crucial for cleaning up after tests that alter the database.
+
+##### Example Usage
+
+###### Example 1: Using `beforeAll` and `afterAll`
+
+In this example, `captureSnapshot` and `rollbackToSnapshot` are used at the Jest suite level to manage database states before and after all tests run. This is useful when tests are not independent or when setup/teardown for each test would be too costly.
+
+```javascript
+describe('Database State Management', () => {
+  let snapshot;
+
+  beforeAll(async () => {
+    // Capture the initial database state before any tests run
+    snapshot = await transactionModule.captureSnapshot();
+  });
+
+  afterAll(async () => {
+    // Roll back to the initial state after all tests have completed
+    await transactionModule.rollbackToSnapshot(snapshot);
+  });
+
+  it('Test Case 1', async () => {
+    // Test actions that modify the database
+  });
+
+  it('Test Case 2', async () => {
+    // Further test actions that modify the database
+  });
+});
+```
+
+###### Example 2: Using at the Beginning and End of Each Test Case
+
+This approach uses `captureSnapshot` and `rollbackToSnapshot` at the start and end of each individual test. It is most effective when tests are meant to run independently, ensuring no residual data affects subsequent tests.
+
+```javascript
+describe('Individual Test Isolation', () => {
+  it('Test Case 1', async () => {
+    const snapshot = await transactionModule.captureSnapshot();
+    // Actions modifying the database
+    await transactionModule.rollbackToSnapshot(snapshot);
+  });
+
+  it('Test Case 2', async () => {
+    const snapshot = await transactionModule.captureSnapshot();
+    // More actions modifying the database
+    await transactionModule.rollbackToSnapshot(snapshot);
+  });
+});
+```
+
 ### Running Tests
 
 #### Docker
@@ -91,6 +206,21 @@ You may run into some issues running the docker commands on Windows:
 
  * If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
  * You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
+
+### Coverage reports
+
+On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
+
+Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
+
+### Coverage reports: Uncovered lines on PR builds
+
+The uncovered lines on PR is generated by finding the intersection between the jest generated coverage file with the git change list for the PR. The additional set of artifacts is generated to aid in providing test coverage for each PR. 
+ * coverage/coverage-final.json  - Only on test_backend, all the distinct jest run outputs are consolidated into a unified coverage-final.json file.
+ * uncovered-lines/uncovered-lines.html - A human readable structure identifing all the lines from this PR that are uncovered by jest tests.
+ * uncovered-lines/uncovered-lines.json - A json structure identifing all the lines from this PR that are uncovered by jest tests.
+
+ This Uncovered lines on PR builds can be configured to fail builds by either perminently changing or overiding the pipeline perameter ```fail-on-modified-lines``` to true, defaults to false.
 
 ## Yarn Commands
 
@@ -116,8 +246,9 @@ You may run into some issues running the docker commands on Windows:
 | | Run the linter only for the backend | `yarn lint` | |
 | | Run the linter for the the backend with results output to xml files | `yarn lint:ci`| |
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
-| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5000` | `yarn docs:serve` | |
+| | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve` | |
 | | Run cucumber tests | `yarn cucumber` | |
+| | Collect backend coverage report | `yarn coverage:backend` ||
 
 ## Infrastructure
 
@@ -132,6 +263,32 @@ The infrastructure used to run this application can be categorized into two dist
 #### Continuous Integration (CI)
 
 Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In the Ad Hoc repository, merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+
+#### Creating and Applying a Deploy Key
+
+In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
+
+The following links outline the steps to take:
+https://circleci.com/docs/github-integration/#create-a-github-deploy-key
+https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+
+Steps to create and apply deploy token:
+1. Open the Git Bash CMD window
+2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+3. When prompted to enter a file name leave blank and press ENTER
+4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
+5. Search for the file created with the name "id_rsa"
+6. Notice that two files have been created private and public in the .ssh folder
+7. Open the public file and copy the entire contents of the file
+8. In Github to the TTAHUB project and click 'Settings' in the top right corner
+9. Under 'Security' click 'Deploy Keys' then 'Add deploy Key'
+10. Give the key a name 'TTAHUB' and paste the private key contents, CHECK 'Allow write access' then click 'Add Key'
+11. Open the private key file that was created and copy the entire contents of the file
+12. Go to CircleCi and open the 'Head-Start-TTADP' project
+13. Click 'Project settings' in the top right corner
+14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
+15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
+16. Click 'Add SSH Key'
 
 #### Continuous Deployment (CD)
 
@@ -174,6 +331,7 @@ organization/space, i.e. each deployment environment, and can be [regenerated by
 who have proper cloud.gov permissions at any time.
 - HSES authentication middleware secrets passed to the application as `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET`.
 - The application `SESSION_SECRET`.
+- The application `JWT_SECRET`.
 - NewRelic license key, passed to the application as `NEW_RELIC_LICENSE_KEY`
 
 Exception:
@@ -364,7 +522,7 @@ Our project includes four deployed Postgres databases, one to interact with each
 
     ```bash
     # example
-    node ./build/server/tools/dataValidationCLI.js
+    node ./build/server/src/tools/dataValidationCLI.js
     ```
 
 1. If on prod, disable ssh in space
@@ -372,6 +530,13 @@ Our project includes four deployed Postgres databases, one to interact with each
     ```bash
     cf disallow-space-ssh ttahub-prod
     ```
+
+##### Example: Manual import of Monitoring data
+Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
+
+
+### Taking a production backup via CircleCI
+We can quickly take a production backup via the CircleCI web interface. To do so, go to the ```production``` branch there and trigger a pipeline with the variable ```manual-trigger``` set to true. You can then retrieve this backup with the script ```bin/latest_backup.sh```.
 
 ### Refreshing data in non-production environments
 
@@ -422,7 +587,7 @@ Ex.
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
 ## Updating node
-To update the version of node the project uses, the version number needs to be specified in a few places. Cloud.gov only supports certain versions of node; you can find supported versions [on the repo for their buildpack](https://github.com/cloudfoundry/nodejs-buildpack/releases). 
+To update the version of node the project uses, the version number needs to be specified in a few places. Cloud.gov only supports certain versions of node; you can find supported versions [on the repo for their buildpack](https://github.com/cloudfoundry/nodejs-buildpack/releases).
 
 Once you have that version number, you need to update it in the following files
 - .circleci/config.yml
@@ -434,8 +599,53 @@ Once you have that version number, you need to update it in the following files
 You should also update it where it is specified this README file.
 
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
+If you are using NVM, you can set intall a new node version with ```nvm install VERSION``` and set it to be the default version of node via ```nvm alias default VERSION```.
+
+## Removing, creating and binding a service from the command line
+In the past, we've needed to destroy and recreate particular services (for example, redis). This can be done through the Cloud.gov UI, through the Terraform architecture, and through the cloud foundry command line interface. The following are instructions for using the cloud foundry CLI (```cf```) for this.
+
+- Login and target the environment you wish to make changes to. (```cf login --sso```).
+- You can use ```cf services``` to list your services
+- Remember that you can use ```cf help COMMAND``` to get the documentation for a particular command
+
+To delete and recreate a service (this should not be done lightly, as it is a destructive action)
+
+1  Unbind a service:
+```cf us APP_NAME SERVICE```
+ex:
+```cf us tta-smarthub-staging ttahub-redis-staging```
+
+2  Delete a service:
+```cf ds SERVICE```
+ex:
+```cf ds ttahub-redis-staging```
+
+3  Create a service:
+```cf cs SERVICE_TYPE SERVICE_LABEL SERVICE```
+ex:
+```cf cs aws-elasticache-redis redis-dev ttahub-redis-staging```
+
+4  Bind a service:
+```cf bs APP_NAME SERVICE```
+ex:
+```cf bs ttahub-smarthub-staging ttahub-redis-staging```
+
+5. Trigger a redeploy through the Circle CI UI (rather than restaging)
+
+6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
+ ```cf network-policies```
+If you see nothing there, you'll need to add an appropriate policy.
+```cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443```
+ex:
+```cf add-network-policy tta-smarthub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
+You may need to connect across spaces (for example, our clamav-api-ttahub-dev app is shared by all of our ephemeral environments). If so, use the -s flag.
+ex:
+```cf add-network-policy tta-smarthub-staging -s ttahub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
+
 
 <!-- Links -->
+
+[Current tech stack](./tech-stack.md)
 
 [adhoc-main]: https://github.com/adhocteam/Head-Start-TTADP/tree/main
 [TTAHUB-System-Operations]: https://github.com/HHS/Head-Start-TTADP/wiki/TTAHUB-System-Operations
@@ -447,3 +657,7 @@ You would then need to rebuild the relevant browser images (docker will likely n
 [cf-service-connect]: https://github.com/cloud-gov/cf-service-connect
 [hhs-main]: https://github.com/HHS/Head-Start-TTADP/tree/main
 [hhs-prod]: https://github.com/HHS/Head-Start-TTADP/tree/production
+[frontend]:http://localhost:3000
+[backend]:http://localhost:8080
+[API documentation]:http://localhost:5003
+[minio]:http://localhost:3000

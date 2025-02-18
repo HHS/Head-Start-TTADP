@@ -1,28 +1,29 @@
-import React from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
-import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
-import { expandFilters, formatDateRange } from '../../../utils';
-import { getGoalsAndObjectivesFilterConfig } from './constants';
-import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
-import GoalsTable from '../../../components/GoalsTable/GoalsTable';
+import { expandFilters } from '../../../utils';
+import { getGoalsAndObjectivesFilterConfig, GOALS_OBJECTIVES_FILTER_KEY } from './constants';
+import UserContext from '../../../UserContext';
+import { getUserRegions } from '../../../permissions';
+import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
-export default function GoalsObjectives({ recipientId, regionId, recipient }) {
-  const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
-
-  const FILTER_KEY = 'goals-objectives-filters';
+export default function GoalsObjectives({
+  recipientId,
+  regionId,
+  recipient,
+  location,
+  canMergeGoals,
+}) {
+  const { user } = useContext(UserContext);
+  const regions = useMemo(() => getUserRegions(user), [user]);
+  const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
-    FILTER_KEY,
-    [{
-      id: uuidv4(),
-      topic: 'createDate',
-      condition: 'is within',
-      query: yearToDate,
-    }],
+    GOALS_OBJECTIVES_FILTER_KEY(recipientId),
+    [],
   );
 
   const possibleGrants = recipient.grants;
@@ -30,52 +31,40 @@ export default function GoalsObjectives({ recipientId, regionId, recipient }) {
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      setFilters(newFilters);
-    }
+    newFilters.splice(index, 1);
+    setFilters(newFilters);
   };
 
-  const filtersToApply = [
-    ...expandFilters(filters),
-    {
-      topic: 'region',
-      condition: 'is',
-      query: regionId,
-    },
-    {
-      topic: 'recipientId',
-      condition: 'contains',
-      query: recipientId,
-    },
-  ];
+  const filtersToApply = expandFilters(filters);
+
+  let hasActiveGrants = false;
+  if (recipient.grants && recipient.grants.find((g) => g.status === 'Active')) {
+    hasActiveGrants = true;
+  }
 
   return (
     <>
       <Helmet>
-        <title>
-          Goals and Objectives
-        </title>
+        <title>RTTAPA</title>
       </Helmet>
-      <div className="margin-x-2 maxw-widescreen" id="recipientGoalsObjectives">
-        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
+      <div className="maxw-widescreen" id="recipientGoalsObjectives">
+        <div className="display-flex display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             onRemoveFilter={onRemoveFilter}
             onApplyFilters={setFilters}
             filterConfig={getGoalsAndObjectivesFilterConfig(possibleGrants)}
             applyButtonAria="Apply filters to goals"
             filters={filters}
+            allUserRegions={regions}
           />
         </div>
-        <Grid row>
-          <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
-            <GoalStatusGraph filters={filtersToApply} />
-          </Grid>
-        </Grid>
-        <GoalsTable
+        <GoalDataController
+          filters={filtersToApply}
           recipientId={recipientId}
           regionId={regionId}
-          filters={expandFilters(filters)}
+          hasActiveGrants={hasActiveGrants}
+          showNewGoals={showNewGoals || false}
+          canMergeGoals={canMergeGoals}
         />
       </div>
     </>
@@ -91,4 +80,6 @@ GoalsObjectives.propTypes = {
       numberWithProgramTypes: PropTypes.string.isRequired,
     })).isRequired,
   }).isRequired,
+  location: ReactRouterPropTypes.location.isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
 };

@@ -1,26 +1,65 @@
-import { ActivityReportApprover } from '../models';
+import { ActivityReportApprover, User } from '../models';
 
 /**
  * Update or create new Approver
  *
  * @param {*} values - object containing Approver properties to create or update
- * @param {*} transaction - sequelize transaction
  */
-export async function upsertApprover(values, transaction) {
-  // Create approver, on unique constraint violation do update
-  const [approver] = await ActivityReportApprover.upsert(values, {
-    transaction,
-    returning: true,
+export async function upsertApprover(values) {
+  const {
+    activityReportId,
+    userId,
+    status,
+    note,
+  } = values;
+
+  let approver = await ActivityReportApprover.findOne({
+    where: {
+      activityReportId,
+      userId,
+    },
+    paranoid: false,
   });
 
-  // Upsert returns null when trying to upsert soft deleted record.
+  if (approver) {
+    // we always want to recalculate updatedAt
+    // so we trigger the hooks, since we are no longer
+    // using upsert
+    approver.changed('updatedAt', true);
+    approver.set('updatedAt', new Date());
+
+    if (status) {
+      approver.set('status', status);
+    }
+
+    if (note) {
+      approver.set('note', values.note);
+    }
+
+    await approver.save({
+      individualHooks: true,
+    });
+  }
+
+  if (!approver) {
+    approver = await ActivityReportApprover.create(values, { individualHooks: true });
+  }
+
   // If soft deleted record, restore instead.
   if (approver.deletedAt) {
     return ActivityReportApprover.restore({
-      where: values,
-      transaction,
+      where: { id: approver.id },
       individualHooks: true,
     });
+  }
+
+  approver = approver.get({ plain: true });
+  const user = await User.findOne({
+    attributes: ['email', 'name', 'fullName'],
+    where: { id: approver.userId },
+  });
+  if (user) {
+    approver.user = user.get({ plain: true });
   }
 
   return approver;
@@ -32,12 +71,10 @@ export async function upsertApprover(values, transaction) {
  * @param {*} activityReportId - pk of ActivityReport, used to find ActivityReportApprovers
  * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
  * deleted or created to match this list
- * @param {*} transaction - sequelize transaction
  */
-export async function syncApprovers(activityReportId, userIds = [], transaction = null) {
+export async function syncApprovers(activityReportId, userIds = []) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
-    transaction,
   });
 
   // Destroy any preexisting approvers now missing from userId request param
@@ -51,7 +88,6 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
           where: { id: approver.id },
           individualHooks: true,
           force: true,
-          transaction,
         });
       }
       // Approver had reviewed the report, soft delete
@@ -59,7 +95,6 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
       return ActivityReportApprover.destroy({
         where: { id: approver.id },
         individualHooks: true,
-        transaction,
       });
     });
     await Promise.all(destroyPromises);
@@ -70,9 +105,19 @@ export async function syncApprovers(activityReportId, userIds = [], transaction 
     const upsertApproverPromises = userIds.map(async (userId) => upsertApprover({
       activityReportId,
       userId,
-    }, transaction));
+    }));
     await Promise.all(upsertApproverPromises);
   }
 
-  return ActivityReportApprover.findAll({ where: { activityReportId }, transaction });
+  return ActivityReportApprover.findAll({
+    where: { activityReportId },
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email'],
+        raw: true,
+      },
+    ],
+  });
 }

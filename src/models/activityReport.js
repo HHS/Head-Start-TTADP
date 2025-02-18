@@ -1,33 +1,16 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { isEqual, uniqWith } = require('lodash');
-const { REPORT_STATUSES, USER_ROLES } = require('../constants');
-
-function formatDate(fieldName) {
-  const raw = this.getDataValue(fieldName);
-  if (raw) {
-    return moment(raw).format('MM/DD/YYYY');
-  }
-  return null;
-}
-
-/**
- * Helper function called by model hooks.
- * Updates current model instance's calculatedStatus field.
- * Background: calculatedStatus is updated to 'submitted', 'needs_review', and 'approved'
- * based on hooks on the ActivityReportApprovers. Before submission though,
- * we want calculatedStatus to function like submissionStatus so developers
- * only have to check calculatedStatus to determine overall report status.
- * @param {*} report - current model instance
- */
-function copyStatus(report) {
-  const { submissionStatus } = report;
-  if (submissionStatus === REPORT_STATUSES.DRAFT
-    || submissionStatus === REPORT_STATUSES.DELETED) {
-    // eslint-disable-next-line no-param-reassign
-    report.calculatedStatus = submissionStatus;
-  }
-}
+const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
+const { formatDate } = require('../lib/modelHelpers');
+const {
+  beforeCreate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+  beforeValidate,
+  afterDestroy,
+} = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';
@@ -38,27 +21,58 @@ const generateCreatorNameWithRole = (ar) => {
   return `${creatorName}${roles}`;
 };
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
-      ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
-      ActivityReport.belongsToMany(models.User, {
-        through: models.ActivityReportCollaborator,
-        // The key in the join table that points to the model defined in this file
+      ActivityReport.belongsToMany(models.Grant, {
+        through: models.ActivityRecipient,
         foreignKey: 'activityReportId',
-        // The key in the join table that points to the "target" of the belongs to many (Users in
-        // this case)
-        otherKey: 'userId',
-        as: 'collaborators',
+        otherKey: 'grantId',
+        as: 'grants',
       });
+      ActivityReport.belongsToMany(models.OtherEntity, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'otherEntityId',
+        as: 'otherEntities',
+      });
+      ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
-      ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
+      ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
+      ActivityReport.belongsToMany(models.File, {
+        through: models.ActivityReportFile,
+        foreignKey: 'activityReportId',
+        otherKey: 'fileId',
+        as: 'files',
+      });
+      ActivityReport.hasMany(models.ActivityReportResource, { foreignKey: 'activityReportId', as: 'activityReportResources' });
+      ActivityReport.belongsToMany(models.Resource, {
+        through: models.ActivityReportResource,
+        foreignKey: 'activityReportId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'specialistNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.SPECIALIST] },
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'recipientNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.RECIPIENT] },
+      });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
+      ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals' });
+      ActivityReport.belongsToMany(models.Goal, {
+        through: models.ActivityReportGoal,
+        foreignKey: 'activityReportId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
       ActivityReport.hasMany(models.ActivityReportObjective, { foreignKey: 'activityReportId', as: 'activityReportObjectives' });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
@@ -131,6 +145,13 @@ module.exports = (sequelize, DataTypes) => {
     deliveryMethod: {
       type: DataTypes.STRING,
     },
+    version: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      // NOTE: if/when the default version needs to change. The database default needs to be
+      // changed in coordination
+      defaultValue: 2,
+    },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
     },
@@ -151,6 +172,9 @@ module.exports = (sequelize, DataTypes) => {
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    language: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
     virtualDeliveryType: {
       type: DataTypes.STRING,
     },
@@ -161,6 +185,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     topics: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
+    programTypes: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     context: {
@@ -174,7 +201,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     submissionStatus: {
-      allowNull: false,
+      allowNull: true,
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
@@ -191,6 +218,7 @@ module.exports = (sequelize, DataTypes) => {
             this.participants,
             this.topics,
             this.ttaType,
+            this.creatorRole,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
@@ -209,31 +237,14 @@ module.exports = (sequelize, DataTypes) => {
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    submittedDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+      allowNull: true,
+    },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
-    },
-    goals: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const objectives = this.objectivesWithGoals || [];
-        const goalsArray = objectives.map((o) => o.goal);
-        const goals = uniqWith(goalsArray, isEqual);
-
-        return goals.map((goal) => {
-          const objs = objectives.filter((o) => o.goalId === goal.id);
-          const plainObjectives = objs.map((o) => {
-            const plain = o.get({ plain: true });
-            const { goal: _, ...plainObj } = plain;
-            return plainObj;
-          });
-          const ret = {
-            ...goal.get({ plain: true }),
-            objectives: plainObjectives,
-          };
-          return ret;
-        });
-      },
     },
     lastSaved: {
       type: DataTypes.VIRTUAL,
@@ -261,6 +272,7 @@ module.exports = (sequelize, DataTypes) => {
         if (!this.topics) {
           return [];
         }
+
         return this.topics.sort((a, b) => {
           if (a < b) {
             return -1;
@@ -290,16 +302,16 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
   }, {
+    hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeCreate: async (instance) => beforeCreate(instance),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'ActivityReport',
-    hooks: {
-      beforeCreate: (report) => {
-        copyStatus(report);
-      },
-      beforeUpdate: (report) => {
-        copyStatus(report);
-      },
-    },
   });
   return ActivityReport;
 };

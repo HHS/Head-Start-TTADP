@@ -1,164 +1,419 @@
-import React, { useState } from 'react';
-import { uniqBy, cloneDeep } from 'lodash';
-import PropTypes from 'prop-types';
-import { Label } from '@trussworks/react-uswds';
-import { useFormContext, useWatch } from 'react-hook-form/dist/index.ie11';
+import React, { useState, useEffect, useRef } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
-
-import FormItem from '../../../../components/FormItem';
-import Goal from './Goal';
-import MultiSelect from '../../../../components/MultiSelect';
+import { uniqBy } from 'lodash';
+import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import {
+  Label, Button, Checkbox, Alert,
+} from '@trussworks/react-uswds';
+import { useFormContext, useWatch, useController } from 'react-hook-form';
+import Select from 'react-select';
+import { getTopics } from '../../../../fetchers/topics';
+import { getGoalTemplatePrompts, getGoalTemplateSource } from '../../../../fetchers/goalTemplates';
+import Req from '../../../../components/Req';
 import Option from './GoalOption';
-import Input from './GoalInput';
+import SingleValue from './GoalValue';
+import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
+import GoalForm from './GoalForm';
+import Modal from '../../../../components/VanillaModal';
+import { fetchCitationsByGrant } from '../../../../fetchers/citations';
+
+export const newGoal = (grantIds) => ({
+  value: uuidv4(),
+  number: false,
+  label: 'Create new goal',
+  objectives: [],
+  name: '',
+  goalNumber: '',
+  id: 'new',
+  isNew: true,
+  endDate: '',
+  onApprovedAR: false,
+  grantIds,
+  goalIds: [],
+  oldGrantIds: [],
+  status: 'Draft',
+  isRttapa: null,
+  isCurated: false,
+});
 
 const components = {
-  Input,
   Option,
+  SingleValue,
 };
-
-const createObjective = () => ({
-  title: '', ttaProvided: '<p></p>', status: 'Not Started', id: uuidv4(), new: true,
-});
 
 const GoalPicker = ({
   availableGoals,
+  grantIds,
+  reportId,
+  goalTemplates,
 }) => {
   const {
-    control, setValue,
+    control, setValue, watch,
   } = useFormContext();
-  const [inMemoryGoals, updateInMemoryGoals] = useState([]);
+  const [topicOptions, setTopicOptions] = useState([]);
+  // the date picker component, as always, presents special challenges, it needs a key updated
+  // to re-render appropriately
+  const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
+  const [templatePrompts, setTemplatePrompts] = useState(false);
+  const [useOhsStandardGoal, setOhsStandardGoal] = useState(false);
+  const activityRecipientType = watch('activityRecipientType');
+
+  const [citationOptions, setCitationOptions] = useState([]);
+  const [rawCitations, setRawCitations] = useState([]);
+  const [grantsWithoutMonitoring, setGrantsWithoutMonitoring] = useState([]);
+
   const selectedGoals = useWatch({ name: 'goals' });
-  // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
-  // inMemoryGoals: unsaved goals, deselected goals
-  // selectedGoals: goals selected by user in MultiSelect
-  const allAvailableGoals = [...selectedGoals, ...inMemoryGoals, ...availableGoals];
+  const activityRecipients = watch('activityRecipients');
+  const regionId = watch('regionId');
+  const startDate = watch('startDate');
+  const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
-  const onRemoveGoal = (id) => {
-    const newGoals = selectedGoals.filter((selectedGoal) => selectedGoal.id !== id);
-    updateInMemoryGoals([...inMemoryGoals, ...newGoals]);
-    setValue('goals', newGoals);
-  };
+  const modalRef = useRef();
+  const [selectedGoal, setSelectedGoal] = useState(null);
 
-  const onUpdateGoal = (index, name) => {
-    if (name !== '') {
-      const oldGoal = selectedGoals[index];
-      const goal = {
-        ...oldGoal,
-        name,
-      };
-      const updatedGoals = cloneDeep(selectedGoals);
-      updatedGoals[index] = goal;
-      setValue('goals', updatedGoals);
+  const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
+    const { id, name } = goal;
+    const newSelectedIds = [...acc.selectedIds, id];
+    const newSelectedNames = [...acc.selectedNames, name];
+
+    return {
+      selectedIds: newSelectedIds,
+      selectedNames: newSelectedNames,
+    };
+  }, {
+    selectedIds: [],
+    selectedNames: [],
+  });
+
+  // excludes already selected goals from the dropdown by name and ID
+  const allAvailableGoals = availableGoals
+    .filter((goal) => goal.goalIds.every((id) => (
+      !selectedIds.includes(id)
+    )) && !selectedNames.includes(goal.name));
+
+  const {
+    field: {
+      onChange,
+      value: goalForEditing,
+    },
+  } = useController({
+    name: 'goalForEditing',
+    rules: {
+      validate: {
+        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals(g ? [g] : []) === true,
+      },
+    },
+    defaultValue: '',
+  });
+
+  const isMonitoringGoal = goalForEditing
+  && goalForEditing.standard
+  && goalForEditing.standard === 'Monitoring';
+
+  // for fetching topic options from API
+  useEffect(() => {
+    async function fetchTopics() {
+      const topics = await getTopics();
+      setTopicOptions(topics);
+    }
+    fetchTopics();
+  }, []);
+
+  // Fetch citations for the goal if the source is CLASS or RANs.
+  useDeepCompareEffect(() => {
+    async function fetchCitations() {
+      // If we have no other goals except a monitoring goal
+      //  and the source is CLASS or RANs, fetch the citations.
+      if (isMonitoringGoal) {
+        const retrievedCitationOptions = await fetchCitationsByGrant(
+          regionId,
+          grantIds,
+          startDate,
+        );
+
+        if (retrievedCitationOptions) {
+          // Reduce the citation options to only unique values.
+          const uniqueCitationOptions = Object.values(retrievedCitationOptions.reduce(
+            (acc, current) => {
+              current.grants.forEach((currentGrant) => {
+                const { findingType } = currentGrant;
+                if (!acc[findingType]) {
+                  acc[findingType] = { label: findingType, options: [] };
+                }
+
+                const findingKey = `${currentGrant.acro} - ${currentGrant.citation} - ${currentGrant.findingSource}`;
+                if (!acc[findingType].options.find((option) => option.name === findingKey)) {
+                  acc[findingType].options.push({
+                    name: findingKey,
+                    id: current.standardId,
+                  });
+                }
+              });
+
+              return acc;
+            }, {},
+          ));
+          setCitationOptions(uniqueCitationOptions);
+          setRawCitations(retrievedCitationOptions);
+        }
+      } else {
+        setCitationOptions([]);
+        setRawCitations([]);
+      }
+    }
+    fetchCitations();
+  }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
+
+  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
+
+  // We need options with the number and also we need to add the
+  // goal templates and "create new goal" to the front of all the options
+  const options = [
+    newGoal(grantIds),
+    ...uniqueAvailableGoals.map(({
+      goalNumber,
+      ...goal
+    }) => (
+      {
+        value: goal.id,
+        number: goalNumber,
+        label: goal.name,
+        objectives: [],
+        isNew: false,
+        ...goal,
+      }
+    )),
+  ];
+
+  const onChangeGoal = async (goal) => {
+    try {
+      if (goal.isCurated) {
+        const [prompts, source] = await Promise.all([
+          getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds),
+          // eslint-disable-next-line max-len
+          getGoalTemplateSource(goal.goalTemplateId, activityRecipients.map((ar) => ar.activityRecipientId)),
+        ]);
+
+        onChange({
+          ...goal,
+          source: source.source,
+        });
+
+        if (prompts) {
+          setTemplatePrompts(prompts);
+        }
+      } else {
+        onChange(goal);
+        setTemplatePrompts(false);
+      }
+
+      setSelectedGoal(null);
+    } catch (err) {
+      onChange(goal);
+      setTemplatePrompts(false);
+    }
+
+    // update the goal date forcefully
+    // also update the date picker key to force a re-render
+    setValue('goalEndDate', goal.endDate || '');
+    if (goal.goalIds) {
+      setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
     }
   };
 
-  const onUpdateObjectives = (index, objectives) => {
-    const newGoals = cloneDeep(selectedGoals);
-    newGoals[index].objectives = objectives;
-    // When objecttives are added/updated, make sure they are attached to available goals
-    updateInMemoryGoals(newGoals);
-    setValue('goals', newGoals);
+  const onKeep = async () => {
+    const savedObjectives = goalForEditing.objectives.map((o) => ({ ...o }));
+    onChangeGoal(selectedGoal);
+    setValue('goalForEditing.objectives', savedObjectives);
+    modalRef.current.toggleModal();
   };
 
-  const onItemSelected = (event) => {
-    // Use selections from MultiSelect to update goals form state
-    const newlySelectedGoals = event.map((e) => {
-      const goal = allAvailableGoals.find((g) => g.id === e.value);
-      let objectives = [createObjective()];
+  const onRemove = async () => {
+    setValue('goalForEditing.objectives', []);
+    onChangeGoal(selectedGoal);
+    modalRef.current.toggleModal();
+  };
 
-      if (goal.objectives && goal.objectives.length > 0) {
-        objectives = goal.objectives;
+  const onSelectGoal = async (goal) => {
+    const objectivesLength = (() => {
+      if (goalForEditing) {
+        return goalForEditing.objectives.length;
       }
-      return {
-        ...goal,
-        objectives,
-      };
-    });
-    // Preserve deselected goals so they can be re-reselected
-    const selectedIds = event.map((g) => g.id);
-    const deselectedGoals = selectedGoals.filter((g) => !selectedIds.includes(g.id));
-    updateInMemoryGoals([...inMemoryGoals, ...deselectedGoals]);
+      return 0;
+    })();
 
-    setValue('goals', newlySelectedGoals);
+    if (objectivesLength && modalRef.current) {
+      setSelectedGoal(goal);
+      modalRef.current.toggleModal();
+      return;
+    }
+
+    setValue('goalForEditing.objectives', []);
+    onChangeGoal(goal);
   };
 
-  const onNewGoalChange = (newGoal) => {
-    const goal = {
-      id: uuidv4(),
-      new: true,
-      name: newGoal,
-      objectives: [createObjective()],
-    };
-    setValue('goals', [...selectedGoals, goal]);
-    updateInMemoryGoals((oldGoals) => [...oldGoals, goal]);
-  };
+  useDeepCompareEffect(() => {
+    // We have only a single monitoring goal selected.
+    if (isMonitoringGoal && (!selectedGoals || selectedGoals.length === 0)) {
+      // Get the monitoring goal from the templates.
+      const monitoringGoal = goalTemplates.find((goal) => goal.standard === 'Monitoring');
+      if (monitoringGoal) {
+        // Find any grants that are missing from the monitoring goal.
+        const missingGrants = grantIds.filter(
+          (grantId) => !monitoringGoal.goals.find((g) => g.grantId === grantId),
+        );
 
-  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
+        if (missingGrants.length > 0) {
+        // get the names of the grants that are missing from goalForEditing.grants
+          const grantsIdsMissingMonitoringFullNames = activityRecipients.filter(
+            (ar) => missingGrants.includes(ar.activityRecipientId),
+          ).map((grant) => grant.name);
+          setGrantsWithoutMonitoring(grantsIdsMissingMonitoringFullNames);
+        } else {
+          setGrantsWithoutMonitoring([]);
+        }
+      }
+    } else if (grantsWithoutMonitoring.length > 0) {
+      setGrantsWithoutMonitoring([]);
+    }
+  }, [goalForEditing,
+    grantIds,
+    selectedGoals,
+    activityRecipients,
+    isMonitoringGoal,
+    goalTemplates]);
+
+  const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
 
   return (
-    <div className="margin-top-4">
-      <FormItem
-        label="Select all goals that apply to this report before leaving this page."
-        name="goals"
-        fieldSetWrapper
+    <>
+      <Modal
+        modalRef={modalRef}
+        heading="You have selected a different goal."
       >
+        <p>Do you want to keep the current objective summary information or remove it?</p>
+        <Button
+          type="button"
+          className="margin-right-1"
+          onClick={onKeep}
+          data-focus="true"
+        >
+          Keep objective
+        </Button>
+        <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
+      </Modal>
+      <div className="margin-top-3 position-relative">
+        {
+          grantsWithoutMonitoring.length > 0 && (
+            <Alert type="warning" className="margin-bottom-2">
+              <span>
+                <span className="margin-top-0">
+                  {grantsWithoutMonitoring.length > 1
+                    ? 'These grants do not have the standard monitoring goal:'
+                    : 'This grant does not have the standard monitoring goal:'}
+                  <ul className="margin-top-2">
+                    {grantsWithoutMonitoring.map((grant) => (
+                      <li key={grant}>{grant}</li>
+                    ))}
+                  </ul>
+                </span>
+                <span className="margin-top-2 margin-bottom-0">
+                  To avoid errors when submitting the report, you can either:
+                  <ul className="margin-top-2 margin-bottom-0">
+                    <li>
+                      Add a different goal to the report
+                    </li>
+                    <li>
+                      Remove the grant from the
+                      {' '}
+                      <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                    </li>
+                  </ul>
+                </span>
+              </span>
+            </Alert>
+          )
+       }
         <Label>
-          Select from existing goal(s) or type to create a new goal.
-          <MultiSelect
-            name="goals"
+          Select recipient&apos;s goal
+          <Req />
+          <Select
+            name="goalForEditing"
             control={control}
-            valueProperty="id"
-            labelProperty="name"
-            simple={false}
             components={components}
-            onItemSelected={onItemSelected}
+            onChange={onSelectGoal}
             rules={{
               validate: validateGoals,
             }}
-            options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
-            singleRowInput
-            multiSelectOptions={{
-              isClearable: false,
-              closeMenuOnSelect: true,
-              controlShouldRenderValue: false,
-              hideSelectedOptions: false,
+            className="usa-select"
+            options={pickerOptions}
+            styles={{
+              ...selectOptionsReset,
+              option: (provided) => ({
+                ...provided,
+                marginBottom: '0.5em',
+              }),
             }}
-            onCreateOption={onNewGoalChange}
-            canCreate
+            placeholder="- Select -"
+            value={goalForEditing}
+            required
           />
         </Label>
-        <div>
-          {selectedGoals.map((goal, index) => (
-            <Goal
-              key={goal.id}
-              goalIndex={index}
-              id={goal.id}
-              objectives={goal.objectives}
-              name={goal.name}
-              isEditable={goal.new === true}
-              createObjective={createObjective}
-              onRemoveGoal={() => onRemoveGoal(goal.id)}
-              onUpdateObjectives={(newObjectives) => {
-                onUpdateObjectives(index, newObjectives);
-              }}
-              onUpdateGoal={(goalName) => onUpdateGoal(index, goalName)}
+        <Checkbox
+          label="Use OHS standard goal"
+          id="useOhsStandardGoal"
+          name="useOhsStandardGoal"
+          checked={useOhsStandardGoal}
+          className="margin-top-1"
+          onChange={() => setOhsStandardGoal(!useOhsStandardGoal)}
+        />
+        {goalForEditing ? (
+          <div>
+            <GoalForm
+              topicOptions={topicOptions}
+              goal={goalForEditing}
+              reportId={reportId}
+              datePickerKey={datePickerKey}
+              templatePrompts={templatePrompts}
+              isMultiRecipientReport={isMultiRecipientReport}
+              citationOptions={citationOptions}
+              rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
             />
-          ))}
-        </div>
-      </FormItem>
-    </div>
+          </div>
+        ) : null}
+      </div>
+
+    </>
   );
 };
 
 GoalPicker.propTypes = {
-  availableGoals: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.number,
-    }),
-  ).isRequired,
+  goalTemplates: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
+    goalTemplateId: PropTypes.number,
+    objectives: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      description: PropTypes.string,
+      goalId: PropTypes.number,
+    })),
+  })).isRequired,
+  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  availableGoals: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.number,
+  })).isRequired,
+  reportId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
 };
 
 export default GoalPicker;

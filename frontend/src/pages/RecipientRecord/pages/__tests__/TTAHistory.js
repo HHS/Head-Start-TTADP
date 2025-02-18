@@ -8,8 +8,10 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import TTAHistory from '../TTAHistory';
 import { formatDateRange } from '../../../../utils';
+import UserContext from '../../../../UserContext';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -24,11 +26,25 @@ describe('Recipient Record - TTA History', () => {
     rows: [],
   };
 
-  const renderTTAHistory = () => {
+  const user = {
+    homeRegionId: 14,
+    permissions: [{
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }, {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }],
+  };
+
+  const renderTTAHistory = ({ name = 'Jim Recipient' } = {}) => {
     render(
-      <Router history={memoryHistory}>
-        <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
-      </Router>,
+      <UserContext.Provider value={{ user }}>
+        <Router history={memoryHistory}>
+          <TTAHistory recipientName={name} recipientId="401" regionId="1" />
+        </Router>
+
+      </UserContext.Provider>,
     );
   };
 
@@ -49,14 +65,20 @@ describe('Recipient Record - TTA History', () => {
 
   it('renders the TTA History page appropriately', async () => {
     act(() => renderTTAHistory());
-    const overview = document.querySelector('.smart-hub--dashboard-overview');
+    const overview = document.querySelector('.smart-hub--dashboard-overview-container');
     expect(overview).toBeTruthy();
   });
 
   it('renders the activity reports table', async () => {
     renderTTAHistory();
-    const reports = await screen.findByText('Activity Reports');
+    const reports = await screen.findByText(/approved activity reports/i, { selector: 'h2' });
     expect(reports).toBeInTheDocument();
+  });
+
+  it('renders null when recipientName is missing', async () => {
+    renderTTAHistory({ name: null });
+    const reports = screen.queryByText('Activity Reports');
+    expect(reports).toBeNull();
   });
 
   it('combines filters appropriately', async () => {

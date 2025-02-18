@@ -1,43 +1,89 @@
 import {} from 'dotenv/config';
+import fs from 'fs';
 import express from 'express';
 import helmet from 'helmet';
 import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
-import { CronJob } from 'cron';
+
+import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
+
+import { registerEventListener } from './processHandler';
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
-import updateGrantsRecipients from './lib/updateGrantsRecipients';
+
 import { logger, auditLogger, requestLogger } from './logger';
+import runCronJobs from './lib/cron';
 
 const app = express();
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
+let index;
+
+registerEventListener();
+
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
+  index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
+}
+
+const serveIndex = (req, res) => {
+  const noncedIndex = index.replaceAll('__NONCE__', res.locals.nonce);
+  res.set('Content-Type', 'text/html');
+  res.send(noncedIndex);
+};
 
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
-      'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
-      imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
-      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json'],
-    },
-  },
-}));
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client')));
+app.use((req, res, next) => {
+  // set the X-Content-Type-Options header to prevent MIME-sniffing
+  res.set('X-Content-Type-Options', 'nosniff');
+
+  // set nonce
+  res.locals.nonce = crypto.randomBytes(16).toString('hex');
+
+  // set CSP
+  const cspMiddleware = helmet.contentSecurityPolicy({
+    directives: {
+      ...omit(
+        helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'upgrade-insecure-requests',
+        'block-all-mixed-content',
+        'script-src',
+        'img-src',
+        'default-src',
+        'style-src',
+        'font-src',
+      ),
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`,
+      // "'sha256-7oERheaqPgauHfP5d4xw0v6p4MUYc+/Quwioe/4rjOI='", "'unsafe-inline'"],
+      fontSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
+      'form-action': ["'self'"],
+      scriptSrc: ["'self'", `'nonce-${res.locals.nonce}'`, '*.googletagmanager.com'],
+      scriptSrcElem: ["'self'", `'nonce-${res.locals.nonce}'`, 'https://*.googletagmanager.com'],
+      imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
+      connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
+      defaultSrc: ["'self'", 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
+    },
+  });
+  cspMiddleware(req, res, next);
+});
+
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
+  app.use('/index.html', serveIndex);
+  app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
-
 app.use('/api', require('./routes/apiDirectory').default);
+
+// Disable "X-Powered-By" header
+app.disable('x-powered-by');
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
@@ -48,6 +94,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 
     const dbUser = await retrieveUserDetails(user);
     req.session.userId = dbUser.id;
+    req.session.uuid = uuidv4();
     auditLogger.info(`User ${dbUser.id} logged in`);
 
     logger.debug(`referrer path: ${req.session.referrerPath}`);
@@ -58,31 +105,10 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'index.html'));
-  });
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
+  app.use('*', serveIndex);
 }
 
-// Set timing parameters.
-// Run at 4 am ET
-const schedule = '0 4 * * *';
-const timezone = 'America/New_York';
-
-const runJob = () => {
-  try {
-    return updateGrantsRecipients();
-  } catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
-    logger.error(error.stack);
-  }
-  return false;
-};
-
-// Run only on one instance
-if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
-  const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-  job.start();
-}
+runCronJobs();
 
 export default app;

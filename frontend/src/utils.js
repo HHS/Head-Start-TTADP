@@ -2,14 +2,15 @@ import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import {
-  GOVERNMENT_HOSTNAME_EXTENSION,
-  REPORT_STATUSES,
+  ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
+  HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
   WITHIN,
   QUERY_CONDITIONS,
-  DECIMAL_BASE,
   DATE_FMT,
   DATE_FORMAT,
+  DATE_DISPLAY_FORMAT,
 } from './Constants';
 
 /**
@@ -34,7 +35,8 @@ export const isValidURL = (url) => {
  */
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
-  return newUrl.host.endsWith(GOVERNMENT_HOSTNAME_EXTENSION);
+  return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
+  || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
 };
 
 /**
@@ -77,6 +79,16 @@ export const getDistinctSortedArray = (arr) => {
 };
 
 /**
+ * Check for a valid date otherwise return '...'.
+ */
+export const checkForDate = (date, format = 'MM/DD/YYYY') => {
+  if (date) {
+    return moment(date, format).format(DATE_DISPLAY_FORMAT);
+  }
+  return '---';
+};
+
+/**
  * Express expects arrays in queries like
  * &filter.is[]=1&filter.is[]=2
  * rather than &filter.is[]=1,2
@@ -106,7 +118,7 @@ export function expandFilters(filters) {
   return arr;
 }
 
-function decodeQueryParam(param) {
+export function decodeQueryParam(param) {
   const query = decodeURIComponent(param);
   if (query.includes(',')) {
     return query.split(',');
@@ -158,10 +170,12 @@ export function filtersToQueryString(filters, region) {
   });
   const queryFragments = filtersWithValues.map((filter) => {
     const con = QUERY_CONDITIONS[filter.condition];
-    return `${filter.topic}.${con}=${encodeURIComponent(filter.query)}`;
+    const q = String(filter.query).trim();
+    return `${filter.topic}.${con}=${encodeURIComponent(q)}`;
   });
-  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
-    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
+
+  if (region && !Number.isNaN(parseInt(region, DECIMAL_BASE))) {
+    queryFragments.push(`region.in[]=${region}`);
   }
 
   return queryFragments.join('&');
@@ -194,6 +208,8 @@ export function formatDateRange(format = {
   yearToDate: false,
   withSpaces: false,
   forDateTime: false,
+  lastThreeMonths: false,
+  lastSixMonths: false,
   sep: '-',
   string: '',
 }) {
@@ -211,6 +227,16 @@ export function formatDateRange(format = {
   if (format.lastThirtyDays) {
     secondDay = moment();
     firstDay = moment().subtract(30, 'days');
+  }
+
+  if (format.lastThreeMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(3, 'months');
+  }
+
+  if (format.lastSixMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(6, 'months');
   }
 
   if (format.yearToDate) {
@@ -237,3 +263,17 @@ export function formatDateRange(format = {
 
   return '';
 }
+
+export const parseFeedIntoDom = (feed) => {
+  if (!feed) {
+    return null;
+  }
+
+  const parsedDom = new window.DOMParser().parseFromString(feed, 'text/xml');
+
+  if (parsedDom.querySelector('parsererror')) {
+    return null;
+  }
+
+  return parsedDom;
+};

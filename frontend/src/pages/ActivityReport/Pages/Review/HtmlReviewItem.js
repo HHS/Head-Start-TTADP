@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../../utils';
 
@@ -39,7 +39,7 @@ const HtmlReviewItem = ({ label, name }) => {
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {values.map((v, index) => (
-          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
             {v}
           </div>
         ))}

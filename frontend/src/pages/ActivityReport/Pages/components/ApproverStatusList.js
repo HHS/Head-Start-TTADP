@@ -1,17 +1,19 @@
 import React from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationCircle, faCheck, faMinus } from '@fortawesome/free-solid-svg-icons';
+import colors from '../../../../colors';
 
 const getStatusIcon = (status) => {
   if (status && status === 'needs_action') {
-    return <FontAwesomeIcon className="margin-right-105" size="1x" color="#eb6689" icon={faExclamationCircle} />;
+    return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.errorDark} icon={faExclamationCircle} />;
   }
   if (status && status === 'approved') {
-    return <FontAwesomeIcon className="margin-right-105" size="1x" color="#4fbe82" icon={faCheck} />;
+    return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.success} icon={faCheck} />;
   }
 
-  return <FontAwesomeIcon className="margin-right-105" size="1x" color="#f2cf95" icon={faMinus} />;
+  return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.warning} icon={faMinus} />;
 };
 
 const getDisplayStatus = (status) => {
@@ -28,11 +30,11 @@ const ApproverStatusList = ({
   approverStatus,
 }) => {
   const displayApproverStatusList = () => approverStatus.map((s) => (
-    <li className="margin-bottom-205" key={s.User.fullName}>
+    <li className="margin-bottom-205" key={uniqueId('approver-status-list-')}>
       {getStatusIcon(s.status)}
       <b>{getDisplayStatus(s.status)}</b>
       {s.status === 'approved' ? ' by ' : ' from '}
-      {s.User.fullName}
+      {s.user.fullName}
     </li>
   ));
 

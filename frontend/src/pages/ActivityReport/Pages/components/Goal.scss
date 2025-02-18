@@ -1,0 +1,13 @@
+@use '../../../../colors.scss' as *;
+
+.smart-hub--goal {
+  border-left: 4px solid $ttahub-medium-blue;
+  display: flex;
+  flex-flow: row;
+  margin-top: 1rem;
+}
+
+.smart-hub--goal-content {
+  margin-left: 1rem;
+  width: 100%;
+}

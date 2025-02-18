@@ -1,0 +1,5 @@
+@use '../../../../mixins.scss';
+
+.usa-error-message + .usa-textarea {
+  @include mixins.error;
+}

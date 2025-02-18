@@ -2,6 +2,7 @@ import express from 'express';
 import { cdiGrants, grantById, assignCDIGrant } from '../../services/grant';
 import Grant from '../../policies/grant';
 import handleErrors from '../../lib/apiErrorHandler';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:GRANTS';
 
@@ -43,7 +44,7 @@ export async function assignRegionRecipientToCDIGrant(req, res) {
 
 const router = express.Router();
 
-router.get('/cdi', getCDIGrants);
-router.put('/cdi/:grantId', assignRegionRecipientToCDIGrant);
+router.get('/cdi', transactionWrapper(getCDIGrants));
+router.put('/cdi/:grantId', transactionWrapper(assignRegionRecipientToCDIGrant));
 
 export default router;

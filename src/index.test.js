@@ -1,6 +1,9 @@
 import request from 'supertest';
 import app from './app';
 
+jest.mock('axios');
+jest.mock('smartsheet');
+
 describe('Root', () => {
   const ORIGINAL_ENV = process.env;
 

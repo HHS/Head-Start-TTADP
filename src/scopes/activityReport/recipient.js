@@ -1,8 +1,23 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
-const recipientName = 'SELECT "ActivityRecipients"."activityReportId" FROM "Recipients" INNER JOIN "Grants" ON "Grants"."recipientId" = "Recipients"."id" INNER JOIN "ActivityRecipients" ON "ActivityRecipients"."grantId" = "Grants"."id" WHERE "Recipients".NAME';
-const otherEntityName = 'SELECT "ActivityRecipients"."activityReportId" FROM "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityRecipients"."otherEntityId" = "OtherEntities"."id" WHERE "OtherEntities".NAME';
+const recipientName = `
+SELECT
+  "ActivityRecipients"."activityReportId"
+FROM "Recipients" "Recipients"
+INNER JOIN "Grants" "Grants"
+ON "Grants"."recipientId" = "Recipients"."id"
+INNER JOIN "ActivityRecipients" "ActivityRecipients"
+ON "ActivityRecipients"."grantId" = "Grants"."id"
+WHERE "Recipients".NAME`;
+
+const otherEntityName = `
+SELECT
+  "ActivityRecipients"."activityReportId"
+FROM "OtherEntities" "OtherEntities"
+INNER JOIN "ActivityRecipients" "ActivityRecipients"
+ON "ActivityRecipients"."otherEntityId" = "OtherEntities"."id"
+WHERE "OtherEntities".NAME`;
 
 export function withRecipientName(names) {
   return {

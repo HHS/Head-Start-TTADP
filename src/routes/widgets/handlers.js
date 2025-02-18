@@ -4,12 +4,27 @@ import handleErrors from '../../lib/apiErrorHandler';
 import { setReadRegions } from '../../services/accessValidation';
 import { onlyAllowedKeys, formatQuery } from './utils';
 import filtersToScopes from '../../scopes';
+import { currentUserId } from '../../services/currentUser';
+import getCachedResponse from '../../lib/cache';
 
 const namespace = 'SERVICE:WIDGETS';
 
 const logContext = {
   namespace,
 };
+
+export function keysDisallowCache(query) {
+  const DISALLOWED_KEYS = ['myReports'];
+  let disallowCache = false;
+
+  Object.keys(query).forEach((key) => {
+    const firstFilterParam = key.split('.')[0];
+    if (DISALLOWED_KEYS.includes(firstFilterParam)) {
+      disallowCache = true;
+    }
+  });
+  return disallowCache;
+}
 
 export async function getWidget(req, res) {
   try {
@@ -22,7 +37,8 @@ export async function getWidget(req, res) {
     }
 
     // This returns the query object with "region" property filtered by user permissions
-    const query = await setReadRegions(req.query, req.session.userId);
+    const userId = await currentUserId(req, res);
+    const query = await setReadRegions(req.query, userId);
 
     // Determine what scopes we need.
     /**
@@ -38,8 +54,13 @@ export async function getWidget(req, res) {
      * The idea is twofold, firstly, that we can expand the options passed to filtersToScopes and
      * also that we can as needed modify the request to add certain objects
      */
-    const scopes = filtersToScopes(query, { grant: { subset: true } });
-
+    const scopes = await filtersToScopes(
+      query,
+      {
+        grant: { subset: true },
+        userId,
+      },
+    );
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
 
@@ -47,14 +68,26 @@ export async function getWidget(req, res) {
    * Proposal: This is where we should do things like format values in the query object
    * if we need special formatting, a la parsing the region for use in string literals   *
    */
-
+    const skipCache = keysDisallowCache(queryWithFilteredKeys);
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
+    const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 
-    // pass in the scopes and the query
-    const widgetData = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+    if (skipCache) {
+      const widgetData = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+      res.json(widgetData);
+      return;
+    }
+    const widgetData = await getCachedResponse(
+      key,
+      async () => {
+        const data = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+        return JSON.stringify(data);
+      },
+      JSON.parse,
+    );
 
     res.json(widgetData);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }

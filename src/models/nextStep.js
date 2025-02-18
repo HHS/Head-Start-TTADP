@@ -1,30 +1,52 @@
 const { Model } = require('sequelize');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
+const { formatDate } = require('../lib/modelHelpers');
+const {
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class NextStep extends Model {
     static associate(models) {
-      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
+      NextStep.hasMany(models.NextStepResource, { foreignKey: 'nextStepId', as: 'nextStepResources' });
+      NextStep.belongsToMany(models.Resource, {
+        through: models.NextStepResource,
+        foreignKey: 'nextStepId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   NextStep.init({
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     note: {
       allowNull: false,
       type: DataTypes.TEXT,
       validate: {
-        isNull: false,
-        isEmpty: false,
+        notNull: true,
+        notEmpty: true,
       },
     },
     noteType: {
       allowNull: false,
-      type: DataTypes.ENUM('SPECIALIST', 'RECIPIENT'),
+      type: DataTypes.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
+    },
+    completeDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
     },
   }, {
     sequelize,
     modelName: 'NextStep',
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
   });
   return NextStep;
 };

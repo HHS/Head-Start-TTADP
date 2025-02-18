@@ -1,15 +1,21 @@
+.filter-pill-container {
+    white-space: nowrap;
+}
+
 .filter-pill-container .smart-hub--ellipsis {
-    display: inline;
-    width: 290px;
     font-size: 16px;
+    max-width: 200px;
+    overflow: hidden;
     vertical-align: top;
 }
 
-.filter-pill-container .smart-hub--tooltip button {
-    display: inline;
-    line-height: 1.15;
+@media all and (min-width: 40em){
+    .filter-pill-container .smart-hub--ellipsis {
+        max-width: 290px;
+    }
 }
 
-.filter-pill:first-of-type {
-    margin-left: 1em;
+.filter-pill-container .smart-hub-tooltip button {
+    display: inline;
+    line-height: 1.15rem;
 }

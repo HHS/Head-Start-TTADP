@@ -1,0 +1,29 @@
+get:
+  tags:
+    - settings
+  summary: Retrieves settings for a user
+  responses:
+    200:
+      description: The settings of a user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/settings'
+    400:
+      description: User for userId was not found or not provided
+
+put:
+  tags:
+    - settings
+  summary: Updates settings for a user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/settings'
+  responses:
+    204:
+      description: Settings updated successfully
+    400:
+      description: Settings were not updated successfully

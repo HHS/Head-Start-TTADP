@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 require('dotenv').config();
 const {
   Given, Then, When,
@@ -19,7 +20,7 @@ Given('I am on the landing page', async () => {
     page.waitForNavigation(),
     await page.goto(`${scope.uri}/activity-reports/new`),
   ]);
-  await scope.context.currentPage.waitForSelector('h1');
+  await scope.context.currentPage.waitForSelector('#main-content > div.smart-hub-activity-report > div.grid-row.flex-justify > div.grid-col-auto.flex-align-self-center > div');
 });
 
 When('I select {string}', async (inputLabel) => {
@@ -34,7 +35,7 @@ Then('I see {string} as an option in the {string} multiselect', async (expectedO
   const selector = `//label[text()='${dropdownLabel}']//div`;
   const multiselect = await page.$x(selector);
   await multiselect[0].click();
-  const elements = await page.$x(`//label[text()='${dropdownLabel}']//div//div[2]//div//div`)
+  const elements = await page.$x(`//label[text()='${dropdownLabel}']//div//div[2]//div//div`);
   let found = false;
 
   for (let i = 0; i < elements.length; i += 1) {

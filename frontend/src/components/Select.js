@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import ReactSelect from 'react-select';
 
 import { DropdownIndicator } from './MultiSelect';
+import colors from '../colors';
 
 function Select({
   name,
@@ -26,10 +27,10 @@ function Select({
       fontFamily: 'SourceSansPro',
       textTransform: 'capitalize',
       fontSize: '14px',
-      color: '#21272d',
+      color: colors.smartHubTextInk,
       lineHeight: '22px',
     }),
-    control: (provided, state) => ({
+    control: (provided) => ({
       ...provided,
       borderColor: '#565c65',
       backgroundColor: 'white',
@@ -37,8 +38,6 @@ function Select({
       '&:hover': {
         borderColor: '#565c65',
       },
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
     }),
     indicatorsContainer: (provided) => ({
       ...provided,

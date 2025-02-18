@@ -1,26 +1,37 @@
 import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
+import { sequelize } from '../../models';
 
-const topicFilter = `
-SELECT DISTINCT g.id
-FROM "ActivityReports" ar
-INNER JOIN "ActivityReportObjectives" aro ON ar."id" = aro."activityReportId"
-INNER JOIN "Objectives" o ON aro."objectiveId" = o.id
-INNER JOIN "Goals" g ON o."goalId" = g.id
-WHERE ARRAY_TO_STRING(ar."topics", ',')`;
+const topicFilter = (topics, options) => {
+  const useRecipient = options && options.recipientId;
+  return `(
+          SELECT DISTINCT "Goal".id FROM "ActivityReports" ar 
+            INNER JOIN "ActivityReportGoals" arg ON ar.id = arg."activityReportId" 
+            INNER JOIN "Goals" "Goal" ON arg."goalId" = "Goal".id 
+            INNER JOIN "Grants" gr ON "Goal"."grantId" = gr."id" 
+            WHERE ${useRecipient ? `gr."recipientId" = ${sequelize.escape(options.recipientId)} AND ` : ''} 
+            ar."topics" && (ARRAY[${topics.map((t) => sequelize.escape(t)).join(',')}::varchar])
+          UNION ALL
+          SELECT DISTINCT "Goal"."id" FROM "Objectives" "Objectives" 
+            INNER JOIN "ActivityReportObjectives" "ActivityReportObjectives" ON "Objectives"."id" = "ActivityReportObjectives"."objectiveId" 
+            INNER JOIN "ActivityReportObjectiveTopics" "ActivityReportObjectiveTopics" ON "ActivityReportObjectives"."id" = "ActivityReportObjectiveTopics"."activityReportObjectiveId" 
+            INNER JOIN "Topics" "Topics" ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id" 
+            INNER JOIN "Goals" "Goal" ON "Objectives"."goalId" = "Goal"."id" 
+            WHERE "Topics"."name" IN (${topics.map((t) => sequelize.escape(t)).join(',')})
+        )`;
+};
 
-export function withTopics(topics) {
+export function withTopics(topics, options) {
   return {
-    [Op.or]: [
-      filterAssociation(topicFilter, topics, false),
-    ],
+    id: {
+      [Op.in]: sequelize.literal(topicFilter(topics, options)),
+    },
   };
 }
 
-export function withoutTopics(topics) {
+export function withoutTopics(topics, options) {
   return {
-    [Op.and]: [
-      filterAssociation(topicFilter, topics, true),
-    ],
+    id: {
+      [Op.notIn]: sequelize.literal(topicFilter(topics, options)),
+    },
   };
 }

@@ -1,21 +1,45 @@
 const {
-  Model,
+  Model, Op,
 } = require('sequelize');
+const {
+  afterCreate,
+  afterUpdate,
+  beforeDestroy,
+  afterDestroy,
+} = require('./hooks/grant');
 
-/**
- * Grants table. Stores grants.
- *
- * @param {} sequelize
- * @param {*} DataTypes
- */
-module.exports = (sequelize, DataTypes) => {
+const { GRANT_INACTIVATION_REASONS } = require('../constants');
+
+const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
+
+export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
-      Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
+      Grant.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
-      Grant.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'grantId', as: 'goals' });
+      Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
+      Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants' });
+      Grant.hasMany(models.ProgramPersonnel, { foreignKey: 'grantId', as: 'programPersonnel' });
+      Grant.belongsToMany(models.Group, {
+        through: models.GroupGrant,
+        foreignKey: 'grantId',
+        otherKey: 'groupId',
+        as: 'groups',
+      });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
+      Grant.belongsToMany(models.ActivityReport, {
+        through: models.ActivityRecipient,
+        foreignKey: 'grantId',
+        otherKey: 'activityReportId',
+        as: 'activityReports',
+      });
+
+      Grant.addScope('defaultScope', {
+        include: [
+          { model: models.Recipient, as: 'recipient' },
+        ],
+      });
     }
   }
   Grant.init({
@@ -29,15 +53,14 @@ module.exports = (sequelize, DataTypes) => {
     number: {
       type: DataTypes.STRING,
       allowNull: false,
-      /*
-        We're not setting unique true here to allow
-        bulkCreate/updateOnDuplicate to properly match rows on just the id.
-        unique: true,
-      */
     },
     annualFundingMonth: DataTypes.STRING,
-    cdi: DataTypes.BOOLEAN,
+    cdi: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     status: DataTypes.STRING,
+    granteeName: DataTypes.STRING,
     grantSpecialistName: DataTypes.STRING,
     grantSpecialistEmail: DataTypes.STRING,
     programSpecialistName: DataTypes.STRING,
@@ -45,11 +68,16 @@ module.exports = (sequelize, DataTypes) => {
     stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
+    inactivationDate: DataTypes.DATE,
+    inactivationReason: DataTypes.ENUM(inactivationReasons),
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    oldGrantId: DataTypes.INTEGER,
+    deleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     programTypes: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -63,7 +91,10 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+        if (this.recipient) {
+          return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+        }
+        return `${this.numberWithProgramTypes}`;
       },
     },
     numberWithProgramTypes: {
@@ -76,12 +107,29 @@ module.exports = (sequelize, DataTypes) => {
     recipientInfo: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.number} - ${this.recipient.id}`;
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number} - ${this.recipientId}`
+          : `${this.number} - ${this.recipientId}`;
+      },
+    },
+    recipientNameWithPrograms: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const programsList = this.programTypes.length > 0 ? `${this.programTypes.join(', ')}` : '';
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number}${programsList ? ` - ${programsList}` : ''}`
+          : `${this.number} - ${this.recipientId}`;
       },
     },
   }, {
     sequelize,
     modelName: 'Grant',
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return Grant;
 };

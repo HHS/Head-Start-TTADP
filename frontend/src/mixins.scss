@@ -1,0 +1,5 @@
+@use './colors.scss';
+
+@mixin error {
+    border: 2px solid colors.$error-dark;
+}

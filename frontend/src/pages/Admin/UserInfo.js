@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Label, TextInput, Grid, Fieldset,
@@ -7,8 +7,7 @@ import {
 import moment from 'moment';
 import RegionDropdown from '../../components/RegionDropdown';
 import AdminMultiSelect from '../../components/AdminMultiSelect';
-
-import { ROLES } from '../../Constants';
+import { getRoles } from '../../fetchers/Admin';
 
 /**
  * This component is the top half of the UserSection on the admin page. It displays and allows
@@ -20,6 +19,25 @@ function UserInfo({ user, onUserChange }) {
   if (lastLogin && lastLogin !== '') {
     lastLogin = moment(lastLogin).format('lll Z');
   }
+
+  const [roleOptions, setRoleOptions] = useState([]);
+  const [fetchError, setFetchError] = useState(false);
+
+  useEffect(() => {
+    async function fetchRoles() {
+      try {
+        const rolesFromApi = await getRoles();
+        setRoleOptions(rolesFromApi.map((r) => r.fullName));
+      } catch (error) {
+        setFetchError(true);
+      }
+    }
+
+    if (!fetchError && roleOptions.length < 1) {
+      fetchRoles();
+    }
+  }, [fetchError, roleOptions.length]);
+
   return (
     <>
       <Fieldset className="margin-bottom-2" legend="User Profile">
@@ -60,12 +78,12 @@ function UserInfo({ user, onUserChange }) {
           <Grid col={12}>
             <AdminMultiSelect
               id="user-roles"
-              name="role"
-              value={user.role}
+              name="roles"
+              value={user.roles ? user.roles.map((role) => (role.fullName)) : []}
               onChange={onUserChange}
               placeholder="Select roles..."
               label="Role(s)"
-              options={ROLES.map((role) => ({ value: role, label: role }))}
+              options={roleOptions.map((role) => ({ value: role, label: role }))}
             />
           </Grid>
         </Grid>
@@ -103,7 +121,9 @@ UserInfo.propTypes = {
     email: PropTypes.string,
     name: PropTypes.string,
     homeRegionId: PropTypes.number,
-    role: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({
+      fullName: PropTypes.string,
+    })),
     hsesUserId: PropTypes.string,
     hsesUsername: PropTypes.string,
     hsesAuthorities: PropTypes.arrayOf(PropTypes.string),

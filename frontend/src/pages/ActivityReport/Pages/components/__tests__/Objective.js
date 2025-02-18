@@ -1,158 +1,366 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import {
+  render, screen, within, act, fireEvent, waitFor,
+} from '@testing-library/react';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
+import selectEvent from 'react-select-event';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import fetchMock from 'fetch-mock';
+import userEvent from '@testing-library/user-event';
+import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
+import AppLoadingContext from '../../../../../AppLoadingContext';
+import UserContext from '../../../../../UserContext';
+import { mockRSSData } from '../../../../../testHelpers';
+
+const history = createMemoryHistory();
+
+const defaultObjective = {
+  id: 1,
+  resources: [],
+  topics: [],
+  title: 'This is an objective title',
+  ttaProvided: '<p><ul><li>What</li></ul></p>',
+  status: 'Not started',
+  ids: [1],
+  objectiveCreatedHere: true,
+};
+
+const mockData = (files) => ({
+  dataTransfer: {
+    files,
+    items: files.map((file) => ({
+      kind: 'file',
+      type: file.type,
+      getAsFile: () => file,
+    })),
+    types: ['Files'],
+  },
+});
+
+const file = (name, id, status = 'Uploaded') => ({
+  originalFileName: name, id, fileSize: 2000, status, lastModified: 123456,
+});
+
+const dispatchEvt = (node, type, data) => {
+  const event = new Event(type, { bubbles: true });
+  Object.assign(event, data);
+  fireEvent(node, event);
+};
+
+const flushPromises = async (rerender, ui) => {
+  await act(() => waitFor(() => rerender(ui)));
+};
+
+let getValues;
 
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  defaultObjective, onRemove = () => {},
+  objective = defaultObjective,
+  onRemove = () => {},
+  citationOptions = [],
+  rawCitations = [],
+  additionalHookFormData = {},
+  isMonitoringGoal = false,
 }) => {
   const hookForm = useForm({
-    defaultValues: { objective: defaultObjective },
+    mode: 'onBlur',
+    defaultValues: {
+      ...additionalHookFormData,
+      objectives: [objective],
+      collaborators: [],
+      author: {
+        role: 'Central office',
+      },
+    },
   });
 
   hookForm.register('goals');
-  hookForm.register('objective');
-  const objective = hookForm.watch('objective');
+  hookForm.register('objectives');
+
+  getValues = hookForm.getValues;
 
   const onUpdate = (obj) => {
-    hookForm.setValue('objective', obj);
+    hookForm.setValue('objectives', [obj]);
   };
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...hookForm}>
-      <Objective
-        objective={objective}
-        onRemove={onRemove}
-        onUpdate={onUpdate}
-        parentLabel="goals"
-        objectiveAriaLabel="1 on goal 1"
-        goalIndex={0}
-        objectiveIndex={0}
-      />
-    </FormProvider>
+    <Router history={history}>
+      <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+        <FormProvider {...hookForm}>
+          <AppLoadingContext.Provider value={
+        {
+          setAppLoadingText: jest.fn(),
+          setIsAppLoading: jest.fn(),
+        }
+      }
+          >
+            <Objective
+              objective={defaultObjective}
+              topicOptions={[]}
+              citationOptions={citationOptions}
+              rawCitations={rawCitations}
+              isMonitoringGoal={isMonitoringGoal}
+              options={[
+                {
+                  label: 'Create a new objective',
+                  value: 'Create a new objective',
+                  topics: [],
+                  resources: [],
+                  files: [],
+                  status: 'Not Started',
+                  title: '',
+                  courses: [],
+                  supportType: '',
+                  objectiveCreatedHere: true,
+                },
+                {
+                  courses: [],
+                  supportType: '',
+                  label: 'Existing objective',
+                  value: 123,
+                  topics: [],
+                  resources: [],
+                  files: [],
+                  status: 'Complete',
+                  title: 'Existing objective',
+                  objectiveCreatedHere: false,
+                }]}
+              index={1}
+              remove={onRemove}
+              fieldArrayName="objectives"
+              goalId={1}
+              onRemove={onRemove}
+              onUpdate={onUpdate}
+              parentLabel="goals"
+              objectiveAriaLabel="1 on goal 1"
+              goalIndex={0}
+              objectiveIndex={0}
+              errors={{}}
+              onObjectiveChange={jest.fn()}
+              onSaveDraft={jest.fn()}
+              parentGoal={{ status: 'In Progress' }}
+              initialObjectiveStatus="Not Started"
+              reportId={98123}
+            />
+          </AppLoadingContext.Provider>
+        </FormProvider>
+      </UserContext.Provider>
+    </Router>
   );
 };
 
 describe('Objective', () => {
-  it('opens in edit mode if "ttaProvided" is blank', async () => {
-    render(<RenderObjective defaultObjective={{ ttaProvided: '<p></p>', title: 'title', status: 'status' }} />);
-    const save = await screen.findByText('Save Objective');
-    expect(save).toBeVisible();
+  afterEach(() => fetchMock.restore());
+  beforeEach(async () => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+    fetchMock.get('/api/courses', [{ id: 1, name: 'Course 1' }, { id: 2, name: 'Course 2' }]);
   });
 
-  it('opens in edit mode if "title" is blank', async () => {
-    render(<RenderObjective defaultObjective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
-    const save = await screen.findByText('Save Objective');
-    expect(save).toBeVisible();
+  it('renders an objective', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
   });
 
-  describe('in edit mode', () => {
-    it('focuses the title field', async () => {
-      render(<RenderObjective defaultObjective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
-      const title = await screen.findByLabelText('Objective (Required)');
-      expect(document.activeElement).toEqual(title);
-    });
-
-    it('saves without explicitly clicking the save button', async () => {
-      const objective = {
-        title: '', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const title = await screen.findByLabelText('Objective (Required)');
-      userEvent.type(title, 'this is a test');
-      const titleWithText = await screen.findByDisplayValue('this is a test');
-      expect(titleWithText).toBeVisible();
-    });
-
-    it('save does not work if "objective" and "TTA Provided" are empty', async () => {
-      render(<RenderObjective defaultObjective={{}} />);
-      const save = await screen.findByText('Save Objective');
-      expect(save).toBeVisible();
-
-      userEvent.click(save);
-      expect(await screen.findByText('Save Objective')).toBeVisible();
-    });
-
-    it('save works when "objective" and "TTA Provided" have values', async () => {
-      const objective = {
-        title: '', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const save = await screen.findByText('Save Objective');
-      expect(save).toBeVisible();
-
-      const title = await screen.findByLabelText('Objective (Required)');
-      userEvent.type(title, 'this is a test');
-
-      userEvent.click(save);
-      expect(await screen.findByTestId('tag')).toBeVisible();
-    });
-
-    it('calls onRemove when the cancel button is clicked with an empty objective', async () => {
-      const onRemove = jest.fn();
-      render(<RenderObjective defaultObjective={{ title: '', ttaProvided: '<p></p>', status: 'Not Started' }} onRemove={onRemove} />);
-      const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
-      userEvent.click(cancel);
-      expect(onRemove).toHaveBeenCalled();
-    });
-
-    it('cancels any edits if the objective is not empty', async () => {
-      const onRemove = jest.fn();
-      render(<RenderObjective defaultObjective={{ title: 'title', ttaProvided: '<p></p>', status: 'Not Started' }} onRemove={onRemove} />);
-      const text = await screen.findByLabelText('Objective (Required)');
-      userEvent.type(text, 'test');
-      const cancel = await screen.findByRole('button', { name: 'Cancel update of objective 1 on goal 1' });
-      userEvent.click(cancel);
-
-      expect(await screen.findByText('title')).toBeVisible();
-      expect(onRemove).not.toHaveBeenCalled();
-    });
+  it('renders an objective that doesn\'t have a status', async () => {
+    render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
   });
 
-  describe('in display mode', () => {
-    it('displays the objective', async () => {
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const title = await screen.findByText('title');
-      const status = await screen.findByText('Not Started');
+  it('renders the citations dropdown when there are citations available', async () => {
+    const citationOptions = [{
+      label: 'Label 1',
+      options: [
+        { name: 'Citation 1', id: 1 },
+      ],
+    }];
 
-      expect(title).toBeVisible();
-      expect(status).toBeVisible();
-    });
+    const rawCitations = [{
+      citation: 'Citation 1',
+      standardId: 1,
+      grants: [{
+        acro: 'DEF',
+        citation: 'Citation 1',
+        grantId: 1,
+        grantNumber: '12345',
+      }],
+    }];
 
-    it('can be removed via the context menu', async () => {
-      const onRemove = jest.fn();
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} onRemove={onRemove} />);
-      const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
-      userEvent.click(menu);
+    render(<RenderObjective
+      citationOptions={citationOptions}
+      rawCitations={rawCitations}
+      isMonitoringGoal
+    />);
+    const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
+    expect(helpButton).toBeVisible();
+    const citationsButton = screen.getByRole('button', { name: /Citation/i });
+    expect(citationsButton).toBeVisible();
 
-      const deleteButton = await screen.findByText('Delete');
-      userEvent.click(deleteButton);
-      expect(onRemove).toHaveBeenCalled();
-    });
+    const citationSelect = await screen.findByLabelText(/citation/i);
+    await selectEvent.select(citationSelect, [/Citation 1/i]);
 
-    it('can be switched to edit mode via the context menu', async () => {
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
-      userEvent.click(menu);
+    expect(await screen.findByText(/Citation 1/i)).toBeVisible();
+  });
 
-      const edit = await screen.findByText('Edit');
-      userEvent.click(edit);
-      const save = await screen.findByText('Save Objective');
-      expect(save).toBeVisible();
-      await screen.findByText('Cancel');
-    });
+  it('uploads a file', async () => {
+    fetchMock.post('/api/files', [{ objectiveIds: [] }]);
+    const { rerender } = render(<RenderObjective />);
+    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link\?/i);
+    const fieldset = files.parentElement;
+    const yes = await within(fieldset).findByText('Yes');
+    userEvent.click(yes);
+    const data = mockData([file('testFile', 1)]);
+    const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
+    expect(fetchMock.called('/api/files')).toBe(false);
+    dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, <RenderObjective />);
+    expect(fetchMock.called('/api/files')).toBe(true);
+  });
+
+  it('handles a file upload error', async () => {
+    fetchMock.post('/api/files', 500);
+    const { rerender } = render(<RenderObjective />);
+    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link?/i);
+    const fieldset = files.parentElement;
+    const yes = await within(fieldset).findByText('Yes');
+    userEvent.click(yes);
+    const data = mockData([file('testFile', 1)]);
+    const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
+    expect(fetchMock.called('/api/files')).toBe(false);
+    dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, <RenderObjective />);
+    expect(fetchMock.called('/api/files')).toBe(true);
+    await screen.findByText(/error uploading your file/i);
+  });
+
+  it('does not clear TTA provided between objective changes', async () => {
+    render(<RenderObjective />);
+    await screen.findByText('What');
+    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
+    expect(await screen.findByText('What')).toBeVisible();
+
+    const values = getValues();
+    const { objectives } = values;
+    const ttas = objectives.map((o) => o.ttaProvided);
+    expect(ttas).toEqual(['<p><ul><li>What</li></ul></p>', '<p><ul><li>What</li></ul></p>']);
+  });
+
+  it('switches the title to read only if the objective changes', async () => {
+    render(<RenderObjective />);
+    await screen.findByText('What');
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
+    expect(await screen.findByText(/Existing objective/i, { selector: 'p' })).toBeVisible();
+    expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(0);
+    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
+    expect(await screen.findByText(/Create a new objective/i)).toBeVisible();
+    expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(1);
+  });
+
+  it('you can change status to suspended', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'Suspended');
+
+    const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
+    userEvent.click(recipientRequestReason);
+
+    const context = await screen.findByLabelText(/Additional context/i);
+    userEvent.type(context, 'This is the context');
+
+    userEvent.click(await screen.findByText(/Submit/i));
+
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+    expect(await screen.findByText(/reason suspended/i)).toBeVisible();
+    expect(await screen.findByText(/recipient request - this is the context/i)).toBeVisible();
+  });
+
+  it('you can change status to in progress', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'In Progress');
+
+    expect(await screen.findByLabelText(/objective status/i)).toHaveValue('In Progress');
+  });
+
+  it('when changing status to suspended, you can cancel', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'Suspended');
+
+    const recipientRequestReason = await screen.findByLabelText(/Recipient request/i);
+    userEvent.click(recipientRequestReason);
+
+    const context = await screen.findByLabelText(/Additional context/i);
+    userEvent.type(context, 'This is the context');
+
+    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls^="modal-suspend-objective-"]' }));
+
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+    expect(await screen.findByText(/not started/i)).toBeVisible();
+  });
+
+  it('shows a warning when the citations selected are not for all the grants selected', async () => {
+    const citationOptions = [{
+      label: 'Label 1',
+      options: [
+        { name: 'Citation 1', id: 1 },
+      ],
+    }];
+
+    const rawCitations = [{
+      citation: 'Citation 1',
+      standardId: 1,
+      grants: [{
+        acro: 'DEF',
+        citation: 'Citation 1',
+        grantId: 1,
+        grantNumber: '12345',
+      }],
+    }];
+
+    const additionalHookFormData = {
+      activityRecipients: [
+        {
+          id: 1,
+          activityRecipientId: 1,
+          name: 'Recipient 1',
+        },
+        {
+          id: 2,
+          activityRecipientId: 2,
+          name: 'Recipient 2',
+        },
+      ],
+    };
+
+    render(<RenderObjective
+      citationOptions={citationOptions}
+      rawCitations={rawCitations}
+      additionalHookFormData={additionalHookFormData}
+      isMonitoringGoal
+    />);
+
+    const helpButton = screen.getByRole('button', { name: /get help choosing citation/i });
+    expect(helpButton).toBeVisible();
+    const citationsButton = screen.getByRole('button', { name: /Citation/i });
+    expect(citationsButton).toBeVisible();
+
+    const citationSelect = await screen.findByLabelText(/citation/i);
+    await selectEvent.select(citationSelect, [/Citation 1/i]);
+
+    expect(await screen.findByText(/Citation 1/i)).toBeVisible();
+
+    expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+    expect(await screen.findByText(/Recipient 2/i)).toBeVisible();
+    expect(await screen.findByText(/To avoid errors when submitting the report, you can either/i)).toBeVisible();
   });
 });
