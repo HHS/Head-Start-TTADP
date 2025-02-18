@@ -43,6 +43,11 @@ describe('LogLine', () => {
     expect(queryByText('via')).toBeNull();
   });
 
+  it('handles null method without error', () => {
+    const { queryByText } = render(<LogLine {...defaultProps} method={null} />);
+    expect(queryByText('via')).toBeNull();
+  });
+
   it('does not render communication date when not provided', () => {
     const { queryByText } = render(<LogLine {...defaultProps} communicationDate="" />);
     expect(queryByText('on')).toBeNull();
