@@ -71,6 +71,11 @@ export default function ViewRegionalCommunicationLog({ match }) {
           <ReadOnlyField label="Other TTA staff">
             {log.data.otherStaff && log.data.otherStaff.map((u) => u.label).join(', ')}
           </ReadOnlyField>
+          <ReadOnlyField label="Recipients">
+            {log.recipients && log.recipients.map((r) => (
+              <div key={r.id}>{r.name}</div>
+            ))}
+          </ReadOnlyField>
           <ReadOnlyField label="Purpose">
             {log.data.purpose}
           </ReadOnlyField>
@@ -80,14 +85,18 @@ export default function ViewRegionalCommunicationLog({ match }) {
           <ReadOnlyField label="Result">
             {log.data.result}
           </ReadOnlyField>
-          <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
-          {log.files.map((file) => (
-            <p className="usa-prose margin-top-0 margin-bottom-0" key={file.id}>
-              <a href={file.url.url}>
-                {file.originalFileName}
-              </a>
-            </p>
-          ))}
+          {log.files && log.files.length > 0 && (
+            <>
+              <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
+              {log.files.map((file) => (
+                <p className="usa-prose margin-top-0 margin-bottom-0" key={file.id}>
+                  <a href={file.url.url}>
+                    {file.originalFileName}
+                  </a>
+                </p>
+              ))}
+            </>
+          )}
           <DisplayNextSteps title="Specialist's next steps" steps={log.data.specialistNextSteps} />
           <DisplayNextSteps title="Recipient's next steps" steps={log.data.recipientNextSteps} />
           <p className="text-bold font-sans-3xs base-dark">
