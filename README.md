@@ -17,7 +17,7 @@ Welcome to the home of the OHS TTAHUB.
 
 ## What We're Building and Why
 
-For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Planning).
+For the latest on our product mission, goals, initiatives, and KPIs, see the [Product Planning page](https://github.com/HHS/Head-Start-TTADP/wiki/Product-Roadmapping).
 
 ## Getting Started
 
@@ -250,7 +250,7 @@ The infrastructure used to run this application can be categorized into two dist
 
 #### Continuous Integration (CI)
 
-Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In the Ad Hoc repository, merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
 
 #### Creating and Applying a Deploy Key
 
@@ -305,12 +305,7 @@ The application is deployed to the following URLs:
 **Sandbox Environment**
 
 An additional deployment environment called "sandbox" is available to developers for testing and
-development on feature branches prior to making a commit to Ad Hoc's main branch and deploying to "dev".
-The current [.circleci/config.yml](.circleci/config.yml) assumes deployments to this space are being made from
-the Ad Hoc repository. Deployments are pushed to the ohstta-sandbox cloud.gov space. To conserve
-resources, running application instances pushed to this space should be deleted as soon as they are no longer needed.
-Running application instances can be deleted by logging into [cloud.gov][cloudgov], and then selecting and
-deleting the application.
+development on feature branches prior to making a commit to the main branch. Deployments are pushed to the ohstta-sandbox cloud.gov space. To conserve resources, running application instances pushed to this space should be deleted as soon as they are no longer needed. Running application instances can be deleted by logging into [cloud.gov][cloudgov], and then selecting and deleting the application.
 
 **Secret Management**
 
