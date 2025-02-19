@@ -146,4 +146,30 @@ describe('changeGoalStatus service', () => {
       context,
     })).rejects.toThrow('Goal not found');
   });
+
+  it('should not create a status change record when new status matches current status', async () => {
+    const currentStatus = 'Draft';
+    const testGoal = await db.Goal.create({
+      name: 'Test no-change goal',
+      status: currentStatus,
+      grantId: grant.id,
+    });
+
+    await changeGoalStatus({
+      goalId: testGoal.id,
+      userId: mockUser.id,
+      newStatus: currentStatus, // Same as current status
+      reason: 'No change needed',
+      context: 'Testing no status change',
+    });
+
+    const statusChangeLogs = await db.GoalStatusChange.findAll({
+      where: { goalId: testGoal.id },
+    });
+
+    expect(statusChangeLogs.length).toBe(0);
+
+    // Clean up
+    await db.Goal.destroy({ where: { id: testGoal.id }, force: true });
+  });
 });
