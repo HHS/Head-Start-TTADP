@@ -433,8 +433,8 @@ export function reduceObjectivesForRecipientRecord(
           endDate: !accumulated.endDate
             || (currentReport.endDate
               && new Date(currentReport.endDate) < new Date(accumulated.endDate))
-            ? currentReport.endDate
-            : accumulated.endDate,
+            ? accumulated.endDate
+            : currentReport.endDate,
         }),
         { reportTopics: [], reportReasons: [], endDate: null },
       );
