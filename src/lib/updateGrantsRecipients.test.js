@@ -17,6 +17,7 @@ import db, {
   ActivityRecipient,
   ProgramPersonnel,
 } from '../models';
+import { logger } from '../logger';
 
 jest.mock('axios');
 const mockZip = jest.fn();
@@ -130,6 +131,7 @@ describe('Update grants, program personnel, and recipients', () => {
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -1157,6 +1159,47 @@ describe('Update grants, program personnel, and recipients', () => {
       expect(updatedGrant1.regionId).toEqual(1);
       expect(updatedGrant2.recipientId).toEqual(11);
       expect(updatedGrant2.regionId).toEqual(2);
+    });
+
+    it('shouldn\'t throw an error if there are no grant replacements found', async () => {
+      // spy on logger.error.
+      jest.spyOn(logger, 'error').mockImplementation(() => {});
+      jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const newGrant = {
+        id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
+      };
+
+      await updateCDIGrantsWithOldGrantData([newGrant]);
+
+      // Ensure logger.error wasn't called.
+      expect(logger.error).not.toHaveBeenCalled();
+
+      // Expect logger.info to display the message that no replacements were found.
+      expect(logger.info).toHaveBeenCalledWith('updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: 8546, skipping');
+    });
+
+    it('logs an error if all oldGrants dont have the same recipient and region id', async () => {
+      const newGrant = {
+        id: 8546, cdi: true, number: 'X5', recipientId: 628, regionId: 13,
+      };
+
+      // spy on logger.error.
+      jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+      // Mock return replacements.
+      jest.spyOn(GrantReplacements, 'findAll').mockResolvedValueOnce([{ replacedGrantId: 1 }, { replacedGrantId: 2 }]);
+
+      // Mock return old grants.
+      jest.spyOn(Grant, 'findByPk').mockResolvedValueOnce({ recipientId: 1, regionId: 1 });
+      jest.spyOn(Grant, 'findByPk').mockResolvedValueOnce({ recipientId: 2, regionId: 2 });
+
+      await updateCDIGrantsWithOldGrantData([newGrant]);
+
+      // Ensure logger.error was called.
+      expect(logger.error).toHaveBeenCalledWith(
+        'updateGrantsRecipients: Error updating grants:',
+        'Expected all valid replaced grants to have the same recipient and region for CDI grant 8546, skipping',
+      );
     });
   });
 });
