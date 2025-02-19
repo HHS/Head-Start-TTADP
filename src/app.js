@@ -106,7 +106,9 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 });
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
-  app.use('*', serveIndex);
+  app.use('/alive', (req, res) => {
+    res.status(200).end();
+  });
 }
 
 runCronJobs();
