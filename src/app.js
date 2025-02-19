@@ -29,6 +29,12 @@ if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
 }
 
+const serveIndex = (req, res) => {
+  const noncedIndex = index.replaceAll('__NONCE__', res.locals.nonce);
+  res.set('Content-Type', 'text/html');
+  res.send(noncedIndex);
+};
+
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
@@ -69,6 +75,7 @@ app.use((req, res, next) => {
 });
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
+  app.use('/index.html', serveIndex);
   app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
 
@@ -97,6 +104,10 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
     res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
+
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
+  app.use('*', serveIndex);
+}
 
 runCronJobs();
 
