@@ -13,6 +13,8 @@ import {
 } from '../constants';
 import { logger, auditLogger } from '../logger';
 
+require('events').EventEmitter.defaultMaxListeners = 25;
+
 // Set timing parameters.
 // Run at 4 am ET
 const schedule = '0 4 * * *';
