@@ -10,7 +10,7 @@ import colors from '../colors';
 import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
 import ContextMenu from '../components/ContextMenu';
-import Tooltip from '../components/Tooltip';
+import TextTrim from '../components/TextTrim';
 
 export default function HorizontalTableWidget(
   {
@@ -237,7 +237,7 @@ export default function HorizontalTableWidget(
                     r.isUrl
                       ? handleUrl(r)
                       : r.tooltip
-                        ? <Tooltip displayText={r.heading || JSON.stringify(r)} tooltipText={r.heading || JSON.stringify(r)} buttonLabel="click to reveal" />
+                        ? <TextTrim text={r.heading || JSON.stringify(r)} />
                         : r.heading
                   }
                   {
@@ -258,7 +258,7 @@ export default function HorizontalTableWidget(
                         : showDashForNullValue && !d.value
                           ? '-'
                           : d.tooltip
-                            ? <Tooltip displayText={d.value} tooltipText={d.value} buttonLabel="click to reveal" />
+                            ? <TextTrim text={d.value} />
                             : d.value
                     }
                   </td>
