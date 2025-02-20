@@ -446,18 +446,18 @@ describe('Horizontal Table Widget', () => {
             value: '17',
           },
         ],
-      }
+      },
     ];
 
     renderHorizontalTableWidget(
-      headers, 
-      data, 
-      'First Heading', 
-      false, 
-      'Last Heading', 
-      {}, 
-      {}, 
-      true // enableCheckboxes
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      true, // enableCheckboxes
     );
 
     // Check the "select all" checkbox
