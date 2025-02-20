@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from './Tooltip';
 
-export default function TextTrim({ text }) {
+export default function TextTrim({ text, position }) {
   const [isTruncated, setIsTruncated] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const visibleTextRef = useRef(null);
@@ -37,9 +37,10 @@ export default function TextTrim({ text }) {
         <Tooltip
           displayText={text}
           tooltipText={text}
-          buttonLabel={`Click to see full text: ${text}`}
+          buttonLabel="click to reveal"
           className="text-trim-tooltip"
           maxWidth={containerWidth}
+          position={position}
         />
         {/* Hidden element for comparison */}
         <div
@@ -89,4 +90,9 @@ export default function TextTrim({ text }) {
 
 TextTrim.propTypes = {
   text: PropTypes.string.isRequired,
+  position: PropTypes.string,
+};
+
+TextTrim.defaultProps = {
+  position: 'top',
 };
