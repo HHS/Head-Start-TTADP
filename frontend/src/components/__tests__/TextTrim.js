@@ -21,7 +21,7 @@ describe('TextTrim', () => {
       configurable: true,
       get() {
         return 100;
-      }
+      },
     });
   });
 
@@ -38,9 +38,9 @@ describe('TextTrim', () => {
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
       configurable: true,
       get() {
-        if (this?.className?.includes('text-trim-tooltip')) return 50;
+        if (this.className && this.className.includes('text-trim-tooltip')) return 50;
         return 100;
-      }
+      },
     });
 
     renderTextTrim('Short text');
