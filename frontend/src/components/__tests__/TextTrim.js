@@ -19,7 +19,9 @@ describe('TextTrim', () => {
     // Reset all mocked offsetWidth values before each test
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
       configurable: true,
-      value: 100,
+      get() {
+        return 100;
+      }
     });
   });
 
@@ -33,16 +35,18 @@ describe('TextTrim', () => {
 
   it('renders text without tooltip when text fits container', async () => {
     // Mock element widths to simulate text fitting in container
-    jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
-      .mockImplementation(function mock() {
-        if (this.className.includes('text-trim-tooltip')) return 50;
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get() {
+        if (this?.className?.includes('text-trim-tooltip')) return 50;
         return 100;
-      });
+      }
+    });
 
     renderTextTrim('Short text');
 
     expect(screen.queryByTestId('tooltip')).not.toBeInTheDocument();
-    expect(screen.getByText('Short text')).toBeVisible();
+    expect(screen.getByText('Short text', { selector: 'span[style*="display: block"]' })).toBeVisible();
   });
 
   it('renders tooltip when text is truncated', async () => {
@@ -63,7 +67,8 @@ describe('TextTrim', () => {
 
   it('handles empty text properly', () => {
     renderTextTrim('');
-    expect(screen.getByText('')).toBeInTheDocument();
+    // Look specifically for the visible text span
+    expect(screen.getByText('', { selector: 'span[style*="display: block"]' })).toBeInTheDocument();
   });
 
   it('updates truncation on window resize', async () => {
