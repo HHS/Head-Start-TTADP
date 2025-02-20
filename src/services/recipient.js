@@ -426,18 +426,12 @@ export function reduceObjectivesForRecipientRecord(
         reportTopics,
         reportReasons,
         endDate,
-      } = (objective.activityReports || []).reduce(
-        (accumulated, currentReport) => ({
-          reportTopics: [...accumulated.reportTopics, ...(currentReport.topics || [])],
-          reportReasons: [...accumulated.reportReasons, ...(currentReport.reason || [])],
-          endDate: !accumulated.endDate
-            || (currentReport.endDate
-              && new Date(currentReport.endDate) < new Date(accumulated.endDate))
-            ? accumulated.endDate
-            : currentReport.endDate,
-        }),
-        { reportTopics: [], reportReasons: [], endDate: null },
-      );
+      } = (objective.activityReports || []).reduce((accumulated, currentReport) => ({
+        reportTopics: [...accumulated.reportTopics, ...currentReport.topics || []],
+        reportReasons: [...accumulated.reportReasons, ...currentReport.reason || []],
+        // eslint-disable-next-line max-len
+        endDate: new Date(currentReport.endDate) < new Date(accumulated.endDate) ? accumulated.endDate : currentReport.endDate,
+      }), { reportTopics: [], reportReasons: [], endDate: null });
 
       const objectiveTitle = objective.title.trim();
       const objectiveStatus = objective.status;
