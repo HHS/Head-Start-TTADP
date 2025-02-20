@@ -122,7 +122,7 @@ const Submitter = ({
     if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
       const citationGrantIds = Array.from(hasMonitoringGoalSelected.objectives.reduce(
         (acc, objective) => {
-          const monitoringReferencesFlat = objective.citations.map(
+          const monitoringReferencesFlat = (objective.citations || []).map(
             (citation) => citation.monitoringReferences,
           ).flat();
 
