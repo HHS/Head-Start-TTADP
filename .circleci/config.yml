@@ -1243,7 +1243,7 @@ jobs:
           command: ./bin/prod-style-server
       - run:
           name: Wait for Node.js server to start
-          command: ./bin/ping-server 8080 localhost /alive
+          command: ./bin/ping-server 8080
       - run:
           name: Wait for similarity_api to start
           command: ./bin/ping-server 9100 localhost /openapi.json

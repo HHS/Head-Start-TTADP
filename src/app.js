@@ -106,11 +106,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 });
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
-  // Define an endpoint to be used in CI for healthcheck purposes.
-  // In other words, this is a way for us to tell if the server is up.
-  app.use('/alive', (req, res) => {
-    res.status(200).end();
-  });
+  app.use('*', serveIndex);
 }
 
 runCronJobs();
