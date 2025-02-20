@@ -17,8 +17,8 @@ export default function TextTrim({ text }) {
 
         // Calculate available width accounting for padding
         const computedStyle = window.getComputedStyle(containerRef.current);
-        const paddingLeft = parseInt(computedStyle.paddingLeft, 10) || 0;
-        const paddingRight = parseInt(computedStyle.paddingRight, 10) || 0;
+        const paddingLeft = parseInt(computedStyle.paddingLeft, 10);
+        const paddingRight = parseInt(computedStyle.paddingRight, 10);
         const availableWidth = containerRef.current.offsetWidth - (paddingLeft + paddingRight);
 
         setContainerWidth(availableWidth);
