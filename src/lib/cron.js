@@ -12,18 +12,17 @@ import {
   DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
 } from '../constants';
 import { logger, auditLogger } from '../logger';
-
-require('events').EventEmitter.defaultMaxListeners = 25;
+import env from '../env';
 
 // Set timing parameters.
 // Run at 4 am ET
-const schedule = '0 4 * * *';
+const schedule = '*/15 * * * *'; // '0 4 * * *';
 // Run daily at 4 pm
-const dailySched = '1 16 * * 1-5';
+const dailySched = '*/15 * * * *'; // '1 16 * * 1-5';
 // Run at 4 pm every Friday
-const weeklySched = '5 16 * * 5';
+const weeklySched = '*/15 * * * *'; // '5 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '10 16 28-31 * *';
+const monthlySched = '*/15 * * * *'; // '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
@@ -76,7 +75,7 @@ export const lastDayOfMonth = (date) => {
 };
 
 const runMonthlyEmailJob = () => (async () => {
-  logger.info('Starting montly digests');
+  logger.info('Starting monthly digests');
   if (!lastDayOfMonth(new Date())) {
     return;
   }
@@ -97,7 +96,7 @@ const runMonthlyEmailJob = () => (async () => {
  */
 export default function runCronJobs() {
   // Run only on one instance
-  if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
+  if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || env.bool('FORCE_CRON')) {
     // disable updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
       const job = new CronJob(schedule, () => runJob(), null, true, timezone);

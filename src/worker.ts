@@ -7,6 +7,7 @@ if (process.env.NODE_ENV === 'production') {
 import {} from 'dotenv/config';
 import httpContext from 'express-http-context';
 import throng from 'throng';
+import { EventEmitter } from 'events';
 import { registerEventListener } from './processHandler';
 import {
   processScanQueue,
@@ -25,6 +26,8 @@ import {
   executeCronEnrollmentFunctions,
   runMaintenanceCronJobs,
 } from './lib/maintenance';
+
+EventEmitter.defaultMaxListeners = 25;
 
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
