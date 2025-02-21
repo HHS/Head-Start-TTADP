@@ -86,6 +86,12 @@ export const styles = (singleRowInput = null) => ({
     ...provided,
     zIndex: 2,
   }),
+  multiValueRemove: (provided) => ({
+    ...provided,
+    '&:hover': {
+      color: '#1B1B1B',
+    },
+  }),
 });
 function MultiSelect({
   name,
