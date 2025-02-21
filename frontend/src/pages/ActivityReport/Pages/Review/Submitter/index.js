@@ -148,6 +148,7 @@ const Submitter = ({
           return acc;
         }, {},
       );
+
       // 3. Get the grants ids that are associated with this monitoring goal.
       // We only save for the grants that require monitoring.
       // The grantIds should only be for the applicable grants on this report.
@@ -166,7 +167,6 @@ const Submitter = ({
           return acc;
         }, [],
       );
-
       const distinctGrantIdsMissing = [...new Set(grantsFoundMissingCitations)];
 
       // 5. From activityRecipients get the name of the grants that match the activityRecipientId.
