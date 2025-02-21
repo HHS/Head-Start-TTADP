@@ -133,36 +133,45 @@ const Submitter = ({
     if (hasMonitoringGoalSelected) {
       // 2. Get all the grant ids off the SELECTED citations.
       // The complexity in the reduce is because we need to parse the monitoringReferences (JSON).
-      const selectedCitationGrantIds = Array.from(hasMonitoringGoalSelected.objectives.reduce(
+      const selectedCitationGrantIds = hasMonitoringGoalSelected.objectives.reduce(
         (acc, objective) => {
           const monitoringReferencesFlat = (objective.citations || []).map(
             (citation) => citation.monitoringReferences,
           ).flat();
 
-          const monitoringReferenceGrantIds = new Set(monitoringReferencesFlat.map(
+          const monitoringReferenceGrantIds = monitoringReferencesFlat.map(
             (reference) => reference.grantId,
-          ));
+          );
 
-          // if acc doesn't have the grant ids in monitoringReferenceGrantIds, add them.
-          monitoringReferenceGrantIds.forEach((grantId) => {
-            if (!acc.has(grantId)) {
-              acc.add(grantId);
-            }
-          });
+          // Add the grant ids to the objective id in the accumulator.
+          acc[objective.id] = monitoringReferenceGrantIds;
           return acc;
-        }, new Set(),
-      ));
+        }, {},
+      );
       // 3. Get the grants ids that are associated with this monitoring goal.
+      // We only save for the grants that require monitoring.
+      // The grantIds should only be for the applicable grants on this report.
       const grantsThatRequireMonitoring = hasMonitoringGoalSelected.grantIds;
 
-      // 4. Get the grant ids that are missing from the citations.
-      const grantsFoundMissingCitations = grantsThatRequireMonitoring.filter(
-        (grantId) => !selectedCitationGrantIds.includes(grantId),
+      // 4. Check each objective and find any missing citations.
+      const grantsFoundMissingCitations = grantsThatRequireMonitoring.reduce(
+        (acc, grantId) => {
+          const objectiveIds = Object.keys(selectedCitationGrantIds);
+          const missingCitations = objectiveIds.filter(
+            (objectiveId) => !selectedCitationGrantIds[objectiveId].includes(grantId),
+          );
+          if (missingCitations.length > 0) {
+            acc.push(grantId);
+          }
+          return acc;
+        }, [],
       );
+
+      const distinctGrantIdsMissing = [...new Set(grantsFoundMissingCitations)];
 
       // 5. From activityRecipients get the name of the grants that match the activityRecipientId.
       const grantNames = activityRecipients.filter(
-        (recipient) => grantsFoundMissingCitations.includes(recipient.activityRecipientId),
+        (recipient) => distinctGrantIdsMissing.includes(recipient.activityRecipientId),
       ).map(
         (recipient) => recipient.name,
       );
