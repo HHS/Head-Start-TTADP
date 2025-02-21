@@ -4,6 +4,7 @@ const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
+const { envParser } = require('../../env');
 const { default: LockManager } = require('../lockManager');
 const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
 const { default: referenceData } = require('../../workers/referenceData');
@@ -564,21 +565,22 @@ addQueueProcessor(MAINTENANCE_CATEGORY.MAINTENANCE, maintenance);
  * Registers maintenance cron jobs using the common cron enrollment mechanism.
  */
 registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
-  if (instanceId !== '0') {
-    auditLogger.log('info', `Skipping maintenance cron job enrollment on instance ${instanceId} in environment ${env}`);
-    return;
-  }
+  if (!envParser.bool('FORCE_CRON')) {
+    if (instanceId !== '0') {
+      auditLogger.log('info', `Skipping maintenance cron job enrollment on instance ${instanceId} in environment ${env}`);
+      return;
+    }
 
-  if (env !== 'production') {
-    auditLogger.log('info', `Skipping maintenance cron job enrollment in non-production environment (${env})`);
-    return;
-  }
+    if (env !== 'production') {
+      auditLogger.log('info', `Skipping maintenance cron job enrollment in non-production environment (${env})`);
+      return;
+    }
 
-  if (contextId !== 0) {
-    auditLogger.log('info', `Skipping maintenance cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`);
-    return;
+    if (contextId !== 0) {
+      auditLogger.log('info', `Skipping maintenance cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`);
+      return;
+    }
   }
-
   auditLogger.log('info', `Registering maintenance cron jobs for context ${contextId} in environment ${env} for instance ${instanceId}`);
 
   addCronJob(
