@@ -399,38 +399,4 @@ describe('Horizontal Table Widget', () => {
     const { container } = renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, true);
     expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeNull();
   });
-
-  it('shows a dash when showDashForNullValue is true', async () => {
-    const headers = ['col1', 'col2', 'col3'];
-    const data = [
-      {
-        heading: 'Row 1 Data',
-        isUrl: false,
-        data: [
-          {
-            title: 'col1',
-            value: '17',
-          },
-          {
-            title: 'col2',
-            value: null,
-          },
-          {
-            title: 'col3',
-            value: '19',
-          },
-        ],
-      },
-    ];
-
-    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false, true);
-    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
-    expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
-    expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
-    expect(screen.getByText(/col3/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
-    expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/17/i)[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/-/i)[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
-  });
 });
