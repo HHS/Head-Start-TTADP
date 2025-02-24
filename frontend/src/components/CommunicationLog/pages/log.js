@@ -250,7 +250,7 @@ const Log = ({
         triggerRef={purposeDrawerRef}
         stickyHeader
         stickyFooter
-        title="Purpose guidance"
+        title="Purpose of communication"
       >
         <ContentFromFeedByTag tagName="ttahub-commlog-purpose" />
       </Drawer>
