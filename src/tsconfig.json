@@ -7,11 +7,13 @@
     "moduleResolution": "node",
     "declaration": false,
     "allowJs": true,
-    "removeComments": true
+    "removeComments": true,
+    "types": ["jest"]
   },
   "include": [
     "./**/*.js",
-    "./**/*.ts"
+    "./**/*.ts",
+    "../tools/**/*.js"
   ]
 }
 

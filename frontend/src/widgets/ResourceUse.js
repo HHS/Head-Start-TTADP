@@ -1,23 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
+import ResourceUseSparklineGraph from './ResourceUseSparklineGraph';
 
 function ResourceUse({ data, loading }) {
+  const [displayTable, setDisplayTable] = useState(false);
+
   return (
     <WidgetContainer
       title="Resource use"
       subtitle="Showing the 10 resources cited most often on Activity Reports"
       loading={loading}
       loadingLabel="Resource use loading"
-      showPaging={false}
+      showPagingBottom={false}
+      displayTable={displayTable}
+      setDisplayTable={setDisplayTable}
     >
+      {displayTable && (
       <HorizontalTableWidget
         id="resourceUse"
         headers={data.headers}
-        data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading, link: d.heading }))}
+        data={data.resources.map((d) => (
+          { ...d, heading: d.title || d.heading, link: d.heading }))}
         firstHeading="Resource URL"
       />
+      )}
+
+      {(!displayTable) && (<ResourceUseSparklineGraph data={data} />)}
+
     </WidgetContainer>
   );
 }

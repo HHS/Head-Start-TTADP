@@ -34,12 +34,14 @@ import {
   submitReport,
   saveReport,
   getReport,
-  getRecipients,
+  getRecipientsForExistingAR,
   createReport,
   getCollaborators,
   getApprovers,
   reviewReport,
   resetToDraft,
+  getGroupsForActivityReport,
+  getRecipients,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -75,6 +77,8 @@ const defaultValues = {
   targetPopulations: [],
   topics: [],
   approvers: [],
+  recipientGroup: null,
+  language: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -87,6 +91,7 @@ export const formatReportWithSaveBeforeConversion = async (
   userHasOneRole,
   reportId,
   approverIds,
+  forceUpdate,
 ) => {
   // if it isn't a new report, we compare it to the last response from the backend (formData)
   // and pass only the updated to save report
@@ -101,7 +106,7 @@ export const formatReportWithSaveBeforeConversion = async (
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
 
-  const updatedReport = isEmpty
+  const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(
       reportId.current, {
@@ -181,6 +186,7 @@ function ActivityReport({
       },
       collaborators: [],
       availableApprovers: [],
+      groups: [],
     },
   );
   const [isApprover, updateIsApprover] = useState(false);
@@ -251,7 +257,13 @@ function ActivityReport({
         reportId.current = activityReportId;
 
         if (activityReportId !== 'new') {
-          const fetchedReport = await getReport(activityReportId);
+          let fetchedReport;
+          try {
+            fetchedReport = await getReport(activityReportId);
+          } catch (e) {
+            // If error retrieving the report show the "something went wrong" page.
+            history.push('/something-went-wrong/500');
+          }
           report = convertReportToFormData(fetchedReport);
         } else {
           report = {
@@ -264,14 +276,22 @@ function ActivityReport({
           };
         }
 
+        const getRecips = async () => {
+          if (reportId.current && reportId.current !== 'new') {
+            return getRecipientsForExistingAR(reportId.current);
+          }
+
+          return getRecipients(report.regionId);
+        };
+
         const apiCalls = [
-          getRecipients(report.regionId),
+          getRecips(),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+          getGroupsForActivityReport(report.regionId),
         ];
 
-        const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
-
+        const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
@@ -289,6 +309,13 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
+        // Add recipientIds to groups.
+        const groupsWithRecipientIds = groups.map((group) => ({
+          ...group,
+          // Match groups to grants as recipients could have multiple grants.
+          recipients: group.grants.map((g) => g.id),
+        }));
+
         updateAdditionalData({
           recipients: recipients || {
             grants: [],
@@ -296,6 +323,7 @@ function ActivityReport({
           },
           collaborators: collaborators || [],
           availableApprovers: availableApprovers || [],
+          groups: groupsWithRecipientIds || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -443,7 +471,7 @@ function ActivityReport({
     history.push(newPath, state);
   };
 
-  const onSave = async (data) => {
+  const onSave = async (data, forceUpdate = false) => {
     const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
@@ -452,7 +480,6 @@ function ActivityReport({
             ...data,
             ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
-
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,
@@ -479,6 +506,7 @@ function ActivityReport({
           userHasOneRole,
           reportId,
           approverIds,
+          forceUpdate,
         );
 
         let reportData = updatedReport;
@@ -563,7 +591,7 @@ function ActivityReport({
         {error}
       </Alert>
       )}
-      <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
+      <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">

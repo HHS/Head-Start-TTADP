@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { Switch, Route } from 'react-router';
+import { Switch, Route, useHistory } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { getRecipient } from '../../fetchers/recipient';
+import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
-import { HTTPError } from '../../fetchers';
 import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
@@ -15,12 +15,19 @@ import GoalsObjectives from './pages/GoalsObjectives';
 import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
-import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
-import RTTAPA from './pages/RTTAPA';
-import RTTAPAHistory from './pages/RTTAPAHistory';
+import { getIdParamArray, GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
+import MergeGoals from './pages/MergeGoals';
+import CommunicationLog from './pages/CommunicationLog';
+import CommunicationLogForm from './pages/CommunicationLogForm';
+import ViewCommunicationLog from './pages/ViewCommunicationLog';
+import { GrantDataProvider } from './pages/GrantDataContext';
+import ViewGoals from './pages/ViewGoals';
+import GoalNameForm from '../../components/GoalNameForm';
+import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
+import AppLoadingContext from '../../AppLoadingContext';
 
-function PageWithHeading({
+export function PageWithHeading({
   children,
   regionId,
   recipientId,
@@ -28,9 +35,9 @@ function PageWithHeading({
   recipientNameWithRegion,
   backLink,
   slug,
+  inlineHeadingChildren,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
-
   return (
     <div>
       <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
@@ -45,9 +52,14 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
-                  {recipientNameWithRegion}
-                </h1>
+                <div className="display-flex">
+                  <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-3`}>
+                    {recipientNameWithRegion}
+                  </h1>
+                  <div>
+                    {inlineHeadingChildren}
+                  </div>
+                </div>
                 {children}
               </>
             )
@@ -64,18 +76,21 @@ PageWithHeading.propTypes = {
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
   slug: PropTypes.string,
+  inlineHeadingChildren: PropTypes.node,
 };
 
 PageWithHeading.defaultProps = {
   error: '',
   backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
+  inlineHeadingChildren: null,
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
+  const history = useHistory();
   const { recipientId, regionId } = match.params;
 
-  const [loading, setLoading] = useState(true);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
     'grants.id': '',
@@ -88,12 +103,30 @@ export default function RecipientRecord({ match, hasAlerts }) {
     recipientName: '',
   });
 
-  const [error, setError] = useState();
+  const [canMergeGoals, setCanMergeGoals] = useState(false);
 
   useEffect(() => {
+    async function fetchMergePermissions() {
+      try {
+        const { canMergeGoalsForRecipient } = await getMergeGoalPermissions(
+          String(recipientId),
+          String(regionId),
+        );
+        setCanMergeGoals(canMergeGoalsForRecipient);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+        setCanMergeGoals(false);
+      }
+    }
+
+    fetchMergePermissions();
+  }, [recipientId, regionId]);
+
+  useDeepCompareEffect(() => {
     async function fetchRecipient() {
       try {
-        setLoading(true);
+        setIsAppLoading(true);
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({
@@ -101,13 +134,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
           });
         }
       } catch (e) {
-        if (e instanceof HTTPError && e.status === 404) {
-          setError('Recipient record not found');
-        } else {
-          setError('There was an error fetching recipient data');
-        }
+        history.push(`/something-went-wrong/${e.status}`);
       } finally {
-        setLoading(false);
+        setIsAppLoading(false);
       }
     }
 
@@ -124,19 +153,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
 
-  if (loading) {
-    return <div>loading...</div>;
-  }
-
   return (
     <>
-      <Helmet>
-        <title>
-          Recipient Profile -
-          {' '}
-          {recipientNameWithRegion}
-        </title>
-      </Helmet>
+      <Helmet titleTemplate={`%s - ${recipientName} | TTA Hub`} defaultTitle="Recipient TTA Record | TTA Hub" />
 
       <Switch>
         <Route
@@ -145,7 +164,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               slug="tta-history"
               hasAlerts={hasAlerts}
@@ -164,33 +182,33 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
-              <Profile
-                recipientName={recipientName}
-                regionId={regionId}
-                recipientId={recipientId}
-                recipientSummary={recipientData}
-              />
+              <GrantDataProvider>
+                <Profile
+                  recipientName={recipientName}
+                  regionId={regionId}
+                  recipientId={recipientId}
+                  recipientSummary={recipientData}
+                />
+              </GrantDataProvider>
             </PageWithHeading>
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives/print"
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/print"
           render={({ location }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={`TTA goals for ${recipientNameWithRegion}`}
               slug="print-goals"
               hasAlerts={hasAlerts}
               backLink={(
                 <Link
                   className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-2 display-inline-block"
-                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives${window.location.search}`}
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa${window.location.search}`}
                 >
                   Back to goals table
                 </Link>
@@ -211,12 +229,11 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives"
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
           render={({ location }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
@@ -226,8 +243,27 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 regionId={regionId}
                 recipient={recipientData}
                 recipientName={recipientName}
+                canMergeGoals={canMergeGoals}
               />
             </PageWithHeading>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
+          render={({ location, match: routeMatch }) => (
+            <>
+              <Helmet>
+                <title>These Goals Might Be Duplicates</title>
+              </Helmet>
+              <MergeGoals
+                regionId={regionId}
+                recipientId={recipientId}
+                match={routeMatch}
+                location={location}
+                recipientNameWithRegion={recipientNameWithRegion}
+                canMergeGoals={canMergeGoals}
+              />
+            </>
           )}
         />
         <Route
@@ -235,59 +271,110 @@ export default function RecipientRecord({ match, hasAlerts }) {
           render={() => (
             <>
               <Helmet>
-                <title>
-                  Create a goal for
-                  {' '}
-                  {recipientName}
-                </title>
+                <title>Create a New Goal</title>
               </Helmet>
-              <GoalForm
+              <GoalNameForm
                 regionId={regionId}
                 recipient={recipientData}
-                showRTRnavigation
-                isNew
               />
             </>
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/view"
           render={() => (
-            <GoalForm
+            <ViewGoals
               regionId={regionId}
               recipient={recipientData}
-              showRTRnavigation
             />
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/new"
-          render={({ location }) => (
-            <FeatureFlag renderNotFound flag="rttapa_form">
-              <RTTAPA
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
+          render={({ location }) => {
+            const goalIds = getIdParamArray(location.search);
+
+            return (
+              <GoalForm
                 regionId={regionId}
-                recipientId={recipientId}
-                recipientNameWithRegion={recipientNameWithRegion}
-                location={location}
+                recipient={recipientData}
+                goalIds={goalIds}
               />
-            </FeatureFlag>
+            );
+          }}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          render={({ location }) => {
+            const goalIds = getIdParamArray(location.search);
+
+            return (
+              <GoalNameForm
+                regionId={regionId}
+                recipient={recipientData}
+                ids={goalIds}
+                isExistingGoal
+              />
+            );
+          }}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
+          render={({ match: routerMatch }) => (
+            <ViewCommunicationLog
+              recipientName={recipientName}
+              match={routerMatch}
+            />
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa-history"
+          path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match: routerMatch }) => (
+            <CommunicationLogForm
+              recipientName={recipientName}
+              match={routerMatch}
+            />
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/communication"
           render={() => (
-            <FeatureFlag renderNotFound flag="rttapa_form">
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
+              inlineHeadingChildren={(
+                <Link
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
+                  className="usa-button smart-hub--new-report-btn margin-left-4"
+                >
+                  <span className="smart-hub--plus">+</span>
+                  <span className="smart-hub--new-report">Add communication</span>
+                </Link>
+              )}
+            >
+              <CommunicationLog
+                regionId={regionId}
+                recipientName={recipientName}
+                recipientId={recipientId}
+              />
+            </PageWithHeading>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/monitoring/:currentPage([a-z\-]*)?"
+          render={({ match: routerMatch }) => (
+            <FeatureFlag flag="monitoring_integration">
               <PageWithHeading
                 regionId={regionId}
                 recipientId={recipientId}
-                error={error}
                 recipientNameWithRegion={recipientNameWithRegion}
-                slug="rttapa-history"
+                hasAlerts={hasAlerts}
+                backLink={<></>}
               >
-                <RTTAPAHistory
-                  regionId={regionId}
-                  recipientId={recipientId}
-                  recipientNameWithRegion={recipientNameWithRegion}
+                <Monitoring
+                  match={routerMatch}
                 />
               </PageWithHeading>
             </FeatureFlag>
@@ -298,7 +385,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >

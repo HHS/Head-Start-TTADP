@@ -18,6 +18,7 @@ import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
 import getCachedResponse from '../../lib/cache';
+import { FEATURE_FLAGS } from '../../constants';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -151,6 +152,19 @@ export async function setFeatureFlag(req, res) {
     const result = await setFlag(flag, on);
 
     res.json(result);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
+  }
+}
+
+export async function getFeatureFlags(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+    const authorization = new UserPolicy(user);
+
+    res.json(authorization.isAdmin()
+      ? FEATURE_FLAGS
+      : user.flags);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
   }

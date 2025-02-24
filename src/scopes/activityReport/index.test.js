@@ -4,10 +4,9 @@ import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
 } from '@ttahub/common';
-import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
+import { GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
-
 import db, {
   ActivityReport,
   ActivityReportApprover,
@@ -29,13 +28,22 @@ import db, {
   Topic,
   Group,
   GroupGrant,
+  ActivityReportGoal,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
+  ActivityReportGoalFieldResponse,
+  GroupCollaborator,
 } from '../../models';
-import { createReport, destroyReport, createGrant } from '../../testUtils';
 import {
-  deleteIndex,
-} from '../../lib/awsElasticSearch/index';
+  createReport,
+  destroyReport,
+  createGrant,
+  createRecipient,
+  createGoal,
+} from '../../testUtils';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
+import { formatDeliveryMethod } from './deliveryMethod';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -118,7 +126,6 @@ describe('filtersToScopes', () => {
   let includedUser2;
   let includedUser3;
   let excludedUser;
-  let client;
 
   beforeAll(async () => {
     await User.create(mockUser);
@@ -209,14 +216,24 @@ describe('filtersToScopes', () => {
     beforeAll(async () => {
       group = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
-        userId: mockUser.id,
         isPublic: false,
+      });
+
+      await GroupCollaborator.create({
+        groupId: group.id,
+        userId: mockUser.id,
+        collaboratorTypeId: 1,
       });
 
       publicGroup = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
-        userId: mockUserTwo.id,
         isPublic: true,
+      });
+
+      await GroupCollaborator.create({
+        groupId: publicGroup.id,
+        userId: mockUserTwo.id,
+        collaboratorTypeId: 1,
       });
 
       grant = await createGrant({
@@ -265,11 +282,17 @@ describe('filtersToScopes', () => {
       await GroupGrant.destroy({
         where: { groupId: [group.id, publicGroup.id] },
       });
+
+      await GroupCollaborator.destroy({
+        where: { groupId: [group.id, publicGroup.id] },
+      });
+
       await Group.destroy({
         where: { id: [group.id, publicGroup.id] },
       });
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
     });
 
@@ -617,6 +640,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
@@ -820,6 +844,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: grantIds },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: recipientIds },
@@ -900,6 +925,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: [grantIncluded.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded.id, recipientExcluded.id] },
@@ -1231,6 +1257,8 @@ describe('filtersToScopes', () => {
       // Delete Topics.
       await Topic.destroy({
         where: { id: [topic1.id, topic2.id] },
+        individualHooks: true,
+        force: true,
       });
 
       // Delete aro.
@@ -1268,6 +1296,7 @@ describe('filtersToScopes', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       // Delete recipient.
@@ -1415,6 +1444,196 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('activityReportGoalResponse', () => {
+    let recipient;
+    let grant;
+    let includedReport1;
+    let includedReport2;
+    let excludedReport;
+    let possibleReportIds;
+
+    let goal;
+    let goalTwo;
+    let goalThree;
+    let goalTemplateFieldPrompt;
+    let goalFieldResponse;
+    let activityReportGoalFieldResponse1;
+    let activityReportGoalFieldResponse2;
+    let activityReportGoalFieldResponse3;
+
+    beforeAll(async () => {
+      // Recipient.
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 133434 }),
+        name: faker.name.firstName(),
+      });
+
+      // Grant.
+      grant = await Grant.create({
+        id: faker.datatype.number({ min: 133434 }),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      // Goal.
+      goal = await Goal.create({
+        name: 'Goal Response Test',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      goalTwo = await Goal.create({
+        name: 'Goal Response Test Two',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      goalThree = await Goal.create({
+        name: 'Goal Response Test Three',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      // Reports.
+      includedReport1 = await ActivityReport.create(draftReport);
+      includedReport2 = await ActivityReport.create(draftReport);
+      excludedReport = await ActivityReport.create(draftReport);
+      possibleReportIds = [includedReport1.id, includedReport2.id, excludedReport.id];
+
+      // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
+      goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+        where: { title: 'FEI root cause' },
+      });
+
+      // Create GoalFieldResponse.
+      goalFieldResponse = await GoalFieldResponse.create({
+        goalId: goal.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Community Partnerships'],
+      });
+
+      // ActivityReportGoals.
+      const activityReportGoal1 = await ActivityReportGoal.create({
+        activityReportId: includedReport1.id,
+        goalId: goal.id,
+      });
+
+      const activityReportGoal2 = await ActivityReportGoal.create({
+        activityReportId: includedReport2.id,
+        goalId: goalTwo.id,
+      });
+
+      const activityReportGoal3 = await ActivityReportGoal.create({
+        activityReportId: excludedReport.id,
+        goalId: goalThree.id,
+      });
+
+      // Create ActivityReportGoalFieldResponse.
+      activityReportGoalFieldResponse1 = await ActivityReportGoalFieldResponse.create({
+        activityReportGoalId: activityReportGoal1.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Community Partnerships'],
+      });
+      activityReportGoalFieldResponse2 = await ActivityReportGoalFieldResponse.create({
+        activityReportGoalId: activityReportGoal2.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Workforce', 'Community Partnerships', 'Family Circumstances'],
+      });
+      activityReportGoalFieldResponse3 = await ActivityReportGoalFieldResponse.create({
+        activityReportGoalId: activityReportGoal3.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Other ECE Care Option'],
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy ActivityReportGoalFieldResponses.
+      await ActivityReportGoalFieldResponse.destroy({
+        where: {
+          id: [
+            activityReportGoalFieldResponse1.id,
+            activityReportGoalFieldResponse2.id,
+            activityReportGoalFieldResponse3.id,
+          ],
+        },
+      });
+
+      // Destroy GoalFieldResponse.
+      await GoalFieldResponse.destroy({
+        where: { id: goalFieldResponse.id },
+      });
+
+      // Destroy ActivityReportGoals.
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [
+            includedReport1.id,
+            includedReport2.id,
+            excludedReport.id,
+          ],
+        },
+      });
+
+      // Destroy Reports.
+      await ActivityReport.destroy({
+        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+      });
+
+      // Destroy Goal.
+      await Goal.destroy({
+        where: { id: [goal.id, goalTwo.id, goalThree.id] },
+      });
+
+      // Destroy Grant.
+      await Grant.destroy({
+        where: { id: grant.id },
+        individualHooks: true,
+      });
+
+      // Destroy Recipient.
+      await Recipient.destroy({
+        where: { id: recipient.id },
+      });
+    });
+
+    it('find reports with fei root cause response', async () => {
+      const filters = { 'activityReportGoalResponse.in': ['Community Partnerships'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleReportIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+    });
+
+    it('find reports without fei root cause response', async () => {
+      const filters = { 'activityReportGoalResponse.nin': ['Community Partnerships'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleReportIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([excludedReport.id]));
     });
   });
 
@@ -1992,6 +2211,7 @@ describe('filtersToScopes', () => {
       });
       await Grant.destroy({
         where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+        individualHooks: true,
       });
       await Recipient.destroy({
         where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
@@ -2455,9 +2675,6 @@ describe('filtersToScopes', () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
       });
-
-      // Delete indexes.
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
     });
 
     it('return correct report text filter search results', async () => {
@@ -2739,8 +2956,7 @@ describe('filtersToScopes', () => {
       await createActivityReportObjectiveFileMetaData(
         'test.pdf',
         'very-unique-file-key',
-        99_998,
-        99_998,
+        [aro.id],
         12_345,
       );
     });
@@ -3091,6 +3307,12 @@ describe('filtersToScopes', () => {
       });
     });
 
+    describe('formatDeliveryMethod', () => {
+      it('returns in-person for "in person"', () => {
+        expect(formatDeliveryMethod('in person')).toBe('in-person');
+      });
+    });
+
     it('includes delivery method', async () => {
       const filters = { 'deliveryMethod.in': ['in-person'] };
       const { activityReport: scope } = await filtersToScopes(filters);
@@ -3221,6 +3443,335 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('goalName', () => {
+    let includedReport;
+    let excludedReport;
+    let possibleIds;
+
+    let recipient;
+    let grant;
+
+    let goalOne;
+    let goalTwo;
+
+    const includedGoalName = `${faker.lorem.sentence(10)}chowder`;
+    const excludedGoalName = `${faker.lorem.sentence(10)}hams`;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      grant = await createGrant({ recipientId: recipient.id });
+
+      goalOne = await createGoal({
+        grantId: grant.id, name: includedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+      });
+      goalTwo = await createGoal({
+        grantId: grant.id, name: excludedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+      });
+
+      // Create reports.
+      includedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          userId: includedUser1.id,
+        },
+      );
+
+      await ActivityReportGoal.create({
+        activityReportId: includedReport.id,
+        goalId: goalOne.id,
+        name: goalOne.name,
+        status: goalOne.status,
+      });
+
+      excludedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          userId: excludedUser.id,
+        },
+      );
+
+      await ActivityReportGoal.create({
+        activityReportId: excludedReport.id,
+        goalId: goalTwo.id,
+        name: goalTwo.name,
+        status: goalTwo.status,
+      });
+
+      possibleIds = [
+        includedReport.id,
+        excludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [includedReport.id, excludedReport.id],
+        },
+      });
+
+      // Delete reports.
+      await ActivityReport.destroy({
+        where: { id: [includedReport.id, excludedReport.id] },
+      });
+
+      await Goal.destroy({
+        where: { id: [goalOne.id, goalTwo.id] },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: { id: grant.id },
+        individualHooks: true,
+      });
+
+      await Recipient.destroy({
+        where: { id: recipient.id },
+      });
+    });
+
+    it('return correct goal name filter search results', async () => {
+      const filters = { 'goalName.ctn': ['chowder'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport.id]));
+    });
+
+    it('excludes correct goal name filter search results', async () => {
+      const filters = { 'goalName.nctn': ['chowder'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([
+          excludedReport.id,
+        ]));
+    });
+  });
+
+  describe('grantStatus', () => {
+    let cdiReportActive;
+    let cdiReportInactive;
+    let nonCdiReportActive;
+    let nonCdiReportInactive;
+    let activeCdiGrant;
+    let inactiveCdiGrant;
+    let nonCdiGrantActive;
+    let nonCdiGrantInactive;
+    let reportIds;
+
+    beforeAll(async () => {
+      // Grants.
+      activeCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: true,
+      });
+
+      inactiveCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Inactive',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: true,
+      });
+
+      nonCdiGrantActive = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: false,
+      });
+
+      nonCdiGrantInactive = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Inactive',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: false,
+      });
+
+      // Activity Report.
+      cdiReportActive = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      cdiReportInactive = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      nonCdiReportActive = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      nonCdiReportInactive = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      reportIds = [
+        cdiReportActive.id,
+        cdiReportInactive.id,
+        nonCdiReportActive.id,
+        nonCdiReportInactive.id];
+
+      // Activity Recipients.
+      await ActivityRecipient.create({
+        activityReportId: cdiReportActive.id,
+        grantId: activeCdiGrant.id,
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: cdiReportInactive.id,
+        grantId: inactiveCdiGrant.id,
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: nonCdiReportActive.id,
+        grantId: nonCdiGrantActive.id,
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: nonCdiReportInactive.id,
+        grantId: nonCdiGrantInactive.id,
+      });
+    });
+
+    afterAll(async () => {
+      // Clean up ActivityRecipients.
+      await ActivityRecipient.destroy({
+        where: {
+          activityReportId: reportIds,
+        },
+      });
+
+      // Clean up ActivityReport.
+      await ActivityReport.destroy({
+        where: { id: reportIds },
+      });
+
+      // Clean up Grants.
+      await Grant.destroy({
+        where: { id: reportIds },
+      });
+
+      // Clean up Recipients.
+      await Recipient.destroy({
+        where: {
+          id: [
+            activeCdiGrant.recipientId,
+            inactiveCdiGrant.recipientId,
+            nonCdiGrantActive.recipientId,
+            nonCdiGrantInactive.recipientId,
+          ],
+        },
+      });
+    });
+
+    it('includes reports with Active grants', async () => {
+      const filters = { 'grantStatus.in': 'active' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      // eslint-disable-next-line max-len
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(nonCdiReportActive.id)).toBe(true);
+    });
+
+    it('doesn\'t include reports with Active grants', async () => {
+      const filters = { 'grantStatus.nin': 'active' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      // eslint-disable-next-line max-len
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(nonCdiReportInactive.id)).toBe(true);
+    });
+
+    it('includes reports with Inactive grants', async () => {
+      const filters = { 'grantStatus.in': 'inactive' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(nonCdiReportInactive.id)).toBe(true);
+    });
+
+    it('doesn\'t include reports with Inactive grants', async () => {
+      //
+      const filters = { 'grantStatus.nin': 'inactive' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(nonCdiReportActive.id)).toBe(true);
+    });
+
+    it('includes reports with CDI grants', async () => {
+      const filters = { 'grantStatus.in': 'cdi' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(cdiReportActive.id)).toBe(true);
+    });
+
+    it('doesn\'t include reports with NonCDI grants', async () => {
+      const filters = { 'grantStatus.nin': 'cdi' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id).includes(nonCdiReportActive.id)).toBe(true);
+      expect(found.map((f) => f.id).includes(nonCdiReportInactive.id)).toBe(true);
     });
   });
 });

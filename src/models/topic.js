@@ -25,20 +25,22 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
-      Topic.hasMany(models.ObjectiveTopic, { foreignKey: 'topicId', as: 'objectiveTopics' });
-      Topic.belongsToMany(models.Objective, {
-        through: models.ObjectiveTopic,
-        foreignKey: 'topicId',
-        otherKey: 'objectiveId',
-        as: 'objectives',
-      });
-      Topic.hasMany(models.ObjectiveTemplateTopic, { foreignKey: 'topicId', as: 'objectiveTemplateTopics' });
-      Topic.belongsToMany(models.ObjectiveTemplate, {
-        through: models.ObjectiveTemplateTopic,
-        foreignKey: 'topicId',
-        otherKey: 'objectiveTemplateId',
-        as: 'objectiveTemplates',
-      });
+
+      models.Topic.belongsTo(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsToTopic',
+        },
+      );
+
+      models.Topic.hasMany(
+        models.Topic,
+        {
+          foreignKey: 'mapsTo',
+          as: 'mapsFromTopics',
+        },
+      );
     }
   }
   Topic.init({

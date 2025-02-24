@@ -6,6 +6,7 @@ import {
   getHandler,
   deleteHandler,
   getParticipants,
+  getGroups,
 } from './handlers';
 import { checkIdParam } from '../../middleware/checkIdParamMiddleware';
 
@@ -18,5 +19,6 @@ router.get('/eventId/:eventId', transactionWrapper(getHandler, `${context} /even
 router.post('/', transactionWrapper(createHandler, context));
 router.put('/id/:id', transactionWrapper(updateHandler, context));
 router.delete('/id/:id', transactionWrapper(deleteHandler, context));
+router.get('/groups', transactionWrapper(getGroups));
 
 export default router;

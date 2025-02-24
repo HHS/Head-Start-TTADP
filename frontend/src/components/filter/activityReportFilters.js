@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import React from 'react';
 import moment from 'moment';
 import { formatDateRange } from '../../utils';
@@ -10,12 +9,14 @@ import {
   MY_REPORTS_FILTER_CONDITIONS,
   SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
   SPECIALIST_NAME_CONDITIONS,
+  EMPTY_TEXT_INPUT,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
+import FilterActivityReportGoalResponseSelect from './FilterActivityReportGoalResponseSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
 import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
 import FilterProgramType from './FilterProgramType';
@@ -24,10 +25,13 @@ import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
+import FilterDomainResultSelect from './FilterDomainResultSelect';
+import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
-import { useDisplayGroups } from './utils';
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -44,18 +48,6 @@ const EMPTY_SINGLE_SELECT = {
   'is not': '',
 };
 
-const EMPTY_TEXT_INPUT = {
-  contains: '',
-  'does not contain': '',
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
-};
-
 const handleStringQuery = (q) => q;
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
@@ -67,16 +59,9 @@ const defaultDateValues = {
   'is on or before': '',
 };
 
-export const fixQueryWhetherStringOrArray = (query) => {
-  if (Array.isArray(query)) {
-    return query.join(', ');
-  }
-  return query;
-};
-
 export const startDateFilter = {
   id: 'startDate',
-  display: 'Date started',
+  display: 'Date started (AR)',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
@@ -104,7 +89,7 @@ export const startDateFilter = {
 
 export const endDateFilter = {
   id: 'endDate',
-  display: 'Date ended',
+  display: 'Date ended (AR)',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
@@ -363,6 +348,24 @@ export const ttaTypeFilter = {
   ),
 };
 
+export const grantStatusFilter = {
+  id: 'grantStatus',
+  display: 'Grant status',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'active',
+    'is not': 'active',
+  },
+  displayQuery: displayGrantsStatus,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <GrantStatus
+      inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const specialistRoleFilter = {
   id: 'role',
   display: 'Specialist roles',
@@ -455,6 +458,22 @@ export const topicsFilter = {
   ),
 };
 
+export const activityReportGoalResponseFilter = {
+  id: 'activityReportGoalResponse',
+  display: 'FEI root cause',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterActivityReportGoalResponseSelect
+      inputId={`fei-root-cause-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      title="FEI root cause"
+    />
+  ),
+};
+
 export const groupsFilter = {
   id: 'group',
   display: 'Group',
@@ -464,6 +483,50 @@ export const groupsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterGroups
       inputId={`group-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const domainEmotionalSupportFilter = {
+  id: 'domainEmotionalSupport',
+  display: 'Domain: Emotional support',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDomainResultSelect
+      inputId={`domainEmotionalSupport-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+export const domainClassroomOrganizationFilter = {
+  id: 'domainClassroomOrganization',
+  display: 'Domain: Classroom organization',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDomainResultSelect
+      inputId={`domainClassroomOrganization-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const domainInstructionalSupportFilter = {
+  id: 'domainInstructionalSupport',
+  display: 'Domain: Instructional support',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDomainResultSelect
+      inputId={`domainInstructionalSupport-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

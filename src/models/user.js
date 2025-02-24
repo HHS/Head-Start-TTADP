@@ -1,15 +1,7 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
-
-const featureFlags = [
-  'resources_dashboard',
-  'rttapa_form',
-  'anv_statistics',
-  'regional_goal_dashboard',
-  'goal_source',
-  'training_reports',
-];
+const { FEATURE_FLAGS } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -30,10 +22,13 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
       User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
       User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
-      User.hasMany(models.RttapaPilot, { foreignKey: 'userId', as: 'rttapaPilots', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
-      User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
       User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
+      User.hasMany(models.CommunicationLog, { foreignKey: 'userId', as: 'communicationLogs' });
+
+      // User can belong to a national center through a national center user.
+      User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
+      User.belongsToMany(models.NationalCenter, { through: models.NationalCenterUser, foreignKey: 'userId', as: 'nationalCenters' });
     }
   }
   User.init({
@@ -78,13 +73,20 @@ export default (sequelize, DataTypes) => {
       },
     },
     flags: {
-      type: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+      type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
       defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
     },
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
         return generateFullName(this.name, this.roles);
+      },
+    },
+    nameWithNationalCenters: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const centers = `, ${(this.nationalCenters || []).map((center) => center.name).join(', ')}`;
+        return `${this.name}${centers}`;
       },
     },
     lastLogin: {
@@ -97,8 +99,4 @@ export default (sequelize, DataTypes) => {
     modelName: 'User',
   });
   return User;
-};
-
-export {
-  featureFlags,
 };

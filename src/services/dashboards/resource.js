@@ -1,18 +1,18 @@
 /* eslint-disable max-len */
-import { Sequelize, Op } from 'sequelize';
+import { Sequelize, Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 import {
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityRecipient,
   Grant,
-  NextStep,
   Goal,
   Objective,
   Recipient,
   Resource,
-  Topic,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
@@ -330,6 +330,458 @@ const switchToTopicCentric = (input) => {
     });
 };
 
+async function GenerateFlatTempTables(reportIds, tblNames) {
+  const flatResourceSql = /* sql */ `
+  -- 1.) Create AR temp table.
+  DROP TABLE IF EXISTS ${tblNames.createdArTempTableName};
+  SELECT
+    id,
+    "startDate",
+    "numberOfParticipants",
+    to_char("startDate", 'Mon-YY') AS "rollUpDate",
+    "regionId",
+    "calculatedStatus"
+    INTO TEMP ${tblNames.createdArTempTableName}
+    FROM "ActivityReports" ar
+    WHERE ar."id" IN (${reportIds.map((r) => r.id).join(',')});
+
+  -- 2.) Create ARO Resources temp table.
+  DROP TABLE IF EXISTS ${tblNames.createdAroResourcesTempTableName};
+  SELECT
+  DISTINCT
+    ar.id AS "activityReportId",
+    COALESCE(r2.id, r.id) AS "resourceId"
+    INTO TEMP ${tblNames.createdAroResourcesTempTableName}
+    FROM ${tblNames.createdArTempTableName} ar
+    JOIN "ActivityReportObjectives" aro
+      ON ar."id" = aro."activityReportId"
+    JOIN "ActivityReportObjectiveResources" aror
+      ON aro.id = aror."activityReportObjectiveId"
+    JOIN "Resources" r
+      ON aror."resourceId" = r.id
+    LEFT JOIN "Resources" r2
+      ON r."mapsTo" = r2.id
+    WHERE aror."sourceFields" && '{resource}';
+
+    -- 3.) Create Resources temp table (only what we need).
+    DROP TABLE IF EXISTS ${tblNames.createdResourcesTempTableName};
+    SELECT
+    DISTINCT
+      r.id,
+      r.domain,
+      r.url,
+      r.title
+      INTO TEMP ${tblNames.createdResourcesTempTableName}
+      FROM "Resources" r
+      JOIN ${tblNames.createdAroResourcesTempTableName} dr
+        ON r.id = dr."resourceId";
+
+      -- 4.) Create ARO Topics temp table. **** Revisit
+      DROP TABLE IF EXISTS  ${tblNames.createdAroTopicsTempTableName};
+      SELECT
+      ar.id AS "activityReportId",
+      arot."topicId",
+      count(DISTINCT aro."objectiveId") AS "objectiveCount"
+      INTO TEMP ${tblNames.createdAroTopicsTempTableName}
+      FROM ${tblNames.createdArTempTableName}  ar
+      JOIN "ActivityReportObjectives" aro
+        ON ar."id" = aro."activityReportId"
+      JOIN "ActivityReportObjectiveResources" aror
+        ON aro.id = aror."activityReportObjectiveId"
+      JOIN "ActivityReportObjectiveTopics" arot
+        ON aro.id = arot."activityReportObjectiveId"
+      GROUP BY ar.id, arot."topicId";
+
+      -- 5.) Create Topics temp table (only what we need).
+      DROP TABLE IF EXISTS ${tblNames.createdTopicsTempTableName};
+      SELECT
+      DISTINCT
+        id,
+        name
+      INTO TEMP ${tblNames.createdTopicsTempTableName}
+      FROM "Topics"
+      JOIN ${tblNames.createdAroTopicsTempTableName} dt
+        ON "Topics".id = dt."topicId";
+
+      -- 6.) Create Flat Resource temp table.
+      DROP TABLE IF EXISTS ${tblNames.createdFlatResourceTempTableName};
+      SELECT
+      DISTINCT
+        ar.id AS "activityReportId",
+        ar."startDate",
+        ar."rollUpDate",
+        arorr.domain,
+        arorr.title,
+        arorr.url,
+        ar."numberOfParticipants"
+      INTO TEMP ${tblNames.createdFlatResourceTempTableName}
+      FROM ${tblNames.createdArTempTableName} ar
+      JOIN ${tblNames.createdAroResourcesTempTableName} aror
+        ON ar.id = aror."activityReportId"
+      JOIN ${tblNames.createdResourcesTempTableName} arorr
+        ON aror."resourceId" = arorr.id;
+
+      -- 7.) Create flat reports with courses temp table.
+      DROP TABLE IF EXISTS ${tblNames.createdAroCoursesTempTableName};
+      SELECT
+      DISTINCT
+        ar.id AS "activityReportId",
+        c.id AS "courseId",
+        c.name
+      INTO TEMP ${tblNames.createdAroCoursesTempTableName}
+      FROM ${tblNames.createdArTempTableName} ar
+      JOIN "ActivityReportObjectives" aro
+        ON ar."id" = aro."activityReportId"
+      JOIN "ActivityReportObjectiveCourses" aroc
+        ON aro.id = aroc."activityReportObjectiveId"
+      JOIN "Courses" c
+        ON aroc."courseId" = c.id;
+
+      -- 8.) Create date headers.
+      DROP TABLE IF EXISTS ${tblNames.createdFlatResourceHeadersTempTableName};
+      SELECT
+          generate_series(
+            date_trunc('month', (SELECT MIN("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            date_trunc('month', (SELECT MAX("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            interval '1 month'
+          )::date AS "date"
+        INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
+  `;
+
+  // Execute the flat table sql.
+  await sequelize.query(
+    flatResourceSql,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+}
+
+function getResourceUseSql(tblNames) {
+  const resourceUseSql = /* sql */`
+  WITH urlvals AS (
+    SELECT
+        url,
+        title,
+        "rollUpDate",
+        count(tf."activityReportId") AS "resourceCount"
+      FROM ${tblNames.createdFlatResourceTempTableName} tf
+      GROUP BY url, title, "rollUpDate"
+      ORDER BY "url", tf."rollUpDate" ASC),
+    distincturls AS (
+    SELECT DISTINCT url, title
+    FROM ${tblNames.createdFlatResourceTempTableName}
+    ),
+    totals AS
+    (
+      SELECT
+      url,
+      title,
+      SUM("resourceCount") AS "totalCount"
+      FROM urlvals
+      GROUP BY url, title
+      ORDER BY SUM("resourceCount")  DESC,
+      url ASC
+      LIMIT 10
+    )
+      SELECT
+      d.url,
+      d.title,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(u."resourceCount", 0) AS "resourceCount",
+      t."totalCount"
+      FROM distincturls d
+      CROSS JOIN ${tblNames.createdFlatResourceHeadersTempTableName} s
+      JOIN totals t
+        ON d.url = t.url
+      LEFT JOIN urlvals u
+        ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
+      ORDER BY 1,4 ASC;
+  `;
+
+  return sequelize.query(
+    resourceUseSql,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+}
+
+function getTopicsUseSql(tblNames) {
+  const topicUseSql = /* sql */`
+  WITH topicsuse AS (
+      SELECT
+        f."activityReportId",
+        t.name,
+        f."rollUpDate",
+        count(DISTINCT f.url) AS "resourceCount" -- Only count each resource once per ar and topic.
+      FROM ${tblNames.createdTopicsTempTableName}  t
+        JOIN ${tblNames.createdAroTopicsTempTableName} arot
+        ON t.id = arot."topicId"
+        JOIN ${tblNames.createdFlatResourceTempTableName} f
+        ON arot."activityReportId" = f."activityReportId"
+        GROUP BY f."activityReportId", t.name, f."rollUpDate"
+        ORDER BY t.name, f."rollUpDate" ASC
+    ),
+    topicsperdate AS
+    (
+    SELECT
+      "name",
+      "rollUpDate",
+      SUM("resourceCount") AS "resourceCount"
+    FROM topicsuse
+    GROUP BY "name", "rollUpDate"
+    ),
+    totals AS
+    (
+      SELECT
+        name,
+        SUM("resourceCount") AS "totalCount"
+      FROM topicsperdate
+      GROUP BY name
+      ORDER BY SUM("resourceCount") DESC
+    )
+    SELECT
+      d.name,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(t."resourceCount", 0) AS "resourceCount",
+      tt."totalCount"
+    FROM ${tblNames.createdTopicsTempTableName} d
+    JOIN ${tblNames.createdFlatResourceHeadersTempTableName} s
+      ON 1=1
+    JOIN totals tt
+      ON d.name = tt.name
+    LEFT JOIN topicsperdate t
+      ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
+    ORDER BY 1, 3 ASC;`;
+  return sequelize.query(
+    topicUseSql,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+}
+
+function getOverview(tblNames, totalReportCount) {
+  // - Number of Participants -
+  const numberOfParticipants = sequelize.query(/* sql */`
+  WITH ar_participants AS (
+    SELECT
+    f."activityReportId",
+    f."numberOfParticipants"
+    FROM ${tblNames.createdFlatResourceTempTableName} f
+    GROUP BY f."activityReportId", f."numberOfParticipants"
+  )
+  SELECT
+         SUM("numberOfParticipants") AS participants
+  FROM ar_participants;
+  `, {
+    type: QueryTypes.SELECT,
+  });
+
+  const numberOfRecipSql = /* sql */`
+   SELECT
+         count(DISTINCT g."recipientId") AS recipients
+  FROM ${tblNames.createdFlatResourceTempTableName} ar
+  JOIN "ActivityRecipients" arr
+    ON ar."activityReportId" = arr."activityReportId"
+  JOIN "Grants" g
+    ON arr."grantId" = g.id
+  `;
+
+  // - Number of Recipients -
+  const numberOfRecipients = sequelize.query(numberOfRecipSql, {
+    type: QueryTypes.SELECT,
+  });
+
+  // - Reports with Resources Pct -
+  const pctOfResourcesSql = /* sql */`
+  SELECT
+    count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
+    ${totalReportCount}::decimal AS "totalReportsCount",
+    CASE WHEN ${totalReportCount} = 0 THEN
+      0
+    ELSE
+      (count(DISTINCT "activityReportId") / ${totalReportCount}::decimal * 100)::decimal(5,2)
+    END AS "resourcesPct"
+  FROM ${tblNames.createdAroResourcesTempTableName};
+  `;
+
+  const pctOfReportsWithResources = sequelize.query(pctOfResourcesSql, {
+    type: QueryTypes.SELECT,
+  });
+
+  const pctOfReportsWithCoursesSql = /* sql */`
+  SELECT
+    count(DISTINCT "activityReportId")::decimal AS "reportsWithCoursesCount",
+    ${totalReportCount}::decimal AS "totalReportsCount",
+    CASE WHEN ${totalReportCount} = 0 THEN
+      0
+    ELSE
+      (count(DISTINCT "activityReportId") / ${totalReportCount}::decimal * 100)::decimal(5,2)
+    END AS "coursesPct"
+  FROM ${tblNames.createdAroCoursesTempTableName};
+  `;
+
+  const pctOfReportsWithCourses = sequelize.query(pctOfReportsWithCoursesSql, {
+    type: QueryTypes.SELECT,
+  });
+
+  // - Number of Reports with HeadStart Resources Pct -
+  const pctOfHeadStartResources = sequelize.query(/* sql */`
+    WITH headstart AS (
+      SELECT
+    COUNT(DISTINCT url) AS "headStartCount"
+    FROM  ${tblNames.createdFlatResourceTempTableName}
+    WHERE domain = 'headstart.gov'
+    ), allres AS (
+    SELECT
+    COUNT(DISTINCT url) AS "allCount"
+    FROM ${tblNames.createdFlatResourceTempTableName}
+    )
+    SELECT
+      e."headStartCount",
+    r."allCount",
+      CASE WHEN
+    r."allCount" = 0
+    THEN 0
+    ELSE  (e."headStartCount" / r."allCount"::decimal * 100)::decimal(5,2)
+    END AS "headStartPct"
+    FROM headstart e
+    CROSS JOIN allres r;
+  `, {
+    type: QueryTypes.SELECT,
+  });
+
+  // 5.) Date Headers table.
+  const dateHeaders = sequelize.query(/* sql */`
+   SELECT
+    to_char("date", 'Mon-YY') AS "rollUpDate"
+   FROM ${tblNames.createdFlatResourceHeadersTempTableName};
+ `, {
+    type: QueryTypes.SELECT,
+  });
+  return {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfReportsWithCourses,
+    pctOfHeadStartResources,
+    dateHeaders,
+  };
+}
+
+/*
+  Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
+  If over time the amount of data increases and slows again we can cache the flat table a set frequency.
+*/
+export async function resourceFlatData(scopes) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
+
+  // 1.) Get report ids using the scopes.
+  const reportIds = await ActivityReport.findAll({
+    attributes: [
+      'id',
+    ],
+    where: {
+      [Op.and]: [
+        scopes.activityReport,
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          startDate: { [Op.ne]: null },
+          createdAt: { [Op.gt]: reportCreatedAtDate },
+        },
+      ],
+    },
+    raw: true,
+  });
+
+  // Get total number of reports.
+  const totalReportCount = reportIds.length;
+
+  if (reportIds.length === 0) {
+    reportIds.push({ id: 0 });
+  }
+  // 2.) Create temp table names.
+  const uuid = uuidv4().replaceAll('-', '_');
+  const createdArTempTableName = `Z_temp_resdb_ar__${uuid}`;
+  const createdAroResourcesTempTableName = `Z_temp_resdb_aror__${uuid}`;
+  const createdAroCoursesTempTableName = `Z_temp_resdb_aroc__${uuid}`;
+  const createdResourcesTempTableName = `Z_temp_resdb_res__${uuid}`;
+  const createdAroTopicsTempTableName = `Z_temp_resdb_arot__${uuid}`;
+  const createdTopicsTempTableName = `Z_temp_resdb_topics__${uuid}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_resdb_headers__${uuid}`; // Date Headers.
+  const createdFlatResourceTempTableName = `Z_temp_resdb_flat__${uuid}`; // Main Flat Table.
+
+  const tempTableNames = {
+    createdArTempTableName,
+    createdAroResourcesTempTableName,
+    createdAroCoursesTempTableName,
+    createdResourcesTempTableName,
+    createdAroTopicsTempTableName,
+    createdTopicsTempTableName,
+    createdFlatResourceTempTableName,
+    createdFlatResourceHeadersTempTableName,
+  };
+
+  // 3. Generate the base temp tables (used for all calcs).
+  await GenerateFlatTempTables(reportIds, tempTableNames);
+
+  // 4.) Calculate the resource data.
+
+  // -- Resource Use --
+  let resourceUseResult = getResourceUseSql(tempTableNames);
+
+  // -- Topic Use --
+  let topicUseResult = getTopicsUseSql(tempTableNames);
+
+  // -- Overview --
+  let {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfReportsWithCourses,
+    pctOfHeadStartResources,
+    dateHeaders,
+  } = getOverview(tempTableNames, totalReportCount);
+
+  // -- Wait for all results --
+  [
+    resourceUseResult,
+    topicUseResult,
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfReportsWithCourses,
+    pctOfHeadStartResources,
+    dateHeaders,
+  ] = await Promise.all(
+    [
+      resourceUseResult,
+      topicUseResult,
+      numberOfParticipants,
+      numberOfRecipients,
+      pctOfReportsWithResources,
+      pctOfReportsWithCourses,
+      pctOfHeadStartResources,
+      dateHeaders,
+    ],
+  );
+
+  // 5.) Restructure Overview.
+  const overView = {
+    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfHeadStartResources, pctOfReportsWithCourses,
+  };
+
+  // 6.) Return the data.
+  return {
+    resourceUseResult, topicUseResult, overView, dateHeaders, reportIds,
+  };
+}
+
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
   // Date to retrieve report data from.
@@ -337,17 +789,11 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
-    // viaReport: null,
-    // viaSpecialistNextSteps: null,
-    // viaRecipientNextSteps: null,
     viaObjectives: null,
     viaGoals: null,
   };
   [
     dbData.allReports,
-    // dbData.viaReport,
-    // dbData.viaSpecialistNextSteps,
-    // dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
     dbData.viaGoals,
   ] = await Promise.all([
@@ -408,300 +854,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
-    /*
-    await ActivityReport.findAll({
-      attributes: [
-        'id',
-        'numberOfParticipants',
-        'topics',
-        [sequelize.fn('COALESCE', 'startDate', 'createdAt'), 'startDate'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
-          ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
-                SELECT jsonb_agg( DISTINCT jsonb_build_object(
-                  'sourceField', "sourceField",
-                  'tableType', 'report'
-                  ))
-              FROM UNNEST("resources->ActivityReportResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
-              )`),
-            ),
-          ),
-        ),
-        'resourceObjects'],
-      ],
-      group: [
-        '"ActivityReport"."id"',
-        '"ActivityReport"."numberOfParticipants"',
-        '"ActivityReport"."topics"',
-        '"ActivityReport"."startDate"',
-      ],
-      where: {
-        [Op.and]: [
-          scopes.activityReport,
-          {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
-            startDate: { [Op.ne]: null },
-          },
-        ],
-      },
-      include: [
-        {
-          model: ActivityRecipient.scope(),
-          as: 'activityRecipients',
-          attributes: [],
-          required: true,
-          include: [
-            {
-              model: Grant.scope(),
-              as: 'grant',
-              attributes: [],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: Resource,
-          as: 'resources',
-          attributes: [],
-          through: {
-            attributes: [],
-          },
-          required: true,
-        },
-      ],
-      raw: true,
-    }),
-    */
-    /*
-    await ActivityReport.findAll({
-      attributes: [
-        'id',
-        'numberOfParticipants',
-        'topics',
-        'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
-          ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"specialistNextSteps->resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"specialistNextSteps->resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"specialistNextSteps->resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"specialistNextSteps->resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
-                SELECT jsonb_agg( DISTINCT jsonb_build_object(
-                  'sourceField', "sourceField",
-                  'tableType', 'specialistNextStep'
-                  ))
-              FROM UNNEST("specialistNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
-              )`),
-            ),
-          ),
-        ),
-        'resourceObjects'],
-      ],
-      group: [
-        '"ActivityReport"."id"',
-        '"ActivityReport"."numberOfParticipants"',
-        '"ActivityReport"."topics"',
-        '"ActivityReport"."startDate"',
-      ],
-      where: {
-        [Op.and]: [
-          scopes.activityReport,
-          {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
-            startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: reportCreatedAtDate },
-          },
-        ],
-      },
-      include: [
-        {
-          model: ActivityRecipient.scope(),
-          as: 'activityRecipients',
-          attributes: [],
-          required: true,
-          include: [
-            {
-              model: Grant.scope(),
-              as: 'grant',
-              attributes: [],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: NextStep,
-          as: 'specialistNextSteps',
-          attributes: [],
-          include: [{
-            model: Resource,
-            as: 'resources',
-            attributes: [],
-            through: {
-              attributes: [],
-            },
-            required: true,
-          }],
-          required: true,
-        },
-      ],
-      raw: true,
-    }),
-    await ActivityReport.findAll({
-      attributes: [
-        'id',
-        'numberOfParticipants',
-        'topics',
-        'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
-          ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"recipientNextSteps->resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"recipientNextSteps->resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"recipientNextSteps->resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"recipientNextSteps->resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
-                SELECT jsonb_agg( DISTINCT jsonb_build_object(
-                  'sourceField', "sourceField",
-                  'tableType', 'recipientNextStep'
-                  ))
-              FROM UNNEST("recipientNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
-              )`),
-            ),
-          ),
-        ),
-        'resourceObjects'],
-      ],
-      group: [
-        '"ActivityReport"."id"',
-        '"ActivityReport"."numberOfParticipants"',
-        '"ActivityReport"."topics"',
-        '"ActivityReport"."startDate"',
-      ],
-      where: {
-        [Op.and]: [
-          scopes.activityReport,
-          {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
-            startDate: { [Op.ne]: null },
-            createdAt: { [Op.gt]: reportCreatedAtDate },
-          },
-        ],
-      },
-      include: [
-        {
-          model: ActivityRecipient.scope(),
-          as: 'activityRecipients',
-          attributes: [],
-          required: true,
-          include: [
-            {
-              model: Grant.scope(),
-              as: 'grant',
-              attributes: [],
-              required: false,
-            },
-          ],
-        },
-        {
-          model: NextStep,
-          as: 'recipientNextSteps',
-          attributes: [],
-          include: [{
-            model: Resource,
-            as: 'resources',
-            attributes: [],
-            through: {
-              attributes: [],
-            },
-            required: true,
-          }],
-          required: true,
-        },
-      ],
-      raw: true,
-    }),
-    */
+
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -745,7 +898,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'objective'
                   ))
               FROM UNNEST("activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -754,7 +907,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -826,14 +979,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 },
               ],
             },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
-            },
           ],
           required: true,
         },
@@ -883,7 +1028,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'goals'
                   ))
               FROM UNNEST("activityReportGoals->resources->ActivityReportGoalResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -892,7 +1037,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -974,14 +1119,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               attributes: [],
               required: true,
             },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
-            },
           ],
           required: true,
         },
@@ -991,17 +1128,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   ]);
 
   let reportsMap = mergeInResources(new Map(), dbData.allReports);
+  const reportIds = Array.from(reportsMap.keys());
+
   delete dbData.allReports;
-  /*
-  let reportsMap = mergeInResources(new Map(), dbData.viaReport);
-  delete dbData.viaReport;
-  */
-  /*
-  reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
-  delete dbData.viaSpecialistNextSteps;
-  reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
-  delete dbData.viaRecipientNextSteps;
-  */
+
   reportsMap = mergeInResources(reportsMap, dbData.viaObjectives);
   delete dbData.viaObjectives;
   reportsMap = mergeInResources(reportsMap, dbData.viaGoals);
@@ -1016,7 +1146,12 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     ? []
     : switchToTopicCentric(reports);
 
-  return { resources, reports, topics };
+  return {
+    resources,
+    reports,
+    topics,
+    reportIds,
+  };
 }
 
 const generateResourceList = (
@@ -1179,16 +1314,6 @@ const generateResourcesDashboardOverview = (allData) => {
   data.reportIntermediate = {};
   data.reportIntermediate
     .reportsWithResources = new Set(resources.flatMap((r) => r.reports).map((r) => r.id));
-  // data.reportIntermediate
-  //   .allRecipientIdsWithEclkcResources = new Set(resources
-  //     .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-  //     .flatMap((r) => r.reports)
-  //     .map((r) => r.id));
-  // data.reportIntermediate
-  //   .allRecipientIdsWithNonEclkcResources = new Set(resources
-  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-  //     .flatMap((r) => r.reports)
-  //     .map((r) => r.id));
 
   // report based stats
   data.report = {};
@@ -1199,12 +1324,6 @@ const generateResourcesDashboardOverview = (allData) => {
   data.report.numNoResources = data.report.num - data.report.numResources;
   data.report.percentNoResources = (data.report.numNoResources / data.report.num) * 100.0;
 
-  // data.report.numEclkc = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
-  // data.report.percentEclkc = (data.report.numEclkc / data.report.num) * 100.0;
-
-  // data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  // data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
-
   delete data.reportIntermediate;
   // recipient based intermediate data
   data.recipientIntermediate = {};
@@ -1212,42 +1331,6 @@ const generateResourcesDashboardOverview = (allData) => {
     .allRecipientIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
   data.recipientIntermediate
     .allRecipientIdsWithResources = reduceRecipients([], resources.flatMap((r) => r.recipients));
-  // data.recipientIntermediate.allRecipientIdsWithEclkcResources = resources
-  //   // filter to ECLKC
-  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
-  //   // Collect recipients
-  //   .flatMap((r) => r.recipients)
-  //   // collect distinct recipients ( or other entities)
-  //   .reduce((currentRecipients, recipient) => {
-  //     const exists = currentRecipients.find((cr) => (
-  //       (cr.recipientId === recipient.recipientId && recipient.recipientId)
-  //       || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-  //     if (exists) {
-  //       return currentRecipients;
-  //     }
-  //     return [
-  //       ...currentRecipients,
-  //       recipient,
-  //     ];
-  //   }, []);
-  // data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = resources
-  //   // filter to Non-ECLKC
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
-  //   // Collect recipients
-  //   .flatMap((r) => r.recipients)
-  //   // collect distinct recipients ( or other entities)
-  //   .reduce((currentRecipients, recipient) => {
-  //     const exists = currentRecipients.find((cr) => (
-  //       (cr.recipientId === recipient.recipientId && recipient.recipientId)
-  //       || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-  //     if (exists) {
-  //       return currentRecipients;
-  //     }
-  //     return [
-  //       ...currentRecipients,
-  //       recipient,
-  //     ];
-  //   }, []);
 
   // recipient based stats
   data.recipient = {};
@@ -1259,32 +1342,21 @@ const generateResourcesDashboardOverview = (allData) => {
   data.recipient.numNoResources = data.recipient.num - data.recipient.numResources;
   data.recipient.percentNoResources = (data.recipient.numNoResources / data.recipient.num) * 100.0;
 
-  // data.recipient.numEclkc = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
-  // data.recipient.percentEclkc = (data.recipient.numEclkc / data.recipient.num) * 100.0;
-
-  // data.recipient.numNonEclkc = data
-  //   .recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  // data.recipient.percentNonEclkc = (data.recipient.numNonEclkc / data.recipient.num) * 100.0;
-
   delete data.recipientIntermediate;
   // resource based intermediate data
   data.resourceIntermediate = {};
   data.resourceIntermediate
     .allResources = resources;
-  data.resourceIntermediate.allEclkcResources = resources
-    .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC);
-  // data.resourceIntermediate.allNonEclkcResources = resources
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC);
+  data.resourceIntermediate.allheadstartResources = resources
+    .filter((r) => r.domain === RESOURCE_DOMAIN.HEAD_START);
 
   // resource based stats
   data.resource = {};
   data.resource.num = data.resourceIntermediate.allResources.length;
 
-  data.resource.numEclkc = data.resourceIntermediate.allEclkcResources.length;
-  data.resource.percentEclkc = (data.resource.numEclkc / data.resource.num) * 100.0;
+  data.resource.numHeadStart = data.resourceIntermediate.allheadstartResources.length;
+  data.resource.percentHeadStart = (data.resource.numHeadStart / data.resource.num) * 100.0;
 
-  // data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.length;
-  // data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
   delete data.resourceIntermediate;
 
   data.participant = {};
@@ -1294,58 +1366,22 @@ const generateResourcesDashboardOverview = (allData) => {
       participants: r.numberOfParticipants,
     }))
     .reduce((partialSum, r) => partialSum + r.participants, 0);
-  // data.participant.numEclkc = resources
-  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
-  //   .flatMap((r) => r.reports)
-  //   .reduce((rs, report) => {
-  //     const exists = rs.find((r) => r.id === report.id);
-  //     if (exists) {
-  //       return rs;
-  //     }
-  //     return [...rs, report];
-  //   }, [])
-  //   .reduce((partialSum, r) => partialSum + r.participants, 0);
-  // data.participant.numEclkc = resources
-  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
-  //   .flatMap((r) => r.reports)
-  //   .reduce((rs, report) => {
-  //     const exists = rs.find((r) => r.id === report.id);
-  //     if (exists) {
-  //       return rs;
-  //     }
-  //     return [...rs, report];
-  //   }, [])
-  //   .reduce((partialSum, r) => partialSum + r.participants, 0);
 
   return {
     report: {
       num: formatNumber(data.report.num),
       numResources: formatNumber(data.report.numResources),
       percentResources: `${formatNumber(data.report.percentResources, 2)}%`,
-      // numNoResources: formatNumber(data.report.numNoResources),
-      // percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
-      // numEclkc: formatNumber(data.report.numEclkc),
-      // percentEclkc: `${formatNumber(data.report.percentEclkc, 2)}%`,
-      // numNonEclkc: formatNumber(data.report.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
     },
     resource: {
       num: formatNumber(data.resource.num),
-      numEclkc: formatNumber(data.resource.numEclkc),
-      percentEclkc: `${formatNumber(data.resource.percentEclkc, 2)}%`,
-      // numNonEclkc: formatNumber(data.resource.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
+      numHeadStart: formatNumber(data.resource.numHeadStart),
+      percentHeadStart: `${formatNumber(data.resource.percentHeadStart, 2)}%`,
     },
     recipient: {
       num: formatNumber(data.recipient.num),
       numResources: formatNumber(data.recipient.numResources),
       percentResources: `${formatNumber(data.recipient.percentResources, 2)}%`,
-      // numNoResources: formatNumber(data.recipient.numNoResources),
-      // percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
-      // numEclkc: formatNumber(data.recipient.numEclkc),
-      // percentEclkc: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
-      // numNonEclkc: formatNumber(data.recipient.numNonEclkc),
-      // percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
     },
     participant: {
       numParticipants: formatNumber(data.participant.num),
@@ -1363,9 +1399,9 @@ Expected JSON (we have this now):
     percentResources: '40.85%',
   },
   resource: {
-    numEclkc: '1,819',
+    numHeadStart: '1,819',
     num: '2,365',
-    percentEclkc: '79.91%',
+    percentHeadStart: '79.91%',
   },
   recipient: {
     numResources: '248',
@@ -1600,6 +1636,7 @@ export async function resourceDashboardPhase1(scopes) {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
+    reportIds: data.reportIds,
   };
 }
 
@@ -1610,5 +1647,124 @@ export async function resourceDashboard(scopes) {
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
     domainList: generateResourceDomainList(data, true),
+  };
+}
+
+export async function rollUpResourceUse(data) {
+  const rolledUpResourceUse = data.resourceUseResult.reduce((accumulator, resource) => {
+    const exists = accumulator.find((r) => r.url === resource.url);
+    if (!exists) {
+      // Add a property with the resource's URL.
+      return [
+        ...accumulator,
+        {
+          heading: resource.url,
+          url: resource.url,
+          title: resource.title,
+          sortBy: resource.title || resource.url,
+          total: resource.totalCount,
+          isUrl: true,
+          data: [{ title: resource.rollUpDate, value: resource.resourceCount }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.data.push({ title: resource.rollUpDate, value: resource.resourceCount });
+    return accumulator;
+  }, []);
+
+  // Loop through the rolled up resources and add a total.
+  rolledUpResourceUse.forEach((resource) => {
+    resource.data.push({ title: 'Total', value: resource.total });
+  });
+
+  // Sort by total and name or url.
+  // rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
+  rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.url.localeCompare(r2.url));
+  return rolledUpResourceUse;
+}
+
+export async function rollUpTopicUse(data) {
+  const filteredTopics = data.topicUseResult.filter((topic) => topic.name !== 'Equity');
+  const rolledUpTopicUse = filteredTopics.reduce((accumulator, topic) => {
+    const exists = accumulator.find((r) => r.name === topic.name);
+    if (!exists) {
+      // Add a property with the resource's name.
+      return [
+        ...accumulator,
+        {
+          heading: topic.name,
+          name: topic.name,
+          total: topic.totalCount,
+          isUrl: false,
+          data: [{ title: topic.rollUpDate, value: topic.resourceCount }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.data.push({ title: topic.rollUpDate, value: topic.resourceCount });
+    return accumulator;
+  }, []);
+
+  // Loop through the rolled up resources and add a total.
+  rolledUpTopicUse.forEach((topic) => {
+    topic.data.push({ title: 'Total', value: topic.total });
+  });
+
+  // Sort by total then topic name.
+  rolledUpTopicUse.sort((r1, r2) => r2.total - r1.total || r1.name.localeCompare(r2.name));
+  return rolledUpTopicUse;
+}
+
+export function restructureOverview(data) {
+  return {
+    report: {
+      percentResources: `${formatNumber(data.overView.pctOfReportsWithResources[0].resourcesPct, 2)}%`,
+      numResources: formatNumber(data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount),
+      num: formatNumber(data.overView.pctOfReportsWithResources[0].totalReportsCount),
+    },
+    participant: {
+      numParticipants: formatNumber(data.overView.numberOfParticipants[0].participants),
+    },
+    recipient: {
+      numResources: formatNumber(data.overView.numberOfRecipients[0].recipients),
+    },
+    resource: {
+      numHeadStart: formatNumber(data.overView.pctOfHeadStartResources[0].headStartCount),
+      num: formatNumber(data.overView.pctOfHeadStartResources[0].allCount),
+      percentHeadStart: `${formatNumber(data.overView.pctOfHeadStartResources[0].headStartPct, 2)}%`,
+    },
+    ipdCourses: {
+      percentReports: `${formatNumber(data.overView.pctOfReportsWithCourses[0].coursesPct, 2)}%`,
+    },
+  };
+}
+
+export async function resourceDashboardFlat(scopes) {
+  // Get flat resource data.
+  const data = await resourceFlatData(scopes);
+
+  // Restructure overview.
+  const dashboardOverview = restructureOverview(data);
+
+  // Roll up resources.
+  const rolledUpResourceUse = await rollUpResourceUse(data);
+
+  // Roll up topics.
+  const rolledUpTopicUse = await rollUpTopicUse(data);
+
+  // Date headers.
+  const dateHeadersArray = data.dateHeaders.map((date) => ({
+    name: moment(date.rollUpDate, 'MMM-YY').format('MMMM YYYY'),
+    displayName: date.rollUpDate,
+  }));
+
+  return {
+    resourcesDashboardOverview: dashboardOverview,
+    resourcesUse: { headers: dateHeadersArray, resources: rolledUpResourceUse },
+    topicUse: { headers: dateHeadersArray, topics: rolledUpTopicUse },
+    reportIds: data.reportIds.map((r) => r.id),
   };
 }

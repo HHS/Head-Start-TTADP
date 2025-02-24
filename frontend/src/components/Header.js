@@ -1,9 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import HeaderUserMenu from './HeaderUserMenu';
-
-import logo1x from '../images/eclkc-blocks-logo-43x56.png';
-import logo2x from '../images/eclkc-blocks-logo-86x111.png';
+import logo1x from '../images/headstart-blocks-logo-43x56.png';
+import logo2x from '../images/headstart-blocks-logo-86x111.png';
 import ReadOnlyEditor from './ReadOnlyEditor';
 import SiteAlert from './SiteAlert';
 
@@ -43,7 +42,7 @@ function Header({
       <div className="display-flex flex-row flex-align-center flex-justify padding-x-2">
         <div className="display-flex flex-align-center">
           <div className="display-flex flex-column flex-align-center">
-            <img src={logo1x} srcSet={`${logo2x} 2x`} alt="ECLKC Blocks Logo" className="flex-align-self-center height-auto desktop:width-5 width-4" />
+            <img src={logo1x} srcSet={`${logo2x} 2x`} alt="Office of Head Start logo" className="flex-align-self-center height-auto desktop:width-5 width-4" />
           </div>
           <div className="flex-column desktop:margin-left-105 margin-left-1">
             <p className="smart-hub-title font-family-sans text-bold margin-y-1">Office of Head Start TTA Hub</p>

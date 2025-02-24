@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { VALID_URL_REGEX } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportResource,
@@ -12,13 +13,8 @@ import {
   GoalTemplateResource,
   NextStep,
   NextStepResource,
-  Objective,
-  ObjectiveResource,
-  ObjectiveTemplate,
-  ObjectiveTemplateResource,
   Resource,
 } from '../models';
-import { VALID_URL_REGEX } from '../lib/urlUtils';
 import { SOURCE_FIELD } from '../constants';
 import Semaphore from '../lib/semaphore';
 
@@ -60,6 +56,24 @@ const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
 ];
 
+const handleEclkcMapping = async (url) => {
+  let matchingHeadStart = null;
+  if (url.includes('eclkc.ohs.acf.hhs.gov')) {
+    matchingHeadStart = await Resource.findOne({
+      where: {
+        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
+      },
+    });
+    if (!matchingHeadStart) {
+      matchingHeadStart = await Resource.create({
+        url: url.replace('eclkc.ohs.acf.hhs.gov', 'headstart.gov'),
+        domain: 'headstart.gov',
+      });
+    }
+  }
+  return matchingHeadStart;
+};
+
 // -----------------------------------------------------------------------------
 // Resource Table
 // -----------------------------------------------------------------------------
@@ -68,7 +82,11 @@ const findOrCreateResource = async (url) => {
   if (url === undefined || url === null || typeof url !== 'string') return undefined;
   let resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
   if (!resource) {
-    const newResource = await Resource.create({ url });
+    const matchingHeadStart = await handleEclkcMapping(url);
+    const newResource = await Resource.create({
+      url,
+      mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+    });
     resource = await newResource.get({ plain: true });
   }
   return resource;
@@ -99,9 +117,14 @@ const findOrCreateResources = async (urls) => {
       .map((currentResource) => currentResource.url));
     newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
   }
+
   const resources = [
     ...await Promise.all(newURLs.map(async (url) => {
-      const resource = await Resource.create({ url });
+      const matchingHeadStart = await handleEclkcMapping(url);
+      const resource = await Resource.create({
+        url,
+        mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+      });
       return resource.get({ plain: true });
     })),
     ...(currentResources || []),
@@ -344,7 +367,7 @@ const filterResourcesForSync = (
         }
         return {
           removed: [
-            ...resources.removed,
+            ...(resources.removed || []),
             {
               genericId: resource.genericId,
               resourceIds: [resource.resourceId],
@@ -375,7 +398,7 @@ const filterResourcesForSync = (
           return resources;
         }
         return {
-          removed: resources.removed,
+          removed: (resources.removed || []),
           reduced: [
             ...resources.reduced,
             {
@@ -1036,138 +1059,6 @@ const getResourcesForActivityReportGoals = async (
 );
 
 // -----------------------------------------------------------------------------
-// Objectives Resource Processing
-// -----------------------------------------------------------------------------
-// Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
-// TODO: verify all values in the sourceFields are in SOURCE_FIELD.OBJECTIVES
-// and log exceptions
-const calculateIsAutoDetectedForObjective = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, OBJECTIVE_AUTODETECTED_FIELDS);
-
-// Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
-// database. This should result in better performance.
-const syncResourcesForObjective = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  ObjectiveResource,
-  'objectiveId',
-  resources,
-);
-
-// Process the current values on the report into the database for all referenced resources.
-const processObjectiveForResources = async (
-  objective,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  ObjectiveResource,
-  'objectiveResources',
-  'objectiveId',
-  OBJECTIVE_AUTODETECTED_FIELDS,
-  syncResourcesForObjective,
-  objective,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
-
-// Process the current values on the report into the database for all referenced resources for
-// the reportId passed.
-const processObjectiveForResourcesById = async (
-  objectiveId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResourcesById(
-  Objective,
-  ObjectiveResource,
-  'objectiveResources',
-  processObjectiveForResources,
-  objectiveId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
-
-const getResourcesForObjectives = async (
-  objectiveIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ObjectiveResource,
-  'objectiveId',
-  objectiveIds,
-  includeAutoDetected,
-);
-
-// -----------------------------------------------------------------------------
-// Objectives Tamplate Resource Processing
-// -----------------------------------------------------------------------------
-// Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
-// TODO: verify all values in the sourceFields are in SOURCE_FIELD.OBJECTIVES
-// and log exceptions
-const calculateIsAutoDetectedForObjectiveTemplate = (
-  sourceFields,
-) => calculateIsAutoDetected(sourceFields, OBJECTIVETEMPLATE_AUTODETECTED_FIELDS);
-
-// Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
-// database. This should result in better performance.
-const syncResourcesForObjectiveTemplate = async (
-  resources,
-) => genericSyncResourcesForEntity(
-  ObjectiveTemplateResource,
-  'objectiveTemplateId',
-  resources,
-);
-
-// Process the current values on the report into the database for all referenced resources.
-const processObjectiveTemplateForResources = async (
-  objectiveTemplate,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResources(
-  ObjectiveTemplateResource,
-  'objectiveTemplateResources',
-  'objectiveTemplateId',
-  OBJECTIVETEMPLATE_AUTODETECTED_FIELDS,
-  syncResourcesForObjectiveTemplate,
-  objectiveTemplate,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
-
-// Process the current values on the report into the database for all referenced resources for
-// the reportId passed.
-const processObjectiveTemplateForResourcesById = async (
-  objectiveTemplateId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-) => genericProcessEntityForResourcesById(
-  ObjectiveTemplate,
-  ObjectiveTemplateResource,
-  'objectiveTemplateResources',
-  processObjectiveTemplateForResources,
-  objectiveTemplateId,
-  urls,
-  resourceIds,
-  ignoreDestroy,
-);
-
-const getResourcesForObjectiveTemplates = async (
-  objectiveTemplateIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ObjectiveTemplateResource,
-  'objectiveTemplateId',
-  objectiveTemplateIds,
-  includeAutoDetected,
-);
-
-// -----------------------------------------------------------------------------
 // Report Objectives Resource Processing
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
@@ -1279,18 +1170,6 @@ export {
   processActivityReportGoalForResources,
   processActivityReportGoalForResourcesById,
   getResourcesForActivityReportGoals,
-  // Objective Resource processing
-  calculateIsAutoDetectedForObjective,
-  syncResourcesForObjective,
-  processObjectiveForResources,
-  processObjectiveForResourcesById,
-  getResourcesForObjectives,
-  // Objective Resource processing
-  calculateIsAutoDetectedForObjectiveTemplate,
-  syncResourcesForObjectiveTemplate,
-  processObjectiveTemplateForResources,
-  processObjectiveTemplateForResourcesById,
-  getResourcesForObjectiveTemplates,
   // ActivityReportObjective Resource Processing
   calculateIsAutoDetectedForActivityReportObjective,
   syncResourcesForActivityReportObjective,

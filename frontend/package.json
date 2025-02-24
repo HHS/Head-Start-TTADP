@@ -9,25 +9,32 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@hookform/error-message": "^0.0.5",
+    "@react-hook/resize-observer": "^1.2.6",
+    "@silevis/reactgrid": "3.1",
     "@trussworks/react-uswds": "4.1.1",
-    "@ttahub/common": "1.7.0",
+    "@ttahub/common": "2.2.8",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
+    "csv-parse": "^4.14.1",
+    "detect-file-encoding-and-language": "^2.4.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
     "ejs": "^3.1.7",
-    "follow-redirects": "^1.14.8",
+    "focus-trap-react": "^10.3.0",
+    "follow-redirects": "^1.15.6",
+    "html-react-parser": "^5.1.1",
     "html-to-draftjs": "^1.5.0",
     "html2canvas": "^1.4.1",
-    "http-proxy-middleware": "^2.0.1",
+    "http-proxy-middleware": "^2.0.7",
     "lodash": "^4.17.20",
+    "micromatch": "^4.0.8",
     "minimist": "^1.2.6",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.35",
     "nth-check": "^2.0.1",
-    "plotly.js": "^2.5.1",
-    "plotly.js-basic-dist": "^2.2.1",
+    "plotly.js": "^2.34.0",
+    "plotly.js-basic-dist": "^2.34.0",
     "prop-types": "^15.7.2",
     "query-string": "^7.0.0",
     "react": "^17.0.1",
@@ -56,7 +63,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "18.18.2"
+    "node": "18.20.6"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -67,32 +74,40 @@
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
+    "lint:fix:single": "eslint --fix",
     "lint:ci": "eslint -f eslint-formatter-multiple src"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
     "async": "^3.2.3",
+    "braces": "^3.0.3",
     "browserslist": "^4.16.5",
+    "cookie": "^0.7.2",
     "cross-fetch": "^3.1.5",
-    "ejs": "^3.1.7",
-    "follow-redirects": "^1.14.8",
-    "json5": "^1.0.2",
+    "d3-color": "^3.1.0",
+    "decode-uri-component": "^0.2.1",
+    "dompurify": "^2.5.8",
+    "ejs": "^3.1.10",
+    "es5-ext": "^0.10.63",
+    "express": "^4.19.2",
+    "follow-redirects": "^1.15.6",
     "glob-parent": "^6.0.2",
+    "json5": "^1.0.2",
+    "minimatch": "^3.0.5",
     "minimist": "^1.2.6",
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
     "nth-check": "^2.0.1",
-    "tar": "^4.4.18",
-    "d3-color": "^3.1.0",
-    "minimatch": "^3.0.5",
+    "path-to-regexp": "^1.9.0",
     "postcss": "^8.4.31",
-    "decode-uri-component": "^0.2.1",
+    "semver": "^7.5.3",
+    "serialize-javascript": "^6.0.2",
+    "tar": "^6.2.1",
     "tough-cookie": "^4.0.0",
     "ua-parser-js": "^0.7.33",
     "webpack": "^5.76.1",
-    "yaml": "^2.2.2",
-    "semver": "^7.5.3"
+    "yaml": "^2.2.2"
   },
   "eslintConfig": {
     "root": true,
@@ -107,7 +122,8 @@
     ],
     "ignorePatterns": [
       "build/*",
-      "node_modules/*"
+      "node_modules/*",
+      "public/*"
     ],
     "rules": {
       "react/jsx-filename-extension": [
@@ -161,6 +177,7 @@
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^12.1.2",
+    "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^13.5.0",
     "cross-env": "^7.0.2",
     "eslint": "^7.20.0",
@@ -177,8 +194,12 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
+    "postcss": "^8.4.39",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
+  },
+  "peerDependencies": {
+    "postcss": "^8.4.33"
   },
   "jest": {
     "coveragePathIgnorePatterns": [
@@ -192,13 +213,15 @@
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
       "<rootDir>/src/pages/makecolors.js",
       "<rootDir>/src/NetworkContext.js",
-      "<rootDir>/src/hooks/helpers.js"
+      "<rootDir>/src/hooks/helpers.js",
+      "<rootDir>/src/testHelpers.js",
+      "<rootDir>/src/pages/activityReports/testHelpers.js"
     ],
     "coverageThreshold": {
       "global": {
         "statements": 90,
-        "functions": 89,
-        "branches": 89,
+        "functions": 90,
+        "branches": 90,
         "lines": 90
       }
     }

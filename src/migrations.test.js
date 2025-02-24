@@ -80,7 +80,6 @@ async function getCurrentBranch() {
 
 async function checkFileDatePrefix() {
   const results = [];
-  const git = simpleGit();
   const paths = [
     'src/migrations/',
     'src/seeders/',

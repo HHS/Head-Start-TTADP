@@ -19,12 +19,17 @@ import {
   participantsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  activityReportGoalResponseFilter,
+  grantStatusFilter,
 } from '../../components/filter/activityReportFilters';
+import { goalNameFilter } from '../../components/filter/goalFilters';
 
 const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   grantNumberFilter,
+  goalNameFilter,
   otherEntitiesFilter,
   participantsFilter,
   programTypeFilter,
@@ -41,6 +46,7 @@ const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
+  grantStatusFilter,
 ];
 
 RESOURCES_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));

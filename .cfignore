@@ -12,3 +12,5 @@ hses.zip
 temp/
 tests/
 .tmp/
+*.test.js
+!*.sql

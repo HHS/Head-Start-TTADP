@@ -6,8 +6,7 @@ $min-width-date-column: 140px;
 $max-width-date-column: 50%;
 
 // reset font sizes
-.ttahub-goal-card,
-.ttahub-goal-card .smart-hub-tooltip .smart-hub--ellipsis {
+.ttahub-goal-card {
   font-size: 1.06rem;
 }
 
@@ -40,7 +39,7 @@ $max-width-date-column: 50%;
 
 .ttahub-goal-card__goal-column__created-on,
 .ttahub-goal-card__goal-column__last-tta,
-.ttahub-goal-card__goal-column__last-reviewed {
+.ttahub-goal-card__goal-column__entered-by {
   flex-basis: clamp(33%, 33%, 50%);
 }
 
@@ -62,7 +61,6 @@ $max-width-date-column: 50%;
 @media(min-width: 1475px) {
 
   .ttahub-goal-card__goal-column__goal-source p {
-    white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 220px;
@@ -79,7 +77,13 @@ $max-width-date-column: 50%;
 
   .ttahub-goal-card__goal-column__created-on,
   .ttahub-goal-card__goal-column__last-tta,
-  .ttahub-goal-card__goal-column__last-reviewed {
+  .ttahub-goal-card__goal-column__entered-by {
     flex-basis: clamp($min-width-date-column, 10%, $max-width-date-column);
   }
+}
+
+.ttahub-goal-card__entered-by-tooltip > .usa-tooltip__body,
+.ttahub-goal-card__entered-by-tooltip.smart-hub-tooltip:hover .usa-tooltip__body,
+.ttahub-goal-card__entered-by-tooltip .smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+  white-space: nowrap;
 }

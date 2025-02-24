@@ -9,6 +9,7 @@ import {
   uploadSessionObjectiveFiles,
   deleteSessionObjectiveFile,
   getPossibleSessionParticipants,
+  getGroupsForSession,
 } from '../session';
 
 const sessionsUrl = join('/', 'api', 'session-reports');
@@ -73,5 +74,11 @@ describe('session fetchers', () => {
     fetchMock.get(join(sessionsUrl, 'participants', regionId), response);
     const result = await getPossibleSessionParticipants(regionId);
     expect(result).toEqual(response);
+  });
+  it('returns the groups', async () => {
+    const expected = { id: 1 };
+    fetchMock.get(join(sessionsUrl, 'groups', '?region=1'), expected);
+    const report = await getGroupsForSession('1');
+    expect(report).toEqual(expected);
   });
 });

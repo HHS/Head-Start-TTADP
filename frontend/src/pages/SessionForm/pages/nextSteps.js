@@ -5,6 +5,7 @@ import {
   Button,
   Fieldset,
 } from '@trussworks/react-uswds';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import {
   nextStepsFields,
@@ -14,7 +15,7 @@ import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRe
 const NextSteps = () => (
   <>
     <Helmet>
-      <title>Next steps</title>
+      <title>Next Steps</title>
     </Helmet>
     <IndicatesRequiredField />
     <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
@@ -37,7 +38,7 @@ const NextSteps = () => (
 
 const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
-const position = 3;
+const position = 4;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
@@ -65,23 +66,28 @@ export default {
   fields,
   render: (
     _additionalData,
-    _formData,
+    formData,
     _reportId,
     isAppLoading,
-    onContinue,
+    _onContinue,
     onSaveDraft,
     onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
-    _onFormSubmit,
+    onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
-      <NextSteps />
+      <NextSteps formData={formData} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
+        {
+          // if status is 'Completed' then don't show the save draft button.
+          formData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+        }
         <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
     </div>

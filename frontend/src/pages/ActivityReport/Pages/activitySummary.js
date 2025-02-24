@@ -2,16 +2,25 @@ import React, {
   useState, useEffect, useRef, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox, Label,
+  Fieldset,
+  Radio,
+  Grid,
+  TextInput,
+  Checkbox,
+  Label,
+  Dropdown,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
   REASONS as reasons,
+  DECIMAL_BASE,
+  LANGUAGES,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
@@ -30,27 +39,42 @@ import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import './activitySummary.scss';
+import GroupAlert from '../../../components/GroupAlert';
+import { parseCheckboxEvent } from '../../../Constants';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
+  groups,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
-
   const {
     register,
     watch,
     setValue,
     control,
     getValues,
+    clearErrors,
   } = useFormContext();
-  const activityRecipientType = watch('activityRecipientType');
 
+  const [useGroup, setUseGroup] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [groupRecipientIds, setGroupRecipientIds] = useState([]);
+  const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
+  const activityRecipientType = watch('activityRecipientType');
+  const watchFormRecipients = watch('activityRecipients');
+  const watchGroup = watch('recipientGroup');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
+  const [previousStartDate, setPreviousStartDate] = useState(startDate);
+
+  const selectedGoals = watch('goals');
+  const goalForEditing = watch('goalForEditing');
+
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
@@ -77,11 +101,24 @@ const ActivitySummary = ({
   const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
   const placeholderText = '- Select -';
 
+  const resetGroup = (checkUseGroup = true) => {
+    setValue('recipientGroup', null, { shouldValidate: false });
+    setGroupRecipientIds([]);
+    setValue('activityRecipients', [], { shouldValidate: false });
+    setShowGroupInfo(false);
+    if (checkUseGroup) {
+      setUseGroup(true);
+    }
+  };
+
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
       && previousActivityRecipientType.current !== ''
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: false });
+      setValue('recipientGroup', null, { shouldValidate: false });
+      setGroupRecipientIds([]);
+      setShowGroupInfo(false);
       setValue('participants', [], { shouldValidate: false });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
@@ -93,6 +130,60 @@ const ActivitySummary = ({
     }
     previousActivityRecipientType.current = activityRecipientType;
   }, [activityRecipientType, setValue, pageState]);
+
+  const handleGroupChange = (event) => {
+    const { value: groupId } = event.target;
+    const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
+
+    // Get all selectedRecipients the have ids in the recipientIds array.
+    const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
+      const groupRecipients = curr.options.filter(
+        (option) => groupToUse.recipients.includes(parseInt(option.value, DECIMAL_BASE)),
+      );
+      return [...acc, ...groupRecipients];
+    }, []);
+
+    // Set selected recipients.
+    const recipientsToSet = selectedGroupRecipients.map((r) => (
+      { ...r, name: r.label, activityRecipientId: r.value }));
+    setValue('activityRecipients', recipientsToSet, { shouldValidate: true });
+    setGroupRecipientIds(recipientsToSet.map((r) => (r.id)));
+  };
+
+  useDeepCompareEffect(() => {
+    // Get all selected recipients that are NOT in the watchGroup.recipients array.
+    const usedRecipientIds = watchFormRecipients.map((r) => r.id);
+    const selectedRecipientsNotInGroup = usedRecipientIds.filter(
+      (option) => !groupRecipientIds.includes(option),
+    );
+
+    // If the user changes recipients manually while using groups.
+    if (useGroup
+      && watchGroup
+      && (groupRecipientIds.length !== watchFormRecipients.length
+        || selectedRecipientsNotInGroup.length > 0)) {
+      setShowGroupInfo(true);
+      setUseGroup(false);
+      setValue('recipientGroup', null, { shouldValidate: false });
+      setGroupRecipientIds([]);
+    }
+  }, [groupRecipientIds, setValue, useGroup, watchFormRecipients, watchGroup]);
+
+  const setEndDate = (newEnd) => {
+    setValue('endDate', newEnd);
+
+    // this will trigger the re-render of the
+    // uncontrolled end date input
+    // it's a little clumsy, but it does work
+    setEndDateKey(`endDate-${newEnd}`);
+  };
+
+  const toggleUseGroup = (event) => {
+    const { checked } = parseCheckboxEvent(event);
+    // Reset.
+    resetGroup(false);
+    setUseGroup(checked);
+  };
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
@@ -109,22 +200,82 @@ const ActivitySummary = ({
     />
   );
 
-  const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
+  useEffect(() => {
+    if (!shouldValidateActivityRecipients) return;
 
-    // this will trigger the re-render of the
-    // uncontrolled end date input
-    // it's a little clumsy, but it does work
-    setEndDateKey(`endDate-${newEnd}`);
+    if (disableRecipients) {
+      setValue('activityRecipients', [], { shouldValidate: true });
+    } else {
+      clearErrors('activityRecipients');
+    }
+  }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
+
+  const renderRecipients = (marginTop = 2, marginBottom = 0) => (
+    <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
+      {!disableRecipients
+         && !connectionActive
+         && !selectedRecipients.length
+        ? <ConnectionError />
+        : null}
+      <FormItem
+        label={recipientLabel}
+        name="activityRecipients"
+      >
+        <MultiSelect
+          name="activityRecipients"
+          disabled={disableRecipients}
+          control={control}
+          valueProperty="activityRecipientId"
+          labelProperty="name"
+          simple={false}
+          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
+          options={selectedRecipients}
+          placeholderText={placeholderText}
+          onClick={() => setShouldValidateActivityRecipients(true)}
+        />
+      </FormItem>
+    </div>
+  );
+
+  const validateCitations = () => {
+    const allGoals = [selectedGoals, goalForEditing].flat().filter((g) => g !== null);
+    // If we have a monitoring goal.
+    const selectedMonitoringGoal = allGoals.filter((gf) => gf && gf.standard).find((goal) => goal.standard === 'Monitoring');
+    if (selectedMonitoringGoal) {
+      // Get all the citations in a single array from all the goal objectives.
+      const allCitations = (selectedMonitoringGoal.objectives || [])
+        .map((objective) => objective.citations)
+        .flat()
+        .filter((citation) => citation !== null);
+      // If we have selected citations
+      if (allCitations.length) {
+        const start = moment(startDate, 'MM/DD/YYYY');
+        const invalidCitations = allCitations.filter(
+          (citation) => citation.monitoringReferences.some(
+            (monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start),
+          ),
+        );
+        // If any of the citations are invalid given the new date.
+        if (invalidCitations.length) {
+          // Rollback the start date.
+          setValue('startDate', previousStartDate);
+          // Display monitoring citation warning and keep start date.
+          return 'The date entered is not valid with the selected citations.';
+        }
+      }
+    }
+    // Save the last good start date.
+    setPreviousStartDate(startDate);
+    return null;
   };
 
   return (
     <>
       <Helmet>
-        <title>Activity summary</title>
+        <title>Activity Summary</title>
       </Helmet>
       <IndicatesRequiredField />
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
+      <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
           <FormItem
@@ -151,29 +302,57 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        <div className="margin-top-2">
-          {!disableRecipients
-          && !connectionActive
-          && !selectedRecipients.length
-            ? <ConnectionError />
-            : null}
-          <FormItem
-            label={recipientLabel}
-            name="activityRecipients"
-          >
-            <MultiSelect
-              name="activityRecipients"
-              disabled={disableRecipients}
-              control={control}
-              valueProperty="activityRecipientId"
-              labelProperty="name"
-              simple={false}
-              required="Select at least one"
-              options={selectedRecipients}
-              placeholderText={placeholderText}
-            />
-          </FormItem>
-        </div>
+        {
+        showGroupInfo && (
+          <GroupAlert resetGroup={resetGroup} />
+        )
+        }
+        {
+        !useGroup
+          ? renderRecipients()
+          : (
+            <div className="margin-top-2">
+              <FormItem
+                label="Group name"
+                name="recipientGroup"
+              >
+                <Dropdown
+                  required
+                  control={control}
+                  id="recipientGroup"
+                  name="recipientGroup"
+                  inputRef={register({ required: 'Select a group' })}
+                  onAbort={resetGroup}
+                  onChange={handleGroupChange}
+                >
+                  <option value="" disabled selected hidden>- Select -</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>{group.name}</option>
+                  ))}
+                </Dropdown>
+              </FormItem>
+            </div>
+          )
+        }
+        {
+          activityRecipientType === 'recipient' && !showGroupInfo && groups.length > 0
+           && (
+           <div className="smart-hub-activity-summary-use-group margin-top-1">
+             <Checkbox
+               id="use-group"
+               label="Use group"
+               className="smart-hub--report-checkbox"
+               onChange={toggleUseGroup}
+               checked={useGroup}
+             />
+           </div>
+           )
+        }
+        {
+          activityRecipientType === 'recipient' && useGroup
+            ? renderRecipients(1, 5)
+            : null
+        }
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
@@ -278,6 +457,7 @@ const ActivitySummary = ({
                   isStartDate
                   inputId="startDate"
                   endDate={endDate}
+                  additionalValidation={validateCitations}
                 />
               </FormItem>
             </Grid>
@@ -356,7 +536,22 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="How was the activity conducted?"
+            label="Language used"
+            name="language"
+            required
+          >
+            <MultiSelect
+              name="language"
+              control={control}
+              options={LANGUAGES.map((language) => ({ value: language, label: language }))}
+              required="Select at least one"
+              placeholderText={placeholderText}
+            />
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
+            label="Delivery method"
             name="deliveryMethod"
             fieldSetWrapper
           >
@@ -498,6 +693,12 @@ ActivitySummary.propTypes = {
       }),
     ),
   }).isRequired,
+  groups: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
 };
 
 const sections = [
@@ -535,6 +736,7 @@ const sections = [
     anchor: 'tta',
     items: [
       { label: 'TTA provided', name: 'ttaType' },
+      { label: 'Language used', name: 'language' },
       { label: 'Conducted', name: 'deliveryMethod' },
     ],
   },
@@ -594,6 +796,7 @@ export const isPageComplete = (formData, formState) => {
     reason,
     ttaType,
     participants,
+    language,
 
     // numbers
     duration,
@@ -614,12 +817,18 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
+  // If language is null return false for now.
+  if (!language) {
+    return false;
+  }
+
   const arraysToValidate = [
     activityRecipients,
     targetPopulationsArray,
     reason,
     ttaType,
     participants,
+    language,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
@@ -661,12 +870,13 @@ export default {
     _onFormSubmit,
     Alert,
   ) => {
-    const { recipients, collaborators } = additionalData;
+    const { recipients, collaborators, groups } = additionalData;
     return (
       <>
         <ActivitySummary
           recipients={recipients}
           collaborators={collaborators}
+          groups={groups}
         />
         <Alert />
         <NavigatorButtons

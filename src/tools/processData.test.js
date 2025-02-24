@@ -12,6 +12,13 @@ import {
   NextStep,
   Permission,
   RequestErrors,
+  GrantNumberLink,
+  MonitoringReviewGrantee,
+  MonitoringReviewStatus,
+  MonitoringReview,
+  MonitoringReviewLink,
+  MonitoringReviewStatusLink,
+  MonitoringClassSummary,
   ZALGoal,
 } from '../models';
 import processData, {
@@ -19,10 +26,7 @@ import processData, {
   hideUsers,
   hideRecipientsGrants,
   bootstrapUsers,
-  convertEmails,
-  convertName,
-  convertFileName,
-  convertRecipientName,
+  convertName, // Kept as it's still used in the main code
 } from './processData';
 
 jest.mock('../logger');
@@ -31,6 +35,7 @@ const RECIPIENT_ID_ONE = 7777;
 const RECIPIENT_ID_TWO = 7776;
 const GRANT_ID_ONE = 88888;
 const GRANT_ID_TWO = 88887;
+const GRANT_NUMBER_ONE = '01GN011311';
 
 const mockUser = {
   id: 3000,
@@ -87,7 +92,6 @@ const mockFile = {
   fileSize: 54417,
 };
 
-// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 const reportObject = {
   activityRecipientType: 'recipient',
   userId: mockUser.id,
@@ -167,6 +171,87 @@ const reportObject = {
   version: 2,
 };
 
+async function createMonitoringData(grantNumber) {
+  await MonitoringClassSummary.findOrCreate({
+    where: { grantNumber },
+    defaults: {
+      reviewId: 'reviewId',
+      grantNumber,
+      emotionalSupport: 6.2303,
+      classroomOrganization: 5.2303,
+      instructionalSupport: 3.2303,
+      reportDeliveryDate: '2023-05-22 21:00:00-07',
+      hash: 'seedhashclasssum3',
+      sourceCreatedAt: '2023-05-22 21:00:00-07',
+      sourceUpdatedAt: '2023-05-22 21:00:00-07',
+    },
+  });
+
+  await MonitoringReviewGrantee.findOrCreate({
+    where: { grantNumber },
+    defaults: {
+      reviewId: 'reviewId',
+      granteeId: '14FC5A81-8E27-4B06-A107-9C28762BC2F6',
+      grantNumber,
+      sourceCreatedAt: '2024-02-12 14:31:55.74-08',
+      sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
+      createTime: '2023-11-14 21:00:00-08',
+      updateTime: '2024-02-12 14:31:55.74-08',
+      updateBy: 'Support Team',
+    },
+  });
+
+  await MonitoringReview.findOrCreate({
+    where: { reviewId: 'reviewId' },
+    defaults: {
+      reviewId: 'reviewId',
+      contentId: '653DABA6-DE64-4081-B5B3-9A126487E8F',
+      statusId: 6006,
+      startDate: '2024-02-12',
+      endDate: '2024-02-12',
+      reviewType: 'FA-1',
+      reportDeliveryDate: '2023-02-21 21:00:00-08',
+      outcome: 'Complete',
+      hash: 'seedhashrev3',
+      sourceCreatedAt: '2023-02-22 21:00:00-08',
+      sourceUpdatedAt: '2023-02-22 21:00:00-08',
+    },
+  });
+
+  await MonitoringReviewLink.findOrCreate({
+    where: { reviewId: 'reviewId' },
+    defaults: {
+      reviewId: 'reviewId',
+    },
+  });
+
+  await MonitoringReviewStatusLink.findOrCreate({
+    where: { statusId: 6006 },
+    defaults: {
+      statusId: 6006,
+    },
+  });
+
+  await MonitoringReviewStatus.findOrCreate({
+    where: { statusId: 6006 },
+    defaults: {
+      statusId: 6006,
+      name: 'Complete',
+      sourceCreatedAt: '2024-02-12 14:31:55.74-08',
+      sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
+    },
+  });
+}
+
+async function destroyMonitoringData() {
+  await MonitoringReviewGrantee.destroy({ where: { reviewId: 'reviewId' }, force: true });
+  await MonitoringClassSummary.destroy({ where: { reviewId: 'reviewId' }, force: true });
+  await MonitoringReview.destroy({ where: { reviewId: 'reviewId' }, force: true });
+  await MonitoringReviewLink.destroy({ where: { reviewId: 'reviewId' }, force: true });
+  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
+  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+}
+
 describe('processData', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser });
@@ -179,7 +264,7 @@ describe('processData', () => {
     await Grant.findOrCreate({
       where: {
         id: GRANT_ID_ONE,
-        number: '01GN011311',
+        number: GRANT_NUMBER_ONE,
         recipientId: RECIPIENT_ID_ONE,
         regionId: 1,
         status: 'Active',
@@ -200,6 +285,7 @@ describe('processData', () => {
         endDate: new Date(),
       },
     });
+    await createMonitoringData(GRANT_NUMBER_ONE);
   });
 
   afterAll(async () => {
@@ -229,14 +315,18 @@ describe('processData', () => {
         ],
       },
     });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE } });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO } });
+    await GrantNumberLink.unscoped().destroy({ where: { grantId: GRANT_ID_ONE }, force: true });
+    await GrantNumberLink.unscoped().destroy({ where: { grantId: GRANT_ID_TWO }, force: true });
+    await GrantNumberLink.unscoped().destroy({ where: { grantId: null }, force: true });
+    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
+    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
+    await destroyMonitoringData();
     await sequelize.close();
   });
 
-  it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
+  it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;
     await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
@@ -276,7 +366,7 @@ describe('processData', () => {
 
   describe('hideUsers', () => {
     it('transforms user names and emails in the Users table', async () => {
-      await hideUsers(mockUser.id.toString());
+      await hideUsers([mockUser.id]);
       const transformedMockUser = await User.findOne({ where: { id: mockUser.id } });
       expect(transformedMockUser.email).not.toBe(mockUser.email);
       expect(transformedMockUser.hsesUsername).not.toBe(mockUser.hsesUsername);
@@ -286,17 +376,22 @@ describe('processData', () => {
   });
 
   describe('hideRecipientsGrants', () => {
+    afterAll(async () => {
+      await destroyMonitoringData();
+    });
+
     it('transforms recipient names in the Recipients table', async () => {
       await hideRecipientsGrants(reportObject.imported.granteeName);
 
       const transformedRecipient = await Recipient.findOne({ where: { id: RECIPIENT_ID_ONE } });
       expect(transformedRecipient.name).not.toBe('Agency One, Inc.');
     });
-    it('transforms grant names in the Grants table', async () => {
+
+    it('transforms grant numbers in the Grants table', async () => {
       await hideRecipientsGrants(reportObject.imported.granteeName);
 
       const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
-      expect(transformedGrant.number).not.toBe('01GN011311');
+      expect(transformedGrant.number).not.toBe(GRANT_NUMBER_ONE);
     });
 
     it('transforms program specialist name and email in the Grants table', async () => {
@@ -309,6 +404,41 @@ describe('processData', () => {
       expect(transformedGrant.programSpecialistName).toBe(transformedMockManager.name);
       expect(transformedGrant.programSpecialistEmail).toBe(transformedMockManager.email);
     });
+
+    it('updates grant numbers in the GrantNumberLink table', async () => {
+      const grantNumberLinkRecordBefore = await GrantNumberLink.findOne({
+        where: { grantId: GRANT_ID_ONE },
+      });
+
+      expect(grantNumberLinkRecordBefore.grantId).toBe(GRANT_ID_ONE);
+
+      await hideRecipientsGrants(reportObject.imported.granteeName);
+
+      const grantNumberLinkRecord = await GrantNumberLink.findOne({
+        where: { grantId: GRANT_ID_ONE },
+      });
+
+      expect(grantNumberLinkRecord.grantNumber).not.toBe(GRANT_NUMBER_ONE);
+      expect(grantNumberLinkRecord.grantId).toBe(GRANT_ID_ONE);
+    });
+
+    it('updates grant numbers in the MonitoringReviewGrantee table', async () => {
+      await hideRecipientsGrants(reportObject.imported.granteeName);
+
+      // Verify that no record with the old grant number exists anymore
+      const monitoringReviewGranteeRecord = await MonitoringReviewGrantee.findOne({
+        where: { grantNumber: GRANT_NUMBER_ONE },
+      });
+
+      expect(monitoringReviewGranteeRecord).toBeNull();
+
+      // Verify that no record with the old grant number exists anymore
+      const monitoringClassSummaryRecord = await MonitoringClassSummary.findOne({
+        where: { grantNumber: GRANT_NUMBER_ONE },
+      });
+
+      expect(monitoringClassSummaryRecord).toBeNull();
+    });
   });
 
   describe('bootstrapUsers', () => {
@@ -319,30 +449,13 @@ describe('processData', () => {
 
       expect(user.homeRegionId).toBe(14);
     });
+
     it('gives permissions to users', async () => {
       await bootstrapUsers();
 
       const user = await User.findOne({ where: { hsesUserId: '51113' } });
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
-    });
-  });
-
-  describe('convertEmails', () => {
-    it('handles null emails', async () => {
-      const emails = convertEmails(null);
-      expect(emails).toBe(null);
-    });
-
-    it('handles emails lacking a @', async () => {
-      const emails = convertEmails('test,test2@test.com,test3');
-      expect(emails.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)).toBeTruthy();
-    });
-
-    it('should convert a single email address to a transformed email address', () => {
-      const input = 'real@example.com';
-      const output = convertEmails(input);
-      expect(output).toMatch(/^no-send_/);
     });
   });
 
@@ -354,20 +467,6 @@ describe('processData', () => {
         id: expect.any(Number),
         name: expect.any(String),
       });
-    });
-  });
-
-  describe('convertFileName', () => {
-    it('handles null file names', async () => {
-      const fileName = await convertFileName(null);
-      expect(fileName).toBe(null);
-    });
-  });
-
-  describe('convertRecipientName', () => {
-    it('handles null recipient names', async () => {
-      const recipientName = await convertRecipientName(null);
-      expect(recipientName).toBe(null);
     });
   });
 });

@@ -1,5 +1,10 @@
 import faker from '@faker-js/faker';
-import db from '../models';
+import db, {
+  SessionReportPilotFile,
+  SessionReportPilotSupportingAttachment,
+  Grant, Recipient,
+  SessionReportPilot,
+} from '../models';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -8,7 +13,13 @@ import {
   findSessionsByEventId,
   updateSession,
   getPossibleSessionParticipants,
+  findSessionHelper,
+  validateFields,
 } from './sessionReports';
+import sessionReportPilot from '../models/sessionReportPilot';
+import { createGrant, createGoal, destroyGoal } from '../testUtils';
+
+jest.mock('bull');
 
 describe('session reports service', () => {
   let event;
@@ -20,8 +31,8 @@ describe('session reports service', () => {
     const eventData = {
       ownerId: 99_888,
       regionId: 99_888,
-      pocIds: [99_888],
-      collaboratorIds: [99_888],
+      pocIds: [18],
+      collaboratorIds: [18],
       data: {
         eventId,
       },
@@ -37,7 +48,7 @@ describe('session reports service', () => {
 
   describe('createSession', () => {
     it('works', async () => {
-      const created = await createSession({ eventId: event.id, data: {} });
+      const created = await createSession({ eventId: event.id, data: { card: 'ace' } });
 
       expect(created).toMatchObject({
         id: expect.anything(),
@@ -45,6 +56,12 @@ describe('session reports service', () => {
       });
 
       await destroySession(created.id);
+    });
+
+    it('throws an error when the event is not found', async () => {
+      await expect(createSession({ eventId: 999999, data: { card: 'ace' } }))
+        .rejects
+        .toThrow('Event with id 999999 not found');
     });
   });
 
@@ -82,6 +99,66 @@ describe('session reports service', () => {
       });
 
       await destroySession(updated.id);
+    });
+  });
+
+  describe('destroySession', () => {
+    let goal; let grant; let createdSession;
+    const grantData = {
+      id: 5555555,
+      number: '1234',
+      regionId: 1,
+      recipientId: 7,
+    };
+    const goalData = {
+      id: 99_111,
+      name: 'Random text goal; Random text',
+      grantId: 5555555,
+      status: 'Draft',
+    };
+    beforeAll(async () => {
+      createdSession = await createSession({ eventId: event.id, data: {} });
+      grant = await createGrant(grantData);
+      goal = await createGoal(goalData);
+    });
+
+    afterAll(async () => {
+      await SessionReportPilot.destroy({ where: { eventId: event.id }, force: true });
+      await destroyGoal(goalData);
+      await Grant.destroy({ where: { id: 5555555 }, force: true, individualHooks: true });
+      await Recipient.destroy({ where: { id: 69514 }, force: true });
+    });
+
+    it('should delete files and attachments associated with the session report pilot', async () => {
+      const id = 1;
+      const destroyMock = jest.spyOn(SessionReportPilotFile, 'destroy').mockResolvedValue(undefined);
+      const destroyAttachmentMock = jest.spyOn(SessionReportPilotSupportingAttachment, 'destroy').mockResolvedValue(undefined);
+
+      await destroySession(id);
+
+      expect(destroyMock).toHaveBeenCalledWith(
+        {
+          where: { sessionReportPilotId: id },
+        },
+        { individualHooks: true },
+      );
+      expect(destroyAttachmentMock).toHaveBeenCalledWith(
+        {
+          where: { sessionReportPilotId: id },
+        },
+        { individualHooks: true },
+      );
+    });
+    it('should delete session', async () => {
+      // Verify the session record is present
+      expect(createdSession).toBeDefined();
+
+      // Delete the session
+      await destroySession(createdSession.id);
+
+      // Verify the session was deleted
+      const session = await SessionReportPilot.findByPk(createdSession.id);
+      expect(session).toBeNull();
     });
   });
 
@@ -193,6 +270,7 @@ describe('session reports service', () => {
         where: {
           recipientId: recipient.id,
         },
+        individualHooks: true,
       });
 
       await db.Recipient.destroy({ where: { id: recipient.id } });
@@ -205,6 +283,94 @@ describe('session reports service', () => {
       expect(participants[0]).toHaveProperty('id');
       expect(participants[0]).toHaveProperty('name');
       expect(participants[0].grants.length).toBe(1);
+    });
+  });
+  describe('findSessionHelper', () => {
+    let createdEvent;
+    let sessionIds;
+    beforeAll(async () => {
+      const eventData = {
+        ownerId: 99_989,
+        regionId: 99_888,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId,
+        },
+      };
+      createdEvent = await createEvent(eventData);
+
+      // Create Sessions.
+      const session1 = await createSession({ eventId: createdEvent.id, data: { startDate: '04/20/2022' } });
+      const session2 = await createSession({ eventId: createdEvent.id, data: { startDate: '01/01/2023' } });
+      const session3 = await createSession({ eventId: createdEvent.id, data: { startDate: '02/10/2022' } });
+      sessionIds = [session1.id, session2.id, session3.id];
+    });
+
+    afterAll(async () => {
+      await sessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+      destroyEvent(createdEvent.id);
+    });
+
+    it('check sessions sort order', async () => {
+      const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
+      expect(sessions.length).toBe(3);
+      expect(sessions[0].data.startDate).toBe('02/10/2022');
+      expect(sessions[1].data.startDate).toBe('04/20/2022');
+      expect(sessions[2].data.startDate).toBe('01/01/2023');
+    });
+
+    it('should return null if no sessions are found', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findAll').mockResolvedValueOnce(null);
+      const sessions = await findSessionHelper({ eventId: 999999 }, true);
+      expect(sessions).toBeNull();
+    });
+
+    it('should return a single session when plural is false', async () => {
+      const session = await findSessionHelper({ id: sessionIds[0] }, false);
+      expect(session).toHaveProperty('id', sessionIds[0]);
+    });
+
+    it('should return multiple sessions when plural is true', async () => {
+      const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
+      expect(sessions.length).toBe(3);
+    });
+
+    it('should return default values when data, files, supportingAttachments, and event are undefined', async () => {
+      const createdSession = await SessionReportPilot.create({
+        eventId: createdEvent.id,
+        data: {},
+      });
+
+      const foundSession = await findSessionHelper({ id: createdSession.id });
+
+      expect(foundSession).toHaveProperty('data', {});
+      expect(foundSession).toHaveProperty('files', []);
+      expect(foundSession).toHaveProperty('supportingAttachments', []);
+
+      await SessionReportPilot.destroy({ where: { id: createdSession.id } });
+    });
+
+    it('should return null for the eventId when session.event is null', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({ id: 999 });
+      const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
+      expect(foundSession).toHaveProperty('eventId', null);
+      expect(foundSession).toHaveProperty('id', 999);
+      expect(foundSession).toHaveProperty('data', {});
+      expect(foundSession).toHaveProperty('files', []);
+      expect(foundSession).toHaveProperty('supportingAttachments', []);
+    });
+  });
+
+  describe('validateFields', () => {
+    it('throws an error when there are missingFields', () => {
+      expect(() => {
+        validateFields({ field1: 'value1' }, ['field1', 'field2']);
+      }).toThrow();
     });
   });
 });

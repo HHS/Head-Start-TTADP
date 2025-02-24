@@ -5,7 +5,9 @@ import {
   Checkbox, Grid, Fieldset,
 } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { REGIONAL_SCOPES } from '../../Constants';
+import {
+  REGIONAL_SCOPES, READ_ONLY_SCOPES, READ_WRITE_SCOPES, ALL_REGIONS,
+} from '../../Constants';
 import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
 import CurrentPermissions from './components/CurrentPermissions';
 import RegionDropdown from '../../components/RegionDropdown';
@@ -25,10 +27,14 @@ function renderUserPermissions(permissions) {
     []
   ));
 
-  _.forEach(permissions, (scopes, region) => {
+  const allRegionPermissions = _.pickBy(_.pick(permissions, [ALL_REGIONS])[ALL_REGIONS]);
+  const otherRegionPermissions = _.pickBy(_.omit(permissions, [ALL_REGIONS]));
+
+  _.forEach(otherRegionPermissions, (scopes, region) => {
     // Grab the scopes that are true. I.E. from {"3": true, "4": true, "5": false} to
     // {"3": true, "4": true}
-    const trueScopes = _.pickBy(scopes);
+    // console.log(_.pickBy(scopes, individualRegionallyTrueOrAllRegionsTrue))
+    const trueScopes = _.pickBy({ ...scopes, ...allRegionPermissions });
     // _.keys gives us an array of keys of the object, so ["3", "4"]
     _.keys(trueScopes).forEach((scope) => {
       currentPermissions[scope].push(region);
@@ -74,15 +80,42 @@ function UserPermissions({
   // The user has selected a new region in the regional dropdown so we need to update
   // what regional permissions are shown
   useEffect(() => {
+    const allRegionPermissions = _.pickBy(regionalPermissions[ALL_REGIONS]);
+
     updatePermissionsForRegion({
       ...createRegionalScopeObject(),
       ...regionalPermissions[selectedRegion],
+      ...allRegionPermissions,
     });
   }, [regionalPermissions, selectedRegion]);
 
   const onSelectedRegionChange = (e) => {
     const { value } = e.target;
     updateSelectedRegion(parseInt(value, DECIMAL_BASE));
+  };
+
+  const PermissionsCheckboxes = ({ scopeGroup }) => _.map(
+    _.pick(permissionsForRegion, scopeGroup),
+    (checked, scopeId) => {
+      const { name, description } = scopeFromId(scopeId);
+      return (
+        <Grid key={name} col={12}>
+          <Checkbox
+            id={name}
+            name={scopeId}
+            checked={checked}
+            onChange={(e) => { onRegionalPermissionChange(e, selectedRegion); }}
+            description={description}
+            disabled={!enablePermissions}
+            label={(<PermissionCheckboxLabel name={name} description={description} />)}
+          />
+        </Grid>
+      );
+    },
+  );
+
+  PermissionsCheckboxes.propTypes = {
+    scopeGroup: PropTypes.arrayOf(PropTypes.string).isRequired,
   };
 
   return (
@@ -111,24 +144,18 @@ function UserPermissions({
         <ul>
           {renderUserPermissions(regionalPermissions)}
         </ul>
-        <RegionDropdown id="permission-region" name="permission-region" value={selectedRegion} onChange={onSelectedRegionChange} />
+        <RegionDropdown
+          id="permission-region"
+          name="permission-region"
+          includeAll
+          value={selectedRegion}
+          onChange={onSelectedRegionChange}
+        />
         <Grid row gap className="margin-top-3">
-          {_.map(permissionsForRegion, (checked, scopeId) => {
-            const { name, description } = scopeFromId(scopeId);
-            return (
-              <Grid key={name} col={12}>
-                <Checkbox
-                  id={name}
-                  name={scopeId}
-                  checked={checked}
-                  onChange={(e) => { onRegionalPermissionChange(e, selectedRegion); }}
-                  description={description}
-                  disabled={!enablePermissions}
-                  label={(<PermissionCheckboxLabel name={name} description={description} />)}
-                />
-              </Grid>
-            );
-          })}
+          <h2>Read only</h2>
+          <PermissionsCheckboxes scopeGroup={READ_ONLY_SCOPES} />
+          <h2>Write or approve</h2>
+          <PermissionsCheckboxes scopeGroup={READ_WRITE_SCOPES} />
         </Grid>
       </Fieldset>
     </>

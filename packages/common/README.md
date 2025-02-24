@@ -21,6 +21,23 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+# 2.2.7
+Additional variations of disallowed ECLKC and HeadStart URLS.
+
+# 2.2.3
+Target population and reason changes
+
+## 2.2.2
+
+Change ECLKC to headstart.gov.
+
+## 2.1.6
+
+Remove constants related to ElasticSearch.
+
+## 1.4.0
+Add SUPPORT_TYPE
+
 ### 1.1.9/1.2.0
 (Sorry for the multiple versions) Update the name of the const COLLABORATOR_TRAINING_REPORTS to POC_TRAINING_REPORTS
 
@@ -37,7 +54,7 @@ Distinguish between training report url params and training report statuses
 Add "event target populations"
 
 ###  1.1.2
-#### 1.1.1 
+#### 1.1.1
 - Add COLLABORATOR_TRAINING_REPORTS permissions
 
 

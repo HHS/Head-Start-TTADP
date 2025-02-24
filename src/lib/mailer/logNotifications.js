@@ -15,10 +15,12 @@ const emailTemplatePath = path.join(process.cwd(), 'email_templates');
  *
  */
 export default async function logEmailNotification(job, success, result) {
-  let subject; let emailTo; let
-    template;
-  let newCollaborator; let newApprover; let
-    collabArray;
+  let subject;
+  let emailTo;
+  let template;
+  let newCollaborator;
+  let newApprover;
+  let collabArray;
   let programSpecialists;
   let collaboratorEmailAddresses;
   const { data } = job;
@@ -53,8 +55,17 @@ export default async function logEmailNotification(job, success, result) {
         report.recipientNamesDisplay = data.recipients.map((r) => r.name).join(', ').trim();
         template = path.resolve(emailTemplatePath, 'recipient_report_approved', 'subject.pug');
         break;
-      default:
+      case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE:
+      case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED:
+        emailTo = data.emailTo;
+        template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
         break;
+      default:
+        logger.error(`Unknown job name: ${job.name}`);
+        throw new Error(`Unknown job name: ${job.name}`);
     }
     subject = compileFile(template)(report);
     const mailerLogEntry = await createMailerLog({
@@ -68,7 +79,7 @@ export default async function logEmailNotification(job, success, result) {
     });
     return mailerLogEntry;
   } catch (err) {
-    logger.error(`Unable to create a log notification record: ${err}`);
+    logger.error(`Unable to create a log notification record: ${err} ${err.stack}`);
     return null;
   }
 }

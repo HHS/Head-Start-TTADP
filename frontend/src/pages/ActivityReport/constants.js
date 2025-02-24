@@ -2,6 +2,7 @@ export const reasonsToMonitor = [
   'Monitoring | Deficiency',
   'Monitoring | Noncompliance',
   'Monitoring | Area of Concern',
+  'Monitoring Goal',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in
@@ -19,7 +20,7 @@ export const reasons = [
   'New Program Option',
   'New Staff / Turnover',
   'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
+  'Planning/Coordination',
   'School Readiness Goals',
   ...reasonsToMonitor,
 ];

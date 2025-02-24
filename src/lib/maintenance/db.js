@@ -224,6 +224,7 @@ const nextBlock = async (type, percent = null) => {
   const newOffset = offset + limit < numOfModels
     ? offset + limit
     : 0;
+
   // Calculate the new limit based on the percentage of total models requested.
   // If no percentage is provided, use the default limit.
   const newLimit = percent === null
@@ -290,22 +291,22 @@ const enqueueDBMaintenanceJob = async (
   type,
   data,
   percent = null, // optional parameter with default value of null
-) => enqueueMaintenanceJob(
-  MAINTENANCE_CATEGORY.DB, // constant representing the category of maintenance
-  {
+) => enqueueMaintenanceJob({
+  category: MAINTENANCE_CATEGORY.DB, // constant representing the category of maintenance
+  data: {
     type, // shorthand property notation for type: type
     ...(!data // spread operator used to merge properties of two objects
       // if data is not provided, call nextBlock function and merge its result
       ? await nextBlock(type, percent)
       : data), // otherwise, merge the provided data object
   },
-);
+});
 
 // This code adds a queue processor for database maintenance tasks.
 // The MAINTENANCE_CATEGORY.DB is used to identify the category of maintenance task.
 // The dbMaintenance function is passed as the callback function to be executed when
 // a task in this category is processed.
-addQueueProcessor(MAINTENANCE_CATEGORY.DB, dbMaintenance);
+addQueueProcessor(MAINTENANCE_CATEGORY.DB, dbMaintenance, false);
 
 // Adds a cron job with the specified maintenance category, type, and function to execute
 addCronJob(
@@ -335,6 +336,7 @@ addCronJob(
 );
 
 module.exports = {
+  nextBlock,
   maintenanceCommand: maintenanceDBCommand,
   tableMaintenanceCommand,
   vacuumTable,

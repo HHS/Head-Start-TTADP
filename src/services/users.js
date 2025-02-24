@@ -11,6 +11,7 @@ import {
   sequelize,
   UserValidationStatus,
   EventReportPilot,
+  NationalCenter,
 } from '../models';
 
 const { SITE_ACCESS } = SCOPES;
@@ -454,6 +455,10 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
     },
     include: [
       {
+        model: NationalCenter,
+        as: 'nationalCenters',
+      },
+      {
         attributes: [
           'id',
           'scopeId',
@@ -528,4 +533,19 @@ export async function getUserNamesByIds(ids) {
   });
 
   return users.map((u) => u.name);
+}
+
+export async function findAllUsersWithScope(scope) {
+  if (!Object.values(SCOPES).includes(scope)) {
+    return [];
+  }
+  return User.findAll({
+    attributes: ['id', 'name'],
+    include: [{
+      attributes: [],
+      model: Permission,
+      as: 'permissions',
+      where: { scopeId: scope },
+    }],
+  });
 }

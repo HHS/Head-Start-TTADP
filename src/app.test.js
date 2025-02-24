@@ -5,6 +5,8 @@ import { retrieveUserDetails } from './services/currentUser';
 
 jest.mock('./middleware/authMiddleware');
 jest.mock('./services/currentUser');
+jest.mock('axios');
+jest.mock('smartsheet');
 
 describe('TTA Hub server', () => {
   const ORIGINAL_ENV = process.env;

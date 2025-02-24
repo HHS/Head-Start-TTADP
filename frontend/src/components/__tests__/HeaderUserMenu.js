@@ -10,6 +10,13 @@ import userEvent from '@testing-library/user-event';
 import App from '../../App';
 import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
 
+const mockBuildInfo = {
+  branch: 'main',
+  commit: 'abcdef12345',
+  buildNumber: '123',
+  timestamp: '2024-11-13 12:34:56',
+};
+
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter', permissions: [] };
   const adminUser = {
@@ -21,6 +28,7 @@ describe('HeaderUserMenu', () => {
   const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
   const feedUrl = join('api', 'feeds', 'whats-new');
   const groupsUrl = join('api', 'groups');
+  const buildInfoUrl = '/api/admin/buildInfo'; // Add build info URL here
 
   const before = async (admin = false) => {
     if (admin) {
@@ -33,8 +41,13 @@ describe('HeaderUserMenu', () => {
     fetchMock.get(cleanupUrl, []);
     fetchMock.get(feedUrl, mockRSSData());
     fetchMock.get(groupsUrl, []);
+    fetchMock.get(buildInfoUrl, mockBuildInfo); // Mock build info response
 
     render(<App />);
+
+    // Use BrowserRouter to go to the home page '/'.
+    // This is necessary because the 404 hides the avatar (as it should).
+    window.history.pushState({}, 'Home page', '/');
 
     await screen.findByText('Office of Head Start TTA Hub');
     fireEvent.click(screen.getByTestId('header-avatar'));
@@ -118,6 +131,7 @@ describe('HeaderUserMenu', () => {
   describe('when unauthenticated', () => {
     beforeEach(async () => {
       fetchMock.get(userUrl, 401);
+      fetchMock.get(buildInfoUrl, mockBuildInfo); // Ensure buildInfo mock exists here too
       render(<App />);
       await screen.findByText('Office of Head Start TTA Hub');
     });

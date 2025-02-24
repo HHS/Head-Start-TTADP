@@ -13,34 +13,7 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ObjectiveTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
-      ObjectiveTemplate.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplateFiles' });
-      ObjectiveTemplate.belongsToMany(models.File, {
-        through: models.ObjectiveTemplateFile,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'fileId',
-        as: 'files',
-      });
-      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplateResources' });
-      ObjectiveTemplate.belongsToMany(models.Resource, {
-        through: models.ObjectiveTemplateResource,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
-      ObjectiveTemplate.hasMany(models.ObjectiveTemplateTopic, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplateTopics' });
-      ObjectiveTemplate.belongsToMany(models.Topic, {
-        through: models.ObjectiveTemplateTopic,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'topicId',
-        as: 'topics',
-      });
       ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
-      ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
-        through: models.GoalTemplateObjectiveTemplate,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'goalTemplateId',
-        as: 'goalTemplates',
-      });
     }
   }
   ObjectiveTemplate.init({

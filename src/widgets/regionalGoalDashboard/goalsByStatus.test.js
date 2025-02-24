@@ -84,6 +84,7 @@ describe('goalsByStatus', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
     await Recipient.destroy({
       where: {

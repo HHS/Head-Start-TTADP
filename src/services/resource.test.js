@@ -11,7 +11,6 @@ import db, {
   NextStepResource,
   Resource,
   Objective,
-  ObjectiveResource,
 } from '../models';
 import {
   // Resource Table
@@ -40,11 +39,6 @@ import {
   syncResourcesForGoal,
   // processGoalForResources,
   processGoalForResourcesById,
-  // Objective Resource processing
-  calculateIsAutoDetectedForObjective,
-  syncResourcesForObjective,
-  // processObjectiveForResources,
-  processObjectiveForResourcesById,
   // ActivityReportObjective Resource Processing
   calculateIsAutoDetectedForActivityReportObjective,
   syncResourcesForActivityReportObjective,
@@ -66,9 +60,47 @@ describe('resource', () => {
     describe('findOrCreateResource', () => {
       const urlGoogle = 'http://google.com';
       let url;
+
+      let existingHeadStartResource;
+      let createdECLKCResource;
+      let createdECLKCResource2;
+      let createdHeadStartResource;
+
+      beforeAll(async () => {
+        existingHeadStartResource = await Resource.create({
+          url: 'https://headstart.gov/existingsingle',
+          domain: 'headstart.gov',
+        });
+      });
+
+      afterAll(async () => {
+        // Delete created ECLKC resource.
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+      });
+
       beforeEach(() => {
         url = urlGoogle;
       });
+
       afterEach(async () => {
         await Resource.destroy({
           where: { url: urlGoogle },
@@ -114,6 +146,30 @@ describe('resource', () => {
         const resource = await findOrCreateResource(url);
         expect(resource).toBe(undefined);
       });
+
+      it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
+        createdECLKCResource = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        expect(createdECLKCResource).not.toBeNull();
+        // Verify eclkc with and existing headstart.gov
+        expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
+      });
+
+      it('maps to an non existing headstart.gov resource if the url is ECLKC', async () => {
+        createdECLKCResource2 = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        expect(createdECLKCResource2).not.toBeNull();
+
+        // Find the headstart url we auto created.
+        createdHeadStartResource = await Resource.findOne({
+          where: { url: 'https://headstart.gov/notexistingsingle' },
+        });
+        expect(createdHeadStartResource).not.toBeNull();
+        expect(createdHeadStartResource.domain).toBe('headstart.gov');
+
+        // Verify eclkc with the auto created headstart url.
+        expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
+      });
     });
     describe('findOrCreateResources', () => {
       const urlsTest = [
@@ -127,6 +183,43 @@ describe('resource', () => {
         if (a.id > b.id) return 1;
         return 0;
       };
+
+      let existingHeadStartResource;
+      let createdECLKCResource;
+      let createdECLKCResource2;
+      let createdHeadStartResource;
+
+      beforeAll(async () => {
+        existingHeadStartResource = await Resource.create({
+          url: 'https://headstart.gov/existing',
+          domain: 'headstart.gov',
+        });
+      });
+
+      afterAll(async () => {
+        // Delete created ECLKC resource.
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+      });
+
       beforeEach(() => {
         urls = urlsTest;
       });
@@ -176,6 +269,27 @@ describe('resource', () => {
         urls = {};
         const resources = await findOrCreateResources(urls);
         expect(resources).toMatchObject([]);
+      });
+
+      it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
+        const resources = await findOrCreateResources(['https://eclkc.ohs.acf.hhs.gov/existing', 'https://eclkc.ohs.acf.hhs.gov/notexisting']);
+        expect(resources.length).toBe(2);
+        // Verify eclkc with and existing headstart.gov
+        createdECLKCResource = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/existing'));
+        expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existing');
+        expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
+
+        // Find the headstart url we auto created.
+        createdHeadStartResource = await Resource.findOne({
+          where: { url: 'https://headstart.gov/notexisting' },
+        });
+        expect(createdHeadStartResource).not.toBeNull();
+        expect(createdHeadStartResource.domain).toBe('headstart.gov');
+
+        // Verify eclkc with the auto created headstart url.
+        createdECLKCResource2 = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/notexisting'));
+        expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexisting');
+        expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
       });
     });
   });
@@ -1312,7 +1426,7 @@ describe('resource', () => {
       beforeAll(async () => {
         [activityReport, deleteReport] = await ActivityReport.findOrCreate({
           where: {
-            id: 99999,
+            id: 1999991,
           },
           defaults: {
             context: 'Resource Report test. http://google.com',
@@ -2376,508 +2490,6 @@ describe('resource', () => {
         expect(gResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
-          ].sort());
-      });
-    });
-  });
-  describe('Objective Resource processing', () => {
-    describe('calculateIsAutoDetectedForObjective', () => {
-      let sourceFields;
-      it('expected usage, single', () => {
-        sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE];
-        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(true);
-      });
-      it('expected usage, multiple with only once auto-detected', () => {
-        sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(true);
-      });
-      it('expected usage, non-auto-detected single', () => {
-        sourceFields = [SOURCE_FIELD.OBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(false);
-      });
-      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
-    });
-    describe('syncResourcesForObjective', () => {
-      let resources;
-      let objective;
-      const urls = [
-        'http://google.com',
-        'http://github.com',
-        'http://cloud.gov',
-        'https://adhocteam.us/',
-      ];
-      beforeAll(async () => {
-        [objective] = await Objective.findOrCreate({
-          where: {
-            goalId: 1,
-            title: 'Resource Objective test. http://google.com',
-            status: OBJECTIVE_STATUS.NOT_STARTED,
-            onAR: false,
-            onApprovedAR: false,
-          },
-          individualHooks: true,
-          raw: true,
-        });
-      });
-      beforeEach(async () => {
-        resources = await findOrCreateResources(urls);
-      });
-      afterEach(async () => {
-        await ObjectiveResource.destroy({
-          where: {
-            objectiveId: objective.id,
-            resourceId: { [Op.in]: resources.map((r) => r.id) },
-          },
-          individualHooks: true,
-        });
-      });
-      afterAll(async () => {
-        await Resource.destroy({
-          where: { id: { [Op.in]: resources.map((r) => r.id) } },
-          individualHooks: true,
-        });
-        await Objective.destroy({
-          where: { id: objective.id },
-          individualHooks: true,
-          force: true,
-        });
-      });
-      it('expected usage, insert', async () => {
-        const data = {
-          create: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-          ],
-          update: [],
-          destroy: [],
-        };
-        await syncResourcesForObjective(data);
-        const oResources = await ObjectiveResource.findAll({
-          where: {
-            objectiveId: objective.id,
-            resourceId: { [Op.in]: resources.map((r) => r.id) },
-          },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
-        });
-        expect(oResources.length).toEqual(4);
-      });
-      it('expected usage, update', async () => {
-        let data = {
-          create: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-          ],
-          update: [],
-          destroy: [],
-        };
-        await syncResourcesForObjective(data);
-        data = {
-          create: [],
-          update: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: true,
-            },
-          ],
-          destroy: [],
-        };
-        await syncResourcesForObjective(data);
-        const oResources = await ObjectiveResource.findAll({
-          where: { objectiveId: objective.id, resourceId: resources[0].id },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
-        });
-        expect(oResources[0].dataValues.sourceFields.length).toEqual(2);
-        expect(oResources[0].isAutoDetected).toEqual(true);
-      });
-      it('expected usage, delete', async () => {
-        let data = {
-          create: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-          ],
-          update: [],
-          destroy: [],
-        };
-        await syncResourcesForObjective(data);
-        data = {
-          create: [],
-          update: [],
-          destroy: [
-            {
-              objectiveId: objective.id,
-              resourceIds: resources.map((r) => r.id),
-            },
-          ],
-        };
-        await syncResourcesForObjective(data);
-        const oResources = await ObjectiveResource.findAll({
-          where: {
-            objectiveId: objective.id,
-            resourceId: { [Op.in]: resources.map((r) => r.id) },
-          },
-        });
-        expect(oResources.length).toEqual(0);
-      });
-      it('expected usage, insert/update/delete', async () => {
-        let data = {
-          create: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-            {
-              objectiveId: objective.id,
-              resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-          ],
-          update: [],
-          destroy: [],
-        };
-        await syncResourcesForObjective(data);
-        data = {
-          create: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: false,
-            },
-          ],
-          update: [
-            {
-              objectiveId: objective.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE],
-              isAutoDetected: true,
-            },
-          ],
-          destroy: [
-            {
-              objectiveId: objective.id,
-              resourceIds: [resources[1].id],
-            },
-          ],
-        };
-        await syncResourcesForObjective(data);
-        const oResources = await ObjectiveResource.findAll({
-          where: {
-            objectiveId: objective.id,
-            resourceId: { [Op.in]: resources.map((r) => r.id) },
-          },
-        });
-        expect(oResources.length).toEqual(3);
-        expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
-        expect(oResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
-        expect(oResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(2);
-        expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(true);
-      });
-    });
-    describe('processObjectiveForResourcesById', () => {
-      let resources;
-      let objective;
-      const urls = [
-        'http://google.com',
-        'http://github.com',
-        'http://cloud.gov',
-        'https://adhocteam.us/',
-      ];
-      beforeAll(async () => {
-        [objective] = await Objective.findOrCreate({
-          where: {
-            goalId: 1,
-            title: 'Resource Objective test. http://google.com',
-            status: OBJECTIVE_STATUS.NOT_STARTED,
-            onAR: false,
-            onApprovedAR: false,
-          },
-          individualHooks: true,
-          raw: true,
-        });
-      });
-      beforeEach(async () => {
-        resources = await findOrCreateResources(urls);
-      });
-      afterEach(async () => {
-        await ObjectiveResource.destroy({
-          where: { objectiveId: objective.id },
-          individualHooks: true,
-        });
-      });
-      afterAll(async () => {
-        await Resource.destroy({
-          where: { url: { [Op.in]: urls } },
-          individualHooks: true,
-        });
-        await Objective.destroy({
-          where: { id: objective.id },
-          individualHooks: true,
-          force: true,
-        });
-      });
-      it('expected usage, empty urls', async () => {
-        const oResources = await processObjectiveForResourcesById(objective.id, []);
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-          ].sort());
-      });
-      it('expected usage, with urls', async () => {
-        const oResources = await processObjectiveForResourcesById(
-          objective.id,
-          urls,
-        );
-        expect(oResources.length).toEqual(4);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-      });
-      it('expected usage, with resourceIds', async () => {
-        const resource = await Resource.findOne({ where: { url: urls[0] } });
-        let oResources = await processObjectiveForResourcesById(
-          objective.id,
-          null,
-          [resource.id],
-        );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-
-        oResources = await processObjectiveForResourcesById(
-          objective.id,
-          null,
-          null,
-        );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-          ].sort());
-
-        oResources = await processObjectiveForResourcesById(
-          objective.id,
-          null,
-          [resource.id],
-        );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-      });
-      it('expected usage, add and remove urls', async () => {
-        let oResources = await processObjectiveForResourcesById(
-          objective.id,
-          [],
-        );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-          ].sort());
-        oResources = await processObjectiveForResourcesById(
-          objective.id,
-          [urls[0]],
-        );
-        expect(oResources.length).toEqual(1);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-
-        oResources = await processObjectiveForResourcesById(
-          objective.id,
-          [urls[1]],
-        );
-        expect(oResources.length).toEqual(2);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-          ].sort());
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-
-        oResources = await processObjectiveForResourcesById(
-          objective.id,
-          urls,
-        );
-        expect(oResources.length).toEqual(4);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
-          ].sort());
-
-        oResources = await processObjectiveForResourcesById(
-          objective.id,
-          [],
-        );
-        expect(oResources.length).toEqual(1);
-        expect(oResources[0].resource.dataValues.url).toEqual(urls[0]);
-        expect(oResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.OBJECTIVE.TITLE,
           ].sort());
       });
     });

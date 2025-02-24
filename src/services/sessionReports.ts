@@ -1,11 +1,16 @@
 import { cast } from 'sequelize';
-import db from '../models';
+import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
-const { SessionReportPilot, EventReportPilot, SessionReportPilotFile } = db;
+const {
+  SessionReportPilot,
+  EventReportPilot,
+  SessionReportPilotFile,
+  SessionReportPilotSupportingAttachment,
+} = db;
 
-const validateFields = (request, requiredFields) => {
+export const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {
@@ -14,10 +19,19 @@ const validateFields = (request, requiredFields) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
+  // Delete files.
   await SessionReportPilotFile.destroy(
     { where: { sessionReportPilotId: id } },
     { individualHooks: true },
   );
+
+  // Delete supporting attachments.
+  await SessionReportPilotSupportingAttachment.destroy(
+    { where: { sessionReportPilotId: id } },
+    { individualHooks: true },
+  );
+
+  // Delete session.
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
@@ -28,17 +42,18 @@ type WhereOptions = {
 };
 
 // eslint-disable-next-line max-len
-async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
-  let session;
-
+export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
   const query = {
     attributes: [
       'id',
       'eventId',
       'data',
       'updatedAt',
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
     where,
+    order: [['startDate', 'ASC']],
     include: [
       {
         model: db.File,
@@ -48,14 +63,16 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
         model: EventReportPilot,
         as: 'event',
       },
+      {
+        model: db.File,
+        as: 'supportingAttachments',
+      },
     ],
   };
 
-  if (plural) {
-    session = await SessionReportPilot.findAll(query);
-  } else {
-    session = await SessionReportPilot.findOne(query);
-  }
+  const session = plural
+    ? await SessionReportPilot.findAll(query)
+    : await SessionReportPilot.findOne(query);
 
   if (!session) {
     return null;
@@ -81,7 +98,9 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     eventId,
     data: session?.data ?? {},
     files: session?.files ?? [],
+    supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
+    event: session?.event,
   };
 }
 
@@ -119,12 +138,16 @@ export async function updateSession(id, request) {
 
   const { eventId, data } = request;
 
+  // Combine existing session data with new data.
+  const existingData = session.data;
+  const newData = { ...existingData, ...data };
+
   const event = await findEventBySmartsheetIdSuffix(eventId);
 
   await SessionReportPilot.update(
     {
       eventId: event.id,
-      data: cast(JSON.stringify(data), 'jsonb'),
+      data: cast(JSON.stringify(newData), 'jsonb'),
     },
     {
       where: { id },

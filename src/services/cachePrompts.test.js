@@ -107,7 +107,7 @@ describe('cachePrompts', () => {
     await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id } });
     await Goal.destroy({ where: { goalTemplateId: template.id }, force: true });
     await GoalTemplate.destroy({ where: { id: template.id } });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
   });

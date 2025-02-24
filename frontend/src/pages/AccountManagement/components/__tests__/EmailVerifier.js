@@ -19,12 +19,14 @@ describe('AccountManagement', () => {
     name: 'user1',
     lastLogin: now,
     validationStatus: [{ type: 'email', validatedAt: now }],
+    roles: [{ name: 'ECM' }, { name: 'GMS' }],
   };
 
   const unvalidatedUser = {
     name: 'user1',
     lastLogin: now,
     validationStatus: [],
+    roles: [],
   };
 
   const token = 123;

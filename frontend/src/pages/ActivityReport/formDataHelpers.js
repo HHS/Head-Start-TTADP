@@ -102,6 +102,80 @@ export const unflattenResourcesUsed = (array) => {
   return array.map((value) => ({ value }));
 };
 
+export const packageGoals = (goals, goal, grantIds, prompts) => {
+  const packagedGoals = [
+    // we make sure to mark all the read only goals as "ActivelyEdited: false"
+    ...goals.map((g) => ({
+      goalIds: g.goalIds,
+      status: g.status,
+      endDate: g.endDate,
+      onApprovedAR: g.onApprovedAR,
+      source: g.source,
+      name: g.name,
+      grantIds,
+      id: g.id,
+      createdVia: g.createdVia,
+      goalTemplateId: g.goalTemplateId,
+      isActivelyBeingEditing: false,
+      prompts: grantIds.length < 2 ? g.prompts : [],
+      objectives: g.objectives.map((objective) => ({
+        id: objective.id,
+        isNew: objective.isNew,
+        ttaProvided: objective.ttaProvided,
+        title: objective.title,
+        status: objective.status,
+        resources: objective.resources,
+        topics: objective.topics,
+        citations: objective.citations,
+        files: objective.files,
+        supportType: objective.supportType,
+        courses: objective.courses,
+        closeSuspendReason: objective.closeSuspendReason,
+        closeSuspendContext: objective.closeSuspendContext,
+        createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: g.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
+      })),
+    })),
+  ];
+
+  if (goal && goal.name) {
+    packagedGoals.push({
+      goalIds: goal.goalIds,
+      status: goal.status,
+      endDate: goal.endDate,
+      onApprovedAR: goal.onApprovedAR,
+      source: goal.source,
+      name: goal.name,
+      createdVia: goal.createdVia,
+      isActivelyBeingEditing: goal.isActivelyBeingEditing,
+      goalTemplateId: goal.goalTemplateId,
+      objectives: goal.objectives.map((objective) => ({
+        id: objective.id,
+        isNew: objective.isNew,
+        ttaProvided: objective.ttaProvided,
+        title: objective.title,
+        status: objective.status,
+        resources: objective.resources,
+        topics: objective.topics,
+        citations: objective.citations,
+        files: objective.files,
+        supportType: objective.supportType,
+        courses: objective.courses,
+        closeSuspendReason: objective.closeSuspendReason,
+        closeSuspendContext: objective.closeSuspendContext,
+        createdHere: objective.createdHere,
+        // eslint-disable-next-line max-len
+        goalId: goal.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
+      })),
+      grantIds,
+      prompts: grantIds.length < 2 ? prompts : [],
+    });
+  }
+
+  return packagedGoals;
+};
+
 // this function takes goals returned from the API and parses them appropriately,
 // setting the editable goal (or at least doing its best guess)
 /**

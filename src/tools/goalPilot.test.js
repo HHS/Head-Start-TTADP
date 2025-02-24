@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs';
-import { expect } from '@playwright/test';
 import createGoal from './goalPilot';
 import { downloadFile } from '../lib/s3';
 import db, {
@@ -117,5 +116,10 @@ describe('Goal pilot script', () => {
     const allGoals2 = await Goal.findAll({ where: { name: goalName }, attributes: ['name'] });
     expect(allGoals).not.toBeNull();
     expect(allGoals2.length).toBe(allGoals.length);
+  });
+
+  it('should throw an error', async () => {
+    downloadFile.mockImplementationOnce(() => { throw new Error('oops'); });
+    await expect(createGoal('asdf')).rejects.toThrow('oops');
   });
 });

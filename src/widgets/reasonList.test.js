@@ -67,22 +67,7 @@ const regionOneReportC = {
   ...reportObject,
   regionId: 8,
   duration: 3,
-  reason: [
-    'Below Competitive Threshold (CLASS)',
-    'Below Quality Threshold (CLASS)',
-    'Change in Scope',
-    'Child Incident',
-    'Complaint',
-    'COVID-19 response',
-    'Full Enrollment',
-    'New Recipient',
-    'New Director or Management',
-    'New Program Option',
-    'New Staff / Turnover',
-    'Ongoing Quality Improvement',
-    'Planning/Coordination (also TTA Plan Agreement)',
-    'School Readiness Goals',
-  ],
+  reason: REASONS,
   startDate: '2021-02-01T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
 };
@@ -165,7 +150,7 @@ describe('Reason list widget', () => {
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id] } });
-    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] } });
+    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] }, individualHooks: true });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await db.sequelize.close();
   });

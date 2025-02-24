@@ -30,7 +30,7 @@ export const uploadFile = async (data) => {
 };
 
 export const uploadObjectivesFile = async (data) => {
-  const res = await fetch(join(fileUrl, 'objectives'), {
+  const res = await fetch(fileUrl, {
     method: 'POST',
     credentials: 'same-origin',
     body: data,
@@ -65,6 +65,28 @@ export const deleteReportFile = async (fileId, reportId) => {
     fileUrl,
     'r',
     reportId.toString(),
+    fileId.toString(),
+  );
+  const res = await destroy(url);
+  return res;
+};
+
+export const deleteLogFile = async (fileId, logId) => {
+  const url = join(
+    fileUrl,
+    'l',
+    logId.toString(),
+    fileId.toString(),
+  );
+  const res = await destroy(url);
+  return res;
+};
+
+export const deleteSessionSupportingAttachment = async (fileId, logId) => {
+  const url = join(
+    fileUrl,
+    'ssa',
+    logId.toString(),
     fileId.toString(),
   );
   const res = await destroy(url);

@@ -13,8 +13,15 @@ import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
 
 describe('GoalForm', () => {
-  const Form = ({ id }) => {
-    const goal = {
+  const DEFAULT_USER = {
+    id: 1,
+    permissions: [],
+    name: 'Ted User',
+    flags: [],
+  };
+
+  const Form = ({ id, customGoal, user = DEFAULT_USER }) => {
+    const goal = customGoal || {
       id,
       isNew: id === 'new',
       goalIds: [123],
@@ -37,9 +44,7 @@ describe('GoalForm', () => {
       }}
       >
         <UserContext.Provider value={{
-          user: {
-            id: 1, permissions: [], name: 'Ted User', flags: [],
-          },
+          user,
         }}
         >
           <FormProvider {...hookForm}>
@@ -60,10 +65,47 @@ describe('GoalForm', () => {
       PropTypes.string,
       PropTypes.number,
     ]).isRequired,
+    customGoal: PropTypes.shape({
+      id: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+      ]).isRequired,
+      isNew: PropTypes.bool,
+      goalIds: PropTypes.arrayOf(PropTypes.number),
+      status: PropTypes.string,
+      prompts: PropTypes.arrayOf(PropTypes.shape({
+        fieldType: PropTypes.string,
+        title: PropTypes.string,
+        prompt: PropTypes.string,
+        options: PropTypes.arrayOf(PropTypes.string),
+        response: PropTypes.arrayOf(PropTypes.string),
+        validations: PropTypes.shape({
+          rules: PropTypes.arrayOf(PropTypes.shape({
+            name: PropTypes.string,
+            value: PropTypes.oneOfType([
+              PropTypes.string,
+              PropTypes.number,
+            ]),
+            message: PropTypes.string,
+          })),
+        }),
+      })),
+    }),
+    user: PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      permissions: PropTypes.arrayOf(PropTypes.shape({
+        scopeId: PropTypes.number,
+      })),
+    }).isRequired,
   };
 
-  const renderGoalForm = (id) => {
-    render(<Form id={id} />);
+  Form.defaultProps = {
+    customGoal: undefined,
+  };
+
+  const renderGoalForm = (id, customGoal = undefined, user) => {
+    render(<Form id={id} customGoal={customGoal} user={user} />);
   };
 
   beforeEach(async () => fetchMock.restore());

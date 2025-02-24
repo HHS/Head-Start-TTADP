@@ -2,7 +2,10 @@
 import { createFiltersToScopes } from '../utils';
 import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
 import { withRegion, withoutRegion } from './region';
-import { withCollaborators, withoutCollaborators } from './collaborators';
+import { withCollaborators } from './collaborators';
+import { withCreators } from './creator';
+import { withoutEventId, withEventId } from './eventId';
+import { withGoalName, withoutGoalName } from './goalName';
 
 export const topicToQuery = {
   startDate: {
@@ -16,8 +19,18 @@ export const topicToQuery = {
     nin: (query) => withoutRegion(query),
   },
   collaborators: {
-    ctn: (query) => withCollaborators(query),
-    nctn: (query) => withoutCollaborators(query),
+    in: (query) => withCollaborators(query),
+  },
+  creator: {
+    in: (query) => withCreators(query),
+  },
+  eventId: {
+    ctn: (query) => withEventId(query),
+    nctn: (query) => withoutEventId(query),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
   },
 };
 

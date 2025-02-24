@@ -1,6 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
+import { uniqueId } from 'lodash';
+import useValidObjectiveStatuses from '../../hooks/useValidObjectiveStatuses';
 
 export default function ObjectiveStatus({
   status,
@@ -12,38 +14,15 @@ export default function ObjectiveStatus({
 }) {
   // capture the initial status so updates to the status don't cause the dropdown to disappear
   const initialStatus = useRef(status);
+  const [statusOptions, hideDropdown] = useValidObjectiveStatuses(
+    goalStatus,
+    userCanEdit,
+    initialStatus.current,
+  );
 
-  // if the goal is closed or not started, the objective status should be read-only
-  const hideDropdown = useMemo(() => {
-    if (['Closed'].includes(goalStatus) || !userCanEdit) {
-      return true;
-    }
-
-    return false;
-  }, [goalStatus, userCanEdit]);
-
-  const options = useMemo(() => {
-    // if the objective is complete, it can only go back to in progress
-    if (initialStatus.current === 'Complete') {
-      return (
-        <>
-          <option>In Progress</option>
-          <option>Suspended</option>
-          <option>Complete</option>
-        </>
-      );
-    }
-
-    // otherwise all the options should be available
-    return (
-      <>
-        <option>Not Started</option>
-        <option>In Progress</option>
-        <option>Suspended</option>
-        <option>Complete</option>
-      </>
-    );
-  }, []);
+  const options = statusOptions.map((option) => (
+    <option key={uniqueId('objective-status-change-option')}>{option}</option>
+  ));
 
   // if the goal is a draft, objective status sits in "in progress"
   if (goalStatus === 'Draft') {

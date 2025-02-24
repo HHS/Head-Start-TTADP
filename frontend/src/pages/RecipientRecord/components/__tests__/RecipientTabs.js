@@ -46,17 +46,4 @@ describe('RecipientTabs', () => {
     renderRecipientTabs(<a href="/">Back</a>);
     expect(screen.queryByTestId('back-link-icon')).toBeInTheDocument();
   });
-
-  it('hides the RTTAPA history if there is no feature flag', () => {
-    renderRecipientTabs(<a href="/">Back</a>);
-    expect(screen.queryByText(/RTTAPA History/i)).not.toBeInTheDocument();
-  });
-
-  it('shows the RTTAPA history if there is a feature flag', () => {
-    renderRecipientTabs(<a href="/">Back</a>, {
-      ...DEFAULT_USER,
-      flags: ['rttapa_form'],
-    });
-    expect(screen.queryByText(/RTTAPA History/i)).toBeInTheDocument();
-  });
 });

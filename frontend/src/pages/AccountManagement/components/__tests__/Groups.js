@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
@@ -29,7 +30,6 @@ describe('Groups', () => {
   };
 
   afterEach(() => fetchMock.restore());
-
   it('renders without crashing', async () => {
     fetchMock.get('/api/groups', []);
     act(renderGroups);
@@ -43,20 +43,40 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        groupCollaborators: [],
+        sharedWith: null,
+        coOwners: [],
+        creator: {
+          name: 'Tom Jones',
+          id: 1,
+        },
       },
       {
         id: 2,
         name: 'group2',
         userId: 1,
         isPublic: true,
+        groupCollaborators: [],
+        coOwners: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        individuals: [],
+        creator: {
+          name: 'Tom Jones',
+          id: 1,
+        },
       },
       {
         id: 3,
         name: 'group3',
         userId: 2,
         isPublic: true,
-        user: {
+        groupCollaborators: [],
+        coOwners: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        individuals: [],
+        creator: {
           name: 'Tim User',
+          id: 2,
         },
       },
     ]);
@@ -98,7 +118,11 @@ describe('Groups', () => {
         name: 'group3',
         userId: 2,
         isPublic: true,
-        user: {
+        groupCollaborators: [],
+        coOwners: [],
+        individuals: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        creator: {
           name: 'Tim User',
         },
       },
@@ -112,6 +136,58 @@ describe('Groups', () => {
     expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
   });
 
+  it('if a user is both coowner and shared only show the group in the coowners section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 3,
+        name: 'I am a coowner and individual, but mostly a coowner',
+        userId: 2,
+        isPublic: true,
+        groupCollaborators: [],
+        coOwners: [{ id: 1, name: 'Tom Jones' }],
+        individuals: [{ id: 1, name: 'Tom Jones' }],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        creator: {
+          name: 'Tim User',
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    const group3 = await screen.findByText(/I am a coowner and individual, but mostly a coowner/i);
+    expect(group3).toBeInTheDocument();
+
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+  });
+
+  it('if a I am a coowner on a group that is public and shared with everyone only display it once', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 3,
+        name: 'This is public but I am a coowner',
+        userId: 2,
+        isPublic: true,
+        groupCollaborators: [],
+        coOwners: [{ id: 1, name: 'Tom Jones' }],
+        individuals: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        creator: {
+          name: 'Tim User',
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    const group3 = await screen.findByText(/This is public but I am a coowner/i);
+    expect(group3).toBeInTheDocument();
+
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+  });
+
   it('renders only user created groups when there are no public groups', async () => {
     fetchMock.get('/api/groups', [
       {
@@ -119,6 +195,14 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        groupCollaborators: [],
+        coOwners: [],
+        individuals: [],
+        sharedWith: null,
+        creator: {
+          name: 'Tim User',
+          id: 1,
+        },
       },
     ]);
 
@@ -127,7 +211,7 @@ describe('Groups', () => {
     const group1 = await screen.findByText(/group1/i);
     expect(group1).toBeInTheDocument();
 
-    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
+    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
   });
 
   it('handles fetch errors', async () => {
@@ -141,13 +225,20 @@ describe('Groups', () => {
   });
 
   it('you can delete a group', async () => {
-    fetchMock.get('/api/groups', [
-      {
+    fetchMock.get('/api/groups', [{
+      id: 1,
+      name: 'group1',
+      userId: 1,
+      isPublic: false,
+      groupCollaborators: [],
+      coOwners: [],
+      individuals: [],
+      sharedWith: null,
+      creator: {
+        name: 'Tim User',
         id: 1,
-        name: 'group1',
-        userId: 1,
-        isPublic: false,
       },
+    },
     ]);
     fetchMock.delete('/api/groups/1', {});
 
@@ -182,6 +273,14 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        groupCollaborators: [],
+        coOwners: [],
+        individuals: [],
+        sharedWith: null,
+        creator: {
+          name: 'Tim User',
+          id: 1,
+        },
       },
     ]);
     fetchMock.delete('/api/groups/1', 500);
@@ -215,83 +314,197 @@ describe('Groups', () => {
     });
   });
 
-  it('more than 10 groups shows pagination', async () => {
-    const mockGroups = (length) => {
-      const groups = [];
-      // eslint-disable-next-line no-plusplus
-      for (let i = 1; i < length; i++) {
-        groups.push({
-          id: i,
-          name: `group${i}`,
-          userId: 3,
-          isPublic: true,
-          user: {
-            name: 'Tim User',
-          },
-        });
-      }
-      return groups;
-    };
-
-    fetchMock.get('/api/groups', mockGroups(33));
-
-    act(() => {
-      renderGroups();
-    });
-
-    const group1 = await screen.findByText('group1');
-    expect(group1).toBeInTheDocument();
-
-    const page2 = await screen.findByRole('button', { name: /page 2/i });
-    expect(page2).toBeInTheDocument();
-
-    act(() => {
-      userEvent.click(page2);
-    });
-
-    const group11 = await screen.findByText(/group11/i);
-    expect(group11).toBeInTheDocument();
-
-    let nextPage = await screen.findByRole('button', { name: /next page/i });
-    act(() => {
-      userEvent.click(nextPage);
-    });
-
-    const group21 = await screen.findByText(/group21/i);
-    expect(group21).toBeInTheDocument();
-
-    const previousPage = await screen.findByRole('button', { name: /previous page/i });
-    act(() => {
-      userEvent.click(previousPage);
-    });
-
-    const group11Again = await screen.findByText(/group11/i);
-    expect(group11Again).toBeInTheDocument();
-
-    nextPage = await screen.findByRole('button', { name: /next page/i });
-    act(() => {
-      userEvent.click(nextPage);
-    });
-
-    nextPage = await screen.findByRole('button', { name: /next page/i });
-    act(() => {
-      userEvent.click(nextPage);
-    });
-
-    const group31 = await screen.findByText(/group31/i);
-    expect(group31).toBeInTheDocument();
-
-    nextPage = screen.queryByRole('button', { name: /next page/i });
-    expect(nextPage).toBeNull();
-  });
-
   it('handles null response', async () => {
     fetchMock.get('/api/groups', null);
 
     act(() => {
       renderGroups();
     });
-    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
+    expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
+  });
+
+  it('displays groups in creator section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        isPublic: true,
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        groupCollaborators: [],
+        coOwners: [
+          {
+            id: 2,
+            name: 'CoOwner User',
+          },
+        ],
+        individuals: [
+          {
+            id: 3,
+            name: 'SharedWith User',
+          },
+        ],
+        creator: {
+          name: 'Creator User',
+          id: 1,
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    await waitFor(() => {
+      expect(screen.queryAllByText(/you haven't created any groups yet/i).length).toBe(0);
+      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+      expect(screen.getByText('group1')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+      expect(screen.getByText('Public')).toBeInTheDocument();
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
+      expect(screen.getByText('Edit group')).toBeInTheDocument();
+      expect(screen.getByText('Delete group')).toBeInTheDocument();
+    });
+  });
+
+  it('displays groups in co-owner section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        isPublic: false,
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        groupCollaborators: [],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        coOwners: [
+          {
+            id: 1,
+            name: 'CoOwner User',
+          },
+        ],
+        individuals: [
+          {
+            id: 3,
+            name: 'SharedWith User',
+          },
+        ],
+        creator: {
+          name: 'Creator User',
+          id: 4,
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    await waitFor(() => {
+      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+      expect(screen.queryAllByText(/you haven't been added as a co-owner yet/i).length).toBe(0);
+      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+      expect(screen.getByText('group1')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+      expect(screen.getByText('Individuals')).toBeInTheDocument();
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
+      expect(screen.getByText('Edit group')).toBeInTheDocument();
+      expect(screen.getByText('Delete group')).toBeInTheDocument();
+    });
+  });
+
+  it('displays groups in shared section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        isPublic: false,
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        groupCollaborators: [],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        coOwners: [
+          {
+            id: 2,
+            name: 'CoOwner User',
+          },
+        ],
+        individuals: [
+          {
+            id: 1,
+            name: 'SharedWith User',
+          },
+        ],
+        creator: {
+          name: 'Creator User',
+          id: 5,
+        },
+      },
+      {
+        id: 2,
+        name: 'group2',
+        isPublic: true,
+        updatedAt: '2024-01-02T00:00:00.000Z',
+        groupCollaborators: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        coOwners: [
+          {
+            id: 10,
+            name: 'CoOwner User',
+          },
+        ],
+        individuals: [],
+        creator: {
+          name: 'Creator User2',
+          id: 14,
+        },
+      },
+      {
+        id: 3,
+        name: 'group3',
+        isPublic: true,
+        updatedAt: '2024-01-03T00:00:00.000Z',
+        groupCollaborators: [],
+        coOwners: [],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        individuals: [
+          {
+            id: 14,
+            name: 'SharedWith User',
+          },
+        ],
+        creator: {
+          name: 'Creator User3',
+          id: 15,
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    await waitFor(() => {
+      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
+      expect(screen.queryAllByText(/You don't have any shared groups yet/i).length).toBe(0);
+
+      // Shared collaborator group.
+      expect(screen.getByText('group1')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+      expect(screen.getByText('Private')).toBeInTheDocument();
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
+      expect(screen.queryAllByText('Edit group').length).toBe(0);
+      expect(screen.queryAllByText('Delete group').length).toBe(0);
+
+      // Is public group.
+      expect(screen.getByText('group2')).toBeInTheDocument();
+      expect(screen.getByText('Creator User2')).toBeInTheDocument();
+      expect(screen.getByText('Public')).toBeInTheDocument();
+      expect(screen.getByText('01/02/2024')).toBeInTheDocument();
+      expect(screen.queryAllByText('Edit group').length).toBe(0);
+      expect(screen.queryAllByText('Delete group').length).toBe(0);
+
+      // Public Group with a different shared collaborator.
+      expect(screen.queryAllByText('group3').length).toBe(0);
+
+      // One view for each row.
+      expect(screen.queryAllByText('View group').length).toBe(2);
+    });
   });
 });

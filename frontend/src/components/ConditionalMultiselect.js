@@ -10,11 +10,10 @@ export default function ConditionalMultiselect({
   validations,
   fieldName,
   fieldValue,
-  isOnReport,
   onBlur,
   onChange,
   error,
-  isComplete,
+  userCanEdit,
 }) {
   const handleOnChange = (selections) => {
     onChange(selections.map((option) => option.label));
@@ -24,9 +23,7 @@ export default function ConditionalMultiselect({
   const selectedOptions = (fieldValue || []).map((label) => options
     .find((option) => option.label === label));
 
-  const isEditable = !(isOnReport && isComplete);
-
-  if (!isEditable) {
+  if (!userCanEdit) {
     if (!fieldValue || fieldValue.length === 0) {
       return null;
     }
@@ -91,14 +88,13 @@ ConditionalMultiselect.propTypes = {
     required: PropTypes.bool,
     message: PropTypes.string,
   }).isRequired,
-  isOnReport: PropTypes.bool.isRequired,
-  isComplete: PropTypes.bool,
   fieldValue: PropTypes.arrayOf(PropTypes.string).isRequired,
   error: PropTypes.node.isRequired,
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
+  userCanEdit: PropTypes.bool,
 };
 
 ConditionalMultiselect.defaultProps = {
-  isComplete: false,
+  userCanEdit: false,
 };

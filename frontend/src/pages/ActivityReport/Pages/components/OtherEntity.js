@@ -73,7 +73,9 @@ export default function OtherEntity({
           />
         );
       })}
-      <PlusButton text="Add new objective" onClick={onAddNew} />
+      {(recipientIds.length > 0) && (
+        <PlusButton text="Add new objective" onClick={onAddNew} />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
+import { uniqueId } from 'lodash';
 import { getEditorState } from '../../utils';
 import './ReadOnlyObjective.scss';
 import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
@@ -33,6 +34,14 @@ export default function ReadOnlyObjective({ objective }) {
         <p className="usa-prose margin-0">{objective.title}</p>
       </div>
 
+      {objective.citations && objective.citations.length
+        ? (
+          <div className="margin-bottom-2">
+            <h4 className="margin-0">Citations</h4>
+            <p className="usa-prose margin-0">{objective.citations.map((citation) => citation.name).join(', ')}</p>
+          </div>
+        ) : null }
+
       {objective.topics && objective.topics.length
         ? (
           <div className="margin-bottom-2">
@@ -48,6 +57,19 @@ export default function ReadOnlyObjective({ objective }) {
             <ul className="usa-list usa-list--unstyled">
               { objective.resources.map((resource) => (
                 <li key={resource.key}>{resource.value}</li>
+              ))}
+            </ul>
+          </div>
+        )
+        : null }
+
+      {objective.courses && objective.courses.length
+        ? (
+          <div className="margin-bottom-2">
+            <h4 className="margin-0">iPD courses</h4>
+            <ul className="usa-list usa-list--unstyled">
+              { objective.courses.map((course) => (
+                <li key={uniqueId('objective-course-')}>{course.name}</li>
               ))}
             </ul>
           </div>
@@ -83,6 +105,13 @@ export default function ReadOnlyObjective({ objective }) {
 
       {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
 
+      {objective.supportType ? (
+        <div className="margin-bottom-2">
+          <h4 className="margin-0">Support type</h4>
+          <p className="usa-prose margin-0">{objective.supportType}</p>
+        </div>
+      ) : null }
+
       {objective.status
         ? (
           <div className="margin-bottom-2">
@@ -94,8 +123,8 @@ export default function ReadOnlyObjective({ objective }) {
 
       <ObjectiveStatusSuspendReason
         status={objective.status}
-        suspendReason={objective.suspendReason}
-        suspendContext={objective.suspendContext}
+        closeSuspendReason={objective.closeSuspendReason}
+        closeSuspendContext={objective.closeSuspendContext}
       />
     </div>
   );
@@ -103,14 +132,21 @@ export default function ReadOnlyObjective({ objective }) {
 
 ReadOnlyObjective.propTypes = {
   objective: PropTypes.shape({
-    suspendContext: PropTypes.string,
-    suspendReason: PropTypes.string,
+    closeSuspendContext: PropTypes.string,
+    closeSuspendReason: PropTypes.string,
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string,
       value: PropTypes.string,
     })),
+    supportType: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+    })),
+    citations: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string,
+    })),
+    courses: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string,
     })),
     files: PropTypes.arrayOf(PropTypes.shape({
