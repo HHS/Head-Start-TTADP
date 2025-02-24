@@ -196,7 +196,7 @@ export default function HorizontalTableWidget(
                 {
                   enableCheckboxes && (
                     <td className="width-8 checkbox-column" data-label="Select report">
-                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.title}`} />
+                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.title || r.heading}`} />
                     </td>
                   )
                 }
