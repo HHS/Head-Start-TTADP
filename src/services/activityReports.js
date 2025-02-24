@@ -1078,6 +1078,37 @@ export async function setStatus(report, status) {
   return activityReportAndRecipientsById(report.id);
 }
 
+export async function handleSoftDeleteReport(report, status) {
+  const goalsToCleanup = (await Goal.findAll({
+    attributes: ['id'],
+    where: {
+      createdVia: 'activityReport',
+    },
+    include: [{
+      model: ActivityReportGoal,
+      as: 'activityReportGoals',
+      where: {
+        activityReportId: report.id,
+      },
+    }],
+  })).filter((goal) => goal.activityReportGoals.length === 1).map((goal) => goal.id);
+
+  // these goals and objectives will also be soft-deleted
+  await Objective.destroy({
+    where: {
+      goalId: goalsToCleanup,
+    },
+  });
+
+  await Goal.destroy({
+    where: {
+      id: goalsToCleanup,
+    },
+  });
+
+  return setStatus(report, status);
+}
+
 /*
  * Queries the db for relevant recipients depending on the region id.
  * If no region id is passed, then default to returning all available recipients.
