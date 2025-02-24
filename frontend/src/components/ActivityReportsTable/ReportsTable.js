@@ -7,6 +7,7 @@ import {
 import Container from '../Container';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
+import PaginationCard from '../PaginationCard';
 import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
 import './ReportsTable.css';
 
@@ -211,6 +212,15 @@ export default function ReportsTable({
           </tbody>
         </Table>
       </div>
+      <PaginationCard
+        currentPage={activePage}
+        totalCount={reportsCount}
+        offset={offset}
+        perPage={REPORTS_PER_PAGE}
+        handlePageChange={handlePageChange}
+        accessibleLandmarkName="Pagination, bottom"
+        paginationClassName="padding-x-1 margin-y-2"
+      />
     </Container>
   );
 }

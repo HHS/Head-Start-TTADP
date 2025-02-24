@@ -4,6 +4,11 @@ import PropTypes from 'prop-types';
 import { Dropdown, Pagination } from '@trussworks/react-uswds';
 import './PaginationCard.css';
 
+const MAX_WIDTH_MOBILE = 500;
+const MIN_UNBOUNDED_PAGES = 25;
+const MOBILE_MAX_SLOTS = 5;
+const MAX_SLOTS = 7;
+
 function PaginationCard({
   currentPage,
   totalCount,
@@ -16,7 +21,7 @@ function PaginationCard({
   paginationClassName,
 }) {
   const el = useRef();
-  const isMobile = useMediaQuery({ maxWidth: 500 });
+  const isMobile = useMediaQuery({ maxWidth: MAX_WIDTH_MOBILE });
   /**
    * there is an unlabeled svg that is used to render the chevron icons
    * within the pagination component
@@ -61,13 +66,18 @@ function PaginationCard({
 
   const totalPages = getTotalPages();
 
+  // leaving the 2 instead of using a magic number
+  // because I think that clarifies the meaning/purpose
   if (hideInfo && totalPages < 2) {
     return null;
   }
 
+  const shouldBeUnbounded = totalPages > MIN_UNBOUNDED_PAGES;
+
   return (
     <div ref={el} className="smart-hub--pagination-card flex-align-self-end display-block">
-      {!(hideInfo) && (
+      {(hideInfo && perPageChange) && ('displaying per page')}
+      {!hideInfo && (
         <div className="smart-hub--pagination-card--contents--info display-flex flex-1 flex-align-center">
           {perPageChange ? (
             <Dropdown
@@ -90,14 +100,13 @@ function PaginationCard({
       <Pagination
         className={paginationClassName}
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={shouldBeUnbounded ? null : totalPages}
         onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
         onClickPageNumber={(_e, page) => handlePageChange(page)}
         aria-label={accessibleLandmarkName}
-        maxSlots={isMobile ? 5 : 7}
+        maxSlots={isMobile ? MOBILE_MAX_SLOTS : MAX_SLOTS}
       />
-
     </div>
   );
 }
