@@ -25,8 +25,9 @@ const weeklySched = '*/15 * * * *'; // '5 16 * * 5';
 const monthlySched = '*/15 * * * *'; // '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
-const runJob = () => {
+const runUpdateJob = () => {
   try {
+    logger.info('Starting update job');
     return updateGrantsRecipients();
   } catch (error) {
     auditLogger.error(`Error processing HSES file: ${error}`);
@@ -99,9 +100,10 @@ export default function runCronJobs() {
   if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || env.bool('FORCE_CRON')) {
     // disable updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
-      const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+      const job = new CronJob(schedule, () => runUpdateJob(), null, true, timezone);
       job.start();
     }
+    logger.info('Scheduling cron jobs');
     const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
     dailyJob.start();
     const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
