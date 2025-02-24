@@ -183,7 +183,7 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purposeView = screen.getByText(/purpose of communication/i);
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
     const purposeDropdown = within(purposeView).getByRole('combobox');
     userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
