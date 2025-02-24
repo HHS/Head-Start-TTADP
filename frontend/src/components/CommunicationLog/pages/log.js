@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
@@ -10,6 +10,8 @@ import {
   Dropdown,
   Textarea,
 } from '@trussworks/react-uswds';
+import Drawer from '../../../components/Drawer';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import { useFormContext } from 'react-hook-form';
 import IndicatesRequiredField from '../../IndicatesRequiredField';
 import FormItem from '../../FormItem';
@@ -36,6 +38,8 @@ const Log = ({
 
   const { user } = useContext(UserContext);
   const { regionalUsers, standardGoals } = useLogContext();
+  const purposeDrawerRef = useRef(null);
+  const resultDrawerRef = useRef(null);
   const communicationDate = watch('communicationDate');
   const authorName = watch('author.name');
   const isEditing = watch('isEditing');
@@ -156,7 +160,19 @@ const Log = ({
       </div>
       <div className="margin-top-2">
         <FormItem
-          label="Purpose of communication "
+          label={(
+            <>
+              Purpose of communication
+              {' '}
+              <button
+                type="button"
+                className="usa-button usa-button--unstyled margin-left-1"
+                ref={purposeDrawerRef}
+              >
+                Get help choosing a purpose
+              </button>
+            </>
+          )}
           name="purpose"
         >
           <Dropdown
@@ -200,7 +216,19 @@ const Log = ({
       </div>
       <div className="margin-top-2">
         <FormItem
-          label="Result"
+          label={(
+            <>
+              Result
+              {' '}
+              <button
+                type="button"
+                className="usa-button usa-button--unstyled margin-left-1"
+                ref={resultDrawerRef}
+              >
+                Get help choosing a result
+              </button>
+            </>
+          )}
           name="result"
           required
         >
@@ -217,6 +245,24 @@ const Log = ({
           </Dropdown>
         </FormItem>
       </div>
+
+      <Drawer
+        triggerRef={purposeDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="Purpose guidance"
+      >
+        <ContentFromFeedByTag tagName="ttahub-commlog-purpose" />
+      </Drawer>
+
+      <Drawer
+        triggerRef={resultDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="Result guidance"
+      >
+        <ContentFromFeedByTag tagName="ttahub-commlog-results" />
+      </Drawer>
     </>
   );
 };
