@@ -13,9 +13,7 @@ export default (sequelize, DataTypes) => {
       File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles' });
       File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
       File.hasMany(models.SessionReportPilotFile, { foreignKey: 'fileId', as: 'sessionFiles' });
-      File.hasMany(models.CommunicationLogFile, { foreignKey: 'fileId', as: 'communicationLogFiles' });
       File.hasMany(models.SessionReportPilotSupportingAttachment, { foreignKey: 'fileId', as: 'supportingAttachments' });
-
       File.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportFile,
         foreignKey: 'fileId',
@@ -34,6 +32,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'sessionReportPilotId',
         as: 'sessions',
       });
+      File.hasMany(models.CommunicationLogFile, { foreignKey: 'fileId', as: 'communicationLogFiles' });
       File.belongsToMany(models.CommunicationLog, {
         through: models.CommunicationLogFile,
         foreignKey: 'fileId',
