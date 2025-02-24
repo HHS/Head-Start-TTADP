@@ -4,6 +4,7 @@ import { GOAL_SOURCES } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import { render, screen, act } from '@testing-library/react';
 import GoalSource from '../GoalSource';
+import FormFieldThatIsSometimesReadOnly from '../FormFieldThatIsSometimesReadOnly';
 
 const defaults = {
   sources: [],
@@ -12,6 +13,8 @@ const defaults = {
   goalStatus: 'Draft',
   isMultiRecipientGoal: false,
   userCanEdit: true,
+  disabled: false,
+  permissions: [true],
 };
 
 describe('GoalSource', () => {
@@ -23,17 +26,24 @@ describe('GoalSource', () => {
       goalStatus,
       isMultiRecipientGoal,
       userCanEdit,
+      createdViaTr,
+      permissions,
     } = props;
-    render(<GoalSource
-      error={<></>}
-      source={source}
-      validateGoalSource={validateGoalSource}
-      onChangeGoalSource={onChangeGoalSource}
-      goalStatus={goalStatus}
-      isLoading={false}
-      isMultiRecipientGoal={isMultiRecipientGoal}
-      userCanEdit={userCanEdit}
-    />);
+    render(
+      <FormFieldThatIsSometimesReadOnly label="Goal source" value={source} permissions={permissions}>
+        <GoalSource
+          error={<></>}
+          source={source}
+          validateGoalSource={validateGoalSource}
+          onChangeGoalSource={onChangeGoalSource}
+          goalStatus={goalStatus}
+          isLoading={false}
+          isMultiRecipientGoal={isMultiRecipientGoal}
+          userCanEdit={userCanEdit}
+          createdViaTr={createdViaTr}
+        />
+      </FormFieldThatIsSometimesReadOnly>,
+    );
   };
 
   it('shows nothing if on a multi-recipient goal', async () => {
@@ -45,32 +55,6 @@ describe('GoalSource', () => {
     });
 
     expect(screen.queryByText('Goal source')).toBeNull();
-    expect(document.querySelector('usa-select')).toBeNull();
-  });
-
-  it('shows read only if user can\'t edit', async () => {
-    renderGoalSource({
-      ...defaults,
-      source: GOAL_SOURCES[0],
-      userCanEdit: false,
-    });
-
-    expect(screen.getByText('Goal source')).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
-    expect(document.querySelector('usa-select')).toBeNull();
-  });
-
-  it('shows the read only view when goal is closed', async () => {
-    act(() => {
-      renderGoalSource({
-        ...defaults,
-        source: GOAL_SOURCES[0],
-        goalStatus: 'Closed',
-      });
-    });
-
-    expect(screen.getByText('Goal source')).toBeInTheDocument();
-    expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
     expect(document.querySelector('usa-select')).toBeNull();
   });
 

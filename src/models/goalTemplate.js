@@ -22,12 +22,6 @@ export default (sequelize, DataTypes) => {
         models.GoalTemplateObjectiveTemplate,
         { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
       );
-      GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
-        through: models.GoalTemplateObjectiveTemplate,
-        foreignKey: 'goalTemplateId',
-        otherKey: 'objectiveTemplateId',
-        as: 'goalTemplates',
-      });
       GoalTemplate.hasMany(models.GoalTemplateFieldPrompt, { foreignKey: 'goalTemplateId', as: 'prompts' });
       GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
       GoalTemplate.belongsToMany(models.Resource, {
@@ -69,6 +63,20 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
     },
+    source: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
+    standard: {
+      allowNull: true,
+      type: DataTypes.TEXT,
+    },
+    isSourceEditable: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.source === null;
+      },
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplate',
@@ -78,6 +86,7 @@ export default (sequelize, DataTypes) => {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
+    paranoid: true,
   });
   return GoalTemplate;
 };

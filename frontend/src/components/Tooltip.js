@@ -9,9 +9,11 @@ export default function Tooltip({
   buttonLabel,
   screenReadDisplayText,
   hideUnderline,
+  underlineStyle,
   svgLineTo,
   className,
   position,
+  buttonClassName,
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -21,10 +23,13 @@ export default function Tooltip({
     setShowTooltip(!showTooltip);
   };
 
+  // Determine the stroke-dasharray based on underlineStyle
+  const strokeDasharray = underlineStyle === 'solid' ? 'none' : '5,5';
+
   return (
     <span className={cssClasses} data-testid="tooltip">
-      <div aria-hidden="true" className={`usa-tooltip__body usa-tooltip__body--${position} maxw-card-lg`}>{tooltipText}</div>
-      <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
+      <div role="tooltip" aria-hidden="true" className={`usa-tooltip__body usa-tooltip__body--${position}`}>{tooltipText}</div>
+      <button type="button" className={`usa-button usa-button--unstyled ${buttonClassName}`} onClick={onClick}>
         <span className="smart-hub--ellipsis">
           <span aria-hidden={!screenReadDisplayText}>
             {displayText}
@@ -37,7 +42,7 @@ export default function Tooltip({
                       stroke="black"
                       strokeLinecap="round"
                       strokeWidth="1"
-                      strokeDasharray="5,5"
+                      strokeDasharray={strokeDasharray}
                       fill="none"
                     />
                   </svg>
@@ -73,6 +78,8 @@ Tooltip.propTypes = {
   svgLineTo: PropTypes.number,
   className: PropTypes.string,
   position: PropTypes.string,
+  underlineStyle: PropTypes.oneOf(['solid', 'dashed']),
+  buttonClassName: PropTypes.string,
 };
 
 Tooltip.defaultProps = {
@@ -81,4 +88,6 @@ Tooltip.defaultProps = {
   svgLineTo: 190,
   className: '',
   position: 'top',
+  underlineStyle: 'dashed',
+  buttonClassName: '',
 };

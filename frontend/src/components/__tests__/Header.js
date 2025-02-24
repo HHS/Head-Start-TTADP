@@ -11,7 +11,11 @@ import UserContext from '../../UserContext';
 const history = createMemoryHistory();
 
 describe('Header', () => {
-  const renderHeader = (authenticated, alert) => {
+  const renderHeader = (
+    authenticated,
+    alert,
+
+  ) => {
     render((
       <Router history={history}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
@@ -42,5 +46,15 @@ describe('Header', () => {
     renderHeader(true, { title: 'Test', message: 'this is a test' });
     expect(document.querySelector('.usa-alert')).not.toBeNull();
     expect(screen.queryByText('this is a test')).not.toBeNull();
+  });
+
+  it('does not render the user menu if there is an error response code', () => {
+    renderHeader(true, null, 500);
+    expect(screen.queryByRole('button', { name: 'User Menu' })).toBeNull();
+  });
+
+  it('does not render the user menu if showing not found', () => {
+    renderHeader(true, null, null, true);
+    expect(screen.queryByRole('button', { name: 'User Menu' })).toBeNull();
   });
 });

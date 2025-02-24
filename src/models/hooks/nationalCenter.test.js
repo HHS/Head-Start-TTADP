@@ -3,6 +3,8 @@ import faker from '@faker-js/faker';
 import db from '..';
 import { updateById } from '../../services/nationalCenters';
 
+jest.mock('./sessionReportPilot');
+
 describe('nationalCenter hooks', () => {
   describe('afterDestroy', () => {
     let center1;

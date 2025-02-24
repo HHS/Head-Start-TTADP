@@ -10,6 +10,7 @@ import {
   sequelize,
 } from '../models';
 import { scopeToWhere } from '../scopes/utils';
+import { getAllTopicsForWidget as getAllTopics } from './helpers';
 
 const getTopicMappings = async () => sequelize.query(`
 SELECT
@@ -21,12 +22,6 @@ LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
 WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
 ORDER BY TT."name"
 `, { type: QueryTypes.SELECT });
-
-const getAllTopics = async () => Topic.findAll({
-  attributes: ['id', 'name', 'deletedAt'],
-  where: { deletedAt: null },
-  order: [['name', 'ASC']],
-});
 
 export async function topicFrequencyGraph(scopes) {
   const [
@@ -46,7 +41,7 @@ export async function topicFrequencyGraph(scopes) {
               SELECT aro.topic
               FROM UNNEST(ARRAY_AGG("activityReportObjectives->topics".name)) aro(topic)
             ) x(topic)
-            GROUP BY TRUE
+            GROUP BY 1=1
           )`),
           'topics',
         ],
@@ -91,7 +86,7 @@ export async function topicFrequencyGraph(scopes) {
     const allTopics = uniq(report.topics).map((t) => lookUpTopic.get(t));
 
     // Loop all topics array and update totals.
-    allTopics.forEach((topic) => {
+    allTopics?.forEach((topic) => {
       const topicIndex = acc.findIndex((t) => t.topic === topic);
       if (topicIndex !== -1) {
         acc[topicIndex].count += 1;
@@ -151,7 +146,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
               'reportIds', x."reportIds"
             )), null)
             FROM "all_topics_with_report_array" x(topic, "reportIds")
-            GROUP BY TRUE
+            GROUP BY 1=1
           )`),
           'topics',
         ],
@@ -207,14 +202,14 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     reportIds: new Set(),
   }));
 
-  topicsAndParticipants.forEach((goalData) => {
+  topicsAndParticipants?.forEach((goalData) => {
     goalData
-      .get('topics')
-      .forEach(({ topic, reportIds }) => {
-        const topicResponce = topicsResponse
+      .get('topics')?.forEach(({ topic, reportIds }) => {
+        const topicResponse = topicsResponse
           .find((t) => t.topic === lookUpTopic.get(topic));
 
-        reportIds.forEach((id) => topicResponce.reportIds.add(id));
+        if (!topicResponse) return;
+        reportIds?.forEach((id) => topicResponse.reportIds.add(id));
       });
   });
 

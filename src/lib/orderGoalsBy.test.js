@@ -1,4 +1,4 @@
-import orderGoalsBy, { STATUS_SORT } from './orderGoalsBy';
+import orderGoalsBy, { STATUS_SORT, MERGED_ID } from './orderGoalsBy';
 import { sequelize } from '../models';
 
 describe('orderGoalsBy', () => {
@@ -25,7 +25,39 @@ describe('orderGoalsBy', () => {
       ],
     ]);
 
-    const three = orderGoalsBy('fuzzbucket', 'desc');
-    expect(three).toStrictEqual('');
+    const three = orderGoalsBy('fuzzbucket', 'DESC');
+    expect(three).toStrictEqual([
+      [
+        sequelize.col('id'),
+        'DESC',
+      ],
+      [
+        sequelize.col(STATUS_SORT), 'DESC',
+      ],
+    ]);
+
+    const four = orderGoalsBy('id', 'ASC');
+    expect(four).toStrictEqual([
+      [
+        sequelize.col('id'),
+        'ASC',
+      ],
+      [
+        sequelize.col(STATUS_SORT), 'ASC',
+      ],
+    ]);
+
+    const five = orderGoalsBy('mergedGoals', 'ASC');
+    expect(five).toStrictEqual([
+      [
+        sequelize.col(MERGED_ID), 'ASC',
+      ],
+      [
+        sequelize.col(STATUS_SORT), 'ASC',
+      ],
+      [
+        sequelize.col('createdAt'), 'DESC',
+      ],
+    ]);
   });
 });

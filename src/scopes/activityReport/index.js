@@ -30,6 +30,10 @@ import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
+import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
+import { withGoalName, withoutGoalName } from './goalName';
+import { withGrantStatus, withoutGrantStatus } from './grantStatus';
+import { withoutStatus } from '../goals/status';
 
 export const topicToQuery = {
   reportId: {
@@ -101,6 +105,10 @@ export const topicToQuery = {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
   },
+  grantStatus: {
+    in: (query) => withGrantStatus(query),
+    nin: (query) => withoutGrantStatus(query),
+  },
   participants: {
     in: (query) => withParticipants(query),
     nin: (query) => withoutParticipants(query),
@@ -126,6 +134,10 @@ export const topicToQuery = {
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDate(query),
     in: (query) => withinEndDate(query),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
   },
   otherEntities: {
     in: (query) => withOtherEntities(query),
@@ -155,6 +167,10 @@ export const topicToQuery = {
     collaborator: (query) => onlyCollaborators(query),
     creator: (query) => onlyCreators(query),
     both: (query) => bothCollaboratorsAndCreators(query),
+  },
+  activityReportGoalResponse: {
+    in: (query) => withActivityReportGoalResponse(query),
+    nin: (query) => withoutActivityReportGoalResponse(query),
   },
 };
 

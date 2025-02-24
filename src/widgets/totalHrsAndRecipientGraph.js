@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common';
 import { ActivityReport } from '../models';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
@@ -12,7 +12,7 @@ function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
 
   const valueToUse = parseFloat(cleanValue, 10) === 0 ? 0 : parseFloat(cleanValue, 10);
 
-  res.forEach((responseObject, index) => {
+  res?.forEach((responseObject, index) => {
     if (index === traceIndex) {
       if (responseObject.x.includes(xValue)) {
         // Update existing x value.
@@ -41,13 +41,28 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
   // Build out return Graph data.
   const res = [
     {
-      name: 'Hours of Training', x: [], y: [], month: [],
+      name: 'Hours of Technical Assistance',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TECHNICAL_ASSISTANCE,
+      trace: 'circle',
     },
     {
-      name: 'Hours of Technical Assistance', x: [], y: [], month: [],
+      name: 'Hours of Both',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.BOTH,
+      trace: 'triangle',
     },
     {
-      name: 'Hours of Both', x: [], y: [], month: [],
+      name: 'Hours of Training',
+      x: [],
+      y: [],
+      month: [],
+      id: TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TRAINING,
+      trace: 'square',
     },
   ];
 
@@ -111,7 +126,7 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
 
   const arDates = [];
 
-  reports.forEach((r) => {
+  reports?.forEach((r) => {
     if (r.startDate && r.startDate !== null) {
       // Get X Axis value to use.
       let xValue;

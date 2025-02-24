@@ -5,6 +5,8 @@ import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
   getFieldPromptsForCuratedTemplate,
+  getOptionsByGoalTemplateFieldPromptName,
+  getSourceFromTemplate,
 } from '../../services/goalTemplates';
 
 export async function getGoalTemplates(req: Request, res: Response) {
@@ -19,6 +21,30 @@ export async function getGoalTemplates(req: Request, res: Response) {
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');
+  }
+}
+
+export async function getSource(req: Request, res: Response) {
+  try {
+    const { goalTemplateId } = req.params;
+    const { grantIds } = req.query;
+
+    // this is a single string param in the url, i.e. the "1" in /goalTemplates/1/prompts/
+    // this will be verified as "canBeNumber" by some middleware before we get to this point
+    const numericalGoalTemplateId = parseInt(goalTemplateId, DECIMAL_BASE);
+
+    // this is a query string, i.e. the "goalIds=1&goalIds=2&goalIds=3"
+    // the query can have one or more goal ids, and its hard to tell
+    // until we parse it if it's a single value or an array
+    const parsedGrantIds = [grantIds]
+      .flat()
+      .map((id: string) => parseInt(id, DECIMAL_BASE))
+      .filter((id: number) => !Number.isNaN(id));
+
+    const source = await getSourceFromTemplate(numericalGoalTemplateId, parsedGrantIds);
+    res.json({ source: source || '' });
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.getSource');
   }
 }
 
@@ -43,5 +69,15 @@ export async function getPrompts(req: Request, res: Response) {
     res.json(prompts);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getPrompts');
+  }
+}
+
+export async function getOptionsByPromptName(req: Request, res: Response) {
+  try {
+    const { name } = req.query;
+    const prompts = await getOptionsByGoalTemplateFieldPromptName((name.toString()));
+    res.json(prompts);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.getOptionsByPromptName');
   }
 }

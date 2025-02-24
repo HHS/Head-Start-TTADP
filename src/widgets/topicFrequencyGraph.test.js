@@ -198,7 +198,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'First Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -206,7 +205,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'Second Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -214,7 +212,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'Third Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -394,8 +391,8 @@ describe('Topics and frequency graph widget', () => {
     await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
-      where:
-      { id: [GRANT_ID] },
+      where: { id: [GRANT_ID] },
+      individualHooks: true,
     });
     await Recipient.destroy({
       where:
@@ -468,10 +465,6 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
-        count: 0,
-      },
-      {
-        topic: 'Equity',
         count: 0,
       },
       {
@@ -644,10 +637,6 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Equity',
-        count: 0,
-      },
-      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -814,10 +803,6 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Environmental Health and Safety / EPRR',
-        count: 0,
-      },
-      {
-        topic: 'Equity',
         count: 0,
       },
       {
@@ -989,10 +974,6 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Equity',
-        count: 0,
-      },
-      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -1101,5 +1082,11 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
     ]);
+  });
+
+  it('doesn\'t throw when likely no results (TTAHUB-2172)', async () => {
+    const query = { 'region.in': [100], 'startDate.win': '2222/01/01-3000/01/01' };
+    const scopes = await filtersToScopes(query);
+    expect(() => topicFrequencyGraph(scopes)).not.toThrow();
   });
 });

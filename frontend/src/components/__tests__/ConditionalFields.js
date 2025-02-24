@@ -5,6 +5,7 @@ import {
   render,
   screen,
   act,
+  fireEvent,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import userEvent from '@testing-library/user-event';
@@ -14,7 +15,6 @@ describe('ConditionalFields', () => {
   const CF = ({
     errors = {},
     prompts = [],
-    isOnReport = false,
     setPrompts = jest.fn(),
     validatePrompts = jest.fn(),
   }) => (
@@ -22,9 +22,9 @@ describe('ConditionalFields', () => {
       <ConditionalFields
         errors={errors}
         prompts={prompts}
-        isOnReport={isOnReport}
         setPrompts={setPrompts}
         validatePrompts={validatePrompts}
+        userCanEdit
       />
       <button type="button">for blurrin</button>
     </>
@@ -124,5 +124,37 @@ describe('ConditionalFields', () => {
     await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1']);
     userEvent.click(btn);
     expect(btn).toHaveFocus();
+  });
+
+  it('validates field on blur', async () => {
+    const validatePrompts = jest.fn();
+    const prompts = [{
+      fieldType: 'multiselect',
+      title: 'Test',
+      prompt: 'What is a test?',
+      options: ['option1', 'option2', 'option3'],
+      validations: {
+        rules: [
+          {
+            name: 'maxSelections',
+            value: 1,
+            message: 'How DARE you',
+          },
+        ],
+      },
+      response: [],
+    }];
+    act(() => {
+      render(<CF prompts={prompts} validatePrompts={validatePrompts} />);
+    });
+
+    // Select an option to have a value to blur from
+    await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1']);
+
+    // Simulate the onBlur event
+    fireEvent.blur(screen.getByLabelText('What is a test?'));
+
+    // Check if validatePrompts has been called with the expected arguments
+    expect(validatePrompts).toHaveBeenCalledWith('Test', expect.any(Boolean), expect.any(String));
   });
 });

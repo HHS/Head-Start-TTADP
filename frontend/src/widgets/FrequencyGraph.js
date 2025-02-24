@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { capitalize } from 'lodash';
@@ -6,9 +6,10 @@ import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import BarGraph from './BarGraph';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 import './FrequencyGraph.css';
 
-function sortData(data, isTabular = false) {
+function sortData(data, isTabular) {
   const sortedData = [...data];
   sortedData.sort((a, b) => b.count - a.count);
   if (!isTabular) {
@@ -29,6 +30,7 @@ export function FreqGraph({ data, loading }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
   const [selectedGraph, updateSelectedGraph] = useState(TOPIC_STR);
+  const widgetRef = useRef(null);
 
   const selectedData = data[selectedGraph];
   const sortedData = sortData(selectedData, showAccessibleData);
@@ -36,11 +38,6 @@ export function FreqGraph({ data, loading }) {
 
   const columnHeadings = HEADINGS[selectedGraph];
   const toggleGraphLabel = selectedGraph === TOPIC_STR ? REASON_STR : TOPIC_STR;
-
-  // toggle the data table
-  function toggleAccessibleData() {
-    updateShowAccessibleData((current) => !current);
-  }
 
   function toggleSelectedGraph() {
     updateSelectedGraph((current) => (current === TOPIC_STR ? REASON_STR : TOPIC_STR));
@@ -67,14 +64,10 @@ export function FreqGraph({ data, loading }) {
           </button>
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
-          <button
-            type="button"
-            className="usa-button--unstyled"
-            aria-label={showAccessibleData ? `display number of activity reports by ${selectedGraph} data as graph` : `display number of activity reports by ${selectedGraph} data as table`}
-            onClick={toggleAccessibleData}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title={`number of activity reports by ${selectedGraph}`}
+            setDisplayTable={updateShowAccessibleData}
+          />
         </Grid>
       </Grid>
       { showAccessibleData
@@ -85,7 +78,13 @@ export function FreqGraph({ data, loading }) {
             rows={accessibleRows}
           />
         )
-        : <BarGraph data={sortedData} xAxisLabel={capitalize(selectedGraph)} />}
+        : (
+          <BarGraph
+            data={sortedData}
+            xAxisLabel={capitalize(selectedGraph)}
+            widgetRef={widgetRef}
+          />
+        )}
     </Container>
   );
 }

@@ -5,27 +5,52 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import goalsObjectives, { validatePrompts } from '../goalsObjectives';
+import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
+import UserContext from '../../../../UserContext';
 import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const spy = jest.fn();
 
+const defaultGoals = [{
+  id: 1,
+  name: 'This is a test goal',
+  isNew: true,
+  goalIds: [1],
+  grants: [
+    {
+      value: 1, label: 'Turtle 1', programs: [], id: 1,
+    },
+  ],
+  objectives: [{
+    id: 1,
+    title: 'title',
+    ttaProvided: 'tta',
+    status: 'In Progress',
+    courses: [],
+  }],
+}];
+
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, connectionActive = true,
+  grantIds,
+  activityRecipientType,
+  connectionActive = true,
+  startDate = null,
+  goalsToUse = defaultGoals,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
   }));
-  const data = { activityRecipientType, activityRecipients };
+  const data = { activityRecipientType, activityRecipients, startDate };
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -37,23 +62,7 @@ const RenderGoalsObjectives = ({
         ],
       },
       collaborators: [],
-      goals: [{
-        id: 1,
-        name: 'This is a test goal',
-        isNew: true,
-        goalIds: [1],
-        grants: [
-          {
-            value: 1, label: 'Turtle 1', programs: [], id: 1,
-          },
-        ],
-        objectives: [{
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-        }],
-      }],
+      goals: [...goalsToUse],
       objectivesWithoutGoals: [],
       approvers: [],
       ...data,
@@ -64,27 +73,29 @@ const RenderGoalsObjectives = ({
   hookForm.setValue = spy;
 
   return (
-    <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
-      <Router history={history}>
-        <FormProvider {...hookForm}>
-          {goalsObjectives.render(
-            null,
-            {
-              activityRecipientType,
-            },
-            1,
-            null,
-            jest.fn(),
-            jest.fn(),
-            jest.fn(),
-            false,
-            '',
-            jest.fn(),
-            () => <></>,
-          )}
-        </FormProvider>
-      </Router>
-    </NetworkContext.Provider>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            {goalsObjectives.render(
+              null,
+              {
+                activityRecipientType,
+              },
+              1,
+              null,
+              jest.fn(),
+              jest.fn(),
+              jest.fn(),
+              false,
+              '',
+              jest.fn(),
+              () => <></>,
+            )}
+          </FormProvider>
+        </Router>
+      </NetworkContext.Provider>
+    </UserContext.Provider>
   );
 };
 
@@ -95,19 +106,25 @@ const renderGoals = (
   isGoalFormClosed = false,
   throwFetchError = false,
   toggleGoalForm = jest.fn(),
+  startDate = null,
+  goalsToUse = defaultGoals,
 ) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   const fetchResponse = throwFetchError ? 500 : goals;
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
-      <RenderGoalsObjectives
-        grantIds={grantIds}
-        activityRecipientType={activityRecipientType}
-        connectionActive={!throwFetchError}
-      />
-    </GoalFormContext.Provider>,
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+        <RenderGoalsObjectives
+          grantIds={grantIds}
+          activityRecipientType={activityRecipientType}
+          connectionActive={!throwFetchError}
+          startDate={startDate}
+          goalsToUse={goalsToUse}
+        />
+      </GoalFormContext.Provider>
+    </UserContext.Provider>,
   );
 };
 
@@ -138,22 +155,24 @@ describe('goals objectives', () => {
       const isGoalFormClosed = false;
       const throwFetchError = true;
 
-      renderGoals([1], 'recipient', goals, isGoalFormClosed, throwFetchError);
+      renderGoals([1], 'recipient', goals, isGoalFormClosed, throwFetchError, jest.fn(), '2021-01-01');
       expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
-      renderGoals([1], 'recipient');
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), '2021-01-01');
       expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
       expect(screen.queryByText(/indicates required field/i)).toBeTruthy();
     });
 
     it('the display goals shows a warning if no grants are selected', async () => {
-      renderGoals([], 'recipient');
+      renderGoals([], 'recipient', [], false, false, jest.fn(), '2021-01-01');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
-      expect(await screen.findByText(/To create goals, first select a recipient/i)).toBeVisible();
+      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
+      expect(await screen.findByText(/who the activity was for/i)).toBeVisible();
+      expect(screen.queryByText(/start date of the activity/i)).toBeNull();
     });
 
     it('you can click the little add new button', async () => {
@@ -247,6 +266,86 @@ describe('goals objectives', () => {
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
+    it('can remove a goal while editing another', async () => {
+      const goalsToUse = [{
+        id: 3,
+        name: 'Sample Goal to Remove',
+        isNew: true,
+        goalIds: [1],
+        grants: [
+          {
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          },
+        ],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+          courses: [],
+        }],
+      },
+      {
+        id: 4,
+        name: 'Sample Goal to Edit',
+        isNew: true,
+        goalIds: [1],
+        grants: [
+          {
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          },
+        ],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+          courses: [],
+        }],
+      }];
+
+      const sampleGoals = [
+        { name: 'Sample Goal to Remove', id: 3, objectives: [] },
+        { name: 'Sample Goal to Edit', id: 4, objectives: [] },
+      ];
+      const isGoalFormClosed = true;
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+      fetchMock.restore();
+      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1', 200);
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm, null, goalsToUse);
+
+      // Verify both goals are visible
+      expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
+      expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+
+      // Edit the first goal
+      let actions = await screen.findByRole('button', { name: /actions for goal 4/i });
+      act(() => userEvent.click(actions));
+      const [editButton] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(async () => {
+        userEvent.click(editButton);
+        await waitFor(async () => {
+          expect(await screen.findByText('Sample Goal to Remove')).toBeVisible();
+          expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+        });
+      });
+
+      // Remove the first goal
+      actions = await screen.findByRole('button', { name: /actions for goal 3/i });
+      act(() => userEvent.click(actions));
+      const [removeButton] = await screen.findAllByRole('button', { name: 'Remove' });
+      act(async () => {
+        userEvent.click(removeButton);
+        await waitFor(async () => {
+          // Assert the goal was removed while the goal being edited is visible still.
+          expect(screen.queryAllByText('Sample Goal to Remove').length).toBe(0);
+          expect(await screen.findByText('Sample Goal to Edit')).toBeVisible();
+        });
+      });
+    });
+
     it('does not fetch if there are no grants', async () => {
       const goals = [{
         name: 'This is a test goal',
@@ -255,6 +354,7 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }];
 
@@ -271,17 +371,47 @@ describe('goals objectives', () => {
       const grants = [1];
       const isGoalFormClosed = false;
       const throwFetchError = true;
-      renderGoals(grants, recipientType, goals, isGoalFormClosed, throwFetchError);
+      renderGoals(grants, recipientType, goals, isGoalFormClosed, throwFetchError, jest.fn(), '2021-01-01');
       expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
   describe('when activity recipient type is not "recipient" or "other-entity"', () => {
-    it('a warning is displayed', async () => {
+    it('both warnings are displayed when the report type and start date are missing', async () => {
       renderGoals([1], null);
-      expect(await screen.findByText(
-        /To add goals and objectives, indicate who the activity was for in/i,
-      )).toBeVisible();
+      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
+      expect(await screen.findByText(/who the activity was for/i)).toBeVisible();
+      expect(await screen.findByText(/start date of the activity/i)).toBeVisible();
+    });
+
+    it('shows the report type warning when the report type is missing', async () => {
+      renderGoals([1], null, [], false, false, jest.fn(), '2021-01-01');
+      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
+      expect(await screen.findByText(/who the activity was for/i)).toBeVisible();
+      expect(screen.queryByText(/start date of the activity/i)).toBeNull();
+    });
+
+    it('shows the start date warning when the start date is missing', async () => {
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), null);
+      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
+      expect(screen.queryByText(/who the activity was for/i)).toBeNull();
+      expect(await screen.findByText(/start date of the activity/i)).toBeVisible();
+    });
+
+    it('hides the warnings when the report type and start date are present', async () => {
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), '2021-01-01');
+      expect(screen.queryByText(/to add goals and objectives, indicate in the/i)).toBeNull();
+      expect(screen.queryByText(/who the activity was for/i)).toBeNull();
+      expect(screen.queryByText(/start date of the activity/i)).toBeNull();
+      // Expect to find an h3 with the text "Goal summary".
+      expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
+    });
+
+    it('shows the start date warning if the start date has the value of "Invalid date"', async () => {
+      renderGoals([1], 'recipient', [], false, false, jest.fn(), 'Invalid date');
+      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
+      expect(screen.queryByText(/who the activity was for/i)).toBeNull();
+      expect(await screen.findByText(/start date of the activity/i)).toBeVisible();
     });
   });
 
@@ -328,6 +458,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: SUPPORT_TYPES[3],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -337,7 +468,11 @@ describe('goals objectives', () => {
 
     describe('for recipient reports', () => {
       it('is false if goals are not valid', () => {
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals: [] });
+        const complete = goalsObjectives.isPageComplete({
+          activityRecipientType: 'recipient',
+          activityRecipients: [],
+          goals: [],
+        });
         expect(complete).toBeFalsy();
       });
 
@@ -346,6 +481,7 @@ describe('goals objectives', () => {
           name: 'Is goal',
           endDate: '2021-01-01',
           isRttapa: 'No',
+          source: 'Source!!',
           objectives: [{
             id: 1,
             title: 'title',
@@ -354,9 +490,14 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: SUPPORT_TYPES[3],
           }],
         }];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
+        const complete = goalsObjectives.isPageComplete({
+          activityRecipientType: 'recipient',
+          activityRecipients: [],
+          goals,
+        });
         expect(complete).toBeTruthy();
       });
 
@@ -375,7 +516,12 @@ describe('goals objectives', () => {
             roles: ['Chief Inspector'],
           }],
         }];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals, goalForEditing: { name: 'is goal 2' } });
+        const complete = goalsObjectives.isPageComplete({
+          activityRecipientType: 'recipient',
+          activityRecipients: [],
+          goals,
+          goalForEditing: { name: 'is goal 2' },
+        });
         expect(complete).toBeFalsy();
       });
     });
@@ -390,6 +536,8 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: SUPPORT_TYPES[1],
+          courses: [],
         },
         {
           id: 2,
@@ -399,6 +547,8 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: SUPPORT_TYPES[1],
+          courses: [],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
@@ -407,7 +557,7 @@ describe('goals objectives', () => {
     });
 
     it('isPageComplete is false', async () => {
-      const formData = { activityRecipientType: 'recipient', goals: [] };
+      const formData = { activityRecipientType: 'recipient', goals: [], activityRecipients: [] };
       const isComplete = goalsObjectives.isPageComplete(formData);
       expect(isComplete).not.toBeTruthy();
     });
@@ -415,7 +565,7 @@ describe('goals objectives', () => {
 
   describe('review page', () => {
     it('displays goals with no objectives', async () => {
-      render(<RenderReview goals={[{ id: 1, name: 'goal' }]} />);
+      render(<RenderReview goals={[{ id: 1, name: 'goal', objectives: [] }]} />);
       const goal = await screen.findByText('goal');
       expect(goal).toBeVisible();
     });
@@ -432,7 +582,9 @@ describe('goals objectives', () => {
             topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
             resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
-            files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+            files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
+            supportType: SUPPORT_TYPES[1],
+            courses: [],
           },
           {
             id: 2,
@@ -443,6 +595,8 @@ describe('goals objectives', () => {
             resources: [],
             roles: ['Chief Inspector'],
             files: [],
+            supportType: SUPPORT_TYPES[1],
+            courses: [],
           },
         ]}
       />);
@@ -467,47 +621,20 @@ describe('goals objectives', () => {
           topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
-          files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+          files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
+          courses: [],
         }],
       }]}
       />);
       const objective = await screen.findByText('title');
       expect(objective).toBeVisible();
-      expect(await screen.findByText(/topic 1, topic 2, topic 3/i)).toBeVisible();
-      expect(await screen.findByRole('link', { name: /test1\.txt \(opens in new tab\)/i })).toBeVisible();
+      expect(await screen.findByText('Topic 1')).toBeVisible();
+      expect(await screen.findByText('Topic 2')).toBeVisible();
+      expect(await screen.findByText('Topic 3')).toBeVisible();
+      expect(await screen.findByRole('link', { name: /test1\.txt/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
-    });
-  });
-
-  describe('validatePrompts', () => {
-    it('returns true if no prompts', async () => {
-      const trigger = jest.fn(() => true);
-      const prompts = [];
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeTruthy();
-    });
-
-    it('returns true if prompts are undefined', async () => {
-      const trigger = jest.fn(() => true);
-      const prompts = undefined;
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeTruthy();
-    });
-
-    it('returns the result of trigger when true', async () => {
-      const trigger = jest.fn(() => true);
-      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeTruthy();
-    });
-
-    it('returns the result of trigger when false', async () => {
-      const trigger = jest.fn(() => false);
-      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
-      const result = await validatePrompts(prompts, trigger);
-      expect(result).toBeFalsy();
     });
   });
 });

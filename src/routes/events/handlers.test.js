@@ -1,4 +1,5 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import httpCodes from 'http-codes';
 import db from '../../models';
 import {
   getHandler,
@@ -6,6 +7,7 @@ import {
   updateHandler,
   deleteHandler,
   getByStatus,
+  getTrainingReportAlertsHandler,
 } from './handlers';
 import {
   createEvent,
@@ -16,6 +18,7 @@ import {
   findEventsByRegionId,
   updateEvent,
   findEventsByStatus,
+  getTrainingReportAlertsForUser,
 } from '../../services/event';
 import EventReport from '../../policies/event';
 
@@ -31,6 +34,7 @@ jest.mock('../../services/event', () => ({
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
+  getTrainingReportAlertsForUser: jest.fn(),
 }));
 
 const mockEvent = {
@@ -73,42 +77,51 @@ describe('event handlers', () => {
       EventReport.mockImplementation(() => ({
         canRead: () => true,
       }));
-      await getHandler({ params: { eventId: 99_999 } }, mockResponse);
+      await getHandler({ params: { eventId: 99_999 }, query: {} }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('returns the event if read only', async () => {
+      findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+      }));
+      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
     it('400 when no params', async () => {
-      await getHandler({ params: {} }, mockResponse);
+      await getHandler({ params: {}, query: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
 
     it('404 when not found by eventId', async () => {
       findEventBySmartsheetIdSuffix.mockResolvedValue(null);
-      await getHandler({ params: { eventId: 1 } }, mockResponse);
+      await getHandler({ params: { eventId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by regionId', async () => {
       findEventsByRegionId.mockResolvedValue(null);
-      await getHandler({ params: { regionId: 1 } }, mockResponse);
+      await getHandler({ params: { regionId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by ownerId', async () => {
       findEventsByOwnerId.mockResolvedValue(null);
-      await getHandler({ params: { ownerId: 1 } }, mockResponse);
+      await getHandler({ params: { ownerId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by pocIds', async () => {
       findEventsByPocId.mockResolvedValue(null);
-      await getHandler({ params: { pocIds: 1 } }, mockResponse);
+      await getHandler({ params: { pocIds: 1 }, query: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
     it('returns 404 when not found by collaboratorId', async () => {
       findEventsByCollaboratorId.mockResolvedValue(null);
-      await getHandler({ params: { collaboratorId: 1 } }, mockResponse);
+      await getHandler({ params: { collaboratorId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
@@ -118,7 +131,7 @@ describe('event handlers', () => {
         isPoc: () => false,
       }));
       findEventBySmartsheetIdSuffix.mockResolvedValue(mockEvent);
-      await getHandler({ params: { eventId: 1 } }, mockResponse);
+      await getHandler({ params: { eventId: 1 }, query: {} }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
@@ -347,6 +360,59 @@ describe('event handlers', () => {
         mockResponse,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+  describe('getTrainingReportAlertsHandler', () => {
+    it('works', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        user: {
+          id: 1,
+        },
+        canSeeAlerts: () => true,
+      }));
+      getTrainingReportAlertsForUser.mockResolvedValue({});
+      await getTrainingReportAlertsHandler(
+        {
+          session: { userId: 1 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.OK);
+    });
+    it('handles auth', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        user: {
+          id: 1,
+        },
+        canSeeAlerts: () => false,
+      }));
+      await getTrainingReportAlertsHandler(
+        {
+          session: { userId: 1 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('handles errors', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        user: {
+          id: 1,
+        },
+        canSeeAlerts: () => true,
+      }));
+      getTrainingReportAlertsForUser.mockRejectedValue(new Error('error'));
+      await getTrainingReportAlertsHandler(
+        {
+          session: { userId: 1 },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });
 });

@@ -2,8 +2,10 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-
 import Drawer from '../Drawer';
+
+// eslint-disable-next-line react/prop-types
+jest.mock('focus-trap-react', () => ({ children }) => <>{children}</>);
 
 describe('Drawer', () => {
   // Create a ref for the trigger element which opens the drawer:
@@ -79,24 +81,6 @@ describe('Drawer', () => {
     expect(screen.getByText('Content')).toBeVisible();
 
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
-  });
-
-  it('clicking outside of the drawer should close the drawer', async () => {
-    render(renderDrawer());
-
-    act(() => {
-      const button = screen.getByRole('button', { name: 'Open' });
-      userEvent.click(button);
-    });
-
-    expect(screen.getByText('Content')).toBeVisible();
-
-    act(() => {
-      const clickTarget = clickTargetRef.current;
-      userEvent.click(clickTarget);
-    });
-
-    expect(screen.queryByText('Content')).not.toBeVisible();
   });
 
   it('has sticky classes when stickyHeader and stickyFooter are true', async () => {

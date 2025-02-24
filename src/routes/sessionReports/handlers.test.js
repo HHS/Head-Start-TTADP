@@ -5,6 +5,7 @@ import {
   getHandler,
   updateHandler,
   getParticipants,
+  getGroups,
 } from './handlers';
 import {
   createSession,
@@ -15,10 +16,20 @@ import {
 } from '../../services/sessionReports';
 import EventReport from '../../policies/event';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from '../../services/event';
+import { userById } from '../../services/users';
+import SCOPES from '../../middleware/scopeConstants';
+import { groupsByRegion } from '../../services/groups';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
 jest.mock('../../services/sessionReports');
+jest.mock('../../services/users', () => ({
+  userById: jest.fn(),
+  usersWithPermissions: jest.fn(),
+}));
+jest.mock('../../services/groups', () => ({
+  groupsByRegion: jest.fn(),
+}));
 
 describe('session report handlers', () => {
   const mockEvent = {
@@ -43,6 +54,7 @@ describe('session report handlers', () => {
       end: jest.fn(),
     })),
     sendStatus: jest.fn(),
+    json: jest.fn(),
   };
 
   beforeEach(() => {
@@ -93,6 +105,56 @@ describe('session report handlers', () => {
       findSessionsByEventId.mockResolvedValue(null);
       await getHandler({ params: { eventId: 0 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('getGroups', () => {
+    it('returns the groups', async () => {
+      // Mock userById with correct permissions.
+      userById.mockResolvedValueOnce({
+        id: 1,
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+            regionId: 1,
+          },
+        ],
+      });
+      // Mock permissions.
+      EventReport.mockImplementationOnce(() => ({
+        canGetGroupsForEditingSession: () => true,
+      }));
+      // Group response.
+      const groupsByRegionResponse = [{ name: 'name', id: 1 }];
+      groupsByRegion.mockResolvedValueOnce(groupsByRegionResponse);
+
+      await getGroups(
+        { session: { userId: 1 }, params: { }, query: { region: 1 } },
+        mockResponse,
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(groupsByRegionResponse);
+    });
+
+    it('returns 403 with incorrect permissions', async () => {
+      // Mock userById with correct permissions.
+      userById.mockResolvedValueOnce({
+        id: 1,
+        permissions: [
+          {
+            scopeId: SCOPES.READ_TRAINING_REPORTS,
+            regionId: 1,
+          },
+        ],
+      });
+      // Mock permissions.
+      EventReport.mockImplementationOnce(() => ({
+        canGetGroupsForEditingSession: () => false,
+      }));
+      await getGroups(
+        { session: { userId: 1 }, params: { }, query: { region: 1 } },
+        mockResponse,
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
 

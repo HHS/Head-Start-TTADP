@@ -43,7 +43,7 @@ const colors = {
   textVisited: '#8C39DB',
 };
 
-function isCamelCase(str) {
+export function isCamelCase(str) {
   // Check if the first character is lowercase
   if (str.charAt(0) !== str.charAt(0).toLowerCase()) {
     return false;
@@ -63,19 +63,7 @@ function isCamelCase(str) {
   return true;
 }
 
-function toCamelCase(str) {
-  return str
-    // Replace any dashes or underscores with spaces
-    .replace(/[-_]/g, ' ')
-    // Split the string into an array of words
-    .split(' ')
-    // Capitalize the first letter of each word (except the first word)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    // Join the words back together with no spaces
-    .join('');
-}
-
-function processEnum(name, table, schemaEnum, modelEnum) {
+export function processEnum(name, table, schemaEnum, modelEnum) {
   let uml = modelEnum
     ? `enum ${name} {\n`
     : `!issue='${name} enum missing for table ${table}'\nenum ${name} #pink;line:red;line.bold;text:red {\n`;
@@ -86,17 +74,19 @@ function processEnum(name, table, schemaEnum, modelEnum) {
     }
     uml += ` ${sEnum}\n`;
   });
-  modelEnum?.forEach((mEnum) => {
-    if (!schemaEnum?.includes(mEnum)) {
-      uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
-    }
-  });
+  if (Array.isArray(modelEnum)) {
+    modelEnum?.forEach((mEnum) => {
+      if (!schemaEnum?.includes(mEnum)) {
+        uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
+      }
+    });
+  }
   uml += '}\n\n';
   uml += `${name} <|-- ${table}\n\n`;
   return uml;
 }
 
-function processClassDefinition(schema, key) {
+export function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
     : `!issue='model missing for table'\nclass ${key} #pink;line:red;line.bold;text:red {\n`;
@@ -135,7 +125,7 @@ function processClassDefinition(schema, key) {
 
     // highlight type when not matched in model
     if (modelField && field.type !== modelField.type.toString().toLowerCase()) {
-      issues.push(`!issue='column type does not match model'`); //eslint-disable-line
+      issues.push(`!issue='column type does not match model: ${field.type} != ${modelField.type.toString().toLowerCase()}'`); //eslint-disable-line
       column += `<color:${colors.error}>${field.type}</color>`;
     } else {
       column += `${field.type}`;
@@ -158,7 +148,18 @@ function processClassDefinition(schema, key) {
     if (field.enumName) {
       foundEnums.push(processEnum(field.enumName, key, field.enums, modelField.type.type.values));
     }
+
     if (field.reference) {
+      if (!modelField?.references) {
+        issues.push(`!issue='column reference missing'`); //eslint-disable-line
+      } else {
+        const tableFieldReference = field.reference.replace('(', '.').replace(')', '');
+        const wrapIfCapital = (s: string): string => (/[A-Z]/.test(s) ? `"${s}"` : s);
+        const modelFieldReference = `"${modelField?.references?.model?.tableName || modelField?.references?.model}".${wrapIfCapital(modelField?.references?.key)}`;
+        if (tableFieldReference !== modelFieldReference) {
+          issues.push(`!issue='column reference does not match model: ${tableFieldReference} !== ${modelFieldReference}'`); //eslint-disable-line
+        }
+      }
       column += ` : REFERENCES ${field.reference.replace('(', '.').replace(')', '')}`;
     }
 
@@ -178,7 +179,7 @@ function processClassDefinition(schema, key) {
   return uml;
 }
 
-function processAssociations(associations, tables, schemas) {
+export function processAssociations(associations, tables, schemas) {
   let uml = '\n\' Associations\n\n';
 
   interface Association {
@@ -206,7 +207,7 @@ function processAssociations(associations, tables, schemas) {
     schema.attributes.forEach((attribute) => {
       if (attribute.reference) {
         const source = /"([^"]*)"/.exec(attribute.reference)[1];
-        const target = schema.table;
+        const target = schema?.table;
         const key = `${source}***${target}`;
 
         if (!sourceTarget[key]) {
@@ -221,13 +222,13 @@ function processAssociations(associations, tables, schemas) {
     const source = schemas.find((s) => s.model?.name === association.source.name);
     const target = schemas.find((s) => s.model?.name === association.target.name);
 
-    let key = `${source.table}***${target.table}`;
+    let key = `${source?.table}***${target?.table}`;
     if (association.associationType.toLowerCase().startsWith('belongstomany')) {
-      const associationTables = [source.table, target.table];
+      const associationTables = [source?.table, target?.table];
       associationTables.sort();
       key = `${associationTables[0]}***${associationTables[1]}`;
     } else if (association.associationType.toLowerCase().startsWith('belongs')) {
-      key = `${target.table}***${source.table}`;
+      key = `${target?.table}***${source?.table}`;
     }
     if (!sourceTarget[key]) {
       sourceTarget[key] = [];
@@ -270,7 +271,7 @@ function processAssociations(associations, tables, schemas) {
     });
     const issues:string[] = [];
 
-    relationKey = sourceTarget[key].map((association) => association.as).join(', ');
+    relationKey = sourceTarget[key].map((association) => association.as).join(',');
 
     let lineColor;
     if (relationKey?.split(',').length === 1) {
@@ -362,13 +363,10 @@ function processAssociations(associations, tables, schemas) {
   return uml;
 }
 
-function writeUml(uml, dbRoot) {
+export function writeUml(uml, dbRoot) {
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.puml'), uml);
   // update readme with uml
-  let root = path.dirname((require.main || {}).filename || './');
-  if (root.endsWith('mocha/bin')) {
-    root = path.join('./');
-  }
+  const root = path.dirname((require.main || {}).filename || './');
   if (fs.existsSync(path.join(root, 'README.md'))) {
     let readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     const umlRegex = /``` ?plantuml([\s\S]*?)\'db\/uml\.puml\n```/; // eslint-disable-line no-useless-escape
@@ -402,7 +400,7 @@ async function generateUML(schemas, tables, root) {
         associations.push(association);
       });
     }
-    uml += processClassDefinition(schema, schema.table);
+    uml += processClassDefinition(schema, schema?.table);
   });
 
   uml += processAssociations(associations, tables, schemas);
@@ -432,7 +430,7 @@ export default async function generateUMLFromDB() {
                       WHEN SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?') = 'int4' THEN 'integer'
                       ELSE SUBSTRING(udt_name FROM '^[_]([^_]+)[_]?')
                     END || '[]'
-                  WHEN data_type = 'numeric' THEN 'decimal(3,1)'
+                  WHEN data_type = 'numeric' THEN CONCAT('decimal(', numeric_precision, ',', numeric_scale, ')')
                   WHEN data_type = 'int4' THEN 'integer'
                   ELSE data_type
                 END,
@@ -476,9 +474,9 @@ export default async function generateUMLFromDB() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const model:any = Object.values(db.sequelize.models)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .find((m: any) => m?.getTableName() === td.table);
+        .find((m: any) => m?.getTableName() === td?.table);
       return ({
-        table: td.table,
+        table: td?.table,
         model,
         attributes: td.fields,
         associations: model?.associations,

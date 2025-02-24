@@ -8,7 +8,7 @@ import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
+import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import { storageAvailable } from '../../hooks/helpers';
 import isAdmin from '../../permissions';
 
@@ -31,7 +31,7 @@ function UserSection({ user, onSave, features }) {
   }, [user]);
 
   const impersonateUserId = () => {
-    if (!haveStorage) return;
+    if (!haveStorage || !formUser || typeof formUser.id !== 'number') return;
     window.sessionStorage.setItem(SESSION_STORAGE_IMPERSONATION_KEY, formUser.id);
     window.location.href = '/';
   };
@@ -73,13 +73,33 @@ function UserSection({ user, onSave, features }) {
     const region = parseInt(strRegion, DECIMAL_BASE);
     const { checked } = e.target;
 
-    if (checked) {
+    if (checked && region === ALL_REGIONS) {
+      updateUser({
+        ...formUser,
+        permissions: [
+          ...formUser.permissions,
+          { userId: user.id, scopeId: scope, regionId: region },
+          ...REGIONS.map((r) => (
+            { userId: user.id, scopeId: scope, regionId: r }
+          )),
+        ],
+      });
+    } else if (checked) {
       updateUser({
         ...formUser,
         permissions: [
           ...formUser.permissions,
           { userId: user.id, scopeId: scope, regionId: region },
         ],
+      });
+    } else if (region === ALL_REGIONS) {
+      updateUser({
+        ...formUser,
+        permissions: formUser.permissions.filter((permission) => (
+          // We are removing permissions (because checked is false). Only keep
+          // permissions that do not have the "unchecked" scope
+          !(permission.scopeId === scope)
+        )),
       });
     } else {
       updateUser({

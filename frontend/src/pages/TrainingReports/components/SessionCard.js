@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import { ModalToggleButton, Button } from '@trussworks/react-uswds';
+import UserContext from '../../../UserContext';
 import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
@@ -11,6 +12,7 @@ import {
   Pencil,
   Trash,
 } from '../../../components/icons';
+import isAdmin from '../../../permissions';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -34,6 +36,10 @@ function SessionCard({
   expanded,
   isWriteable,
   onRemoveSession,
+  eventStatus,
+  isPoc,
+  isOwner,
+  isCollaborator,
 }) {
   const modalRef = useRef();
   const {
@@ -45,6 +51,8 @@ function SessionCard({
     objectiveTopics,
     objectiveTrainers,
     status,
+    pocComplete,
+    ownerComplete,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -58,6 +66,8 @@ function SessionCard({
   };
 
   const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
+  const { user } = useContext(UserContext);
+  const isAdminUser = isAdmin(user);
 
   const displaySessionStatus = getSessionDisplayStatusText();
 
@@ -69,6 +79,31 @@ function SessionCard({
     }
     return <NoStatus />;
   })();
+
+  const showSessionEdit = () => {
+    // If they are a POC and POC work is complete, they should not be able to edit the session.
+    if (isPoc && pocComplete && !isAdminUser) {
+      return false;
+    }
+
+    // eslint-disable-next-line max-len
+    // If they are the owner and owner work is complete, they should not be able to edit the session.
+    if (((isOwner || isCollaborator) && !isAdminUser) && ownerComplete) {
+      return false;
+    }
+
+    // First if both general poc and owner status is blocked make sure they are not and admin.
+    if (!isAdminUser && (!isWriteable || statusIsComplete)) {
+      return false;
+    }
+
+    // Admin can edit the session until the EVENT is complete.
+    if (isAdminUser && eventStatus === TRAINING_REPORT_STATUSES.COMPLETE) {
+      return false;
+    }
+
+    return true;
+  };
 
   return (
     <ul className="ttahub-session-card__session-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!expanded}>
@@ -96,10 +131,10 @@ function SessionCard({
             {sessionName}
           </p>
           {
-            isWriteable && !statusIsComplete
-              ? (
+            showSessionEdit()
+              && (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
-                  <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`} className="margin-right-4">
+                  <Link to={`/training-report/${eventId}/session/${session.id}`} className="margin-right-4">
                     <Pencil />
                     Edit session
                   </Link>
@@ -109,8 +144,7 @@ function SessionCard({
                   </ModalToggleButton>
                 </div>
               )
-              : null
-      }
+          }
         </div>
       </CardData>
 
@@ -158,6 +192,8 @@ export const sessionPropTypes = PropTypes.shape({
       'Complete',
       'Needs status',
     ]),
+    pocComplete: PropTypes.bool.isRequired,
+    ownerComplete: PropTypes.bool.isRequired,
   }).isRequired,
 });
 SessionCard.propTypes = {
@@ -166,5 +202,9 @@ SessionCard.propTypes = {
   expanded: PropTypes.bool.isRequired,
   isWriteable: PropTypes.bool.isRequired,
   onRemoveSession: PropTypes.func.isRequired,
+  eventStatus: PropTypes.string.isRequired,
+  isPoc: PropTypes.bool.isRequired,
+  isOwner: PropTypes.bool.isRequired,
+  isCollaborator: PropTypes.bool.isRequired,
 };
 export default SessionCard;

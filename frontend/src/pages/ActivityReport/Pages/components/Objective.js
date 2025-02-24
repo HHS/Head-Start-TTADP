@@ -1,32 +1,43 @@
 import React, {
-  useState, useMemo, useContext, useRef,
+  useState,
+  useContext,
+  useRef,
+  useMemo,
 } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
+import { Link } from 'react-router-dom';
 import {
-  useController, useFormContext,
+  useController, useFormContext, useWatch,
 } from 'react-hook-form';
-import { REPORT_STATUSES } from '@ttahub/common';
-
+import {
+  Alert,
+} from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
-import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
+import GenericSelectWithDrawer from '../../../../components/GoalForm/GenericSelectWithDrawer';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
+import ObjectiveSupportType from '../../../../components/ObjectiveSupportType';
 import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
   OBJECTIVE_TITLE,
-  OBJECTIVE_RESOURCES,
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
+  OBJECTIVE_CITATIONS,
 } from './goalValidator';
-import { validateListOfResources } from '../../../../components/GoalForm/constants';
+import { validateListOfResources, noDisallowedUrls } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
+import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import CitationDrawerContent from '../../../../components/CitationDrawerContent';
 
 export default function Objective({
   objective,
@@ -40,8 +51,14 @@ export default function Objective({
   parentGoal,
   initialObjectiveStatus,
   reportId,
+  citationOptions,
+  rawCitations,
+  isMonitoringGoal,
 }) {
   const modalRef = useRef();
+
+  const citationNames = useMemo(() => rawCitations.map((rawCitation) => rawCitation.citation),
+    [rawCitations]);
 
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
@@ -53,8 +70,15 @@ export default function Objective({
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
-  const { getValues, setError, clearErrors } = useFormContext();
+  const {
+    getValues, setError, clearErrors, watch,
+  } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+  const { objectiveCreatedHere } = initialObjective;
+  const [onApprovedAR, setOnApprovedAR] = useState(initialObjective.onApprovedAR);
+  const [citationWarnings, setCitationWarnings] = useState([]);
+  const activityRecipients = watch('activityRecipients');
+  const selectedGoals = useWatch({ name: 'goals' });
 
   /**
    * add controllers for all the controlled fields
@@ -62,6 +86,23 @@ export default function Objective({
    * but we want to keep the logic in one place for the AR/RTR
    * if at all possible
    */
+  const {
+    field: {
+      onChange: onChangeCitations,
+      onBlur: onBlurCitations,
+      value: objectiveCitations,
+      name: objectiveCitationsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].citations`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_CITATIONS,
+      },
+    },
+    // If citations are not available, set citations to null
+    defaultValue: objective.citations,
+  });
 
   const {
     field: {
@@ -93,6 +134,7 @@ export default function Objective({
     rules: {
       validate: {
         notEmpty: (value) => (value && value.length) || OBJECTIVE_TOPICS,
+        noNullId: (value) => value.every((topic) => topic.id) || OBJECTIVE_TOPICS,
       },
     },
     defaultValue: objective.topics,
@@ -109,7 +151,8 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].resources`,
     rules: {
       validate: {
-        allResourcesAreValid: (value) => validateListOfResources(value) || OBJECTIVE_RESOURCES,
+        noDisallowedUrls,
+        allResourcesAreValid: (value) => validateListOfResources(value) || 'Enter one resource per field. Valid resource links must start with http:// or https://',
       },
     },
     defaultValue: objective.resources,
@@ -129,6 +172,33 @@ export default function Objective({
 
   const {
     field: {
+      onChange: onChangeUseIpdCourses,
+      onBlur: onBlurUseIpdCourses,
+      value: objectiveUseIpdCourses,
+      name: objectiveUseIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].useIpdCourses`,
+    defaultValue: !!(objective.courses && objective.courses.length) || false,
+  });
+
+  const {
+    field: {
+      onChange: onChangeIpdCourses,
+      onBlur: onBlurIpdCourses,
+      value: objectiveIpdCourses,
+      name: objectiveIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].courses`,
+    defaultValue: objective.courses || [],
+    rules: {
+      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+    },
+  });
+
+  const {
+    field: {
       onChange: onChangeTta,
       onBlur: onBlurTta,
       value: objectiveTta,
@@ -142,6 +212,21 @@ export default function Objective({
       },
     },
     defaultValue: objective.ttaProvided ? objective.ttaProvided : '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSupportType,
+      onBlur: onBlurSupportType,
+      value: supportType,
+      name: supportTypeInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].supportType`,
+    rules: {
+      required: 'Please select a support type',
+    },
+    defaultValue: objective.supportType || '',
   });
 
   const {
@@ -167,8 +252,8 @@ export default function Objective({
     rules: {
       required: objective.status === 'Suspended',
     },
-    name: `${fieldArrayName}[${index}].suspendReason`,
-    defaultValue: objective.suspendReason || '',
+    name: `${fieldArrayName}[${index}].closeSuspendReason`,
+    defaultValue: objective.closeSuspendReason || '',
   });
 
   const {
@@ -178,19 +263,22 @@ export default function Objective({
       name: objectiveSuspendContextInputName,
     },
   } = useController({
-    name: `${fieldArrayName}[${index}].suspendContext`,
+    name: `${fieldArrayName}[${index}].closeSuspendContext`,
     rules: { required: true },
-    defaultValue: objective.suspendContext || '',
+    defaultValue: objective.closeSuspendContext || '',
   });
 
-  const isOnApprovedReport = useMemo(() => objective.activityReports
-    && objective.activityReports.some(
-      (report) => report.status === REPORT_STATUSES.APPROVED,
-    ), [objective.activityReports]);
+  const {
+    field: {
+      value: createdHere,
+      onChange: onChangeCreatedHere,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].createdHere`,
+    defaultValue: objectiveCreatedHere || null,
+  });
 
-  const isOnReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.length
-  ), [objective.activityReports]);
+  const isOnReport = objective.onAR;
 
   const onChangeObjective = (newObjective) => {
     setSelectedObjective(newObjective);
@@ -204,6 +292,7 @@ export default function Objective({
     }
 
     onChangeStatus(newObjective.status);
+    onChangeSupportType(newObjective.supportType);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
@@ -211,6 +300,16 @@ export default function Objective({
     // set a new initial status, which we went to preserve separately from the dropdown
     // this determines if the title is read only or not
     setStatusForCalculations(newObjective.status);
+
+    // ipd course
+    onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
+    onChangeIpdCourses(newObjective.courses);
+
+    // was objective created on this report?
+    onChangeCreatedHere(newObjective.objectiveCreatedHere);
+
+    // keep track of whether the objective is on an approved report
+    setOnApprovedAR(newObjective.onApprovedAR);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {
@@ -228,6 +327,7 @@ export default function Objective({
       setIsAppLoading(true);
       setAppLoadingText('Uploading');
       const data = new FormData();
+      data.append('reportId', JSON.stringify(reportId));
       data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
         data.append('file', file);
@@ -242,14 +342,6 @@ export default function Objective({
       setIsAppLoading(false);
     }
   };
-
-  let savedTopics = [];
-  let savedResources = [];
-
-  if (isOnApprovedReport) {
-    savedTopics = objective.topics;
-    savedResources = objective.resources;
-  }
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
   const onRemove = () => remove(index);
@@ -269,14 +361,64 @@ export default function Objective({
 
   const setStatusReasonError = (on) => {
     if (on) {
-      setError(`${fieldArrayName}[${index}].suspendReason`, {
+      setError(`${fieldArrayName}[${index}].closeSuspendReason`, {
         type: 'required',
         message: 'Reason for suspension is required',
       });
     } else {
-      clearErrors(`${fieldArrayName}[${index}].suspendReason`);
+      clearErrors(`${fieldArrayName}[${index}].closeSuspendReason`);
     }
   };
+
+  // Store the complete citation in ActivityReportObjectiveCitations in the DB row.
+  const selectedCitationsChanged = (newCitations) => {
+    const newCitationStandardIds = newCitations.map((newCitation) => newCitation.id);
+    // From rawCitations get all the raw citations with the same standardId as the newCitations.
+    const newCitationsObjects = rawCitations.filter(
+      (rawCitation) => newCitationStandardIds.includes(rawCitation.standardId),
+    ).map((rawCitation) => (
+      {
+        ...rawCitation,
+        id: rawCitation.standardId,
+        name: newCitations.find(
+          (newCitation) => newCitation.id === rawCitation.standardId,
+        ).name,
+        monitoringReferences:
+        [
+          ...rawCitation.grants.map((grant) => ({
+            ...grant,
+            standardId: rawCitation.standardId,
+            name: newCitations.find(
+              (newCitation) => newCitation.id === rawCitation.standardId,
+            ).name,
+          })),
+        ],
+      }));
+
+    onChangeCitations([...newCitationsObjects]);
+  };
+
+  useDeepCompareEffect(() => {
+    // Get a distinct list of grantId's from the citation.grants array.
+    if ((!objectiveCitations || !objectiveCitations.length)
+        || (selectedGoals && selectedGoals.length > 0)) {
+      if (citationWarnings.length > 0) {
+        setCitationWarnings([]);
+      }
+      return;
+    }
+    const grantIdsWithCitations = Array.from(objectiveCitations.reduce((acc, citation) => {
+      const grantsToAdd = citation.monitoringReferences.map((grant) => grant.grantId);
+      return new Set([...acc, ...grantsToAdd]);
+    }, new Set()));
+
+    // Find all the grantIds not in grantIdsWithCitations.
+    const missingRecipientGrantNames = (activityRecipients || []).filter(
+      (recipient) => !grantIdsWithCitations.includes(recipient.activityRecipientId),
+    ).map((recipient) => recipient.name);
+
+    setCitationWarnings(missingRecipientGrantNames);
+  }, [objectiveCitations, activityRecipients, selectedGoals, citationWarnings]);
 
   return (
     <>
@@ -286,48 +428,121 @@ export default function Objective({
         options={options}
         onRemove={onRemove}
       />
-      <ObjectiveTitle
-        error={errors.title
-          ? ERROR_FORMAT(errors.title.message)
-          : NO_ERROR}
-        isOnApprovedReport={isOnApprovedReport || false}
-        title={objectiveTitle}
-        onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={onBlurTitle}
-        inputName={objectiveTitleInputName}
-        parentGoal={parentGoal}
-        initialObjectiveStatus={statusForCalculations}
-      />
-      <ObjectiveTopics
+      <FormFieldThatIsSometimesReadOnly
+        label="TTA Objective"
+        value={objectiveTitle}
+        permissions={[
+          createdHere,
+          statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+          !onApprovedAR,
+        ]}
+      >
+        <ObjectiveTitle
+          error={errors.title
+            ? ERROR_FORMAT(errors.title.message)
+            : NO_ERROR}
+          title={objectiveTitle}
+          onChangeTitle={onChangeTitle}
+          validateObjectiveTitle={onBlurTitle}
+          inputName={objectiveTitleInputName}
+          initialObjectiveStatus={statusForCalculations}
+        />
+      </FormFieldThatIsSometimesReadOnly>
+      {
+        isMonitoringGoal && citationWarnings.length > 0 && (
+          <Alert type="warning" className="margin-bottom-2">
+            <span>
+              <span className="margin-top-0">
+                {citationWarnings.length > 1
+                  ? 'These grants do not have any of the citations selected:'
+                  : 'This grant does not have any of the citations selected:'}
+                <ul className="margin-top-2">
+                  {citationWarnings.map((grant) => (
+                    <li key={grant}>{grant}</li>
+                  ))}
+                </ul>
+              </span>
+              <span className="margin-top-2 margin-bottom-0">
+                To avoid errors when submitting the report, you can either:
+                <ul className="margin-top-2 margin-bottom-0">
+                  <li>
+                    Add a citation for this grant under an objective for the monitoring goal
+                  </li>
+                  <li>
+                    Remove the grant from the
+                    {' '}
+                    <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity summary</Link>
+                  </li>
+                  <li>
+                    Add another goal to the report
+                  </li>
+                </ul>
+              </span>
+            </span>
+          </Alert>
+        )
+      }
+      {
+        isMonitoringGoal && (
+          <GenericSelectWithDrawer
+            error={errors.citations
+              ? ERROR_FORMAT(errors.citations.message)
+              : NO_ERROR}
+            name="Citation"
+            options={citationOptions}
+            validateValues={onBlurCitations}
+            values={objectiveCitations}
+            onChangeValues={selectedCitationsChanged}
+            inputName={objectiveCitationsInputName}
+            drawerTitle="Citation guidance"
+            drawerContent={(
+              <CitationDrawerContent
+                citations={citationNames}
+              />
+            )}
+          />
+        )
+      }
+
+      <GenericSelectWithDrawer
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
           : NO_ERROR}
-        savedTopics={savedTopics}
-        topicOptions={topicOptions}
-        validateObjectiveTopics={onBlurTopics}
-        topics={isOnApprovedReport ? [] : objectiveTopics}
-        isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
-        onChangeTopics={onChangeTopics}
+        name="Topic"
+        options={topicOptions}
+        validateValues={onBlurTopics}
+        values={objectiveTopics}
+        onChangeValues={onChangeTopics}
         inputName={objectiveTopicsInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        userCanEdit
-        editingFromActivityReport
+        drawerTitle="Topic guidance"
+        drawerContent={useMemo(() => <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />, [])}
       />
+
+      <IpdCourseSelect
+        error={errors.courses
+          ? ERROR_FORMAT(errors.courses.message)
+          : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-top-3"
+      />
+
       <ResourceRepeater
-        resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        resources={resourcesForRepeater}
         isOnReport={isOnReport || false}
         setResources={onChangeResources}
-        error={errors.resources
-          ? ERROR_FORMAT(errors.resources.message)
-          : NO_ERROR}
+        error={errors.resources ? errors.resources.message : ''}
         validateResources={onBlurResources}
-        savedResources={savedResources}
         inputName={objectiveResourcesInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
-        editingFromActivityReport
       />
+
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
@@ -339,7 +554,7 @@ export default function Objective({
         inputName={objectiveFilesInputName}
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        label="Did you use any TTA resources that aren't available as link?"
+        label="Did you use any other TTA resources that aren't available as link?"
         selectedObjectiveId={selectedObjective.id}
         userCanEdit
         editingFromActivityReport
@@ -349,11 +564,20 @@ export default function Objective({
         onChangeTTA={onChangeTta}
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
-        isOnApprovedReport={isOnApprovedReport || false}
+        isOnApprovedReport={false}
         error={errors.ttaProvided
           ? ERROR_FORMAT(errors.ttaProvided.message)
           : NO_ERROR}
         validateTta={onBlurTta}
+      />
+      <ObjectiveSupportType
+        onBlurSupportType={onBlurSupportType}
+        supportType={supportType}
+        onChangeSupportType={onChangeSupportType}
+        inputName={supportTypeInputName}
+        error={errors.supportType
+          ? ERROR_FORMAT(errors.supportType.message)
+          : NO_ERROR}
       />
 
       <ObjectiveSuspendModal
@@ -367,9 +591,7 @@ export default function Objective({
         onChangeSuspendContext={onChangeSuspendContext}
         onChangeStatus={onChangeStatus}
         setError={setStatusReasonError}
-        error={errors.suspendReason
-          ? ERROR_FORMAT(errors.suspendReason.message)
-          : NO_ERROR}
+        error={errors.closeSuspendReason}
       />
 
       <ObjectiveStatus
@@ -378,8 +600,8 @@ export default function Objective({
         status={objectiveStatus}
         onChangeStatus={onUpdateStatus}
         userCanEdit
-        suspendContext={objectiveSuspendContext}
-        suspendReason={objectiveSuspendReason}
+        closeSuspendContext={objectiveSuspendContext}
+        closeSuspendReason={objectiveSuspendReason}
       />
     </>
   );
@@ -389,6 +611,9 @@ Objective.propTypes = {
   index: PropTypes.number.isRequired,
   objective: OBJECTIVE_PROP.isRequired,
   errors: PropTypes.shape({
+    supportType: PropTypes.shape({
+      message: PropTypes.string,
+    }),
     ttaProvided: PropTypes.shape({
       message: PropTypes.string,
     }),
@@ -398,13 +623,19 @@ Objective.propTypes = {
     resources: PropTypes.shape({
       message: PropTypes.string,
     }),
+    courses: PropTypes.shape({
+      message: PropTypes.string,
+    }),
     roles: PropTypes.shape({
       message: PropTypes.string,
     }),
     topics: PropTypes.shape({
       message: PropTypes.string,
     }),
-    suspendReason: PropTypes.shape({
+    citations: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    closeSuspendReason: PropTypes.shape({
       message: PropTypes.string,
     }),
   }).isRequired,
@@ -412,6 +643,23 @@ Objective.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  isMonitoringGoal: PropTypes.bool,
   options: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
@@ -424,4 +672,10 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
+};
+
+Objective.defaultProps = {
+  citationOptions: [],
+  rawCitations: [],
+  isMonitoringGoal: false,
 };

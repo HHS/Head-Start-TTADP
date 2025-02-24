@@ -16,7 +16,7 @@ export function compareDate(dates: string[], property: string, operator: string)
     ...acc,
     {
       [property]: {
-        [operator]: new Date(date),
+        [operator]: date,
       },
     },
   ], []);
@@ -45,8 +45,8 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       ...acc,
       {
         [property]: {
-          [Op.gte]: new Date(startDate),
-          [Op.lte]: new Date(endDate),
+          [Op.gte]: startDate,
+          [Op.lte]: endDate,
         },
       },
     ];
@@ -99,12 +99,16 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId) {
 export function filterAssociation(baseQuery, searchTerms, exclude, callback, comparator = '~*', escape = true) {
   if (exclude) {
     return {
-      [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, escape),
+      where: {
+        [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, escape),
+      },
     };
   }
 
   return {
-    [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
+    where: {
+      [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
+    },
   };
 }
 

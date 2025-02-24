@@ -10,6 +10,24 @@ const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
+const IMPORT_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  COLLECTING: 'COLLECTING',
+  COLLECTED: 'COLLECTED',
+  COLLECTION_FAILED: 'COLLECTION_FAILED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
+};
+
+const IMPORT_DATA_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
+  WILL_NOT_PROCESS: 'WILL_NOT_PROCESS',
+};
+
 const DATE_FORMAT = 'MM/DD/YYYY';
 
 const REPORTS_PER_PAGE = 10;
@@ -20,9 +38,11 @@ const SEARCH_RESULTS_PER_PAGE = 23;
 
 const AUTOMATIC_CREATION = 'Automatic';
 const CURATED_CREATION = 'Curated';
+const SYSTEM_GENERATED = 'System Generated';
 const CREATION_METHOD = {
   AUTOMATIC: AUTOMATIC_CREATION,
   CURATED: CURATED_CREATION,
+  SYSTEM_GENERATED,
 };
 
 const GOAL_STATUS = {
@@ -31,6 +51,15 @@ const GOAL_STATUS = {
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
   CLOSED: 'Closed',
+};
+
+const GOAL_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a goal
+  EDITOR: 'Editor', // The user(s) who edits the text of a goal
+  LINKER: 'Linker', // The user who links the goal to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
 };
 
 const GRANT_PERSONNEL_ROLES = [
@@ -49,6 +78,15 @@ const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
+const OBJECTIVE_COLLABORATORS = {
+  CREATOR: 'Creator', // The user who creates a objective
+  EDITOR: 'Editor', // The user(s) who edits the text of a objective
+  LINKER: 'Linker', // The user who links the objective to a report
+  UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
+  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
+  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
+};
+
 const NEXTSTEP_NOTETYPE = {
   SPECIALIST: 'SPECIALIST',
   RECIPIENT: 'RECIPIENT',
@@ -56,6 +94,13 @@ const NEXTSTEP_NOTETYPE = {
 
 const RESOURCE_ACTIONS = {
   GET_METADATA: 'getMetaData',
+};
+
+const GROUP_COLLABORATORS = {
+  CREATOR: 'Creator',
+  CO_OWNER: 'Co-Owner',
+  SHARED_WITH: 'SharedWith',
+  EDITOR: 'Editor',
 };
 
 /**
@@ -97,12 +142,11 @@ const EMAIL_ACTIONS = {
   APPROVED_DIGEST: 'reportApprovedDigest',
   RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
-};
-
-const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
+  TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
+  TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
 };
 
 const S3_ACTIONS = {
@@ -167,11 +211,7 @@ const SOURCE_FIELD = {
 };
 
 const RESOURCE_DOMAIN = {
-  ECLKC: 'eclkc.ohs.acf.hhs.gov',
-};
-
-const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
+  HEAD_START: 'headstart.gov',
 };
 
 const GRANT_INACTIVATION_REASONS = {
@@ -188,39 +228,68 @@ const MAINTENANCE_TYPE = {
   REINDEX_TABLES: 'REINDEX TABLES',
   DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
+  IMPORT_SCHEDULE: 'IMPORT_SCHEDULE',
+  IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
+  IMPORT_PROCESS: 'IMPORT_PROCESS',
 };
+
+const FEATURE_FLAGS = [
+  'anv_statistics',
+  'regional_goal_dashboard',
+  'closed_goal_merge_override',
+  'training_reports_dashboard',
+  'quality_assurance_dashboard',
+  'manual_mark_goals_similar',
+  'monitoring_integration',
+];
 
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',
   MAINTENANCE: 'MAINTENANCE',
+  IMPORT: 'IMPORT',
 };
 
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'monitoring'];
+
+const CURRENT_GOAL_SIMILARITY_VERSION = 5;
+
+const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
+const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
+
 module.exports = {
+  CURRENT_GOAL_SIMILARITY_VERSION,
+  FEI_PROD_GOAL_TEMPLATE_ID,
+  CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
   FILE_STATUSES,
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
   DATE_FORMAT,
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
+  GOAL_CREATED_VIA,
   SEARCH_RESULTS_PER_PAGE,
   AUTOMATIC_CREATION,
   CURATED_CREATION,
   CREATION_METHOD,
   GOAL_STATUS,
+  GOAL_COLLABORATORS,
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
+  OBJECTIVE_COLLABORATORS,
+  GROUP_COLLABORATORS,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   EMAIL_ACTIONS,
-  AWS_ELASTICSEARCH_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
   PROMPT_FIELD_TYPE,
   SOURCE_FIELD,
   RESOURCE_DOMAIN,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
+  FEATURE_FLAGS,
 };

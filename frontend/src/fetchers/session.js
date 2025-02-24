@@ -50,3 +50,8 @@ export const getPossibleSessionParticipants = async (regionId) => {
   const response = await get(join(sessionsUrl, 'participants', String(regionId)));
   return response.json();
 };
+
+export const getGroupsForSession = async (regionId) => {
+  const response = await get(join(sessionsUrl, 'groups', `?region=${regionId}`));
+  return response.json();
+};

@@ -86,6 +86,19 @@ const canApproveRegion = user(false, false, false, true, 8);
 const canNotApproveRegion = user(false, false, false, false, 9);
 
 describe('Activity Report policies', () => {
+  describe('isApproverAndCreator', () => {
+    it('is true if the user is an approver and the creator of the report', () => {
+      const report = activityReport(author.id, null, [author.id]);
+      const policy = new ActivityReport(author, report);
+      expect(policy.isApproverAndCreator()).toBeTruthy();
+    });
+
+    it('is false if the user is not an approver', () => {
+      const report = activityReport(author.id);
+      const policy = new ActivityReport(author, report);
+      expect(policy.isApproverAndCreator()).toBeFalsy();
+    });
+  });
   describe('canReview', () => {
     it('is true if the user is the approving manager', () => {
       const report = activityReport(author.id, null, [approver.id]);

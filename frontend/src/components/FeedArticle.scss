@@ -1,39 +1,24 @@
-@use '../colors.scss' as *;
+// hide the "blog post by" text
+.ttahub-feed-article-content p:has(a:not([href])){
+    display: none;
+}
 
-/**
-this hides the initial "author inforation" blocks"
-**/
-.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:nth-child(1),
-.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:nth-child(2),
-.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:nth-child(3),
-.ttahub-feed-article:not(.ttahub-feed-article--partial) div[data-contents="true"] > [data-block="true"]:last-child,
-.ttahub-feed-article div[data-contents="true"] > [data-block="true"]:empty,
-.ttahub-feed-article h4:empty {
+// remove inline styles from feed
+// - since they are inline, we have to use !important
+.ttahub-feed-article-content .feed > div {
+    border: none !important;
+    padding: 0 !important;
+}
+
+.ttahub-feed-article-content .feed div:last-child{
     display: none;
 }
 
 
-// fix the margins and spacing of the read only editor 
-.ttahub-feed-article .public-DraftStyleDefault-block {
-    font-size: 1.06rem;
-    line-height: 1.5;
-    margin: 0;
-    white-space: normal;
-}
 
-// hide the big old link icon that pops up 
-.ttahub-feed-article .rdw-link-decorator-icon {
-    display: none;
-}
-
-.ttahub-feed-article .public-DraftStyleDefault-block a:after,
-.ttahub-read-more--external:after {
-    content: "\f35d";    
+.ttahub-feed-article-content .feed a[href^="http"]:after {
+    content: "\f35d";
     display: inline-block;
     font: normal normal normal 16px/1 FontAwesome;
     margin: 0 8px;
-}
-
-.ttahub-feed-article .public-DraftStyleDefault-block a:hover:after {
-    opacity: 0.75;
 }

@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import {
-  createReport, destroyReport, createGoal, createGrant,
+  createReport, destroyReport, createGoal, createGrant, createRecipient,
 } from '../../testUtils';
 import filtersToScopes from '../index';
 import db, {
@@ -9,7 +9,6 @@ import db, {
   Objective,
   ActivityReportObjective,
   Recipient,
-  ObjectiveTopic,
   Topic,
   Grant,
   Group,
@@ -19,13 +18,21 @@ import db, {
   ActivityReportGoal,
   ActivityReportGoalResource,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveTopic,
   ActivityReportResource,
   NextStep,
   NextStepResource,
   ActivityReportFile,
   ActivityReportObjectiveFile,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
+  GroupCollaborator,
   File,
 } from '../../models';
+import { GOAL_STATUS } from '../../constants';
+import { withoutStatus, withStatus } from './status';
+import { withoutTtaType, withTtaType } from './ttaType';
+import { onlyValidParticipants, withParticipants, withoutParticipants } from './participants';
 
 const REGION_ID = 10;
 
@@ -187,13 +194,21 @@ describe('goal filtersToScopes', () => {
       },
     });
 
-    ots.push(await ObjectiveTopic.create({
-      objectiveId: objectives[0].id,
+    // goal for topics
+    const aroWithTopics = await ActivityReportObjective.create({
+      objectiveId: objectives[1].id,
+      activityReportId: reportWithTopics.id,
+      ttaProvided: 'asdfadf',
+      status: objectives[1].status,
+    });
+
+    ots.push(await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: aroWithTopics.id,
       topicId: topicOne.id,
     }));
 
-    ots.push(await ObjectiveTopic.create({
-      objectiveId: objectives[1].id,
+    ots.push(await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: aroWithTopics.id,
       topicId: topicTwo.id,
     }));
 
@@ -205,13 +220,6 @@ describe('goal filtersToScopes', () => {
           activityReportId: reportWithReasons.id,
           ttaProvided: 'asdfadf',
           status: objectives[0].status,
-        }),
-        // goal for topics
-        await ActivityReportObjective.create({
-          objectiveId: objectives[1].id,
-          activityReportId: reportWithTopics.id,
-          ttaProvided: 'asdfadf',
-          status: objectives[1].status,
         }),
         // goal for status
         await ActivityReportObjective.create({
@@ -246,7 +254,7 @@ describe('goal filtersToScopes', () => {
       individualHooks: true,
     });
 
-    await ObjectiveTopic.destroy({
+    await ActivityReportObjectiveTopic.destroy({
       where: {
         id: ots.map((ot) => ot.id),
       },
@@ -325,6 +333,12 @@ describe('goal filtersToScopes', () => {
         isPublic: false,
       });
 
+      await GroupCollaborator.create({
+        groupId: group.id,
+        userId: mockUser.id,
+        collaboratorTypeId: 1,
+      });
+
       await GroupGrant.create({
         groupId: group.id,
         grantId: grantForGroups.id,
@@ -346,6 +360,13 @@ describe('goal filtersToScopes', () => {
       });
 
       await GroupGrant.destroy({
+        where: {
+          groupId: group.id,
+        },
+        individualHooks: true,
+      });
+
+      await GroupCollaborator.destroy({
         where: {
           groupId: group.id,
         },
@@ -509,6 +530,38 @@ describe('goal filtersToScopes', () => {
       expect(found.map((g) => g.name)).toContain('Goal 2');
       expect(found.map((g) => g.name)).toContain('Goal 3');
       expect(found.map((g) => g.name)).toContain('Goal 4');
+    });
+
+    it('withStatus, when statuses does not include Needs status', () => {
+      const out = withStatus([]);
+      expect(out).toMatchObject({
+        [Op.or]: [],
+      });
+    });
+
+    it('withoutStatus, when status includes Needs status', () => {
+      const out = withoutStatus(['Needs status']);
+      expect(out).toMatchObject({
+        [Op.or]: [
+          { status: { [Op.eq]: null } },
+          {
+            [Op.and]: [{
+              status: { [Op.notILike]: '%sNeeds status%s' },
+            }],
+          },
+        ],
+      });
+    });
+  });
+
+  describe('ttaType', () => {
+    it('withTtaType, empty query returns empty object', () => {
+      const out = withTtaType([]);
+      expect(out).toMatchObject({});
+    });
+    it('withoutTtaType, empty query returns empty object', () => {
+      const out = withoutTtaType([]);
+      expect(out).toMatchObject({});
     });
   });
 
@@ -1309,6 +1362,195 @@ describe('goal filtersToScopes', () => {
     });
   });
 
+  describe('goalName', () => {
+    let includedGoal;
+    let excludedGoal;
+    let greatGrant;
+    let recipient;
+
+    const includedGoalName = `${faker.lorem.sentences(5)}INCLUDED`;
+    const excludedGoalName = `${faker.lorem.sentences(5)}EXCLUDED`;
+
+    let availableGoalIds;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      greatGrant = await createGrant({ recipientId: recipient.id });
+
+      includedGoal = await createGoal({
+        grantId: greatGrant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+        name: includedGoalName,
+      });
+      excludedGoal = await createGoal({
+        grantId: greatGrant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+        name: excludedGoalName,
+      });
+
+      availableGoalIds = [includedGoal.id, excludedGoal.id];
+    });
+
+    afterAll(async () => {
+      await Goal.destroy({
+        where: {
+          id: [includedGoal.id, excludedGoal.id],
+        },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: greatGrant.id,
+        },
+        individualHooks: true,
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+    });
+
+    it('in', async () => {
+      const filters = { 'goalName.ctn': includedGoalName };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: availableGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toEqual(1);
+      expect(found[0].id).toEqual(includedGoal.id);
+    });
+    it('not in', async () => {
+      const filters = { 'goalName.nctn': includedGoalName };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: availableGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toEqual(1);
+      expect(found[0].id).not.toEqual(includedGoal.id);
+      expect(found[0].id).toEqual(excludedGoal.id);
+    });
+  });
+
+  describe('goalFieldResponse', () => {
+    let prompt;
+    let goal1;
+    let goal2;
+    let goal3;
+    let response1;
+    let response2;
+    let response3;
+
+    beforeAll(async () => {
+      prompt = await GoalTemplateFieldPrompt.findOne({
+        where: { title: 'FEI root cause' },
+      });
+
+      goal1 = await Goal.create({
+        name: 'Goal 6',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: goalGrant.id,
+        createdVia: 'rtr',
+      });
+
+      goal2 = await Goal.create({
+        name: 'Goal 7',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: goalGrant.id,
+        createdVia: 'rtr',
+      });
+
+      goal3 = await Goal.create({
+        name: 'Goal 8',
+        status: 'In Progress',
+        timeframe: '12 months',
+        isFromSmartsheetTtaPlan: false,
+        createdAt: new Date('2021-01-20'),
+        grantId: goalGrant.id,
+        createdVia: 'rtr',
+      });
+
+      response1 = await GoalFieldResponse.create({
+        goalId: goal1.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Community Partnerships'],
+      });
+
+      response2 = await GoalFieldResponse.create({
+        goalId: goal2.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Workforce', 'Family circumstances'],
+      });
+
+      response2 = await GoalFieldResponse.create({
+        goalId: goal3.id,
+        goalTemplateFieldPromptId: prompt.id,
+        response: ['Facilities'],
+      });
+    });
+
+    afterAll(async () => {
+      await GoalFieldResponse.destroy({
+        where: {
+          id: [response1.id, response2.id, response3.id],
+        },
+      });
+
+      await Goal.destroy({
+        where: {
+          id: [goal1.id, goal2.id, goal3.id],
+        },
+        individualHooks: true,
+      });
+    });
+
+    it('finds goals with responses', async () => {
+      const filters = { 'goalResponse.in': ['Workforce'] };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: { [Op.and]: [scope, { id: [goal1.id, goal2.id, goal3.id] }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([goal2.id]));
+    });
+
+    it('finds goals without responses', async () => {
+      const filters = { 'goalResponse.nin': ['Workforce'] };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: { [Op.and]: [scope, { id: [goal1.id, goal2.id, goal3.id] }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([goal1.id, goal3.id]));
+    });
+  });
+
   describe('resourceAttachment', () => {
     let reportToInclude;
     let reportToExclude;
@@ -2016,6 +2258,56 @@ describe('goal filtersToScopes', () => {
         expect(found.map((g) => g.id)).not.toContain(arAdditionalNotesGoal.id);
         expect(found.length).toEqual(goalIds.length - 1);
       });
+    });
+  });
+
+  describe('participants', () => {
+    it('filters with participants', async () => {
+      const filters = { 'participants.in': ['participant1'] };
+      const { goal: scope } = await filtersToScopes(filters);
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBeGreaterThan(0);
+    });
+
+    it('filters without participants', async () => {
+      const filters = { 'participants.nin': ['participant1'] };
+      const { goal: scope } = await filtersToScopes(filters);
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('onlyValidParticipants', () => {
+    it('returns valid participants when input is an array', () => {
+      const query = ['Other', 'invalidParticipant'];
+      const result = onlyValidParticipants(query);
+      expect(result).toEqual(['Other']);
+    });
+
+    it('returns valid participants when input is not an array', () => {
+      const query = 'Other';
+      const result = onlyValidParticipants(query);
+      expect(result).toEqual(['Other']);
     });
   });
 });

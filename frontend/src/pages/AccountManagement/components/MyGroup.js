@@ -1,21 +1,20 @@
 import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import { Link } from 'react-router-dom';
 import {
   Button,
   ModalToggleButton,
 } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
 import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
+import './MyGroup.scss';
 
 export default function MyGroup({
-  group, setMyGroups, setError,
+  group, setMyGroups, setError, isViewOnly, isCoOwner,
 }) {
   const modalRef = useRef();
-
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   const onDelete = async (groupId) => {
@@ -28,18 +27,51 @@ export default function MyGroup({
     }
   };
 
+  const determineGroupAccess = () => {
+    let access = group.isPublic ? 'Public' : 'Private';
+    if (isCoOwner && group.individuals.length) {
+      if (group.individuals.length) {
+        access = 'Individuals';
+      }
+    }
+
+    return access;
+  };
+
+  const getLastUpdated = () => {
+    let updatedAt = moment(group.updatedAt, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    if (group.editor) {
+      updatedAt = `${updatedAt} by ${group.editor.name}`;
+    }
+    return updatedAt;
+  };
+
   return (
     <tr key={group.id}>
       <td data-label="Group name">
         {group.name}
       </td>
-      <td data-label="Group access">
-        {!group.isPublic ? <FontAwesomeIcon className="margin-right-1" icon={faLock} /> : <FontAwesomeIcon className="margin-right-1" icon={faUserFriends} />}
-        {group.isPublic ? 'Public' : 'Private'}
+      <td data-label="Owner">
+        {group.creator.name}
       </td>
-      <td align="right">
-        <Link disabled={isAppLoading} to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
-        <ModalToggleButton disabled={isAppLoading} opener aria-label={`delete ${group.name}`} modalRef={modalRef} unstyled>Delete group</ModalToggleButton>
+      <td data-label="Access">
+        {determineGroupAccess()}
+      </td>
+      <td data-label="Last update">
+        {getLastUpdated()}
+      </td>
+      <td className={isViewOnly ? 'smart-hub--groups-view' : 'smart-hub--groups-edit-delete'} align="right">
+        {
+          isViewOnly
+            ? <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
+            : (
+              <>
+                <Link disabled={isAppLoading} to={`/account/my-groups/${group.id}`} aria-label={`edit ${group.name}`} className="usa-button usa-button--unstyled desktop:margin-right-3">Edit group</Link>
+                <ModalToggleButton disabled={isAppLoading} opener aria-label={`delete ${group.name}`} modalRef={modalRef} unstyled>Delete group</ModalToggleButton>
+              </>
+            )
+        }
+
         <VanillaModal modalRef={modalRef} heading="Are you sure you want to continue?">
           <div>
             <p className="usa-prose">
@@ -75,7 +107,24 @@ MyGroup.propTypes = {
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     isPublic: PropTypes.bool.isRequired,
+    updatedAt: PropTypes.string.isRequired,
+    creator: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    editor: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    individuals: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired),
   }).isRequired,
   setMyGroups: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
+  isViewOnly: PropTypes.bool,
+  isCoOwner: PropTypes.bool,
+};
+
+MyGroup.defaultProps = {
+  isViewOnly: false,
+  isCoOwner: false,
 };

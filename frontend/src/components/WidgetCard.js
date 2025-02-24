@@ -29,10 +29,11 @@ export default function WidgetCard({
         {children}
       </div>
 
-      <div className="ttahub-widget-card--footer">
-        {footer}
-      </div>
-
+      {footer && (
+        <div className="ttahub-widget-card--footer">
+          {footer}
+        </div>
+      )}
     </div>
   );
 }

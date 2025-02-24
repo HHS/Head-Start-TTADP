@@ -1,6 +1,7 @@
 import {
   validateListOfResources,
   GOAL_NAME_ERROR,
+  GOAL_SOURCE_ERROR,
 } from '../../../../components/GoalForm/constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
@@ -11,8 +12,36 @@ export const OBJECTIVE_ROLE = 'Select a specialist role';
 export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invalid resources will not be saved.';
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
+export const OBJECTIVE_CITATIONS = 'Select at least one citation';
 
-export const unfinishedObjectives = (objectives, setError = () => {}, fieldArrayName = 'goalForEditing.objectives') => {
+/**
+ * Function to validate a single value based on a user's flags
+ * defaults to a boolean validator
+ * if the user does not have the flag, the value is considered valid
+ *
+ * @param {object} user
+ * @param {string} flag
+ * @param {string | number} value
+ * @param {function} validator
+ * @returns boolean
+ */
+export const validateOnlyWithFlag = (
+  user,
+  flag,
+  value,
+  validator = Boolean,
+) => {
+  if (user.flags && user.flags.includes(flag)) {
+    return validator(value);
+  }
+  return true;
+};
+
+export const unfinishedObjectives = (
+  objectives,
+  setError = () => {},
+  fieldArrayName = 'goalForEditing.objectives',
+) => {
   const unfinished = objectives.some(
     (objective, index) => {
       let incomplete = false;
@@ -31,8 +60,22 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
         incomplete = true;
       }
 
+      // We only validate citations if they exist (they are not always required).
+      if (objective.citations && !objective.citations.length) {
+        setError(`${fieldArrayName}[${index}].citations`, { message: OBJECTIVE_CITATIONS });
+        incomplete = true;
+      }
+
       if (!objective.resources || !validateListOfResources(objective.resources)) {
         setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+        incomplete = true;
+      }
+
+      if (!objective.supportType) {
+        setError(
+          `${fieldArrayName}[${index}].supportType`,
+          { message: 'Select a support type' },
+        );
         incomplete = true;
       }
 
@@ -43,7 +86,7 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };
 
-export const unfinishedGoals = (goals, setError = () => {}) => {
+export const unfinishedGoals = (goals, setError = () => {}, hasMultipleGrants) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
 
@@ -52,9 +95,14 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
       return GOAL_NAME_ERROR;
     }
 
+    if (!goal.source && !hasMultipleGrants) {
+      setError('goalSource', { message: GOAL_SOURCE_ERROR });
+      return GOAL_SOURCE_ERROR;
+    }
+
     // Every goal must have an objective or the `goals` field has unfinished goals
     if (goal.objectives && goal.objectives.length > 0) {
-      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError);
+      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives');
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
@@ -67,14 +115,26 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}) => {
+export const validateGoals = (goals, setError = () => {}, hasMultipleGrants = false) => {
   if (goals.length < 1) {
     return GOALS_EMPTY;
   }
 
-  const unfinishedMessage = unfinishedGoals(goals, setError);
+  const unfinishedMessage = unfinishedGoals(goals, setError, hasMultipleGrants);
   if (unfinishedMessage) {
     return unfinishedMessage;
   }
+  return true;
+};
+
+export const validatePrompts = async (promptTitles, trigger) => {
+  // attempt to validate prompts
+  if (promptTitles && promptTitles.length) {
+    const outputs = await Promise.all((promptTitles.map((title) => trigger(title.fieldName))));
+    if (outputs.some((output) => output === false)) {
+      return false;
+    }
+  }
+
   return true;
 };

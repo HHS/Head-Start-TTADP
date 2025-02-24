@@ -95,15 +95,16 @@ function ResourcesAssociatedWithTopics({
 
     // Value sort.
     const sortValueA = direction === 'asc' ? 1 : -1;
-    const sortValueB = direction === 'asc' ? -1 : -1;
-    valuesToSort.sort(
-      (a, b) => (
-        // eslint-disable-next-line no-nested-ternary
-        (a.sortBy > b.sortBy) ? sortValueA
-          : ((b.sortBy > a.sortBy)
-            ? sortValueB : 0)
-      ),
-    );
+    const sortValueB = direction === 'asc' ? -1 : 1;
+    valuesToSort.sort((a, b) => {
+      if (a.sortBy > b.sortBy) {
+        return sortValueA;
+      } if (b.sortBy > a.sortBy) {
+        return sortValueB;
+      }
+      return 0;
+    });
+
     setTopicUse(valuesToSort);
     setOffset(0);
     setSortConfig({ sortBy, direction, activePage: 1 });
@@ -115,7 +116,7 @@ function ResourcesAssociatedWithTopics({
       subtitle="Number of resources cited on Activity Reports with a given topic. If an activity report has more than one topic, resources count towards each topic."
       loading={loading || localLoading}
       loadingLabel="Resource associated with topics loading"
-      showPaging
+      showPagingBottom
       currentPage={activePage}
       totalCount={topicCount}
       offset={offset}

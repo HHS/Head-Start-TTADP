@@ -1,0 +1,52 @@
+@use '../colors.scss' as colors;
+
+.ttahub-resource-use-sparkline--legend {
+    gap: .5em;
+}
+.ttahub-resource-use-sparkline--legend__item--blue {
+    background: colors.$ttahub-medium-blue;
+}
+
+.ttahub-resource-use-sparkline--legend__item--orange {
+    background: colors.$ttahub-orange;
+}
+
+.ttahub-resource-use-sparkline__heading-group,
+.ttahub-resource-use-sparkline__graphs {
+    display: grid;
+    grid-template-columns: 200px 1fr 90px;    
+    max-width: 100%;
+}
+
+
+@media(min-width: 800px) {
+    .ttahub-resource-use-sparkline__heading-group,
+    .ttahub-resource-use-sparkline__graphs {
+        grid-template-columns: 330px 1fr 90px;    
+    }
+}
+
+.ttahub-resource-use-sparkline__heading-group {
+    grid-template-rows: 3em;
+    align-items: center;
+}
+
+span.ttahub-resource-use-sparkline__resource-heading {
+    border-right-color: colors.$text-ink;
+}
+
+span.ttahub-resource-use-sparkline__resource-heading-total {
+    border-left-color: colors.$text-ink;
+}
+
+.ttahub-resource-use-sparkline__graphs {
+    grid-template-rows: auto;
+}
+
+.ttahub-resource-use-sparkline__heading {
+    width: 68px;
+}
+
+.ttahub-resource-use-sparkline-resource-title {
+    max-width: 30ch;
+}

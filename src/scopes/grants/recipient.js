@@ -11,16 +11,20 @@ WHERE "Recipients"."name"`;
 
 export function withRecipientName(name) {
   return {
-    [Op.or]: [
-      filterAssociation(recipientNameFilter, name, false),
-    ],
+    where: {
+      [Op.or]: [
+        filterAssociation(recipientNameFilter, name, false),
+      ],
+    },
   };
 }
 
 export function withoutRecipientName(name) {
   return {
-    [Op.and]: [
-      filterAssociation(recipientNameFilter, name, true),
-    ],
+    where: {
+      [Op.and]: [
+        filterAssociation(recipientNameFilter, name, true),
+      ],
+    },
   };
 }

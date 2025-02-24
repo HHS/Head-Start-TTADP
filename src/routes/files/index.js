@@ -2,9 +2,7 @@ import express from 'express';
 import {
   uploadHandler,
   deleteHandler,
-  deleteObjectiveFileHandler,
   deleteOnlyFile,
-  uploadObjectivesFile,
   deleteActivityReportObjectiveFile,
 } from './handlers';
 import {
@@ -13,6 +11,8 @@ import {
   checkObjectiveTemplateIdParam,
   checkFileIdParam,
   checkIdParam,
+  checkCommunicationLogIdParam,
+  checkSessionAttachmentIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -23,7 +23,6 @@ const context = 'files';
  * API for file uploads
  */
 router.post('/', transactionWrapper(uploadHandler));
-router.post('/objectives', transactionWrapper(uploadObjectivesFile));
 router.delete(
   '/s/:eventSessionId/:fileId',
   (req, res, next) => checkIdParam(req, res, next, 'eventSessionId'),
@@ -38,9 +37,16 @@ router.delete(
   transactionWrapper(deleteHandler, `${context} /r/:reportId?/:fileId?`),
 );
 router.delete(
-  '/:fileId/objectives',
+  '/l/:communicationLogId/:fileId?',
+  checkCommunicationLogIdParam,
   checkFileIdParam,
-  transactionWrapper(deleteObjectiveFileHandler, `${context} /:fileId/objectives`),
+  transactionWrapper(deleteHandler, `${context} /r/:communicationLogId/:fileId?`),
+);
+router.delete(
+  '/ssa/:sessionAttachmentId/:fileId?',
+  checkSessionAttachmentIdParam,
+  checkFileIdParam,
+  transactionWrapper(deleteHandler, `${context} /ssa/:sessionAttachmentId/:fileId?`),
 );
 router.delete(
   '/o/:objectiveId?/:fileId?',

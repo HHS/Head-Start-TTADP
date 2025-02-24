@@ -123,4 +123,5 @@ PaginationCard.defaultProps = {
   accessibleLandmarkName: 'Pagination',
   paginationClassName: 'padding-1',
 };
+
 export default PaginationCard;

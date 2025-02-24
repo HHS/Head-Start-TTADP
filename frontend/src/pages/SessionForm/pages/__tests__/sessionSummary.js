@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { MemoryRouter } from 'react-router-dom';
 import join from 'url-join';
 import {
@@ -93,7 +94,7 @@ describe('sessionSummary', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderSessionSummary = ({ formValues = defaultFormValues }) => {
+    const RenderSessionSummary = ({ formValues = defaultFormValues, additionalData = { status: 'Not started' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -108,7 +109,7 @@ describe('sessionSummary', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {sessionSummary.render(
-                  null,
+                  additionalData,
                   defaultFormValues,
                   1,
                   false,
@@ -133,11 +134,29 @@ describe('sessionSummary', () => {
         { id: 2, name: 'Complaint' },
       ]);
 
-      fetchMock.get('/api/national-center', [
-        { id: 1, name: 'DTL' },
-        { id: 2, name: 'HBHS' },
-        { id: 3, name: 'PFCE' },
-        { id: 4, name: 'PFMO' },
+      fetchMock.get('/api/national-center', {
+        centers: [
+          { id: 1, name: 'DTL' },
+          { id: 2, name: 'HBHS' },
+          { id: 3, name: 'PFCE' },
+          { id: 4, name: 'PFMO' },
+        ],
+        users: [],
+      });
+
+      fetchMock.get('/api/courses', [
+        {
+          id: 1,
+          name: 'Sample Course 1',
+        },
+        {
+          id: 2,
+          name: 'Sample Course 2',
+        },
+        {
+          id: 3,
+          name: 'Sample Course 3',
+        },
       ]);
 
       fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
@@ -224,7 +243,7 @@ describe('sessionSummary', () => {
       fetchMock.delete(deleteUrl, 200);
 
       const confirmDelete = await screen.findByRole('button', {
-        name: /This button will permanently delete the file/i,
+        name: /confirm delete/i,
       });
 
       act(() => {
@@ -234,6 +253,32 @@ describe('sessionSummary', () => {
       await waitFor(() => expect(
         fetchMock.called(deleteUrl, { method: 'DELETE' }),
       ).toBe(true));
+
+      // Select courses.
+      let yesCourses = document.querySelector('#useIpdCourses-yes');
+      act(async () => {
+        userEvent.click(yesCourses);
+      });
+
+      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      await selectEvent.select(courseSelect, ['Sample Course 2', 'Sample Course 3']);
+      expect(await screen.findByText(/Sample Course 2/i)).toBeVisible();
+      expect(await screen.findByText(/Sample Course 3/i)).toBeVisible();
+
+      const noCourses = document.querySelector('#useIpdCourses-no');
+      act(async () => {
+        userEvent.click(noCourses);
+      });
+
+      expect(await screen.findByText(/Sample Course 2/i)).not.toBeVisible();
+      expect(await screen.findByText(/Sample Course 3/i)).not.toBeVisible();
+
+      yesCourses = document.querySelector('#useIpdCourses-yes');
+      act(async () => {
+        userEvent.click(yesCourses);
+      });
+      await selectEvent.select(courseSelect, ['Sample Course 1']);
+      expect(await screen.findByText(/Sample Course 1/i)).toBeVisible();
 
       fetchMock.restore();
 
@@ -270,7 +315,7 @@ describe('sessionSummary', () => {
 
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
       act(() => {
-        userEvent.selectOptions(supportType, 'Planning');
+        userEvent.selectOptions(supportType, SUPPORT_TYPES[1]);
       });
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
@@ -290,7 +335,7 @@ describe('sessionSummary', () => {
       fetchMock.delete(deleteUrl, 500);
 
       const confirmDelete = await screen.findByRole('button', {
-        name: /This button will permanently delete the file/i,
+        name: /confirm delete/i,
       });
 
       act(() => {
@@ -363,6 +408,50 @@ describe('sessionSummary', () => {
       });
 
       expect(await screen.findByText(/There was an error fetching objective trainers/i)).toBeInTheDocument();
+    });
+
+    it('hides the save draft button if the session status is complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'Complete',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete' }} />);
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the save draft button if the session status is not complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'In progress',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />);
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
+    });
+
+    it('shows the save and continue button if the admin is editing the session and the session status is not complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'In progress',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress', isAdminUser: true }} />);
+      expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /review and submit/i })).not.toBeInTheDocument();
+    });
+
+    it('only shows the continue button if the admin is editing the session and the session status is complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'Complete',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete', isAdminUser: true }} />);
+      expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
   });
 });

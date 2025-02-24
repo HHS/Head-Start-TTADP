@@ -11,22 +11,21 @@ const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations, value, isOnReport, isComplete) => (
+    render: (field, validations, value, userCanEdit) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}
         fieldName={formatTitleForHtmlAttribute(field.title)}
         defaultValue={value}
-        isOnReport={isOnReport}
         key={`conditional-multiselect-${formatTitleForHtmlAttribute(field.title)}`}
-        isComplete={isComplete}
+        userCanEdit={userCanEdit}
       />
     ),
   },
 };
 
 export default function ConditionalFieldsForHookForm({
-  prompts, isOnReport, isMultiRecipientReport,
+  prompts, isMultiRecipientReport, userCanEdit,
 }) {
   const {
     field: {
@@ -71,25 +70,11 @@ export default function ConditionalFieldsForHookForm({
     }
 
     if (FIELD_DICTIONARY[prompt.fieldType]) {
-      const initialValue = (() => {
-        const current = initialValues.find((p) => p.promptId === prompt.promptId);
-        if (current) {
-          return current.response;
-        }
-
-        return [];
-      })();
-
-      const validationsAndCompletions = CONDITIONAL_FIELD_CONSTANTS[prompt.fieldType];
-      const completions = validationsAndCompletions.confirmResponseComplete(prompt.validations);
-      const isComplete = completions.every((completion) => completion(initialValue));
-
       return FIELD_DICTIONARY[prompt.fieldType].render(
         prompt,
         prompt.validations,
         prompt.response,
-        isOnReport,
-        isComplete,
+        userCanEdit,
       );
     }
 
@@ -106,6 +91,10 @@ ConditionalFieldsForHookForm.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   isMultiRecipientReport: PropTypes.bool.isRequired,
+  canEdit: PropTypes.bool,
+};
+
+ConditionalMultiselectForHookForm.defaultProps = {
+  userCanEdit: false,
 };

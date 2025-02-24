@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
 
 export const CONTAINS = 'contains';
@@ -19,12 +20,18 @@ export const EMPTY_MULTI_SELECT = {
   'is not': [],
 };
 
+export const EMPTY_TEXT_INPUT = {
+  contains: '',
+  'does not contain': '',
+};
+
 export const SPECIALIST_NAME_CONDITIONS = [IS_COLLABORATOR, IS_CREATOR, IS_BOTH];
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
 export const REGION_CONDITIONS = [IS];
 export const SINGLE_OR_MULTI_RECIPIENT_CONDITIONS = [IS];
+export const SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
   [CONTAINS]: 'ctn[]',
@@ -48,6 +55,11 @@ export const DATE_CONDITIONS = [
   WITHIN,
 ];
 
+export const WITHOUT_ACTIVITY_DATE_CONDITIONS = [
+  IS,
+  WITHIN,
+];
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const REGIONAL_SCOPES = {
@@ -56,8 +68,9 @@ export const REGIONAL_SCOPES = {
     description: 'Can view and create/edit activity reports in the region',
   },
   [SCOPE_IDS.READ_ACTIVITY_REPORTS]: {
-    name: 'READ_ACTIVITY_REPORTS',
-    description: 'Can view reports activity in the region',
+    name: 'READ_REPORTS',
+    description: 'Can view reports in the region',
+    readOnly: true,
   },
   [SCOPE_IDS.APPROVE_ACTIVITY_REPORTS]: {
     name: 'APPROVE_ACTIVITY_REPORTS',
@@ -67,15 +80,14 @@ export const REGIONAL_SCOPES = {
     name: 'READ_WRITE_TRAINING_REPORTS',
     description: 'Can view and create/edit training reports in the region',
   },
-  [SCOPE_IDS.READ_TRAINING_REPORTS]: {
-    name: 'READ_TRAINING_REPORTS',
-    description: 'Can view training reports in the region',
-  },
   [SCOPE_IDS.POC_TRAINING_REPORTS]: {
     name: 'POC_TRAINING_REPORTS',
     description: 'Can serve as a regional point of contact in the region (A regional POC can create sessions, view and edit reports)',
   },
 };
+
+export const READ_WRITE_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => !scope.readOnly));
+export const READ_ONLY_SCOPES = Object.keys(pickBy(REGIONAL_SCOPES, (scope) => scope.readOnly));
 
 export const GLOBAL_SCOPES = {
   [SCOPE_IDS.SITE_ACCESS]: {
@@ -127,6 +139,9 @@ export const REGIONS = [
   12,
 ];
 
+export const CENTRAL_OFFICE = 14;
+export const ALL_REGIONS = 15;
+
 export const managerReportStatuses = [
   'needs_action',
   'approved',
@@ -140,10 +155,15 @@ export const MODEL_TYPES = {
 export const REPORTS_PER_PAGE = 10;
 export const ALERTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
-export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
+export const ECLKC_GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
+export const HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION = 'headstart.gov';
 export const ESCAPE_KEY_CODE = 27;
 export const GOALS_PER_PAGE = 10;
 export const TOPICS_PER_PAGE = 10;
+export const COURSES_PER_PAGE = 10;
+export const RECIPIENTS_WITH_NO_TTA_PER_PAGE = 10;
+export const RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE = 10;
+export const RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE = 10;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
@@ -154,8 +174,34 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.3';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.4';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY = 'regional-resources-dashboard-filters';
+
+export const SUPPORT_LINK = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
+export const mustBeQuarterHalfOrWhole = (value) => {
+  if (value % 0.25 !== 0) {
+    return 'Duration must be rounded to the nearest quarter hour';
+  }
+  return true;
+};
+
+export const parseCheckboxEvent = (event) => {
+  const { target: { checked = null, value = null } = {} } = event;
+  return {
+    checked,
+    value,
+  };
+};
+
+export const arrayExistsAndHasLength = (array) => array && Array.isArray(array) && array.length > 0;
+
+export const NOOP = () => {};
+export const EMPTY_ARRAY = [];
+
+export const ROUTES = {
+  SOMETHING_WENT_WRONG: '/something-went-wrong',
+};

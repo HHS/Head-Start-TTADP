@@ -72,10 +72,10 @@ const CloseSuspendReasonModal = ({
         >
           <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
-              {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
-              {
-                generateReasonRadioButtons()
-              }
+              <ErrorMessage>
+                { showValidationError ? `Please select a reason for ${reasonDisplayStatus} goal.` : ''}
+              </ErrorMessage>
+              {generateReasonRadioButtons()}
             </Fieldset>
           </FormGroup>
           <FormGroup>

@@ -27,6 +27,8 @@ const Submitter = ({
     calculatedStatus,
     approvers,
     creatorRole,
+    goalsAndObjectives,
+    activityRecipients,
   } = formData;
   const draft = calculatedStatus === REPORT_STATUSES.DRAFT;
   const submitted = calculatedStatus === REPORT_STATUSES.SUBMITTED;
@@ -92,6 +94,93 @@ const Submitter = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
 
+  /*
+  grantsMissingMonitoring:
+  * This checks that if we only have a single monitoring goal selected,
+  * that all selected recipient/grants are associated with that goal.
+  * If not they either need to remove the recipient or add a standard goal.
+  */
+  const grantsMissingMonitoring = () => {
+    // 1. Determine if a monitoring goal is selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    // 2. If we only have a monitoring goal selected (no other goals).
+    if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
+      // 3. Determine if any selected recipients are not applicable the the monitoring goal.
+      const missingGrants = activityRecipients.filter(
+        (recipient) => !hasMonitoringGoalSelected.grantIds.includes(recipient.activityRecipientId),
+      ).map((recipient) => recipient.activityRecipientId);
+
+      // 4. Get the names of the recipents/grants that are not applicable to this monitoring goal.
+      const grantNames = activityRecipients.filter(
+        (recipient) => missingGrants.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      return grantNames;
+    }
+    return [];
+  };
+
+  /*
+  grantsMissingCitations:
+    This returns grants that are missing citations,
+    that should have them on the monitoring goal.
+    This happens regardless of how many additional goals are selected.
+  */
+  const grantsMissingCitations = () => {
+    // 1. Determine if a monitoring goal is selected.
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    if (hasMonitoringGoalSelected) {
+      // 2. Get all the grant ids off the SELECTED citations.
+      // The complexity in the reduce is because we need to parse the monitoringReferences (JSON).
+      const selectedCitationGrantIds = hasMonitoringGoalSelected.objectives.reduce(
+        (acc, objective) => {
+          const monitoringReferencesFlat = (objective.citations || []).map(
+            (citation) => citation.monitoringReferences,
+          ).flat();
+
+          const monitoringReferenceGrantIds = monitoringReferencesFlat.map(
+            (reference) => reference.grantId,
+          );
+
+          // Add the grant ids to the objective id in the accumulator.
+          acc[objective.id] = monitoringReferenceGrantIds;
+          return acc;
+        }, {},
+      );
+
+      // 3. Get the grants ids that are associated with this monitoring goal.
+      // We only save for the grants that require monitoring.
+      // The grantIds should only be for the applicable grants on this report.
+      const grantsThatRequireMonitoring = hasMonitoringGoalSelected.grantIds;
+
+      // 4. Check each objective and find any missing citations.
+      const grantsFoundMissingCitations = grantsThatRequireMonitoring.reduce(
+        (acc, grantId) => {
+          const objectiveIds = Object.keys(selectedCitationGrantIds);
+          const missingCitations = objectiveIds.filter(
+            (objectiveId) => !selectedCitationGrantIds[objectiveId].includes(grantId),
+          );
+          if (missingCitations.length > 0) {
+            acc.push(grantId);
+          }
+          return acc;
+        }, [],
+      );
+      const distinctGrantIdsMissing = [...new Set(grantsFoundMissingCitations)];
+
+      // 5. From activityRecipients get the name of the grants that match the activityRecipientId.
+      const grantNames = activityRecipients.filter(
+        (recipient) => distinctGrantIdsMissing.includes(recipient.activityRecipientId),
+      ).map(
+        (recipient) => recipient.name,
+      );
+      // 6. Return the names of the missing recipients/grants.
+      return grantNames;
+    }
+    return [];
+  };
+
   return (
     <>
       {renderTopAlert()}
@@ -116,6 +205,8 @@ const Submitter = ({
               approverStatusList={approverStatusList}
               lastSaveTime={lastSaveTime}
               creatorRole={creatorRole}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
             />
           )}
         {submitted
@@ -138,6 +229,7 @@ const Submitter = ({
               creatorRole={creatorRole}
               displayId={displayId}
               reportId={id}
+              availableApprovers={availableApprovers}
             />
           )}
         {approved
@@ -178,6 +270,14 @@ Submitter.propTypes = {
         status: PropTypes.string,
       }),
     ),
+    goalsAndObjectives: PropTypes.arrayOf(PropTypes.shape({
+      standard: PropTypes.string,
+      grantIds: PropTypes.arrayOf(PropTypes.number),
+    })),
+    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
+      activityRecipientId: PropTypes.number,
+      name: PropTypes.string,
+    })),
   }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
 

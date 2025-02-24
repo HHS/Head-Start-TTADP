@@ -19,6 +19,7 @@ export default function NextStepsRepeater({
   name,
   ariaName,
   recipientType,
+  required,
 }) {
   const [heights, setHeights] = useState([]);
 
@@ -95,6 +96,13 @@ export default function NextStepsRepeater({
     ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
     : `When do you anticipate completing step ${index + 1}?`);
 
+  const textareaRegister = (() => {
+    if (required) {
+      return register({ required: 'Enter a next step' });
+    }
+    return register();
+  })();
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
@@ -109,7 +117,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-${index + 1}`}
               >
                 {`Step ${index + 1}`}
-                <Req />
+                {required && (<Req />)}
               </Label>
               {(errors[name]
                 && errors[name][index] && errors[name][index].note)
@@ -124,11 +132,11 @@ export default function NextStepsRepeater({
                   className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                   name={`${name}[${index}].note`}
                   defaultValue={item.note}
-                  inputRef={register({ required: 'Enter a next step' })}
+                  inputRef={textareaRegister}
                   data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
                   style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
                   onChange={(e) => onStepTextChanged(e, index)}
-                  required
+                  required={required}
                 />
                 {canDelete ? (
                   <Button
@@ -157,7 +165,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
                 {dateLabel(index)}
-                <Req announce />
+                {required && (<Req announce />)}
               </Label>
               {(errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
@@ -173,6 +181,7 @@ export default function NextStepsRepeater({
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
+                  required={required}
                 />
               </div>
             </FormGroup>
@@ -194,8 +203,10 @@ NextStepsRepeater.propTypes = {
   name: PropTypes.string.isRequired,
   ariaName: PropTypes.string.isRequired,
   recipientType: PropTypes.string,
+  required: PropTypes.bool,
 };
 
 NextStepsRepeater.defaultProps = {
   recipientType: '',
+  required: true,
 };

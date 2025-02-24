@@ -46,19 +46,13 @@ export default (sequelize, DataTypes) => {
         otherKey: 'goalTemplateId',
         as: 'goalTemplates',
       });
-      Resource.hasMany(models.ObjectiveResource, { foreignKey: 'resourceId', as: 'objectiveResources' });
-      Resource.belongsToMany(models.Objective, {
-        through: models.ObjectiveResource,
-        foreignKey: 'resourceId',
-        otherKey: 'objectiveId',
-        as: 'objectives',
+      Resource.hasMany(models.Resource, {
+        foreignKey: 'mapsTo',
+        as: 'mapsFromResource',
       });
-      Resource.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'resourceId', as: 'objectiveTemplateResources' });
-      Resource.belongsToMany(models.ObjectiveTemplate, {
-        through: models.ObjectiveTemplateResource,
-        foreignKey: 'resourceId',
-        otherKey: 'objectiveTemplateId',
-        as: 'objectiveTemplates',
+      Resource.belongsTo(models.Resource, {
+        foreignKey: 'mapsTo',
+        as: 'mapsToResource',
       });
     }
   }
@@ -75,6 +69,14 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.TEXT,
     },
+    mimeType: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
+    lastStatusCode: {
+      allowNull: true,
+      type: DataTypes.INTEGER,
+    },
     metadata: {
       type: DataTypes.JSONB,
       allowNull: true,
@@ -82,6 +84,16 @@ export default (sequelize, DataTypes) => {
     metadataUpdatedAt: {
       allowNull: true,
       type: DataTypes.DATE,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: {
+          tableName: 'Resource',
+        },
+        key: 'id',
+      },
     },
   }, {
     hooks: {

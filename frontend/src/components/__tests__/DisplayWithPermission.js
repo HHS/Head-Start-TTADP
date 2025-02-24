@@ -9,12 +9,11 @@ import { createMemoryHistory } from 'history';
 import DisplayWithPermission from '../DisplayWithPermission';
 import UserContext from '../../UserContext';
 
-const { ADMIN, READ_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
+const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
 describe('display with permissions', () => {
+  const history = createMemoryHistory();
   const renderDisplayWithPermission = (scopes, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
@@ -30,11 +29,11 @@ describe('display with permissions', () => {
     const user = {
       permissions: [
         {
-          scopeId: READ_TRAINING_REPORTS,
+          scopeId: READ_WRITE_TRAINING_REPORTS,
         },
       ],
     };
-    renderDisplayWithPermission([READ_ACTIVITY_REPORTS, READ_TRAINING_REPORTS], user);
+    renderDisplayWithPermission([READ_ACTIVITY_REPORTS, READ_WRITE_TRAINING_REPORTS], user);
     expect(screen.getByText('This is a test')).toBeVisible();
   });
 
@@ -46,7 +45,7 @@ describe('display with permissions', () => {
         },
       ],
     };
-    renderDisplayWithPermission([READ_TRAINING_REPORTS], user);
+    renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user);
 
     expect(document.querySelectorAll('h1').length).toBe(0);
   });
@@ -60,18 +59,19 @@ describe('display with permissions', () => {
         },
       ],
     };
-    renderDisplayWithPermission([READ_TRAINING_REPORTS], user);
+    renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user);
 
     expect(screen.getByText('This is a test')).toBeVisible();
   });
 
-  it('renders not found where appropriate', () => {
+  it('renders not found where appropriate', async () => {
     const user = {
       flags: [],
       permissions: [],
     };
     const renderNotFound = true;
-    renderDisplayWithPermission([READ_TRAINING_REPORTS], user, renderNotFound);
-    expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
+
+    renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user, renderNotFound);
+    expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
   });
 });

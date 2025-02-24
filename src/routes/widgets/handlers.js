@@ -13,6 +13,19 @@ const logContext = {
   namespace,
 };
 
+export function keysDisallowCache(query) {
+  const DISALLOWED_KEYS = ['myReports'];
+  let disallowCache = false;
+
+  Object.keys(query).forEach((key) => {
+    const firstFilterParam = key.split('.')[0];
+    if (DISALLOWED_KEYS.includes(firstFilterParam)) {
+      disallowCache = true;
+    }
+  });
+  return disallowCache;
+}
+
 export async function getWidget(req, res) {
   try {
     const { widgetId } = req.params;
@@ -55,10 +68,15 @@ export async function getWidget(req, res) {
    * Proposal: This is where we should do things like format values in the query object
    * if we need special formatting, a la parsing the region for use in string literals   *
    */
-
+    const skipCache = keysDisallowCache(queryWithFilteredKeys);
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
     const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 
+    if (skipCache) {
+      const widgetData = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
+      res.json(widgetData);
+      return;
+    }
     const widgetData = await getCachedResponse(
       key,
       async () => {
@@ -70,6 +88,6 @@ export async function getWidget(req, res) {
 
     res.json(widgetData);
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }

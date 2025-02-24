@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Sequelize, Op } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
@@ -57,12 +56,29 @@ specified region.
 @param grantIds - An array of grant IDs to filter by. If null, all grants will be included.
 @returns A Promise that resolves to an array of GoalTemplate objects.
 */
-export async function getCuratedTemplates(grantIds: number[] | null): Promise<GoalTemplate[]> {
+export async function getCuratedTemplates(
+  grantIds: number[] | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
+
+  let monitoringGoalIds = [];
+  const monitoringGoals = await GoalModel.findAll({
+    attributes: ['id'],
+    where: {
+      createdVia: 'monitoring',
+      grantId: grantIds,
+    },
+  });
+  monitoringGoalIds = monitoringGoals.map((goal) => goal.id);
+
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
+      'source',
+      'isSourceEditable',
+      'standard',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
@@ -76,29 +92,87 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       [Sequelize.literal('TRUE'), 'isCurated'], // setting this tells the frontnd to check for conditional prompts
       [Sequelize.literal('FALSE'), 'isNew'],
     ],
-    include: [{
-      model: Region,
-      as: 'region',
-      attributes: [],
-      required: false,
-      include: [{
-        model: Grant,
-        as: 'grants',
+    include: [
+      {
+        model: Region,
+        as: 'region',
         attributes: [],
         required: false,
-        where: { id: grantIds },
-      }],
-    }],
+        include: [{
+          model: Grant.unscoped(), // remove recipient from response
+          as: 'grants',
+          attributes: [],
+          required: false,
+          where: { id: grantIds },
+          include: [],
+        }],
+      },
+      {
+        model: GoalModel,
+        as: 'goals',
+        attributes: [
+          'id',
+          'name',
+          'source',
+          'status',
+          'grantId',
+          'goalTemplateId',
+        ],
+        required: false,
+        where: {
+          grantId: grantIds,
+          status: {
+            [Op.notIn]: [
+              GOAL_STATUS.SUSPENDED,
+              GOAL_STATUS.CLOSED,
+            ],
+          },
+        },
+      },
+    ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
-      [Op.or]: [
-        { '$"region.grants"."id"$': { [Op.not]: null } },
-        { regionId: null },
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { '$"region.grants"."id"$': { [Op.not]: null } },
+            { regionId: null },
+          ],
+        },
+        {
+          [Op.or]: [
+            { '$goals.id$': monitoringGoalIds },
+            {
+              standard: {
+                [Op.not]: 'Monitoring',
+              },
+            },
+          ],
+        },
       ],
     },
-    ORDER: [['name', 'ASC']],
-    raw: true,
+    order: [['templateName', 'ASC']],
   });
+}
+
+export async function getSourceFromTemplate(
+  goalTemplateId: number,
+  grantIds: number[],
+) {
+  const goal = await GoalModel.findOne({
+    where: {
+      goalTemplateId,
+      grantId: grantIds,
+    },
+    attributes: ['source'],
+    include: {
+      model: GoalTemplateModel,
+      as: 'goalTemplate',
+      attributes: ['source'],
+    },
+  });
+
+  return goal?.source || goal?.goalTemplate?.source;
 }
 
 /**
@@ -180,17 +254,50 @@ export async function getFieldPromptsForCuratedTemplate(
       }
       return promptsWithResponses;
     },
-    // the inital set of prompts, including the
-    // response key if not already present
-    prompts.map((p: FieldPrompts) => {
-      if (p.response) {
-        return p;
-      }
-
-      return { ...p, response: [] };
-    }),
+    // the inital set of prompts, which can't have a response yet
+    // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
+    // doesn't include a response and doesn't join with GoalFieldResponseModel.
+    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
   );
   return restructuredPrompts;
+}
+
+/**
+ * Validates the response for a given prompt based on its requirements.
+ * @param {string[]} response - The response to validate.
+ * @param {any} promptRequirements - The requirements of the prompt.
+ * @throws Will throw an error if the response is invalid.
+ */
+export function validatePromptResponse(response: string[], promptRequirements) {
+  if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
+    if (response && response.filter((r) => !promptRequirements.options.includes(r)).length > 0) {
+      throw new Error(
+        `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${
+          response.filter((r) => !promptRequirements.options.includes(r)).map((r) => `'${r}'`).join(', ')
+        }.`,
+      );
+    }
+
+    if (promptRequirements.validations) {
+      const { rules } = promptRequirements.validations;
+
+      if (rules) {
+        const maxSelections = (() => {
+          const max = rules?.find((r) => r.name === 'maxSelections');
+          if (max) {
+            return max.value;
+          }
+          return false;
+        })();
+
+        if (maxSelections && response && response.length > maxSelections) {
+          throw new Error(
+            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
+          );
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -269,51 +376,16 @@ export async function setFieldPromptForCuratedTemplate(
     }));
 
   if (goalIdsToUpdate.length || recordsToCreate.length) {
-    if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
-      if (response
-        && response
-          .filter((r) => !promptRequirements.options.includes(r))
-          .length > 0) {
-        return Promise.reject(new Error(
-          `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${
-            response
-              .filter((r) => !promptRequirements.options.includes(r))
-              .map((r) => `'${r}'`)
-              .join(', ')
-          }.`,
-        ));
-      }
-
-      // todo - rip out this validation logic and put it in it's own function
-      if (promptRequirements.validations) {
-        const { rules } = promptRequirements.validations;
-
-        if (rules) {
-          const maxSelections = (() => {
-            const max = rules?.find((r) => r.name === 'maxSelections');
-            if (max) {
-              return max.value;
-            }
-            return false;
-          })();
-
-          if (maxSelections && response && response.length > maxSelections) {
-            throw new Error(
-              `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
-            );
-          }
-        }
-      }
-    }
+    validatePromptResponse(response, promptRequirements);
 
     return Promise.all([
       GoalFieldResponseModel.update(
         { response },
         {
           where: {
+            // GoalFieldResponses should always be updated regardless of on approved ar.
             goalTemplateFieldPromptId: promptId,
             goalId: goalIdsToUpdate,
-            onApprovedAR: false,
           },
           individualHooks: true,
         },
@@ -344,4 +416,18 @@ export async function setFieldPromptsForCuratedTemplate(
         response,
       }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
   );
+}
+
+/**
+Retrieves field prompts for template name.
+@param name - Name of the goal field template prompt to retrieve templates.
+@returns An array of Field Prompts for the named goal template prompt.
+*/
+export async function getOptionsByGoalTemplateFieldPromptName(
+  name: string,
+): Promise<FieldPrompts[]> {
+  return GoalTemplateFieldPromptModel.findOne({
+    attributes: ['options'],
+    where: { title: name },
+  });
 }

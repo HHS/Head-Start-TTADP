@@ -1,7 +1,9 @@
-import newQueue from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { S3_ACTIONS } from '../constants';
 import { logger, auditLogger } from '../logger';
 import { deleteFileFromS3Job } from '../lib/s3';
+import transactionQueueWrapper from '../workers/transactionWrapper';
+import referenceData from '../workers/referenceData';
 
 const s3Queue = newQueue('s3');
 
@@ -11,9 +13,9 @@ const addDeleteFileToQueue = (id, key) => {
     fileId: id,
     fileKey: key,
     key: S3_ACTIONS.DELETE_FILE,
+    ...referenceData(),
   };
-  s3Queue.add(S3_ACTIONS.DELETE_FILE, data);
-  return data;
+  return s3Queue.add(S3_ACTIONS.DELETE_FILE, data);
 };
 
 const onFailedS3Queue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
@@ -28,11 +30,15 @@ const processS3Queue = () => {
   // S3 Queue.
   s3Queue.on('failed', onFailedS3Queue);
   s3Queue.on('completed', onCompletedS3Queue);
+  increaseListeners(s3Queue);
 
   // Delete S3 file.
   s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
-    deleteFileFromS3Job,
+    transactionQueueWrapper(
+      deleteFileFromS3Job,
+      S3_ACTIONS.DELETE_FILE,
+    ),
   );
 };
 

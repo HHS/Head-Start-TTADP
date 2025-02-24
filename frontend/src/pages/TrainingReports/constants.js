@@ -3,32 +3,28 @@ import PropTypes from 'prop-types';
 import {
   startDateFilter,
   regionFilter,
-  collaboratorFilter,
+  collaboratorsFilter,
+  creatorFilter,
+  eventIdFilter,
 } from '../../components/filter/trainingReportFilters';
+import { goalNameFilter } from '../../components/filter/goalFilters';
 
-const TRAINING_REPORT_BASE_FILTER_CONFIG = [
+const TRAINING_REPORT_FILTER_CONFIG = [
   startDateFilter,
-  collaboratorFilter,
-];
-
-const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
-  startDateFilter,
+  creatorFilter,
+  collaboratorsFilter,
+  eventIdFilter,
+  goalNameFilter,
   regionFilter,
-  collaboratorFilter,
 ];
 
-// sort both by display prop
-TRAINING_REPORT_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
-TRAINING_REPORT_CONFIG_WITH_REGIONS.sort((a, b) => a.display.localeCompare(b.display));
-
-export { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS };
+export { TRAINING_REPORT_FILTER_CONFIG };
 
 export const dataPropTypes = PropTypes.shape({
   Creator: PropTypes.string,
   Audience: PropTypes.string,
   'Event ID': PropTypes.string,
   'Edit Title': PropTypes.string,
-  'Sheet Name': PropTypes.string,
   'Full Event Title': PropTypes.string,
   'Reason for Activity': PropTypes.string,
   'Target Population(s)': PropTypes.string,

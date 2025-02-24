@@ -30,4 +30,51 @@ describe('TopicsTableWidget', () => {
     userEvent.click(topicsHeader);
     expect(topicsHeader).toHaveClass('desc');
   });
+
+  it('sorts with invalid sort values', async () => {
+    render(<TopicsTableWidget
+      data={[
+        {
+          ...topicsData[0],
+          topic: false,
+        },
+        {
+          ...topicsData[1],
+          topic: true,
+        },
+      ]}
+      loading={false}
+    />);
+
+    const topicsHeader = screen.getByRole('button', { name: /topic/i });
+
+    userEvent.click(topicsHeader);
+    expect(topicsHeader).toHaveClass('asc');
+
+    userEvent.click(topicsHeader);
+    expect(topicsHeader).toHaveClass('desc');
+  });
+
+  it('sorts with invalid equal sort values', async () => {
+    render(<TopicsTableWidget
+      data={[
+        {
+          ...topicsData[0],
+        },
+        {
+          ...topicsData[1],
+          topic: false,
+        },
+      ]}
+      loading={false}
+    />);
+
+    const topicsHeader = screen.getByRole('button', { name: /topic/i });
+
+    userEvent.click(topicsHeader);
+    expect(topicsHeader).toHaveClass('asc');
+
+    userEvent.click(topicsHeader);
+    expect(topicsHeader).toHaveClass('desc');
+  });
 });

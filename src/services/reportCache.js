@@ -1,7 +1,7 @@
 import {
-  getResourcesForActivityReportObjectives,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
+import { auditLogger } from '../logger';
 
 const { Op } = require('sequelize');
 const {
@@ -9,17 +9,19 @@ const {
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
+  ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCitation,
   Goal,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
   Objective,
-  ObjectiveFile,
-  ObjectiveResource,
-  ObjectiveTopic,
+  sequelize,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
-  const fileIds = files.map((file) => file.fileId);
+  const fileIds = files.map((file) => file.id);
   const filesSet = new Set(fileIds);
   const originalAROFiles = await ActivityReportObjectiveFile.findAll({
     where: { activityReportObjectiveId },
@@ -45,41 +47,20 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
         hookMetadata: { objectiveId },
       })
       : Promise.resolve(),
-    newFilesIds.length > 0
-      ? ObjectiveFile.update(
-        { onAR: true },
-        {
-          where: { fileId: { [Op.in]: newFilesIds } },
-          include: [
-            {
-              model: Objective,
-              as: 'objective',
-              required: true,
-              where: { id: objectiveId },
-              include: [
-                {
-                  model: ActivityReportObjective,
-                  as: 'activityReportObjectives',
-                  required: true,
-                  where: { id: activityReportObjectiveId },
-                },
-              ],
-            },
-          ],
-        },
-      )
-      : Promise.resolve(),
   ]);
 };
 
-const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
+const cacheResources = async (_objectiveId, activityReportObjectiveId, resources = []) => {
+  // Get resource urls.
   const resourceUrls = resources
     .map((r) => {
       if (r.resource && r.resource.url) return r.resource.url;
       if (r.url) return r.url;
+      if (r.value) return r.value;
       return null;
     })
     .filter((url) => url);
+
   const resourceIds = resources
     .map((r) => {
       if (r.resource && r.resource.id) return r.resource.id;
@@ -87,93 +68,62 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       return null;
     })
     .filter((id) => id);
-  const originalAROResources = await getResourcesForActivityReportObjectives(
-    activityReportObjectiveId,
-    true,
-  );
-  const aroResources = await processActivityReportObjectiveForResourcesById(
+
+  return processActivityReportObjectiveForResourcesById(
     activityReportObjectiveId,
     resourceUrls,
     resourceIds,
   );
-  const newAROResourceIds = aroResources
-    && aroResources.length > 0
-    ? aroResources
-      .filter((r) => !!originalAROResources.find((oR) => oR.id === r.id))
-      .map((r) => r.resourceId)
-    : [];
-  const removedAROResourceIds = originalAROResources
-    .filter((oR) => !aroResources?.find((r) => oR.id === r.id))
-    .map((r) => r.resourceId);
+};
+
+export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
+  const courseIds = courses.map((course) => course.id);
+  const courseSet = new Set(courseIds);
+  const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+  const originalCourseIds = originalAroCourses.map((course) => course.courseId)
+    || [];
+  const removedCourseIds = originalCourseIds.filter((id) => !courseSet.has(id));
+  const currentCourseIds = new Set(originalCourseIds.filter((id) => courseSet.has(id)));
+  const newCourseIds = courseIds.filter((id) => !currentCourseIds.has(id));
 
   return Promise.all([
-    newAROResourceIds.length > 0
-      ? ObjectiveResource.update(
-        { onAR: true },
-        {
-          where: {
-            id: objectiveId,
-            onAR: false,
-            resourceId: { [Op.in]: newAROResourceIds },
-          },
+    ...newCourseIds.map(async (courseId) => ActivityReportObjectiveCourse.create({
+      activityReportObjectiveId,
+      courseId,
+    })),
+    removedCourseIds.length > 0
+      ? ActivityReportObjectiveCourse.destroy({
+        where: {
+          activityReportObjectiveId,
+          courseId: { [Op.in]: removedCourseIds },
         },
-      )
-      : Promise.resolve(),
-    removedAROResourceIds.length > 0
-      ? (async () => {
-        const resourceNotOnARs = await ObjectiveResource.findAll({
-          attributes: ['id'],
-          where: {
-            [Op.and]: [
-              { objectiveId },
-              { onAR: true },
-              { resourceId: { [Op.in]: removedAROResourceIds } },
-              { '$"objective.activityReportObjectives".id$': { [Op.is]: null } },
-            ],
-          },
-          include: [{
-            attributes: [],
-            model: Objective,
-            as: 'objective',
-            required: true,
-            include: [{
-              attributes: [],
-              model: ActivityReportObjective,
-              as: 'activityReportObjectives',
-              required: false,
-              where: { id: { [Op.not]: activityReportObjectiveId } },
-              include: [{
-                attributes: [],
-                model: ActivityReportObjectiveResource,
-                as: 'activityReportObjectiveResources',
-                required: false,
-                where: { resourceId: { [Op.in]: removedAROResourceIds } },
-              }],
-            }],
-          }],
-          raw: true,
-        });
-        return resourceNotOnARs && resourceNotOnARs.length > 0
-          ? ObjectiveResource.update(
-            { onAR: false },
-            { where: { id: resourceNotOnARs.map((r) => r.id) } },
-          )
-          : Promise.resolve();
-      })()
+        individualHooks: true,
+        hookMetadata: { objectiveId },
+      })
       : Promise.resolve(),
   ]);
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => topic.topicId);
+  const topicIds = topics.map((topic) => {
+    if (!topic.id) {
+      auditLogger.error(`Error saving ARO topics: ${JSON.stringify(topics)} for objectiveId: ${objectiveId} and activityReportObjectiveId: ${activityReportObjectiveId}`);
+    }
+    return topic.id;
+  });
+
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
-    raw: true,
   });
   const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
     || [];
+  // Get topics for ARO we need to delete.
   const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
+  // Get topics to keep.
   const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
   const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
 
@@ -192,31 +142,71 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
         hookMetadata: { objectiveId },
       })
       : Promise.resolve(),
-    newTopicsIds.length > 0
-      ? ObjectiveTopic.update(
-        { onAR: true },
-        {
-          where: { topicId: { [Op.in]: newTopicsIds } },
-          include: [
-            {
-              model: Objective,
-              as: 'objective',
-              required: true,
-              where: { id: objectiveId },
-              include: [
-                {
-                  model: ActivityReportObjective,
-                  as: 'activityReportObjectives',
-                  required: true,
-                  where: { id: activityReportObjectiveId },
-                },
-              ],
-            },
-          ],
-        },
-      )
-      : Promise.resolve(),
   ]);
+};
+
+/*
+  - ActivityReportObjectiveCitation -
+  Each row in this table is per grant (from ARO).
+  Each row has a json column called 'monitoringReferences', this is an array of objects.
+  Each object is unique by a combination of grantId, findingId, and reviewName (for the same grant).
+  To avoid complex lookups, we will simply UPDATE (by id) existing and CREATE new citations.
+  Citations to remove will be determined by id.
+*/
+export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
+  let newCitations = [];
+  // Delete all existing citations for this activity report objective.
+  await ActivityReportObjectiveCitation.destroy({
+    where: { activityReportObjectiveId },
+    individualHooks: true,
+    hookMetadata: { objectiveId },
+  });
+
+  // Create citations to save.
+  if (citations && citations.length > 0) {
+    // Get the grant id from the goal.
+    const goal = await Goal.findOne({
+      attributes: ['grantId'],
+      include: [
+        {
+          model: Objective,
+          as: 'objectives',
+          where: { id: objectiveId },
+          required: true,
+        },
+      ],
+    });
+
+    const grantForThisCitation = goal.grantId;
+
+    // Get all the citations for the grant.
+    const citationsToSave = citations.reduce((acc, citation) => {
+      const { monitoringReferences } = citation;
+      monitoringReferences.forEach((ref) => {
+        const { grantId } = ref;
+        if (grantId === grantForThisCitation) {
+          acc.push(citation);
+        }
+      });
+      return acc;
+    }, []);
+
+    newCitations = citationsToSave.map((citation) => (
+      {
+        activityReportObjectiveId,
+        citation: citation.citation,
+        // Only save the monitoring references for the grant we are working with.
+        monitoringReferences: citation.monitoringReferences.filter(
+          (ref) => ref.grantId === grantForThisCitation,
+        ),
+      }));
+
+    // If we have citations to save, create them.
+    if (newCitations.length > 0) {
+      return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });
+    }
+  }
+  return newCitations;
 };
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
@@ -224,12 +214,17 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     files,
     resources,
     topics,
+    citations,
     ttaProvided,
     status,
+    courses,
     order,
-    suspendContext,
-    suspendReason,
+    supportType,
+    closeSuspendContext,
+    closeSuspendReason,
+    objectiveCreatedHere,
   } = metadata;
+
   const objectiveId = objective.dataValues
     ? objective.dataValues.id
     : objective.id;
@@ -249,18 +244,21 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const { id: activityReportObjectiveId } = aro;
   // Updates take longer then selects to settle in the db, as a result this update needs to be
   // complete prior to calling cacheResources to prevent stale data from being returned. This
-  // results in the following update cannot be in the Promise.all in the return.
+  // means the following update cannot be in the Promise.all in the return.
   await ActivityReportObjective.update({
     title: objective.title,
     status: status || objective.status,
     ttaProvided,
+    supportType: supportType || null,
     arOrder: order + 1,
-    suspendContext: suspendContext || null,
-    suspendReason: suspendReason || null,
+    closeSuspendContext: closeSuspendContext || null,
+    closeSuspendReason: closeSuspendReason || null,
+    objectiveCreatedHere,
   }, {
     where: { id: activityReportObjectiveId },
     individualHooks: true,
   });
+
   return Promise.all([
     Objective.update({ onAR: true }, {
       where: { id: objectiveId },
@@ -269,6 +267,8 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
+    cacheCourses(objectiveId, activityReportObjectiveId, courses),
+    cacheCitations(objectiveId, activityReportObjectiveId, citations),
   ]);
 };
 
@@ -356,6 +356,7 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
+  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -403,12 +404,45 @@ const cacheGoalMetadata = async (
     });
   }
 
-  return Promise.all([
+  const finalPromises = [
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    prompts && prompts.length
-      ? cachePrompts(goal.id, arg.id, prompts)
-      : Promise.resolve(),
-  ]);
+  ];
+
+  if (isMultiRecipientReport) {
+    // Check for fei goal prompts we need to update on the activity report goal.
+    const goalPrompts = await GoalFieldResponse.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        [sequelize.col('prompt."title"'), 'title'],
+        'response',
+      ],
+      where: { goalId: goal.id },
+      raw: true,
+      include: [
+        {
+          model: GoalTemplateFieldPrompt,
+          as: 'prompt',
+          required: true,
+          attributes: [],
+          where: {
+            title: 'FEI root cause',
+          },
+        },
+      ],
+    });
+
+    // if we have goal prompts call cache prompts with the goals prompts
+    if (goalPrompts && goalPrompts.length) {
+      finalPromises.push(
+        cachePrompts(goal.id, arg.id, goalPrompts),
+      );
+    }
+  } else if (prompts && prompts.length) {
+    finalPromises.push(
+      cachePrompts(goal.id, arg.id, prompts),
+    );
+  }
+  return Promise.all(finalPromises);
 };
 
 async function destroyActivityReportObjectiveMetadata(

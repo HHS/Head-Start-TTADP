@@ -1,12 +1,15 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
   beforeUpdate,
   afterCreate,
   afterUpdate,
+  afterDestroy,
+  beforeCreate,
 } = require('./hooks/goal');
+const { GOAL_CREATED_VIA, CREATION_METHOD } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -20,6 +23,7 @@ export default (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
       Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'originalGoalId', as: 'reassignedActivityReportGoals' });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
@@ -51,6 +55,13 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsToParentGoalId',
         as: 'childGoals',
       });
+      Goal.addScope('defaultScope', {
+        where: {
+          mapsToParentGoalId: null,
+        },
+      });
+      Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal1', as: 'scoreOne' });
+      Goal.hasMany(models.SimScoreGoalCache, { foreignKey: 'goal2', as: 'scoreTwo' });
     }
   }
   Goal.init({
@@ -69,12 +80,12 @@ export default (sequelize, DataTypes) => {
         return `G-${id}`;
       },
     },
-    closeSuspendReason: {
-      allowNull: true,
-      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
-    },
-    closeSuspendContext: {
-      type: DataTypes.TEXT,
+    isCurated: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { goalTemplate } = this;
+        return goalTemplate?.creationMethod === CREATION_METHOD.CURATED;
+      },
     },
     grantId: {
       type: DataTypes.INTEGER,
@@ -97,9 +108,6 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
       onUpdate: 'CASCADE',
-    },
-    previousStatus: {
-      type: DataTypes.TEXT,
     },
     mapsToParentGoalId: {
       type: DataTypes.INTEGER,
@@ -126,48 +134,8 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(RTTAPA_ENUM),
       allowNull: true,
     },
-    firstNotStartedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastNotStartedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstInProgressAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastInProgressAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstCeasedSuspendedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastCeasedSuspendedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstClosedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastClosedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstCompletedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastCompletedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
     createdVia: {
-      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
+      type: DataTypes.ENUM(GOAL_CREATED_VIA),
       allowNull: true,
     },
     rtrOrder: {
@@ -178,6 +146,16 @@ export default (sequelize, DataTypes) => {
     source: {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
+    isSourceEditable: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.goalTemplate && this.goalTemplate.source) {
+          return this.goalTemplate.source === null;
+        }
+
+        return true;
+      },
+    },
   }, {
     sequelize,
     modelName: 'Goal',
@@ -185,8 +163,10 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
   return Goal;

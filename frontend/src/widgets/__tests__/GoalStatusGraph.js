@@ -38,7 +38,7 @@ describe('GoalStatusChart', () => {
 
   it('switches to accessible data', async () => {
     renderGoalStatusChart(testData);
-    const button = await screen.findByRole('button', { name: /display goal statuses by number as a table/i });
+    const button = await screen.findByRole('button', { name: /display goal statuses/i });
     userEvent.click(button);
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeVisible();
   });

@@ -1,15 +1,39 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId, uniq } from 'lodash';
 import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
 
-const formatPrompts = (prompts) => prompts.filter((prompt) => (
-  prompt.response && prompt.response.length)).map((prompt) => ({
-  key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
-  title: prompt.title,
-  response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
-}));
+const formatPrompts = (prompts) => {
+  const ps = Array.isArray(prompts) ? prompts : Object.values(prompts);
+  return ps.filter((prompt) => (
+    prompt.response && prompt.response.length)).map((prompt) => ({
+    key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
+    title: prompt.title,
+    response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
+  }));
+};
+
+export const parseObjectValuesOrString = (d) => {
+  try {
+  // if null or undefined, return empty string
+    if (!d) {
+      return '';
+    }
+
+    if (typeof d === 'string') {
+      return d;
+    }
+
+    // this gets arrays and numbers
+    // (although numbers are not expected
+    // and will be converted to empty arrays by Object.values)
+    return uniq(Object.values(d)).join(', ');
+  } catch (e) {
+    return ''; // honestly, try breaking this function now, you can't
+  }
+};
 
 export default function ReadOnlyGoal({
   onEdit,
@@ -54,7 +78,7 @@ export default function ReadOnlyGoal({
           ? (
             <div className="margin-bottom-2">
               <h4 className="margin-0">Recipient grant numbers</h4>
-              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.label).join(', ')}</p>
+              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
             </div>
           )
           : null }
@@ -62,10 +86,10 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
-        {(goal.source && goal.source.length) ? (
-          <div className="margin-bottom-2" key={goal.source}>
+        {(goal.source) ? (
+          <div className="margin-bottom-2" key={uniqueId('goal-source-read-only-')}>
             <h4 className="margin-0">Goal source</h4>
-            <p className="usa-prose margin-0">{goal.source}</p>
+            <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
           </div>
         ) : null}
         {(goal.prompts) && (

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 
 test('get /v1/activity-reports/display/R01-AR-9999', async ({ request }) => {

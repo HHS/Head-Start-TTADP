@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import { HashLink } from 'react-router-hash-link';
 
 const Section = ({
-  title, children, basePath, anchor, hidePrint, canEdit,
+  title, children, basePath, anchor, hidePrint, canEdit, isLastSection,
 }) => {
   const classes = [
     'smart-hub-review-section',
     'margin-top-2 desktop:margin-top-0',
     hidePrint ? 'smart-hub-review-section--empty no-print' : '',
-    'margin-bottom-3',
+    isLastSection ? 'margin-bottom-0' : 'margin-bottom-3',
   ].filter((x) => x).join(' ');
 
   return (
@@ -42,6 +42,11 @@ Section.propTypes = {
   children: PropTypes.node.isRequired,
   basePath: PropTypes.string.isRequired,
   canEdit: PropTypes.bool.isRequired,
+  isLastSection: PropTypes.bool,
+};
+
+Section.defaultProps = {
+  isLastSection: false,
 };
 
 export default Section;

@@ -1,14 +1,46 @@
 #!/bin/bash
 #
-# This script sets up a server as run-owasp-scan expects it
+# This script sets up the system as run-owasp-scan expects it
 
-# remove old build directory
-rm -r build/
+# Setup script to fail on any error and log all output
+set -e
+set -o pipefail
+exec > >(tee -a "setup.log") 2>&1
 
-# run a production style build (single BE server with static FE)
-docker-compose -f docker-compose.dss.yml run --rm server yarn install --production=false
-docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
-docker-compose -f docker-compose.dss.yml run --rm server yarn build
-docker-compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
-docker-compose -f docker-compose.dss.yml up -d
-docker-compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci
+echo "Starting server setup..."
+
+# Check for existence of required docker-compose file
+if [ ! -f "docker-compose.dss.yml" ]; then
+    echo "Error: docker-compose.dss.yml does not exist."
+    exit 1
+fi
+
+# Remove old build directory
+if [ -d "build/" ]; then
+    echo "Removing old build directory..."
+    rm -r build/
+else
+    echo "No old build directory found, skipping removal."
+fi
+
+# Install dependencies and build for Node.js app
+echo "Installing and building Node.js app..."
+docker compose -f docker-compose.dss.yml run --rm server yarn install --production=false
+docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend install --production=false
+docker compose -f docker-compose.dss.yml run --rm server yarn build
+docker compose -f docker-compose.dss.yml run --rm server yarn --cwd frontend run build
+
+# Install dependencies for Python similarity_api
+echo "Installing Python dependencies for similarity_api..."
+docker compose -f docker-compose.dss.yml run --rm --user root similarity_api pip install --no-cache-dir -r /app/requirements.txt --timeout=60
+
+# Run database migrations using Node.js app
+echo "Running database migrations using Node.js app..."
+docker compose -f docker-compose.dss.yml run --rm server yarn db:migrate:ci
+
+# Start all services
+echo "Starting all services..."
+docker compose -f docker-compose.dss.yml up -d
+
+echo "Setup completed successfully."
+docker ps

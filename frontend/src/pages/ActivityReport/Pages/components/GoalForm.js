@@ -16,12 +16,10 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import isAdmin from '../../../../permissions';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import FeatureFlag from '../../../../components/FeatureFlag';
 import GoalSource from '../../../../components/GoalForm/GoalSource';
-import UserContext from '../../../../UserContext';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function GoalForm({
   goal,
@@ -30,6 +28,9 @@ export default function GoalForm({
   datePickerKey,
   templatePrompts,
   isMultiRecipientReport,
+  citationOptions,
+  rawCitations,
+  isMonitoringGoal,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -88,23 +89,6 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
-  // goal source rules = required if activityRecipientType === 'recipient'
-  // and if user has the goal_source flag
-
-  const { user } = useContext(UserContext);
-
-  const goalSourceRules = useMemo(() => {
-    if (activityRecipientType === 'recipient' && ((user && user.flags.includes('goal_source')) || isAdmin(user))) {
-      return {
-        required: {
-          value: true,
-          message: 'Select a goal source',
-        },
-      };
-    }
-    return {};
-  }, [activityRecipientType, user]);
-
   const {
     field: {
       onChange: onUpdateGoalSource,
@@ -114,7 +98,12 @@ export default function GoalForm({
     },
   } = useController({
     name: 'goalSource',
-    rules: goalSourceRules,
+    rules: activityRecipientType === 'recipient' ? {
+      required: {
+        value: true,
+        message: 'Select a goal source',
+      },
+    } : {},
     defaultValue: '',
   });
 
@@ -164,28 +153,45 @@ export default function GoalForm({
 
   const prompts = combinePrompts(templatePrompts, goal.prompts);
   const isCurated = goal.isCurated || false;
+  const { isSourceEditable } = goal;
 
   return (
     <>
-      <GoalText
-        error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-        goalName={goalText}
-        validateGoalName={onBlurGoalText}
-        onUpdateText={onUpdateText}
-        inputName={goalTextInputName}
-        isOnReport={goal.onApprovedAR || false}
-        goalStatus={status}
-        isLoading={isAppLoading}
-        userCanEdit={!isCurated}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !(goal.onApprovedAR),
+          !isCurated,
+        ]}
+        label="Recipient's goal"
+        value={goalText}
+      >
+        <GoalText
+          error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
+          goalName={goalText}
+          validateGoalName={onBlurGoalText}
+          onUpdateText={onUpdateText}
+          inputName={goalTextInputName}
+          isOnReport={goal.onApprovedAR || false}
+          goalStatus={status}
+          isLoading={isAppLoading}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <ConditionalFields
         prompts={prompts}
-        isOnReport={goal.onApprovedAR || false}
         isMultiRecipientReport={isMultiRecipientReport}
+        userCanEdit
       />
 
-      <FeatureFlag flag="goal_source">
+      <FormFieldThatIsSometimesReadOnly
+        permissions={isCurated ? [
+          isSourceEditable,
+          !goal.onApprovedAR || !goal.source,
+          !isMonitoringGoal,
+        ] : [!goal.onApprovedAR || !goal.source]}
+        label="Goal source"
+        value={goalSource}
+      >
         <GoalSource
           error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
           source={goalSource}
@@ -194,11 +200,9 @@ export default function GoalForm({
           inputName={goalSourceInputName}
           goalStatus={status}
           isLoading={isAppLoading}
-          userCanEdit={!isCurated}
-          isOnReport={false}
           isMultiRecipientGoal={isMultiRecipientReport}
         />
-      </FeatureFlag>
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
@@ -219,6 +223,9 @@ export default function GoalForm({
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         reportId={parseInt(reportId, DECIMAL_BASE)}
+        citationOptions={citationOptions}
+        rawCitations={rawCitations}
+        isMonitoringGoal={isMonitoringGoal}
       />
     </>
   );
@@ -237,9 +244,11 @@ GoalForm.propTypes = {
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
     isCurated: PropTypes.bool,
+    isSourceEditable: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
     source: PropTypes.string,
+    createdVia: PropTypes.string,
     prompts: PropTypes.arrayOf(PropTypes.shape({
       type: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
@@ -251,6 +260,23 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
+  citationOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })),
+  isMonitoringGoal: PropTypes.bool,
+  rawCitations: PropTypes.arrayOf(PropTypes.shape({
+    standardId: PropTypes.number,
+    citation: PropTypes.string,
+    // Create array of jsonb objects
+    grants: PropTypes.arrayOf(PropTypes.shape({
+      grantId: PropTypes.number,
+      findingId: PropTypes.string,
+      reviewName: PropTypes.string,
+      grantNumber: PropTypes.string,
+      reportDeliveryDate: PropTypes.string,
+    })),
+  })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
   templatePrompts: PropTypes.oneOfType([
@@ -267,4 +293,7 @@ GoalForm.propTypes = {
 
 GoalForm.defaultProps = {
   isMultiRecipientReport: false,
+  citationOptions: [],
+  rawCitations: [],
+  isMonitoringGoal: false,
 };

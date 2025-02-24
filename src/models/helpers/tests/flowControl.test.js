@@ -1,7 +1,6 @@
 import {
   isMatch,
   containsName,
-  hasIgnoreHooks,
   skipIf,
 } from '../flowControl';
 

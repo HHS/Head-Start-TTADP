@@ -210,6 +210,7 @@ describe('saveReport', () => {
     await Topic.destroy({
       where: { id: [firstTopic.id, secondTopic.id] },
       individualHooks: true,
+      force: true,
     });
 
     await Permission.destroy({
@@ -484,11 +485,6 @@ describe('saveReport', () => {
             },
           ],
         },
-        {
-          model: Topic,
-          as: 'topics',
-          required: false,
-        },
       ],
     });
 
@@ -503,22 +499,10 @@ describe('saveReport', () => {
         timeframe: null,
         isFromSmartsheetTtaPlan: false,
         endDate: null,
-        closeSuspendReason: null,
-        closeSuspendContext: null,
         grantId: grantAndRecipientId,
         onAR: true,
         onApprovedAR: false,
         isRttapa: 'No',
-        firstNotStartedAt: null,
-        lastNotStartedAt: null,
-        firstInProgressAt: null,
-        lastInProgressAt: null,
-        firstCeasedSuspendedAt: null,
-        lastCeasedSuspendedAt: null,
-        firstClosedAt: null,
-        lastClosedAt: null,
-        firstCompletedAt: null,
-        lastCompletedAt: null,
         createdVia: 'rtr',
         createdAt: new Date(),
         updatedAt: new Date(),

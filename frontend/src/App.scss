@@ -1,10 +1,41 @@
 @use 'colors.scss' as *;
+@use './Grid.scss';
+
+@use './widgets/widgets.scss';
 
 @font-face {
   font-family: 'FontAwesome';
   src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
   font-weight: bold;
 }
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Regular.ttf') format('truetype');
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: bold;
+}
+
+
 
 a {
   color: $text-link;
@@ -13,6 +44,12 @@ a {
 a:visited {
   color: $text-visited
 }
+
+summary {
+  cursor: pointer;
+}
+
+/*|||||| Table resets |||||||*/
 
 .usa-table thead th a {
   color: $text-ink;
@@ -78,6 +115,10 @@ body {
   color: $text-ink
 }
 
+.base-medium {
+  color: $base-medium;
+}
+
 .smart-hub-bg-blue-primary {
   background-color: $ttahub-blue;
 }
@@ -95,6 +136,9 @@ body {
   border-color: $error-dark;
 }
 
+.smart-hub-maxw-form-field {
+  max-width: 30rem;
+}
 
 .smart-hub-maxw-placard {
   max-width: 34.25rem;
@@ -125,6 +169,10 @@ body {
   }
 }
 
+
+.flex-gap-2 {
+  gap: 1em;
+}
 
 /* ========== some form resets ========== */
 
@@ -161,6 +209,22 @@ button:not([disabled]):focus {
 
 .usa-radio__input:checked + .usa-radio__label::before {
   background-color: $ttahub-medium-blue;
+}
+
+/* ========== generic typography ========== */
+
+.smart-hub-serif {
+  font-family: Merriweather, serif;
+}
+
+.smart-hub-title-big-serif {
+  font-size: 30px;
+  font-family: Merriweather, serif;
+}
+
+/* =========== colors ================== */
+.base-dark {
+  color: $base-dark;
 }
 
 /* ========== page heading class to be shared ========== */
@@ -333,10 +397,7 @@ fill: #1B1B1B;
   z-index: 99999;
 }
 
-.smart-hub-title-big-serif {
-  font-size: 30px;
-  font-family: Merriweather, serif;
-}
+
 
 /* ========== some color helpers ========== */
 
@@ -361,6 +422,18 @@ fill: #1B1B1B;
   border-bottom: 1px solid;
 }
 
+/* ========== button overrides ========== */
+
+/**
+  * reset for "unstyled" buttons, like we use in the table headers
+  * different from .usa-button--unstyled
+  */
+
+.ttahub-button--unstyled {
+  background: transparent;
+  border: none;
+}
+
 /* Like .usa-button--unstyled, but preserves spacing and
  * radius so that it fits next to other styled buttons.
  * e.g. <Button className="use-button--subtle" />
@@ -371,4 +444,27 @@ fill: #1B1B1B;
   color: $ttahub-medium-blue;
   font-weight: normal;
   text-decoration: underline;
+}
+
+@media all and (min-width: 64em){
+  .desktop\:maxw-6 {
+    max-width: 3rem;
+  }
+}
+
+.smart-hub--vertical-text {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+.text-overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lead-paragraph {
+  font-family: "Merriweather Web", Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
 }

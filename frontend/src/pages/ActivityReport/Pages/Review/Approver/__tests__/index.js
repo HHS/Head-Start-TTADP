@@ -56,6 +56,7 @@ const RenderApprover = ({
         formData={formData}
         isPendingApprover
         pages={pages}
+        availableApprovers={[{ id: 1, name: 'Approver 1' }]}
       >
         <div>
           test
@@ -167,7 +168,7 @@ describe('Approver review page', () => {
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
 
-      const statuses = screen.queryAllByLabelText('Choose report status *');
+      const statuses = screen.queryAllByLabelText('Choose approval status *');
       expect(statuses.length).toBe(1);
     });
 
@@ -238,7 +239,7 @@ describe('Approver review page', () => {
         calculatedStatus, onFormReview, reviewed, approvers, pages,
       );
 
-      const statuses = screen.queryAllByLabelText('Choose report status (Required)');
+      const statuses = screen.queryAllByLabelText('Choose approval status (Required)');
       expect(statuses.length).toBe(0);
     });
   });

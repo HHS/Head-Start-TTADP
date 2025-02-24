@@ -1,5 +1,8 @@
+/* eslint-disable max-len */
+/* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
+import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import {
   screen,
@@ -11,8 +14,8 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES } from '@ttahub/common';
-import { mockWindowProperty, withText } from '../../../testHelpers';
+import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
+import { mockRSSData, mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
   history,
@@ -36,10 +39,31 @@ describe('ActivityReport', () => {
     removeItem,
   });
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => {
+    fetchMock.restore();
+    jest.clearAllMocks();
+  });
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
+    fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
+    fetchMock.get('/api/activity-reports/groups?region=1', [{
+      id: 110,
+      name: 'Group 1',
+      grants: [
+        { id: 1 },
+        { id: 2 },
+      ],
+    },
+    {
+      id: 111,
+      name: 'Group 2',
+      grants: [
+        { id: 3 },
+        { id: 4 },
+      ],
+    },
+    ]);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -48,7 +72,6 @@ describe('ActivityReport', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
-
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
     fetchMock.get('/api/activity-reports/1', async () => { throw e; });
@@ -117,6 +140,196 @@ describe('ActivityReport', () => {
     });
   });
 
+  describe('something went wrong context', () => {
+    it('ensure we call set the response code on error', async () => {
+      const spy = jest.spyOn(history, 'push');
+      fetchMock.get('/api/activity-reports/1', 500);
+      renderActivityReport('1', 'activity-summary', null, 1);
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/something-went-wrong/500'));
+    });
+  });
+
+  describe('groups', () => {
+    it('recipients correctly update for groups', async () => {
+      const groupRecipients = {
+        grants: [
+          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+        ],
+        otherEntities: [],
+      };
+
+      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+      fetchMock.get('/api/activity-reports/1/activity-recipients', groupRecipients, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Page is done loading.
+      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
+
+      // Make sure 'recipient' is selected.
+      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
+      expect(recipient[0]).toBeChecked();
+
+      // Check use group.
+      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
+      });
+      expect(await screen.findByText(/Group name/i)).toBeVisible();
+
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 2');
+
+        await waitFor(() => {
+        // expect Group 2 to be visible.
+          expect(screen.getByText('Group 2')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+
+      // Change to group 1.
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 1');
+
+        await waitFor(() => {
+        // expect Group 1 to be visible.
+          expect(screen.getByText('Group 1')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 1 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 1 Grant B/i)).toBeVisible();
+
+      // Uncheck use group.
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).not.toBeChecked());
+      });
+
+      // Assert Group name is not visible.
+      expect(screen.queryByText(/Group name/i)).toBeNull();
+    });
+
+    it('modifying group recipients notifies the user', async () => {
+      const groupRecipients = {
+        grants: [
+          { id: 11, name: 'Group 1 Recipients', grants: [{ activityRecipientId: 1, name: 'Group 1 Grant A' }, { activityRecipientId: 2, name: 'Group 1 Grant B' }] },
+          { id: 12, name: 'Group 2 Recipients', grants: [{ activityRecipientId: 3, name: 'Group 2 Grant A' }, { activityRecipientId: 4, name: 'Group 2 Grant B' }] },
+          { id: 13, name: 'Group 3 Recipients', grants: [{ activityRecipientId: 5, name: 'Group 3 Grant A' }, { activityRecipientId: 6, name: 'Group 3 Grant B' }] },
+        ],
+        otherEntities: [],
+      };
+
+      fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+      fetchMock.get('/api/activity-reports/1/activity-recipients', groupRecipients, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
+
+      renderActivityReport('1', 'activity-summary');
+
+      // Page is done loading.
+      expect(await screen.findByText(/who was the activity for\?/i)).toBeVisible();
+
+      // Make sure 'recipient' is selected.
+      const recipient = screen.queryAllByRole('radio', { name: /recipient/i });
+      expect(recipient[0]).toBeChecked();
+
+      // Check use group.
+      const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+      await act(async () => {
+        userEvent.click(useGroupCheckbox);
+        await waitFor(() => expect(useGroupCheckbox).toBeChecked());
+      });
+      expect(await screen.findByText(/Group name/i)).toBeVisible();
+
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 2');
+
+        await waitFor(() => {
+        // expect Group 2 to be visible.
+          expect(screen.getByText('Group 2')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+
+      // Remove a recipient from the group.
+      await act(async () => {
+        const removeGrantButton = await screen.findByRole('button', { name: /remove group 2 grant a/i });
+        userEvent.click(removeGrantButton);
+        await waitFor(() => expect(removeGrantButton).not.toBeInTheDocument());
+      });
+
+      expect(await screen.findByText(
+        /you've successfully modified the group's recipients for this report\. changes here do not affect the group itself\./i,
+      )).toBeVisible();
+
+      // Click the reset link.
+      await act(async () => {
+        const resetLink = await screen.findByRole('button', { name: /reset or select a different group\./i });
+        userEvent.click(resetLink);
+        await waitFor(() => expect(resetLink).not.toBeInTheDocument());
+      });
+
+      // Assert use group checkbox is checked.
+      expect(useGroupCheckbox).toBeChecked();
+
+      // Select Group 2.
+      await act(async () => {
+        const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+        userEvent.selectOptions(groupSelectBox, 'Group 2');
+
+        await waitFor(() => {
+        // expect Group 2 to be visible.
+          expect(screen.getByText('Group 2')).toBeVisible();
+        });
+      });
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+
+      // Add recipient 'Group 3 Grant A'.
+      const recipientName = await screen.findByText(/recipient names/i);
+      const recipientSelect = await within(recipientName).findByText(/Group 2 Grant A/i);
+      await reactSelectEvent.select(recipientSelect, ['Group 3 Grant A']);
+
+      // Assert correct recipients.
+      expect(await screen.findByText(/Group 2 Grant A/i)).toBeVisible();
+      expect(await screen.findByText(/Group 2 Grant B/i)).toBeVisible();
+      expect(await screen.findByText(/Group 3 Grant A/i)).toBeVisible();
+
+      expect(await screen.findByText(
+        /you've successfully modified the group's recipients for this report\. changes here do not affect the group itself\./i,
+      )).toBeVisible();
+
+      // Click the reset link.
+      await act(async () => {
+        const resetLink = await screen.findByRole('button', { name: /reset or select a different group\./i });
+        userEvent.click(resetLink);
+        await waitFor(() => expect(resetLink).not.toBeInTheDocument());
+      });
+
+      // Assert use group checkbox is checked.
+      expect(useGroupCheckbox).toBeChecked();
+    });
+  });
+
   describe('last saved time', () => {
     it('is shown if history.state.showLastUpdatedTime is true', async () => {
       const data = formData();
@@ -157,6 +370,7 @@ describe('ActivityReport', () => {
 
   describe('resetToDraft', () => {
     it('navigates to the correct page', async () => {
+      fetchMock.get('/api/activity-reports/3/activity-recipients', recipients);
       const data = formData();
       // load the report
       fetchMock.get('/api/activity-reports/3', {
@@ -178,11 +392,13 @@ describe('ActivityReport', () => {
 
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
+      const spy = jest.spyOn(history, 'push');
       fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
+
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/1/supporting-attachments', { showLastUpdatedTime: true }));
     });
   });
 
@@ -447,6 +663,7 @@ describe('ActivityReport', () => {
     it('loads goals in edit mode', async () => {
       const data = formData();
       fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/goal-templates?grantIds=12539', []);
       fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
       fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
       fetchMock.get('/api/activity-reports/1', {
@@ -479,6 +696,7 @@ describe('ActivityReport', () => {
     it('loads goals in read-only mode', async () => {
       const data = formData();
       fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/goal-templates?grantIds=12539', []);
       fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
       // fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
       fetchMock.get('/api/activity-reports/1', {
@@ -548,7 +766,7 @@ describe('ActivityReport', () => {
       source: null,
       isCurated: false,
     }]);
-    fetchMock.get('/api/goal-templates?grantIds=10431', []);
+    fetchMock.get('/api/goal-templates?grantIds=10431&reportStartDate=2012-05-20', []);
     fetchMock.get('/api/activity-reports/1', {
       ...formData(),
       activityRecipientType: 'recipient',
@@ -715,14 +933,14 @@ describe('ActivityReport', () => {
       'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
     ));
 
-    const radio = screen.getByLabelText(/Yes/i);
+    const radio = document.querySelector('#add-objective-files-yes-95297-0'); // yes radio button
     act(() => {
       userEvent.click(radio);
     });
 
     const dropzone = container.querySelector('.dropzone');
 
-    fetchMock.post('/api/files/objectives', [{
+    fetchMock.post('/api/files', [{
       id: 25649, originalFileName: 'BSH_UE_SRD_1.0.2.docx', key: 'dc4b723f-f151-4934-a2b3-5f513c8254a2docx', status: 'UPLOADING', fileSize: 240736, updatedAt: '2023-07-05T18:40:06.130Z', createdAt: '2023-07-05T18:40:06.130Z', url: { url: 'http://minio:9000/ttadp-test/dc4b723f-f151-4934-a2b3-5f513c8254a2docx?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEID%2F20230705%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230705T184006Z&X-Amz-Expires=360&X-Amz-Signature=595be3d29630f8275d206300c7dfce6f5e3d7b16d506b7f47d64db04418cf982&X-Amz-SignedHeaders=host', error: null },
     }]);
 
@@ -730,7 +948,7 @@ describe('ActivityReport', () => {
 
     dispatchEvt(dropzone, 'drop', e);
 
-    await waitFor(() => expect(fetchMock.called('/api/files/objectives', { method: 'POST' })).toBeTruthy());
+    await waitFor(() => expect(fetchMock.called('/api/files', { method: 'POST' })).toBeTruthy());
 
     expect(await screen.findByText('BSH_UE_SRD_1.0.2.docx')).toBeInTheDocument();
   });
@@ -738,11 +956,14 @@ describe('ActivityReport', () => {
   it('you can add a goal and objective and add a file after saving', async () => {
     const data = formData();
     fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
+    fetchMock.get('/api/courses', []);
     fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-    fetchMock.get('/api/goal-templates?grantIds=12539', []);
+    fetchMock.get('/api/goal-templates?grantIds=12539&reportStartDate=2012-05-20', []);
     fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=37504', {});
+    fetchMock.get('//api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/activity-reports/1', {
       ...data,
+      startDate: moment().format('YYYY-MM-DD'),
       activityRecipientType: 'recipient',
       activityRecipients: [
         {
@@ -775,6 +996,7 @@ describe('ActivityReport', () => {
             ttaProvided: '<p>sdgfsdfg</p>\n',
             status: 'Not Started',
             label: 'Create a new objective',
+            supportType: SUPPORT_TYPES[1],
           },
         ],
         name: 'Create new goal',
@@ -791,6 +1013,7 @@ describe('ActivityReport', () => {
         status: 'Draft',
         isRttapa: null,
         isCurated: false,
+        source: 'Source',
       }],
     });
 
@@ -808,6 +1031,8 @@ describe('ActivityReport', () => {
     fetchMock.put('/api/activity-reports/1', {
       id: 23786,
       userId: 355,
+      startDate: moment().format('YYYY-MM-DD'),
+      endDate: null,
       lastUpdatedById: 355,
       ECLKCResourcesUsed: [],
       nonECLKCResourcesUsed: [],
@@ -816,8 +1041,6 @@ describe('ActivityReport', () => {
       deliveryMethod: null,
       version: 2,
       duration: null,
-      endDate: null,
-      startDate: null,
       activityRecipientType: 'recipient',
       activityRecipients: [
         {
@@ -922,6 +1145,7 @@ describe('ActivityReport', () => {
             ttaProvided: '<p>ASDF</p>\n',
             createdAt: '2023-06-21T17:54:17.172Z',
             updatedAt: '2023-06-21T17:54:17.207Z',
+            supportType: SUPPORT_TYPES[1],
             activityReportObjectiveTopics: [{
               id: 13747,
               activityReportObjectiveId: 104904,
@@ -961,7 +1185,7 @@ describe('ActivityReport', () => {
       userEvent.click(saveGoal);
     });
 
-    const errors = document.querySelectorAll('.usa-error-message');
+    const errors = document.querySelectorAll('.usa-error-message:not(:empty)');
     expect(errors.length).toBe(0);
 
     await waitFor(() => {
@@ -974,7 +1198,7 @@ describe('ActivityReport', () => {
     });
 
     fetchMock.get('/api/goals?reportId=1&goalIds=37504', [{
-      endDate: '',
+      startDate: moment().format('YYYY-MM-DD'),
       status: 'Draft',
       value: 37504,
       label: 'dfghgh',
@@ -1122,8 +1346,12 @@ describe('ActivityReport', () => {
     message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
     expect(message).toBeNull();
 
-    const didYouUse = await screen.findByText(/Did you use any TTA resources/i);
-    expect(didYouUse).toBeInTheDocument();
+    const didYouUse = await screen.findAllByText(/Did you use any other TTA resources/i);
+    expect(didYouUse).toHaveLength(2);
+
+    didYouUse.forEach((el) => {
+      expect(el).toBeVisible();
+    });
 
     radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
     expect(radios).not.toBeNull();

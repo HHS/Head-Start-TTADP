@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { filterAssociation, selectDistinctActivityReportGoalIds } from './utils';
 
-const nextStepsIncludeExclude = (include = true) => {
+const nextStepsIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("NextSteps".note IS NULL) OR';
 
   return selectDistinctActivityReportGoalIds(
@@ -11,7 +11,7 @@ const nextStepsIncludeExclude = (include = true) => {
   );
 };
 
-const argsIncludeExclude = (include = true) => {
+const argsIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("ActivityReportGoals".name IS NULL) OR';
 
   return selectDistinctActivityReportGoalIds(
@@ -20,7 +20,7 @@ const argsIncludeExclude = (include = true) => {
   );
 };
 
-const objectiveTitleAndTtaProvidedIncludeExclude = (include = true) => {
+const objectiveTitleAndTtaProvidedIncludeExclude = (include) => {
   const a = include ? '' : 'bool_or("ActivityReportObjectives".title IS NULL OR "ActivityReportObjectives"."ttaProvided" IS NULL) OR';
 
   return selectDistinctActivityReportGoalIds(
