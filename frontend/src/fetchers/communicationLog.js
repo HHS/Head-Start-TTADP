@@ -10,14 +10,12 @@ const communicationLogUrl = join(
   'communication-logs',
 );
 
-export const getAdditionalCommunicationLogData = async (regionId, recipientId) => {
+export const getAdditionalCommunicationLogData = async (regionId) => {
   const response = await get(
     join(
       communicationLogUrl,
       'region',
       String(regionId),
-      'recipient',
-      String(recipientId),
       'additional-data',
     ),
   );
@@ -64,6 +62,28 @@ export const getCommunicationLogsByRecipientId = async (
   return response.json();
 };
 
+export const getCommunicationLogs = async (
+  sortBy, direction, offset, limit = 10, filters = [], format = 'json',
+) => {
+  const query = filtersToQueryString(filters);
+
+  const limitQuery = limit ? `&limit=${limit}` : '';
+  const queryString = `?sortBy=${sortBy}&direction=${direction}&offset=${offset}${limitQuery}&format=${format}&${query}`;
+
+  const response = await get(
+    `${join(
+      communicationLogUrl,
+      'region',
+    )}${queryString}`,
+  );
+
+  if (format === 'csv') {
+    return response.blob();
+  }
+
+  return response.json();
+};
+
 export const updateCommunicationLogById = async (logId, data) => {
   const response = await put(
     join(
@@ -84,6 +104,19 @@ export const deleteCommunicationLogById = async (logId) => destroy(
     String(logId),
   ),
 );
+
+export const createRegionalCommunicationLog = async (regionId, data) => {
+  const response = await post(
+    join(
+      communicationLogUrl,
+      'region',
+      String(regionId),
+    ),
+    { data },
+  );
+
+  return response.json();
+};
 
 export const createCommunicationLogByRecipientId = async (regionId, recipientId, data) => {
   const response = await post(
