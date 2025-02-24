@@ -37,7 +37,7 @@ export default function GoalsObjectives({
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
   const hasActiveGrants = useMemo(() => {
-    if (recipient.grants.find((g) => g.status === 'Active')) {
+    if (recipient.grants && recipient.grants.find((g) => g.status === 'Active')) {
       return true;
     }
 
