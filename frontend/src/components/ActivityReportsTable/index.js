@@ -12,7 +12,6 @@ import ReportsTable from './ReportsTable';
 import { REPORTS_PER_PAGE } from '../../Constants';
 import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
-import PaginationCard from '../PaginationCard';
 
 function ActivityReportsTable({
   filters,
