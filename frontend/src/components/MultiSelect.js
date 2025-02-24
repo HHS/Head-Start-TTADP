@@ -284,6 +284,7 @@ MultiSelect.propTypes = {
 };
 
 MultiSelect.defaultProps = {
+
   canCreate: false,
   disabled: false,
   singleRowInput: false,

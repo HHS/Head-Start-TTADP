@@ -1,4 +1,6 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, {
+  useState, useContext, useRef, useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -17,11 +19,11 @@ import {
   resultFilter,
 } from '../../../components/filter/communicationLogFilters';
 import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
-import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting from '../../../hooks/useWidgetSorting';
 import { EMPTY_ARRAY } from '../../../Constants';
 import Modal from '../../../components/Modal';
 import { UsersIcon } from '../../../components/icons';
+import useAsyncWidgetExport from '../../../hooks/useAsyncWidgetExport';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'communication-log-filters';
@@ -42,7 +44,6 @@ const COMMUNICATION_LOG_FILTER_CONFIG = [
 COMMUNICATION_LOG_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
 const headers = ['Date', 'Purpose', 'Goals', 'Creator name', 'Other TTA staff', 'Result'];
-const headersForExporting = [...headers, 'Recipient next steps', 'Specialist next steps', 'Files'];
 
 const DeleteLogModal = ({
   modalRef,
@@ -118,22 +119,6 @@ export default function CommunicationLog({ regionId, recipientId }) {
     COMMUNICATION_LOG_FILTER_CONFIG,
   );
 
-  const { exportRows } = useWidgetExport(
-    tabularData,
-    headersForExporting,
-    checkboxes,
-    'Log ID',
-    'Communication_Log_Export',
-  );
-
-  const menuItems = useWidgetMenuItems(
-    showTabularData,
-    setShowTabularData,
-    null, // capture function
-    checkboxes,
-    exportRows,
-  ).filter((m) => !m.label.includes('Display'));
-
   const {
     requestSort,
     sortConfig,
@@ -147,6 +132,38 @@ export default function CommunicationLog({ regionId, recipientId }) {
     ['Date'], // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
+
+  const { exportRows } = useAsyncWidgetExport(
+    checkboxes,
+    'Communication_Log_Export',
+    sortConfig,
+    useCallback(async (
+      sortBy,
+      direction,
+      limit,
+      offset,
+      dataFilters,
+      format,
+    ) => getCommunicationLogsByRecipientId(
+      String(regionId),
+      String(recipientId),
+      sortBy,
+      direction,
+      offset,
+      limit,
+      dataFilters,
+      format,
+    ), [recipientId, regionId]),
+    filters,
+  );
+
+  const menuItems = useWidgetMenuItems(
+    showTabularData,
+    setShowTabularData,
+    null, // capture function
+    checkboxes,
+    exportRows,
+  ).filter((m) => !m.label.includes('Display'));
 
   const handleDelete = (log) => {
     setLogToDelete(log);
@@ -182,10 +199,8 @@ export default function CommunicationLog({ regionId, recipientId }) {
           isUrl: true,
           isInternalLink: true,
           link: `/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`,
-          // TODO: Multi-recipient support isn't implemented yet, so data.recipients may not exactly
-          // be correct here, and may need to be changed when MR support is in.
           suffixContent:
-            log.data.recipients && log.data.recipients.length > 0 ? <UsersIcon /> : null,
+            log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
             { title: 'Date', value: log.data.communicationDate },
             { title: 'Purpose', value: log.data.purpose },

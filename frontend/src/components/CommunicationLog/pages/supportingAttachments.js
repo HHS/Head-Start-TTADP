@@ -4,9 +4,9 @@ import {
   Label,
 } from '@trussworks/react-uswds';
 import { pageComplete } from '../constants';
-import { deleteLogFile } from '../../../../../fetchers/File';
-import SupportingAttachmentsSessionOrCommunication from '../../../../../components/SupportAttachmentsSessionOrCommunication';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import { deleteLogFile } from '../../../fetchers/File';
+import SupportingAttachmentsSessionOrCommunication from '../../SupportAttachmentsSessionOrCommunication';
+import IndicatesRequiredField from '../../IndicatesRequiredField';
 
 const path = 'supporting-attachments';
 const position = 2;

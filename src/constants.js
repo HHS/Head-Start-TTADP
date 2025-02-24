@@ -241,6 +241,7 @@ const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'manual_mark_goals_similar',
   'monitoring_integration',
+  'multirecipient_communication_log',
 ];
 
 const MAINTENANCE_CATEGORY = {
