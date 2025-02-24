@@ -3,6 +3,7 @@
 /* eslint-disable no-plusplus */
 import { test, expect, Page } from '@playwright/test';
 import { blur } from './common';
+import { apply as popoverPolyfillApply } from '@oddbird/popover-polyfill/dist/popover-fn.js';
 
 async function getFullName(page: Page) {
   await page.goto('/');
@@ -160,6 +161,10 @@ async function nextSteps(page: Page, isForOtherEntity: boolean = false) {
   await page.getByTestId('recipientNextSteps-input').fill('2');
   await page.getByLabel(`When does the ${label} anticipate completing step 1? *`).fill('12/01/2050');
 }
+
+test.beforeEach(async () => {
+  popoverPolyfillApply();
+});
 
 test.describe('Activity Report', () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
