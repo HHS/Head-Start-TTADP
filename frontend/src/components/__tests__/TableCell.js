@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -21,9 +22,9 @@ describe('TableCell', () => {
     const data = {
       title: 'Test Cell',
       value: 'Test Value',
-      heading: 'Test Heading'
+      heading: 'Test Heading',
     };
-    
+
     renderTableCell({ data });
     expect(screen.getByText('Test Value')).toBeInTheDocument();
   });
@@ -32,9 +33,9 @@ describe('TableCell', () => {
     const data = {
       title: 'Test Cell',
       value: 'Test Value',
-      heading: 'Test Heading'
+      heading: 'Test Heading',
     };
-    
+
     renderTableCell({ data, isFirstColumn: true });
     expect(screen.getByText('Test Heading')).toBeInTheDocument();
   });
@@ -43,9 +44,9 @@ describe('TableCell', () => {
     const data = {
       title: 'Test Cell',
       value: null,
-      heading: 'Test Heading'
+      heading: 'Test Heading',
     };
-    
+
     renderTableCell({ data, showDashForNullValue: true });
     expect(screen.getByText('-')).toBeInTheDocument();
   });
@@ -57,9 +58,9 @@ describe('TableCell', () => {
       heading: 'Test Heading',
       isUrl: true,
       isInternalLink: true,
-      link: '/test-link'
+      link: '/test-link',
     };
-    
+
     renderTableCell({ data });
     const link = screen.getByText('Test Heading');
     expect(link).toHaveAttribute('href', '/test-link');
@@ -71,9 +72,9 @@ describe('TableCell', () => {
       value: 'Test Link',
       heading: 'Test Heading',
       isUrl: true,
-      link: 'https://example.com'
+      link: 'https://example.com',
     };
-    
+
     const { container } = renderTableCell({ data });
     const link = screen.getByText('Test Heading');
     expect(link).toHaveAttribute('href', 'https://example.com');
@@ -87,9 +88,9 @@ describe('TableCell', () => {
       heading: 'Test Heading',
       isUrl: true,
       link: 'https://example.com',
-      hideLinkIcon: true
+      hideLinkIcon: true,
     };
-    
+
     const { container } = renderTableCell({ data });
     const link = screen.getByText('Test Heading');
     expect(link).toHaveAttribute('href', 'https://example.com');
@@ -101,9 +102,9 @@ describe('TableCell', () => {
       title: 'Test Cell',
       value: 'Test Value',
       heading: 'Test Heading',
-      tooltip: true
+      tooltip: true,
     };
-    
+
     renderTableCell({ data });
     const elements = screen.getAllByText('Test Heading');
     expect(elements.length).toBeGreaterThan(0);
@@ -114,9 +115,9 @@ describe('TableCell', () => {
       title: 'Test Cell',
       value: 'Test Value',
       heading: 'Test Heading',
-      suffixContent: <span>Suffix</span>
+      suffixContent: <span>Suffix</span>,
     };
-    
+
     renderTableCell({ data });
     expect(screen.getByText('Suffix')).toBeInTheDocument();
   });
@@ -125,15 +126,15 @@ describe('TableCell', () => {
     const data = {
       title: 'Test Cell',
       value: 'Test Value',
-      heading: 'Test Heading'
+      heading: 'Test Heading',
     };
-    
-    const { container } = renderTableCell({ 
-      data, 
-      isFirstColumn: true, 
-      enableCheckboxes: true 
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      enableCheckboxes: true,
     });
-    
+
     const td = container.querySelector('td');
     expect(td).toHaveClass('left-with-checkbox');
   });
