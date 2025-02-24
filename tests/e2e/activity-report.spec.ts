@@ -3,7 +3,7 @@
 /* eslint-disable no-plusplus */
 import { test, expect, Page } from '@playwright/test';
 import { blur } from './common';
-import { apply as popoverPolyfillApply } from '@oddbird/popover-polyfill/dist/popover-fn';
+import { apply as popoverPolyfillApply } from '@oddbird/popover-polyfill/fn';
 
 async function getFullName(page: Page) {
   await page.goto('/');
