@@ -10,9 +10,9 @@ import {
   Dropdown,
   Textarea,
 } from '@trussworks/react-uswds';
-import Drawer from '../../../components/Drawer';
-import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import { useFormContext } from 'react-hook-form';
+import Drawer from '../../Drawer';
+import ContentFromFeedByTag from '../../ContentFromFeedByTag';
 import IndicatesRequiredField from '../../IndicatesRequiredField';
 import FormItem from '../../FormItem';
 import ControlledDatePicker from '../../ControlledDatePicker';
