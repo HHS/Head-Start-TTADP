@@ -72,6 +72,8 @@ const renderReview = (
   hasGrantsMissingMonitoring = false,
   goalsAndObjectives = [],
   additionalCitations = [],
+  grantIds = [2],
+  additionalObjectives = [],
 ) => {
   const formData = {
     approvers,
@@ -114,6 +116,7 @@ const renderReview = (
         }],
         standard: 'Monitoring',
         objectives: [
+          ...additionalObjectives,
           {
             id: 1,
             citations: [
@@ -129,7 +132,7 @@ const renderReview = (
           },
         ],
         goalIds: [1, 2],
-        grantIds: [2],
+        grantIds,
       }];
   }
 
@@ -220,9 +223,75 @@ describe('Submitter review page', () => {
         null,
         false,
         true,
+        [],
+        [],
+        [1, 2],
       );
       expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
-      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(2);
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error if some of the objectives are missing citations', async () => {
+      const objectiveMissingCitation = [
+        {
+          id: 2,
+          citations: [],
+        },
+      ];
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [2],
+        objectiveMissingCitation,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error if missing citations with multiple goals', async () => {
+      const additionalGoals = [
+        {
+          isCurated: false,
+          prompts: [],
+          standard: 'normal',
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [3],
+          grantIds: [3],
+        },
+      ];
+
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        additionalGoals,
+        [],
+        [1],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
     });
 
     it('hides an error if some of the grants are missing citations', async () => {
