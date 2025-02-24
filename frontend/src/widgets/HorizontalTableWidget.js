@@ -2,15 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { Table, Checkbox } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
 import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
 import ContextMenu from '../components/ContextMenu';
-import TextTrim from '../components/TextTrim';
+import TableCell from '../components/TableCell';
 
 export default function HorizontalTableWidget(
   {
@@ -74,32 +70,6 @@ export default function HorizontalTableWidget(
     );
   };
 
-  const handleUrl = (url) => {
-    if (url.isInternalLink) {
-      return (
-        <Link to={url.link} className="text-overflow-ellipsis">
-          {url.heading || url.value}
-        </Link>
-      );
-    }
-    return (
-      <>
-        <a href={url.link} target="_self" rel="noreferrer" className="text-overflow-ellipsis">
-          {url.heading || url.value}
-        </a>
-        {' '}
-        {
-        !url.hideLinkIcon && (
-        <FontAwesomeIcon
-          color={colors.ttahubBlue}
-          icon={faArrowUpRightFromSquare}
-          size="xs"
-        />
-        )
-    }
-      </>
-    );
-  };
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
@@ -231,37 +201,19 @@ export default function HorizontalTableWidget(
                     </td>
                   )
                 }
-                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'} ${!hideFirstColumnBorder ? 'smarthub-horizontal-table-first-column-border' : ''}`}>
-                  {
-                    // eslint-disable-next-line no-nested-ternary
-                    r.isUrl
-                      ? handleUrl(r)
-                      : r.tooltip
-                        ? <TextTrim text={r.heading || JSON.stringify(r)} />
-                        : r.heading
-                  }
-                  {
-                    r.suffixContent && (
-                      <span className="margin-left-2">
-                        {r.suffixContent}
-                      </span>
-                    )
-                  }
-                </td>
+                <TableCell
+                  data={r}
+                  showDashForNullValue={showDashForNullValue}
+                  isFirstColumn
+                  enableCheckboxes={enableCheckboxes}
+                  hideFirstColumnBorder={hideFirstColumnBorder}
+                />
                 {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
-                  <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
-                    {
-                      // eslint-disable-next-line no-nested-ternary
-                      d.isUrl
-                        ? handleUrl(d)
-                        // eslint-disable-next-line no-nested-ternary
-                        : showDashForNullValue && !d.value
-                          ? '-'
-                          : d.tooltip
-                            ? <TextTrim text={d.value} />
-                            : d.value
-                    }
-                  </td>
+                  <TableCell
+                    key={`horizontal_table_cell_${cellIndex}`}
+                    data={{...d, title: d.title}}
+                    showDashForNullValue={showDashForNullValue}
+                  />
                 ))}
                 {r.actions && r.actions.length ? (
                   <td data-label="Row actions" key={`horizontal_table_row_actions_${index}`} className={`smarthub-horizontal-table-last-column text-overflow-ellipsis ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
