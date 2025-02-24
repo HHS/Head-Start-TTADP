@@ -297,7 +297,7 @@ describe('ReviewSubmit', () => {
         onSubmit,
         onReview,
       );
-      userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
+      userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
       userEvent.click(reviewButton);
       await waitFor(() => expect(onReview).toHaveBeenCalled());
@@ -319,7 +319,7 @@ describe('ReviewSubmit', () => {
       renderReview(
         allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
       );
-      userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
+      userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
       userEvent.click(reviewButton);
       const error = await screen.findByText('Unable to review report');
