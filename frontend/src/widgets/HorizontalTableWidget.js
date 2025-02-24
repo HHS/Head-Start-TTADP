@@ -6,7 +6,7 @@ import { Table, Checkbox } from '@trussworks/react-uswds';
 import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
 import ContextMenu from '../components/ContextMenu';
-import TableCell from '../components/TableCell';
+import HorizontalTableWidgetCell from './HorizontalTableWidgetCell';
 
 export default function HorizontalTableWidget(
   {
@@ -200,7 +200,7 @@ export default function HorizontalTableWidget(
                     </td>
                   )
                 }
-                <TableCell
+                <HorizontalTableWidgetCell
                   data={r}
                   showDashForNullValue={showDashForNullValue}
                   isFirstColumn
@@ -208,7 +208,7 @@ export default function HorizontalTableWidget(
                   hideFirstColumnBorder={hideFirstColumnBorder}
                 />
                 {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
-                  <TableCell
+                  <HorizontalTableWidgetCell
                     key={`horizontal_table_cell_${cellIndex}`}
                     data={{ ...d, title: d.title }}
                     showDashForNullValue={showDashForNullValue}

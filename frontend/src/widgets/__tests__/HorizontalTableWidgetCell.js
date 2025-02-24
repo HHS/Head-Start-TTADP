@@ -3,14 +3,14 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import TableCell from '../TableCell';
+import HorizontalTableWidgetCell from '../HorizontalTableWidgetCell';
 
 const renderTableCell = (props) => render(
   <BrowserRouter>
     <table>
       <tbody>
         <tr>
-          <TableCell {...props} />
+          <HorizontalTableWidgetCell {...props} />
         </tr>
       </tbody>
     </table>
