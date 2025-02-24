@@ -271,6 +271,24 @@ describe('recipient record page', () => {
     await screen.findByText(/You haven't logged any communication yet./i);
   });
 
+  it('renders communication log header with correct structure', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
+    memoryHistory.push('/recipient-tta-records/45/region/1/communication');
+    act(() => renderRecipientRecord());
+
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+
+    const header = screen.getByRole('heading', { level: 1 });
+    expect(header).toHaveClass('page-heading');
+    expect(header.textContent).toBe('the Mighty Recipient - Region 45');
+
+    const addButton = screen.getByRole('link', { name: /add communication/i });
+    expect(addButton).toHaveClass('usa-button', 'smart-hub--new-report-btn');
+    expect(addButton.getAttribute('href')).toBe('/recipient-tta-records/1/region/45/communication/new');
+  });
+
   describe('PageWithHeading', () => {
     const recipientNameWithRegion = 'Recipient 1 - Region 1';
 

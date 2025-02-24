@@ -277,3 +277,37 @@ export const parseFeedIntoDom = (feed) => {
 
   return parsedDom;
 };
+
+export const checkboxesToIds = (checkboxes) => {
+  const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
+  // Loop all selected rows and parseInt to an array of integers.
+  // If the ID isn't a number, keep it as a string.
+  return selectedRowsStrings.map((s) => {
+    const parsedInt = parseInt(s, DECIMAL_BASE);
+    return s.includes('-') ? s : parsedInt;
+  });
+};
+
+export const blobToCsvDownload = (blob, fileName) => {
+  let url;
+  try {
+    // Check if url exists with the attribute of download
+    // and remove it if it does.
+    if (document.getElementsByName('download').length > 0) {
+      Array.from(document.getElementsByName('download')).forEach((el) => el.remove());
+    }
+
+    url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', fileName);
+    document.body.appendChild(a);
+    a.click();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  } finally {
+    window.URL.revokeObjectURL(url);
+  }
+};
