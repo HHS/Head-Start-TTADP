@@ -70,7 +70,6 @@ export default function HorizontalTableWidget(
     );
   };
 
-
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
     setAllCheckBoxesChecked(false);
@@ -211,7 +210,7 @@ export default function HorizontalTableWidget(
                 {(r.data || []).filter((d) => !d.hidden).map((d, cellIndex) => (
                   <TableCell
                     key={`horizontal_table_cell_${cellIndex}`}
-                    data={{...d, title: d.title}}
+                    data={{ ...d, title: d.title }}
                     showDashForNullValue={showDashForNullValue}
                   />
                 ))}

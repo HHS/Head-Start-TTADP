@@ -92,7 +92,7 @@ TableCell.propTypes = {
   showDashForNullValue: PropTypes.bool,
   isFirstColumn: PropTypes.bool,
   enableCheckboxes: PropTypes.bool,
-  hideFirstColumnBorder: PropTypes.bool
+  hideFirstColumnBorder: PropTypes.bool,
 };
 
 TableCell.defaultProps = {
