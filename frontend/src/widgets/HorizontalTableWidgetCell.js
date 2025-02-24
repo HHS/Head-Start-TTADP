@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
-import TextTrim from './TextTrim';
+import TextTrim from '../components/TextTrim';
 
-export default function TableCell({
+export default function HorizontalTableWidgetCell({
   data,
   showDashForNullValue,
   isFirstColumn = false,
@@ -77,7 +77,7 @@ export default function TableCell({
   );
 }
 
-TableCell.propTypes = {
+HorizontalTableWidgetCell.propTypes = {
   data: PropTypes.shape({
     isUrl: PropTypes.bool,
     isInternalLink: PropTypes.bool,
@@ -95,7 +95,7 @@ TableCell.propTypes = {
   hideFirstColumnBorder: PropTypes.bool,
 };
 
-TableCell.defaultProps = {
+HorizontalTableWidgetCell.defaultProps = {
   showDashForNullValue: false,
   isFirstColumn: false,
   enableCheckboxes: false,
