@@ -60,9 +60,47 @@ describe('resource', () => {
     describe('findOrCreateResource', () => {
       const urlGoogle = 'http://google.com';
       let url;
+
+      let existingHeadStartResource;
+      let createdECLKCResource;
+      let createdECLKCResource2;
+      let createdHeadStartResource;
+
+      beforeAll(async () => {
+        existingHeadStartResource = await Resource.create({
+          url: 'https://headstart.gov/existingsingle',
+          domain: 'headstart.gov',
+        });
+      });
+
+      afterAll(async () => {
+        // Delete created ECLKC resource.
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+      });
+
       beforeEach(() => {
         url = urlGoogle;
       });
+
       afterEach(async () => {
         await Resource.destroy({
           where: { url: urlGoogle },
@@ -108,6 +146,30 @@ describe('resource', () => {
         const resource = await findOrCreateResource(url);
         expect(resource).toBe(undefined);
       });
+
+      it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
+        createdECLKCResource = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        expect(createdECLKCResource).not.toBeNull();
+        // Verify eclkc with and existing headstart.gov
+        expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
+      });
+
+      it('maps to an non existing headstart.gov resource if the url is ECLKC', async () => {
+        createdECLKCResource2 = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        expect(createdECLKCResource2).not.toBeNull();
+
+        // Find the headstart url we auto created.
+        createdHeadStartResource = await Resource.findOne({
+          where: { url: 'https://headstart.gov/notexistingsingle' },
+        });
+        expect(createdHeadStartResource).not.toBeNull();
+        expect(createdHeadStartResource.domain).toBe('headstart.gov');
+
+        // Verify eclkc with the auto created headstart url.
+        expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
+      });
     });
     describe('findOrCreateResources', () => {
       const urlsTest = [
@@ -121,6 +183,43 @@ describe('resource', () => {
         if (a.id > b.id) return 1;
         return 0;
       };
+
+      let existingHeadStartResource;
+      let createdECLKCResource;
+      let createdECLKCResource2;
+      let createdHeadStartResource;
+
+      beforeAll(async () => {
+        existingHeadStartResource = await Resource.create({
+          url: 'https://headstart.gov/existing',
+          domain: 'headstart.gov',
+        });
+      });
+
+      afterAll(async () => {
+        // Delete created ECLKC resource.
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
+      });
+
       beforeEach(() => {
         urls = urlsTest;
       });
@@ -170,6 +269,27 @@ describe('resource', () => {
         urls = {};
         const resources = await findOrCreateResources(urls);
         expect(resources).toMatchObject([]);
+      });
+
+      it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
+        const resources = await findOrCreateResources(['https://eclkc.ohs.acf.hhs.gov/existing', 'https://eclkc.ohs.acf.hhs.gov/notexisting']);
+        expect(resources.length).toBe(2);
+        // Verify eclkc with and existing headstart.gov
+        createdECLKCResource = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/existing'));
+        expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existing');
+        expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
+
+        // Find the headstart url we auto created.
+        createdHeadStartResource = await Resource.findOne({
+          where: { url: 'https://headstart.gov/notexisting' },
+        });
+        expect(createdHeadStartResource).not.toBeNull();
+        expect(createdHeadStartResource.domain).toBe('headstart.gov');
+
+        // Verify eclkc with the auto created headstart url.
+        createdECLKCResource2 = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/notexisting'));
+        expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexisting');
+        expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
       });
     });
   });

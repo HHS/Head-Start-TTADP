@@ -7,8 +7,8 @@ const testData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
   resources: [
     {
-      heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
-      url: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      url: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       isUrl: true,
       data: [
         {
@@ -30,7 +30,7 @@ const testData = {
       ],
     },
     {
-      heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       title: 'ECLKC Sample Title Test',
       isUrl: true,
       data: [
@@ -53,8 +53,8 @@ const testData = {
       ],
     },
     {
-      heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
-      url: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      url: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       title: 'ECLKC Sample Title Test',
       isUrl: true,
       data: [
