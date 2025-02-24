@@ -67,7 +67,11 @@ export function OverviewWidgetField({
         )}
         {label2}
         {route && (!showNoResults || !noData) && (
-          <Link to={route.to} className="margin-top-1">
+          <Link
+            to={route.to}
+            className="margin-top-1"
+            aria-label={route.ariaLabel}
+          >
             {route.label}
           </Link>
         )}
@@ -93,6 +97,7 @@ OverviewWidgetField.propTypes = {
   route: PropTypes.shape({
     to: PropTypes.string,
     label: PropTypes.string,
+    ariaLabel: PropTypes.string,
   }),
   filterApplicable: PropTypes.bool,
   iconSize: PropTypes.string,

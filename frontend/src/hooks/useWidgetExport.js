@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { blobToCsvDownload, checkboxesToIds } from '../utils';
 
 export default function useWidgetExport(
   data,
@@ -10,18 +10,10 @@ export default function useWidgetExport(
   exportDataName = null, // Specify the data to export.
 ) {
   const exportRows = useCallback((exportType) => {
-    let url = null;
     try {
       let dataToExport = data;
       if (exportType === 'selected') {
-        // Get all the ids of the rowsToExport that have a value of true.
-        const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
-        // Loop all selected rows and parseInt to an array of integers.
-        // If the ID isn't a number, keep it as a string.
-        const selectedRowsIds = selectedRowsStrings.map((s) => {
-          const parsedInt = parseInt(s, DECIMAL_BASE);
-          return s.includes('-') ? s : parsedInt;
-        });
+        const selectedRowsIds = checkboxesToIds(checkboxes);
         // Filter the recipients to export to only include the selected rows.
         dataToExport = data.filter((row) => selectedRowsIds.includes(row.id));
       }
@@ -50,23 +42,10 @@ export default function useWidgetExport(
       // Create CSV.
       const csvString = csvRows.join('\n');
       const blob = new Blob([csvString], { type: 'text/csv' });
-
-      // Check if url exists with the attribute of download.
-      if (document.getElementsByName('download').length > 0) {
-        document.getElementsByName('download')[0].remove();
-      }
-      url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('hidden', '');
-      a.setAttribute('href', url);
-      a.setAttribute('download', exportName);
-      document.body.appendChild(a);
-      a.click();
+      blobToCsvDownload(blob, exportName);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(error);
-    } finally {
-      window.URL.revokeObjectURL(url);
     }
   }, [checkboxes, data, exportHeading, exportName, headers, exportDataName]);
 

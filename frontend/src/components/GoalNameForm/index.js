@@ -85,6 +85,7 @@ export default function GoalNameForm({
           hookForm.setValue('goalName', goal.name);
           hookForm.setValue('goalStatus', goal.status);
           hookForm.setValue('goalIds', goal.goalIds);
+          hookForm.setValue('selectedGrant', goal.grant);
         }
       } catch (err) {
         history.push('/something-went-wrong/500');
