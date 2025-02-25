@@ -10,7 +10,6 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
-
 import AppLoadingContext from '../../../AppLoadingContext';
 import { GrantDataProvider } from '../pages/GrantDataContext';
 
@@ -287,6 +286,26 @@ describe('recipient record page', () => {
     const addButton = screen.getByRole('link', { name: /add communication/i });
     expect(addButton).toHaveClass('usa-button', 'smart-hub--new-report-btn');
     expect(addButton.getAttribute('href')).toBe('/recipient-tta-records/1/region/45/communication/new');
+  });
+
+  it('navigates to the merge goals page', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/recipient/1/region/45/group/1', { goalRows: [] });
+    memoryHistory.push('/recipient-tta-records/1/region/45/goals/merge/1');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/These goals might be duplicates/i)).toBeInTheDocument();
+  });
+
+  it('navigates to the goal name form', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/goal-templates?grantIds=10', []);
+    memoryHistory.push('/recipient-tta-records/1/region/45/goals/new');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
   });
 
   describe('PageWithHeading', () => {
