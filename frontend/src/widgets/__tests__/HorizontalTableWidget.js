@@ -433,4 +433,39 @@ describe('Horizontal Table Widget', () => {
     expect(screen.getAllByText(/-/i)[0]).toBeInTheDocument();
     expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
   });
+
+  it('renders checkboxes with proper aria-labels', async () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Test Recipient',
+        id: '123',
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+        ],
+      },
+    ];
+
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      true, // enableCheckboxes
+    );
+
+    // Check the "select all" checkbox
+    const selectAllCheckbox = screen.getByLabelText('Select or de-select all');
+    expect(selectAllCheckbox).toBeInTheDocument();
+
+    // Check the row checkbox
+    const rowCheckbox = screen.getByLabelText('Select Test Recipient');
+    expect(rowCheckbox).toBeInTheDocument();
+  });
 });
