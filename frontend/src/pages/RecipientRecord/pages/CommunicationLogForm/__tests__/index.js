@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
@@ -182,14 +183,16 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'General Check-In');
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
+    const purposeDropdown = within(purposeView).getByRole('combobox');
+    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const result = await screen.findByLabelText(/result/i);
-    userEvent.selectOptions(result, 'Next Steps identified');
+    const resultView = screen.getAllByText(/result/i)[0];
+    const resultDropdown = within(resultView).getByRole('combobox');
+    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, {
@@ -236,14 +239,16 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'General Check-In');
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
+    const purposeDropdown = within(purposeView).getByRole('combobox');
+    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const result = await screen.findByLabelText(/result/i);
-    userEvent.selectOptions(result, 'Next Steps identified');
+    const resultView = screen.getAllByText(/result/i)[0];
+    const resultDropdown = within(resultView).getByRole('combobox');
+    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, 500);
