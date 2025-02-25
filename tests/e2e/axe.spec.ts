@@ -30,7 +30,7 @@ const testForAxeViolations = async (page: Page, url: { url: string, rules: strin
 };  
 
 for (const url of axeUrls) {
-  test(`testing with ${url}`, async ({ page }) => {
+  test(`testing with ${url.url}`, async ({ page }) => {
     await testForAxeViolations(page, url);
   });
 }
