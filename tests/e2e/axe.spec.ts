@@ -2,29 +2,28 @@ import { test, expect, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const axeUrls = [
-  { url: 'http://localhost:3000/', rules: [] },
-  { url: 'http://localhost:3000/activity-reports/new/activity-summary', rules: [] },
-  { url: 'http://localhost:3000/activity-reports/new/supporting-attachments', rules: [] },
-  { url: 'http://localhost:3000/activity-reports/new/goals-objectives', rules: [] },
-  { url: 'http://localhost:3000/activity-reports/new/next-steps', rules: [] },
-  { url: 'http://localhost:3000/activity-reports/new/review', rules: [] },
-  { url: 'http://localhost:3000/activity-reports/view/9999', rules: [] },
-  { url: 'http://localhost:3000/dashboards/regional-dashboard/activity-reports', rules: [] },
-  { url: 'http://localhost:3000/training-reports/not-started', rules: [] },
-  { url: 'http://localhost:3000/recipient-tta-records', rules: [] },
-  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/profile', rules: [] },
-  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/tta-history', rules: [] },
-  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/rttapa', rules: [] },
-  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/goals/new', rules: [] },
-  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/rttapa/print', rules: [] },
+  { url: 'http://localhost:3000/', disabledRules: [] },
+  { url: 'http://localhost:3000/activity-reports/new/activity-summary', disabledRules: ['aria-allowed-attr'] },
+  { url: 'http://localhost:3000/activity-reports/new/supporting-attachments', disabledRules: [] },
+  { url: 'http://localhost:3000/activity-reports/new/goals-objectives', disabledRules: [] },
+  { url: 'http://localhost:3000/activity-reports/new/next-steps', disabledRules: [] },
+  { url: 'http://localhost:3000/activity-reports/new/review', disabledRules: ['aria-allowed-attr'] },
+  { url: 'http://localhost:3000/activity-reports/view/9999', disabledRules: [] },
+  { url: 'http://localhost:3000/dashboards/regional-dashboard/activity-reports', disabledRules: ['empty-table-header'] },
+  { url: 'http://localhost:3000/training-reports/not-started', disabledRules: [] },
+  { url: 'http://localhost:3000/recipient-tta-records', disabledRules: [] },
+  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/profile', disabledRules: [] },
+  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/tta-history', disabledRules: ['empty-table-header'] },
+  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/rttapa', disabledRules: [] },
+  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/goals/new', disabledRules: [] },
+  { url: 'http://localhost:3000/recipient-tta-records/9/region/1/rttapa/print', disabledRules: [] },
 ];
 
-const testForAxeViolations = async (page: Page, url: { url: string, rules: string[] }) => {
+const testForAxeViolations = async (page: Page, url: { url: string, disabledRules: string[] }) => {
   await page.goto(url.url, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500); // mirror the "sleep" in the original circle ci config
   const builder = new AxeBuilder({ page });
-  // builder.disableRules([...url.rules, 'aria-allowed-attr', 'empty-table-header']);  
-  builder.disableRules(url.rules);
+  builder.disableRules(url.disabledRules);
   const results = await builder.analyze();
   expect(results.violations).toEqual([]);
 };  
