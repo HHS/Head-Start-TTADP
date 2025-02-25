@@ -1078,7 +1078,7 @@ export async function setStatus(report, status) {
   return activityReportAndRecipientsById(report.id);
 }
 
-export async function handleSoftDeleteReport(report, status) {
+export async function handleSoftDeleteReport(report) {
   const goalsToCleanup = (await Goal.findAll({
     attributes: ['id'],
     where: {
@@ -1093,20 +1093,21 @@ export async function handleSoftDeleteReport(report, status) {
     }],
   })).filter((goal) => goal.activityReportGoals.length === 1).map((goal) => goal.id);
 
-  // these goals and objectives will also be soft-deleted
-  await Objective.destroy({
-    where: {
-      goalId: goalsToCleanup,
-    },
-  });
+  if (goalsToCleanup.length) {
+    // these goals and objectives will also be soft-deleted
+    await Objective.destroy({
+      where: {
+        goalId: goalsToCleanup,
+      },
+    });
 
-  await Goal.destroy({
-    where: {
-      id: goalsToCleanup,
-    },
-  });
-
-  return setStatus(report, status);
+    await Goal.destroy({
+      where: {
+        id: goalsToCleanup,
+      },
+    });
+  }
+  return setStatus(report, REPORT_STATUSES.DELETED);
 }
 
 /*
