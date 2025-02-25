@@ -46,10 +46,13 @@ function PaginationCard({
       }
     });
 
-    const paginationList = el.current.querySelector('.usa-pagination__list');
-    if (paginationList) {
-      paginationList.removeAttribute('role');
-    }
+    // Remove role="presentation" from list items
+    // This code can be removed when we can upgrade to react-uswds to more recent versions
+    // pending react, create react app updates
+    const presenters = el.current.querySelectorAll('[role="presentation"]');
+    Array.from(presenters).forEach((presenter) => {
+      presenter.removeAttribute('role');
+    });
   });
 
   const getPageInfo = () => {
