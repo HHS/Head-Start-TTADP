@@ -58,7 +58,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
 
   await page.locator('#ttaProvided').fill('TTA');
 
-  await page.locator('.usa-select').selectOption('Introducing');
+  await page.locator('select.usa-select').selectOption('Introducing');
   await blur(page);
   await page.waitForTimeout(2000); // wait for first post to complete
   // Click Save and continue.
