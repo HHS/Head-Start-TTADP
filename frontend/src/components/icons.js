@@ -11,6 +11,7 @@ import {
   faPencil,
   faTrash,
   faUsers,
+  faUserGroup,
 } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
@@ -76,6 +77,9 @@ NeedsActionIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 const UsersIcon = ({ size }) => <Icon size={size} color={colors.baseDarkest} icon={faUsers} />;
 UsersIcon.propTypes = STATUS_ICON_PROP_TYPES;
 UsersIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const UserGroupIcon = ({ size }) => <Icon size={size} color={colors.baseDarkest} icon={faUserGroup} />;
+UserGroupIcon.propTypes = STATUS_ICON_PROP_TYPES;
+UserGroupIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 
 export {
   InProgress,
@@ -89,4 +93,5 @@ export {
   NeedsActionIcon,
   Trash,
   UsersIcon,
+  UserGroupIcon,
 };

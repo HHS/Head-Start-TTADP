@@ -51,6 +51,8 @@ export default function ViewCommunicationLog({ match, recipientName }) {
     return null;
   }
 
+  const editLink = log.recipients.length > 1 ? `/communication-log/region/${regionId}/log/${log.id}/log` : `/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/log`;
+
   return (
     <>
       <Helmet>
@@ -71,7 +73,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           {isAuthor && (
           <Link
             className="position-absolute top-0 right-0 margin-top-4 margin-right-4"
-            to={`/recipient-tta-records/${log.recipientId}/region/${regionId}/communication/${log.id}/log`}
+            to={editLink}
           >
             Edit
           </Link>
@@ -79,7 +81,9 @@ export default function ViewCommunicationLog({ match, recipientName }) {
           <ReadOnlyField
             label="Other TTA staff"
           >
-            {log.data.otherStaff && log.data.otherStaff.map((u) => u.label).join(', ')}
+            {log.data.otherStaff && log.data.otherStaff.map((u) => (
+              <div key={u.value}>{u.label}</div>
+            ))}
           </ReadOnlyField>
           <ReadOnlyField
             label="Purpose"

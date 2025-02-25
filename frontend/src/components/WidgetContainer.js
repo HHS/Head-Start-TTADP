@@ -31,7 +31,6 @@ export default function WidgetContainer(
     displayTable,
     setDisplayTable,
     enableCheckboxes,
-    exportRows,
 
     // slot components
     SubtitleDrawer,
@@ -67,7 +66,6 @@ export default function WidgetContainer(
         SubtitleDrawer={() => SubtitleDrawer || null}
         menuItems={menuItems}
         enableCheckboxes={enableCheckboxes}
-        exportRows={exportRows}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -137,7 +135,6 @@ WidgetContainer.propTypes = {
   widgetContainerTitleClass: PropTypes.string,
   displayPaginationBoxOutline: PropTypes.bool,
   enableCheckboxes: PropTypes.bool,
-  exportRows: PropTypes.func,
   showFiltersNotApplicable: PropTypes.bool,
 };
 
@@ -163,7 +160,6 @@ WidgetContainer.defaultProps = {
   displayTable: false,
   setDisplayTable: null,
   enableCheckboxes: false,
-  exportRows: null,
 
   // Drawer components
   SubtitleDrawer: null,
