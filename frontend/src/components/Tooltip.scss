@@ -48,8 +48,12 @@
     display: inline-block;
     line-height: 1;
     position: absolute;
-    transform: translateX(-25%);
+    transform: translateX(-50%);
+    left: 50%;
     white-space: normal;
+    min-width: 120px;
+    max-width: 300px;
+    width: max-content;
 
     &.usa-tooltip__body--top {
         bottom: 2.25rem;

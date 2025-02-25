@@ -17,6 +17,7 @@ const renderDashboardField = (fieldData) => (
     route={fieldData.route ? {
       to: `/dashboards/${fieldData.route}`,
       label: 'Display details',
+      ariaLabel: fieldData.ariaLabel,
     } : null}
     filterApplicable={fieldData.filterApplicable}
     iconSize={fieldData.iconSize}
