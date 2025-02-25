@@ -375,7 +375,7 @@ describe('Users DB service', () => {
 
     const eventReportPilotId = faker.datatype.number({ min: 25000 });
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       await Promise.all(
         users.map((u) => User.create({
           id: u.id,
@@ -403,7 +403,7 @@ describe('Users DB service', () => {
       );
     });
 
-    afterEach(async () => {
+    afterAll(async () => {
       await User.destroy({ where: { id: userIds } });
       await EventReportPilot.destroy({ where: { id: eventReportPilotId } });
     });

@@ -236,9 +236,16 @@ class CommunicationLogFiles{
  * updatedAt : timestamp with time zone
 }
 
+class CommunicationLogRecipients{
+ * id : integer : <generated>
+ * communicationLogId : integer : REFERENCES "CommunicationLogs".id
+ * recipientId : integer : REFERENCES "Recipients".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+}
+
 class CommunicationLogs{
  * id : integer : <generated>
- * recipientId : integer : REFERENCES "Recipients".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * data : jsonb
@@ -1128,6 +1135,7 @@ enum enum_Users_flags {
  closed_goal_merge_override
  manual_mark_goals_similar
  monitoring_integration
+ multirecipient_communication_log
  quality_assurance_dashboard
  regional_goal_dashboard
  training_reports_dashboard
@@ -1395,6 +1403,20 @@ class ZALCollaboratorTypes{
 }
 
 class ZALCommunicationLogFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCommunicationLogRecipients{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2527,6 +2549,7 @@ CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : 
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : groupCollaborator, collaboratorType
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objectiveCollaborator, collaboratorType
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
+CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : communicationLog, communicationLogRecipients
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
@@ -2601,7 +2624,7 @@ OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : oth
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
 ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : mapsFromProgramPersonnel, mapsToProgramPersonnel
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : recipient, communicationLogRecipients
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : recipient, goalSimilarityGroups
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : simScores, recipient
@@ -2663,6 +2686,7 @@ CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, col
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, collaboratorTypes
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Users : usersThroughGoalCollaborators, usersThroughGroupCollaborators, usersThroughObjectiveCollaborators, collaboratorTypesThroughGoalCollaborator, collaboratorTypesThroughGroupCollaborator, collaboratorTypesThroughObjectiveCollaborator
 CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
+CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Recipients : recipients, logs
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
 GoalSimilarityGroups "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, similarityGroups
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
