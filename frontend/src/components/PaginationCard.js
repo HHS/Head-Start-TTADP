@@ -45,6 +45,11 @@ function PaginationCard({
         svg.setAttribute('aria-hidden', 'true');
       }
     });
+
+    const paginationList = el.current.querySelector('.usa-pagination__list');
+    if (paginationList) {
+      paginationList.removeAttribute('role');
+    }
   });
 
   const getPageInfo = () => {
