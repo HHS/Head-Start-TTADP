@@ -33,17 +33,10 @@ async function postToSimilarity(body) {
 
     return await response.json();
   } catch (error) {
-    if (error.name === 'SyntaxError') {
-      auditLogger.error(
-        `${namespace} Failed to parse JSON response from Similarity API: ${error.message}`,
-        { error },
-      );
-    } else {
-      auditLogger.error(
-        `${namespace} Similarity API response failure: ${error.message}`,
-        { error },
-      );
-    }
+    auditLogger.error(
+      `${namespace} Similarity API response failure: ${error.message}`,
+      { error },
+    );
     throw error;
   }
 }
