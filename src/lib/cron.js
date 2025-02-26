@@ -16,13 +16,13 @@ import env from '../env';
 
 // Set timing parameters.
 // Run at 4 am ET
-const schedule = '*/15 * * * *'; // '0 4 * * *';
+const schedule = '0 4 * * *';
 // Run daily at 4 pm
-const dailySched = '*/15 * * * *'; // '1 16 * * 1-5';
+const dailySched = '1 16 * * 1-5';
 // Run at 4 pm every Friday
-const weeklySched = '*/15 * * * *'; // '5 16 * * 5';
+const weeklySched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '*/15 * * * *'; // '10 16 28-31 * *';
+const monthlySched = '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
 const runUpdateJob = () => {
