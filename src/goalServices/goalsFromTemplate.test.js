@@ -84,6 +84,7 @@ describe('goalsFromTemplate', () => {
     expect(newGoal).not.toBeNull();
     expect(newGoal.name).toBe(goalName);
     expect(newGoal.goalTemplateId).toBe(goalTemplate.id);
+    expect(newGoal.status).toBe(GOAL_STATUS.NOT_STARTED);
   });
 
   it('should throw an error if the template does not exist', async () => {
