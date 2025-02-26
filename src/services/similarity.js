@@ -23,7 +23,13 @@ async function postToSimilarity(body) {
         body: JSON.stringify(body),
       },
     );
-    auditLogger.info(`${namespace} Similarity API response status: ${response.status}, body: ${JSON.stringify(response.body)}`);
+
+    // Check if response is OK before parsing JSON
+    if (!response.ok) {
+      const errorText = await response.text();
+      auditLogger.error(`${namespace} Similarity API error response: ${errorText.substring(0, 500)}`);
+      throw new Error(`API returned status ${response.status}: ${errorText.substring(0, 100)}`);
+    }
 
     return await response.json();
   } catch (error) {
@@ -31,7 +37,7 @@ async function postToSimilarity(body) {
       `${namespace} Similarity API response failure: ${error.message}`,
       { error },
     );
-    throw new Error(error);
+    throw error;
   }
 }
 
