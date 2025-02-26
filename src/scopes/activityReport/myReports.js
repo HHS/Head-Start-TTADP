@@ -1,8 +1,10 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
+import { auditLogger } from '../../logger';
 // this should return an array of activityReport ids.
 // That where clause will be finished when the function is called.
 export function myReportsScopes(userId, roles, exclude) {
+  roles = roles || [];
   let reportSql = '';
   if (roles.includes('Creator')) {
     reportSql += `
@@ -28,6 +30,11 @@ export function myReportsScopes(userId, roles, exclude) {
       DISTINCT "ActivityReportApprovers"."activityReportId"
     FROM "ActivityReportApprovers"
     WHERE "ActivityReportApprovers"."userId" = '${userId}'`;
+  }
+
+  if (!reportSql.trim()) {
+    auditLogger.info(`User: ${userId} attempting to filter reports with a role: ${roles} `);
+    return {};
   }
 
   reportSql = `"ActivityReport"."id" ${exclude ? ' NOT ' : ''} IN (${reportSql})`;
