@@ -176,7 +176,6 @@ commands:
 
             if [ "$ok" != "true" ]; then
               echo "Slack notification failed: $error"
-              exit 1
             else
               echo "Slack notification sent successfully"
             fi
