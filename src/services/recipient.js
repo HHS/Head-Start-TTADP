@@ -521,20 +521,9 @@ export function reduceObjectivesForRecipientRecord(
     // eslint-disable-next-line no-param-reassign
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
-  }).sort((a, b) => {
-    const dateA = a?.endDate?.trim() && !Number.isNaN(new Date(a.endDate).getTime())
-      ? new Date(a.endDate)
-      : new Date('1970-01-01');
-
-    const dateB = b?.endDate?.trim() && !Number.isNaN(new Date(b.endDate).getTime())
-      ? new Date(b.endDate)
-      : new Date('1970-01-01');
-
-    if (dateA.getTime() === dateB.getTime()) {
-      return b.id - a.id;
-    }
-    return dateB - dateA;
-  });
+  }).sort((a, b) => ((
+    a.endDate === b.endDate ? a.id < b.id
+      : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
 
 export function wasGoalPreviouslyClosed(goal) {

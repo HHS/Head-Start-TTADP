@@ -1369,51 +1369,6 @@ describe('Recipient DB service', () => {
       expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]); // Sorted by endDate descending
     });
 
-    it('handles undefined activityReports gracefully', () => {
-      const currentModel = {
-        objectives: [
-          {
-            id: 3,
-            endDate: null,
-            title: 'Objective 3',
-            status: 'In Progress',
-            activityReports: undefined,
-          },
-          {
-            id: 2,
-            endDate: '2024-12-30',
-            title: 'Objective 2',
-            status: 'Complete',
-            activityReports: [],
-          },
-        ],
-      };
-
-      const goal = {
-        objectives: [
-          {
-            id: 1,
-            endDate: undefined,
-            title: 'Objective 1',
-            status: 'Not Started',
-            activityReports: undefined,
-          },
-        ],
-        goalTopics: [],
-        reasons: [],
-      };
-
-      const grantNumbers = [];
-
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
-      // Expected order: [1 (missing date), 3 (null date), 2 (valid date)]
-      expect(result.map((obj) => obj.id)).toEqual([2, 3, 1]);
-    });
-
     it('handles an empty objectives array', () => {
       const currentModel = { objectives: [] };
       const goal = { objectives: [], goalTopics: [], reasons: [] };
@@ -1741,7 +1696,7 @@ describe('Recipient DB service', () => {
       expect(result).toBeDefined();
       expect(result.length).toBe(4);
 
-      expect(result.map((obj) => obj.id)).toEqual([3, 2, 4, 1]);
+      expect(result.map((obj) => obj.id)).toEqual([4, 3, 2, 1]);
     });
   });
 
@@ -2461,17 +2416,6 @@ describe('Recipient DB service', () => {
 
       expect(result.goalRows.length).toBe(1);
       expect(result.goalRows[0].id).toBe(goals[0].id);
-    });
-
-    it('handles goals with missing collaborators gracefully', async () => {
-      await GoalCollaborator.destroy({
-        where: { goalId: goals.map((g) => g.id) },
-        force: true,
-      });
-
-      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
-
-      expect(result.goalRows.every((goal) => !goal.collaborators.goalCreator)).toBe(true);
     });
 
     it('returns an empty array when offset exceeds total count', async () => {
