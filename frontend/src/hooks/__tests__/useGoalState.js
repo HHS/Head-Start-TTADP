@@ -167,4 +167,65 @@ describe('useGoalState', () => {
     expect(push).not.toHaveBeenCalledWith();
     expect(result.current.error).toBe('Sorry, something went wrong');
   });
+
+  it('using an existing initative goal shows the confirmation page', async () => {
+    const action = jest.fn(() => [1, 2]);
+    useNewGoalAction.mockReturnValue(action);
+
+    const push = jest.fn();
+    useHistory.mockReturnValue({ push });
+
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
+
+    act(() => {
+      result.current.hookForm.setValue('useOhsInitiativeGoal', true);
+    });
+
+    await act(async () => {
+      await result.current.submit({ goalTemplate: { goals: [{ id: 1, status: 'In Progress' }] } });
+    });
+
+    expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.CONFIRMATION);
+    expect(result.current.error).toBe(null);
+    expect(result.current.buttons).toEqual([{
+      id: expect.any(String),
+      label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
+      type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
+      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+    },
+    {
+      id: expect.any(String),
+      label: GOAL_FORM_BUTTON_LABELS.BACK,
+      onClick: expect.any(Function),
+      type: GOAL_FORM_BUTTON_TYPES.BUTTON,
+      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+    },
+    {
+      id: expect.any(String),
+      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+      to: '/recipient-tta-records/1/region/1/rttapa/',
+      type: GOAL_FORM_BUTTON_TYPES.LINK,
+      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+    },
+    ]);
+  });
+  it('creating a new iniative goal skips confirmation and goes to new goal form', async () => {
+    const action = jest.fn(() => [999]);
+    useNewGoalAction.mockReturnValue(action);
+
+    const push = jest.fn();
+    useHistory.mockReturnValue({ push });
+
+    const { result } = renderHook(() => useGoalState({ id: 1 }, 1));
+
+    act(() => {
+      result.current.hookForm.setValue('useOhsInitiativeGoal', true);
+    });
+
+    await act(async () => {
+      await result.current.submit({ goalTemplate: { goals: [] } });
+    });
+
+    expect(push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals/edit?id[]=999');
+  });
 });
