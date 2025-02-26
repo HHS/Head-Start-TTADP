@@ -47,6 +47,7 @@ const runDailyEmailJob = () => (async () => {
     if (process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true') {
       await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
     }
+    logger.info('Completed daily digests');
   } catch (error) {
     auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
     logger.error(`Daily Email Digest Error: ${error}`);
@@ -61,6 +62,7 @@ const runWeeklyEmailJob = () => (async () => {
     await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
     await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
     await recipientApprovedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
+    logger.info('Completed weekly digests');
   } catch (error) {
     auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
     logger.error(`Weekly Email Digest Error: ${error}`);
@@ -86,6 +88,7 @@ const runMonthlyEmailJob = () => (async () => {
     await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
     await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
     await recipientApprovedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
+    logger.info('Completed monthly digests');
   } catch (error) {
     auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
     logger.error(`Monthly Email Digest Error: ${error}`);
