@@ -1083,13 +1083,14 @@ export async function handleSoftDeleteReport(report) {
     attributes: ['id'],
     where: {
       createdVia: 'activityReport',
+      id: {
+        [Op.in]: sequelize.literal(`(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`),
+      },
     },
     include: [{
       model: ActivityReportGoal,
       as: 'activityReportGoals',
-      where: {
-        activityReportId: report.id,
-      },
+      attributes: ['id', 'goalId'],
     }],
   })).filter((goal) => goal.activityReportGoals.length === 1).map((goal) => goal.id);
 
