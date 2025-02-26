@@ -7,6 +7,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
+import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import RegionalCommunicationLog from '..';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -139,14 +140,16 @@ describe('RegionalCommunicationLog', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'New TTA request');
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
+    const purposeDropdown = within(purposeView).getByRole('combobox');
+    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const result = await screen.findByLabelText(/result/i);
-    userEvent.selectOptions(result, 'Next Steps identified');
+    const resultView = screen.getAllByText(/result/i)[0];
+    const resultDropdown = within(resultView).getByRole('combobox');
+    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
@@ -181,14 +184,16 @@ describe('RegionalCommunicationLog', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'New TTA request');
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
+    const purposeDropdown = within(purposeView).getByRole('combobox');
+    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const result = await screen.findByLabelText(/result/i);
-    userEvent.selectOptions(result, 'Next Steps identified');
+    const resultView = screen.getAllByText(/result/i)[0];
+    const resultDropdown = within(resultView).getByRole('combobox');
+    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
 
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
