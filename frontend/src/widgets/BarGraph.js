@@ -54,7 +54,7 @@ function BarGraph({
 
   // We need to buffer the min range/scale otherwise we will cut off the smallest value.
   const minRange = Math.min(...counts);
-  const range = [minRange === 0 || minRange - 2 === 0 ? 0 : minRange - 2, Math.max(...counts) + 2];
+  const range = [minRange === 0 || minRange - 2 <= 0 ? 0 : minRange - 2, Math.max(...counts) + 2];
 
   const trace = {
     type: 'bar',
