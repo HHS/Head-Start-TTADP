@@ -4,25 +4,20 @@ import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './RecipientResults.scss';
 import TableHeader from '../../../components/TableHeader';
-import PaginationCard from '../../../components/PaginationCard';
 
-export default function RecipientResults(
-  {
-    recipients,
-    loading,
-    activePage,
-    offset,
-    perPage,
-    count,
-    handlePageChange,
-    requestSort,
-    sortConfig,
-  },
-) {
+export default function RecipientResults({
+  recipients,
+  activePage,
+  offset,
+  perPage,
+  count,
+  handlePageChange,
+  requestSort,
+  sortConfig,
+}) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
   const renderRecipient = (recipient) => {
-    // Get a unique sorted list of Program Specialists.
     const { regionId, programSpecialists } = recipient;
 
     return (
@@ -59,7 +54,6 @@ export default function RecipientResults(
           aria-label={`${displayName}. Activate to sort ${
             sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
-          disabled={loading}
         >
           {displayName}
         </button>
@@ -68,7 +62,7 @@ export default function RecipientResults(
   };
 
   return (
-    <Container className="landing ttahub-recipient-results maxw-desktop" paddingX={0} paddingY={0} loading={loading} loadingLabel="Recipient search results loading">
+    <Container className="landing ttahub-recipient-results maxw-desktop" paddingX={0} paddingY={0}>
       <TableHeader
         title="Recipients"
         hideMenu
@@ -96,14 +90,6 @@ export default function RecipientResults(
           {recipients.map((recipient) => renderRecipient(recipient))}
         </tbody>
       </table>
-      <PaginationCard
-        totalCount={count}
-        currentPage={activePage}
-        offset={offset}
-        perPage={perPage}
-        handlePageChange={handlePageChange}
-        accessibleLandmarkName="Recipients pagination, bottom"
-      />
     </Container>
   );
 }
@@ -117,7 +103,6 @@ RecipientResults.propTypes = {
       programSpecialistName: PropTypes.string,
     })),
   })),
-  loading: PropTypes.bool.isRequired,
   activePage: PropTypes.number.isRequired,
   offset: PropTypes.number.isRequired,
   perPage: PropTypes.number.isRequired,

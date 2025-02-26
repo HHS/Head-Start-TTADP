@@ -3,6 +3,7 @@ import { useMediaQuery } from 'react-responsive';
 import PropTypes from 'prop-types';
 import { Dropdown, Pagination } from '@trussworks/react-uswds';
 import './PaginationCard.css';
+import { getPageInfo } from '../utils';
 
 const MAX_WIDTH_MOBILE = 500;
 const MIN_UNBOUNDED_PAGES = 25;
@@ -55,18 +56,6 @@ function PaginationCard({
     });
   });
 
-  const getPageInfo = () => {
-    const from = offset >= totalCount ? 0 : offset + 1;
-    const offsetTo = perPage * currentPage;
-    let to;
-    if (offsetTo > totalCount) {
-      to = totalCount;
-    } else {
-      to = offsetTo;
-    }
-    return `${from}-${to} of ${totalCount}`;
-  };
-
   const getTotalPages = () => {
     const totalPages = Math.floor(totalCount / perPage);
     return totalCount % perPage > 0 ? totalPages + 1 : totalPages;
@@ -84,7 +73,6 @@ function PaginationCard({
 
   return (
     <div ref={el} className="smart-hub--pagination-card flex-align-self-end display-block">
-      {(hideInfo && perPageChange) && ('displaying per page')}
       {!hideInfo && (
         <div className="smart-hub--pagination-card--contents--info display-flex flex-1 flex-align-center">
           {perPageChange ? (
@@ -102,9 +90,17 @@ function PaginationCard({
               <option value={totalCount}>all</option>
             </Dropdown>
           ) : null }
-          <span>{getPageInfo()}</span>
+          <span className={totalPages < 2 ? 'margin-right-1' : ''}>
+            {getPageInfo(
+              offset,
+              totalCount,
+              currentPage,
+              perPage,
+            )}
+          </span>
         </div>
       )}
+      {totalPages > 1 && (
       <Pagination
         className={paginationClassName}
         currentPage={currentPage}
@@ -115,6 +111,7 @@ function PaginationCard({
         aria-label={accessibleLandmarkName}
         maxSlots={isMobile ? MOBILE_MAX_SLOTS : MAX_SLOTS}
       />
+      )}
     </div>
   );
 }
@@ -138,7 +135,7 @@ PaginationCard.defaultProps = {
   perPageChange: false,
   hideInfo: false,
   accessibleLandmarkName: 'Pagination',
-  paginationClassName: 'padding-1',
+  paginationClassName: 'margin-bottom-0 margin-top-0',
 };
 
 export default PaginationCard;

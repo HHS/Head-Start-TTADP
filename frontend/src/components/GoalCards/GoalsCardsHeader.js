@@ -41,6 +41,7 @@ export default function GoalCardsHeader({
   dismissMergeSuccess,
   allSelectedGoalIds,
   goalBuckets,
+  perPageChange,
 }) {
   const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
@@ -176,9 +177,9 @@ export default function GoalCardsHeader({
           offset={offset}
           perPage={perPage}
           handlePageChange={handlePageChange}
-          accessibleLandmarkName="Goals pagination, top"
+          accessibleLandmarkName="Goals pagination"
           paginationClassName="padding-x-1 margin-0"
-          hideInfo
+          perPageChange={perPageChange}
         />
       </div>
       {(canMergeGoals && goalMergeGroups.length > 0) && (
@@ -355,6 +356,7 @@ GoalCardsHeader.propTypes = {
     id: PropTypes.number,
     goals: PropTypes.arrayOf(PropTypes.number),
   })).isRequired,
+  perPageChange: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

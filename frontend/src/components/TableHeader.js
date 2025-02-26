@@ -84,16 +84,17 @@ export default function TableHeader({
             )}
           </span>
         </div>
-        <PaginationCard
-          currentPage={activePage}
-          totalCount={count}
-          offset={offset}
-          perPage={perPage}
-          handlePageChange={handlePageChange}
-          accessibleLandmarkName="Pagination, top"
-          paginationClassName="padding-x-1 margin-0"
-          hideInfo
-        />
+        <div className="display-flex flex-align-center">
+          <PaginationCard
+            currentPage={activePage}
+            totalCount={count}
+            offset={offset}
+            perPage={perPage}
+            handlePageChange={handlePageChange}
+            accessibleLandmarkName="Pagination, top"
+            paginationClassName="padding-x-1 margin-0"
+          />
+        </div>
       </div>
     </div>
   );
