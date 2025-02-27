@@ -52,9 +52,8 @@ function BarGraph({
     counts.push(dataPoint.count);
   });
 
-  // We need to buffer the min range/scale otherwise we will cut off the smallest value.
-  const minRange = Math.min(...counts);
-  const range = [minRange === 0 || minRange - 2 <= 0 ? 0 : minRange - 2, Math.max(...counts) + 2];
+  // Always start the bar at 0 so smaller values aren't hidden.
+  const range = [0, Math.max(...counts) + 2];
 
   const trace = {
     type: 'bar',
