@@ -141,6 +141,7 @@ const LOG_WHERE_OPTIONS = (id: number) => ({
         'id',
       ],
       as: 'author',
+      required: true,
     },
   ],
 });
