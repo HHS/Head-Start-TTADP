@@ -15,6 +15,9 @@ import db, {
   Role,
   UserRole,
   Program,
+  Goal,
+  Objective,
+  ActivityReportGoal,
 } from '../models';
 import {
   createOrUpdate,
@@ -33,11 +36,15 @@ import {
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsApprovedByDate,
+  handleSoftDeleteReport,
 } from './activityReports';
 import SCOPES from '../middleware/scopeConstants';
 
-import { createReport, destroyReport } from '../testUtils';
+import {
+  createGrant, createRecipient, createReport, destroyReport,
+} from '../testUtils';
 import { auditLogger } from '../logger';
+import { GOAL_STATUS } from '../constants';
 
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
@@ -1953,6 +1960,139 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
+    });
+  });
+  describe('handleSoftDeleteReport', () => {
+    let user;
+    let report;
+    let alternateReport;
+    let unrelatedReport;
+    let recipient;
+    let grant;
+    let goal;
+    let alternateGoal;
+    let unrelatedGoal;
+
+    beforeAll(async () => {
+      user = await User.create({
+        ...mockUserFour,
+        hsesUserId: faker.datatype.string(10),
+        id: faker.datatype.number({ min: 90000 }),
+      });
+      recipient = await createRecipient({});
+      grant = await createGrant({ recipientId: recipient.id });
+
+      report = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      alternateReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      unrelatedReport = await ActivityReport.create({
+        ...submittedReport,
+        userId: user.id,
+        lastUpdatedById: user.id,
+        submissionStatus: REPORT_STATUSES.APPROVED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        activityRecipients: [{ activityRecipientId: grant.id }],
+      });
+      unrelatedGoal = await Goal.create({
+        name: 'Unrelated Goal',
+        createdVia: 'activityReport',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      goal = await Goal.create({
+        name: 'Test Goal',
+        createdVia: 'activityReport',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      alternateGoal = await Goal.create({
+        name: 'Test Alternate Goal',
+        createdVia: 'activityReport',
+        grantId: grant.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      await Objective.create({
+        title: 'Test Objective',
+        goalId: goal.id,
+        status: GOAL_STATUS.NOT_STARTED,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: unrelatedReport.id,
+        goalId: unrelatedGoal.id,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: goal.id,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: alternateGoal.id,
+      });
+      await ActivityReportGoal.create({
+        activityReportId: alternateReport.id,
+        goalId: alternateGoal.id,
+      });
+    });
+
+    afterAll(async () => {
+      const reports = [report.id, alternateReport.id, unrelatedReport.id];
+      const goals = [goal.id, alternateGoal.id, unrelatedGoal.id];
+      await ActivityReportGoal.destroy(
+        {
+          where: {
+            activityReportId: reports,
+          },
+        },
+      );
+      await Objective.destroy({ where: { goalId: goals }, force: true });
+      await Goal.destroy({ where: { id: goals }, force: true });
+      await ActivityReport.destroy({ where: { id: reports }, force: true });
+      await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
+      await Recipient.destroy({ where: { id: recipient.id }, force: true });
+      await User.destroy({ where: { id: user.id }, force: true });
+    });
+
+    it('soft deletes goals and objectives associated with the report', async () => {
+      expect(report.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
+      await handleSoftDeleteReport(report);
+
+      const objs = await Objective.findAll({
+        where: { goalId: [goal.id, alternateGoal.id] },
+        paranoid: false,
+      });
+      const gls = await Goal.findAll({
+        where: { id: [goal.id, alternateGoal.id] },
+        paranoid: false,
+      });
+
+      expect(report.submissionStatus).toBe(REPORT_STATUSES.DELETED);
+      expect(objs.length).toBe(1);
+      const deletedObjectives = objs.filter((o) => o.deletedAt !== null);
+      expect(deletedObjectives.length).toBe(1);
+      const [deletedObjective] = deletedObjectives;
+      expect(deletedObjective.goalId).toBe(goal.id);
+      expect(gls.length).toBe(2);
+      const deletedGoals = gls.filter((g) => g.deletedAt !== null);
+      expect(deletedGoals.length).toBe(1);
+      const [deletedGoal] = deletedGoals;
+      expect(deletedGoal.id).toBe(goal.id);
+
+      const unrelated = await Goal.findByPk(unrelatedGoal.id, { paranoid: false });
+      expect(unrelated).not.toBeNull();
+      expect(unrelated.deletedAt).toBeNull();
     });
   });
 });
