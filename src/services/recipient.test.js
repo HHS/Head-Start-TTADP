@@ -1767,8 +1767,8 @@ describe('Recipient DB service', () => {
       const result2 = reduceObjectivesForRecipientRecord(currentModel2, goal2, []);
 
       // Both calls should produce the same sorted order
-      expect(result1.map(obj => obj.id)).toEqual([3, 2, 1]);
-      expect(result2.map(obj => obj.id)).toEqual([3, 2, 1]);
+      expect(result1.map((obj) => obj.id)).toEqual([3, 2, 1]);
+      expect(result2.map((obj) => obj.id)).toEqual([3, 2, 1]);
     });
 
     it('properly handles activity report endDates when determining objective endDate', () => {
