@@ -52,7 +52,8 @@ function BarGraph({
     counts.push(dataPoint.count);
   });
 
-  const range = [Math.min(...counts), Math.max(...counts)];
+  // Always start the bar at 0 so smaller values aren't hidden.
+  const range = [0, Math.max(...counts) + 2];
 
   const trace = {
     type: 'bar',
