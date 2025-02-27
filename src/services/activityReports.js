@@ -1078,6 +1078,39 @@ export async function setStatus(report, status) {
   return activityReportAndRecipientsById(report.id);
 }
 
+export async function handleSoftDeleteReport(report) {
+  const goalsToCleanup = (await Goal.findAll({
+    attributes: ['id'],
+    where: {
+      createdVia: 'activityReport',
+      id: {
+        [Op.in]: sequelize.literal(`(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`),
+      },
+    },
+    include: [{
+      model: ActivityReportGoal,
+      as: 'activityReportGoals',
+      attributes: ['id', 'goalId'],
+    }],
+  })).filter((goal) => goal.activityReportGoals.length === 1).map((goal) => goal.id);
+
+  if (goalsToCleanup.length) {
+    // these goals and objectives will also be soft-deleted
+    await Objective.destroy({
+      where: {
+        goalId: goalsToCleanup,
+      },
+    });
+
+    await Goal.destroy({
+      where: {
+        id: goalsToCleanup,
+      },
+    });
+  }
+  return setStatus(report, REPORT_STATUSES.DELETED);
+}
+
 /*
  * Queries the db for relevant recipients depending on the region id.
  * If no region id is passed, then default to returning all available recipients.
