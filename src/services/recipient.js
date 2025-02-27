@@ -426,12 +426,36 @@ export function reduceObjectivesForRecipientRecord(
         reportTopics,
         reportReasons,
         endDate,
-      } = (objective.activityReports || []).reduce((accumulated, currentReport) => ({
-        reportTopics: [...accumulated.reportTopics, ...currentReport.topics || []],
-        reportReasons: [...accumulated.reportReasons, ...currentReport.reason || []],
+      } = (objective.activityReports || []).reduce((accumulated, currentReport) => {
+        // Always collect topics and reasons regardless of endDate
+        const updatedTopics = [...accumulated.reportTopics, ...(currentReport.topics || [])];
+        const updatedReasons = [...accumulated.reportReasons, ...(currentReport.reason || [])];
+
+        // Skip reports without endDate for date comparison only
+        if (!currentReport.endDate) {
+          return {
+            reportTopics: updatedTopics,
+            reportReasons: updatedReasons,
+            endDate: accumulated.endDate,
+          };
+        }
+
+        // If accumulated.endDate is null or the current report's endDate is later
         // eslint-disable-next-line max-len
-        endDate: new Date(currentReport.endDate) < new Date(accumulated.endDate) ? accumulated.endDate : currentReport.endDate,
-      }), { reportTopics: [], reportReasons: [], endDate: null });
+        if (!accumulated.endDate || new Date(currentReport.endDate) > new Date(accumulated.endDate)) {
+          return {
+            reportTopics: updatedTopics,
+            reportReasons: updatedReasons,
+            endDate: currentReport.endDate,
+          };
+        }
+
+        return {
+          reportTopics: updatedTopics,
+          reportReasons: updatedReasons,
+          endDate: accumulated.endDate,
+        };
+      }, { reportTopics: [], reportReasons: [], endDate: objective.endDate || null });
 
       const objectiveTitle = objective.title.trim();
       const objectiveStatus = objective.status;
@@ -479,7 +503,7 @@ export function reduceObjectivesForRecipientRecord(
       const formattedObjective = {
         id: objective.id,
         title: objective.title.trim(),
-        endDate: endDate || objective.endDate,
+        endDate: endDate || objective.endDate || null,
         status: objectiveStatus,
         grantNumbers: [grantNumberToUse],
         reasons: uniq(reportReasons),
@@ -521,9 +545,23 @@ export function reduceObjectivesForRecipientRecord(
     // eslint-disable-next-line no-param-reassign
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
-  }).sort((a, b) => ((
-    a.endDate === b.endDate ? a.id < b.id
-      : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+  }).sort((a, b) => {
+    // Handle null/undefined dates
+    if (!a.endDate && !b.endDate) {
+      // If both dates are null/undefined, sort by id in descending order
+      return a.id > b.id ? -1 : 1;
+    }
+    if (!a.endDate) return 1; // Null dates go last
+    if (!b.endDate) return -1;
+
+    // If dates are equal, sort by id in descending order (consistent with date sort)
+    if (a.endDate === b.endDate) {
+      return a.id > b.id ? -1 : 1;
+    }
+
+    // Sort by date in descending order
+    return new Date(a.endDate) > new Date(b.endDate) ? -1 : 1;
+  });
 }
 
 export function wasGoalPreviouslyClosed(goal) {
