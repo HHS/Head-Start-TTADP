@@ -270,6 +270,7 @@ export default function GoalCard({
         </div>
         { !hideGoalOptions && (
           <ContextMenu
+            fixed
             label={contextMenuLabel}
             menuItems={menuItems}
             menuWidthOffset={100}

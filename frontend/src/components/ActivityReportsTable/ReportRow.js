@@ -141,7 +141,13 @@ function ReportRow({
       <td data-label="Last saved">{lastSaved}</td>
       <td data-label="Approved at">{approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td data-label="Context menu">
-        <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} fixed />
+        <ContextMenu
+          label={contextMenuLabel}
+          menuItems={menuItems}
+          up={openMenuUp}
+          menuWidthOffset={130}
+          fixed
+        />
       </td>
     </tr>
   );

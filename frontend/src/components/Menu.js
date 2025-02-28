@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 /*
   Context menu shows a list of actions the user can select to perform actions. The actions
   are hidden until the user opens the menu (the three dot icon). The menu is automatically
@@ -31,6 +32,7 @@ function Menu({
   const [menuPosition, updateMenuPosition] = useState({});
   const defaultClass = 'smart-hub--menu';
   const buttonRef = useRef(null);
+  const popoverRef = useRef(null);
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
@@ -47,44 +49,27 @@ function Menu({
   }, [onEscape]);
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
-    // set initial postition
-    if (fixed && buttonRef.current && buttonRef.current.getBoundingClientRect) {
-      // get the button's position
-      const {
-        top,
-        height,
-        left: l,
-        width,
-      } = buttonRef.current.getBoundingClientRect();
-
-      // we could be progratically calculating the height and width offset numbers
-      // but a little manual work up front will save on performance in the browser
-
-      let leftPos = l + width;
-
-      // left = the menu opens to the left of the button instead of the right
-      if (left) {
-        leftPos = l + width - menuWidthOffset;
-      }
-
-      // top = the menu opens above the button instead of below
-      let topPos = top + height;
-
-      if (up) {
-        topPos = top - height - menuHeightOffset;
-      }
-
-      // update the CSS
-      updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px` });
+    if (!(fixed && buttonRef.current && buttonRef.current.getBoundingClientRect)) {
+      return;
     }
+
+    const {
+      x,
+      y,
+      height,
+      width,
+    } = buttonRef.current.getBoundingClientRect();
+
+    const leftPos = left ? x + width - menuWidthOffset : x + width;
+
+    // top = the menu opens above the button instead of below
+    const topPos = up ? y - height - menuHeightOffset : y + height;
+
+    updateMenuPosition({ top: `${topPos}px`, left: `${leftPos}px`, margin: 0 });
   }, [fixed, left, menuHeightOffset, menuWidthOffset, up]);
 
   // watch for window scroll
   useEffect(() => {
-    // the menu position is based on the button position, but because it is encased in a
-    // no-overflow div, we position it using "fixed"
-    // this means that it wouldn't scroll with the page, so we need to update the position
-    // when the user scrolls
     if (fixed) {
       window.addEventListener('scroll', recordButtonPositionAndUpdateMenu);
     }
@@ -93,6 +78,12 @@ function Menu({
       window.removeEventListener('scroll', recordButtonPositionAndUpdateMenu);
     };
   }, [fixed, recordButtonPositionAndUpdateMenu]);
+
+  useEffect(() => {
+    if (shown) {
+      recordButtonPositionAndUpdateMenu();
+    }
+  }, [recordButtonPositionAndUpdateMenu, shown]);
 
   const onBlur = (e) => {
     const { currentTarget } = e;
@@ -124,10 +115,6 @@ function Menu({
   const menuClass = `${defaultClass} shadow-1 z-top ${positionClass} ${placementClass}`;
 
   const onClick = () => {
-    // we don't need to check anything before calling this - if fixed is false, it won't do anything
-    recordButtonPositionAndUpdateMenu();
-
-    // toggle the menu visibility
     updateShown((previous) => !previous);
   };
 
@@ -144,11 +131,20 @@ function Menu({
         type="button"
         data-testid={buttonTestId}
         ref={buttonRef}
+        popovertarget="menu-popover"
+        popovertargetaction="toggle"
       >
         {buttonText}
       </button>
       {shown && (
-      <div data-testid="menu" className={menuClass} style={{ backgroundColor, ...menuPosition }}>
+      <div
+        id="menu-popover"
+        ref={popoverRef}
+        popover="manual"
+        data-testid="menu"
+        className={menuClass}
+        style={{ backgroundColor, ...menuPosition }}
+      >
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
             <li key={item.label} role="menuitem">

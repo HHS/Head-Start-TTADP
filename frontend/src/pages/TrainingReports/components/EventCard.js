@@ -253,6 +253,7 @@ function EventCard({
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu position-absolute right-0">
             {menuItems.length > 0 && (
             <ContextMenu
+              fixed
               label={contextMenuLabel}
               menuItems={menuItems}
             />

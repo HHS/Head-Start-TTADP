@@ -63,8 +63,10 @@ const WidgetContainerTitleGroup = ({
         )}
         {(menuItems.length > 0 && (
           <ContextMenu
+            fixed
             menuItems={menuItems}
             label={`Open Actions for ${title}`}
+            menuWidthOffset={140}
           />
         ))}
       </div>
