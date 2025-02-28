@@ -32,7 +32,7 @@ export function myReportsScopes(userId, roles, exclude) {
     WHERE "ActivityReportApprovers"."userId" = '${userId}'`;
   }
 
-  if (!reportSql.trim()) {
+  if (!reportSql) {
     auditLogger.info(`User: ${userId} attempting to filter reports with a role: ${roles} `);
     return {};
   }
