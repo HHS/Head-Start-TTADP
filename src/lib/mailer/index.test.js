@@ -28,6 +28,7 @@ import {
   trEventComplete,
   sendEmailVerificationRequestWithToken,
   recipientApprovedDigest,
+  cleanInactiveUserEmails,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -37,9 +38,10 @@ import {
 import { auditLogger, logger } from '../../logger';
 import { userById } from '../../services/users';
 import db, {
-  ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
+  ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover, Permission,
 } from '../../models';
 import { usersWithSetting } from '../../services/userSettings';
+import SCOPES from '../../middleware/scopeConstants';
 
 const { DAILY, WEEKLY, MONTHLY } = DIGEST_SUBJECT_FREQ;
 
@@ -1622,21 +1624,54 @@ describe('mailer tests', () => {
   });
 
   describe('filterAndDeduplicateEmails', () => {
-    it('should return an array with unique emails when given an array with duplicate emails', () => {
+    const emailsForUsers = [
+      'test@example.com',
+      'another@example.com',
+      'unique@example.com',
+      'no-send_test@example.com'];
+    const userIds = [];
+    beforeAll(async () => {
+      await Promise.all(emailsForUsers.map(async (email) => {
+        const user = await User.create({
+          id: Math.floor(Math.random() * 1000000),
+          homeRegionId: 1,
+          name: 'Test User',
+          email,
+          hsesUserId: Math.random().toString(36).substring(2, 17),
+          hsesUsername: Math.random().toString(36).substring(2, 17),
+          role: [],
+        });
+        userIds.push(user.id);
+        await Permission.create({
+          userId: user.id,
+          regionId: 14,
+          scopeId: SCOPES.SITE_ACCESS,
+        });
+      }));
+    });
+
+    afterAll(async () => {
+      // Clean all Permissions for userIds.
+      await Permission.destroy({ where: { userId: userIds } });
+      // Clean all  Users for userIds.
+      await User.destroy({ where: { id: userIds } });
+    });
+
+    it('should return an array with unique emails when given an array with duplicate emails', async () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com'];
-      const result = filterAndDeduplicateEmails(emails);
+      const result = await filterAndDeduplicateEmails(emails);
       expect(result).toEqual(['test@example.com', 'another@example.com']);
     });
 
-    it('should return an array without emails starting with "no-send_"', () => {
+    it('should return an array without emails starting with "no-send_"', async () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com', 'unique@example.com', 'no-send_test@example.com'];
-      const result = filterAndDeduplicateEmails(emails);
+      const result = await filterAndDeduplicateEmails(emails);
       expect(result).toEqual(['test@example.com', 'another@example.com', 'unique@example.com']);
     });
 
-    it('should return an empty array when given an empty array', () => {
+    it('should return an empty array when given an empty array', async () => {
       const emails = [];
-      const result = filterAndDeduplicateEmails(emails);
+      const result = await filterAndDeduplicateEmails(emails);
       expect(result).toEqual([]);
     });
   });
@@ -1653,6 +1688,64 @@ describe('mailer tests', () => {
       await programSpecialistRecipientReportApprovedNotification(mockProgramSpecialist, mockReport);
       expect(auditLogger.error).toHaveBeenCalledTimes(1);
       expect(auditLogger.error.mock.calls[0][0].message).toContain('Error adding to queue');
+    });
+  });
+
+  describe('clean inactive users from emails', () => {
+    let activeUser = null;
+    let inactiveUser = null;
+    beforeAll(async () => {
+      activeUser = await User.create(
+        {
+          id: 22447830,
+          homeRegionId: 1,
+          name: 'Test Active Email User',
+          email: 'activeuser@ttahub.com',
+          hsesUserId: 'activeemailuser',
+          hsesUsername: 'activeemailuser',
+          role: [],
+        },
+        { validate: false },
+        { individualHooks: false },
+      );
+
+      inactiveUser = await User.create({
+        id: 22484231,
+        homeRegionId: 1,
+        name: 'Test Inactive Email User',
+        email: 'inactiveuser@ttahub.com',
+        hsesUserId: 'inactiveemailuser',
+        hsesUsername: 'inactiveemailuser',
+        role: [],
+      });
+
+      // Create active user permisssion.
+      await Permission.create({
+        userId: activeUser.id,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      // Create inactive user permission
+      await Permission.create({
+        userId: inactiveUser.id,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      });
+    });
+
+    afterAll(async () => {
+      await Permission.destroy({ where: { userId: [activeUser.id, inactiveUser.id] } });
+      await User.destroy({ where: { id: [activeUser.id, inactiveUser.id] } });
+    });
+
+    it('cleans the email list of inactive users', async () => {
+      const emailList = [
+        'inactiveuser@ttahub.com',
+        'activeuser@ttahub.com'];
+
+      const cleanEmails = await cleanInactiveUserEmails(emailList);
+      expect(cleanEmails).toEqual(['activeuser@ttahub.com']);
     });
   });
 });

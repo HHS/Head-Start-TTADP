@@ -7,6 +7,8 @@ import Email from 'email-templates';
 import * as path from 'path';
 import {
   sequelize,
+  User,
+  Permission,
 } from '../../models';
 import { auditLogger, logger } from '../../logger';
 import newQueue, { increaseListeners } from '../queue';
@@ -23,6 +25,7 @@ import logEmailNotification, { logDigestEmailNotification } from './logNotificat
 import transactionQueueWrapper from '../../workers/transactionWrapper';
 import referenceData from '../../workers/referenceData';
 import safeParse from '../../models/helpers/safeParse';
+import SCOPES from '../../middleware/scopeConstants';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -80,6 +83,29 @@ export const frequencyToInterval = (freq) => {
   return date;
 };
 
+export const cleanInactiveUserEmails = async (emails) => {
+  try {
+    const activeUsers = await User.findAll({
+      where: {
+        email: emails,
+      },
+      include: [
+        {
+          model: Permission,
+          as: 'permissions',
+          where: {
+            regionId: 14,
+            scopeId: SCOPES.SITE_ACCESS,
+          },
+        },
+      ],
+    });
+    return activeUsers.map((user) => user.email);
+  } catch (error) {
+  }
+  return ['error'];
+};
+
 /**
  * Filters and deduplicates an array of email addresses, removing duplicates
  * and excluding email addresses that start with 'no-send_'.
@@ -87,12 +113,11 @@ export const frequencyToInterval = (freq) => {
  * @param {string[]} emails - An array of email addresses to filter and deduplicate.
  * @returns {string[]} - A deduplicated and filtered array of email addresses.
  */
-export const filterAndDeduplicateEmails = (emails) => {
+export const filterAndDeduplicateEmails = async (emails) => {
   const filteredEmails = emails.flat()
     .filter((email) => typeof email === 'string' && !email.startsWith('no-send_'))
     .filter((email, index, array) => array.indexOf(email) === index);
-
-  return filteredEmails;
+  return await cleanInactiveUserEmails(filteredEmails);
 };
 
 export const onFailedNotification = (job, error) => {
@@ -129,7 +154,7 @@ export const onCompletedNotification = (job, result) => {
  * Process function for changesRequested jobs added to notification queue
  * Sends group email to report author and collaborators about a single approver's requested changes
  */
-export const notifyChangesRequested = (job, transport = defaultTransport) => {
+export const notifyChangesRequested = async (job, transport = defaultTransport) => {
   const addresses = [];
   const {
     report, approver, authorWithSetting, collabsWithSettings,
@@ -155,7 +180,7 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
       addresses.push(collabArray);
     }
 
-    const toEmails = filterAndDeduplicateEmails(addresses);
+    const toEmails = await filterAndDeduplicateEmails(addresses);
 
     if (toEmails.length === 0) {
       return null;
@@ -191,7 +216,7 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
  * Process function for reportApproved jobs added to notification queue
  * Sends group email to report author and collaborators about approved status
  */
-export const notifyReportApproved = (job, transport = defaultTransport) => {
+export const notifyReportApproved = async (job, transport = defaultTransport) => {
   const addresses = [];
   const { report, authorWithSetting, collabsWithSettings } = job.data;
   // Set these inside the function to allow easier testing
@@ -210,7 +235,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
       addresses.push(collaboratorEmailAddresses);
     }
-    const toEmails = filterAndDeduplicateEmails(addresses);
+    const toEmails = await filterAndDeduplicateEmails(addresses);
 
     if (toEmails.length === 0) {
       return null; // Don't send anything if the "to" array is empty
@@ -240,7 +265,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   return null;
 };
 
-export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
+export const notifyRecipientReportApproved = async (job, transport = defaultTransport) => {
   const { report, programSpecialists, recipients } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
@@ -252,7 +277,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
 
     logger.info(`MAILER: Attempting to notify program specialists that report ${displayId} was approved because they have grants associated with it.`);
     const addresses = programSpecialists.map((c) => c.email);
-    const toEmails = filterAndDeduplicateEmails(addresses);
+    const toEmails = await filterAndDeduplicateEmails(addresses);
 
     if (toEmails.length === 0) {
       return null;
@@ -279,7 +304,7 @@ export const notifyRecipientReportApproved = (job, transport = defaultTransport)
  * Process function for approverAssigned jobs added to notification queue
  * Sends email to user about new ability to approve a report
  */
-export const notifyApproverAssigned = (job, transport = defaultTransport) => {
+export const notifyApproverAssigned = async (job, transport = defaultTransport) => {
   // Set these inside the function to allow easier testing
   const { report, newApprover } = job.data;
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
@@ -290,7 +315,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
     } = report;
     const approverEmail = newApprover.user.email;
     logger.debug(`MAILER: Attempting to notify ${approverEmail} that they were requested to approve report ${displayId}`);
-    const toEmails = filterAndDeduplicateEmails([approverEmail]);
+    const toEmails = await filterAndDeduplicateEmails([approverEmail]);
 
     if (toEmails.length === 0) {
       return null;
@@ -325,7 +350,7 @@ export const notifyApproverAssigned = (job, transport = defaultTransport) => {
  * Process function for collaboratorAssigned jobs added to notification queue
  * Sends email to user about new ability to edit a report
  */
-export const notifyCollaboratorAssigned = (job, transport = defaultTransport) => {
+export const notifyCollaboratorAssigned = async (job, transport = defaultTransport) => {
   const { report, newCollaborator } = job.data;
   const {
     id,
@@ -338,7 +363,7 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
     logger.debug(`MAILER: Attempting to notify ${newCollaborator.email} that they were added as a collaborator to report ${report.displayId}`);
 
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    const toEmails = filterAndDeduplicateEmails([newCollaborator.email]);
+    const toEmails = await filterAndDeduplicateEmails([newCollaborator.email]);
 
     if (toEmails.length === 0) {
       return null;
@@ -452,7 +477,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
     debugMessage,
   } = data;
 
-  const toEmails = filterAndDeduplicateEmails([emailTo]);
+  const toEmails = await filterAndDeduplicateEmails([emailTo]);
 
   if (!toEmails || toEmails.length === 0) {
     logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
@@ -501,7 +526,7 @@ export const trSessionCreated = async (event, sessionId) => {
 
     await Promise.all(event.pocIds.map(async (id) => {
       const user = await userById(id);
-      const emailTo = filterAndDeduplicateEmails([user.email]);
+      const emailTo = await filterAndDeduplicateEmails([user.email]);
 
       if (emailTo.length === 0) {
         logger.info(`Did not send tr session created notification for ${eId} preferences are not set or marked as "no-send"`);
@@ -550,7 +575,7 @@ export const trCollaboratorAdded = async (
     const eId = eventId.split('-').pop();
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
-    const emailTo = filterAndDeduplicateEmails([collaborator.email]);
+    const emailTo = await filterAndDeduplicateEmails([collaborator.email]);
 
     if (!emailTo || emailTo.length === 0) {
       logger.info(`Did not send tr collaborator added notification for ${eId} preferences are not set or marked as "no-send"`);
@@ -638,7 +663,7 @@ export const trEventComplete = async (
       return user.email;
     }));
 
-    const emailTo = filterAndDeduplicateEmails(emails.filter((email) => email));
+    const emailTo = await filterAndDeduplicateEmails(emails.filter((email) => email));
 
     if (!emailTo || emailTo.length === 0) {
       logger.info(`Did not send tr event complete notification for ${eId} preferences are not set or marked as "no-send"`);
@@ -1073,7 +1098,7 @@ export async function trainingReportTaskDueNotifications(freq) {
         userMap.set(userId, user);
       }
 
-      const emailTo = filterAndDeduplicateEmails([user.email]);
+      const emailTo = await filterAndDeduplicateEmails([user.email]);
 
       if (!emailTo || emailTo.length === 0) {
         return null;
@@ -1110,7 +1135,7 @@ export async function trainingReportTaskDueNotifications(freq) {
  * @param {*} transport - nodemailer transport
  *
  */
-export const notifyDigest = (job, transport = defaultTransport) => {
+export const notifyDigest = async (job, transport = defaultTransport) => {
   const {
     user, reports, type, freq, subjectFreq,
   } = job.data;
@@ -1120,7 +1145,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
 
   if (SEND_NOTIFICATIONS === 'true') {
     logger.debug(`MAILER: Attempting to create ${user.email}'s ${type} digest for ${freq}`);
-    const toEmails = filterAndDeduplicateEmails([user.email]);
+    const toEmails = await filterAndDeduplicateEmails([user.email]);
 
     if (toEmails.length === 0) {
       return null;
@@ -1286,12 +1311,12 @@ export const processNotificationQueue = () => {
  * @param {string} token
  * @returns Promise<any>
  */
-export const sendEmailVerificationRequestWithToken = (
+export const sendEmailVerificationRequestWithToken = async (
   user,
   token,
   transport = defaultTransport,
 ) => {
-  const toEmails = filterAndDeduplicateEmails([user.email]);
+  const toEmails = await filterAndDeduplicateEmails([user.email]);
 
   if (toEmails.length === 0) {
     return null;
