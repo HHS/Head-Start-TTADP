@@ -14,6 +14,13 @@ import {
   default as newQueue,
 } from './queue';
 
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
 describe('increaseListeners', () => {
   const MAX_LISTENERS = 20;
   let queue;
