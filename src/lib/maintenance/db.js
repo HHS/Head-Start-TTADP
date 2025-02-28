@@ -6,8 +6,10 @@ const {
   addQueueProcessor,
   enqueueMaintenanceJob,
   maintenanceCommand,
+  registerCronEnrollmentFunction,
   addCronJob,
 } = require('./common');
+const { auditLogger } = require('../../logger');
 
 const numOfModels = Object.values(sequelize.models).length;
 
@@ -308,32 +310,51 @@ const enqueueDBMaintenanceJob = async (
 // a task in this category is processed.
 addQueueProcessor(MAINTENANCE_CATEGORY.DB, dbMaintenance, false);
 
-// Adds a cron job with the specified maintenance category, type, and function to execute
-addCronJob(
-  MAINTENANCE_CATEGORY.DB, // The maintenance category is "DB"
-  MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE, // The maintenance type is "DAILY_DB_MAINTENANCE"
-  // The function to execute takes in the category, type, timezone, and schedule parameters
-  (category, type, timezone, schedule) => new CronJob(
-    schedule, // The schedule parameter specifies when the job should run
-    () => enqueueDBMaintenanceJob( // Enqueues a database maintenance job
-      MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE, // The maintenance type is "DAILY_DB_MAINTENANCE"
-      null, // no extra data passed
-      0.2, // Only 20% of the tables will be maintained each day
+registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
+  if (env !== 'production') {
+    auditLogger.log('info', `Skipping DB cron job enrollment in non-production environment (${env})`);
+    return;
+  }
+
+  if (instanceId !== '0') {
+    auditLogger.log('info', `Skipping DB cron job enrollment on instance ${instanceId} in environment ${env}`);
+    return;
+  }
+
+  if (contextId !== 0) {
+    auditLogger.log('info', `Skipping DB cron job enrollment on context ${contextId} in environment ${env} instance ${instanceId}`);
+    return;
+  }
+
+  auditLogger.log('info', `Registering DB maintenance cron jobs for context ${contextId} in environment ${env} instance ${instanceId}`);
+
+  // Adds a cron job with the specified maintenance category, type, and function to execute
+  addCronJob(
+    MAINTENANCE_CATEGORY.DB, // The maintenance category is "DB"
+    MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE, // The maintenance type is "DAILY_DB_MAINTENANCE"
+    // The function to execute takes in the category, type, timezone, and schedule parameters
+    (category, type, timezone, schedule) => new CronJob(
+      schedule, // The schedule parameter specifies when the job should run
+      () => enqueueDBMaintenanceJob( // Enqueues a database maintenance job
+        MAINTENANCE_TYPE.DAILY_DB_MAINTENANCE, // The maintenance type is "DAILY_DB_MAINTENANCE"
+        null, // no extra data passed
+        0.2, // Only 20% of the tables will be maintained each day
+      ),
+      null,
+      true,
+      timezone, // The timezone parameter specifies the timezone in which the job should run
     ),
-    null,
-    true,
-    timezone, // The timezone parameter specifies the timezone in which the job should run
-  ),
-  /**
-   * This cron expression breaks down as follows:
-   *  0 - The minute when the job will run (in this case, 0 minutes past the hour)
-   *  23 - The hour when the job will run (in this case, 11 pm)
-   *  * - The day of the month when the job will run (in this case, any day of the month)
-   *  * - The month when the job will run (in this case, any month)
-   *  * - The day of the week when the job will run (in this case, any day of the week)
-   * */
-  '0 23 * * *',
-);
+    /**
+     * This cron expression breaks down as follows:
+     *  0 - The minute when the job will run (in this case, 0 minutes past the hour)
+     *  23 - The hour when the job will run (in this case, 11 pm)
+     *  * - The day of the month when the job will run (in this case, any day of the month)
+     *  * - The month when the job will run (in this case, any month)
+     *  * - The day of the week when the job will run (in this case, any day of the week)
+     * */
+    '0 23 * * *',
+  );
+});
 
 module.exports = {
   nextBlock,
