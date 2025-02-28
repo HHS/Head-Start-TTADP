@@ -84,26 +84,22 @@ export const frequencyToInterval = (freq) => {
 };
 
 export const cleanInactiveUserEmails = async (emails) => {
-  try {
-    const activeUsers = await User.findAll({
-      where: {
-        email: emails,
-      },
-      include: [
-        {
-          model: Permission,
-          as: 'permissions',
-          where: {
-            regionId: 14,
-            scopeId: SCOPES.SITE_ACCESS,
-          },
+  const activeUsers = await User.findAll({
+    where: {
+      email: emails,
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+        where: {
+          regionId: 14,
+          scopeId: SCOPES.SITE_ACCESS,
         },
-      ],
-    });
-    return activeUsers.map((user) => user.email);
-  } catch (error) {
-  }
-  return ['error'];
+      },
+    ],
+  });
+  return activeUsers.map((user) => user.email);
 };
 
 /**
