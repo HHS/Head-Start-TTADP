@@ -109,11 +109,15 @@ export const cleanInactiveUserEmails = async (emails) => {
  * @param {string[]} emails - An array of email addresses to filter and deduplicate.
  * @returns {string[]} - A deduplicated and filtered array of email addresses.
  */
-export const filterAndDeduplicateEmails = async (emails) => {
-  const filteredEmails = emails.flat()
+export const filterAndDeduplicateEmails = async (emails, checkForActiveUsers) => {
+  let filteredEmails = emails.flat()
     .filter((email) => typeof email === 'string' && !email.startsWith('no-send_'))
     .filter((email, index, array) => array.indexOf(email) === index);
-  return await cleanInactiveUserEmails(filteredEmails);
+
+  if (checkForActiveUsers) {
+    filteredEmails = await cleanInactiveUserEmails(filteredEmails);
+  }
+  return filteredEmails;
 };
 
 export const onFailedNotification = (job, error) => {
@@ -150,7 +154,11 @@ export const onCompletedNotification = (job, result) => {
  * Process function for changesRequested jobs added to notification queue
  * Sends group email to report author and collaborators about a single approver's requested changes
  */
-export const notifyChangesRequested = async (job, transport = defaultTransport) => {
+export const notifyChangesRequested = async (
+  job,
+  transport = defaultTransport,
+  checkForActiveUsers = true,
+) => {
   const addresses = [];
   const {
     report, approver, authorWithSetting, collabsWithSettings,
@@ -176,7 +184,7 @@ export const notifyChangesRequested = async (job, transport = defaultTransport) 
       addresses.push(collabArray);
     }
 
-    const toEmails = await filterAndDeduplicateEmails(addresses);
+    const toEmails = await filterAndDeduplicateEmails(addresses, checkForActiveUsers);
 
     if (toEmails.length === 0) {
       return null;

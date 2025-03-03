@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { trainingReportTaskDueNotifications } from '.';
+import { trainingReportTaskDueNotifications, cleanInactiveUserEmails } from '.';
 import { userById } from '../../services/users';
 import { getTrainingReportAlerts } from '../../services/event';
 import { EMAIL_DIGEST_FREQ } from '../../constants';
@@ -8,9 +8,22 @@ import { EMAIL_DIGEST_FREQ } from '../../constants';
 jest.mock('bull');
 jest.mock('../../services/event', () => ({ getTrainingReportAlerts: jest.fn() }));
 jest.mock('../../services/users', () => ({ userById: jest.fn() }));
+jest.mock('../../lib/mailer', () => ({
+  ...jest.requireActual('.'),
+  cleanInactiveUserEmails: jest.fn(),
+}));
 
 describe('trainingReportTaskDueNotifications', () => {
   const today = moment().format('MM/DD/YYYY');
+  beforeAll(() => {
+    // Mock cleanInactiveUserEmails to return the same emails passed in.
+    cleanInactiveUserEmails.mockImplementation((emails) => emails);
+  });
+
+  afterAll(() => {
+    // Reset mocks.
+    jest.clearAllMocks();
+  });
 
   it('requires a date', async () => {
     await expect(trainingReportTaskDueNotifications()).rejects.toThrow('date is null');

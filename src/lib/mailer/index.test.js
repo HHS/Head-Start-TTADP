@@ -323,7 +323,8 @@ describe('mailer tests', () => {
           authorWithSetting: mockReport.author,
           collabsWithSettings: [mockCollaborator1, mockCollaborator2],
         },
-      }, jsonTransport);
+      }, jsonTransport, false);
+
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([
         mockAuthor.email,
@@ -345,14 +346,14 @@ describe('mailer tests', () => {
           authorWithSetting: null,
           collabsWithSettings: [],
         },
-      }, jsonTransport);
+      }, jsonTransport, false);
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
       const email = await notifyChangesRequested({
         data: { report: mockReport },
-      }, jsonTransport);
+      }, jsonTransport, false);
       expect(email).toBeNull();
     });
   });
