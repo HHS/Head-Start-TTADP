@@ -1660,19 +1660,19 @@ describe('mailer tests', () => {
 
     it('should return an array with unique emails when given an array with duplicate emails', async () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com'];
-      const result = await filterAndDeduplicateEmails(emails);
+      const result = await filterAndDeduplicateEmails(emails, false);
       expect(result).toEqual(['test@example.com', 'another@example.com']);
     });
 
     it('should return an array without emails starting with "no-send_"', async () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com', 'unique@example.com', 'no-send_test@example.com'];
-      const result = await filterAndDeduplicateEmails(emails);
+      const result = await filterAndDeduplicateEmails(emails, false);
       expect(result).toEqual(['test@example.com', 'another@example.com', 'unique@example.com']);
     });
 
     it('should return an empty array when given an empty array', async () => {
       const emails = [];
-      const result = await filterAndDeduplicateEmails(emails);
+      const result = await filterAndDeduplicateEmails(emails, false);
       expect(result).toEqual([]);
     });
   });
