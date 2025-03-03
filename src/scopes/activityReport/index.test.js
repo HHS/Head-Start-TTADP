@@ -44,6 +44,7 @@ import {
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 import { formatDeliveryMethod } from './deliveryMethod';
+import { myReportsScopes } from './myReports';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -2627,6 +2628,33 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([globallyExcludedReport.id]));
+    });
+
+    it('should return an empty object for invalid roles and log a warning', () => {
+      jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
+      const result = myReportsScopes(mockUser.id, ['InvalidRole'], false);
+      expect(result).toEqual({});
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `User: ${mockUser.id} attempting to filter reports with a role: InvalidRole `,
+      );
+    });
+
+    it('should return an empty object and log a warning when roles are empty', () => {
+      jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
+      const result = myReportsScopes(mockUser.id, [], false);
+      expect(result).toEqual({});
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `User: ${mockUser.id} attempting to filter reports with a role:  `,
+      );
+    });
+
+    it('should return an empty object when roles are undefined', () => {
+      jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
+      const result = myReportsScopes(mockUser.id, undefined, false);
+      expect(result).toEqual({});
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `User: ${mockUser.id} attempting to filter reports with a role:  `,
+      );
     });
   });
 
