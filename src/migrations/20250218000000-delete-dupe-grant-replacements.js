@@ -20,18 +20,20 @@ module.exports = {
         -- future interest.
 
         -- Find the dupe sets but only choose those with at least one record
-        -- where "grantReplacementTypeId" IS NULL
+        -- where "grantReplacementTypeId" IS NULL and at least one record is
+        -- NOT null.
         DROP TABLE IF EXISTS dupe_grant_replacement_sets;
         CREATE TEMP TABLE dupe_grant_replacement_sets
         AS
         SELECT
           "replacedGrantId" old_grid,
           "replacingGrantId" new_grid,
-          COUNT(id) FILTER (WHERE "grantReplacementTypeId" IS NULL) nullid_cnt
+          COUNT(id) FILTER (WHERE "grantReplacementTypeId" IS NULL) nullid_cnt,
+          COUNT(id) cnt
         FROM "GrantReplacements" gr
-        GROUP BY 1,2,3
+        GROUP BY 1,2
         HAVING BOOL_OR("grantReplacementTypeId" IS NULL)
-          AND COUNT(id) > 1
+          AND BOOL_OR("grantReplacementTypeId" IS NOT NULL)
         ;
 
         -- delete the dupes with null grantReplacementTypeId
