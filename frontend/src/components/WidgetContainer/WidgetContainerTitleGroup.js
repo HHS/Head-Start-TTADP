@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from '../ContextMenu';
 import useMarginFromConfig from '../../hooks/useMarginFromConfig';
+import WidgetContainerSubtitle from './WidgetContainerSubtitle';
 
 const WidgetContainerTitleGroup = ({
   children,
@@ -18,6 +19,14 @@ const WidgetContainerTitleGroup = ({
     return null;
   }
 
+  const renderSubtitle = () => {
+    if (typeof subtitle === 'string') {
+      return <WidgetContainerSubtitle>{subtitle}</WidgetContainerSubtitle>;
+    }
+
+    return subtitle;
+  };
+
   return (
     <div className={`smart-hub--table-widget-container padding-x-3 padding-top-3 position-relative ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
       <div className="desktop:display-flex flex-align-center flex-gap-2">
@@ -25,7 +34,7 @@ const WidgetContainerTitleGroup = ({
           <h2 className={`smart-hub--table-widget-heading ${h2Margins} font-sans-lg`}>
             {title}
           </h2>
-          {subtitle}
+          {renderSubtitle()}
         </div>
         {children}
       </div>
