@@ -10,19 +10,15 @@ import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
-import SelectPagination from '../SelectPagination';
 import { similarity } from '../../fetchers/goals';
 import { markSimilarGoals } from '../../fetchers/recipient';
 import FeatureFlag from '../FeatureFlag';
+import PaginationCard from '../PaginationCard';
+import './GoalsCardsHeader.css';
 
 export default function GoalCardsHeader({
   title,
   count,
-  activePage,
-  offset,
-  perPage,
-  handlePageChange,
-  hidePagination,
   recipientId,
   regionId,
   hasActiveGrants,
@@ -33,15 +29,19 @@ export default function GoalCardsHeader({
   selectAllGoalCheckboxSelect,
   selectAllGoals,
   pageSelectedGoalIds,
-  perPageChange,
   pageGoalIds,
   showRttapaValidation,
   draftSelectedRttapa,
+  activePage,
+  offset,
+  perPage,
+  handlePageChange,
   canMergeGoals,
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
   allSelectedGoalIds,
   goalBuckets,
+  perPageChange,
 }) {
   const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
@@ -135,11 +135,11 @@ export default function GoalCardsHeader({
   const showClearAllAlert = numberOfSelectedGoals === count;
 
   return (
-    <div className="padding-x-3 position-relative">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
-        <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
+    <div className="ttahub-goal-cards-header padding-x-3 position-relative">
+      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white margin-y-1 desktop:margin-0">
+        <h2 className="font-body-lg desktop:margin-left-2 margin-right-1 desktop:margin-y-3">{title}</h2>
         { showAddNewButton ? (
-          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
+          <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 display-flex flex-row flex-align-center">
             <Link
               to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}
               className="display-flex flex-justify usa-button"
@@ -153,7 +153,7 @@ export default function GoalCardsHeader({
           </span>
         ) : null }
       </div>
-      <div className="desktop:display-flex flex-justify bg-white">
+      <div className="ttahub-goal-cards-header--sort-and-pagination">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
@@ -171,19 +171,16 @@ export default function GoalCardsHeader({
             <option value="goalStatus-desc">goal status (closed first) </option>
           </Dropdown>
         </div>
-        {!hidePagination && (
-        <div className="smart-hub--table-nav">
-          <SelectPagination
-            title="Goals"
-            offset={offset}
-            perPage={perPage}
-            activePage={activePage}
-            count={count}
-            handlePageChange={handlePageChange}
-            perPageChange={perPageChange}
-          />
-        </div>
-        )}
+        <PaginationCard
+          totalCount={count}
+          currentPage={activePage}
+          offset={offset}
+          perPage={perPage}
+          handlePageChange={handlePageChange}
+          accessibleLandmarkName="Goals pagination"
+          paginationClassName="padding-x-1 margin-0"
+          perPageChange={perPageChange}
+        />
       </div>
       {(canMergeGoals && goalMergeGroups.length > 0) && (
       <div className="usa-alert usa-alert--info" data-testid="alert">
@@ -328,12 +325,7 @@ export default function GoalCardsHeader({
 
 GoalCardsHeader.propTypes = {
   title: PropTypes.string.isRequired,
-  hidePagination: PropTypes.bool,
   count: PropTypes.number,
-  activePage: PropTypes.number,
-  offset: PropTypes.number,
-  perPage: PropTypes.number,
-  handlePageChange: PropTypes.func,
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
@@ -348,13 +340,14 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
-  pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  perPageChange: PropTypes.func.isRequired,
-  pageGoalIds: PropTypes.oneOfType(
-    [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
-  ).isRequired,
+  pageGoalIds: PropTypes.number.isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  activePage: PropTypes.number.isRequired,
+  offset: PropTypes.number.isRequired,
+  perPage: PropTypes.number.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
+  pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
   shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
@@ -363,16 +356,12 @@ GoalCardsHeader.propTypes = {
     id: PropTypes.number,
     goals: PropTypes.arrayOf(PropTypes.number),
   })).isRequired,
+  perPageChange: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
-  hidePagination: false,
   allGoalsChecked: false,
   count: 0,
-  activePage: 0,
-  offset: 0,
-  perPage: 10,
-  handlePageChange: () => { },
   selectAllGoalCheckboxSelect: () => { },
   selectAllGoals: () => { },
   numberOfSelectedGoals: 0,
