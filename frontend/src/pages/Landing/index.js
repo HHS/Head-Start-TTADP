@@ -41,18 +41,6 @@ import { specialistNameFilter } from '../../components/filter/activityReportFilt
 
 const FILTER_KEY = 'landing-filters';
 
-export function renderTotal(offset, perPage, activePage, reportsCount) {
-  const from = offset >= reportsCount ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > reportsCount) {
-    to = reportsCount;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${reportsCount}`;
-}
-
 export function getAppliedRegion(filters) {
   const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
   if (regionFilters && regionFilters.length > 0) {

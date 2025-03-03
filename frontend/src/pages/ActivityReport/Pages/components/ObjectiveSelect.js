@@ -25,9 +25,9 @@ export default function ObjectiveSelect({
           <ModalToggleButton
             modalRef={modalRef}
             type="button"
+            opener
             className="ttahub-objective-select-remove-objective"
             unstyled
-            onClick={onRemove}
           >
             Remove this objective
           </ModalToggleButton>

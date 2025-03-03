@@ -10,6 +10,10 @@ $max-width-date-column: 50%;
   font-size: 1.06rem;
 }
 
+.ttahub-goal-cards .ttahub-goal-card:last-of-type {
+  margin-bottom: 0;
+}
+
 .ttahub-goal-card .smart-hub--menu-button .fa-ellipsis {
   font-size: 1.5rem;
 }

@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -28,19 +28,21 @@ export default function GoalsObjectives({
 
   const possibleGrants = recipient.grants;
 
-  const onRemoveFilter = (id) => {
+  const onRemoveFilter = useCallback((id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
     newFilters.splice(index, 1);
     setFilters(newFilters);
-  };
+  }, [filters, setFilters]);
 
-  const filtersToApply = expandFilters(filters);
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+  const hasActiveGrants = useMemo(() => {
+    if (recipient.grants && recipient.grants.find((g) => g.status === 'Active')) {
+      return true;
+    }
 
-  let hasActiveGrants = false;
-  if (recipient.grants && recipient.grants.find((g) => g.status === 'Active')) {
-    hasActiveGrants = true;
-  }
+    return false;
+  }, [recipient.grants]);
 
   return (
     <>

@@ -435,7 +435,7 @@ describe('Goals Table', () => {
 
   describe('Paging', () => {
     beforeEach(async () => {
-      renderTable({ goals: baseGoals, goalsCount: 6 }, defaultUser);
+      renderTable({ goals: baseGoals, goalsCount: 12 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
@@ -445,24 +445,20 @@ describe('Goals Table', () => {
     });
 
     it('Pagination links are visible', async () => {
-      const prevLink = await screen.findByRole('link', {
-        name: /go to previous page/i,
+      const [pageOne] = await screen.findAllByRole('button', {
+        name: /page 1/i,
       });
-      const pageOne = await screen.findByRole('link', {
-        name: /go to page number 1/i,
-      });
-      const nextLink = await screen.findByRole('link', {
-        name: /go to next page/i,
+      const [nextLink] = await screen.findAllByRole('button', {
+        name: /next page/i,
       });
 
-      expect(prevLink).toBeVisible();
       expect(pageOne).toBeVisible();
       expect(nextLink).toBeVisible();
     });
 
     it('Clicking on pagination page works', async () => {
-      const pageOne = await screen.findByRole('link', {
-        name: /go to page number 1/i,
+      const [pageOne] = await screen.findAllByRole('button', {
+        name: /page 1/i,
       });
 
       fireEvent.click(pageOne);
