@@ -311,3 +311,14 @@ export const blobToCsvDownload = (blob, fileName) => {
     window.URL.revokeObjectURL(url);
   }
 };
+export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
+  const from = offset >= totalCount ? 0 : offset + 1;
+  const offsetTo = perPage * currentPage;
+  let to;
+  if (offsetTo > totalCount) {
+    to = totalCount;
+  } else {
+    to = offsetTo;
+  }
+  return `${from.toLocaleString()}-${to.toLocaleString()} of ${totalCount.toLocaleString()}`;
+};

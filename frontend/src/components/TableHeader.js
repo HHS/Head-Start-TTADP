@@ -3,21 +3,10 @@ import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import Pagination from 'react-js-pagination';
 import ReportMenu from '../pages/Landing/ReportMenu';
 import colors from '../colors';
-
-export function renderTotal(offset, perPage, activePage, reportsCount) {
-  const from = offset >= reportsCount ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > reportsCount) {
-    to = reportsCount;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${reportsCount}`;
-}
+import PaginationCard from './PaginationCard';
+import './TableHeader.css';
 
 export default function TableHeader({
   title,
@@ -28,25 +17,34 @@ export default function TableHeader({
   handleDownloadAll,
   handleDownloadClick,
   count,
-  activePage,
-  offset,
-  perPage,
-  handlePageChange,
-  hidePagination,
   downloadError,
   setDownloadError,
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
-  paginationName,
   exportIdPrefix,
+  activePage,
+  offset,
+  perPage,
+  handlePageChange,
 }) {
+  const tableHeaderClassNames = [
+    'ttahub-table-header',
+    'desktop:display-flex',
+  ];
+
+  if (hideMenu) {
+    tableHeaderClassNames.push('ttahub-table-header--hide-menu');
+  }
+
+  const controlsWrapDisplay = hideMenu ? 'display-none' : 'display-flex';
   return (
-    <div className="desktop:display-flex">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
-        <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        <span className="smart-hub--table-controls desktop:margin-0 margin-2 display-flex flex-row flex-align-center">
-          {numberOfSelected > 0
+    <div className={tableHeaderClassNames.join(' ')}>
+      <div className="ttahub-table-header--contents padding-y-2">
+        <div className="ttahub-table-header--contents-heading-section display-flex">
+          <h2 className="font-body-lg margin-y-0 margin-left-2 margin-right-1">{title}</h2>
+          <span className={`smart-hub--table-controls margin-x-0 ${controlsWrapDisplay} flex-row`}>
+            {numberOfSelected > 0
             && (
               <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
                 {numberOfSelected}
@@ -69,7 +67,7 @@ export default function TableHeader({
                 </Button>
               </span>
             )}
-          {!hideMenu && (
+            {!hideMenu && (
             <ReportMenu
               label={menuAriaLabel}
               hasSelectedReports={numberOfSelected > 0}
@@ -83,40 +81,21 @@ export default function TableHeader({
               downloadSelectedButtonRef={downloadSelectedButtonRef}
               exportIdPrefix={exportIdPrefix}
             />
-          )}
-        </span>
-      </div>
-      {!hidePagination && (
-        <span className="smart-hub--table-nav">
-          <span aria-label={`Pagination for ${paginationName}`}>
-            <span
-              className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
-              aria-label={`Page ${activePage}, displaying rows ${renderTotal(
-                offset,
-                perPage,
-                activePage,
-                count,
-              )}`}
-            >
-              <span>{renderTotal(offset, perPage, activePage, count)}</span>
-              <Pagination
-                innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
-                hideFirstLastPages
-                prevPageText="<Prev"
-                nextPageText="Next>"
-                activePage={activePage}
-                itemsCountPerPage={perPage}
-                totalItemsCount={count}
-                pageRangeDisplayed={4}
-                onChange={handlePageChange}
-                linkClassPrev="smart-hub--link-prev"
-                linkClassNext="smart-hub--link-next"
-                tabIndex={0}
-              />
-            </span>
+            )}
           </span>
-        </span>
-      )}
+        </div>
+        <div className="display-flex flex-align-center">
+          <PaginationCard
+            currentPage={activePage}
+            totalCount={count}
+            offset={offset}
+            perPage={perPage}
+            handlePageChange={handlePageChange}
+            accessibleLandmarkName="Pagination, top"
+            paginationClassName="padding-x-1 margin-0"
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -128,12 +107,11 @@ TableHeader.propTypes = {
   toggleSelectAll: PropTypes.func,
   handleDownloadAll: PropTypes.func,
   handleDownloadClick: PropTypes.func,
-  hidePagination: PropTypes.bool,
   count: PropTypes.number,
-  activePage: PropTypes.number,
-  offset: PropTypes.number,
-  perPage: PropTypes.number,
-  handlePageChange: PropTypes.func,
+  activePage: PropTypes.number.isRequired,
+  offset: PropTypes.number.isRequired,
+  perPage: PropTypes.number.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
   hideMenu: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   setDownloadError: PropTypes.func,
@@ -147,20 +125,15 @@ TableHeader.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
-  paginationName: PropTypes.string,
+
 };
 
 TableHeader.defaultProps = {
   numberOfSelected: 0,
   toggleSelectAll: null,
-  hidePagination: false,
   handleDownloadAll: null,
   handleDownloadClick: null,
   count: 0,
-  activePage: 0,
-  offset: 0,
-  perPage: 10,
-  handlePageChange: null,
   hideMenu: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
@@ -168,5 +141,4 @@ TableHeader.defaultProps = {
   isDownloading: false,
   downloadAllButtonRef: null,
   downloadSelectedButtonRef: null,
-  paginationName: 'activity reports',
 };
