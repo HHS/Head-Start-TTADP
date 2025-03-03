@@ -14,9 +14,9 @@ module.exports = {
         -- null grantReplacementTypeId value set.
 
         -- There are also many other GrantReplacements entries where
-        -- they have the same replacedGrantId, replacingGrantId, and
-        -- replacementDate, but different non-null grantReplacementTypeId
-        -- values. This leaves those intact because they are of potential
+        -- they have the same replacedGrantId and replacingGrantId, but
+        -- different non-null grantReplacementTypeId values.
+        -- This leaves those intact because they are of potential
         -- future interest.
 
         -- Find the dupe sets but only choose those with at least one record
@@ -27,7 +27,6 @@ module.exports = {
         SELECT
           "replacedGrantId" old_grid,
           "replacingGrantId" new_grid,
-          "replacementDate" replacedate,
           COUNT(id) FILTER (WHERE "grantReplacementTypeId" IS NULL) nullid_cnt
         FROM "GrantReplacements" gr
         GROUP BY 1,2,3
@@ -44,7 +43,6 @@ module.exports = {
         USING dupe_grant_replacement_sets
         WHERE "replacedGrantId" = old_grid
           AND "replacingGrantId" = new_grid
-          AND "replacementDate" = replacedate
           AND "grantReplacementTypeId" IS NULL
         RETURNING id deleted_grid
         )
