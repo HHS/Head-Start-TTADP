@@ -53,12 +53,6 @@ LogProvider.propTypes = {
   ]).isRequired,
 };
 
-const useLogContext = () => {
-  if (!LogContext) {
-    throw new Error('useLogContext must be used within a LogProvider');
-  }
-
-  return useContext(LogContext);
-};
+const useLogContext = () => useContext(LogContext);
 
 export { LogProvider, useLogContext, LogContext };

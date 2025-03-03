@@ -63,7 +63,6 @@ describe('Recipient Search > RecipientResults', () => {
   const renderRecipientResults = (
     handlePageChange,
     requestSort,
-    loading = false,
     sortConfig = config,
   ) => (
     render(
@@ -71,7 +70,6 @@ describe('Recipient Search > RecipientResults', () => {
         <RecipientResults
           region={1}
           recipients={recipients}
-          loading={loading}
           activePage={1}
           offset={0}
           perPage={12}
@@ -106,14 +104,6 @@ describe('Recipient Search > RecipientResults', () => {
     expect(requestSort).toHaveBeenCalledWith('programSpecialist');
   });
 
-  it('disables the buttons on loading', async () => {
-    const handlePageChange = jest.fn();
-    const requestSort = jest.fn();
-    renderRecipientResults(handlePageChange, requestSort, true);
-    const button = screen.getByRole('button', { name: /program specialist\. activate to sort ascending/i });
-    expect(button).toBeDisabled();
-  });
-
   it('sorts in reverse', async () => {
     const sortConfig = {
       sortBy: 'name',
@@ -122,7 +112,7 @@ describe('Recipient Search > RecipientResults', () => {
 
     const handlePageChange = jest.fn();
     const requestSort = jest.fn();
-    renderRecipientResults(handlePageChange, requestSort, false, sortConfig);
+    renderRecipientResults(handlePageChange, requestSort, sortConfig);
     const tds = document.querySelectorAll('td');
     expect(tds[1]).toHaveTextContent('Agency 2 in region 1, Inc.');
     const button = screen.getByRole('button', { name: /recipient name\. activate to sort descending/i });
