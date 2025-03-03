@@ -12,6 +12,8 @@ import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import { EMPTY_ARRAY } from '../Constants';
 import BarGraph from './BarGraph';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
 import './RootCauseFeiGoals.css';
 
 const FIRST_COLUMN = 'Root cause';
@@ -138,16 +140,26 @@ export default function RootCauseFeiGoals({ data }) {
     exportRows,
   );
 
+  const subtitle = (
+    <div className="margin-bottom-3">
+      <WidgetContainerSubtitle>
+        Each goal can have up to 2 root causes
+      </WidgetContainerSubtitle>
+      <SecondarySubtitleWithFilterWarning showFiltersNotApplicable={showFiltersNotApplicable}>
+        {`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
+      </SecondarySubtitleWithFilterWarning>
+    </div>
+  );
+
   return (
     <div>
       <WidgetContainer
         className="tta-qa-dashboard-percentage-ars-by-role"
         loading={false}
         title="Root cause on FEI goals"
-        subtitle="Each goal can have up to 2 root causes"
-        subtitle2={`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
+        subtitle={subtitle}
         menuItems={menuItems}
-        showFiltersNotApplicable={showFiltersNotApplicable}
+        titleMargin={{ bottom: 2 }}
       >
         {showTabularData ? (
           <HorizontalTableWidget

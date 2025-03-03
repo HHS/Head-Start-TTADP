@@ -7,6 +7,7 @@ import useWidgetPaging from '../hooks/useWidgetPaging';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import Drawer from '../components/Drawer';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 
 function RecipientsWithOhsStandardFeiGoalWidget({
   data,
@@ -92,12 +93,49 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     },
   ];
 
+  const subtitle = (
+    <>
+      <DrawerTriggerButton drawerTriggerRef={titleDrawerRef}>
+        Learn more about root causes
+      </DrawerTriggerButton>
+      <Drawer
+        triggerRef={titleDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="OHS standard FEI goal"
+      >
+        <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
+      </Drawer>
+      <WidgetContainerSubtitle marginY={1}>
+        Root causes were identified through self-reported data
+      </WidgetContainerSubtitle>
+      <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">
+        <strong>{getSubtitleWithPct()}</strong>
+      </p>
+      <div className="smart-hub--table-widget-subtitle margin-x-0 margin-top-0 margin-bottom-3">
+        <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
+          Learn about root causes
+        </DrawerTriggerButton>
+        <Drawer
+          triggerRef={subtitleDrawerLinkRef}
+          stickyHeader
+          stickyFooter
+          title="FEI root cause"
+        >
+          <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
+        </Drawer>
+      </div>
+    </>
+  );
+
   return (
     <>
       <WidgetContainer
-        title="Recipients with"
-        subtitle="Root causes were identified through self-reported data."
-        subtitle2={getSubtitleWithPct()}
+        title="Recipients with OHS standard FEI goal"
+        titleMargin={{
+          bottom: 1,
+        }}
+        subtitle={subtitle}
         loading={loading || localLoading}
         loadingLabel="Recipients with OHS standard FEI goal loading"
         showPagingBottom
@@ -107,37 +145,6 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         perPage={RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE}
         handlePageChange={handlePageChange}
         menuItems={menuItems}
-        // content slots
-        TitleDrawer={(
-          <>
-            <DrawerTriggerButton customClass="font-sans-lg margin-left-1 text-bold" drawerTriggerRef={titleDrawerRef}>
-              OHS standard FEI goal
-            </DrawerTriggerButton>
-            <Drawer
-              triggerRef={titleDrawerRef}
-              stickyHeader
-              stickyFooter
-              title="OHS standard FEI goal"
-            >
-              <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
-            </Drawer>
-          </>
-        )}
-        SubtitleDrawer={(
-          <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-3 ">
-            <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
-              Learn about root causes
-            </DrawerTriggerButton>
-            <Drawer
-              triggerRef={subtitleDrawerLinkRef}
-              stickyHeader
-              stickyFooter
-              title="FEI root cause"
-            >
-              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
-            </Drawer>
-          </div>
-        )}
         enableCheckboxes
         exportRows={exportRows}
       >
