@@ -308,6 +308,7 @@ describe('ActivityReportsTable', () => {
       it('downloads all reports', async () => {
         const user = {
           name: 'test@test.com',
+          homeRegionId: 14,
           permissions: [
             {
               scopeId: 3,
@@ -466,25 +467,9 @@ describe('ActivityReportsTable', () => {
       expect(fetchMock.called()).toBe(true);
     });
 
-    it('Pagination links are visible', async () => {
-      const prevLink = await screen.findByRole('link', {
-        name: /go to previous page/i,
-      });
-      const pageOne = await screen.findByRole('link', {
-        name: /go to page number 1/i,
-      });
-      const nextLink = await screen.findByRole('link', {
-        name: /go to next page/i,
-      });
-
-      expect(prevLink).toBeVisible();
-      expect(pageOne).toBeVisible();
-      expect(nextLink).toBeVisible();
-    });
-
     it('clicking on pagination page works', async () => {
-      const pageOne = await screen.findByRole('link', {
-        name: /go to page number 1/i,
+      const [pageOne] = await screen.findAllByRole('button', {
+        name: /page 1/i,
       });
       fetchMock.reset();
       fetchMock.get(
@@ -517,8 +502,8 @@ describe('ActivityReportsTable', () => {
 
       renderTable(user);
 
-      const pageTwo = await screen.findByRole('link', {
-        name: /go to page number 2/i,
+      const [pageTwo] = await screen.findAllByRole('button', {
+        name: /page 2/i,
       });
 
       fetchMock.get(
@@ -549,8 +534,8 @@ describe('ActivityReportsTable', () => {
 
       renderTable(user);
 
-      const pageTwo = await screen.findByRole('link', {
-        name: /go to page number 2/i,
+      const [pageTwo] = await screen.findAllByRole('button', {
+        name: /page 2/i,
       });
 
       fetchMock.get(
@@ -586,11 +571,40 @@ describe('ActivityReportsTable', () => {
       expect(pagination).toBeVisible();
 
       // check the active page is reset
-      const [activePage] = screen.getAllByRole('link', {
-        name: /go to page number 1/i,
+      const [activePage] = screen.getAllByRole('button', {
+        name: /page 1/i,
       });
 
       expect(activePage).toBeVisible();
     });
+
+    it('downloads all reports', async () => {
+      const reportMenu = await screen.findByLabelText(/reports menu/i);
+      userEvent.click(reportMenu);
+      const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+      userEvent.click(downloadButton);
+      expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
+    });
+  });
+
+  it('disables download button while downloading', async () => {
+    const user = {
+      name: 'test@test.com',
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderTable(user);
+    const reportMenu = await screen.findByLabelText(/reports menu/i);
+    userEvent.click(reportMenu);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).not.toBeDisabled();
+    const downloadButton = await screen.findByRole('menuitem', { name: /export table data/i });
+    userEvent.click(downloadButton);
+    expect(await screen.findByRole('menuitem', { name: /export table data/i })).toBeDisabled();
+    expect(getAllReportsDownloadURL).toHaveBeenCalledWith('region.in[]=1');
   });
 });
