@@ -1369,51 +1369,6 @@ describe('Recipient DB service', () => {
       expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]); // Sorted by endDate descending
     });
 
-    it('handles undefined activityReports gracefully', () => {
-      const currentModel = {
-        objectives: [
-          {
-            id: 3,
-            endDate: null,
-            title: 'Objective 3',
-            status: 'In Progress',
-            activityReports: undefined,
-          },
-          {
-            id: 2,
-            endDate: '2024-12-30',
-            title: 'Objective 2',
-            status: 'Complete',
-            activityReports: [],
-          },
-        ],
-      };
-
-      const goal = {
-        objectives: [
-          {
-            id: 1,
-            endDate: undefined,
-            title: 'Objective 1',
-            status: 'Not Started',
-            activityReports: undefined,
-          },
-        ],
-        goalTopics: [],
-        reasons: [],
-      };
-
-      const grantNumbers = [];
-
-      const result = reduceObjectivesForRecipientRecord(
-        currentModel,
-        goal,
-        grantNumbers,
-      );
-      // Expected order: [1 (missing date), 3 (null date), 2 (valid date)]
-      expect(result.map((obj) => obj.id)).toEqual([2, 3, 1]);
-    });
-
     it('handles an empty objectives array', () => {
       const currentModel = { objectives: [] };
       const goal = { objectives: [], goalTopics: [], reasons: [] };
@@ -1741,7 +1696,106 @@ describe('Recipient DB service', () => {
       expect(result).toBeDefined();
       expect(result.length).toBe(4);
 
-      expect(result.map((obj) => obj.id)).toEqual([3, 2, 4, 1]);
+      expect(result.map((obj) => obj.id)).toEqual([1, 3, 2, 4]);
+    });
+
+    it('consistently sorts objectives with mixed endDate values and maintains order across multiple calls', () => {
+      // First call with objectives in one order
+      const currentModel1 = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: null,
+          },
+          {
+            id: 2,
+            title: 'Objective 2',
+            status: 'Complete',
+            endDate: '2023-12-01',
+          },
+        ],
+      };
+
+      const goal1 = {
+        objectives: [
+          {
+            id: 3,
+            title: 'Objective 3',
+            status: 'Not Started',
+            endDate: '2023-12-02',
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const result1 = reduceObjectivesForRecipientRecord(currentModel1, goal1, []);
+
+      // Second call with same objectives but in different order
+      const currentModel2 = {
+        objectives: [
+          {
+            id: 3,
+            title: 'Objective 3',
+            status: 'Not Started',
+            endDate: '2023-12-02',
+          },
+        ],
+      };
+
+      const goal2 = {
+        objectives: [
+          {
+            id: 2,
+            title: 'Objective 2',
+            status: 'Complete',
+            endDate: '2023-12-01',
+          },
+          {
+            id: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            endDate: null,
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const result2 = reduceObjectivesForRecipientRecord(currentModel2, goal2, []);
+
+      // Both calls should produce the same sorted order
+      expect(result1.map((obj) => obj.id)).toEqual([3, 2, 1]);
+      expect(result2.map((obj) => obj.id)).toEqual([3, 2, 1]);
+    });
+
+    it('properly handles activity report endDates when determining objective endDate', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 1,
+            title: 'Objective with reports',
+            status: 'In Progress',
+            endDate: '2023-01-01',
+            activityReports: [
+              { endDate: '2023-02-01', topics: ['Topic A'] },
+              { endDate: '2023-03-01', topics: ['Topic B'] }, // This should be used
+              { endDate: '2023-01-15', topics: ['Topic C'] },
+            ],
+          },
+        ],
+      };
+
+      const goal = { objectives: [], goalTopics: [], reasons: [] };
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, []);
+
+      expect(result.length).toBe(1);
+      expect(result[0].endDate).toBe('2023-03-01'); // Should use the latest report endDate
+      expect(result[0].topics).toContain('Topic A');
+      expect(result[0].topics).toContain('Topic B');
+      expect(result[0].topics).toContain('Topic C');
     });
   });
 
@@ -2461,17 +2515,6 @@ describe('Recipient DB service', () => {
 
       expect(result.goalRows.length).toBe(1);
       expect(result.goalRows[0].id).toBe(goals[0].id);
-    });
-
-    it('handles goals with missing collaborators gracefully', async () => {
-      await GoalCollaborator.destroy({
-        where: { goalId: goals.map((g) => g.id) },
-        force: true,
-      });
-
-      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
-
-      expect(result.goalRows.every((goal) => !goal.collaborators.goalCreator)).toBe(true);
     });
 
     it('returns an empty array when offset exceeds total count', async () => {

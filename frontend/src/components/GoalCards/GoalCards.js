@@ -9,7 +9,7 @@ import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import { reopenGoal, updateGoalStatus } from '../../fetchers/goals';
+import { updateGoalStatus, reopenGoal } from '../../fetchers/goals';
 import ReopenReasonModal from '../ReopenReasonModal';
 import { parseCheckboxEvent } from '../../Constants';
 
@@ -180,7 +180,7 @@ function GoalCards({
         </Alert>
       </Grid>
       )}
-      <Container className="goals-table maxw-full position-relative" paddingX={0} paddingY={0} positionRelative loading={loading} loadingLabel="Goals table loading">
+      <Container className="goals-table maxw-full position-relative padding-bottom-2" paddingX={0} paddingY={0} positionRelative loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
           goalIds={closeSuspendGoalIds}
@@ -223,7 +223,7 @@ function GoalCards({
           goalBuckets={goalBuckets}
           allSelectedGoalIds={selectedGoalCheckBoxes}
         />
-        <div className="padding-x-3 padding-y-2">
+        <div className="padding-x-3 padding-y-2 ttahub-goal-cards">
           {goals.map((goal, index) => (
             <GoalCard
               key={`goal-row-${goal.id}`}

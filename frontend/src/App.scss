@@ -156,6 +156,19 @@ body {
 .flex-gap-1 {
   gap: 0.5em;
 }
+/* ========== a new breakpoint for display-flex reset ========== */
+
+@media all and (min-width: 80em){
+  .desktop-lg\:display-flex {
+    display: flex;
+  }
+
+  .desktop-lg\:margin-y-0 {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
 
 .flex-gap-2 {
   gap: 1em;
