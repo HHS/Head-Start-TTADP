@@ -1168,9 +1168,39 @@ describe('mailer tests', () => {
 
   describe('enqueue', () => {
     beforeEach(async () => {
-      await User.create(digestMockCollab, { validate: false }, { individualHooks: false });
-      await User.create(digestMockApprover, { validate: false }, { individualHooks: false });
-      await User.create(mockUser, { validate: false }, { individualHooks: false });
+      await User.create(
+        digestMockCollab,
+        { validate: false },
+        { individualHooks: false },
+      );
+      await User.create(
+        digestMockApprover,
+        { validate: false },
+        { individualHooks: false },
+      );
+      await User.create(
+        mockUser,
+        { validate: false },
+        { individualHooks: false },
+      );
+
+      await Permission.create({
+        userId: digestMockCollab.id,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        userId: digestMockApprover.id,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        userId: mockUser.id,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
 
       jest.spyOn(notificationQueueMock, 'add').mockImplementation(async () => Promise.resolve());
       jest.spyOn(notificationDigestQueueMock, 'add').mockImplementation(async () => Promise.resolve());
@@ -1184,12 +1214,15 @@ describe('mailer tests', () => {
         force: true,
       });
       await ActivityReport.destroy({ where: { userId: mockUser.id } });
+
+      // Destroy user permissions.
+      await Permission.destroy({ where: { userId: digestMockCollab.id } });
+      await Permission.destroy({ where: { userId: digestMockApprover.id } });
+      await Permission.destroy({ where: { userId: mockUser.id } });
+
       await User.destroy({ where: { id: digestMockCollab.id } });
       await User.destroy({ where: { id: digestMockApprover.id } });
       await User.destroy({ where: { id: mockUser.id } });
-    });
-    afterAll(async () => {
-      await db.sequelize.close();
     });
 
     it('"collaborators added" on the notificationQueue', async () => {
@@ -1623,7 +1656,6 @@ describe('mailer tests', () => {
       expect(auditLogger.error).toHaveBeenCalledTimes(0);
     });
   });
-
   describe('filterAndDeduplicateEmails', () => {
     const emailsForUsers = [
       'test@example.com',
@@ -1676,7 +1708,6 @@ describe('mailer tests', () => {
       expect(result).toEqual([]);
     });
   });
-
   describe('programSpecialistRecipientReportApprovedNotification', () => {
     afterEach(() => {
       logger.info.mockClear();
