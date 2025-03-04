@@ -1,4 +1,13 @@
-import { reduceGoals, reduceObjectivesForActivityReport } from './reduceGoals';
+import {
+  reduceGoals, reduceObjectivesForActivityReport,
+  reduceRelationThroughActivityReportObjectives
+} from './reduceGoals';
+
+import {
+  IObjectiveModelInstance,
+} from './types';
+
+type IAcceptableModelParameter = { [key: string]: any };
 
 describe('reduceGoals', () => {
   const goals = [
@@ -356,5 +365,64 @@ describe('reduceGoals', () => {
         name: 'ANC - Citation 3 - Source 3',
       },
     ]);
+  });
+  describe('reduceRelationThroughActivityReportObjectives', () => {
+    it('should merge existing relations with new ones while ensuring uniqueness', () => {
+      const objective: IObjectiveModelInstance = {
+        id: 101,
+        title: 'Test Objective',
+        status: 'Active',
+        goalId: 10,
+        onApprovedAR: false,
+        onAR: false,
+        rtrOrder: 1,
+        otherEntityId: null,
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        activityReportObjectives: [
+          {
+            id: 1,
+            objectiveId: 101,
+            activityReportId: 500,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            name: 'Activity Report Objective 1',
+            status: 'In Progress',
+            endDate: '2025-01-01',
+            isActivelyEdited: false,
+            source: 'Some Source',
+            arOrder: 1,
+            objectiveCreatedHere: false,
+            supportType: 'Technical Assistance',
+            ttaProvided: 'Training',
+            closeSuspendReason: 'Completed',
+            closeSuspendContext: 'Closed due to completion',
+            activityReportObjectiveResources: [
+              { key: 1, resource: { value: 'R1' } },
+              { key: 2, resource: { value: 'R2' } },
+            ],
+            activityReportObjectiveTopics: [],
+            activityReportObjectiveFiles: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveCitations: [],
+            toJSON: function () { return this; },
+          },
+        ],
+      };
+      const existingRelation = [{ value: 'R1' }];
+      const result = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+        { resource: existingRelation },
+        'value',
+      );
+      expect(result).toEqual([
+        { value: 'R1' }, // Existing
+        { value: 'R2' }, // New and Unique
+      ]);
+    });
   });
 });

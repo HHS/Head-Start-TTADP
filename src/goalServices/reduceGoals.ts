@@ -103,7 +103,7 @@ export function reduceObjectives(
    * @returns {Array} - The reduced relation array.
    */
 type IAcceptableModelParameter = ITopic | IResource | ICourse;
-const reduceRelationThroughActivityReportObjectives = (
+export const reduceRelationThroughActivityReportObjectives = (
   objective: IObjectiveModelInstance,
   join: string,
   relation: string,
@@ -111,16 +111,20 @@ const reduceRelationThroughActivityReportObjectives = (
   uniqueBy = 'id',
 ) => {
   const existingRelation = exists[relation] || [];
-  return uniqBy([
-    ...existingRelation,
-    ...(objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-      ? objective.activityReportObjectives[0][join]
-        .map((t: IAcceptableModelParameter) => t[relation].dataValues)
-        .filter((t: IAcceptableModelParameter) => t)
-      : []),
-  ], (e: string) => e[uniqueBy]);
-};
+  const newRelations = objective.activityReportObjectives?.[0]?.[join]
+    ? objective.activityReportObjectives[0][join]
+      .map((t: { [x: string]: any; }) => {
+        const extracted = t[relation];
+
+        return extracted?.dataValues ?? extracted;
+      })
+      .filter((t: any) => t)
+    : [];
+
+  const result = uniqBy([...existingRelation, ...newRelations], (e: any) => e?.[uniqueBy]);
+
+  return result;
+}
 
 export function reduceObjectivesForActivityReport(
   newObjectives: IObjectiveModelInstance[],
