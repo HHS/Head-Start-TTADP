@@ -124,7 +124,7 @@ export const reduceRelationThroughActivityReportObjectives = (
   const result = uniqBy([...existingRelation, ...newRelations], (e: any) => e?.[uniqueBy]);
 
   return result;
-}
+};
 
 export function reduceObjectivesForActivityReport(
   newObjectives: IObjectiveModelInstance[],
