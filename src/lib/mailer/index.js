@@ -500,7 +500,7 @@ export const trSessionCreated = async (event, sessionId) => {
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
     await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id);
+      const user = await userById(id, true);
       const emailTo = filterAndDeduplicateEmails([user.email]);
 
       if (emailTo.length === 0) {
@@ -633,7 +633,7 @@ export const trEventComplete = async (
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
     const emails = await Promise.all(userIds.map(async (id) => {
-      const user = await userById(id);
+      const user = await userById(id, true);
       if (!user) return null;
       return user.email;
     }));
