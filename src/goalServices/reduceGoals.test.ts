@@ -1,6 +1,6 @@
 import {
   reduceGoals, reduceObjectivesForActivityReport,
-  reduceRelationThroughActivityReportObjectives
+  reduceRelationThroughActivityReportObjectives,
 } from './reduceGoals';
 
 import {
@@ -407,7 +407,7 @@ describe('reduceGoals', () => {
             activityReportObjectiveFiles: [],
             activityReportObjectiveCourses: [],
             activityReportObjectiveCitations: [],
-            toJSON: function () { return this; },
+            toJSON() { return this; },
           },
         ],
       };
