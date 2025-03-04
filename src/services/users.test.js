@@ -36,16 +36,63 @@ describe('Users DB service', () => {
         hsesUserId: '55',
         lastLogin: new Date(),
       });
+
+      // Active user.
+      await User.create({
+        id: 56,
+        name: 'user 56',
+        hsesUsername: 'user.56',
+        hsesUserId: '56',
+        lastLogin: new Date(),
+      });
+
+      await Permission.create({
+        userId: 56,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        userId: 56,
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      // In-active users.
+      await User.create({
+        id: 57,
+        name: 'user 57',
+        hsesUsername: 'user.57',
+        hsesUserId: '57',
+      });
+
+      await Permission.create({
+        userId: 57,
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
+      });
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [54, 55] } });
+      await Permission.destroy({ where: { userId: [56, 57] } });
+      await User.destroy({ where: { id: [54, 55, 56, 57] } });
     });
 
     it('retrieves the correct user', async () => {
       const user = await userById(54);
       expect(user.id).toBe(54);
       expect(user.name).toBe('user 54');
+    });
+
+    it('retrieves user if they are active', async () => {
+      const user = await userById(56, true);
+      expect(user.id).toBe(56);
+      expect(user.name).toBe('user 56');
+    });
+
+    it('does not retrieve user if they are inactive', async () => {
+      const user = await userById(57, true);
+      expect(user).toBe(null);
     });
   });
 
