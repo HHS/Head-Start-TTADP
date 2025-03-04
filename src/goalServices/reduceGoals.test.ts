@@ -9,6 +9,7 @@ import {
 
 type IAcceptableModelParameter = { [key: string]: any };
 
+
 describe('reduceGoals', () => {
   const goals = [
     {
