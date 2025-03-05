@@ -8,6 +8,7 @@ import {
   recipientApprovedDigest,
   trainingReportTaskDueNotifications,
 } from './mailer';
+import { runMaintenanceCronJobs } from './maintenance';
 import {
   DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
 } from '../constants';
@@ -113,5 +114,6 @@ export default function runCronJobs() {
     weeklyJob.start();
     const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
     monthlyJob.start();
+    // runMaintenanceCronJobs(timezone);
   }
 }
