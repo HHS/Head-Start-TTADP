@@ -21,7 +21,7 @@ const WidgetContainerTitleGroup = ({
 
   const renderSubtitle = () => {
     if (typeof subtitle === 'string') {
-      return <WidgetContainerSubtitle>{subtitle}</WidgetContainerSubtitle>;
+      return <div className="margin-bottom-3"><WidgetContainerSubtitle>{subtitle}</WidgetContainerSubtitle></div>;
     }
 
     return subtitle;
