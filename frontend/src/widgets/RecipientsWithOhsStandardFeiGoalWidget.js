@@ -107,7 +107,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
       </Drawer>
       <WidgetContainerSubtitle marginY={1}>
-        Root causes were identified through self-reported data
+        Root causes were identified through self-reported data.
       </WidgetContainerSubtitle>
       <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">
         <strong>{getSubtitleWithPct()}</strong>
