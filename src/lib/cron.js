@@ -114,6 +114,5 @@ export default function runCronJobs() {
     weeklyJob.start();
     const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
     monthlyJob.start();
-    // runMaintenanceCronJobs(timezone);
   }
 }
