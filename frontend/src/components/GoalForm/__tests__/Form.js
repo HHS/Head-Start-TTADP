@@ -10,7 +10,6 @@ import AppLoadingContext from '../../../AppLoadingContext';
 
 const DEFAULT_GOAL = {
   name: '',
-  endDate: '',
   selectedGrants: [],
   status: 'Draft',
   isOnApprovedReport: false,
@@ -54,7 +53,6 @@ describe('Goal Form > Form component', () => {
             isOnApprovedReport={goal.isOnApprovedReport}
             errors={FORM_FIELD_DEFAULT_ERRORS}
             validateGoalName={jest.fn()}
-            validateEndDate={jest.fn()}
             validateGrantNumbers={jest.fn()}
             setObjectiveError={jest.fn()}
             possibleGrants={[{ label: 'Grant 1', value: 1 }]}
@@ -79,13 +77,10 @@ describe('Goal Form > Form component', () => {
                 numberWithProgramTypes: 'GRANT_NUMBER EHS',
               }],
             }}
-            endDate={goal.endDate}
-            setEndDate={jest.fn()}
             setObjectives={jest.fn()}
             topicOptions={[{ label: 'Topic 1', value: 1 }]}
             objectives={objectives}
             status={goal.status}
-            datePickerKey="endDate"
             fetchError={fetchError}
             goalNumber="1"
             clearEmptyObjectiveError={jest.fn()}
