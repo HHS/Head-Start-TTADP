@@ -6,6 +6,12 @@ import ResourceUseSparklineGraph from './ResourceUseSparklineGraph';
 
 function ResourceUse({ data, loading }) {
   const [displayTable, setDisplayTable] = useState(false);
+  const menuItems = [
+    {
+      label: `View as ${displayTable ? 'graph' : 'table'}`,
+      onClick: () => setDisplayTable(!displayTable),
+    },
+  ];
 
   return (
     <WidgetContainer
@@ -16,6 +22,7 @@ function ResourceUse({ data, loading }) {
       showPagingBottom={false}
       displayTable={displayTable}
       setDisplayTable={setDisplayTable}
+      menuItems={menuItems}
     >
       {displayTable && (
       <HorizontalTableWidget
