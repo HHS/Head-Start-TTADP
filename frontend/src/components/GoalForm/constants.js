@@ -32,13 +32,12 @@ export const FORM_FIELD_INDEXES = {
   GRANTS: 0,
   NAME: 1,
   GOAL_SOURCES: 2,
-  END_DATE: 3,
-  OBJECTIVES_EMPTY: 4,
-  OBJECTIVES: 5,
-  GOAL_PROMPTS: 6,
+  OBJECTIVES_EMPTY: 3,
+  OBJECTIVES: 4,
+  GOAL_PROMPTS: 5,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>, [], {}];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <>, </>, <></>, [], {}];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',
@@ -153,7 +152,6 @@ export const grantsToGoals = ({
   status,
   source,
   isCurated,
-  endDate,
   regionId,
   recipient,
   objectives,
@@ -168,7 +166,6 @@ export const grantsToGoals = ({
     status,
     source: goalSource || null,
     isCurated,
-    endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
     regionId: parseInt(regionId, DECIMAL_BASE),
     recipientId: recipient.id,
     objectives,
