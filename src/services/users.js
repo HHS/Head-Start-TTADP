@@ -30,7 +30,19 @@ export const userAttributes = [
   'createdAt',
 ];
 
-export async function userById(userId) {
+export async function userById(userId, onlyActiveUsers = false) {
+  let permissionInclude = {
+    model: Permission,
+    as: 'permissions',
+    attributes: ['userId', 'scopeId', 'regionId'],
+  };
+
+  if (onlyActiveUsers) {
+    permissionInclude = {
+      ...permissionInclude,
+      where: { scopeId: SITE_ACCESS },
+    };
+  }
   return User.findOne({
     attributes: userAttributes,
     where: {
@@ -39,7 +51,9 @@ export async function userById(userId) {
       },
     },
     include: [
-      { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+      {
+        ...permissionInclude,
+      },
       { model: Role, as: 'roles' },
       { model: UserValidationStatus, as: 'validationStatus', attributes: ['userId', 'type', 'validatedAt'] },
     ],
