@@ -1,7 +1,6 @@
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
-// import { z } from 'zod'; // TODO: use for validation of JSON header
 import db from '../models';
 import User from '../policies/user';
 import { auditLogger } from '../logger';
