@@ -95,7 +95,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
 
   const subtitle = (
     <>
-      <DrawerTriggerButton drawerTriggerRef={titleDrawerRef} customClass="margin-bottom-1">
+      <DrawerTriggerButton drawerTriggerRef={titleDrawerRef} customClass="margin-bottom-2">
         Learn about the OHS standard goal
       </DrawerTriggerButton>
       <Drawer
@@ -109,7 +109,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
       <WidgetContainerSubtitle>
         Root causes were identified through self-reported data.
       </WidgetContainerSubtitle>
-      <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">
+      <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">
         <strong>{getSubtitleWithPct()}</strong>
       </p>
       <div className="smart-hub--table-widget-subtitle margin-x-0 margin-top-0 margin-bottom-3">
