@@ -8,7 +8,6 @@ import {} from 'dotenv/config';
 import httpContext from 'express-http-context';
 import throng from 'throng';
 import { EventEmitter } from 'events';
-import env from './env';
 import { logger } from './logger';
 import { registerEventListener } from './processHandler';
 import {
@@ -28,6 +27,7 @@ import {
   executeCronEnrollmentFunctions,
   runMaintenanceCronJobs,
 } from './lib/maintenance';
+import envParser from './envParser';
 
 EventEmitter.defaultMaxListeners = 25;
 
@@ -55,7 +55,7 @@ async function start(contextId: number) {
 
     // Ensure only instance zero and the first Throng worker run the maintenance jobs
     logger.info(`Starting worker, cf_instance: ${process.env.CF_INSTANCE_INDEX}, contextId: ${contextId}`);
-    if ((process.env.CF_INSTANCE_INDEX === '0') || env.bool('FORCE_CRON')) {
+    if ((process.env.CF_INSTANCE_INDEX === '0') || envParser.bool('FORCE_CRON')) {
       await executeCronEnrollmentFunctions(
         process.env.CF_INSTANCE_INDEX,
         contextId,
