@@ -70,13 +70,13 @@ describe('DB Cron Enrollment', () => {
     expect(addCronJob).not.toHaveBeenCalled();
   });
 
-  test('should skip enrollment when contextId is not 0', async () => {
+  test('should skip enrollment when contextId is not 1', async () => {
     expect(typeof enrollmentCallback).toBe('function');
-    // Simulate production with instanceId "0" but a non-zero contextId.
-    await enrollmentCallback('0', 1, 'production');
+    // Simulate production with instanceId "0" but contextId of 2.
+    await enrollmentCallback('0', 2, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping DB cron job enrollment on context 1 in environment production instance 0'),
+      expect.stringContaining('Skipping DB cron job enrollment on context 2 in environment production instance 0'),
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
