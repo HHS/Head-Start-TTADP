@@ -158,7 +158,7 @@ export default function PercentageActivityReportByRole({ data }) {
         title="Percentage of activity reports by role"
         subtitle={subtitle}
         menuItems={menuItems}
-        titleMargin={{ bottom: 2 }}
+        titleMargin={{ bottom: 1 }}
       >
         {showTabularData ? (
           <HorizontalTableWidget

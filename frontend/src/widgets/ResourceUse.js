@@ -23,6 +23,7 @@ function ResourceUse({ data, loading }) {
       displayTable={displayTable}
       setDisplayTable={setDisplayTable}
       menuItems={menuItems}
+      titleMargin={{ bottom: 1 }}
     >
       {displayTable && (
       <HorizontalTableWidget
