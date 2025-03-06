@@ -27,7 +27,7 @@ import {
   executeCronEnrollmentFunctions,
   runMaintenanceCronJobs,
 } from './lib/maintenance';
-import envParser from './envParser';
+import { isTrue } from './envParser';
 
 EventEmitter.defaultMaxListeners = 25;
 
@@ -55,7 +55,7 @@ async function start(contextId: number) {
 
     // Ensure only instance zero and the first Throng worker run the maintenance jobs
     logger.info(`Starting worker, cf_instance: ${process.env.CF_INSTANCE_INDEX}, contextId: ${contextId}`);
-    if ((process.env.CF_INSTANCE_INDEX === '0') || envParser.bool('FORCE_CRON')) {
+    if ((process.env.CF_INSTANCE_INDEX === '0') || isTrue('FORCE_CRON')) {
       await executeCronEnrollmentFunctions(
         process.env.CF_INSTANCE_INDEX,
         contextId,
