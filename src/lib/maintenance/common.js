@@ -4,10 +4,10 @@ const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
+const { isTrue } = require('../../envParser');
 const { default: LockManager } = require('../lockManager');
 const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
 const { default: referenceData } = require('../../workers/referenceData');
-const envParser = require('../../envParser');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
@@ -266,7 +266,6 @@ const setCronJobSchedule = (category, type, name, schedule) => {
  */
 const removeCronJob = (category, type, name) => {
   // Check if the key exists in the maintenanceCronJobs object.
-  logger.info(`Removing cron job: ${category}:${type}:${name} from ${maintenanceCronJobs}`);
   if (hasCronJob(category, type, name)) {
     delete maintenanceCronJobs[category][type][name];
 
@@ -566,7 +565,7 @@ addQueueProcessor(MAINTENANCE_CATEGORY.MAINTENANCE, maintenance);
  * Registers maintenance cron jobs using the common cron enrollment mechanism.
  */
 registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
-  if (!envParser.bool('FORCE_CRON')) {
+  if (!isTrue('FORCE_CRON')) {
     if (instanceId !== '0') {
       auditLogger.log('info', `Skipping maintenance cron job enrollment on instance ${instanceId} in environment ${env}`);
       return;
