@@ -107,6 +107,7 @@ function RecipientsWithNoTtaWidget({
       perPage={RECIPIENTS_WITH_NO_TTA_PER_PAGE}
       handlePageChange={handlePageChange}
       menuItems={menuItems}
+      titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget
         headers={pageData ? pageData.headers : []}
