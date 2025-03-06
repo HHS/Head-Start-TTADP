@@ -85,7 +85,7 @@ function RecipientsWithNoTtaWidget({
 
   const subtitle = (
     <div className="margin-bottom-3">
-      <WidgetContainerSubtitle marginY={1}>
+      <WidgetContainerSubtitle>
         Recipients without Activity Reports or Training Reports for more than 90 days.
       </WidgetContainerSubtitle>
       <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">

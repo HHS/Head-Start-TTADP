@@ -271,7 +271,7 @@ export default function DeliveryMethodGraph({ data }) {
       title="Delivery method"
       subtitle={subtitle}
       menuItems={menuItems}
-      titleMargin={{ bottom: 2 }}
+      titleMargin={{ bottom: 1 }}
     >
       <LineGraph
         showTabularData={showTabularData}

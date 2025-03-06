@@ -95,8 +95,8 @@ function RecipientsWithOhsStandardFeiGoalWidget({
 
   const subtitle = (
     <>
-      <DrawerTriggerButton drawerTriggerRef={titleDrawerRef}>
-        Learn more about root causes
+      <DrawerTriggerButton drawerTriggerRef={titleDrawerRef} customClass="margin-bottom-1">
+        Learn about the OHS standard goal
       </DrawerTriggerButton>
       <Drawer
         triggerRef={titleDrawerRef}
@@ -106,7 +106,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
       >
         <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
       </Drawer>
-      <WidgetContainerSubtitle marginY={1}>
+      <WidgetContainerSubtitle>
         Root causes were identified through self-reported data.
       </WidgetContainerSubtitle>
       <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">

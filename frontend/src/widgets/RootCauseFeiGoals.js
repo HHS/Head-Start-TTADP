@@ -159,7 +159,7 @@ export default function RootCauseFeiGoals({ data }) {
         title="Root cause on FEI goals"
         subtitle={subtitle}
         menuItems={menuItems}
-        titleMargin={{ bottom: 2 }}
+        titleMargin={{ bottom: 1 }}
       >
         {showTabularData ? (
           <HorizontalTableWidget
