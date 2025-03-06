@@ -54,10 +54,6 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
     },
-    endDate: {
-      type: DataTypes.DATEONLY,
-      get: formatDate,
-    },
     closeSuspendContext: {
       type: DataTypes.TEXT,
     },

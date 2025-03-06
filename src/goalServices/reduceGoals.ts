@@ -555,16 +555,6 @@ export function reduceGoals(
         return previousValues;
       }
 
-      const endDate = (() => {
-        const date = moment(currentValue.dataValues.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
-
-        if (date === 'Invalid date') {
-          return '';
-        }
-
-        return date;
-      })();
-
       const { source: sourceForReport } = currentValue.dataValues;
       const promptsForReport = reducePrompts(
         forReport,
@@ -599,7 +589,6 @@ export function reduceGoals(
         grantId: currentValue.grant.id,
         id: currentValue.dataValues.id,
         name: currentValue.dataValues.name,
-        endDate,
         activityReportGoals: currentValue.activityReportGoals,
         status: currentValue.dataValues.status,
         regionId: currentValue.grant.regionId,
