@@ -4,10 +4,10 @@ const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
-const { envParser } = require('../../env');
 const { default: LockManager } = require('../lockManager');
 const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
 const { default: referenceData } = require('../../workers/referenceData');
+const envParser = require('../../envParser');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
@@ -266,6 +266,7 @@ const setCronJobSchedule = (category, type, name, schedule) => {
  */
 const removeCronJob = (category, type, name) => {
   // Check if the key exists in the maintenanceCronJobs object.
+  logger.info(`Removing cron job: ${category}:${type}:${name} from ${maintenanceCronJobs}`);
   if (hasCronJob(category, type, name)) {
     delete maintenanceCronJobs[category][type][name];
 
