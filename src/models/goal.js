@@ -69,10 +69,6 @@ export default (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     timeframe: DataTypes.TEXT,
     isFromSmartsheetTtaPlan: DataTypes.BOOLEAN,
-    endDate: {
-      type: DataTypes.DATEONLY,
-      get: formatDate,
-    },
     goalNumber: {
       type: DataTypes.VIRTUAL,
       get() {
