@@ -8,6 +8,7 @@ import {
   getOptionsByGoalTemplateFieldPromptName,
   getSourceFromTemplate,
 } from '../../services/goalTemplates';
+import standardGoals from '../../services/standardGoals';
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
@@ -21,6 +22,22 @@ export async function getGoalTemplates(req: Request, res: Response) {
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');
+  }
+}
+
+export async function useStandardGoal(req: Request, res: Response) {
+  try {
+    const { grantId, goalTemplateId } = req.params;
+
+    const standards = await standardGoals(
+      Number(grantId),
+      Number(goalTemplateId),
+      [],
+    );
+
+    res.json(standards);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.useStandardGoal');
   }
 }
 
