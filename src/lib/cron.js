@@ -12,7 +12,7 @@ import {
   DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
 } from '../constants';
 import { logger, auditLogger } from '../logger';
-import env from '../env';
+import { isTrue } from '../envParser';
 
 // Set timing parameters.
 // Run at 4 am ET
@@ -100,7 +100,7 @@ const runMonthlyEmailJob = () => (async () => {
  */
 export default function runCronJobs() {
   // Run only on one instance
-  if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || env.bool('FORCE_CRON')) {
+  if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || isTrue('FORCE_CRON')) {
     // disable updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
       const job = new CronJob(schedule, () => runUpdateJob(), null, true, timezone);

@@ -234,7 +234,7 @@ registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
     return;
   }
 
-  if (contextId !== 0) {
+  if (contextId !== 1) {
     auditLogger.log('info', `Skipping import cron job enrollment on context ${contextId} in environment ${env} for instance ${instanceId}`);
     return;
   }

@@ -70,24 +70,24 @@ describe('DB Cron Enrollment', () => {
     expect(addCronJob).not.toHaveBeenCalled();
   });
 
-  test('should skip enrollment when contextId is not 0', async () => {
+  test('should skip enrollment when contextId is not 1', async () => {
     expect(typeof enrollmentCallback).toBe('function');
-    // Simulate production with instanceId "0" but a non-zero contextId.
-    await enrollmentCallback('0', 1, 'production');
+    // Simulate production with instanceId "0" but contextId of 2.
+    await enrollmentCallback('0', 2, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping DB cron job enrollment on context 1 in environment production instance 0'),
+      expect.stringContaining('Skipping DB cron job enrollment on context 2 in environment production instance 0'),
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
 
-  test('should register a cron job when in production with instanceId "0" and contextId 0', async () => {
+  test('should register a cron job when in production with instanceId "0" and contextId 1', async () => {
     expect(typeof enrollmentCallback).toBe('function');
     // Simulate the proper environment.
-    await enrollmentCallback('0', 0, 'production');
+    await enrollmentCallback('0', 1, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Registering DB maintenance cron jobs for context 0 in environment production instance 0'),
+      expect.stringContaining('Registering DB maintenance cron jobs for context 1 in environment production instance 0'),
     );
     // Verify that addCronJob is called with the expected parameters.
     expect(addCronJob).toHaveBeenCalledWith(

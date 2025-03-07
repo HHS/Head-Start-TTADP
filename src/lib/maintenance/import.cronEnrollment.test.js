@@ -80,18 +80,18 @@ describe('Import Cron Enrollment', () => {
     expect(addCronJob).not.toHaveBeenCalled();
   });
 
-  test('should skip enrollment when contextId is not 0', async () => {
+  test('should skip enrollment when contextId is not 1', async () => {
     expect(typeof enrollmentCallback).toBe('function');
-    // Simulate production with instanceId "0" but a non-zero contextId.
-    await enrollmentCallback('0', 1, 'production');
+    // Simulate production with instanceId "0" but a contextId of 2.
+    await enrollmentCallback('0', 2, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping import cron job enrollment on context 1 in environment production for instance 0'),
+      expect.stringContaining('Skipping import cron job enrollment on context 2 in environment production for instance 0'),
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
 
-  test('should register cron jobs in production with instanceId "0" and contextId 0', async () => {
+  test('should register cron jobs in production with instanceId "0" and contextId 1', async () => {
     // Prepare a fake schedule list.
     const mockSchedules = [
       { id: 1, name: 'Import One', schedule: '0 0 * * *' },
@@ -99,12 +99,12 @@ describe('Import Cron Enrollment', () => {
     ];
     getImportSchedules.mockResolvedValue(mockSchedules);
 
-    await enrollmentCallback('0', 0, 'production');
+    await enrollmentCallback('0', 1, 'production');
 
     // Check that the registration log is issued.
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Registering import maintenance cron jobs for context 0 in environment production for instance 0'),
+      expect.stringContaining('Registering import maintenance cron jobs for context 1 in environment production for instance 0'),
     );
     expect(getImportSchedules).toHaveBeenCalled();
 
@@ -141,7 +141,7 @@ describe('Import Cron Enrollment', () => {
     const error = new Error('Failed to get schedules');
     getImportSchedules.mockRejectedValue(error);
 
-    await enrollmentCallback('0', 0, 'production');
+    await enrollmentCallback('0', 1, 'production');
 
     expect(global.auditLogger.error).toHaveBeenCalledWith(
       expect.stringContaining(`Error registering import cron jobs: ${error.message}`),
