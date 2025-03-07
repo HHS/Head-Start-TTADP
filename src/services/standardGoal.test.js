@@ -13,6 +13,7 @@ import db, {
 import {
   goalForRtr,
   newStandardGoal,
+  standardGoalsForRecipient,
   updateExistingStandardGoal,
 } from './standardGoals';
 import { createGrant, createRecipient, createGoalTemplate } from '../testUtils';
@@ -485,6 +486,111 @@ describe('standardGoal service', () => {
         expect(g.responses).toBeDefined();
         expect(g.responses[0].response).toEqual(['Option 1', 'Option 2']);
       });
+    });
+  });
+
+  describe('standardGoalsForRecipient', () => {
+    let grant;
+    let secondGrant;
+
+    let goalTemplate;
+    let secondGoalTemplate;
+
+    let firstGoalForFirstTemplate;
+    let secondGoalForFirstTemplate;
+
+    let firstGoalForSecondTemplate;
+    let secondGoalForSecondTemplate;
+
+    beforeAll(async () => {
+      grant = await createGrant({ recipientId: recipient.id });
+      secondGrant = await createGrant({ recipientId: recipient.id });
+
+      goalTemplate = await createGoalTemplate({
+        name: 'Standard Goal #5',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      secondGoalTemplate = await createGoalTemplate({
+        name: 'Standard Goal #6',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      firstGoalForFirstTemplate = await Goal.create({
+        grantId: grant.id,
+        goalTemplateId: goalTemplate.id,
+        status: GOAL_STATUS.CLOSED,
+        name: goalTemplate.templateName,
+      });
+
+      secondGoalForFirstTemplate = await Goal.create({
+        grantId: grant.id,
+        goalTemplateId: goalTemplate.id,
+        status: GOAL_STATUS.NOT_STARTED,
+        name: goalTemplate.templateName,
+      });
+
+      firstGoalForSecondTemplate = await Goal.create({
+        grantId: grant.id,
+        goalTemplateId: secondGoalTemplate.id,
+        status: GOAL_STATUS.NOT_STARTED,
+        name: secondGoalTemplate.templateName,
+      });
+
+      secondGoalForSecondTemplate = await Goal.create({
+        grantId: grant.id,
+        goalTemplateId: secondGoalTemplate.id,
+        status: GOAL_STATUS.NOT_STARTED,
+        name: secondGoalTemplate.templateName,
+      });
+    });
+
+    afterAll(async () => {
+      await Goal.destroy({
+        where: {
+          id: [
+            firstGoalForFirstTemplate.id,
+            secondGoalForFirstTemplate.id,
+            firstGoalForSecondTemplate.id,
+            secondGoalForSecondTemplate.id,
+          ],
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await GoalTemplate.destroy({
+        where: {
+          id: [goalTemplate.id, secondGoalTemplate.id],
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: [grant.id, secondGrant.id],
+        },
+        individualHooks: true,
+        force: true,
+      });
+    });
+
+    it('retrieves standard goals for recipient', async () => {
+      const goals = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {},
+      );
+
+      console.log(goals);
+
+      expect(goals).toBeDefined();
+
+      const { allGoalIds } = goals;
+      expect(allGoalIds).toContain(secondGoalForFirstTemplate.id);
+      expect(allGoalIds).toContain(secondGoalForSecondTemplate.id);
+
     });
   });
 });
