@@ -9,8 +9,9 @@ import {
   useStandardGoal,
   updateStandardGoal,
   getStandardGoal,
+  getStandardGoalsByRecipientId,
 } from './handlers';
-import { checkGoalTemplateIdParam, checkGrantIdParam } from '../../middleware/checkIdParamMiddleware';
+import { checkGoalTemplateIdParam, checkGrantIdParam, checkRecipientIdParam, checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
 import canWriteReportsInGrantRegionMiddleware from '../../middleware/canWriteReportsInGrantRegionMiddleware';
 
 const router = express.Router();
@@ -33,6 +34,6 @@ router.put('/standard/:goalTemplateId/grant/:grantId', authMiddleware, checkGoal
 
 // eslint-disable-next-line max-len
 // future PR: get standard goals by recipient ID for the goal cards
-// router.get('/standard/recipient/:recipientId');
+router.get('/standard/recipient/:recipientId/region/regionId'), authMiddleware, checkRecipientIdParam, checkRegionIdParam, transactionWrapper(getStandardGoalsByRecipientId);
 
 export default router;

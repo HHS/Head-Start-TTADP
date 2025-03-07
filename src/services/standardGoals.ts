@@ -1,13 +1,31 @@
 import { Op } from 'sequelize';
-import { GOAL_STATUS } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common'; 
+import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import db from '../models';
+import orderGoalsBy from '../lib/orderGoalsBy';
+import filtersToScopes from '../scopes';
+import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+
+const GOALS_PER_PAGE = 10;
 
 const {
+  sequelize,
   GoalTemplate,
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   Goal,
   Objective,
+  Grant,
+  ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Topic,
+  GoalStatusChange,
+  User,
+  UserRole,
+  Role,
+  CollaboratorType,
+  GoalCollaborator,
 } = db;
 
 interface IObjective {
@@ -240,4 +258,202 @@ export async function updateExistingStandardGoal(
     grantId,
     standardGoalId,
   );
+}
+
+export async function standardGoalsForRecipient(
+  recipientId: number,
+  regionId: number,
+  {
+    sortBy = 'goalStatus',
+    sortDir = 'desc',
+    offset = 0,
+    limit = GOALS_PER_PAGE,
+    goalIds = [],
+    ...filters
+  },
+) {
+  const { goal: scopes } = await filtersToScopes(filters, {});
+
+  const { rows, count } = await Goal.findAndCountAll({
+    logging: console.log,
+    attributes: [
+      'id',
+      'name',
+      'status',
+      'createdAt',
+      [sequelize.literal(`
+        CASE
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
+          WHEN "Goal"."status" = 'Draft' THEN 2
+          WHEN "Goal"."status" = 'Not Started' THEN 3
+          WHEN "Goal"."status" = 'In Progress' THEN 4
+          WHEN "Goal"."status" = 'Closed' THEN 5
+          WHEN "Goal"."status" = 'Suspended' THEN 6
+          ELSE 7 END`),
+      'status_sort'],
+    ],
+    where: {
+      [Op.and]: [
+        ...scopes,
+        sequelize.where(
+          sequelize.col('Goal.id'),
+          'IN',
+          sequelize.literal(`(
+            SELECT MAX(g2.id)
+            FROM "Goals" g2
+            INNER JOIN "Grants" gr2 ON g2."grantId" = gr2.id
+            INNER JOIN "GoalTemplates" gt2 ON g2."goalTemplateId" = gt2.id
+            WHERE gr2."recipientId" = ${recipientId}
+            AND gr2."regionId" = ${regionId}
+            GROUP BY g2."goalTemplateId", g2."grantId"
+          )`),
+        ),
+      ],
+    },
+    include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
+      {
+        model: GoalCollaborator,
+        as: 'goalCollaborators',
+        attributes: [],
+        required: false,
+        include: [
+          {
+            model: CollaboratorType,
+            as: 'collaboratorType',
+            required: true,
+            where: {
+              name: 'Creator',
+            },
+            attributes: ['name'],
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name'],
+            required: true,
+            include: [
+              {
+                model: UserRole,
+                as: 'userRoles',
+                required: true,
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                    attributes: ['name'],
+                    required: true,
+                  },
+                ],
+                attributes: [],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: true,
+        where: {
+          creationMethod: CREATION_METHOD.CURATED,
+        },
+      },
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: [
+          'id',
+          'recipientId',
+          'regionId',
+          'number',
+        ],
+        where: {
+          regionId,
+          recipientId,
+        },
+      },
+      {
+        attributes: [
+          'id',
+          'title',
+          'status',
+          'goalId',
+          'onApprovedAR',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: ['id', 'objectiveId'],
+            required: false,
+            include: [
+              {
+                attributes: [
+                  'id',
+                  'endDate',
+                  'calculatedStatus',
+                  'regionId',
+                  'displayId',
+                ],
+                model: ActivityReport,
+                as: 'activityReport',
+                required: false,
+                where: {
+                  calculatedStatus: REPORT_STATUSES.APPROVED,
+                },
+              },
+              {
+                model: Topic,
+                as: 'topics',
+                attributes: ['name'],
+                required: false,
+              },
+              {
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                attributes: [
+                  'citation',
+                  'monitoringReferences',
+                ],
+                required: false,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    order: orderGoalsBy(sortBy, sortDir),
+  });
+
+  const ids = rows.map((r) => r.id);
+
+  const statuses = await goalStatusByGoalName({
+    goal: {
+      id: ids,
+    },
+  });
+
+  return {
+    count,
+    goalRows: rows,
+    statuses,
+    allGoalIds: ids,
+  };
 }
