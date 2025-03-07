@@ -10,7 +10,6 @@ import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import Req from '../../../components/Req';
 import GoalSource from '../../../components/GoalForm/GoalSource';
-import GoalDate from '../../../components/GoalForm/GoalDate';
 import {
   getCreatorsByRegion, getGroupsByRegion, getCuratedTemplates, createMultiRecipientGoalsFromAdmin,
 } from '../../../fetchers/Admin';
@@ -61,20 +60,6 @@ export default function Create() {
   } = useController({
     control: hookForm.control,
     name: 'goalSource',
-    rules: {},
-    defaultValue: '',
-  });
-
-  const {
-    field: {
-      onChange: onUpdateGoalDate,
-      onBlur: onBlurGoalDate,
-      value: goalDate,
-      name: goalDateInputName,
-    },
-  } = useController({
-    control: hookForm.control,
-    name: 'goalDate',
     rules: {},
     defaultValue: '',
   });
@@ -348,17 +333,6 @@ export default function Create() {
               userCanEdit
               isMultiRecipientGoal={false}
               required={false}
-            />
-
-            <GoalDate
-              error={<></>}
-              setEndDate={onUpdateGoalDate}
-              endDate={goalDate}
-              validateEndDate={onBlurGoalDate}
-              inputName={goalDateInputName}
-              isLoading={false}
-              goalStatus="Not started"
-              userCanEdit
             />
 
             <FormGroup>

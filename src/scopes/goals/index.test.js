@@ -982,7 +982,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToInclude.id,
         name: goalToInclude.name,
         status: goalToInclude.status,
-        endDate: null,
       });
 
       const arResource = await Resource.create({
@@ -1055,7 +1054,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToExclude.id,
         name: goalToExclude.name,
         status: goalToExclude.status,
-        endDate: null,
       });
 
       const arResourceExcluded = await Resource.create({
@@ -1587,7 +1585,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToInclude.id,
         name: goalToInclude.name,
         status: goalToInclude.status,
-        endDate: null,
       });
 
       const arResource = await File.create({
@@ -1642,7 +1639,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToExclude.id,
         name: goalToExclude.name,
         status: goalToExclude.status,
-        endDate: null,
       });
 
       const arResourceExcluded = await File.create({
@@ -1886,7 +1882,6 @@ describe('goal filtersToScopes', () => {
         goalId: nextStepsGoal.id,
         name: nextStepsGoal.name,
         status: nextStepsGoal.status,
-        endDate: null,
       });
 
       argNameReport = await createReport({
@@ -1905,7 +1900,6 @@ describe('goal filtersToScopes', () => {
         goalId: argNameGoal.id,
         name: argNameGoal.name,
         status: argNameGoal.status,
-        endDate: null,
       });
 
       objectiveTitleReport = await createReport({
@@ -1928,7 +1922,6 @@ describe('goal filtersToScopes', () => {
         goalId: objectiveTitleGoal.id,
         name: objectiveTitleGoal.name,
         status: objectiveTitleGoal.status,
-        endDate: null,
       });
       await ActivityReportObjective.create({
         activityReportId: objectiveTitleReport.id,
@@ -1957,7 +1950,6 @@ describe('goal filtersToScopes', () => {
         goalId: objectiveTTAProvidedGoal.id,
         name: objectiveTTAProvidedGoal.name,
         status: objectiveTTAProvidedGoal.status,
-        endDate: null,
       });
       await ActivityReportObjective.create({
         activityReportId: objectiveTTAProvidedReport.id,

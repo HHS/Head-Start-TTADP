@@ -29,9 +29,6 @@ const RecipientReviewSection = () => {
         { label: 'Goal source', name: 'source' },
         { label: 'Goal number', name: 'goalNumber' },
         { label: 'Root cause', name: 'promptsForReview' },
-        {
-          label: 'Anticipated close date', name: 'endDate',
-        },
       ],
     },
   ];

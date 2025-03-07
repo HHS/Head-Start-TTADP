@@ -100,12 +100,6 @@ export default function ReadOnlyGoal({
             </div>
           ))
         )}
-        {goal.endDate ? (
-          <div className="margin-bottom-4">
-            <h4 className="margin-0">Anticipated close date</h4>
-            <p className="usa-prose margin-0">{goal.endDate}</p>
-          </div>
-        ) : null }
         { goal.objectives.map((objective) => (
           <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
         ))}
@@ -161,7 +155,6 @@ ReadOnlyGoal.propTypes = {
       }),
     ),
     name: PropTypes.string,
-    endDate: PropTypes.string,
     isRttapa: PropTypes.string,
   }).isRequired,
 };

@@ -110,7 +110,6 @@ describe('goalFieldResponseHooks', () => {
       goal = await Goal.create({
         name: 'Goal 1',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -120,7 +119,6 @@ describe('goalFieldResponseHooks', () => {
       goalNotToUpdate = await Goal.create({
         name: 'Goal 1 Not to Update',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grantNotToUpdate.id,
@@ -130,7 +128,6 @@ describe('goalFieldResponseHooks', () => {
       goalMissingResponse = await Goal.create({
         name: 'Goal Missing Response',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,

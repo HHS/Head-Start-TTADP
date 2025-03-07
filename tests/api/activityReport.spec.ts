@@ -14,7 +14,6 @@ test.describe('get /activity-reports/goals', () => {
       name: Joi.string().required(),
       status: Joi.string().required(),
       onApprovedAR: Joi.boolean().required(),
-      endDate: Joi.any().required(),
       source: Joi.any(),
       createdVia: Joi.any(),
     });

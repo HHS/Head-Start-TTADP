@@ -155,7 +155,6 @@ describe('mergeGoals', () => {
     oldGoal = await Goal.create({
       name: `old goal${faker.animal.dog() + faker.datatype.string(100)}}`,
       status: GOAL_STATUS.IN_PROGRESS,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantOne.id,
@@ -165,7 +164,6 @@ describe('mergeGoals', () => {
     goalZero = await Goal.create({
       name: `Selected goal 0${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantZero.id,
@@ -175,7 +173,7 @@ describe('mergeGoals', () => {
     goalOne = await Goal.create({
       name: `Selected goal 1${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
-      endDate: null,
+
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantOne.id,
@@ -185,7 +183,6 @@ describe('mergeGoals', () => {
     goalTwo = await Goal.create({
       name: `Selected goal 2${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.NOT_STARTED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantOne.id,
@@ -196,7 +193,6 @@ describe('mergeGoals', () => {
     goalThree = await Goal.create({
       name: `Selected goal 3${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.SUSPENDED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantTwo.id,
@@ -207,7 +203,6 @@ describe('mergeGoals', () => {
     dummyGoal = await Goal.create({
       name: dummyGoalName,
       status: GOAL_STATUS.CLOSED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantTwo.id,

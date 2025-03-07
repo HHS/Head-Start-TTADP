@@ -1486,7 +1486,6 @@ describe('filtersToScopes', () => {
       goal = await Goal.create({
         name: 'Goal Response Test',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -1496,7 +1495,6 @@ describe('filtersToScopes', () => {
       goalTwo = await Goal.create({
         name: 'Goal Response Test Two',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -1506,7 +1504,6 @@ describe('filtersToScopes', () => {
       goalThree = await Goal.create({
         name: 'Goal Response Test Three',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,

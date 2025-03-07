@@ -244,17 +244,6 @@ describe('create goal', () => {
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
-    userEvent.type(ed, 'apple season');
-
-    userEvent.click(save);
-
-    await screen.findByText('Enter a valid date');
-
-    userEvent.type(ed, '08/15/2023');
-
-    expect(fetchMock.called('/api/goals', { method: 'post' })).toBe(false);
-
     userEvent.click(save);
 
     expect(fetchMock.called('/api/goals', { method: 'post' })).toBe(true);
@@ -319,9 +308,6 @@ describe('create goal', () => {
     fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     await screen.findByText(/Recipient's goal/i);
-
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
-    userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save/i });
     userEvent.click(save);
@@ -447,9 +433,6 @@ describe('create goal', () => {
 
     await screen.findByText(/this is goal text/i);
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
-    userEvent.type(ed, '08/15/2023');
-
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
@@ -569,9 +552,6 @@ describe('create goal', () => {
 
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
-
-    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
-    expect(endDate.value).toBe('10/08/2021');
   });
 
   it('draft goals don\'t show status dropdowns', async () => {
@@ -606,9 +586,6 @@ describe('create goal', () => {
 
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
-
-    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
-    expect(endDate.value).toBe('10/08/2021');
   });
 
   it('not started goals on AR', async () => {
@@ -651,9 +628,5 @@ describe('create goal', () => {
     // we should expect there to be a warning here
     await screen.findByText(/This goal is used on an activity report/i);
     await screen.findByText(/Some fields can't be edited/i);
-
-    // only close date should be editable
-    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
-    expect(endDate.value).toBe('10/08/2021');
   });
 });
