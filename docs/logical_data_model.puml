@@ -77,7 +77,7 @@ class ActivityReportGoals{
  * updatedAt : timestamp with time zone
  closeSuspendContext : text
  closeSuspendReason : enum
-!issue='column missing from model' <color:#d54309>endDate</color>: date
+ endDate : date
  isActivelyEdited : boolean : false
  isRttapa : enum
  name : text
@@ -434,7 +434,7 @@ class Goals{
  * updatedAt : timestamp with time zone
  createdVia : enum
  deletedAt : timestamp with time zone
-!issue='column missing from model' <color:#d54309>endDate</color>: date
+ endDate : date
  isFromSmartsheetTtaPlan : boolean
  isRttapa : enum
  name : text
