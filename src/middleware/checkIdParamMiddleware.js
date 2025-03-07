@@ -139,7 +139,7 @@ export function checkGrantIdParam(req, res, next) {
     return next();
   }
 
-  const msg = `${errorMessage}: groupId ${String(req?.params?.grantId)}`;
+  const msg = `${errorMessage}: grantId ${String(req?.params?.grantId)}`;
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }

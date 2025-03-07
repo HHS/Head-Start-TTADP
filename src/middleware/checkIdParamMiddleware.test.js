@@ -717,7 +717,7 @@ describe('checkIdParamMiddleware', () => {
 
       checkGrantIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: goalTemplateId 2D`);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantId 2D`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
