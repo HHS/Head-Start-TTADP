@@ -6,6 +6,9 @@ import {
   getSource,
   getPrompts,
   getOptionsByPromptName,
+  getStandardGoal,
+  useStandardGoal,
+  updateStandardGoal,
 } from './handlers';
 import {
   getCuratedTemplates,
@@ -13,8 +16,15 @@ import {
   getFieldPromptsForCuratedTemplate,
   getOptionsByGoalTemplateFieldPromptName,
 } from '../../services/goalTemplates';
+import {
+  goalForRtr,
+  newStandardGoal,
+  updateExistingStandardGoal,
+} from '../../services/standardGoals';
+import { GOAL_STATUS } from '../../constants';
 
 jest.mock('../../services/goalTemplates');
+jest.mock('../../services/standardGoals');
 
 const mockResponse = {
   attachment: jest.fn(),
@@ -28,6 +38,144 @@ const mockResponse = {
 };
 
 describe('goalTemplates handlers', () => {
+  describe('getStandardGoal', () => {
+    it('handles success', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        query: {},
+      };
+
+      const goal = { id: 1, name: 'Goal 1' };
+      goalForRtr.mockResolvedValue(goal);
+
+      await getStandardGoal(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(goal);
+    });
+
+    it('uses status from query', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        query: {
+          status: GOAL_STATUS.NOT_STARTED,
+        },
+      };
+
+      const goal = { id: 1, name: 'Goal 1' };
+      goalForRtr.mockResolvedValue(goal);
+
+      await getStandardGoal(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(goal);
+    });
+
+    it('handles errors', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        query: {
+          status: GOAL_STATUS.NOT_STARTED,
+        },
+      };
+
+      goalForRtr.mockRejectedValue(new Error('error'));
+
+      await getStandardGoal(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('useStandardGoal', () => {
+    it('handles success', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        body: {
+          objectives: [],
+          rootCauses: [],
+        },
+      };
+
+      const goal = { id: 1, name: 'Goal 1' };
+      newStandardGoal.mockResolvedValue(goal);
+
+      await useStandardGoal(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(goal);
+    });
+
+    it('handles errors', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        body: {
+          objectives: [],
+          rootCauses: [],
+        },
+      };
+
+      newStandardGoal.mockRejectedValue(new Error('error'));
+
+      await useStandardGoal(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('updateStandardGoal', () => {
+    it('handles success', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        body: {
+          objectives: [],
+          rootCauses: [],
+        },
+      };
+
+      const goal = { id: 1, name: 'Goal 1' };
+      updateExistingStandardGoal.mockResolvedValue(goal);
+
+      await updateStandardGoal(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(goal);
+    });
+
+    it('handles errors', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+          grantId: 1,
+        },
+        body: {
+          objectives: [],
+          rootCauses: [],
+        },
+      };
+
+      updateExistingStandardGoal.mockRejectedValue(new Error('error'));
+
+      await updateStandardGoal(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+  });
+
   describe('getSource', () => {
     it('handles success', async () => {
       const req = {

@@ -126,6 +126,25 @@ export function checkGroupIdParam(req, res, next) {
 }
 
 /**
+ *  Check groupId req param
+ *
+ * This middleware validates that the site alert id supplied
+ * by the alertId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGrantIdParam(req, res, next) {
+  if (req.params && req.params.grantId && canBeInt(req.params.grantId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: grantId ${String(req?.params?.grantId)}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
  *  Check alertId req param
  *
  * This middleware validates that the site alert id supplied
