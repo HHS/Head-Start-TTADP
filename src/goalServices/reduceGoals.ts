@@ -96,11 +96,17 @@ export function reduceObjectives(
 /**
    * Reduces the relation through activity report objectives.
    *
-   * @param {Object} objective - The objective object.
-   * @param {string} join tablename that joins aro <> relation. activityReportObjectiveResources
-   * @param {string} relation - The relation that will be returned. e.g. resource.
-   * @param {Object} [exists={}] - The existing relation object.
-   * @returns {Array} - The reduced relation array.
+   * This function extracts and deduplicates related entities (e.g., topics, resources, courses)
+   * from an `IObjectiveModelInstance` by traversing through its `activityReportObjectives` associations.
+   * It ensures that both existing and newly found relations are merged while removing duplicates.
+   *
+   * @param {IObjectiveModelInstance} objective - The objective containing activity report objectives.
+   * @param {string} join - The table name that joins the activity report objectives with the relation.
+   *                        Example: 'activityReportObjectiveResources'.
+   * @param {string} relation - The specific relation to extract. Example: 'resource'.
+   * @param {Object} [exists={}] - The existing relations object.
+   * @param {string} [uniqueBy='id'] - The key used to ensure uniqueness in the final result.
+   * @returns {Array} - A deduplicated array of related entities.
    */
 type IAcceptableModelParameter = ITopic | IResource | ICourse;
 export const reduceRelationThroughActivityReportObjectives = (
@@ -110,18 +116,19 @@ export const reduceRelationThroughActivityReportObjectives = (
   exists = {},
   uniqueBy = 'id',
 ) => {
+  // Retrieve existing relation array (defaults to empty array)
   const existingRelation = exists[relation] || [];
+
+  // Extract new relations from the first activity report objective, if available.
+  // Ensures the expected association (join) exists before mapping.
   const newRelations = objective.activityReportObjectives?.[0]?.[join]
     ? objective.activityReportObjectives[0][join]
-      .map((t: { [x: string]: any; }) => {
-        const extracted = t[relation];
-
-        return extracted?.dataValues ?? extracted;
-      })
-      .filter((t: any) => t)
+      .map((t: IAcceptableModelParameter) => t[relation]?.dataValues) // Extracts dataValues if present
+      .filter((t: IAcceptableModelParameter) => t) // Removes null/undefined values
     : [];
 
-  const result = uniqBy([...existingRelation, ...newRelations], (e: any) => e?.[uniqueBy]);
+  // Combine existing and new relations while ensuring uniqueness based on the specified key.
+  const result = uniqBy([...existingRelation, ...newRelations], (e: string) => e?.[uniqueBy]);
 
   return result;
 };
