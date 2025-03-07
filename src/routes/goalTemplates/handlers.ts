@@ -8,7 +8,36 @@ import {
   getOptionsByGoalTemplateFieldPromptName,
   getSourceFromTemplate,
 } from '../../services/goalTemplates';
-import standardGoals from '../../services/standardGoals';
+import {
+  newStandardGoal,
+  updateExistingStandardGoal,
+  goalForRtr,
+} from '../../services/standardGoals';
+
+export async function getStandardGoal(req: Request, res: Response) {
+  try {
+    const { grantId, goalTemplateId } = req.params;
+    const { status } = req.query;
+
+    if (status) {
+      const standard = await goalForRtr(
+        Number(grantId),
+        Number(goalTemplateId),
+        status as string[],
+      );
+      res.json(standard);
+      return;
+    }
+
+    const standard = await goalForRtr(
+      Number(grantId),
+      Number(goalTemplateId),
+    );
+    res.json(standard);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.getStandardGoal');
+  }
+}
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
@@ -28,11 +57,31 @@ export async function getGoalTemplates(req: Request, res: Response) {
 export async function useStandardGoal(req: Request, res: Response) {
   try {
     const { grantId, goalTemplateId } = req.params;
+    const { objectives, rootCauses } = req.body;
 
-    const standards = await standardGoals(
+    const standards = await newStandardGoal(
       Number(grantId),
       Number(goalTemplateId),
-      [],
+      objectives,
+      rootCauses,
+    );
+
+    res.json(standards);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.useStandardGoal');
+  }
+}
+
+export async function updateStandardGoal(req: Request, res: Response) {
+  try {
+    const { grantId, goalTemplateId } = req.params;
+    const { objectives, rootCauses } = req.body;
+
+    const standards = await updateExistingStandardGoal(
+      Number(grantId),
+      Number(goalTemplateId),
+      objectives,
+      rootCauses,
     );
 
     res.json(standards);

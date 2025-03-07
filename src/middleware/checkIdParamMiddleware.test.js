@@ -14,6 +14,7 @@ import {
   checkGoalGroupIdParam,
   checkGoalTemplateIdParam,
   checkSessionAttachmentIdParam,
+  checkGrantIdParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
@@ -686,6 +687,35 @@ describe('checkIdParamMiddleware', () => {
       };
 
       checkGoalTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: goalTemplateId 2D`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkGrantIdParam', () => {
+    it('calls next if grantId is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          grantId: '2',
+        },
+      };
+
+      checkGrantIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          grantId: '2D',
+        },
+      };
+
+      checkGrantIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: goalTemplateId 2D`);
       expect(mockNext).not.toHaveBeenCalled();
