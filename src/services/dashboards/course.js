@@ -23,7 +23,6 @@ export async function rollUpCourseUrlData(data) {
       return [
         ...accumulator,
         {
-          id: c.id,
           heading: c.course,
           url: c.course,
           course: c.course,
@@ -36,8 +35,8 @@ export async function rollUpCourseUrlData(data) {
       ];
     }
 
-    // Add the resource to the accumulator.
     exists.data.push({ title: c.rollUpDate, value: beforeCutOff ? '-' : c.count, date: c.date });
+
     return accumulator;
   }, []);
 
@@ -86,7 +85,6 @@ export async function getCourseUrlWidgetData(scopes) {
         },
       ],
     },
-    raw: true,
   });
 
   // Make sure we have at least one report id.
@@ -108,7 +106,6 @@ export async function getCourseUrlWidgetData(scopes) {
         ),
       counts AS (
         SELECT
-            c.id,
             c."name",
             MIN(ar."startDate") AS "minStartDate",
             MAX(ar."startDate") AS "maxStartDate",
@@ -123,7 +120,7 @@ export async function getCourseUrlWidgetData(scopes) {
             ON aroc."courseId" = c.id
         WHERE
             ar.id IN (${reportIds.map((r) => r.id).join(',')})
-        GROUP BY c.id, c.name, to_char(ar."startDate", 'Mon-YY')
+        GROUP BY c.name, to_char(ar."startDate", 'Mon-YY')
         ),
         totals AS (
             SELECT
@@ -133,10 +130,9 @@ export async function getCourseUrlWidgetData(scopes) {
             GROUP BY "name"
         ),
         distinctcourses AS (
-          SELECT distinct "id", "name" FROM "counts"
+          SELECT distinct "name" FROM "counts"
         )
         SELECT
-            cor.id,
             cor."name" AS "course",
             to_char(d."date", 'Mon-YY') AS "rollUpDate",
             d."date",
