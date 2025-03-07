@@ -245,7 +245,6 @@ export async function ttaByReviews(
     citationsOnActivityReports,
     granteeIds,
   } = await extractExternalData(recipientId, regionId);
-
   const reviews = await MonitoringReview.findAll({
     order: [['reportDeliveryDate', 'DESC']],
     where: {
@@ -302,14 +301,17 @@ export async function ttaByReviews(
                   {
                     model: MonitoringFindingStandard,
                     as: 'monitoringFindingStandards',
+                    required: true,
                     include: [
                       {
                         model: MonitoringStandardLink,
                         as: 'standardLink',
+                        required: true,
                         include: [
                           {
                             model: MonitoringStandard,
                             as: 'monitoringStandards',
+                            required: true,
                           },
                         ],
                       },
