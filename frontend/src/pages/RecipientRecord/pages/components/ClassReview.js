@@ -60,7 +60,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
           </Link>
         </div>
-        <div className="margin-top-1">
+        <div className="margin-top-2">
           <button
             type="button"
             className="usa-button usa-button--unstyled font-sans-xs"
