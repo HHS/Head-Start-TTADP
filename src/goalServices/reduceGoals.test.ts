@@ -3,12 +3,6 @@ import {
   reduceRelationThroughActivityReportObjectives,
 } from './reduceGoals';
 
-import {
-  IObjectiveModelInstance,
-} from './types';
-
-type IAcceptableModelParameter = { [key: string]: any };
-
 describe('reduceGoals', () => {
   const goals = [
     {
@@ -367,20 +361,22 @@ describe('reduceGoals', () => {
     ]);
   });
   describe('reduceRelationThroughActivityReportObjectives', () => {
-    it('should merge existing relations with new ones while ensuring uniqueness', () => {
-      const objective: IObjectiveModelInstance = {
-        id: 101,
-        title: 'Test Objective',
-        status: 'Active',
-        goalId: 10,
-        onApprovedAR: false,
-        onAR: false,
-        rtrOrder: 1,
+    it('should handle null topic values without crashing', () => {
+      // Mock objective with an activity report that has a null topic
+      const objective = {
+        id: 243577,
         otherEntityId: null,
-        topics: [],
-        resources: [],
-        files: [],
-        courses: [],
+        goalId: 94169,
+        title: 'Objective Title',
+        status: 'In Progress',
+        objectiveTemplateId: 44484,
+        onAR: true,
+        onApprovedAR: true,
+        createdVia: 'activityReport',
+        rtrOrder: 1,
+        createdAt: new Date('2025-01-15T14:24:08.065Z'),
+        updatedAt: new Date('2025-01-15T14:48:11.857Z'),
+        deletedAt: null,
         activityReportObjectives: [
           {
             id: 1,
@@ -399,29 +395,44 @@ describe('reduceGoals', () => {
             ttaProvided: 'Training',
             closeSuspendReason: 'Completed',
             closeSuspendContext: 'Closed due to completion',
-            activityReportObjectiveResources: [
-              { key: 1, resource: { value: 'R1' } },
-              { key: 2, resource: { value: 'R2' } },
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [
+              { topic: null }, // This simulates a topic that is null
+              { topic: { dataValues: { id: 73, name: 'Family Support Services' }, id: 73, name: 'Family Support Services' } }, // Valid topic
             ],
-            activityReportObjectiveTopics: [],
             activityReportObjectiveFiles: [],
             activityReportObjectiveCourses: [],
             activityReportObjectiveCitations: [],
             toJSON() { return this; },
+            dataValues: this,
           },
         ],
+        resources: [],
+        topics: [
+          { id: 82, name: 'Parent and Family Engagement' },
+        ],
+        files: [],
+        courses: [],
       };
-      const existingRelation = [{ value: 'R1' }];
+
+      const exists = {
+        topics: [
+          { id: 82, name: 'Parent and Family Engagement' }, // Pre-existing topic
+        ],
+      };
+
+      // Call the function
       const result = reduceRelationThroughActivityReportObjectives(
         objective,
-        'activityReportObjectiveResources',
-        'resource',
-        { resource: existingRelation },
-        'value',
+        'activityReportObjectiveTopics',
+        'topic',
+        exists,
       );
+
+      // Expected result should exclude null topics
       expect(result).toEqual([
-        { value: 'R1' }, // Existing
-        { value: 'R2' }, // New and Unique
+        { id: 82, name: 'Parent and Family Engagement' }, // Existing
+        { id: 73, name: 'Family Support Services' }, // From objective
       ]);
     });
   });

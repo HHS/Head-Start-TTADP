@@ -97,11 +97,14 @@ export function reduceObjectives(
    * Reduces the relation through activity report objectives.
    *
    * This function extracts and deduplicates related entities (e.g., topics, resources, courses)
-   * from an `IObjectiveModelInstance` by traversing through its `activityReportObjectives` associations.
+   * from an `IObjectiveModelInstance` by traversing through its `activityReportObjectives`
+   * associations.
    * It ensures that both existing and newly found relations are merged while removing duplicates.
    *
-   * @param {IObjectiveModelInstance} objective - The objective containing activity report objectives.
-   * @param {string} join - The table name that joins the activity report objectives with the relation.
+   * @param {IObjectiveModelInstance} objective - The objective containing activity report
+   *                                              objectives.
+   * @param {string} join - The table name that joins the activity report objectives with the
+   *                        relation.
    *                        Example: 'activityReportObjectiveResources'.
    * @param {string} relation - The specific relation to extract. Example: 'resource'.
    * @param {Object} [exists={}] - The existing relations object.
@@ -117,17 +120,17 @@ export const reduceRelationThroughActivityReportObjectives = (
   uniqueBy = 'id',
 ) => {
   // Retrieve existing relation array (defaults to empty array)
-  const existingRelation = exists[relation] || [];
+  const existingRelation = exists[`${relation}s`] || [];
 
   // Extract new relations from the first activity report objective, if available.
   // Ensures the expected association (join) exists before mapping.
   const newRelations = objective.activityReportObjectives?.[0]?.[join]
     ? objective.activityReportObjectives[0][join]
-      .map((t: IAcceptableModelParameter) => t[relation]?.dataValues) // Extracts dataValues if present
+      .map((t: IAcceptableModelParameter) => t[relation]?.dataValues) // Gets dataValues if exist
       .filter((t: IAcceptableModelParameter) => t) // Removes null/undefined values
     : [];
 
-  // Combine existing and new relations while ensuring uniqueness based on the specified key.
+  // Combine existing and new relations ensuring uniqueness based on the specified key.
   const result = uniqBy([...existingRelation, ...newRelations], (e: string) => e?.[uniqueBy]);
 
   return result;
