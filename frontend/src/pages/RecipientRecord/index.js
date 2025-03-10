@@ -308,7 +308,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals"
           render={() => (
             <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <StandardGoalForm />
+              <StandardGoalForm
+                recipient={recipientData}
+              />
             </FeatureFlag>
           )}
         />
