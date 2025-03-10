@@ -852,6 +852,8 @@ describe('standardGoal service', () => {
 
       const [goalOne, goalTwo] = goalRows;
 
+      // ======
+
       expect(goalOne.id).toBe(secondGoalForSecondTemplate.id);
       expect(goalOne.name).toBe(secondGoalTemplate.templateName);
       expect(goalOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
