@@ -1888,12 +1888,13 @@ workflows:
       - process_backup:
           requires:
             - process_production
-      - restore_processed_to_staging:
-          requires:
-            - process_backup
+      # - restore_processed_to_staging:
+      #     requires:
+      #       - process_backup
       - restore_processed_to_sandbox:
           requires:
-            - restore_processed_to_staging
+            - process_backup
+            # - restore_processed_to_staging
       - restore_processed_to_dev:
           requires:
             - restore_processed_to_sandbox
@@ -1976,11 +1977,11 @@ workflows:
       - process_backup:
           requires:
             - process_production
-  manual_restore_staging:
-    when:
-      equal: [true, << pipeline.parameters.manual-restore-staging >>]
-    jobs:
-      - restore_processed_to_staging
+  # manual_restore_staging:
+  #   when:
+  #     equal: [true, << pipeline.parameters.manual-restore-staging >>]
+  #   jobs:
+  #     - restore_processed_to_staging
   manual_restore_sandbox:
     when:
       equal: [true, << pipeline.parameters.manual-restore-sandbox >>]
