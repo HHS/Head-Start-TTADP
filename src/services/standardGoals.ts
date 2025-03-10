@@ -274,24 +274,8 @@ export async function standardGoalsForRecipient(
 ) {
   const { goal: scopes } = await filtersToScopes(filters, {});
 
-  const { rows, count } = await Goal.findAndCountAll({
-    logging: console.log,
-    attributes: [
-      'id',
-      'name',
-      'status',
-      'createdAt',
-      [sequelize.literal(`
-        CASE
-          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
-          WHEN "Goal"."status" = 'Draft' THEN 2
-          WHEN "Goal"."status" = 'Not Started' THEN 3
-          WHEN "Goal"."status" = 'In Progress' THEN 4
-          WHEN "Goal"."status" = 'Closed' THEN 5
-          WHEN "Goal"."status" = 'Suspended' THEN 6
-          ELSE 7 END`),
-      'status_sort'],
-    ],
+  const goals = await Goal.findAll({
+    attributes: ['id'],
     where: {
       [Op.and]: [
         ...scopes,
@@ -312,15 +296,51 @@ export async function standardGoalsForRecipient(
     },
     include: [
       {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: true,
+        where: {
+          creationMethod: CREATION_METHOD.CURATED,
+        },
+      },
+    ],
+  });
+
+  const ids = goals.map((g: { id: number }) => g.id);
+
+  const rows = await Goal.findAll({
+    attributes: [
+      'id',
+      'name',
+      'status',
+      'createdAt',
+      [sequelize.literal(`
+        CASE
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
+          WHEN "Goal"."status" = 'Draft' THEN 2
+          WHEN "Goal"."status" = 'Not Started' THEN 3
+          WHEN "Goal"."status" = 'In Progress' THEN 4
+          WHEN "Goal"."status" = 'Closed' THEN 5
+          WHEN "Goal"."status" = 'Suspended' THEN 6
+          ELSE 7 END`),
+      'status_sort'],
+    ],
+    where: {
+      id: ids,
+    },
+    include: [
+      {
         model: GoalStatusChange,
         as: 'statusChanges',
-        attributes: ['oldStatus'],
+        attributes: ['oldStatus', 'newStatus'],
         required: false,
       },
       {
         model: GoalCollaborator,
         as: 'goalCollaborators',
         attributes: [],
+        separate: true,
         required: false,
         include: [
           {
@@ -363,15 +383,6 @@ export async function standardGoalsForRecipient(
         attributes: ['response', 'goalId'],
       },
       {
-        model: GoalTemplate,
-        as: 'goalTemplate',
-        attributes: [],
-        required: true,
-        where: {
-          creationMethod: CREATION_METHOD.CURATED,
-        },
-      },
-      {
         required: true,
         model: Grant,
         as: 'grant',
@@ -397,6 +408,11 @@ export async function standardGoalsForRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
+        separate: true,
+        order: [
+          [sequelize.col('activityReportObjectives.activityReport.endDate'), 'DESC'],
+          ['createdAt', 'DESC'],
+        ],
         include: [
           {
             model: ActivityReportObjective,
@@ -407,6 +423,7 @@ export async function standardGoalsForRecipient(
               {
                 attributes: [
                   'id',
+                  'startDate',
                   'endDate',
                   'calculatedStatus',
                   'regionId',
@@ -442,8 +459,6 @@ export async function standardGoalsForRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
-  const ids = rows.map((r) => r.id);
-
   const statuses = await goalStatusByGoalName({
     goal: {
       id: ids,
@@ -451,7 +466,7 @@ export async function standardGoalsForRecipient(
   });
 
   return {
-    count,
+    count: rows.length,
     goalRows: rows,
     statuses,
     allGoalIds: ids,
