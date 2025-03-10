@@ -161,10 +161,12 @@ export async function getStandardGoalsByRecipientId(req: Request, res: Response)
     const goals = await standardGoalsForRecipient(
       Number(recipientId),
       Number(regionId),
-      Number(limit),
-      Number(offset),
-      sortBy as 'createdOn' | 'goalStatus',
-      sortDir as 'ASC' | 'DESC',
+      {
+        limit: Number(limit),
+        offset: Number(offset),
+        sortBy: sortBy as 'createdOn' | 'goalStatus',
+        sortDir: sortDir as 'ASC' | 'DESC',
+      },
     );
     res.json(goals);
   } catch (err) {
