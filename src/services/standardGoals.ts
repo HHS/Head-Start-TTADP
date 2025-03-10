@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common'; 
+import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
