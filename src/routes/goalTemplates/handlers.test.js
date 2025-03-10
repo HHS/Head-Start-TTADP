@@ -9,6 +9,7 @@ import {
   getStandardGoal,
   useStandardGoal,
   updateStandardGoal,
+  getStandardGoalsByRecipientId,
 } from './handlers';
 import {
   getCuratedTemplates,
@@ -20,6 +21,7 @@ import {
   goalForRtr,
   newStandardGoal,
   updateExistingStandardGoal,
+  standardGoalsForRecipient,
 } from '../../services/standardGoals';
 import { GOAL_STATUS } from '../../constants';
 
@@ -130,6 +132,51 @@ describe('goalTemplates handlers', () => {
       newStandardGoal.mockRejectedValue(new Error('error'));
 
       await useStandardGoal(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('getStandardGoalsByRecipientId', () => {
+    it('handles success', async () => {
+      const req = {
+        params: {
+          regionId: 1,
+          recipientId: 1,
+        },
+        query: {
+          limit: 10,
+          offset: 0,
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+        },
+      };
+
+      const goals = [{ id: 1, name: 'Goal 1' }];
+      standardGoalsForRecipient.mockResolvedValue(goals);
+
+      await getStandardGoalsByRecipientId(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(goals);
+    });
+
+    it('handles errors', async () => {
+      const req = {
+        params: {
+          regionId: 1,
+          recipientId: 1,
+        },
+        query: {
+          limit: 10,
+          offset: 0,
+          sortBy: 'createdAt',
+          sortDir: 'desc',
+        },
+      };
+
+      standardGoalsForRecipient.mockRejectedValue(new Error('error'));
+
+      await getStandardGoalsByRecipientId(req, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
     });
