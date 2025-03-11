@@ -140,6 +140,7 @@ const createMonitoringGoals = async () => {
               'Special'
             )
             AND g.status IN ('Closed', 'Suspended')
+            AND g."createdVia" = 'monitoring'
           GROUP BY 1
         )
       SELECT "goalId"
@@ -174,6 +175,7 @@ const createMonitoringGoals = async () => {
       ON g."grantId" = gr.id
       WHERE gt.standard = 'Monitoring'
       AND g.status != 'Closed'
+      AND g."createdVia" = 'monitoring'
     ),
     with_no_active_reports AS (
       SELECT
