@@ -500,7 +500,7 @@ export const trSessionCreated = async (event, sessionId) => {
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
     await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id);
+      const user = await userById(id, true);
       const emailTo = filterAndDeduplicateEmails([user.email]);
 
       if (emailTo.length === 0) {
@@ -539,7 +539,7 @@ export const trCollaboratorAdded = async (
 ) => {
   if (process.env.CI) return;
   try {
-    const collaborator = await userById(newCollaboratorId);
+    const collaborator = await userById(newCollaboratorId, true);
     if (!collaborator) {
       throw new Error(`Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`);
     }
@@ -587,7 +587,7 @@ export const trOwnerAdded = async (
 ) => {
   if (process.env.CI) return;
   try {
-    const owner = await userById(ownerId);
+    const owner = await userById(ownerId, true);
 
     // due to the way sequelize sends the JSON column :(
     const parsedData = safeParse(report); // parse the JSON string
@@ -633,7 +633,7 @@ export const trEventComplete = async (
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
     const emails = await Promise.all(userIds.map(async (id) => {
-      const user = await userById(id);
+      const user = await userById(id, true);
       if (!user) return null;
       return user.email;
     }));
@@ -881,7 +881,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
     specialists = specialists.filter((s) => s !== null);
 
     const users = await Promise.all(
-      specialists.map(async (s) => userById(s.id)),
+      specialists.map(async (s) => userById(s.id, true)),
     );
 
     const records = users.map((user) => {
@@ -1064,7 +1064,7 @@ export async function trainingReportTaskDueNotifications(freq) {
       const { userId } = mail;
       let user = userMap.get(userId);
       if (!user) {
-        user = await userById(userId);
+        user = await userById(userId, true);
 
         if (!user) {
           return null;
