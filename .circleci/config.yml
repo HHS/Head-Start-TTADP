@@ -783,7 +783,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/remove-unused-ap-scheduler-functionality"
+    default: "context-changes"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
     default: "mb/TTAHUB-1350/pagination"
@@ -1670,26 +1670,26 @@ jobs:
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
-  restore_processed_to_staging:
-    docker:
-      - image: cimg/base:2024.05
-    steps:
-    - sparse_checkout:
-          directories: 'automation'
-          branch: << pipeline.git.branch >>
-    - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-staging
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-    - cf_migrate:
-          app_name: tta-smarthub-staging
-          cloudgov_username: CLOUDGOV_STAGING_USERNAME
-          cloudgov_password: CLOUDGOV_STAGING_PASSWORD
-          cloudgov_space: CLOUDGOV_STAGING_SPACE
+  # restore_processed_to_staging:
+  #   docker:
+  #     - image: cimg/base:2024.05
+  #   steps:
+  #   - sparse_checkout:
+  #         directories: 'automation'
+  #         branch: << pipeline.git.branch >>
+  #   - cf_restore:
+  #         auth_client_secret: PROD_AUTH_CLIENT_SECRET
+  #         cloudgov_username: CLOUDGOV_PROD_USERNAME
+  #         cloudgov_password: CLOUDGOV_PROD_PASSWORD
+  #         cloudgov_space: CLOUDGOV_PROD_SPACE
+  #         rds_service_name: ttahub-staging
+  #         s3_service_name: ttahub-db-backups
+  #         backup_prefix: processed
+  #   - cf_migrate:
+  #         app_name: tta-smarthub-staging
+  #         cloudgov_username: CLOUDGOV_STAGING_USERNAME
+  #         cloudgov_password: CLOUDGOV_STAGING_PASSWORD
+  #         cloudgov_space: CLOUDGOV_STAGING_SPACE
   restore_processed_to_sandbox:
     docker:
       - image: cimg/base:2024.05
@@ -1888,12 +1888,13 @@ workflows:
       - process_backup:
           requires:
             - process_production
-      - restore_processed_to_staging:
-          requires:
-            - process_backup
+      # - restore_processed_to_staging:
+      #     requires:
+      #       - process_backup
       - restore_processed_to_sandbox:
           requires:
-            - restore_processed_to_staging
+            - process_backup
+            # - restore_processed_to_staging
       - restore_processed_to_dev:
           requires:
             - restore_processed_to_sandbox
@@ -1976,11 +1977,11 @@ workflows:
       - process_backup:
           requires:
             - process_production
-  manual_restore_staging:
-    when:
-      equal: [true, << pipeline.parameters.manual-restore-staging >>]
-    jobs:
-      - restore_processed_to_staging
+  # manual_restore_staging:
+  #   when:
+  #     equal: [true, << pipeline.parameters.manual-restore-staging >>]
+  #   jobs:
+  #     - restore_processed_to_staging
   manual_restore_sandbox:
     when:
       equal: [true, << pipeline.parameters.manual-restore-sandbox >>]
