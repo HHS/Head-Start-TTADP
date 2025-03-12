@@ -203,11 +203,11 @@ export default function CommunicationLog({ regionId, recipientId }) {
             log.recipients && log.recipients.length > 1 ? <UsersIcon /> : null,
           data: [
             { title: 'Date', value: log.data.communicationDate },
-            { title: 'Purpose', value: log.data.purpose },
+            { title: 'Purpose', value: log.data.purpose, tooltip: true },
             { title: 'Goals', value: (log.data.goals || []).map((g) => g.label).join(', '), tooltip: true },
             { title: 'Creator name', value: log.authorName },
             { title: 'Other TTA staff', value: (log.data.otherStaff || []).map((u) => u.label).join(', '), tooltip: true },
-            { title: 'Result', value: log.data.result },
+            { title: 'Result', value: log.data.result, tooltip: true },
             { title: 'Recipient next steps', value: log.data.recipientNextSteps.map((s) => s.note).join(', '), hidden: true },
             { title: 'Specialist next steps', value: log.data.specialistNextSteps.map((s) => s.note).join(', '), hidden: true },
             { title: 'Files', value: log.files.map((f) => f.originalFileName).join(', '), hidden: true },
