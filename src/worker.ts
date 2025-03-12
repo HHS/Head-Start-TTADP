@@ -8,6 +8,7 @@ import {} from 'dotenv/config';
 import httpContext from 'express-http-context';
 import throng from 'throng';
 import { EventEmitter } from 'events';
+import { logger } from './logger';
 import { registerEventListener } from './processHandler';
 import {
   processScanQueue,
@@ -26,6 +27,7 @@ import {
   executeCronEnrollmentFunctions,
   runMaintenanceCronJobs,
 } from './lib/maintenance';
+import { isTrue } from './envParser';
 
 EventEmitter.defaultMaxListeners = 25;
 
@@ -34,11 +36,11 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 const timezone = 'America/New_York';
 
 // Wrap your process functions to use httpContext
-async function start(context: { id: number }) {
+async function start(contextId: number) {
   registerEventListener();
 
   httpContext.ns.run(async () => {
-    httpContext.set('workerId', context.id);
+    httpContext.set('workerId', contextId);
 
     // File Scanning Queue
     processScanQueue();
@@ -52,10 +54,11 @@ async function start(context: { id: number }) {
     processNotificationQueue();
 
     // Ensure only instance zero and the first Throng worker run the maintenance jobs
-    if (process.env.CF_INSTANCE_INDEX === '0' && context.id === 1) {
+    logger.info(`Starting worker, cf_instance: ${process.env.CF_INSTANCE_INDEX}, contextId: ${contextId}`);
+    if ((process.env.CF_INSTANCE_INDEX === '0') || isTrue('FORCE_CRON')) {
       await executeCronEnrollmentFunctions(
         process.env.CF_INSTANCE_INDEX,
-        context.id,
+        contextId,
         process.env.NODE_ENV,
       );
       runMaintenanceCronJobs(timezone);
