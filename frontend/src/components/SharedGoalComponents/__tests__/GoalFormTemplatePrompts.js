@@ -27,7 +27,7 @@ describe('GoalFormTemplatePrompts', () => {
         <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
       </Wrapper>,
     );
-    expect(screen.getByLabelText("Select recipient's goal")).toBeInTheDocument();
+    expect(screen.getByLabelText(/select root causes/i)).toBeInTheDocument();
   });
 
   it('renders the correct prompt and hint', () => {

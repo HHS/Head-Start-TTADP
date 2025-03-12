@@ -28,7 +28,7 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
         >
           <Select
             isMulti
-            aria-label="Select recipient's goal"
+            aria-label={prompt.prompt}
             inputId={fieldName}
             name={fieldName}
             className="usa-select"
