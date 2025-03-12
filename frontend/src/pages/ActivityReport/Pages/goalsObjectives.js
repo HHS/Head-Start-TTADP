@@ -121,6 +121,7 @@ const GoalsObjectives = ({
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [goalTemplates, setGoalTemplates] = useState([]);
+  const [goalToRemove, setGoalToRemove] = useState(null);
 
   const {
     field: {
@@ -203,7 +204,6 @@ const GoalsObjectives = ({
     // so 'create a new goal' will still be an option.
   };
 
-  let goalToRemove = null;
   const onRemove = () => {
     const goalId = goalToRemove.id;
     const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
@@ -417,7 +417,7 @@ const GoalsObjectives = ({
         <ReadOnly
           onEdit={onEdit}
           onRemove={(goal) => {
-            goalToRemove = goal;
+            setGoalToRemove(goal);
             modalRef.current.toggleModal();
           }}
           createdGoals={goalsForReview}
