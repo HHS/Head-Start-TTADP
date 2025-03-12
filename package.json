@@ -318,7 +318,7 @@
     "umzug": "^3.2.1"
   },
   "dependencies": {
-    "@babel/runtime": "^7.12.1",
+    "@babel/runtime": "^7.26.10",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
     "@ttahub/common": "2.2.8",
