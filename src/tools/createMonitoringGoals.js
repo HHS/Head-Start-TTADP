@@ -254,7 +254,6 @@ const createMonitoringGoals = async () => {
       }
     });
   } catch (error) {
-    console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
     auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
   }
 };
