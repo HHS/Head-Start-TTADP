@@ -1,60 +1,68 @@
 import React, { useMemo, useContext } from 'react';
+import { GOAL_STATUS, DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import { Controller, FormProvider, useForm } from 'react-hook-form';
+import {
+  Controller,
+  FormProvider,
+  useForm,
+} from 'react-hook-form';
 import Select from 'react-select';
-import { Redirect, useParams } from 'react-router';
+import { Redirect, useParams, useHistory } from 'react-router';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { DECIMAL_BASE } from '@ttahub/common';
-import Container from '../../components/Container';
-import GoalFormHeading from '../../components/SharedGoalComponents/GoalFormHeading';
-import GoalFormNavigationLink from '../../components/SharedGoalComponents/GoalFormNavigationLink';
-import GoalFormTitleGroup from '../../components/SharedGoalComponents/GoalFormTitleGroup';
-// import GoalFormButton from '../../components/SharedGoalComponents/GoalFormButton';
-// import GoalFormError from '../../components/SharedGoalComponents/GoalFormError';
+import { uniqueId } from 'lodash';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 import { canEditOrCreateGoals } from '../../permissions';
-import GoalGrantSingleSelect from '../../components/SharedGoalComponents/GoalGrantSingleSelect';
 import useGoalTemplates from '../../hooks/useGoalTemplates';
+import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
 import FormItem from '../../components/FormItem';
 import selectOptionsReset from '../../components/selectOptionsReset';
-
-const GOAL_FORM_FIELDS = {
-  SELECTED_GRANT: 'selectedGrant',
-  SELECTED_GOAL: 'selectedGoal',
-  OBJECTIVES: 'objectives',
-  ROOT_CAUSES: 'rootCauses',
-};
+import { GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../../components/SharedGoalComponents/constants';
+import GoalFormHeading from '../../components/SharedGoalComponents/GoalFormHeading';
+import GoalGrantSingleSelect from '../../components/SharedGoalComponents/GoalGrantSingleSelect';
+import GoalFormNavigationLink from '../../components/SharedGoalComponents/GoalFormNavigationLink';
+import GoalFormTitleGroup from '../../components/SharedGoalComponents/GoalFormTitleGroup';
+import GoalFormButtonIterator from '../../components/SharedGoalComponents/GoalFormButtonIterator';
+import ObjectivesSection from '../../components/SharedGoalComponents/ObjectivesSection';
+import GoalFormContainer from '../../components/SharedGoalComponents/GoalFormContainer';
+import { addStandardGoal } from '../../fetchers/standardGoals';
+import { GOAL_FORM_FIELDS } from './constants';
+import GoalFormTemplatePrompts from '../../components/SharedGoalComponents/GoalFormTemplatePrompts';
 
 export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
+
+  const history = useHistory();
 
   const hookForm = useForm({
     defaultValues: {
       [GOAL_FORM_FIELDS.SELECTED_GRANT]: null,
       [GOAL_FORM_FIELDS.SELECTED_GOAL]: null,
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [],
       [GOAL_FORM_FIELDS.ROOT_CAUSES]: [],
     },
   });
 
-  // this hook will manage the state for the page within itself
-  //   const {
-  //     alert,
-  //     error,
-  //     buttons,
-  //     hookForm,
-  //     submit,
-  //     modalRef,
-  //   } = useGoalState(recipient, regionId, isExistingGoal);
-
-  //   const history = useHistory();
+  const standardGoalFormButtons = useMemo(() => [
+    {
+      id: uniqueId('goal-form-button-'),
+      type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
+      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+      label: GOAL_FORM_BUTTON_LABELS.ADD_GOAL,
+    },
+    {
+      id: uniqueId('goal-form-button-'),
+      type: GOAL_FORM_BUTTON_TYPES.LINK,
+      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+      to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
+    },
+  ], [recipient.id, regionId]);
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
   const possibleGrants = useMemo(() => (recipient.grants || []).filter(((g) => g.status === 'Active')), [recipient.grants]);
 
   // watch the selected grants
-  const { selectedGrant } = hookForm.watch();
+  const { selectedGrant, selectedGoal } = hookForm.watch();
 
   const selectedGrants = useMemo(() => [selectedGrant], [selectedGrant]);
   const goalTemplates = useGoalTemplates(selectedGrants, true);
@@ -64,6 +72,8 @@ export default function StandardGoalForm({ recipient }) {
   // eslint-disable-next-line max-len
   const userCanEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
 
+  const goalTemplatePrompts = useGoalTemplatePrompts(selectedGoal ? selectedGoal.id : null);
+
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grants
     if (possibleGrants.length === 1) {
@@ -72,13 +82,24 @@ export default function StandardGoalForm({ recipient }) {
   }, [possibleGrants]);
 
   const onSubmit = async (data) => {
-    // eslint-disable-next-line no-console
-    console.log(data);
+    try {
+      setIsAppLoading(true);
 
-    setIsAppLoading(true);
-    // submit handles errors internally
-    // await submit(data);
-    setIsAppLoading(false);
+      // submit to backend
+      await addStandardGoal({
+        goalTemplateId: selectedGoal.id,
+        grantId: selectedGrant.id,
+        objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value })) : [],
+        rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
+      });
+
+      history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+    } finally {
+      setIsAppLoading(false);
+    }
   };
 
   if (!userCanEdit) {
@@ -90,10 +111,9 @@ export default function StandardGoalForm({ recipient }) {
     <FormProvider {...hookForm}>
       <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
       <GoalFormHeading recipient={recipient} regionId={regionId} />
-      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        <GoalFormTitleGroup />
+      <GoalFormContainer>
+        <GoalFormTitleGroup status={GOAL_STATUS.NOT_STARTED} />
         <form onSubmit={hookForm.handleSubmit(onSubmit)}>
-          {/* <GoalFormError error={error} /> */}
           <GoalGrantSingleSelect
             permissions={[
               userCanEdit,
@@ -127,20 +147,11 @@ export default function StandardGoalForm({ recipient }) {
             rules={{ required: 'Select a goal' }}
             defaultValue={null}
           />
-
-          {/* {buttons.map((button) => (
-            <GoalFormButton
-              key={button.id}
-              onClick={button.onClick}
-              label={button.label}
-              variant={button.variant}
-              type={button.type}
-              to={button.to}
-              modalRef={modalRef}
-            />
-          ))} */}
+          <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} />
+          {selectedGoal ? <ObjectivesSection /> : <div className="margin-top-4" />}
+          <GoalFormButtonIterator buttons={standardGoalFormButtons} />
         </form>
-      </Container>
+      </GoalFormContainer>
     </FormProvider>
   );
 }

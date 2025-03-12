@@ -10,7 +10,6 @@ import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
 import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLink';
 import GoalFormTitleGroup from '../SharedGoalComponents/GoalFormTitleGroup';
 import GoalNudge from '../GoalForm/GoalNudge';
-import GoalFormButton from '../SharedGoalComponents/GoalFormButton';
 import GoalFormError from '../SharedGoalComponents/GoalFormError';
 import GoalFormAlert from '../SharedGoalComponents/GoalFormAlert';
 import ReopenReasonModal from '../ReopenReasonModal';
@@ -19,6 +18,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import GoalGrantSingleSelect from '../SharedGoalComponents/GoalGrantSingleSelect';
+import GoalFormButtonIterator from '../SharedGoalComponents/GoalFormButtonIterator';
 
 export default function GoalNameForm({
   recipient,
@@ -141,17 +141,7 @@ export default function GoalNameForm({
             regionId={regionId}
             selectedGrant={selectedGrant}
           />
-          {buttons.map((button) => (
-            <GoalFormButton
-              key={button.id}
-              onClick={button.onClick}
-              label={button.label}
-              variant={button.variant}
-              type={button.type}
-              to={button.to}
-              modalRef={modalRef}
-            />
-          ))}
+          <GoalFormButtonIterator buttons={buttons} modalRef={modalRef} />
         </form>
         {/*
           this is not the ideal position for accessibility,
