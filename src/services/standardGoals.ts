@@ -13,6 +13,7 @@ const {
 } = db;
 
 interface IObjective {
+  id?: number;
   title: string;
   objectiveTemplateId?: number;
 }
@@ -42,9 +43,7 @@ export async function goalForRtr(
     where: {
       grantId,
       goalTemplateId,
-      status: {
-        [Op.in]: status,
-      },
+      status,
     },
     attributes: [
       'id',
@@ -214,12 +213,23 @@ export async function updateExistingStandardGoal(
 
   // a new goal does not require objectives, but may include them
   if (objectives.length) {
-    await Promise.all(objectives.map(async (objective) => {
+    const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
       if (objective.objectiveTemplateId) {
+        const orOptions = [
+          { title: objective.title },
+        ] as {
+          id?: number;
+          title?: string;
+        }[];
+
+        if (objective.id) {
+          orOptions.push({ id: objective.id });
+        }
+
         const existingObjective = await Objective.findOne({
           where: {
             goalId: goal.id,
-            objectiveTemplateId: objective.objectiveTemplateId,
+            [Op.or]: orOptions,
           },
         });
 
@@ -236,6 +246,15 @@ export async function updateExistingStandardGoal(
         goalId: goal.id,
       });
     }));
+
+    await Objective.destroy({
+      where: {
+        goalId: goal.id,
+        id: {
+          [Op.notIn]: updatedObjectives.map((o) => o.id),
+        },
+      },
+    });
   }
 
   if (requiresPrompts) {

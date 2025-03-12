@@ -1,18 +1,23 @@
 import join from 'url-join';
-import { get, post } from './index';
+import { get, post, put } from './index';
 
 const standardGoalUrl = join('/', 'api', 'goal-templates', 'standard');
 
 export const getStandardGoal = async (
   goalTemplateId,
   grantId,
+  status,
 ) => {
-  const url = join(
+  let url = join(
     standardGoalUrl,
     String(goalTemplateId),
     'grant',
     String(grantId),
   );
+
+  if (status) {
+    url += `?status=${status}`;
+  }
 
   const response = await get(url);
   return response.json();
@@ -36,4 +41,20 @@ export const addStandardGoal = async (data) => {
   return response.json();
 };
 
-export const updateStandardGoal = () => {};
+export const updateStandardGoal = async (data) => {
+  const {
+    goalTemplateId,
+    grantId,
+    ...body
+  } = data;
+
+  const url = join(
+    standardGoalUrl,
+    String(data.goalTemplateId),
+    'grant',
+    String(data.grantId),
+  );
+
+  const response = await put(url, body);
+  return response.json();
+};

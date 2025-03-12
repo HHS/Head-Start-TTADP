@@ -28,6 +28,7 @@ import FeatureFlag from '../../components/FeatureFlag';
 import AppLoadingContext from '../../AppLoadingContext';
 import StandardGoalForm from '../StandardGoalForm';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
+import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 
 export function PageWithHeading({
   children,
@@ -304,6 +305,16 @@ export default function RecipientRecord({ match, hasAlerts }) {
               />
             );
           }}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId/restart"
+          render={() => (
+            <FeatureFlag flag="standard_goals_update" renderNotFound>
+              <RestartStandardGoal
+                recipient={recipientData}
+              />
+            </FeatureFlag>
+          )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId"

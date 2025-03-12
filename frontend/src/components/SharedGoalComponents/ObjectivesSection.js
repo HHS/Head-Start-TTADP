@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button, Textarea } from '@trussworks/react-uswds';
 import PlusButton from '../GoalForm/PlusButton';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
@@ -9,11 +9,17 @@ import ReadOnlyField from '../ReadOnlyField';
 
 export default function ObjectivesSection({
   fieldName,
-  objectives,
-  append,
-  remove,
 }) {
-  const { register } = useFormContext();
+  const { register, control } = useFormContext();
+
+  const {
+    fields: objectives,
+    append,
+    remove,
+  } = useFieldArray({
+    control,
+    name: fieldName,
+  });
 
   const onAddNewObjectiveClick = () => {
     append({ value: '' });
@@ -65,13 +71,6 @@ export default function ObjectivesSection({
 
 ObjectivesSection.propTypes = {
   fieldName: PropTypes.string,
-  objectives: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    value: PropTypes.string,
-    onAR: PropTypes.bool,
-  })).isRequired,
-  append: PropTypes.func.isRequired,
-  remove: PropTypes.func.isRequired,
 };
 
 ObjectivesSection.defaultProps = {
