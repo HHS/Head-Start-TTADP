@@ -2,20 +2,21 @@
 import React, {
   useContext, useEffect, useMemo, useState,
 } from 'react';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { useHistory, useParams } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { GOAL_FORM_FIELDS } from './constants';
 import { GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../../components/SharedGoalComponents/constants';
-import { getStandardGoal, updateStandardGoal } from '../../fetchers/standardGoals';
+import { addStandardGoal, getStandardGoal } from '../../fetchers/standardGoals';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
-import AppLoadingContext from '../../AppLoadingContext';
 import GoalFormUpdateOrRestart from '../../components/SharedGoalComponents/GoalFormUpdateOrRestart';
+import AppLoadingContext from '../../AppLoadingContext';
 import { HTTPError } from '../../fetchers';
 import { ROUTES } from '../../Constants';
 
-export default function UpdateStandardGoal({ recipient }) {
+export default function RestartStandardGoal({ recipient }) {
   const { goalTemplateId, regionId, grantId } = useParams();
   const history = useHistory();
 
@@ -38,20 +39,20 @@ export default function UpdateStandardGoal({ recipient }) {
         setIsAppLoading(true);
 
         // we need to get closed only if we are restarting the goal
-        const g = await getStandardGoal(goalTemplateId, grantId);
-
-        setGoal(g);
+        const g = await getStandardGoal(goalTemplateId, grantId, GOAL_STATUS.CLOSED);
         if (!g) {
           throw new HTTPError('Goal not found', 404);
         }
+        setGoal(g);
 
+        // we handle the restart case a little differently
+        // first off: all objectives will be "fresh" but the previous iterations
+        // objectives will appear as removable
         const resetFormData = {
           // eslint-disable-next-line max-len
-          [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({ value: o.title, objectiveId: o.id, onAR: o.onAR })),
-          [GOAL_FORM_FIELDS.ROOT_CAUSES]: g.responses.flatMap((responses) => (
-            responses.response.map((r) => ({ id: r, name: r }))
-          )),
+          [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({ value: o.title, objectiveId: o.id, onAR: false })),
         };
+
         hookForm.reset(resetFormData);
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -76,7 +77,7 @@ export default function UpdateStandardGoal({ recipient }) {
       id: uniqueId('goal-form-button-'),
       type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
       variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-      label: GOAL_FORM_BUTTON_LABELS.SAVE,
+      label: GOAL_FORM_BUTTON_LABELS.RESTART,
     },
     {
       id: uniqueId('goal-form-button-'),
@@ -92,11 +93,10 @@ export default function UpdateStandardGoal({ recipient }) {
       setIsAppLoading(true);
 
       // submit to backend
-      await updateStandardGoal({
+      await addStandardGoal({
         goalTemplateId,
         grantId,
-        // eslint-disable-next-line max-len
-        objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value, id: o.objectiveId })) : [],
+        objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value })) : [],
         rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
       });
 
@@ -126,7 +126,7 @@ export default function UpdateStandardGoal({ recipient }) {
   );
 }
 
-UpdateStandardGoal.propTypes = {
+RestartStandardGoal.propTypes = {
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -137,4 +137,5 @@ UpdateStandardGoal.propTypes = {
       }),
     ),
   }).isRequired,
+
 };
