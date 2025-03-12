@@ -51,6 +51,18 @@ describe('StandardGoals fetcher', () => {
     expect(res).toEqual(mockData);
     expect(fetchMock.called(url)).toBeTruthy();
   });
+  it('addStandardGoal expect to throw', async () => {
+    const url = join(standardGoalUrl,
+      '1',
+      'grant',
+      '1');
+    fetchMock.postOnce(url, 500);
+    await expect(addStandardGoal({
+      grantId: 1,
+      goalTemplateId: 1,
+      data: 'Expected',
+    })).rejects.toThrow();
+  });
   it('updateStandardGoal', async () => {
     const mockData = [{ data: 'Expected' }];
     const url = join(standardGoalUrl,
