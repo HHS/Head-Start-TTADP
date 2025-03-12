@@ -53,14 +53,18 @@ export default function GoalGrantSingleSelect(
   );
 }
 
-const GrantPropType = {
-  numberWithProgramTypes: PropTypes.string.isRequired,
-  id: PropTypes.number.isRequired,
-};
+const GrantPropType = PropTypes.shape({
+  numberWithProgramTypes: PropTypes.string,
+  id: PropTypes.number,
+});
 
 GoalGrantSingleSelect.propTypes = {
-  permissions: PropTypes.arrayOf(PropTypes.boolean).isRequired,
+  permissions: PropTypes.arrayOf(PropTypes.bool).isRequired,
   control: PropTypes.shape({}).isRequired,
-  selectedGrant: PropTypes.shape(GrantPropType).isRequired,
+  selectedGrant: GrantPropType,
   possibleGrants: PropTypes.arrayOf(GrantPropType).isRequired,
+};
+
+GoalGrantSingleSelect.defaultProps = {
+  selectedGrant: null,
 };

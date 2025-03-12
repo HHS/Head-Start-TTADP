@@ -1,5 +1,7 @@
 import join from 'url-join';
-import { get, post, put } from './index';
+import {
+  get, HTTPError, post, put,
+} from './index';
 
 const standardGoalUrl = join('/', 'api', 'goal-templates', 'standard');
 
@@ -38,6 +40,9 @@ export const addStandardGoal = async (data) => {
   );
 
   const response = await post(url, body);
+  if (!response.ok) {
+    throw new HTTPError(response.status, response.statusText);
+  }
   return response.json();
 };
 

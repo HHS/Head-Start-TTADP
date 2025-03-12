@@ -28,6 +28,7 @@ import GoalFormContainer from '../../components/SharedGoalComponents/GoalFormCon
 import { addStandardGoal } from '../../fetchers/standardGoals';
 import { GOAL_FORM_FIELDS } from './constants';
 import GoalFormTemplatePrompts from '../../components/SharedGoalComponents/GoalFormTemplatePrompts';
+import { ROUTES } from '../../Constants';
 
 export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
@@ -96,7 +97,8 @@ export default function StandardGoalForm({ recipient }) {
       history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.log(err);
+      console.error(err);
+      history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${err.status}`);
     } finally {
       setIsAppLoading(false);
     }
