@@ -247,7 +247,7 @@
     },
     "setupFiles": [
       "./src/setupTest.js",
-      "./src/env.js"
+      "./src/envParser.js"
     ]
   },
   "keywords": [],
