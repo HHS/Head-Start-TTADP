@@ -55,7 +55,7 @@ export default function GoalGrantSingleSelect(
 
 const GrantPropType = {
   numberWithProgramTypes: PropTypes.string.isRequired,
-  id: PropTypes.string.isRequired,
+  id: PropTypes.number.isRequired,
 };
 
 GoalGrantSingleSelect.propTypes = {

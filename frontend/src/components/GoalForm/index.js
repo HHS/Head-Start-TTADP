@@ -11,7 +11,6 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import { isEqual } from 'lodash';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import Form from './Form';
@@ -34,8 +33,12 @@ import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLi
 import GoalFormButton from '../SharedGoalComponents/GoalFormButton';
 import { GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../SharedGoalComponents/constants';
 import { canEditOrCreateGoals } from '../../permissions';
+import GoalFormContainer from '../SharedGoalComponents/GoalFormContainer';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
+
+// TODO: This file can be deleted when we switch over to standard goals
+// (as well as files linked to this, too numerous to list here)
 
 export default function GoalForm({
   recipient,
@@ -683,7 +686,7 @@ export default function GoalForm({
     <>
       <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
       <GoalFormHeading recipient={recipient} regionId={regionId} />
-      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
+      <GoalFormContainer>
         { createdGoalsForReadOnly.length ? (
           <ReadOnly
             createdGoals={createdGoalsForReadOnly}
@@ -778,7 +781,7 @@ export default function GoalForm({
 
           { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
         </form>
-      </Container>
+      </GoalFormContainer>
     </>
   );
 }

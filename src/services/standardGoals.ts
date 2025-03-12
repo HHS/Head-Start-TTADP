@@ -7,7 +7,9 @@ const {
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   Goal,
+  Grant,
   Objective,
+  Program,
 } = db;
 
 interface IObjective {
@@ -51,25 +53,46 @@ export async function goalForRtr(
       'goalTemplateId',
       'grantId',
     ],
-    include: [{
-      attributes: [
-        'id',
-        'title',
-        'onAR',
-        'status',
-        'objectiveTemplateId',
-      ],
-      model: Objective,
-      as: 'objectives',
-    }, {
-      model: GoalFieldResponse,
-      as: 'responses',
-      attributes: [
-        'id',
-        'goalId',
-        'response',
-      ],
-    }],
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        attributes: [
+          'numberWithProgramTypes',
+          'id',
+          'number',
+        ],
+        include: [
+          {
+            model: Program,
+            as: 'programs',
+            attributes: [
+              'grantId',
+              'programType',
+            ],
+          },
+        ],
+      },
+      {
+        attributes: [
+          'id',
+          'title',
+          'onAR',
+          'status',
+          'objectiveTemplateId',
+        ],
+        model: Objective,
+        as: 'objectives',
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        attributes: [
+          'id',
+          'goalId',
+          'response',
+        ],
+      }],
   });
 }
 
