@@ -170,11 +170,11 @@ export default function RegionalCommLogTable({ filters }) {
           data: [
             { title: 'Recipient', value: log.recipients.map((r) => r.name).join(', '), tooltip: true },
             { title: 'Date', value: log.data.communicationDate },
-            { title: 'Purpose', value: log.data.purpose },
+            { title: 'Purpose', value: log.data.purpose, tooltip: true },
             { title: 'Goals', value: (log.data.goals || []).map((g) => g.label).join(', '), tooltip: true },
             { title: 'Creator name', value: log.authorName },
             { title: 'Other TTA staff', value: (log.data.otherStaff || []).map((u) => u.label).join(', '), tooltip: true },
-            { title: 'Result', value: log.data.result },
+            { title: 'Result', value: log.data.result, tooltip: true },
           ],
           actions: log.userId === user.id ? [
             { label: 'View', onClick: () => handleRowActionClick('View', log, Number(log.data.regionId)) },
