@@ -39,7 +39,7 @@ describe('GoalFormTemplatePrompts', () => {
 
   const goalTemplatePrompts = [
     {
-      prompt: 'Select fei root cause',
+      prompt: 'Select root causes',
       hint: 'Choose the root causes for the goal',
       options: ['Option 1', 'Option 2', 'Option 3'],
     },
@@ -51,7 +51,7 @@ describe('GoalFormTemplatePrompts', () => {
         <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
       </Wrapper>,
     );
-    expect(screen.getByLabelText(/select fei root cause/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/select root causes/i)).toBeInTheDocument();
   });
 
   it('renders the correct prompt and hint', () => {
@@ -60,8 +60,8 @@ describe('GoalFormTemplatePrompts', () => {
         <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
       </Wrapper>,
     );
-    expect(screen.getByText(/Select fei root causes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Choose the root causes for the goal/i)).toBeInTheDocument();
+    expect(screen.getByText('Select root causes')).toBeInTheDocument();
+    expect(screen.getByText('Choose the root causes for the goal')).toBeInTheDocument();
   });
 
   it('can select options', async () => {
@@ -71,7 +71,7 @@ describe('GoalFormTemplatePrompts', () => {
       </Wrapper>,
     );
 
-    const select = screen.getByLabelText(/select fei root causes/i);
+    const select = screen.getByLabelText(/select root causes/i);
 
     await selectEvent.select(select, ['Option 1', 'Option 2']);
 
