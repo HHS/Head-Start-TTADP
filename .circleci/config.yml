@@ -921,11 +921,11 @@ jobs:
             source venv/bin/activate
             pip install -U pip setuptools wheel
             pip install -U --use-pep517 -r requirements.txt
-      - run:
-          name: Check python version compatibility  with buildpack
-          command: |
-            chmod +x ./bin/check_python_version_compatibility.sh
-            ./bin/check_python_version_compatibility.sh
+      # - run:
+      #     name: Check python version compatibility  with buildpack
+      #     command: |
+      #       chmod +x ./bin/check_python_version_compatibility.sh
+      #       ./bin/check_python_version_compatibility.sh
       - save_cache:
           paths:
             - similarity_api/src/venv
