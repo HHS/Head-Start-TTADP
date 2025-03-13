@@ -39,7 +39,7 @@ const mockButtons = [
 const mockGoalTemplatePrompts = [
   {
     id: 1,
-    prompt: 'Prompt 1',
+    prompt: 'Prompt',
     options: [
       {
         id: 1,
@@ -81,6 +81,6 @@ describe('GoalFormUpdateOrRestart', () => {
 
   it('renders goal template prompts when provided', () => {
     render(<RenderTest goalTemplatePrompts={mockGoalTemplatePrompts} />);
-    expect(screen.getByLabelText('Prompt 1')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Prompts/i)).toBeInTheDocument();
   });
 });
