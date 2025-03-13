@@ -7,23 +7,24 @@ import { auditLogger } from '../logger';
 import { changeGoalStatusWithSystemUser } from '../goalServices/changeGoalStatus';
 
 const createMonitoringGoals = async () => {
-  const cutOffDate = '2025-01-21';
-  // Verify that the monitoring goal template exists.
-  const monitoringGoalTemplate = await GoalTemplate.findOne({
-    where: {
-      standard: 'Monitoring',
-    },
-  });
+  try {
+    const cutOffDate = '2025-01-21';
+    // Verify that the monitoring goal template exists.
+    const monitoringGoalTemplate = await GoalTemplate.findOne({
+      where: {
+        standard: 'Monitoring',
+      },
+    });
 
-  // If the monitoring goal template does not exist, throw an error.
-  if (!monitoringGoalTemplate) {
-    auditLogger.error('Monitoring Goal template not found');
-    return;
-  }
+    // If the monitoring goal template does not exist, throw an error.
+    if (!monitoringGoalTemplate) {
+      auditLogger.error('Monitoring Goal template not found');
+      return;
+    }
 
-  // 1. Create monitoring goals for grants that need them.
-  await sequelize.transaction(async (transaction) => {
-    await sequelize.query(`
+    // 1. Create monitoring goals for grants that need them.
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(`
       WITH
       grants_needing_goal AS (
         SELECT
@@ -95,8 +96,8 @@ const createMonitoringGoals = async () => {
       FROM new_goals;
     `, { transaction });
 
-    // 2. Reopen monitoring goals for grants that need them.
-    const goalsToOpen = await sequelize.query(`
+      // 2. Reopen monitoring goals for grants that need them.
+      const goalsToOpen = await sequelize.query(`
       WITH
         grants_needing_goal_reopend AS (
           SELECT
@@ -140,27 +141,28 @@ const createMonitoringGoals = async () => {
               'Special'
             )
             AND g.status IN ('Closed', 'Suspended')
+            AND g."createdVia" = 'monitoring'
           GROUP BY 1
         )
       SELECT "goalId"
       FROM grants_needing_goal_reopend;
     `, { transaction });
 
-    // Set reopened goals via Sequelize so we ensure the hooks fire.
-    if (goalsToOpen[0].length > 0) {
-      const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
-      // This function also updates the status of the goal via the hook.
-      // No need to explicitly update the goal status.
-      await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatusWithSystemUser({
-        goalId: goal.goalId,
-        newStatus: 'Not Started',
-        reason: 'Active monitoring citations',
-        context: null,
-      })));
-    }
+      // Set reopened goals via Sequelize so we ensure the hooks fire.
+      if (goalsToOpen[0].length > 0) {
+        const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
+        // This function also updates the status of the goal via the hook.
+        // No need to explicitly update the goal status.
+        await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatusWithSystemUser({
+          goalId: goal.goalId,
+          newStatus: 'Not Started',
+          reason: 'Active monitoring citations',
+          context: null,
+        })));
+      }
 
-    // 3. Close monitoring goals that no longer have any active citations and un-approved reports.
-    const goalsToClose = await sequelize.query(`
+      // 3. Close monitoring goals that no longer have any active citations and un-approved reports.
+      const goalsToClose = await sequelize.query(`
       WITH
     grants_with_monitoring_goal AS (
       SELECT
@@ -174,6 +176,7 @@ const createMonitoringGoals = async () => {
       ON g."grantId" = gr.id
       WHERE gt.standard = 'Monitoring'
       AND g.status != 'Closed'
+      AND g."createdVia" = 'monitoring'
     ),
     with_no_active_reports AS (
       SELECT
@@ -237,19 +240,23 @@ const createMonitoringGoals = async () => {
       FROM without_active_citations_and_reports;
     `, { transaction });
 
-    // Set closed goals via Sequelize so we ensure the hooks fire.
-    if (goalsToClose[0].length > 0) {
-      const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
-      // This function also updates the status of the goal via the hook.
-      // No need to explicitly update the goal status.
-      await Promise.all(goalsToClose[0].map((goal) => changeGoalStatusWithSystemUser({
-        goalId: goal.goalId,
-        newStatus: 'Closed',
-        reason: 'No active monitoring citations',
-        context: null,
-      })));
-    }
-  });
+      // Set closed goals via Sequelize so we ensure the hooks fire.
+      if (goalsToClose[0].length > 0) {
+        const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
+        // This function also updates the status of the goal via the hook.
+        // No need to explicitly update the goal status.
+        await Promise.all(goalsToClose[0].map((goal) => changeGoalStatusWithSystemUser({
+          goalId: goal.goalId,
+          newStatus: 'Closed',
+          reason: 'No active monitoring citations',
+          context: null,
+        })));
+      }
+    });
+  } catch (error) {
+    console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
+    auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
+  }
 };
 
 export default createMonitoringGoals;
