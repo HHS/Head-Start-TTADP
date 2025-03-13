@@ -168,17 +168,19 @@ function RecipientsWithClassScoresAndGoalsWidget({
 
   const subtitle = (
     <>
-      <DrawerTriggerButton customClass="margin-bottom-1" drawerTriggerRef={titleDrawerRef}>
-        Learn about the OHS standard CLASS&reg; goal
-      </DrawerTriggerButton>
-      <Drawer
-        triggerRef={titleDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="OHS standard CLASS&reg; goal"
-      >
-        <ContentFromFeedByTag tagName="ttahub-ohs-standard-class-goal" />
-      </Drawer>
+      <div className="margin-bottom-2">
+        <DrawerTriggerButton drawerTriggerRef={titleDrawerRef}>
+          Learn about the OHS standard CLASS&reg; goal
+        </DrawerTriggerButton>
+        <Drawer
+          triggerRef={titleDrawerRef}
+          stickyHeader
+          stickyFooter
+          title="OHS standard CLASS&reg; goal"
+        >
+          <ContentFromFeedByTag tagName="ttahub-ohs-standard-class-goal" />
+        </Drawer>
+      </div>
       <div className="smart-hub--table-widget-subtitle margin-x-0 margin-bottom-2">
         <DrawerTriggerButton drawerTriggerRef={subtitleRef} removeLeftMargin>
           How are thresholds met?
