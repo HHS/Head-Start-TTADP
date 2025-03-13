@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import { uniqueId } from 'lodash';
-import Select from 'react-select';
-import FormItem from '../FormItem';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
-import selectOptionsReset from '../selectOptionsReset';
+import GenericSelectWithDrawer from '../GoalForm/GenericSelectWithDrawer';
+import { ERROR_FORMAT } from '../../pages/ActivityReport/Pages/components/constants';
+import { NO_ERROR } from '../../pages/SessionForm/constants';
 
 export const validate = (value) => {
   if (value.length < 1) {
@@ -17,7 +17,7 @@ export const validate = (value) => {
   return true;
 };
 export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName }) {
-  const { control } = useFormContext();
+  const { control, formState: { errors } } = useFormContext();
 
   // we can assume that there is only ever one prompt: for root causes
   // todo: if this ever changes, rewrite this to be generic
@@ -25,32 +25,31 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
     return null;
   }
 
+  const error = errors[fieldName];
+
   return goalTemplatePrompts.map((prompt) => (
     <Controller
       key={uniqueId('goal-form-prompt-')}
       render={({ value, onChange, onBlur }) => (
-        <FormItem
-          label={prompt.prompt}
+        <GenericSelectWithDrawer
+          error={error
+            ? ERROR_FORMAT(error)
+            : NO_ERROR}
+          name={prompt.prompt}
           hint={prompt.hint}
-          name={fieldName}
-          required
-        >
-          <Select
-            isMulti
-            aria-label={prompt.prompt}
-            inputId={fieldName}
-            name={fieldName}
-            className="usa-select"
-            styles={selectOptionsReset}
-            onChange={onChange}
-            options={prompt.options.map((option) => ({ name: option, id: option })) || []}
-            placeholder="- Select -"
-            value={value}
-            getOptionLabel={(option) => option.name}
-            getOptionValue={(option) => option.id}
-            onBlur={onBlur}
-          />
-        </FormItem>
+          options={prompt.options.map((option) => ({ name: option, id: option })) || []}
+          validateValues={(e) => {
+            console.log(e);
+            onBlur(e);
+          }}
+          values={value || []}
+          onChangeValues={onChange}
+          inputName={fieldName}
+          isLoading={false}
+          drawerButtonText="Get help choosing root causes"
+          drawerContent={<></>}
+          drawerTitle="Root causes"
+        />
       )}
       name={fieldName}
       control={control}
