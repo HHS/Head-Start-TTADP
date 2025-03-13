@@ -367,7 +367,7 @@ const GoalsObjectives = ({
         title="Are you sure you want to delete this goal?"
         modalId="remove-goal-modal"
         onOk={() => {
-         onRemove(modalRef.current.goal);
+          onRemove(modalRef.current.goal);
           if (modalRef.current.modalIsOpen) {
             modalRef.current.toggleModal();
           }
