@@ -52,19 +52,14 @@ export default function GenericSelectWithDrawer({
           </Label>
           <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
             {drawerButtonText}
-            {/* Get help choosing
-            {' '}
-            {name.toLowerCase()}
-            s */}
           </DrawerTriggerButton>
-          {hint && (
+        </div>
+        {hint && (
           <>
-            <br />
             <span className="usa-hint">{hint}</span>
             <br />
           </>
-          )}
-        </div>
+        )}
         {error}
         <Select
           inputName={inputName}
