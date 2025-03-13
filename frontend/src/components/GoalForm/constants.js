@@ -37,7 +37,7 @@ export const FORM_FIELD_INDEXES = {
   GOAL_PROMPTS: 5,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <>, </>, <></>, [], {}];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, [], {}];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',
