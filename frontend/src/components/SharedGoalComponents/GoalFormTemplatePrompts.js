@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import { uniqueId } from 'lodash';
@@ -21,27 +21,26 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
 
   // we can assume that there is only ever one prompt: for root causes
   // todo: if this ever changes, rewrite this to be generic
-  if (!goalTemplatePrompts) {
+  // eslint-disable-next-line max-len
+  const prompt = useMemo(() => (goalTemplatePrompts ? goalTemplatePrompts[0] : null), [goalTemplatePrompts]);
+  const promptId = useMemo(() => uniqueId('goal-form-prompt-'), []);
+  // eslint-disable-next-line max-len
+  const options = useMemo(() => (prompt ? prompt.options.map((option) => ({ name: option, id: option })) : []), [prompt]);
+
+  if (!prompt) {
     return null;
   }
 
-  const error = errors[fieldName];
-
-  return goalTemplatePrompts.map((prompt) => (
+  return (
     <Controller
-      key={uniqueId('goal-form-prompt-')}
+      key={promptId}
       render={({ value, onChange, onBlur }) => (
         <GenericSelectWithDrawer
-          error={error
-            ? ERROR_FORMAT(error)
-            : NO_ERROR}
+          error={errors[fieldName] ? ERROR_FORMAT(errors[fieldName].message) : NO_ERROR}
           name={prompt.prompt}
           hint={prompt.hint}
-          options={prompt.options.map((option) => ({ name: option, id: option })) || []}
-          validateValues={(e) => {
-            console.log(e);
-            onBlur(e);
-          }}
+          options={options}
+          validateValues={onBlur}
           values={value || []}
           onChangeValues={onChange}
           inputName={fieldName}
@@ -58,7 +57,7 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
       }}
       defaultValue={null}
     />
-  ));
+  );
 }
 
 GoalFormTemplatePrompts.propTypes = {

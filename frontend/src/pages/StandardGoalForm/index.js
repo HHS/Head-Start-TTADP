@@ -36,6 +36,7 @@ export default function StandardGoalForm({ recipient }) {
   const history = useHistory();
 
   const hookForm = useForm({
+    mode: 'onBlur',
     defaultValues: {
       [GOAL_FORM_FIELDS.SELECTED_GRANT]: null,
       [GOAL_FORM_FIELDS.SELECTED_GOAL]: null,
