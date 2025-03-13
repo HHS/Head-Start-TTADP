@@ -18,8 +18,10 @@ export default function GenericSelectWithDrawer({
   onChangeValues,
   inputName,
   isLoading,
+  hint,
 
   // drawer props
+  drawerButtonText,
   drawerContent,
   drawerTitle,
 }) {
@@ -49,11 +51,19 @@ export default function GenericSelectWithDrawer({
             </>
           </Label>
           <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
-            Get help choosing
+            {drawerButtonText}
+            {/* Get help choosing
             {' '}
             {name.toLowerCase()}
-            s
+            s */}
           </DrawerTriggerButton>
+          {hint && (
+          <>
+            <br />
+            <span className="usa-hint">{hint}</span>
+            <br />
+          </>
+          )}
         </div>
         {error}
         <Select
@@ -82,6 +92,7 @@ export default function GenericSelectWithDrawer({
 }
 
 GenericSelectWithDrawer.propTypes = {
+  hint: PropTypes.string,
   name: PropTypes.string.isRequired,
   error: PropTypes.node.isRequired,
   options: PropTypes.arrayOf(PropTypes.shape({
@@ -96,10 +107,12 @@ GenericSelectWithDrawer.propTypes = {
   onChangeValues: PropTypes.func.isRequired,
   inputName: PropTypes.string.isRequired,
   isLoading: PropTypes.bool,
+  drawerButtonText: PropTypes.string.isRequired,
   drawerContent: PropTypes.node.isRequired,
   drawerTitle: PropTypes.string.isRequired,
 };
 
 GenericSelectWithDrawer.defaultProps = {
   isLoading: false,
+  hint: '',
 };
