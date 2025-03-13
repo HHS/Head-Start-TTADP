@@ -1,4 +1,7 @@
-import { reduceGoals, reduceObjectivesForActivityReport } from './reduceGoals';
+import {
+  reduceGoals, reduceObjectivesForActivityReport,
+  reduceRelationThroughActivityReportObjectives,
+} from './reduceGoals';
 
 describe('reduceGoals', () => {
   const goals = [
@@ -356,5 +359,81 @@ describe('reduceGoals', () => {
         name: 'ANC - Citation 3 - Source 3',
       },
     ]);
+  });
+  describe('reduceRelationThroughActivityReportObjectives', () => {
+    it('should handle null topic values without crashing', () => {
+      // Mock objective with an activity report that has a null topic
+      const objective = {
+        id: 243577,
+        otherEntityId: null,
+        goalId: 94169,
+        title: 'Objective Title',
+        status: 'In Progress',
+        objectiveTemplateId: 44484,
+        onAR: true,
+        onApprovedAR: true,
+        createdVia: 'activityReport',
+        rtrOrder: 1,
+        createdAt: new Date('2025-01-15T14:24:08.065Z'),
+        updatedAt: new Date('2025-01-15T14:48:11.857Z'),
+        deletedAt: null,
+        activityReportObjectives: [
+          {
+            id: 1,
+            objectiveId: 101,
+            activityReportId: 500,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            name: 'Activity Report Objective 1',
+            status: 'In Progress',
+            endDate: '2025-01-01',
+            isActivelyEdited: false,
+            source: 'Some Source',
+            arOrder: 1,
+            objectiveCreatedHere: false,
+            supportType: 'Technical Assistance',
+            ttaProvided: 'Training',
+            closeSuspendReason: 'Completed',
+            closeSuspendContext: 'Closed due to completion',
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [
+              { topic: null }, // This simulates a topic that is null
+              { topic: { dataValues: { id: 73, name: 'Family Support Services' }, id: 73, name: 'Family Support Services' } }, // Valid topic
+            ],
+            activityReportObjectiveFiles: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveCitations: [],
+            toJSON() { return this; },
+            dataValues: this,
+          },
+        ],
+        resources: [],
+        topics: [
+          { id: 82, name: 'Parent and Family Engagement' },
+        ],
+        files: [],
+        courses: [],
+      };
+
+      const exists = {
+        topics: [
+          { id: 82, name: 'Parent and Family Engagement' }, // Pre-existing topic
+        ],
+      };
+
+      // Call the function
+      const result = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+        exists,
+      );
+
+      // Expected result should exclude null topics
+      expect(result).toEqual([
+        { id: 82, name: 'Parent and Family Engagement' }, // Existing
+        { id: 73, name: 'Family Support Services' }, // From objective
+      ]);
+    });
   });
 });
