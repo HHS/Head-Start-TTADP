@@ -77,7 +77,7 @@ GoalFormUpdateOrRestart.propTypes = {
       type: PropTypes.string,
       variant: PropTypes.string,
       label: PropTypes.string,
-      to: PropTypes.string,
+      to: PropTypes,
     }),
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,

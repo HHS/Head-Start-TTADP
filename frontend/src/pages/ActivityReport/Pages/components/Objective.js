@@ -494,7 +494,6 @@ export default function Objective({
             values={objectiveCitations}
             onChangeValues={selectedCitationsChanged}
             inputName={objectiveCitationsInputName}
-            drawerButtonText="Get help choosing citations"
             drawerTitle="Citation guidance"
             drawerContent={(
               <CitationDrawerContent
@@ -516,7 +515,6 @@ export default function Objective({
         onChangeValues={onChangeTopics}
         inputName={objectiveTopicsInputName}
         drawerTitle="Topic guidance"
-        drawerButtonText="Get help choosing topics"
         drawerContent={useMemo(() => <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />, [])}
       />
 

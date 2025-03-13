@@ -44,7 +44,6 @@ describe('ObjectiveTopics', () => {
       isOnReport={isOnReport}
       goalStatus={goalStatus}
       userCanEdit={userCanEdit}
-      drawerButtonText="Get help choosing topics"
       drawerContent={<div>Drawer Content</div>}
       drawerTitle="Drawer Title"
     />
