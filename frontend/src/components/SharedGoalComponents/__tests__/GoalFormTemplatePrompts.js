@@ -4,15 +4,39 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
-import GoalFormTemplatePrompts from '../GoalFormTemplatePrompts';
+import selectEvent from 'react-select-event';
+import GoalFormTemplatePrompts, { validate } from '../GoalFormTemplatePrompts';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
 
+let methods;
+
 const Wrapper = ({ children }) => {
-  const methods = useForm();
-  return <FormProvider {...methods}>{children}</FormProvider>;
+  methods = useForm({
+    mode: 'onSubmit',
+  });
+  return (
+    <FormProvider {...methods}>
+      {children}
+      <button type="submit">Submit</button>
+    </FormProvider>
+  );
 };
 
 describe('GoalFormTemplatePrompts', () => {
+  describe('validate', () => {
+    it('returns true when there is at least one option selected', () => {
+      expect(validate(['Option 1'])).toBe(true);
+    });
+
+    it('returns an error message when no options are selected', () => {
+      expect(validate([])).toBe('Select at least one root cause');
+    });
+
+    it('returns an error message when more than two options are selected', () => {
+      expect(validate(['Option 1', 'Option 2', 'Option 3'])).toBe('Select a maximum of 2 root causes');
+    });
+  });
+
   const goalTemplatePrompts = [
     {
       prompt: 'Select root causes',
@@ -40,12 +64,36 @@ describe('GoalFormTemplatePrompts', () => {
     expect(screen.getByText('Choose the root causes for the goal')).toBeInTheDocument();
   });
 
-  it('returns null if no goalTemplatePrompts are provided', () => {
+  it('can select options', async () => {
+    render(
+      <Wrapper>
+        <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
+      </Wrapper>,
+    );
+
+    const select = screen.getByLabelText(/select root causes/i);
+
+    await selectEvent.select(select, ['Option 1', 'Option 2']);
+
+    expect(methods.getValues(GOAL_FORM_FIELDS.ROOT_CAUSES)).toEqual([
+      {
+        id: 'Option 1',
+        name: 'Option 1',
+      },
+      {
+        id: 'Option 2',
+        name: 'Option 2',
+      },
+    ]);
+  });
+
+  it('returns null if no goalTemplatePrompts are provided', async () => {
     const { container } = render(
       <Wrapper>
         <GoalFormTemplatePrompts goalTemplatePrompts={null} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
       </Wrapper>,
     );
-    expect(container.firstChild).toBeNull();
+    const submitButton = await screen.findByRole('button', { name: /submit/i });
+    expect(container.firstChild).toBe(submitButton);
   });
 });

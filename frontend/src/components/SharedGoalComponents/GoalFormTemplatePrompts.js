@@ -7,6 +7,15 @@ import FormItem from '../FormItem';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
 import selectOptionsReset from '../selectOptionsReset';
 
+export const validate = (value) => {
+  if (value.length < 1) {
+    return 'Select at least one root cause';
+  }
+  if (value.length > 2) {
+    return 'Select a maximum of 2 root causes';
+  }
+  return true;
+};
 export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName }) {
   const { control } = useFormContext();
 
@@ -46,15 +55,7 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
       name={fieldName}
       control={control}
       rules={{
-        validate: (value) => {
-          if (value.length < 1) {
-            return 'Select at least one root cause';
-          }
-          if (value.length > 2) {
-            return 'Select a maximum of 2 root causes';
-          }
-          return true;
-        },
+        validate,
       }}
       defaultValue={null}
     />
