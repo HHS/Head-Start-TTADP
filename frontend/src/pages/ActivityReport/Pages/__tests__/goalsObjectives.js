@@ -256,7 +256,15 @@ describe('goals objectives', () => {
       userEvent.click(actions);
       const [button] = await screen.findAllByRole('button', { name: 'Remove' });
       act(() => userEvent.click(button));
-      expect(goalSummary).not.toBeVisible();
+
+      // Modal to remove.
+      await waitFor(async () => {
+        expect(await screen.findByText(/If you remove the goal, the objectives and TTA provided content will also be deleted/i)).toBeVisible();
+      });
+
+      const modalRemove = await screen.findByLabelText(/remove goal/i);
+      act(() => userEvent.click(modalRemove));
+
       const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
       expect(addNewGoal).toBeVisible();
       const keys = ['goalForEditing', 'goalName', 'goalEndDate'];
@@ -336,8 +344,18 @@ describe('goals objectives', () => {
       actions = await screen.findByRole('button', { name: /actions for goal 3/i });
       act(() => userEvent.click(actions));
       const [removeButton] = await screen.findAllByRole('button', { name: 'Remove' });
+      userEvent.click(removeButton);
+
       act(async () => {
-        userEvent.click(removeButton);
+        // wait for modal text to be visible.
+        await waitFor(async () => {
+          expect(await screen.findByText(/If you remove the goal, the objectives and TTA provided content will also be deleted/i)).toBeVisible();
+        });
+      });
+
+      act(async () => {
+        const modalRemove = await screen.findByLabelText(/remove goal/i);
+        userEvent.click(modalRemove);
         await waitFor(async () => {
           // Assert the goal was removed while the goal being edited is visible still.
           expect(screen.queryAllByText('Sample Goal to Remove').length).toBe(0);
