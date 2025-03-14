@@ -86,7 +86,6 @@ export async function getCuratedTemplates(
       [Sequelize.literal('ARRAY[]::int[]'), 'goalIds'],
       [Sequelize.literal('NULL::varchar'), 'isRttapa'],
       [Sequelize.literal(`'${GOAL_STATUS.NOT_STARTED}'`), 'status'],
-      [Sequelize.literal('NULL::varchar'), 'endDate'],
       [Sequelize.literal('ARRAY[]::int[]'), 'grantIds'],
       [Sequelize.literal('ARRAY[]::int[]'), 'oldGrantIds'],
       [Sequelize.literal('TRUE'), 'isCurated'], // setting this tells the frontnd to check for conditional prompts
