@@ -2,7 +2,6 @@
 import '@testing-library/jest-dom';
 import {
   render,
-  screen,
 } from '@testing-library/react';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -113,7 +112,6 @@ describe('GoalForm', () => {
   it('fetches data for existing goals', async () => {
     const goalId = 123;
     fetchMock.get(`/api/goals?reportId=1&goalIds=${goalId}`, [{
-      endDate: '',
       status: '',
       value: goalId,
       label: 'Test',
@@ -124,14 +122,5 @@ describe('GoalForm', () => {
 
     renderGoalForm(goalId);
     expect(fetchMock.called()).toBe(true);
-  });
-
-  it('displays new goals properly', async () => {
-    const goalId = 'new';
-    renderGoalForm(goalId);
-    expect(fetchMock.called()).toBe(false);
-
-    const endDate = await screen.findByText(/anticipated close date/i);
-    expect(endDate).toBeVisible();
   });
 });
