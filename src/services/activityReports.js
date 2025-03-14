@@ -384,7 +384,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
               'id',
               'name',
               'status',
-              'endDate',
               'goalNumber',
             ],
           },
