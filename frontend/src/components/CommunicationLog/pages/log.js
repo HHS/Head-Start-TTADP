@@ -230,12 +230,12 @@ const Log = ({
             </>
           )}
           name="result"
-          required
+          required={false}
         >
           <Dropdown
             id="result"
             name="result"
-            inputRef={register({ required: 'Select a result' })}
+            inputRef={register()}
             defaultValue=""
           >
             <option value="" disabled hidden>Select one</option>
