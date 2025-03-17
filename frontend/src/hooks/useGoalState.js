@@ -17,6 +17,8 @@ import {
 import NewGoalAlert from '../components/SharedGoalComponents/NewGoalAlert';
 import useNewGoalAction from './useNewGoalAction';
 
+// TODO: this file can be removed once standard goals are launched
+
 export default function useGoalState(recipient, regionId, isExistingGoal = false) {
   const hookForm = useForm({
     mode: 'onBlur',
