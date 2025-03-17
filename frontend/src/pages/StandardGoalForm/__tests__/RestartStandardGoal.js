@@ -67,8 +67,8 @@ const renderRestartStandardGoal = () => {
 };
 
 describe('RestartStandardGoal', () => {
+  const goalTemplatesUrl = join('/', 'api', 'goal-templates');
   beforeEach(() => {
-    const goalTemplatesUrl = join('/', 'api', 'goal-templates');
     fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), []);
     fetchMock.get('/api/goal-templates/standard/1/grant/1?status=Closed', mockGoal);
   });
@@ -90,6 +90,7 @@ describe('RestartStandardGoal', () => {
 
   it('handles goal not found error', async () => {
     fetchMock.reset();
+    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), []);
     fetchMock.get('/api/goal-templates/standard/1/grant/1?status=Closed', 404);
 
     const { history } = renderRestartStandardGoal();

@@ -26,7 +26,7 @@ import GoalFormButtonIterator from '../../components/SharedGoalComponents/GoalFo
 import ObjectivesSection from '../../components/SharedGoalComponents/ObjectivesSection';
 import GoalFormContainer from '../../components/SharedGoalComponents/GoalFormContainer';
 import { addStandardGoal } from '../../fetchers/standardGoals';
-import { GOAL_FORM_FIELDS } from './constants';
+import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
 import GoalFormTemplatePrompts from '../../components/SharedGoalComponents/GoalFormTemplatePrompts';
 import { ROUTES } from '../../Constants';
 
@@ -91,8 +91,7 @@ export default function StandardGoalForm({ recipient }) {
       await addStandardGoal({
         goalTemplateId: selectedGoal.id,
         grantId: selectedGrant.id,
-        objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value })) : [],
-        rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
+        ...mapObjectivesAndRootCauses(data),
       });
 
       history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);

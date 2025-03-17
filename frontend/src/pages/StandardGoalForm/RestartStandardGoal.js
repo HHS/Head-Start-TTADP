@@ -6,7 +6,7 @@ import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { useHistory, useParams } from 'react-router';
 import { useForm } from 'react-hook-form';
-import { GOAL_FORM_FIELDS } from './constants';
+import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
 import { GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../../components/SharedGoalComponents/constants';
 import { addStandardGoal, getStandardGoal } from '../../fetchers/standardGoals';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
@@ -95,8 +95,7 @@ export default function RestartStandardGoal({ recipient }) {
       await addStandardGoal({
         goalTemplateId,
         grantId,
-        objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value })) : [],
-        rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
+        ...mapObjectivesAndRootCauses(data),
       });
 
       history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
