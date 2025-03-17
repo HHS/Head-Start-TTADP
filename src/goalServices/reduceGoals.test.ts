@@ -19,13 +19,11 @@ describe('reduceGoals', () => {
         },
       },
       dataValues: {
-        endDate: '2023-12-31',
         grant: {
           recipientId: 1,
           numberWithProgramTypes: 1,
         },
       },
-      endDate: '2023-12-31',
       grantId: 1,
       createdVia: 'rtr',
       source: 'Source',
@@ -44,13 +42,11 @@ describe('reduceGoals', () => {
         },
       },
       dataValues: {
-        endDate: '2023-12-31',
         grant: {
           recipientId: 1,
           numberWithProgramTypes: 1,
         },
       },
-      endDate: '2023-12-31',
       grantId: 1,
       createdVia: 'rtr',
       source: 'Source',
@@ -103,13 +99,11 @@ describe('reduceGoals', () => {
           },
         },
         dataValues: {
-          endDate: '2023-12-31',
           grant: {
             recipientId: 1,
             numberWithProgramTypes: 1,
           },
         },
-        endDate: '2023-12-31',
         grantId: 1,
         createdVia: 'rtr',
         source: 'Source',
@@ -167,13 +161,11 @@ describe('reduceGoals', () => {
           },
         },
         dataValues: {
-          endDate: '2023-12-31',
           grant: {
             recipientId: 1,
             numberWithProgramTypes: 1,
           },
         },
-        endDate: '2023-12-31',
         grantId: 1,
         createdVia: 'rtr',
         source: 'Source',

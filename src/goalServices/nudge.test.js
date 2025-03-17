@@ -90,7 +90,6 @@ describe('nudge', () => {
             name: templateName,
             isTemplate: true,
             source: templateSource,
-            endDate: '',
           },
           similarity: 0.7,
         },
@@ -114,7 +113,6 @@ describe('nudge', () => {
       status: GOAL_STATUS.NOT_STARTED,
       goalTemplateId: matchingId,
       isCuratedTemplate: true,
-      endDate: '',
       source: templateSource,
     }]);
 
@@ -151,7 +149,6 @@ describe('nudge', () => {
             name: curatedName,
             isTemplate: true,
             source: 'Regional office priority',
-            endDate: '',
           },
           similarity: 0.7,
         },
@@ -182,7 +179,6 @@ describe('nudge', () => {
         status: GOAL_STATUS.NOT_STARTED,
         goalTemplateId: templateId,
         isCuratedTemplate: true,
-        endDate: '',
         source: 'Regional office priority',
         reason: '',
       },

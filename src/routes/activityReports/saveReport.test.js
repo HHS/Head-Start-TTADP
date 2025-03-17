@@ -127,7 +127,6 @@ describe('saveReport', () => {
     firstGoal = await Goal.create({
       name: firstGoalName,
       createdVia: 'rtr',
-      endDate: new Date(),
       isRttapa: 'Yes',
       grantId: grantAndRecipientId,
       status: GOAL_STATUS.DRAFT,
@@ -136,7 +135,6 @@ describe('saveReport', () => {
     secondGoal = await Goal.create({
       name: firstGoalName,
       createdVia: 'rtr',
-      endDate: new Date(),
       isRttapa: 'Yes',
       grantId: secondGrantId,
       status: GOAL_STATUS.DRAFT,
@@ -145,7 +143,6 @@ describe('saveReport', () => {
     thirdGoal = await Goal.create({
       name: secondGoalName,
       createdVia: 'rtr',
-      endDate: new Date(),
       isRttapa: 'Yes',
       grantId: grantAndRecipientId,
       status: GOAL_STATUS.DRAFT,
@@ -154,7 +151,6 @@ describe('saveReport', () => {
     fourthGoal = await Goal.create({
       name: secondGoalName,
       createdVia: 'rtr',
-      endDate: new Date(),
       isRttapa: 'Yes',
       grantId: secondGrantId,
       status: GOAL_STATUS.DRAFT,

@@ -60,7 +60,6 @@ describe('activityReportGoalResource hooks', () => {
     goalToDestroy = await Goal.create({
       name: 'Activity Report Goal Resource',
       status: 'Draft',
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: 1,
