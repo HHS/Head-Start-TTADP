@@ -197,3 +197,28 @@ describe('newQueue', () => {
     );
   });
 });
+
+describe('removeQueueEventHandlers', () => {
+  it('safely handles removing event listeners when some are undefined', () => {
+    const mockQueue = {
+      removeListener: jest.fn(),
+    };
+
+    const originalProcessRemoveListener = process.removeListener;
+    process.removeListener = jest.fn();
+
+    // eslint-disable-next-line global-require
+    const { removeQueueEventHandlers } = require('./queue');
+
+    const errorListener = jest.fn();
+
+    // Call with some undefined listeners
+    removeQueueEventHandlers(mockQueue, errorListener, undefined, undefined, undefined);
+
+    // Verify it removes the defined listener but doesn't try to remove undefined ones
+    expect(mockQueue.removeListener).toHaveBeenCalledWith('error', errorListener);
+    expect(process.removeListener).not.toHaveBeenCalled();
+
+    process.removeListener = originalProcessRemoveListener;
+  });
+});
