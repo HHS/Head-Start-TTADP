@@ -14,6 +14,7 @@ import selectEvent from 'react-select-event';
 import StandardGoalForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from '../constants';
 
 jest.mock('react-router', () => ({
   ...jest.requireActual('react-router'),
@@ -181,5 +182,43 @@ describe('StandardGoalForm', () => {
     userEvent.click(cancelButton);
 
     expect(history.location.pathname).toMatch(/\/recipient-tta-records\/1\/region\/1\/rttapa/);
+  });
+
+  describe('mapObjectivesAndRootCauses', () => {
+    it('maps objectives and root causes correctly', () => {
+      const data = {
+        [GOAL_FORM_FIELDS.OBJECTIVES]: [{ value: 'Objective 1' }, { value: 'Objective 2' }],
+        [GOAL_FORM_FIELDS.ROOT_CAUSES]: [{ id: 1 }, { id: 2 }],
+      };
+
+      const result = mapObjectivesAndRootCauses(data);
+
+      expect(result).toEqual({
+        objectives: [{ title: 'Objective 1' }, { title: 'Objective 2' }],
+        rootCauses: [1, 2],
+      });
+    });
+    it('handles null root causes', () => {
+      const data = {
+        [GOAL_FORM_FIELDS.OBJECTIVES]: [{ value: 'Objective 1' }, { value: 'Objective 2' }],
+      };
+
+      const result = mapObjectivesAndRootCauses(data);
+
+      expect(result).toEqual({
+        objectives: [{ title: 'Objective 1' }, { title: 'Objective 2' }],
+        rootCauses: null,
+      });
+    });
+    it('handles null objectives', () => {
+      const data = {
+        [GOAL_FORM_FIELDS.ROOT_CAUSES]: [{ id: 1 }, { id: 2 }],
+      };
+      const result = mapObjectivesAndRootCauses(data);
+      expect(result).toEqual({
+        objectives: [],
+        rootCauses: [1, 2],
+      });
+    });
   });
 });

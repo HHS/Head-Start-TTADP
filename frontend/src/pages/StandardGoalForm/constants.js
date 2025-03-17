@@ -7,6 +7,12 @@ const GOAL_FORM_FIELDS = {
   ROOT_CAUSES: 'rootCauses',
 };
 
+const mapObjectivesAndRootCauses = (data) => ({
+  objectives: data.objectives ? data.objectives.map((o) => ({ title: o.value })) : [],
+  rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
+});
+
 export {
   GOAL_FORM_FIELDS,
+  mapObjectivesAndRootCauses,
 };
