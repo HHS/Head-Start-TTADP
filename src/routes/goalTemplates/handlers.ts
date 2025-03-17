@@ -12,6 +12,7 @@ import {
   newStandardGoal,
   updateExistingStandardGoal,
   goalForRtr,
+  standardGoalsForRecipient,
 } from '../../services/standardGoals';
 
 export async function getStandardGoal(req: Request, res: Response) {
@@ -86,7 +87,7 @@ export async function updateStandardGoal(req: Request, res: Response) {
 
     res.json(standards);
   } catch (err) {
-    await handleErrors(req, res, err, 'goalTemplates.useStandardGoal');
+    await handleErrors(req, res, err, 'goalTemplates.updateStandardGoal');
   }
 }
 
@@ -145,5 +146,30 @@ export async function getOptionsByPromptName(req: Request, res: Response) {
     res.json(prompts);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getOptionsByPromptName');
+  }
+}
+
+export async function getStandardGoalsByRecipientId(req: Request, res: Response) {
+  try {
+    const { regionId, recipientId } = req.params;
+    const {
+      limit,
+      offset,
+      sortBy,
+      sortDir,
+    } = req.query;
+    const goals = await standardGoalsForRecipient(
+      Number(recipientId),
+      Number(regionId),
+      {
+        limit: Number(limit),
+        offset: Number(offset),
+        sortBy: sortBy as 'createdOn' | 'goalStatus',
+        sortDir: sortDir as 'ASC' | 'DESC',
+      },
+    );
+    res.json(goals);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.getStandardGoalsByRecipientId');
   }
 }
