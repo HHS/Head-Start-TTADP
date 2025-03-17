@@ -123,7 +123,7 @@ const Log = ({
               name="duration"
               type="number"
               min={0}
-              max={99.5}
+              max={24}
               step={0.25}
               inputRef={
                 register({
@@ -133,7 +133,7 @@ const Log = ({
                     mustBeQuarterHalfOrWhole,
                   },
                   min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
-                  max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
+                  max: { value: 24, message: 'Duration must be less than or equal to 24 hours' },
                 })
               }
               required

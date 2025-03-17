@@ -19,7 +19,6 @@ import {
   FORM_FIELD_DEFAULT_ERRORS,
   OBJECTIVE_ERROR_MESSAGES,
   GOAL_NAME_ERROR,
-  GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
   grantsToMultiValue,
@@ -50,7 +49,6 @@ export default function GoalForm({
 
   const goalDefaults = useMemo(() => ({
     name: '',
-    endDate: null,
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
@@ -73,7 +71,6 @@ export default function GoalForm({
   // this will store our created goals (vs the goal that's occupying the form at present)
   const [createdGoals, setCreatedGoals] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
-  const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(
     grantsToMultiValue(goalDefaults.grants, goalDefaults.prompts, []),
   );
@@ -87,7 +84,6 @@ export default function GoalForm({
   const [goalOnAR, setGoalonAR] = useState(goalDefaults.onAR);
   const [isReopenedGoal, setIsReopenedGoal] = useState(goalDefaults.isReopenedGoal);
   // we need to set this key to get the component to re-render (uncontrolled input)
-  const [datePickerKey, setDatePickerKey] = useState('DPK-00');
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
   const [alert, setAlert] = useState({ message: '', type: 'success' });
@@ -139,8 +135,6 @@ export default function GoalForm({
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
-        setEndDate(goal.endDate);
-        setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setPrompts(grantsToMultiValue(selectedGoalGrants, goal.prompts, []));
         setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
@@ -260,23 +254,6 @@ export default function GoalForm({
     return !error.props.children;
   };
 
-  /**
-   *
-   * @returns bool
-   */
-  const validateEndDate = () => {
-    let error = <></>;
-
-    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
-      error = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
-    }
-
-    const newErrors = [...errors];
-    newErrors.splice(FORM_FIELD_INDEXES.END_DATE, 1, error);
-    setErrors(newErrors);
-    return !error.props.children;
-  };
-
   const validateGrantNumbers = (message = SELECT_GRANTS_ERROR) => {
     let error = <></>;
     if (!selectedGrants.length) {
@@ -357,7 +334,6 @@ export default function GoalForm({
   const isValidNotStarted = () => (
     validateGrantNumbers()
     && validateGoalSource()
-    && validateEndDate()
     && validateObjectives()
     && validateAllPrompts()
   );
@@ -403,7 +379,6 @@ export default function GoalForm({
           status: statusToSave,
           source: goal.source,
           isCurated: goal.isCurated,
-          endDate: goal.endDate,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipient,
           objectives: goal.objectives,
@@ -451,7 +426,6 @@ export default function GoalForm({
           status,
           source,
           isCurated,
-          endDate,
           regionId,
           recipient,
           objectives,
@@ -508,7 +482,6 @@ export default function GoalForm({
   const clearForm = () => {
     // clear our form fields
     setGoalName(goalDefaults.name);
-    setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
     setIsCurated(goalDefaults.isCurated);
@@ -517,7 +490,6 @@ export default function GoalForm({
     setCreatedVia(goalDefaults.createdVia);
     setShowForm(false);
     setObjectives([]);
-    setDatePickerKey('DPK-00');
   };
 
   const onSaveAndContinue = async (redirect = false) => {
@@ -540,7 +512,6 @@ export default function GoalForm({
         status,
         source,
         isCurated,
-        endDate,
         regionId,
         recipient,
         objectives,
@@ -556,7 +527,6 @@ export default function GoalForm({
             status: goal.status,
             source: goal.source,
             isCurated: goal.isCurated,
-            endDate: goal.endDate,
             prompts: goal.prompts,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipient,
@@ -607,7 +577,7 @@ export default function GoalForm({
 
     // then repopulate the form
     setGoalName(goal.name);
-    setEndDate(goal.endDate);
+
     setStatus(goal.status);
     setGoalNumbers(goal.goalNumbers);
     setSelectedGrants(goal.grants);
@@ -617,13 +587,7 @@ export default function GoalForm({
     setSource(goal.source);
     setCreatedVia(goal.createdVia);
     setIds(goal.ids);
-
-    // we need to update the date key so it re-renders all the
-    // date pickers, as they are uncontrolled inputs
-    // PS - endDate can be null
-    setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
     setObjectives(goal.objectives);
-
     setShowForm(true);
   };
 
@@ -705,11 +669,7 @@ export default function GoalForm({
               goalName={goalName}
               prompts={prompts}
               setPrompts={setPrompts}
-              endDate={endDate}
-              setEndDate={setEndDate}
-              datePickerKey={datePickerKey}
               errors={errors}
-              validateEndDate={validateEndDate}
               validateGrantNumbers={validateGrantNumbers}
               validateGoalNameAndRecipients={validateGoalNameAndRecipients}
               objectives={objectives}
