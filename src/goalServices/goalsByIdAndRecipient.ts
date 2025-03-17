@@ -45,7 +45,6 @@ export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number) => ({
   attributes: [
-    'endDate',
     'name',
     'status',
     'source',

@@ -3,16 +3,13 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
-import GoalDate from '../../../../components/GoalForm/GoalDate';
 import ConditionalFields from './ConditionalFieldsForHookForm';
 import {
-  GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
@@ -25,7 +22,6 @@ export default function GoalForm({
   goal,
   topicOptions,
   reportId,
-  datePickerKey,
   templatePrompts,
   isMultiRecipientReport,
   citationOptions,
@@ -45,31 +41,11 @@ export default function GoalForm({
    * if at all possible
    */
 
-  const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
   const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
-
-  const {
-    field: {
-      onChange: onUpdateDate,
-      onBlur: onBlurDate,
-      value: goalEndDate,
-      name: goalEndDateInputName,
-    },
-  } = useController({
-    name: 'goalEndDate',
-    rules: {
-      validate: {
-        isValidDate: (value) => activityRecipientType === 'other-entity' || (
-          (value && moment(value, 'MM/DD/YYYY').isValid()) || value === ''
-        ) || GOAL_DATE_ERROR,
-      },
-    },
-    defaultValue: defaultEndDate || '',
-  });
 
   const {
     field: {
@@ -116,10 +92,6 @@ export default function GoalForm({
     goal.name,
     onUpdateText,
   ]);
-
-  useEffect(() => {
-    onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
-  }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   useEffect(() => {
     onUpdateGoalSource(goal.source ? goal.source : defaultSource);
@@ -204,18 +176,6 @@ export default function GoalForm({
         />
       </FormFieldThatIsSometimesReadOnly>
 
-      <GoalDate
-        error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
-        setEndDate={onUpdateDate}
-        endDate={goalEndDate || ''}
-        validateEndDate={onBlurDate}
-        key={datePickerKey} // force a re-render when the a new goal is picked
-        inputName={goalEndDateInputName}
-        goalStatus={status}
-        isLoading={isAppLoading}
-        userCanEdit
-      />
-
       <Objectives
         objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
@@ -241,7 +201,6 @@ GoalForm.propTypes = {
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
-    endDate: PropTypes.string,
     isNew: PropTypes.bool,
     isCurated: PropTypes.bool,
     isSourceEditable: PropTypes.bool,
@@ -278,7 +237,6 @@ GoalForm.propTypes = {
     })),
   })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  datePickerKey: PropTypes.string.isRequired,
   templatePrompts: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.arrayOf(PropTypes.shape({
