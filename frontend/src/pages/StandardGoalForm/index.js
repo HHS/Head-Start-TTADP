@@ -29,6 +29,7 @@ import { addStandardGoal } from '../../fetchers/standardGoals';
 import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
 import GoalFormTemplatePrompts from '../../components/SharedGoalComponents/GoalFormTemplatePrompts';
 import { ROUTES } from '../../Constants';
+import usePossibleGrants from '../../hooks/usePossibleGrants';
 
 export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
@@ -61,7 +62,7 @@ export default function StandardGoalForm({ recipient }) {
   ], [recipient.id, regionId]);
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
-  const possibleGrants = useMemo(() => (recipient.grants || []).filter(((g) => g.status === 'Active')), [recipient.grants]);
+  const possibleGrants = usePossibleGrants(recipient);
 
   // watch the selected grants
   const { selectedGrant, selectedGoal } = hookForm.watch();

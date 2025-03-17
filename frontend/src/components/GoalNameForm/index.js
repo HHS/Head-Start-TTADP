@@ -19,6 +19,7 @@ import { canEditOrCreateGoals } from '../../permissions';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import GoalGrantSingleSelect from '../SharedGoalComponents/GoalGrantSingleSelect';
 import GoalFormButtonIterator from '../SharedGoalComponents/GoalFormButtonIterator';
+import usePossibleGrants from '../../hooks/usePossibleGrants';
 
 export default function GoalNameForm({
   recipient,
@@ -39,7 +40,7 @@ export default function GoalNameForm({
   const history = useHistory();
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
-  const possibleGrants = useMemo(() => (recipient.grants || []).filter(((g) => g.status === 'Active')), [recipient.grants]);
+  const possibleGrants = usePossibleGrants(recipient);
 
   // watch the selected grants
   const { selectedGrant, isGoalNameEditable, goalIds } = hookForm.watch();
