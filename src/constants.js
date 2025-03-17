@@ -241,6 +241,7 @@ const FEATURE_FLAGS = [
   'manual_mark_goals_similar',
   'monitoring_integration',
   'multirecipient_communication_log',
+  'standard_goals_update',
 ];
 
 const MAINTENANCE_CATEGORY = {
