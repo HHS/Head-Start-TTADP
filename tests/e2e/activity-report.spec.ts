@@ -523,9 +523,6 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await blur(page);
 
-    // goal end date
-    await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
-
     // goal source
     await page.getByLabel(/Goal source/i).selectOption('Recipient request');
 
