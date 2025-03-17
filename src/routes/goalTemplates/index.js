@@ -9,9 +9,16 @@ import {
   useStandardGoal,
   updateStandardGoal,
   getStandardGoal,
+  getStandardGoalsByRecipientId,
 } from './handlers';
-import { checkGoalTemplateIdParam, checkGrantIdParam } from '../../middleware/checkIdParamMiddleware';
+import {
+  checkGoalTemplateIdParam,
+  checkGrantIdParam,
+  checkRecipientIdParam,
+  checkRegionIdParam,
+} from '../../middleware/checkIdParamMiddleware';
 import canWriteReportsInGrantRegionMiddleware from '../../middleware/canWriteReportsInGrantRegionMiddleware';
+import canWriteReportsInRegionMiddleware from '../../middleware/canWriteReportsInRegionMiddleware';
 
 const router = express.Router();
 // get templates with goal usage for activity reports and for the "new goal" form in the RTR
@@ -32,7 +39,6 @@ router.post('standard/:goalTemplateId/grant/:grantId', authMiddleware, checkGoal
 router.put('/standard/:goalTemplateId/grant/:grantId', authMiddleware, checkGoalTemplateIdParam, checkGrantIdParam, canWriteReportsInGrantRegionMiddleware, transactionWrapper(updateStandardGoal));
 
 // eslint-disable-next-line max-len
-// future PR: get standard goals by recipient ID for the goal cards
-// router.get('/standard/recipient/:recipientId');
+router.get('/standard/recipient/:recipientId/region/regionId', authMiddleware, checkRecipientIdParam, checkRegionIdParam, canWriteReportsInRegionMiddleware, transactionWrapper(getStandardGoalsByRecipientId));
 
 export default router;
