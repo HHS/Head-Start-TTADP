@@ -128,16 +128,14 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="multirecipient_communication_log">
-                    <li>
-                      <NavLink
-                        withinDisclosure
-                        to="/communication-log"
-                      >
-                        Communication Log
-                      </NavLink>
-                    </li>
-                  </FeatureFlag>
+                  <li>
+                    <NavLink
+                      withinDisclosure
+                      to="/communication-log"
+                    >
+                      Communication Log
+                    </NavLink>
+                  </li>
                   <li>
                     <NavLink
                       withinDisclosure
