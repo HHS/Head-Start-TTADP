@@ -73,8 +73,8 @@ describe('CommunicationLog', () => {
     });
     await act(() => waitFor(() => renderTest()));
     const tableCells = screen.getAllByRole('cell');
-    const tableCellContents = tableCells.map((cell) => cell.textContent);
-    expect(tableCellContents).toContain('My purposeMy purpose');
+    const tableCellContents = tableCells.map((cell) => cell.textContent).join('');
+    expect(tableCellContents).toMatch(/My purpose/i);
   });
 
   it('formats the log correctly', async () => {

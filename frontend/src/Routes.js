@@ -311,9 +311,7 @@ export default function Routes({
           path="/communication-log"
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
-                <RegionalCommunicationLogDashboard />
-              </FeatureFlag>
+              <RegionalCommunicationLogDashboard />
             </AppWrapper>
           )}
         />
@@ -371,9 +369,7 @@ export default function Routes({
           path="/communication-log/region/:regionId/log/:logId/view"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
-                <ViewRegionalCommunicationLog match={match} />
-              </FeatureFlag>
+              <ViewRegionalCommunicationLog match={match} />
             </AppWrapper>
           )}
         />
@@ -381,11 +377,9 @@ export default function Routes({
           exact
           path="/communication-log/region/:regionId/log/:logId/:currentPage?"
           render={() => (
-            <FeatureFlag flag="multirecipient_communication_log" renderNotFound>
-              <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-                <RegionalCommunicationLog />
-              </AppWrapper>
-            </FeatureFlag>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <RegionalCommunicationLog />
+            </AppWrapper>
           )}
         />
         <Route
