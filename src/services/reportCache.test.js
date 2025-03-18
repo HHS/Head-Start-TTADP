@@ -326,6 +326,7 @@ describe('activityReportObjectiveCitation', () => {
           grantId: grant.id,
           findingId: 1,
           reviewName: 'Review 1',
+          standardId: 1,
         }],
       },
       {
@@ -334,6 +335,7 @@ describe('activityReportObjectiveCitation', () => {
           grantId: 2,
           findingId: 1,
           reviewName: 'Review 2',
+          standardId: 2,
         }],
       },
       {
@@ -343,11 +345,13 @@ describe('activityReportObjectiveCitation', () => {
             grantId: 3,
             findingId: 1,
             reviewName: 'Review 3',
+            standardId: 3,
           },
           {
             grantId: grant.id,
             findingId: 1,
             reviewName: 'Review 4',
+            standardId: 4,
           }],
       },
     ];
