@@ -5,6 +5,8 @@ import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import filtersToScopes from '../scopes';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
+import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 
 const GOALS_PER_PAGE = 10;
 
@@ -33,6 +35,102 @@ interface IObjective {
   id?: number;
   title: string;
   objectiveTemplateId?: number;
+}
+
+/** *
+ * This function will save the standard goals for a report.
+ * We still save for each recipient.
+ * But we now have special logic for when to re-use va create a new goal.
+ *  - Not Used: Grant gets the goal and moved to 'Not Started status,
+ *   until report is approved then 'In progress'.
+ *  - Not Started: Existing goal moves to 'In progress'.
+ *  - In progress: Existing goal gets new objectives.
+ *  - Suspended: Existing goal moves to 'In progress'.
+ *  - Closed: Goal is restarted and moves to 'In progress' (restarted = create a new goal).
+ * Objectives will save exactly as they did before.
+*
+ * @param goals
+ * @returns {object} Goal
+ * @return {object} Goal.objectives
+ */
+export async function saveStandardGoalsForReport(goals, userId) {
+  // Loop goal templates.
+  const updatedGoals = await Promise.all(goals.map(async (goal) =>
+    // Loops recipients update / create goals.
+    // eslint-disable-next-line implicit-arrow-linebreak
+    Promise.all(goal.grantIds.map(async (grantId) => {
+      // If this is a monitoring goal
+
+      // Check if there is an existing goal for this template and grant.
+      let newOrUpdatedGoal = await Goal.findOne({
+        where: {
+          grantId,
+          goalTemplateId: goal.goalTemplateId,
+        },
+        include: [
+          {
+            model: Objective,
+            as: 'objectives',
+            attributes: ['id', 'title', 'status'],
+          },
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+            attributes: ['response'],
+          },
+        ],
+      });
+
+      // If this is a monitoring goal check for existing goal.
+      if (goal.goalTemplate.standard === 'Monitoring' && !newOrUpdatedGoal) {
+        // No monitoring goal for this grant skip.
+        return null;
+      }
+
+      if (newOrUpdatedGoal) {
+        // If the goal is 'Not started' move to 'In progress'.
+        if (newOrUpdatedGoal.status === GOAL_STATUS.NOT_STARTED) {
+          await changeGoalStatus({
+            goalId: newOrUpdatedGoal.id,
+            userId,
+            newStatus: GOAL_STATUS.IN_PROGRESS,
+            reason: 'Goal moved to In Progress from Not Started',
+            context: 'saveStandardGoalsForReport',
+          });
+        } else if (newOrUpdatedGoal.status === GOAL_STATUS.SUSPENDED) {
+          // If the goal is 'Suspended' move to 'In progress'.
+          await changeGoalStatus({
+            goalId: newOrUpdatedGoal.id,
+            userId,
+            newStatus: GOAL_STATUS.IN_PROGRESS,
+            reason: 'Goal moved to In Progress from Suspended',
+            context: 'saveStandardGoalsForReport',
+          });
+        } else if (newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
+          // If the goal is 'Closed' create a new goal.
+          newOrUpdatedGoal = null;
+        }
+      }
+
+      // If there is no existing goal, or its closed, create a new one in 'Not started'.
+      if (!newOrUpdatedGoal) {
+        newOrUpdatedGoal = await Goal.create({
+          goalTemplateId: goal.goalTemplateId,
+          createdVia: 'activityReport',
+          name: goal.name ? goal.name.trim() : '',
+          grantId,
+          GOAL_STATUS: GOAL_STATUS.NOT_STARTED,
+        }, { individualHooks: true });
+      }
+
+      // Handle goal prompts for curated goals like FEI.
+      if (goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED && goal.prompts) {
+        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], goal.prompts);
+      }
+      
+
+      return newOrUpdatedGoal;
+    }))));
 }
 
 /**
