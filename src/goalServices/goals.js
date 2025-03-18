@@ -1173,6 +1173,16 @@ export async function createObjectivesForGoal(goal, objectives) {
   if (!objectives) {
     return [];
   }
+ // TODO: Add support type and status change 
+      /*
+      closeSuspendReason: {
+        allowNull: true,
+        type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
+      },
+      closeSuspendContext: {
+        type: DataTypes.TEXT,
+      },
+      */
 
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
