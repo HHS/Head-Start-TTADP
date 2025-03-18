@@ -45,6 +45,7 @@ export default function TextTrim({ text, position }) {
         {/* Hidden element for comparison */}
         <div
           ref={hiddenTextRef}
+          aria-hidden="true"
           style={{
             position: 'absolute',
             visibility: 'hidden',
