@@ -786,7 +786,7 @@ parameters:
     default: "mb/node-20-upgrade"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "mb/TTAHUB-1350/pagination"
+    default: "mb/TTAHUB-3820/headings-within-headings-worlds-within-worlds"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

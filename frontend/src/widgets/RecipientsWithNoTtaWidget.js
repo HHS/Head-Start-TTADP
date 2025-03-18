@@ -4,6 +4,7 @@ import { RECIPIENTS_WITH_NO_TTA_PER_PAGE } from '../Constants';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 
 const defaultSortConfig = {
   sortBy: 'Days_Since_Last_TTA',
@@ -82,11 +83,21 @@ function RecipientsWithNoTtaWidget({
     },
   ];
 
+  const subtitle = (
+    <div className="margin-bottom-3">
+      <WidgetContainerSubtitle>
+        Recipients without Activity Reports or Training Reports for more than 90 days.
+      </WidgetContainerSubtitle>
+      <p className="usa-prose margin-x-0 margin-top-0 margin-bottom-1">
+        <strong>{getSubtitleWithPct()}</strong>
+      </p>
+    </div>
+  );
+
   return (
     <WidgetContainer
       title="Recipients with no TTA"
-      subtitle="Recipients without Activity Reports or Training Reports for more than 90 days."
-      subtitle2={getSubtitleWithPct()}
+      subtitle={subtitle}
       loading={loading || localLoading}
       loadingLabel="Recipients with no TTA loading"
       showPagingBottom
@@ -96,6 +107,7 @@ function RecipientsWithNoTtaWidget({
       perPage={RECIPIENTS_WITH_NO_TTA_PER_PAGE}
       handlePageChange={handlePageChange}
       menuItems={menuItems}
+      titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget
         headers={pageData ? pageData.headers : []}
