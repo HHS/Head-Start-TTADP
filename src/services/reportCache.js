@@ -178,19 +178,18 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
     });
 
     const grantForThisCitation = goal.grantId;
-
     // Get all the citations for the grant.
     const citationsToSave = citations.reduce((acc, citation) => {
       const { monitoringReferences } = citation;
       monitoringReferences.forEach((ref) => {
         const { grantId } = ref;
-        if (grantId === grantForThisCitation) {
+        if (grantId === grantForThisCitation
+          && !acc.some((c) => c.standardId === citation.standardId)) {
           acc.push(citation);
         }
       });
       return acc;
     }, []);
-
     newCitations = citationsToSave.map((citation) => (
       {
         activityReportObjectiveId,
@@ -200,7 +199,6 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           (ref) => ref.grantId === grantForThisCitation,
         ),
       }));
-
     // If we have citations to save, create them.
     if (newCitations.length > 0) {
       return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });

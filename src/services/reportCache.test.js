@@ -136,8 +136,6 @@ describe('cacheTopics', () => {
 });
 
 describe('activityReportObjectiveCitation', () => {
-  let activityReportObjectiveCitation1;
-  let activityReportObjectiveCitation2;
   let activityReport;
   let grant;
   let recipient;
@@ -278,6 +276,48 @@ describe('activityReportObjectiveCitation', () => {
     expect(deletedAroCitations).toHaveLength(0);
   });
 
+  it('should only return one citation if there is more than one with the same standard id', async () => {
+    const citationsToCreate = [{
+      citation: 'Citation 1',
+      monitoringReferences: [{
+        acro: 'TST',
+        grantId: grant.id,
+        citation: '78',
+        severity: 2,
+        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
+        reviewName: '247691FUA',
+        findingType: 'Noncompliance',
+        grantNumber: '02CH010989',
+        findingSource: ' Test Infrastructure Citation',
+        originalGrantId: grant.id,
+        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+        monitoringFindingStatusName: 'Active',
+        standardId: 200039,
+        name: 'TST - 78 -  Test Infrastructure Citation',
+      },
+      {
+        acro: 'TST',
+        grantId: grant.id,
+        citation: '78',
+        severity: 2,
+        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
+        reviewName: '247691FUA',
+        findingType: 'Noncompliance',
+        grantNumber: '02CH012742',
+        findingSource: 'Test Infrastructure Citation',
+        originalGrantId: grant.id,
+        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+        monitoringFindingStatusName: 'Active',
+        standardId: 200039,
+        name: 'TST - 78 - Test Infrastructure Citation',
+      },
+      ],
+    }];
+
+    const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    expect(result).toHaveLength(1);
+  });
   it('correctly saves aro citations per grant', async () => {
     const multiGrantCitations = [
       {
