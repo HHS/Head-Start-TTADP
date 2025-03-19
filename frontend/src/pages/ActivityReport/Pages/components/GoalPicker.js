@@ -30,7 +30,6 @@ export const newGoal = (grantIds) => ({
   goalNumber: '',
   id: 'new',
   isNew: true,
-  endDate: '',
   onApprovedAR: false,
   grantIds,
   goalIds: [],
@@ -57,7 +56,6 @@ const GoalPicker = ({
   const [topicOptions, setTopicOptions] = useState([]);
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
-  const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
   const [templatePrompts, setTemplatePrompts] = useState(false);
   const [useOhsStandardGoal, setOhsStandardGoal] = useState(false);
   const activityRecipientType = watch('activityRecipientType');
@@ -216,13 +214,6 @@ const GoalPicker = ({
       onChange(goal);
       setTemplatePrompts(false);
     }
-
-    // update the goal date forcefully
-    // also update the date picker key to force a re-render
-    setValue('goalEndDate', goal.endDate || '');
-    if (goal.goalIds) {
-      setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
-    }
   };
 
   const onKeep = async () => {
@@ -377,7 +368,6 @@ const GoalPicker = ({
               topicOptions={topicOptions}
               goal={goalForEditing}
               reportId={reportId}
-              datePickerKey={datePickerKey}
               templatePrompts={templatePrompts}
               isMultiRecipientReport={isMultiRecipientReport}
               citationOptions={citationOptions}

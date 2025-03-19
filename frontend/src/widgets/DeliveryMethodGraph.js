@@ -13,6 +13,8 @@ import useWidgetSorting from '../hooks/useWidgetSorting';
 import useWidgetExport from '../hooks/useWidgetExport';
 import { EMPTY_ARRAY } from '../Constants';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
 
 // the following constants are to configure the table
 // we store them outside of the component to avoid
@@ -250,14 +252,26 @@ export default function DeliveryMethodGraph({ data }) {
     exportRows,
   );
 
+  const subtitle = (
+    <div className="margin-bottom-3">
+      <WidgetContainerSubtitle marginY={0}>
+        How much TTA is being delivered in-person, virtually,
+        {' '}
+        or hybrid as reported on Activity Reports
+      </WidgetContainerSubtitle>
+      <SecondarySubtitleWithFilterWarning showFiltersNotApplicable={showFiltersNotApplicable}>
+        {`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
+      </SecondarySubtitleWithFilterWarning>
+    </div>
+  );
+
   return (
     <WidgetContainer
       loading={false}
       title="Delivery method"
-      subtitle="How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity Reports"
-      subtitle2={`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
+      subtitle={subtitle}
       menuItems={menuItems}
-      showFiltersNotApplicable={showFiltersNotApplicable}
+      titleMargin={{ bottom: 1 }}
     >
       <LineGraph
         showTabularData={showTabularData}

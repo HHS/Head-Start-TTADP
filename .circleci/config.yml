@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.20.6-browsers
+      - image: cimg/node:20.18.2-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.20.6-browsers
+      - image: cimg/node:20.18.2-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: cimg/postgres:15.6
@@ -783,10 +783,14 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "context-changes"
+    default: "mb/node-20-upgrade"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
+<<<<<<< HEAD
     default: "al-await-zip-in-monitoring-job"
+=======
+    default: "mb/TTAHUB-3820/headings-within-headings-worlds-within-worlds"
+>>>>>>> main
     type: string
   prod_new_relic_app_id:
     default: "877570491"
