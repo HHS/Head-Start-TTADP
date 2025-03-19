@@ -183,8 +183,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
       const { monitoringReferences } = citation;
       monitoringReferences.forEach((ref) => {
         const { grantId } = ref;
-        if (grantId === grantForThisCitation
-          && !acc.some((c) => c.standardId === ref.standardId)) {
+        if (grantId === grantForThisCitation && !acc.find((c) => c.standardId === ref.standardId)) {
           acc.push(citation);
         }
       });

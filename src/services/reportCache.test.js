@@ -279,6 +279,7 @@ describe('activityReportObjectiveCitation', () => {
   it('should only return one citation if there is more than one with the same standard id', async () => {
     const citationsToCreate = [{
       citation: 'Citation 1',
+      standardId: 200039,
       monitoringReferences: [{
         acro: 'TST',
         grantId: grant.id,
