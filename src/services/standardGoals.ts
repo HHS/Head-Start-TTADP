@@ -7,6 +7,7 @@ import filtersToScopes from '../scopes';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
+import { cacheGoalMetadata } from './reportCache';
 
 const GOALS_PER_PAGE = 10;
 
@@ -53,14 +54,12 @@ interface IObjective {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId) {
+export async function saveStandardGoalsForReport(goals, userId, report) {
   // Loop goal templates.
   const updatedGoals = await Promise.all(goals.map(async (goal) =>
     // Loops recipients update / create goals.
     // eslint-disable-next-line implicit-arrow-linebreak
     Promise.all(goal.grantIds.map(async (grantId) => {
-      // If this is a monitoring goal
-
       // Check if there is an existing goal for this template and grant.
       let newOrUpdatedGoal = await Goal.findOne({
         where: {
@@ -127,7 +126,14 @@ export async function saveStandardGoalsForReport(goals, userId) {
       if (goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED && goal.prompts) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], goal.prompts);
       }
-      
+
+      // Save goal meta data.
+      await cacheGoalMetadata(
+        newOrUpdatedGoal,
+        report.id,
+        false, // The only path that actively being edited is set is from AR.
+        goal.prompts,
+      );
 
       return newOrUpdatedGoal;
     }))));
