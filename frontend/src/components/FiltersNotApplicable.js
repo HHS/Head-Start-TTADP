@@ -8,7 +8,10 @@ import Tooltip from './Tooltip';
 
 const FiltersNotApplicable = () => (
   <>
-    <span className="ttahub-filters-not-applicable font-sans-xs margin-right-1"> - Filters not applied</span>
+    <span className="ttahub-filters-not-applicable font-sans-xs margin-right-1">
+      {' '}
+      - Filters not applied
+    </span>
     <Tooltip
       displayText={<FontAwesomeIcon icon={faQuestionCircle} color={colors.ttahubMediumBlue} size="lg" />}
       tooltipText="One or more of the selected filters cannot be applied to this data."
