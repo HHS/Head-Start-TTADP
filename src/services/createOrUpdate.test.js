@@ -90,7 +90,6 @@ describe('createOrUpdate', () => {
     goals = await Promise.all(grantIds.map((grantId) => Goal.create({
       name: faker.lorem.sentence(),
       status: GOAL_STATUS.NOT_STARTED,
-      endDate: '04/14/2024',
       createdVia: 'activityReport',
       grantId,
       onAR: true,
@@ -103,7 +102,6 @@ describe('createOrUpdate', () => {
         goalId: g.id,
         name: g.name,
         status: g.status,
-        endDate: g.endDate,
       })
     ))));
 
@@ -251,7 +249,6 @@ describe('createOrUpdate', () => {
         status: goal.status,
         timeframe: null,
         isFromSmartsheetTtaPlan: null,
-        endDate: goal.endDate,
         grantId: grantIds[0],
         goalTemplateId: null,
         onAR: true,

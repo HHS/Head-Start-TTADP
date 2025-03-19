@@ -1,17 +1,15 @@
-/* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Alert } from '@trussworks/react-uswds';
-import Container from './Container';
-import PaginationCard from './PaginationCard';
+import Container from '../Container';
+import PaginationCard from '../PaginationCard';
 import WidgetContainerTitleGroup from './WidgetContainerTitleGroup';
-import './WidgetContainer.scss';
+import './index.scss';
 
 export default function WidgetContainer(
   {
     title,
     subtitle,
-    subtitle2,
     children,
     showPagingBottom,
     showPagingTop,
@@ -28,30 +26,18 @@ export default function WidgetContainer(
     className,
     menuItems,
     footNote,
-    displayTable,
-    setDisplayTable,
     enableCheckboxes,
-
-    // slot components
-    SubtitleDrawer,
-    TitleDrawer,
-    widgetContainerTitleClass,
+    titleMargin,
     displayPaginationBoxOutline,
-
-    showFiltersNotApplicable,
   },
 ) {
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className={widgetContainerTitleClass}
+        titleMargin={titleMargin}
         title={title}
         subtitle={subtitle}
-        subtitle2={subtitle2}
         showHeaderBorder={showHeaderBorder}
-        displayTable={displayTable}
-        setDisplayTable={setDisplayTable}
-        showFiltersNotApplicable={showFiltersNotApplicable}
         pagination={showPagingTop ? (
           <PaginationCard
             currentPage={currentPage}
@@ -62,8 +48,6 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
-        TitleDrawer={() => TitleDrawer || null}
-        SubtitleDrawer={() => SubtitleDrawer || null}
         menuItems={menuItems}
         enableCheckboxes={enableCheckboxes}
       >
@@ -104,8 +88,7 @@ export default function WidgetContainer(
 
 WidgetContainer.propTypes = {
   title: PropTypes.string,
-  subtitle: PropTypes.string,
-  subtitle2: PropTypes.string,
+  subtitle: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   children: PropTypes.node,
   showPagingBottom: PropTypes.bool,
   showPagingTop: PropTypes.bool,
@@ -125,24 +108,20 @@ WidgetContainer.propTypes = {
     onClick: PropTypes.func,
   })),
   footNote: PropTypes.string,
-  displayTable: PropTypes.bool,
-  setDisplayTable: PropTypes.func,
-
-  // Drawer components
-  SubtitleDrawer: PropTypes.node,
-  TitleDrawer: PropTypes.node,
-
-  widgetContainerTitleClass: PropTypes.string,
   displayPaginationBoxOutline: PropTypes.bool,
   enableCheckboxes: PropTypes.bool,
-  showFiltersNotApplicable: PropTypes.bool,
+  titleMargin: PropTypes.shape({
+    bottom: PropTypes.number,
+    top: PropTypes.number,
+    right: PropTypes.number,
+    left: PropTypes.number,
+  }),
 };
 
 WidgetContainer.defaultProps = {
   children: <></>,
   title: null,
   subtitle: null,
-  subtitle2: null,
   showPagingBottom: false,
   showPagingTop: false,
   totalCount: 0,
@@ -157,14 +136,12 @@ WidgetContainer.defaultProps = {
   className: '',
   menuItems: [],
   footNote: null,
-  displayTable: false,
-  setDisplayTable: null,
   enableCheckboxes: false,
-
-  // Drawer components
-  SubtitleDrawer: null,
-  TitleDrawer: null,
-  widgetContainerTitleClass: 'padding-x-3',
+  titleMargin: {
+    bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+  },
   displayPaginationBoxOutline: false,
-  showFiltersNotApplicable: false,
 };
