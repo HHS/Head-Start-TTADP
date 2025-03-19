@@ -1139,6 +1139,7 @@ enum enum_Users_flags {
  multirecipient_communication_log
  quality_assurance_dashboard
  regional_goal_dashboard
+ standard_goals_update
  training_reports_dashboard
 }
 

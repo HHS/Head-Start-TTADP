@@ -136,8 +136,6 @@ describe('cacheTopics', () => {
 });
 
 describe('activityReportObjectiveCitation', () => {
-  let activityReportObjectiveCitation1;
-  let activityReportObjectiveCitation2;
   let activityReport;
   let grant;
   let recipient;
@@ -162,7 +160,6 @@ describe('activityReportObjectiveCitation', () => {
     goal = await Goal.create({
       name: faker.lorem.sentence(20),
       status: GOAL_STATUS.NOT_STARTED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grant.id,
@@ -279,6 +276,49 @@ describe('activityReportObjectiveCitation', () => {
     expect(deletedAroCitations).toHaveLength(0);
   });
 
+  it('should only return one citation if there is more than one with the same standard id', async () => {
+    const citationsToCreate = [{
+      citation: 'Citation 1',
+      standardId: 200039,
+      monitoringReferences: [{
+        acro: 'TST',
+        grantId: grant.id,
+        citation: '78',
+        severity: 2,
+        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
+        reviewName: '247691FUA',
+        findingType: 'Noncompliance',
+        grantNumber: '02CH010989',
+        findingSource: ' Test Infrastructure Citation',
+        originalGrantId: grant.id,
+        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+        monitoringFindingStatusName: 'Active',
+        standardId: 200039,
+        name: 'TST - 78 -  Test Infrastructure Citation',
+      },
+      {
+        acro: 'TST',
+        grantId: grant.id,
+        citation: '78',
+        severity: 2,
+        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
+        reviewName: '247691FUA',
+        findingType: 'Noncompliance',
+        grantNumber: '02CH012742',
+        findingSource: 'Test Infrastructure Citation',
+        originalGrantId: grant.id,
+        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+        monitoringFindingStatusName: 'Active',
+        standardId: 200039,
+        name: 'TST - 78 - Test Infrastructure Citation',
+      },
+      ],
+    }];
+
+    const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    expect(result).toHaveLength(1);
+  });
   it('correctly saves aro citations per grant', async () => {
     const multiGrantCitations = [
       {
@@ -287,6 +327,7 @@ describe('activityReportObjectiveCitation', () => {
           grantId: grant.id,
           findingId: 1,
           reviewName: 'Review 1',
+          standardId: 1,
         }],
       },
       {
@@ -295,6 +336,7 @@ describe('activityReportObjectiveCitation', () => {
           grantId: 2,
           findingId: 1,
           reviewName: 'Review 2',
+          standardId: 2,
         }],
       },
       {
@@ -304,11 +346,13 @@ describe('activityReportObjectiveCitation', () => {
             grantId: 3,
             findingId: 1,
             reviewName: 'Review 3',
+            standardId: 3,
           },
           {
             grantId: grant.id,
             findingId: 1,
             reviewName: 'Review 4',
+            standardId: 4,
           }],
       },
     ];
@@ -380,7 +424,6 @@ describe('cacheGoalMetadata', () => {
       name: faker.lorem.sentence(20),
       status: GOAL_STATUS.DRAFT,
       timeframe: 'Short Term',
-      endDate: null,
       isRttapa: null,
       isActivelyEdited: false,
       source: GOAL_SOURCES[0],
@@ -393,7 +436,6 @@ describe('cacheGoalMetadata', () => {
       timeframe: 'Short Term',
       closeSuspendReason: null,
       closeSuspendContext: null,
-      endDate: null,
       isRttapa: null,
       isActivelyEdited: false,
       source: GOAL_SOURCES[0],
@@ -476,7 +518,6 @@ describe('cacheGoalMetadata', () => {
       name: goal.name,
       status: GOAL_STATUS.DRAFT,
       timeframe: 'Short Term',
-      endDate: null,
       isRttapa: null,
       isActivelyEdited: false,
       source: GOAL_SOURCES[0],

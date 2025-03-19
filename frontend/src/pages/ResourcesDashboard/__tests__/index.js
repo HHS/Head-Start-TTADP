@@ -353,9 +353,16 @@ describe('Resource Dashboard page', () => {
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
-    const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
+    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i });
+
     act(() => {
       userEvent.click(button);
+    });
+
+    const viewAsTable = await screen.findByRole('button', { name: /view as table/i });
+
+    act(() => {
+      userEvent.click(viewAsTable);
     });
 
     // Overview (initial).
