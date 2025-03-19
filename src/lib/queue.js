@@ -98,18 +98,20 @@ export async function increaseListeners(queue, num = 1) {
 }
 
 // Remove event handlers
-function removeQueueEventHandlers(
+export function removeQueueEventHandlers(
   queue,
   errorListener,
   shutdownListener,
   exceptionListener,
   rejectionListener,
 ) {
-  queue.removeListener('error', errorListener);
-  process.removeListener('SIGINT', shutdownListener);
-  process.removeListener('SIGTERM', shutdownListener);
-  process.removeListener('uncaughtException', exceptionListener);
-  process.removeListener('unhandledRejection', rejectionListener);
+  if (errorListener) queue.removeListener('error', errorListener);
+  if (shutdownListener) {
+    process.removeListener('SIGINT', shutdownListener);
+    process.removeListener('SIGTERM', shutdownListener);
+  }
+  if (exceptionListener) process.removeListener('uncaughtException', exceptionListener);
+  if (rejectionListener) process.removeListener('unhandledRejection', rejectionListener);
 }
 
 // Define the handlers so they can be added and removed
