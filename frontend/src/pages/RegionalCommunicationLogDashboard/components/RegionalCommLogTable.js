@@ -214,6 +214,7 @@ export default function RegionalCommLogTable({ filters }) {
         perPage={COMMUNICATION_LOG_PER_PAGE}
         error={error}
         handlePageChange={handlePageChange}
+        titleMargin={{ bottom: 3 }}
       >
         {(logs && logs.count > 0) ? (
           <HorizontalTableWidget
