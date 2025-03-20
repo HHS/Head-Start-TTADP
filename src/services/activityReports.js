@@ -37,12 +37,12 @@ import {
   Course,
 } from '../models';
 import {
-  removeUnusedGoalsObjectivesFromReport,
   saveGoalsForReport,
   removeRemovedRecipientsGoals,
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
+import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
 
 export async function batchQuery(query, limit) {
   let finished = false;
