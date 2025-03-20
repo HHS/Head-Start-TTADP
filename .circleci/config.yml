@@ -103,10 +103,10 @@ jobs:
     resource_class: large
     parameters:
       APP_VARS_FILE: 
-        default: deployment_config/<< pipeline.parameters.env >>_vars.yml
+        default: ./deployment_config/<< pipeline.parameters.env >>_vars.yml
         type: string
       CI_VARS_FILE: 
-        default: deployment_config/<< pipeline.parameters.env >>_vars_ci.yml
+        default: ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml
         type: string
     steps:
       - checkout
@@ -657,6 +657,9 @@ commands:
       - run:
           name: Login with service account
           command: |
+            pwd
+            ls -la
+            ls -la ./deployment_config
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
             source ci.vars
             cf login -a ${cg_api} \
@@ -668,7 +671,7 @@ commands:
           name: Push application
           command: |
             source ci.vars
-            circleci env subst < deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
+            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
             set -x
 
  
