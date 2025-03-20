@@ -35,7 +35,7 @@ parameters:
       type: enum
       enum: ["blue", "green", "red", "dev", "sandbox", "staging", "prod"]
   input:
-    description: "Additional data for the job.  Leave blank if unsure"
+    description: "Additional data for the job.  Leave blank if not sure"
     default: ""
     type: string
 
@@ -88,6 +88,8 @@ workflows:
   app_deploy:
     when: pipeline.parameters.action == "deploy"
     jobs:
+      - build_and_lint
+      - build_and_lint_similarity_api
       - deploy:
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
 
@@ -154,7 +156,6 @@ jobs:
           paths:
             - .
     
-
   build_and_lint_similarity_api:
     executor: docker-python-executor
     resource_class: large
@@ -592,7 +593,39 @@ commands:
       - run:
           name: Combine requirements.txt files to single file
           command: cat similarity_api/src/requirements.txt > << parameters.filename >>
-  
+ 
+  sparse_checkout:
+    description: "Checkout sparse directories from a specific branch."
+    parameters:
+      directories:
+        type: string
+        description: "Comma-separated list of directories to checkout sparsely"
+      branch:
+        type: string
+        description: "Branch to checkout"
+    steps:
+      - run:
+          name: Install Git
+          command: |
+            sudo apt-get update && sudo apt-get install -y git
+      - run:
+          name: Clone Repository
+          command: |
+            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+      - run:
+          name: Sparse Checkout
+          environment:
+            DIRECTORIES: "<< parameters.directories >>"
+          command: |
+            git config core.sparseCheckout true
+            echo $DIRECTORIES | tr ',' '\n' | while read dir; do
+              echo "$dir" | tee -a .git/info/sparse-checkout
+            done
+      - run:
+          name: Checkout Branch
+          command: |
+            git checkout << parameters.branch >>
+
   notify_new_relic:
     description: "Notify new relic of a deploy"
     steps:
