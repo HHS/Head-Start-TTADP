@@ -86,7 +86,7 @@ workflows:
             - cucumber_test
             - dynamic_security_scan
   app_deploy:
-    when: << pipeline.parameters.action >> == deploy
+    when: pipeline.parameters.action == "deploy"
     jobs:
       - deploy:
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
