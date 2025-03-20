@@ -520,7 +520,11 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          command: circleci env subst < deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
+          command: |
+            pwd
+            ls -la
+            ls -la ./deployment_config
+            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
       - run:
           name: Build backend assets
           command: yarn build
