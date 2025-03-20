@@ -61,7 +61,6 @@ import extractObjectiveAssociationsFromActivityReportObjectives from './extractO
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import {
   createObjectivesForGoal,
-  removeObjectives,
   removeUnusedGoalsObjectivesFromReport,
   removeUnusedGoalsCreatedViaAr,
 } from '../services/standardGoals';
