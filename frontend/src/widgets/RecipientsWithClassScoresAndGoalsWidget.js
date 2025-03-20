@@ -165,9 +165,44 @@ function RecipientsWithClassScoresAndGoalsWidget({
   const selectedRecipientCheckBoxesCount = Object.keys(selectedRecipientCheckBoxes).filter(
     (key) => selectedRecipientCheckBoxes[key],
   ).length;
+
+  const subtitle = (
+    <>
+      <div className="margin-bottom-2">
+        <DrawerTriggerButton drawerTriggerRef={titleDrawerRef}>
+          Learn about the OHS standard CLASS&reg; goal
+        </DrawerTriggerButton>
+        <Drawer
+          triggerRef={titleDrawerRef}
+          stickyHeader
+          stickyFooter
+          title="OHS standard CLASS&reg; goal"
+        >
+          <ContentFromFeedByTag tagName="ttahub-ohs-standard-class-goal" />
+        </Drawer>
+      </div>
+      <div className="smart-hub--table-widget-subtitle margin-x-0 margin-bottom-2">
+        <DrawerTriggerButton drawerTriggerRef={subtitleRef} removeLeftMargin>
+          How are thresholds met?
+        </DrawerTriggerButton>
+        <Drawer
+          triggerRef={subtitleRef}
+          stickyHeader
+          stickyFooter
+          title="CLASS&reg; review thresholds"
+        >
+          <ContentFromFeedByTag tagName="ttahub-class-thresholds" />
+        </Drawer>
+      </div>
+      <p className="margin-top-0 margin-bottom-3 usa-prose text-bold">
+        {getSubtitleWithPct()}
+      </p>
+    </>
+  );
+
   return (
     <WidgetContainer
-      title="Recipients with CLASS&reg; scores and"
+      title="Recipients with CLASS&reg; scores and goals"
       loading={loading || parentLoading}
       loadingLabel="Recipients with CLASS&reg; scores and goals loading"
       showPagingBottom
@@ -178,49 +213,17 @@ function RecipientsWithClassScoresAndGoalsWidget({
       handlePageChange={handlePageChange}
       enableCheckboxes
       exportRows={exportRows}
-        // content slots
-      TitleDrawer={(
-        <>
-          <DrawerTriggerButton customClass="font-sans-lg margin-left-1 text-bold" drawerTriggerRef={titleDrawerRef}>
-            OHS standard CLASS&reg; goals
-          </DrawerTriggerButton>
-          <Drawer
-            triggerRef={titleDrawerRef}
-            stickyHeader
-            stickyFooter
-            title="OHS standard CLASS&reg; goal"
-          >
-            <ContentFromFeedByTag tagName="ttahub-ohs-standard-class-goal" />
-          </Drawer>
-        </>
-        )}
-      SubtitleDrawer={(
-        <>
-          <div className="smart-hub--table-widget-subtitle margin-x-0 margin-bottom-2">
-            <DrawerTriggerButton drawerTriggerRef={subtitleRef} removeLeftMargin>
-              How are thresholds met?
-            </DrawerTriggerButton>
-            <Drawer
-              triggerRef={subtitleRef}
-              stickyHeader
-              stickyFooter
-              title="CLASS&reg; review thresholds"
-            >
-              <ContentFromFeedByTag tagName="ttahub-class-thresholds" />
-            </Drawer>
-          </div>
-          <p className="margin-top-0 usa-prose text-bold">
-            {getSubtitleWithPct()}
-          </p>
-        </>
-        )}
-      className="padding-3"
+      subtitle={subtitle}
       displayPaginationBoxOutline
       showHeaderBorder={false}
-      widgetContainerTitleClass="padding-top-2"
-      titleDrawerCss="smart-hub--qa-details--title-drawer"
+      titleMargin={{
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 1,
+      }}
     >
-      <div className="bg-white padding-">
+      <div className="bg-white padding-x-3">
         <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}

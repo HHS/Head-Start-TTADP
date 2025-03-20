@@ -203,6 +203,7 @@ function CoursesAssociatedWithActivityReports({
       handlePageChange={handlePageChange}
       menuItems={menuItems}
       footNote="* Collection of iPD courses in the TTA Hub began on March 7, 2024."
+      titleMargin={{ bottom: 1 }}
     >
       <HorizontalTableWidget
         headers={data.headers || []}
