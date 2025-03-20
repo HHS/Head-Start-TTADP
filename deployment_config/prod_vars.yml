@@ -17,3 +17,34 @@ SUPPRESS_ERROR_LOGGING: "false"
 SIMILARITY_ENDPOINT: https://tta-similarity-api-prod.app.cloud.gov/compute
 SMARTSHEET_ENDPOINT: ""
 FORCE_CRON: "false"
+
+
+auth_client_id: PROD_AUTH_CLIENT_ID
+auth_client_secret: PROD_AUTH_CLIENT_SECRET
+cloudgov_username: CLOUDGOV_PROD_USERNAME
+cloudgov_password: CLOUDGOV_PROD_PASSWORD
+cloudgov_space: CLOUDGOV_PROD_SPACE
+
+new_relic_license: NEW_RELIC_LICENSE_KEY
+session_secret: PROD_SESSION_SECRET
+jwt_secret: PROD_JWT_SECRET
+hses_data_file_url: PROD_HSES_DATA_FILE_URL
+hses_data_username: PROD_HSES_DATA_USERNAME
+hses_data_password: PROD_HSES_DATA_PASSWORD
+smtp_host: SMTP_HOST
+smtp_port: SMTP_PORT
+smtp_host_test: SMTP_HOST_TEST
+smtp_port_test: SMTP_PORT_TEST
+smtp_secure: SMTP_SECURE
+smtp_ignore_tls: SMTP_IGNORE_TLS
+from_email_address: FROM_EMAIL_ADDRESS
+smtp_user: SMTP_USER
+smtp_password: SMTP_PASSWORD
+suppress_error_logging: SUPPRESS_ERROR_LOGGING
+itams_md_host: ITAMS_MD_HOST
+itams_md_port: ITAMS_MD_PORT
+itams_md_username: ITAMS_MD_USERNAME
+itams_md_password: ITAMS_MD_PASSWORD
+smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
+
+new_relic_app_id: "877570491"
