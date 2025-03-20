@@ -657,6 +657,7 @@ commands:
       - run:
           name: Login with service account
           command: |
+            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
             source ci.vars
             cf login -a ${cg_api} \
               -u ${cg_username} \
