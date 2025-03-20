@@ -31,7 +31,7 @@ parameters:
     type: enum
   env: 
       description: "Target environment"
-      default: "prod"
+      default: "dev"
       type: enum
       enum: ["blue", "green", "red", "dev", "sandbox", "staging", "prod"]
   input:
