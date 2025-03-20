@@ -75,7 +75,7 @@ workflows:
             - build_and_lint
             - build_and_lint_similarity_api
       - deploy:
-          serial-group: << pipeline.project.slug >>/<< pipeline.parameters.env >>/deploy-lock
+          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           requires:
             - test_backend
             - test_frontend
@@ -89,7 +89,7 @@ workflows:
     when: << pipeline.parameters.action >> == deploy
     jobs:
       - deploy:
-          serial-group: << pipeline.project.slug >>/<< pipeline.parameters.env >>/deploy-lock
+          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
 
 
 # ----------------- jobs ----------------- 
@@ -98,8 +98,12 @@ jobs:
     executor: docker-executor
     resource_class: large
     parameters:
-      APP_VARS_FILE: deployment_config/<<pipeline.parameters.env>>_vars.yml
-      CI_VARS_FILE: deployment_config/<<pipeline.parameters.env>>_vars_ci.yml
+      APP_VARS_FILE: 
+        default: deployment_config/<< pipeline.parameters.env >>_vars.yml
+        type: string
+      CI_VARS_FILE: 
+        default: deployment_config/<< pipeline.parameters.env >>_vars_ci.yml
+        type: string
     steps:
       - checkout
       - create_combined_yarnlock
@@ -596,7 +600,7 @@ commands:
           name: Notify New Relic
           command: |
             source ci.vars
-            curl -X POST "https://api.newrelic.com/v2/applications/<< /deployments.json" \
+            curl -X POST "https://api.newrelic.com/v2/applications/${new_relic_app_id}/deployments.json" \
             -H "X-Api-Key: $NEW_RELIC_REST_API_KEY" -i \
             -H "Content-Type: application/json" \
             -d \
@@ -626,13 +630,7 @@ commands:
             source ci.vars
             circleci env subst < deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
             set -x
-            cf push \
-              --vars-file app.vars
-              --var NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY} \
-              --var BUILD_BRANCH=<< pipeline.git.branch >> \
-              --var BUILD_COMMIT=<< pipeline.git.revision >> \
-              --var BUILD_NUMBER=<< pipeline.number >> \
-              --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+
  
 
   notify_slack:
