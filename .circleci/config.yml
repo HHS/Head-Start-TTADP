@@ -523,9 +523,6 @@ jobs:
           at: .
       - run:
           command: |
-            pwd
-            ls -la
-            ls -la ./deployment_config
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
       - run:
           name: Build backend assets
@@ -657,9 +654,6 @@ commands:
       - run:
           name: Login with service account
           command: |
-            pwd
-            ls -la
-            ls -la ./deployment_config
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
             source ci.vars
             cf login -a ${cg_api} \
@@ -673,8 +667,6 @@ commands:
             source ci.vars
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
             set -x
-
- 
 
   notify_slack:
     description: "Notify Slack with message"
