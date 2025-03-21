@@ -551,10 +551,14 @@ jobs:
           command: |
             cf run-task tta-smarthub-<< pipeline.parameters.env >> --command "yarn db:migrate:prod" --name migrate
       - notify_new_relic
-      - notify_slack_deploy:
-          slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-          environment_name: << pipeline.parameters.env >>
+      - when:
+          condition:
+            equal: [ << pipeline.parameters.env >>, prod ]
+          steps:
+            - notify_slack_deploy:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+                environment_name: << pipeline.parameters.env >>
   
 # ----------------- Commands -----------------
 
