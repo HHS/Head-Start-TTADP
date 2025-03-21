@@ -110,6 +110,667 @@ jobs:
         type: string
     steps:
       - checkout
+      - run:
+          name: Generate Message
+          command: |
+            # Determine the environment URL
+            case "<< parameters.environment_name >>" in
+                sandbox)
+                    ENV_URL="https://tta-smarthub-sandbox.app.cloud.gov/"
+                    ;;
+                dev)
+                    ENV_URL="https://tta-smarthub-dev.app.cloud.gov/"
+                    ;;
+                staging)
+                    ENV_URL="https://tta-smarthub-staging.app.cloud.gov/"
+                    ;;
+                production)
+                    ENV_URL="https://ttahub.ohs.acf.hhs.gov"
+                    ;;
+                *)
+                    ENV_URL="#"
+                    ;;
+            esac
+
+            env_name="<< parameters.environment_name >>"
+
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+                PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g" | sed -e 's/"/\\"/g')
+
+                if [ ! -z "${PR_TITLE}" ]; then
+                    JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
+
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
+                    if [ -n "${JIRA_URLS}" ]; then
+                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                    fi
+                else
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
+                fi
+            else
+                COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+                if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+                  PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
+                  PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+                  MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
+                  if [ ! -z "${JIRA_URLS}" ]; then
+                      MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                  fi
+                else
+                    MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
+                fi
+            fi
+            echo -e "${MESSAGE_TEXT}" > /tmp/message_file
+
+      - notify_slack:
+          slack_bot_token: << parameters.slack_bot_token >>
+          slack_channel: << parameters.slack_channel >>
+          message_text_file: "/tmp/message_file"
+
+  cf_deploy:
+    description: "Login to cloud foundry space with service account credentials
+      and push application using deployment configuration file."
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
+      build_branch:
+        description: "The branch of the build being deployed"
+        type: string
+        default: << pipeline.git.branch >>
+      build_commit:
+        description: "The commit of the build being deployed"
+        type: string
+        default: << pipeline.git.revision >>
+      auth_client_id:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client id, a required application variable"
+        type: env_var_name
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client secret, a required application variable"
+        type: env_var_name
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+      deploy_config_file:
+        description: "Path to deployment configuration file"
+        type: string
+      session_secret:
+        description: "Name of CircleCi project environment variable that
+          holds session secret, a required application variable"
+        type: env_var_name
+      jwt_secret:
+        description: "CircleCi project environment variable used by the backend
+          token service for the email verification flow."
+        type: env_var_name
+      new_relic_license:
+        description: "Name of CircleCI project environment variable that
+          holds the New Relic License key, a required application variable"
+        type: env_var_name
+      hses_data_file_url:
+        description: "Url to download HSES grants and recipient data from"
+        type: env_var_name
+      hses_data_username:
+        description: "Username used to access the HSES grants and recipient data"
+        type: env_var_name
+      hses_data_password:
+        description: "Password used to access the HSES grants and recipient data"
+        type: env_var_name
+      smtp_host:
+        description: "SMTP server"
+        type: env_var_name
+      smtp_port:
+        description: "SMTP port"
+        type: env_var_name
+      smtp_host_test:
+        description: "SMTP server test"
+        type: env_var_name
+      smtp_port_test:
+        description: "SMTP port test"
+        type: env_var_name
+      smtp_secure:
+        description: "SMTP secure transport"
+        type: env_var_name
+      smtp_ignore_tls:
+        description: "SMTP specifies whether to negotiate TLS"
+        type: env_var_name
+      from_email_address:
+        description: "From email address"
+        type: env_var_name
+      smtp_user:
+        description: "SMTP user"
+        type: env_var_name
+      smtp_password:
+        description: "SMTP password"
+        type: env_var_name
+      suppress_error_logging:
+        description: "Stop logging of non-sequelize errors to the db"
+        type: env_var_name
+      itams_md_host:
+        description: "host url for itams monitoring data"
+        type: env_var_name
+      itams_md_port:
+        description: "port for itams monitoring data"
+        type: env_var_name
+      itams_md_username:
+        description: "username for itams monitoring data"
+        type: env_var_name
+      itams_md_password:
+        description: "password for itams monitoring data"
+        type: env_var_name
+      smartsheet_access_token:
+        description: "non-production smartsheet access token"
+        type: env_var_name
+    steps:
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Push application with deployment vars
+          command: |
+            set -x
+            cf push \
+              --vars-file << parameters.deploy_config_file >> \
+              --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
+              --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
+              --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
+              --var SESSION_SECRET=${<< parameters.session_secret >>} \
+              --var JWT_SECRET=${<< parameters.jwt_secret >>} \
+              --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
+              --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
+              --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
+              --var SMTP_HOST=${<< parameters.smtp_host >>} \
+              --var SMTP_PORT=${<< parameters.smtp_port >>} \
+              --var SMTP_HOST_TEST=${<< parameters.smtp_host_test >>} \
+              --var SMTP_PORT_TEST=${<< parameters.smtp_port_test >>} \
+              --var SMTP_USER=${<< parameters.smtp_user >>} \
+              --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
+              --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
+              --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
+              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
+              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
+              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
+              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
+              --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>} \
+              --var BUILD_BRANCH=<< parameters.build_branch >> \
+              --var BUILD_COMMIT=<< parameters.build_commit >> \
+              --var BUILD_NUMBER=<< pipeline.number >> \
+              --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< parameters.build_branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+          when: always
+      # - run:
+      #     name: Push maintenance application
+      #     command: |
+      #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
+  cf_migrate:
+    description: "Login to Cloud Foundry space, run migration"
+    parameters:
+      app_name:
+        description: "Name of Cloud Foundry cloud.gov application; must match
+          application name specified in manifest"
+        type: string
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+    steps:
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Migrate database
+          command: |
+            cf run-task << parameters.app_name >> \
+              --command "yarn db:migrate:prod" \
+              --name "migrate"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "<< parameters.app_name >>" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+  cf_automation_task:
+    description: "Login to Cloud Foundry space, run automation task, and send notification"
+    parameters:
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that holds authentication client secret"
+        type: env_var_name
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that holds deployer username for Cloud Foundry space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that holds deployer password for Cloud Foundry space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that holds name of Cloud Foundry space to target for application deployment"
+        type: env_var_name
+      task_name:
+        description: "Name of the automation task to run"
+        type: string
+      task_command:
+        description: "Command to run for the automation task"
+        type: string
+      task_args:
+        description: "Arguments for the automation task"
+        type: string
+      config:
+        description: "Config prefix for the automation task"
+        type: string
+      success_message:
+        description: "Success message for Slack notification"
+        type: string
+      timeout:
+        description: "Max duration allowed for task"
+        type: string
+        default: "300"
+      directory:
+        description: 'directory to root to push'
+        type: string
+        default: "./automation"
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            set -e
+            set -u
+            set -o pipefail
+            set -o noglob
+            set -o noclobber
+
+            # update
+            sudo apt-get update
+            # Install uuid-runtime to have access to uuidgen
+            # Install pv wget
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq
+
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
+
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
+
+            # cleanup
+            sudo rm -rf /var/lib/apt/lists/*
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Start Log Monitoring
+          command: |
+            #!/bin/bash
+
+            CONTROL_FILE="/tmp/stop_tail"
+            rm -f $CONTROL_FILE
+
+            # Function to start tailing logs
+            start_log_tailing() {
+                echo "Starting cf logs for tta-automation..."
+                cf logs tta-automation &
+                TAIL_PID=$!
+            }
+
+            # Start tailing logs for the first time
+            start_log_tailing
+
+            # Monitor the cf logs process
+            while [ ! -f $CONTROL_FILE ]; do
+                # Check if the cf logs process is still running
+                if ! kill -0 $TAIL_PID 2>/dev/null; then
+                    echo "cf logs command has stopped unexpectedly. Restarting..."
+                    start_log_tailing
+                fi
+                sleep 1
+            done
+
+            # Kill the cf logs command
+            kill -9 $TAIL_PID
+            echo "cf logs command for tta-automation has been terminated."
+          background: true
+      - run:
+          name: cf_lambda - script to trigger task
+          command: |
+            set -x
+            json_data=$(jq -n \
+              --arg directory "<< parameters.directory >>" \
+              --arg config "<< parameters.config >>" \
+              --arg task_name "<< parameters.task_name >>" \
+              --arg command "<< parameters.task_command >>" \
+              --arg timeout_active_tasks "<< parameters.timeout >>" \
+              --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
+              --argjson args '<< parameters.task_args >>' \
+              '{
+                directory: $directory,
+                config: $config,
+                task_name: $task_name,
+                command: $command,
+                timeout_active_tasks: $timeout_active_tasks,
+                timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
+                args: $args
+              }')
+
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
+
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+      - run:
+          name: Generate Message
+          command: |
+            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+              echo "<< parameters.success_message >> before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
+            else
+              echo "<< parameters.success_message >> successful!" > /tmp/message_file
+            fi
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text_file: "/tmp/message_file"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Logout of service account
+          command: |
+            # Signal the log monitoring to stop
+            CONTROL_FILE="/tmp/stop_tail"
+            touch $CONTROL_FILE
+
+            # Wait for the log monitoring process to terminate
+            sleep 5
+
+            # Logout from Cloud Foundry
+            cf logout
+  cf_backup:
+    description: "Backup database to S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "backup"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
+  cf_restore:
+    description: "Restore backup database from S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - run:
+          name: Validate Parameters
+          command: |
+            if [ "<< parameters.rds_service_name >>" = "ttahub-prod" ]; then
+              echo "Error: rds_service_name cannot be 'ttahub-prod'"
+              exit 1
+            fi
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "restore"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-restore"
+          success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+          timeout: "900"
+  cf_process:
+    description: "Process database from S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "process"
+          task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
+          task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
+          config: "process"
+          success_message: ':database: Restored data processed'
+          directory: "./"
+          timeout: "3000"
+  cf_retention:
+    description: "Delete Backup from S3 based on retention"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "retention"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
+parameters:
+  cg_org:
+    description: "Cloud Foundry cloud.gov organization name"
+    default: "hhs-acf-ohs-tta"
+    type: string
+  cg_api:
+    description: "URL of Cloud Controller in Cloud Foundry cloud.gov instance"
+    default: "https://api.fr.cloud.gov"
+    type: string
+  prod_git_url:
+    description: "URL of github repo that will deploy to prod"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  staging_git_url:
+    description: "URL of github repo that will deploy to staging"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  dev_git_url:
+    description: "URL of github repo that will deploy to dev"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  sandbox_git_url:
+    description: "URL of github repo that will deploy to sandbox"
+    default: "https://github.com/HHS/Head-Start-TTADP"
+    type: string
+  prod_git_branch:
+    description: "Name of github branch that will deploy to prod"
+    default: "production"
+    type: string
+  staging_git_branch:
+    description: "Name of github branch that will deploy to staging"
+    default: "main"
+    type: string
+  dev_git_branch: # change to feature branch to test deployment
+    description: "Name of github branch that will deploy to dev"
+    default: "mb/node-20-upgrade"
+    type: string
+  sandbox_git_branch: # change to feature branch to test deployment
+    default: "mb/TTAHUB-3820/headings-within-headings-worlds-within-worlds"
+    type: string
+  prod_new_relic_app_id:
+    default: "877570491"
+    type: string
+  staging_new_relic_app_id:
+    default: "868729138"
+    type: string
+  dev_new_relic_app_id:
+    default: "867221900"
+    type: string
+  sandbox_new_relic_app_id:
+    default: "867346799"
+    type: string
+  manual-trigger:
+    type: boolean
+    default: false
+  env_list:
+    description: "List of environments to manage (start/stop)"
+    type: string
+    default: "DEV,SANDBOX"
+  space_list:
+    description: "List of Cloud Foundry spaces corresponding to each environment"
+    type: string
+    default: ""
+  env_state:
+    description: "State of the environment to change (start, stop, restart, restage)"
+    type: string
+    default: "none"
+  manual-manage-env:
+    type: boolean
+    default: false
+  manual-restore:
+    type: boolean
+    default: false
+  manual-process:
+    type: boolean
+    default: false
+  manual-backup:
+    type: boolean
+    default: false
+  manual-full-process:
+    type: boolean
+    default: false
+  manual-restore-staging:
+    type: boolean
+    default: false
+  manual-restore-sandbox:
+    type: boolean
+    default: false
+  manual-restore-dev:
+    type: boolean
+    default: false
+  fail-on-modified-lines:
+    type: boolean
+    default: false
+  manual-retention-production:
+    type: boolean
+    default: false
+  manual-retention-processed:
+    type: boolean
+    default: false
+jobs:
+  build_and_lint:
+    executor: docker-executor
+    steps:
+      - checkout
       - create_combined_yarnlock
       - restore_cache:
           keys:
