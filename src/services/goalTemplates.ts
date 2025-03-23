@@ -313,6 +313,7 @@ export async function setFieldPromptForCuratedTemplate(
   promptId: number,
   response: string[] | null,
 ) {
+  console.log('\n\n\n---- Prompt Id passed: ', promptId);
   // Retrieve the current responses and prompt requirements for the given goals and prompt ID.
   const [currentResponses, promptRequirements] = await Promise.all([
     GoalModel.findAll({
