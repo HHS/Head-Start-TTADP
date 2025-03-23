@@ -328,10 +328,12 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
 export async function saveStandardGoalsForReport(goals, userId, report) {
   // Loop goal templates.
   let currentObjectives = [];
-  const updatedGoals = await Promise.all(goals.map(async (goal) =>
+  const updatedGoals = await Promise.all(goals.map(async (goal) => {
     // Loops recipients update / create goals.
     // eslint-disable-next-line implicit-arrow-linebreak
-    Promise.all(goal.grantIds.map(async (grantId) => {
+    const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
+    const isMonitoring = goalTemplate.standard === 'Monitoring';
+    return Promise.all(goal.grantIds.map(async (grantId) => {
       // Check if there is an existing goal for this template and grant.
       let newOrUpdatedGoal = await Goal.findOne({
         where: {
@@ -353,14 +355,17 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       });
 
       // If this is a monitoring goal check for existing goal.
-      if (goal.goalTemplate.standard === 'Monitoring' && !newOrUpdatedGoal) {
+      if (isMonitoring && !newOrUpdatedGoal) {
         // No monitoring goal for this grant skip.
         return null;
       }
 
       if (newOrUpdatedGoal) {
+        // TODO: Do we want to use this when saving a goal a second time?
+        const onApprovedAr = newOrUpdatedGoal.onApprovedAR;
+
         // If the goal is 'Not started' move to 'In progress'.
-        if (newOrUpdatedGoal.status === GOAL_STATUS.NOT_STARTED) {
+        if (newOrUpdatedGoal.status === GOAL_STATUS.NOT_STARTED && onApprovedAr) {
           await changeGoalStatus({
             goalId: newOrUpdatedGoal.id,
             userId,
@@ -388,14 +393,16 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
         newOrUpdatedGoal = await Goal.create({
           goalTemplateId: goal.goalTemplateId,
           createdVia: 'activityReport',
-          name: goal.name ? goal.name.trim() : '',
+          name: goal.name,
           grantId,
-          GOAL_STATUS: GOAL_STATUS.NOT_STARTED,
+          status: GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
+        console.log("\n\n\n----- created goal: ", newOrUpdatedGoal);
       }
 
       // Handle goal prompts for curated goals like FEI.
-      if (goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED && goal.prompts) {
+      console.log('\n\n\n--- goal prompts: ', goal.prompts);
+      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED && goal.prompts) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], goal.prompts);
       }
 
@@ -415,7 +422,8 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
       return newOrUpdatedGoal;
-    }))));
+    }));
+  }));
 
   const uniqueObjectives = uniqBy(currentObjectives, 'id');
   await Promise.all(uniqueObjectives.map(async (savedObjective) => {
@@ -457,6 +465,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
     );
   }));
 
+  console.log('\n\n\n------ Updated Goals: ', updatedGoals);
   // Get all goal ids.
   const currentGoalIds = updatedGoals.flat().map((g) => g.id);
 
