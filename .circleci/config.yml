@@ -26,7 +26,7 @@ executors:
 parameters:
   action:
     description: "Desired job to run"
-    enum: ["build_test", "deploy"]
+    enum: ["build_test", "deploy", "cmd"]
     default: "build_test"
     type: enum
   env: 
@@ -95,6 +95,10 @@ workflows:
           requires:
             - build_and_lint
             - build_and_lint_similarity_api
+  run_command:
+    when: pipeline.parameters.action == "cmd"
+    jobs:
+      - run_command
 
 # ----------------- jobs ----------------- 
 jobs:
@@ -656,6 +660,13 @@ commands:
       and push application using deployment configuration file."  
     steps:
       - run:
+          name: Check for prod
+          command: |
+            if [ "<< pipeline.parameters.env >>" == "prod" ] && [ "$CIRCLE_BRANCH" != "prod"]; then
+              echo "Can only deploy prod branch to prod environment"
+              exit 1
+            fi
+      - run:
           name: Login with service account
           command: |
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
@@ -674,7 +685,6 @@ commands:
             echo "Deploying app@branch:[ $CIRCLE_BRANCH] to [<< pipeline.parameters.env >>]"
             cf push \
               --vars-file app.vars \
-              --vars-file ci.vars \
               --var BUILD_BRANCH=$CIRCLE_BRANCH \
               --var BUILD_COMMIT=$CIRCLE_SHA1 \
               --var BUILD_NUMBER=<< pipeline.number >> \
@@ -793,3 +803,191 @@ commands:
           slack_bot_token: << parameters.slack_bot_token >>
           slack_channel: << parameters.slack_channel >>
           message_text_file: "/tmp/message_file"
+
+  cf_automation_task:
+    description: "Login to Cloud Foundry space, run automation task, and send notification"
+    parameters:
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that holds authentication client secret"
+        type: env_var_name
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that holds deployer username for Cloud Foundry space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that holds deployer password for Cloud Foundry space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that holds name of Cloud Foundry space to target for application deployment"
+        type: env_var_name
+      task_name:
+        description: "Name of the automation task to run"
+        type: string
+      task_command:
+        description: "Command to run for the automation task"
+        type: string
+      task_args:
+        description: "Arguments for the automation task"
+        type: string
+      config:
+        description: "Config prefix for the automation task"
+        type: string
+      success_message:
+        description: "Success message for Slack notification"
+        type: string
+      timeout:
+        description: "Max duration allowed for task"
+        type: string
+        default: "300"
+      directory:
+        description: 'directory to root to push'
+        type: string
+        default: "./automation"
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            set -e
+            set -u
+            set -o pipefail
+            set -o noglob
+            set -o noclobber
+
+            # update
+            sudo apt-get update
+            # Install uuid-runtime to have access to uuidgen
+            # Install pv wget
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq
+
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
+
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
+
+            # cleanup
+            sudo rm -rf /var/lib/apt/lists/*
+      - run:
+          name: Login with service account
+          command: |
+            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
+            source ci.vars
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
+      - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Start Log Monitoring
+          command: |
+            #!/bin/bash
+
+            CONTROL_FILE="/tmp/stop_tail"
+            rm -f $CONTROL_FILE
+
+            # Function to start tailing logs
+            start_log_tailing() {
+                echo "Starting cf logs for tta-automation..."
+                cf logs tta-automation &
+                TAIL_PID=$!
+            }
+
+            # Start tailing logs for the first time
+            start_log_tailing
+
+            # Monitor the cf logs process
+            while [ ! -f $CONTROL_FILE ]; do
+                # Check if the cf logs process is still running
+                if ! kill -0 $TAIL_PID 2>/dev/null; then
+                    echo "cf logs command has stopped unexpectedly. Restarting..."
+                    start_log_tailing
+                fi
+                sleep 1
+            done
+
+            # Kill the cf logs command
+            kill -9 $TAIL_PID
+            echo "cf logs command for tta-automation has been terminated."
+          background: true
+      - run:
+          name: cf_lambda - script to trigger task
+          command: |
+            set -x
+            json_data=$(jq -n \
+              --arg directory "<< parameters.directory >>" \
+              --arg config "<< parameters.config >>" \
+              --arg task_name "<< parameters.task_name >>" \
+              --arg command "<< parameters.task_command >>" \
+              --arg timeout_active_tasks "<< parameters.timeout >>" \
+              --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
+              --argjson args '<< parameters.task_args >>' \
+              '{
+                directory: $directory,
+                config: $config,
+                task_name: $task_name,
+                command: $command,
+                timeout_active_tasks: $timeout_active_tasks,
+                timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
+                args: $args
+              }')
+
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
+
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+      - run:
+          name: Generate Message
+          command: |
+            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+              echo "<< parameters.success_message >> before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
+            else
+              echo "<< parameters.success_message >> successful!" > /tmp/message_file
+            fi
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text_file: "/tmp/message_file"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Logout of service account
+          command: |
+            # Signal the log monitoring to stop
+            CONTROL_FILE="/tmp/stop_tail"
+            touch $CONTROL_FILE
+
+            # Wait for the log monitoring process to terminate
+            sleep 5
+
+            # Logout from Cloud Foundry
+            cf logout
