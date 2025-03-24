@@ -45,7 +45,7 @@ workflows:
     when:
       or:
         - equal: [ build_test, << pipeline.parameters.action >> ]
-        - equal: [ deploy, << pipeline.parameters.action  >> ]  
+        - equal: [ deploy, << pipeline.parameters.action  >> ]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -87,7 +87,8 @@ workflows:
       #      - dynamic_security_scan
   
   run_deploy:
-    when: pipeline.parameters.action == "deploy"
+    when: 
+        equal: [ << pipeline.parameters.action >>, deploy ]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -98,7 +99,8 @@ workflows:
             - build_and_lint_similarity_api
 
   run_input_cmd:
-    when: pipeline.parameters.action == "cmd"
+    when: 
+        equal: [ << pipeline.parameters.action >>, cmd ]
     jobs:
       - run_cmd
 # ----------------- jobs ----------------- 
@@ -836,11 +838,11 @@ commands:
               -s ${cg_space}
 
       - run:
-          name: run task
+          name: "Run Task: << parameters.the_command >>"
           command: |
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
-            set -x
             cf logs tta-smarthub-<< pipeline.parameters.env >> | grep ${TASK_NAME} & 
+            set -x
             cf run-task \
               tta-smarthub-<< pipeline.parameters.env >> \
               --command "<< parameters.the_command >>" \
