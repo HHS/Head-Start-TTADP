@@ -675,8 +675,8 @@ commands:
             #cf push \
             #  --vars-file app.vars \
             #  --vars-file ci.vars \
-            #  --var BUILD_BRANCH=<< $CIRCLE_BRANCH >> \
-            #  --var BUILD_COMMIT=<< $CIRCLE_SHA1 >> \
+            #  --var BUILD_BRANCH=$CIRCLE_BRANCH \
+            #  --var BUILD_COMMIT=$CIRCLE_SHA1 \
             #  --var BUILD_NUMBER=<< pipeline.number >> \
             #  --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
 
