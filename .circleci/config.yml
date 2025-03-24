@@ -26,16 +26,16 @@ executors:
 parameters:
   action:
     description: "Desired job to run"
-    enum: ["build_test", "deploy", "cmd"]
-    default: "build_test"
+    enum: ["build_test_deploy", "cmd"]
+    default: "build_test_deploy"
     type: enum
   env: 
-      description: "Target environment"
+      description: "(cmd) Target environment"
       default: "dev"
       type: enum
       enum: ["blue", "green", "red", "dev", "sandbox", "staging", "prod"]
-  input:
-    description: "Additional data for the job.  Leave blank if not sure"
+  cmd_input:
+    description: "(cmd) The command to run"
     default: ""
     type: string
 
@@ -43,68 +43,75 @@ parameters:
 workflows:
   build_test_deploy:
     when:
-      or:
-        - equal: [ build_test, << pipeline.parameters.action >> ]
-        - equal: [ deploy, << pipeline.parameters.action  >> ]
+        equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
-      - test_backend:
-          requires:
-            - build_and_lint
-      - test_frontend:
-          requires:
-            - build_and_lint
-      - test_e2e:
-          requires:
-            - build_and_lint
-      - test_api:
-          requires:
-            - build_and_lint
-      - test_similarity_api:
-          requires:
-            - build_and_lint_similarity_api
       - test_utils:
           requires:
             - build_and_lint
-      - cucumber_test:
+            - build_and_lint_similarity_api
+      - test_backend:
           requires:
-            - build_and_lint
+            - test_utils
+      - test_frontend:
+          requires:
+            - test_utils
+      - test_e2e:
+          requires:
+            - test_utils
+      - test_cucumber:
+          requires:
+            - test_utils
+      - test_api:
+          requires:
+            - test_utils
+      - test_tta_app:
+          requires:
+            - test_backend
+            - test_frontend
+            - test_e2e
+            - test_api
+            - test_cucumber
+      - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
       - dynamic_security_scan:
           requires:
-            - build_and_lint
-            - build_and_lint_similarity_api
-      #- run_deploy:
-      #    serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
-      #    requires:
-      #      - test_backend
-      #      - test_frontend
-      #      - test_e2e
-      #      - test_api
-      #      - test_similarity_api
-      #      - test_utils
-      #      - cucumber_test
-      #      - dynamic_security_scan
-  
-  run_deploy:
-    when: 
-        equal: [ << pipeline.parameters.action >>, deploy ]
-    jobs:
-      - build_and_lint
-      - build_and_lint_similarity_api
+            - test_utils
+
+      # repeat again with different filters for prod/staging and pass the env
       - deploy:
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           requires:
-            - build_and_lint
-            - build_and_lint_similarity_api
+            - test_tta_app
+            - test_similarity_api 
+            - dynamic_security_scan
+          filters:
+            branches:
+              only:
+                - dev
+                - dev-green
+                - sandbox
+
 
   run_input_cmd:
     when: 
         equal: [ << pipeline.parameters.action >>, cmd ]
     jobs:
       - run_cmd
+
 # ----------------- jobs ----------------- 
 jobs:
+
+  test_tta_app:
+    steps: []
+    executor: docker-executor
+
+  test_similarity:
+    steps: []
+    executor: docker-executor
+
   build_and_lint:
     executor: docker-executor
     resource_class: large
@@ -463,7 +470,7 @@ jobs:
       - store_artifacts:
           path: tests/utilsTests
     
-  cucumber_test:
+  test_cucumber:
     executor: docker-postgres-executor
     resource_class: large
     steps:
@@ -536,10 +543,13 @@ jobs:
               curl -X POST "https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel?circle-token=$CIRCLE_API_TOKEN"
             fi
           done
-  
+
   deploy:
     executor: docker-executor
     resource_class: large
+    parameters:
+      env: 
+        type: string
     steps:
       - attach_workspace:
           at: .
@@ -588,7 +598,7 @@ jobs:
     resource_class: large
     steps:
       - cf_cmd:
-          the_command: << pipeline.parameters.input >>
+          the_command: << pipeline.parameters.cmd_input >>
 
 
 # ----------------- Commands -----------------
@@ -659,10 +669,6 @@ commands:
             echo $DIRECTORIES | tr ',' '\n' | while read dir; do
               echo "$dir" | tee -a .git/info/sparse-checkout
             done
-      - run:
-          name: Checkout Branch
-          command: |
-            git checkout << parameters.branch >>
 
   notify_new_relic:
     description: "Notify new relic of a deploy"
