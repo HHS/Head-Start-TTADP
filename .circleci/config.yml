@@ -521,7 +521,22 @@ jobs:
           command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - store_artifacts:
           path: reports
-    
+  
+  auto_cancel:
+    executor: docker-executor
+    steps:
+    - run: 
+        background: true
+        command: |
+          while true; do
+            sleep 5
+            LATEST_COMMIT=$(git ls-remote $CIRCLE_REPOSITORY_URL | grep $CIRCLE_BRANCH | cut -f 1)
+            if [ "$LATEST_COMMIT" != "$CIRCLE_SHA1" ]; then
+              echo "more recent commit to branch, exiting"
+              curl -X POST "https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel?circle-token=$CIRCLE_API_TOKEN"
+            fi
+          done
+  
   deploy:
     executor: docker-executor
     resource_class: large
@@ -703,6 +718,8 @@ commands:
               --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
               --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+
+  
   notify_slack:
     description: "Notify Slack with message"
     parameters:
