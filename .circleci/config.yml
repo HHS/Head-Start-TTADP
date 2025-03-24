@@ -98,7 +98,7 @@ workflows:
   run_command:
     when: pipeline.parameters.action == "cmd"
     jobs:
-      - run_command
+      - cf_task
 
 # ----------------- jobs ----------------- 
 jobs:
@@ -563,7 +563,14 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
                 environment_name: << pipeline.parameters.env >>
-  
+    run_task:
+      executor: docker-executor
+      resource_class: large
+      steps:
+        cf_task:
+          the_command: << pipeline.parameters.input >>
+
+
 # ----------------- Commands -----------------
 
 commands:
@@ -862,6 +869,10 @@ commands:
               -s ${cg_space}
       
       - run:
+          name: watch logs
+          command: cf logs tta-smarthub-<< pipeline.parameters.env >> 
+          background: true
+      - run:
           name: cf run 
           command: |
             set -x
@@ -872,6 +883,7 @@ commands:
               --name "automation-task"
               -m 2GB
               -k 2GB
+              --wait-for-completion
               
       - run:
           name: Logout of service account
