@@ -840,7 +840,7 @@ commands:
           command: |
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             set -x
-            cf logs tta-smarthub-<< pipeline.parameters.env >> | grep -oP '${TASK_NAME}' & 
+            cf logs tta-smarthub-<< pipeline.parameters.env >> | grep ${TASK_NAME} & 
             cf run-task \
               tta-smarthub-<< pipeline.parameters.env >> \
               --command "<< parameters.the_command >>" \
