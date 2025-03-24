@@ -819,43 +819,8 @@ commands:
         description: "Command to run"
         type: string
     steps:
-      - run:
-          name: Install Dependencies
-          command: |
-            set -e
-            set -u
-            set -o pipefail
-            set -o noglob
-            set -o noclobber
-
-            # update
-            sudo apt-get update
-            # Install uuid-runtime to have access to uuidgen
-            # Install pv wget
-            sudo apt-get install -y pv uuid-runtime wget coreutils jq
-
-            # Install Cloud Foundry CLI
-            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-            sudo apt-get update
-            sudo apt-get install -y cf8-cli
-            # Install plugin needed for connect-to-service
-            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
-
-            # The line you want to ensure exists in the /etc/hosts file
-            line="127.0.0.1        localhost"
-
-            # Check if the line already exists
-            if ! grep -qF "$line" /etc/hosts; then
-                # If the line does not exist, append it
-                echo "$line" | sudo tee -a /etc/hosts > /dev/null
-                echo "Line added to /etc/hosts"
-            else
-                echo "Line already exists in /etc/hosts"
-            fi
-
-            # cleanup
-            sudo rm -rf /var/lib/apt/lists/*
+      - checkout
+      - install_cf_tools
       - run:
           name: Login with service account
           command: |
