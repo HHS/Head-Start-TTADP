@@ -106,10 +106,7 @@ jobs:
 
   test_tta_app:
     steps: []
-    executor: docker-executor
-
-  test_similarity:
-    steps: []
+    type: no-op
     executor: docker-executor
 
   build_and_lint:
