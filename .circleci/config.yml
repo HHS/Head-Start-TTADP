@@ -74,7 +74,7 @@ workflows:
           requires:
             - build_and_lint
             - build_and_lint_similarity_api
-      #- deploy:
+      #- run_deploy:
       #    serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
       #    requires:
       #      - test_backend
@@ -85,7 +85,7 @@ workflows:
       #      - test_utils
       #      - cucumber_test
       #      - dynamic_security_scan
-  app_deploy:
+  run_deploy:
     when: pipeline.parameters.action == "deploy"
     jobs:
       - build_and_lint
@@ -525,6 +525,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Setup env vars
           command: |
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
       - run:
@@ -552,6 +553,7 @@ jobs:
       - run:
           name: Run database migrations
           command: |
+            set -x
             cf run-task tta-smarthub-<< pipeline.parameters.env >> --command "yarn db:migrate:prod" --name migrate
       - notify_new_relic
       - when:
@@ -695,7 +697,7 @@ commands:
               --var BUILD_COMMIT=$CIRCLE_SHA1 \
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
-              --var SMTP_IGNORE_TLS=${SMTP_IGNORE_TLS} \
+              --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
   notify_slack:
     description: "Notify Slack with message"
@@ -841,11 +843,11 @@ commands:
             set -x
             CF_COLOR=true
             cf run-task \
-              tta-smarthub-<< pipeline.parameters.env >>
-              --command "<< parameters.the_command >>"
-              --name "automation-task"
-              -m 2GB
-              -k 2GB
+              tta-smarthub-<< pipeline.parameters.env >> \
+              --command "<< parameters.the_command >>" \
+              --name "automation-task" \
+              -m 2GB \
+              -k 2GB \
               --wait-for-completion
               
       - run:
