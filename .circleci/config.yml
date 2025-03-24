@@ -85,6 +85,7 @@ workflows:
       #      - test_utils
       #      - cucumber_test
       #      - dynamic_security_scan
+  
   run_deploy:
     when: pipeline.parameters.action == "deploy"
     jobs:
@@ -95,6 +96,7 @@ workflows:
           requires:
             - build_and_lint
             - build_and_lint_similarity_api
+
   run_cmd:
     when: pipeline.parameters.action == "cmd"
     jobs:
@@ -564,11 +566,11 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
                 environment_name: << pipeline.parameters.env >>
-  run_task:
+  run_cmd:
     executor: docker-executor
     resource_class: large
     steps:
-      - cf_task:
+      - cf_cmd:
           the_command: << pipeline.parameters.input >>
 
 
@@ -813,7 +815,7 @@ commands:
           slack_channel: << parameters.slack_channel >>
           message_text_file: "/tmp/message_file"
 
-  cf_task:
+  cf_cmd:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
       the_command:
@@ -832,20 +834,17 @@ commands:
               -p ${cg_password} \
               -o ${cg_org} \
               -s ${cg_space}
-      
-      - run:
-          name: watch logs
-          command: cf logs tta-smarthub-<< pipeline.parameters.env >> 
-          background: true
+
       - run:
           name: run task
           command: |
+            TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             set -x
-            CF_COLOR=true
+            cf logs tta-smarthub-<< pipeline.parameters.env >> | grep -oP '${TASK_NAME}' & 
             cf run-task \
               tta-smarthub-<< pipeline.parameters.env >> \
               --command "<< parameters.the_command >>" \
-              --name "automation-task" \
+              --name ${TASK_NAME} \
               -m 2GB \
               -k 2GB \
               --wait
