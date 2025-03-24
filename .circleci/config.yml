@@ -694,10 +694,9 @@ commands:
               --var BUILD_BRANCH=$CIRCLE_BRANCH \
               --var BUILD_COMMIT=$CIRCLE_SHA1 \
               --var BUILD_NUMBER=<< pipeline.number >> \
-              --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")" \
-              --var NEW_RELIC_LICENSE_KEY=$NEW_RELIC_LICENSE_KEY \ 
-              --var SMTP_IGNORE_TLS=$SMTP_IGNORE_TLS
-
+              --var NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY} \ 
+              --var SMTP_IGNORE_TLS=${SMTP_IGNORE_TLS} \
+              --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
   notify_slack:
     description: "Notify Slack with message"
     parameters:
