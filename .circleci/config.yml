@@ -95,11 +95,10 @@ workflows:
           requires:
             - build_and_lint
             - build_and_lint_similarity_api
-  run_command:
+  run_cmd:
     when: pipeline.parameters.action == "cmd"
     jobs:
-      - cf_task
-
+      - run_task
 # ----------------- jobs ----------------- 
 jobs:
   build_and_lint:
@@ -563,11 +562,11 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
                 environment_name: << pipeline.parameters.env >>
-    run_task:
-      executor: docker-executor
-      resource_class: large
-      steps:
-        cf_task:
+  run_task:
+    executor: docker-executor
+    resource_class: large
+    steps:
+      - cf_task:
           the_command: << pipeline.parameters.input >>
 
 
