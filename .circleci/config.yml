@@ -671,12 +671,12 @@ commands:
             source ci.vars
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
             set -x
-            echo "Deploying app@branch:[<< parameters.git.branch >>] to [<< pipeline.parameters.env >>]"
+            echo "Deploying app@branch:[ $CIRCLE_BRANCH] to [<< pipeline.parameters.env >>]"
             #cf push \
             #  --vars-file app.vars \
             #  --vars-file ci.vars \
-            #  --var BUILD_BRANCH=<< parameters.git.branch >> \
-            #  --var BUILD_COMMIT=<< pipeline.git.revision >> \
+            #  --var BUILD_BRANCH=<< $CIRCLE_BRANCH >> \
+            #  --var BUILD_COMMIT=<< $CIRCLE_SHA1 >> \
             #  --var BUILD_NUMBER=<< pipeline.number >> \
             #  --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
 
