@@ -97,10 +97,10 @@ workflows:
             - build_and_lint
             - build_and_lint_similarity_api
 
-  run_cmd:
+  run_input_cmd:
     when: pipeline.parameters.action == "cmd"
     jobs:
-      - run_task
+      - run_cmd
 # ----------------- jobs ----------------- 
 jobs:
   build_and_lint:
