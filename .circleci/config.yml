@@ -74,17 +74,17 @@ workflows:
           requires:
             - build_and_lint
             - build_and_lint_similarity_api
-      - deploy:
-          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
-          requires:
-            - test_backend
-            - test_frontend
-            - test_e2e
-            - test_api
-            - test_similarity_api
-            - test_utils
-            - cucumber_test
-            - dynamic_security_scan
+      #- deploy:
+      #    serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
+      #    requires:
+      #      - test_backend
+      #      - test_frontend
+      #      - test_e2e
+      #      - test_api
+      #      - test_similarity_api
+      #      - test_utils
+      #      - cucumber_test
+      #      - dynamic_security_scan
   app_deploy:
     when: pipeline.parameters.action == "deploy"
     jobs:
@@ -671,6 +671,14 @@ commands:
             source ci.vars
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
             set -x
+            echo "Deploying app@branch:[<< parameters.git.branch >>] to [<< pipeline.parameters.env >>]"
+            #cf push \
+            #  --vars-file app.vars \
+            #  --vars-file ci.vars \
+            #  --var BUILD_BRANCH=<< parameters.git.branch >> \
+            #  --var BUILD_COMMIT=<< pipeline.git.revision >> \
+            #  --var BUILD_NUMBER=<< pipeline.number >> \
+            #  --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
 
   notify_slack:
     description: "Notify Slack with message"
