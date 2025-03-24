@@ -587,7 +587,7 @@ commands:
             sudo apt-get update
             sudo apt-get install -y cf8-cli
             # Install plugin needed for connect-to-service
-            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
   
 
   create_combined_yarnlock:
@@ -848,7 +848,7 @@ commands:
               --name "automation-task" \
               -m 2GB \
               -k 2GB \
-              --wait-for-completion
+              --wait
               
       - run:
           name: Logout of service account
