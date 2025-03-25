@@ -1,0 +1,32 @@
+test_utils:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: default
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:utils
+      - store_artifacts:
+          path: tests/utilsTests
+    resource_class: large
