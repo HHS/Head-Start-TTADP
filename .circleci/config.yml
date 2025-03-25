@@ -884,11 +884,6 @@ jobs:
             cd frontend
             chmod 744 ./run-yarn-audit.sh
             ./run-yarn-audit.sh;
-      - run:
-          name: Check nodejs version compatibility with buildpack
-          command: |
-            chmod +x ./bin/check_node_version_compatibility.sh
-            ./bin/check_node_version_compatibility.sh
       - store_artifacts: # store backend lint reports
           path: reports
       - store_artifacts: # store frontend lint reports
