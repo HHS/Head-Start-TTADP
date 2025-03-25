@@ -73,8 +73,8 @@ workflows:
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
-          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           env: << pipeline.git.branch >>
+          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           requires:
             - build_tta_app
             - test_backend
@@ -160,13 +160,6 @@ jobs:
           root: .
           paths:
             - .
-
-  test_e2e:
-    executor: docker-executor
-    steps:
-      - test_e2e_ci
-      - test_e2e_api
-      - test_e2e_utils
 
   build_similarity_api:
     executor: docker-python-executor
@@ -352,7 +345,7 @@ jobs:
           path: frontend/coverage-artifacts/
           destination: uncovered-lines
     
-  test_e2e_ci:
+  test_e2e:
     executor: docker-postgres-executor
     resource_class: large
     steps:
@@ -384,82 +377,16 @@ jobs:
           name: Install playwright dependencies
           command: |
             npx playwright install
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
       - run:
           name: Run playwright e2e:ci tests
           command: yarn e2e:ci
       - store_artifacts:
           path: tests/e2e
-    
-  test_e2e_api:
-    executor: docker-postgres-executor
-    resource_class: large
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
       - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
-      - run:
-          name: Install playwright dependencies
-          command: |
-            npx playwright install
-      - run:
-          name: Run playwright tests
+          name: Run playwright e2e:api tests
           command: yarn e2e:api
       - store_artifacts:
           path: tests/api
-    
-  test_e2e_utils:
-    executor: docker-postgres-executor
-    resource_class: large
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Install playwright dependencies
-          command: |
-            npx playwright install
       - run:
           name: Run e2e:utils
           command: yarn e2e:utils
