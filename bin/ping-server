@@ -18,7 +18,7 @@ max_attempts=${4:-10}
 
 echo "Pinging server at http://${HOSTNAME}:${PORT}${URLPATH}..."
 
-until $(curl --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}); do
+until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}); do
     if [ ${attempt_counter} -eq ${max_attempts} ]; then
         echo "Error: Max attempts reached. Server at ${HOSTNAME}:${PORT}${URLPATH} is not responding."
         exit 1
@@ -28,5 +28,8 @@ until $(curl --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${UR
     echo "Attempt ${attempt_counter}/${max_attempts}: Retrying in 30 seconds..."
     sleep 30
 done
+
+# log the response for tracking
+curl --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}
 
 echo "Success: Server at ${HOSTNAME}:${PORT}${URLPATH} is responding."
