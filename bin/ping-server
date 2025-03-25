@@ -1,6 +1,5 @@
 #!/bin/bash
 # Usage: ./bin/ping-server <port> [hostname]
-set -e
 
 # Ensure port is provided
 if [ -z "$1" ]; then

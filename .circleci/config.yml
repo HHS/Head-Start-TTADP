@@ -40,10 +40,12 @@ parameters:
 workflows:
 # ----------------------------------
   build_test_deploy:
+    # This is the primary workflow that runs on each push to the GitHub repo
+    # Some jobs (such as e2e tests and dynamic security scan) require running on the host machine
+    # Therefore these jobs need to be scheduled in sequential order or they will interfere
     when:
         equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
-        # TTA
       - build_tta_app
       - test_backend:
           requires:
@@ -54,8 +56,6 @@ workflows:
       - test_e2e:
           requires:
             - build_tta_app
-
-      # Similarity API
       - build_similarity_api
       - test_similarity_api:
           requires:
@@ -63,7 +63,6 @@ workflows:
 
       - dynamic_security_scan:
           requires:
-            - test_similarity_api
             - test_frontend
             - test_backend
             - test_e2e
@@ -94,9 +93,33 @@ workflows:
     jobs:
       - run_cmd
 
+  daily_task:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - tm/cleanup-circle # normally main
+    jobs:
+      - run_cmd:
+          command: "echo 'hello world'"
+
+
 # ---------------------------------- 
 jobs:
 # ---------------------------------- 
+
+  run_cmd:
+    executor: docker-executor
+    resource_class: large
+    parameters:
+      command:
+        type: string
+        default: << pipeline.parameters.cmd_input >>
+    steps:
+      - cf_cmd:
+          the_command: << parameters.cmd_input >>
 
   build_tta_app:
     executor: docker-executor
@@ -439,13 +462,6 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
                 environment_name: << pipeline.parameters.env >>
-  run_cmd:
-    executor: docker-executor
-    resource_class: large
-    steps:
-      - cf_cmd:
-          the_command: << pipeline.parameters.cmd_input >>
-
 
 # ----------------- Commands -----------------
 
