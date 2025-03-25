@@ -36,8 +36,9 @@ parameters:
     default: ""
     type: string
 
-# ----------------- workflows ----------------- 
+# ----------------------------------
 workflows:
+# ----------------------------------
   build_test_deploy:
     when:
         equal: [ build_test_deploy, << pipeline.parameters.action >> ]
@@ -56,7 +57,6 @@ workflows:
       - test_e2e:
           requires:
             - build_tta_app
-            #- test_backend todo
 
       # Similarity API
       - build_similarity_api
@@ -66,9 +66,9 @@ workflows:
 
       - dynamic_security_scan:
           requires:
+            - test_frontend
             - test_backend
             - test_cucumber
-            - test_frontend
             - test_similarity_api
             - test_e2e
 
@@ -99,8 +99,9 @@ workflows:
     jobs:
       - run_cmd
 
-# ----------------- jobs ----------------- 
+# ---------------------------------- 
 jobs:
+# ---------------------------------- 
 
   build_tta_app:
     executor: docker-executor
@@ -349,78 +350,23 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: Start the server and watch logs
-          command: |
-            BYPASS_AUTH=true 
-            CURRENT_USER_ID=5 
-            yarn build
-            yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Install playwright dependencies
-          command: |
-            npx playwright install
-      - run:
-          name: Wait for server to be running
-          command: ./bin/ping-server 3000
-      # # everything below this will be executed on the host machine
-      # - setup_remote_docker:
-      #     version: default
-      # - run:
-      #     name: Monitor database
-      #     background: true
-      #     command: |
-      #       docker attach  $(docker ps | grep postgres | awk '{print $1}')
-      - run:
-          name: Run playwright e2e:ci tests
+      - run_with_db:
           command: yarn e2e:ci
-      - store_artifacts:
-          path: tests/e2e
-      - run:
-          name: Run playwright e2e:api tests
+          artifacts: tests/e2e
+      - run_with_db:
           command: yarn e2e:api
-      - store_artifacts:
-          path: tests/api
-      - run:
-          name: Run e2e:utils
+          artifacts: tests/api
+      - run_with_db:
           command: yarn e2e:utils
-      - store_artifacts:
-          path: tests/utilsTests
-    
+          artifacts: tests/utilsTests
+
   test_cucumber:
     executor: docker-postgres-executor
     resource_class: large
     steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
-          background: true
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Run cucumber
-          command: |
-            yarn cucumber:ci
-      - store_artifacts:
-          path: reports/
+      - run_with_db:
+          command: yarn cucumber:ci
+          artifacts: reports/
     
   dynamic_security_scan:
     executor: machine-executor
@@ -551,6 +497,44 @@ commands:
           name: Combine requirements.txt files to single file
           command: cat similarity_api/src/requirements.txt > << parameters.filename >>
  
+  run_with_db:
+    parameters:
+      command: 
+        type: string
+      artifacts:
+        type: string
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start the server and watch logs
+          command: |
+            BYPASS_AUTH=true 
+            CURRENT_USER_ID=5 
+            yarn build
+            yarn start:ci
+          background: true
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to be running
+          command: ./bin/ping-server 3000
+      - run:
+          name: "Running: << parameters.command >>"
+          command: << parameters.command >>
+      - store_artifacts:
+          path: << parameters.artifacts >>
+
+
+
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
     parameters:

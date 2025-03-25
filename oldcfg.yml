@@ -1616,6 +1616,7 @@ jobs:
           path: frontend/coverage-artifacts/
           destination: uncovered-lines
     resource_class: large
+
   test_e2e:
     executor: docker-postgres-executor
     steps:
@@ -1658,6 +1659,7 @@ jobs:
       - store_artifacts:
           path: tests/e2e
     resource_class: large
+    
   test_api:
     executor: docker-postgres-executor
     steps:
