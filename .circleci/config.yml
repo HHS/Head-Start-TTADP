@@ -48,6 +48,9 @@ workflows:
     jobs:
       - build_tta_app
       - build_similarity_api
+      - test_similarity_api:
+          requires:
+            - build_similarity_api
       - test_frontend:
           requires:
             - build_tta_app
@@ -57,14 +60,12 @@ workflows:
       - test_e2e:
           requires:
             - build_tta_app
-      - test_similarity_api:
-          requires:
-            - build_similarity_api
 
       - dynamic_security_scan:
           requires:
-            - build_tta_app
-            - build_similarity_api
+            - test_similarity_api
+            - test_backend
+            - test_frontend
             - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
@@ -72,10 +73,6 @@ workflows:
           env: << pipeline.git.branch >>
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           requires:
-            - test_frontend
-            - test_backend
-            - test_e2e
-            - test_similarity_api
             - dynamic_security_scan
           filters:
             branches:
