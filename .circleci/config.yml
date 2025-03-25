@@ -83,7 +83,10 @@ workflows:
                 - dev
                 - dev-green
                 - sandbox
+      
   deploy_dev:
+    when:
+        equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
       - deploy:
           env: "dev-green"
@@ -428,7 +431,7 @@ jobs:
             cfg_env="<< parameters.env >>"
             if [ ${actual_env} == "dev-green" ]; then
               cfg_env="dev"
-            }
+            fi
             circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
       - run:
           name: Build backend assets
