@@ -56,7 +56,6 @@ workflows:
       - test_e2e:
           requires:
             - build_tta_app
-            - test_backend
 
       # Similarity API
       - build_similarity_api
@@ -83,7 +82,7 @@ workflows:
             - test_cucumber
             - build_similarity_api
             - test_similarity_api 
-            #- dynamic_security_scan
+            - dynamic_security_scan
           filters:
             branches:
               only:
