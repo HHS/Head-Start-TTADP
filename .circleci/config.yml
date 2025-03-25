@@ -354,10 +354,12 @@ jobs:
       - setup_remote_docker:
           version: default
       - run:
-          name: Start server
+          name: Start the server and watch logs
           command: |
+            BYPASS_AUTH=true 
+            CURRENT_USER_ID=5 
             yarn build
-            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+            yarn start:ci
           background: true
       - run:
           name: Run migrations ci
@@ -366,17 +368,17 @@ jobs:
           name: Seed database
           command: yarn db:seed:ci
       - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
-      - run:
           name: Install playwright dependencies
           command: |
             npx playwright install
+      - run:
+          name: Wait for server to be running
+          command: ./bin/ping-server 3000
+      - run:
+          name: Watch the database logs
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Run playwright e2e:ci tests
           command: yarn e2e:ci
