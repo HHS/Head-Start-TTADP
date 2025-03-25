@@ -27,14 +27,14 @@ executors:
 parameters:
   action:
     description: "Desired job to run"
-    enum: ["build_test_deploy", "cmd"]
+    enum: ["build_test_deploy", "deploy", "cmd"]
     default: "build_test_deploy"
     type: enum
   env: 
     description: "(cmd) Target environment"
     default: "dev"
     type: enum
-    enum: ["blue", "green", "red", "dev", "sandbox", "staging", "prod"]
+    enum: ["dev-blue", "dev-green", "dev-red", "dev", "sandbox", "staging", "prod"]
   cmd_input:
     description: "(cmd) The command to run"
     type: string
@@ -83,6 +83,11 @@ workflows:
                 - dev
                 - dev-green
                 - sandbox
+  deploy_dev:
+    jobs:
+      - deploy:
+          env: "dev-green"
+          #serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
 
 
   run_input_cmd:
@@ -420,7 +425,11 @@ jobs:
       - run:
           name: Setup env vars
           command: |
-            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
+            cfg_env="<< parameters.env >>"
+            if [ ${actual_env} == "dev-green" ]; then
+              cfg_env="dev"
+            }
+            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
       - run:
           name: Build backend assets
           command: yarn build
