@@ -340,42 +340,15 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
     },
   });
 
-  console.log('\n\n\n--- EXISTING GOALSzzzz: ', existingGoals);
-
   let updatedGoals = await Promise.all(goals.map(async (goal) => {
     // Loops recipients update / create goals.
     // eslint-disable-next-line implicit-arrow-linebreak
     const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
     const isMonitoring = goalTemplate.standard === 'Monitoring';
-    console.log('\n\n\n--- IS MONITORING GOAL: ', goalTemplate.standard);
     return Promise.all(goal.grantIds.map(async (grantId) => {
-      // Check if there is an existing goal for this template and grant.
-      /*
-      let newOrUpdatedGoal = await Goal.findOne({
-        where: {
-          grantId,
-          goalTemplateId: goal.goalTemplateId,
-        },
-        include: [
-          {
-            model: Objective,
-            as: 'objectives',
-            attributes: ['id', 'title', 'status'],
-          },
-          {
-            model: GoalFieldResponse,
-            as: 'responses',
-            attributes: ['response'],
-          },
-        ],
-      });
-      */
-
       let newOrUpdatedGoal = existingGoals.find((existingGoal) => (
         existingGoal.grantId === grantId && existingGoal.goalTemplateId === goal.goalTemplateId
       ));
-
-      console.log('\n\n\n--- CHECK FOR GOAL123: ', newOrUpdatedGoal);
 
       // If this is a monitoring goal check for existing goal.
       if (isMonitoring && !newOrUpdatedGoal) {
@@ -384,20 +357,8 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       }
 
       if (newOrUpdatedGoal) {
-        // TODO: Do we want to use this when saving a goal a second time?
-        const onApprovedAr = newOrUpdatedGoal.onApprovedAR;
-
-        // If the goal is 'Not started' move to 'In progress'.
-        if (newOrUpdatedGoal.status === GOAL_STATUS.NOT_STARTED && onApprovedAr) {
-          await changeGoalStatus({
-            goalId: newOrUpdatedGoal.id,
-            userId,
-            newStatus: GOAL_STATUS.IN_PROGRESS,
-            reason: 'Goal moved to In Progress from Not Started',
-            context: 'saveStandardGoalsForReport',
-          });
-        } else if (newOrUpdatedGoal.status === GOAL_STATUS.SUSPENDED) {
-          // If the goal is 'Suspended' move to 'In progress'.
+        // If the goal is 'Suspended' move to 'In progress'.
+        if (newOrUpdatedGoal.status === GOAL_STATUS.SUSPENDED) {
           await changeGoalStatus({
             goalId: newOrUpdatedGoal.id,
             userId,
@@ -405,30 +366,27 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
             reason: 'Goal moved to In Progress from Suspended',
             context: 'saveStandardGoalsForReport',
           });
+          newOrUpdatedGoal.status = GOAL_STATUS.IN_PROGRESS;
         } else if (newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
           // If the goal is 'Closed' create a new goal.
           newOrUpdatedGoal = null;
         }
       }
-
       // If there is no existing goal, or its closed, create a new one in 'Not started'.
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
-          goalTemplateId: goal.goalTemplateId,
+          goalTemplateId: goalTemplate.id,
           createdVia: 'activityReport',
-          name: goal.name,
+          name: goalTemplate.templateName,
           grantId,
           status: GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
-        console.log('\n\n\n----- created goal: ', newOrUpdatedGoal);
       }
 
       // Handle goal prompts for curated goals like FEI.
-      console.log('\n\n\n--- goal prompts: ', goal.prompts);
       if (goalTemplate.creationMethod === CREATION_METHOD.CURATED && goal.prompts) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], goal.prompts);
       }
-
       // Save goal meta data.
       await cacheGoalMetadata(
         newOrUpdatedGoal,
@@ -490,8 +448,6 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       },
     );
   }));
-
-  console.log('\n\n\n------ Updated Goals Clean: ', updatedGoals);
 
   // Get all goal ids.
   const currentGoalIds = updatedGoals.map((g) => g.id);
