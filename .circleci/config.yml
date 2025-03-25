@@ -343,7 +343,9 @@ jobs:
     executor: docker-postgres-executor
     resource_class: large
     steps:
-      # these each need to run with a fresh database
+      - setup_remote_docker:
+          # this job runs on the host machine
+          version: default
       - run_with_db:
           command: yarn e2e:ci
           artifacts: tests/e2e
@@ -487,8 +489,6 @@ commands:
           command: cat similarity_api/src/requirements.txt > << parameters.filename >>
  
   run_with_db:
-    # this job runs on the host machine, and modifies the database
-    # therefore, no two jobs using this command should run at the same time
     parameters:
       command: 
         type: string
@@ -497,8 +497,6 @@ commands:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
       - run:
           name: Start the server and watch logs
           background: true
