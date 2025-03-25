@@ -77,7 +77,6 @@ workflows:
             - test_backend
             - test_frontend
             - test_e2e
-            - test_cucumber
             - build_similarity_api
             - test_similarity_api 
             - dynamic_security_scan
