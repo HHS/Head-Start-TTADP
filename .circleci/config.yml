@@ -47,7 +47,7 @@ workflows:
     # Some jobs (such as e2e tests and dynamic security scan) require running on the host machine
     # Therefore these jobs need to be scheduled in sequential order or they will interfere
     when:
-        equal: [ build_test_deploy, << pipeline.parameters.action >> ]
+      equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
       - build_tta_app
       - build_similarity_api
@@ -74,7 +74,7 @@ workflows:
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
           env: << pipeline.git.branch >>
-          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
+          serial-group: << pipeline.id >>/<< parameters.parameters.env >>/deploy-lock
           requires:
             - dynamic_security_scan
           filters:
@@ -84,11 +84,15 @@ workflows:
                 - dev-green
                 - sandbox
       
-  deploy_dev:
+  deploy_manual:
     when:
-        equal: [ build_test_deploy, << pipeline.parameters.action >> ]
+      equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
+      - build_tta_app
+      - build_similarity_api
       - deploy:
+          requires:
+            - build_tta_app
           env: "dev-green"
           #serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
 
@@ -425,7 +429,6 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - checkout
       - run:
           name: Setup env vars
           command: |
