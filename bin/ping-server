@@ -1,6 +1,6 @@
 #!/bin/bash
-
 # Usage: ./bin/ping-server <port> [hostname]
+set -e
 
 # Ensure port is provided
 if [ -z "$1" ]; then
@@ -17,10 +17,9 @@ URLPATH=${3}
 attempt_counter=0
 max_attempts=${4:-10}
 
-
 echo "Pinging server at http://${HOSTNAME}:${PORT}${URLPATH}..."
 
-until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}); do
+until $(curl --max-time 10 --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}); do
     if [ ${attempt_counter} -eq ${max_attempts} ]; then
         echo "Error: Max attempts reached. Server at ${HOSTNAME}:${PORT}${URLPATH} is not responding."
         exit 1
