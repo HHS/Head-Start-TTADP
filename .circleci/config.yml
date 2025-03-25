@@ -63,10 +63,10 @@ workflows:
           requires:
             - build_similarity_api
 
-      #- dynamic_security_scan:
-      #    requires:
-      #      - build_tta_app
-      #      - build_similarity_api
+      - dynamic_security_scan:
+          requires:
+            - build_tta_app
+            - build_similarity_api
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
@@ -195,8 +195,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
+      #- setup_remote_docker:
+      #    version: default
       - run:
           name: Add GitHub to known_hosts
           command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
@@ -257,8 +257,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
+      #- setup_remote_docker:
+      #    version: default
       - run:
           name: Syft SBOM
           environment:
@@ -342,10 +342,10 @@ jobs:
     executor: docker-postgres-executor
     resource_class: large
     steps:
+      #- setup_remote_docker:
+      #    version: default
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
       - run:
           name: Start the server and watch logs
           command: |
