@@ -48,42 +48,34 @@ workflows:
     jobs:
       - build_tta_app
       - build_similarity_api
-      - build_jobs:
-          requires:
-            - build_tta_app
-            - build_similarity_api
-
       - test_frontend:
           requires:
-            - build_jobs
+            - build_tta_app
       - test_backend:
           requires:
-            - build_jobs
+            - build_tta_app
       - test_e2e:
           requires:
-            - build_jobs
+            - build_tta_app
       - test_similarity_api:
           requires:
-            - build_jobs
-      - test_jobs:
-          requires:
-            - test_frontend
-            - test_e2e
-            - test_similarity_api
-            - test_backend
+            - build_similarity_api
 
       - dynamic_security_scan:
           requires:
-            - build_jobs
-            - test_jobs
+            - build_tta_app
+            - build_similarity_api
+            - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
           env: << pipeline.git.branch >>
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           requires:
-            - build_jobs
-            - test_jobs
+            - test_frontend
+            - test_backend
+            - test_e2e
+            - test_similarity_api
             - dynamic_security_scan
           filters:
             branches:
@@ -115,15 +107,6 @@ workflows:
 # ---------------------------------- 
 jobs:
 # ---------------------------------- 
-
-  # These are just empty placeholder jobs used as labels for the workflow
-  build_jobs:
-    executor: docker-executor
-    steps: []
-
-  test_jobs:
-    executor: docker-executor
-    steps: []
 
   run_cmd:
     executor: docker-executor
