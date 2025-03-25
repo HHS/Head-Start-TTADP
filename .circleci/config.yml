@@ -51,9 +51,6 @@ workflows:
       - test_frontend:
           requires:
             - build_tta_app
-      - test_cucumber:
-          requires:
-            - build_tta_app
       - test_e2e:
           requires:
             - build_tta_app
@@ -66,10 +63,9 @@ workflows:
 
       - dynamic_security_scan:
           requires:
+            - test_similarity_api
             - test_frontend
             - test_backend
-            - test_cucumber
-            - test_similarity_api
             - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
@@ -348,8 +344,7 @@ jobs:
     executor: docker-postgres-executor
     resource_class: large
     steps:
-      - attach_workspace:
-          at: .
+      # these each need to run with a fresh database
       - run_with_db:
           command: yarn e2e:ci
           artifacts: tests/e2e
@@ -359,11 +354,6 @@ jobs:
       - run_with_db:
           command: yarn e2e:utils
           artifacts: tests/utilsTests
-
-  test_cucumber:
-    executor: docker-postgres-executor
-    resource_class: large
-    steps:
       - run_with_db:
           command: yarn cucumber:ci
           artifacts: reports/
@@ -498,6 +488,8 @@ commands:
           command: cat similarity_api/src/requirements.txt > << parameters.filename >>
  
   run_with_db:
+    # this job runs on the host machine, and modifies the database
+    # therefore, no two jobs using this command should run at the same time
     parameters:
       command: 
         type: string
@@ -506,14 +498,16 @@ commands:
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          version: default
       - run:
           name: Start the server and watch logs
-          command: |
-            BYPASS_AUTH=true 
-            CURRENT_USER_ID=5 
-            yarn build
-            yarn start:ci
           background: true
+          command: |
+            yarn build
+            BYPASS_AUTH=true
+            CURRENT_USER_ID=5 
+            yarn start:ci
       - run:
           name: Install playwright dependencies
           command: |
