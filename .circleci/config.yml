@@ -45,47 +45,43 @@ workflows:
     when:
         equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
-      - build_and_lint
-      - build_and_lint_similarity_api
-      - test_utils:
-          requires:
-            - build_and_lint
-            - build_and_lint_similarity_api
+        # TTA
+      - build_tta_app
       - test_backend:
           requires:
-            - test_utils
+            - build_tta_app
       - test_frontend:
           requires:
-            - test_utils
+            - build_tta_app
       - test_e2e:
           requires:
-            - test_utils
+            - build_tta_app
       - test_cucumber:
           requires:
-            - test_utils
-      - test_api:
-          requires:
-            - test_utils
-      - test_tta_app:
-          requires:
-            - test_backend
-            - test_frontend
-            - test_e2e
-            - test_api
-            - test_cucumber
+            - build_tta_app
+
+      # Similarity API
+      - build_similarity_api
       - test_similarity_api:
           requires:
-            - build_and_lint_similarity_api
+            - build_similarity_api
+
       - dynamic_security_scan:
           requires:
-            - test_utils
+            - build_tta_app
+            - build_similarity_api
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
           env: << pipeline.git.branch >>
           requires:
-            - test_tta_app
+            - build_tta_app
+            - test_backend
+            - test_frontend
+            - test_e2e
+            - test_cucumber
+            - build_similarity_api
             - test_similarity_api 
             - dynamic_security_scan
           filters:
@@ -105,12 +101,7 @@ workflows:
 # ----------------- jobs ----------------- 
 jobs:
 
-  test_tta_app:
-    steps:
-      - run: echo "App build & tests complete"
-    executor: docker-executor
-
-  build_and_lint:
+  build_tta_app:
     executor: docker-executor
     resource_class: large
     parameters:
@@ -169,8 +160,15 @@ jobs:
           root: .
           paths:
             - .
-    
-  build_and_lint_similarity_api:
+
+  test_e2e:
+    executor: docker-executor
+    steps:
+      - test_e2e_ci
+      - test_e2e_api
+      - test_e2e_utils
+
+  build_similarity_api:
     executor: docker-python-executor
     resource_class: large
     steps:
@@ -354,7 +352,7 @@ jobs:
           path: frontend/coverage-artifacts/
           destination: uncovered-lines
     
-  test_e2e:
+  test_e2e_ci:
     executor: docker-postgres-executor
     resource_class: large
     steps:
@@ -392,12 +390,12 @@ jobs:
             docker attach  $(docker ps | grep postgres | awk '{print $1}')
           background: true
       - run:
-          name: Run playwright tests
+          name: Run playwright e2e:ci tests
           command: yarn e2e:ci
       - store_artifacts:
           path: tests/e2e
     
-  test_api:
+  test_e2e_api:
     executor: docker-postgres-executor
     resource_class: large
     steps:
@@ -435,7 +433,7 @@ jobs:
       - store_artifacts:
           path: tests/api
     
-  test_utils:
+  test_e2e_utils:
     executor: docker-postgres-executor
     resource_class: large
     steps:
@@ -463,7 +461,7 @@ jobs:
           command: |
             npx playwright install
       - run:
-          name: Run playwright tests
+          name: Run e2e:utils
           command: yarn e2e:utils
       - store_artifacts:
           path: tests/utilsTests
@@ -526,21 +524,6 @@ jobs:
           command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - store_artifacts:
           path: reports
-  
-  auto_cancel:
-    executor: docker-executor
-    steps:
-    - run: 
-        background: true
-        command: |
-          while true; do
-            sleep 5
-            LATEST_COMMIT=$(git ls-remote $CIRCLE_REPOSITORY_URL | grep $CIRCLE_BRANCH | cut -f 1)
-            if [ "$LATEST_COMMIT" != "$CIRCLE_SHA1" ]; then
-              echo "more recent commit to branch, exiting"
-              curl -X POST "https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/cancel?circle-token=$CIRCLE_API_TOKEN"
-            fi
-          done
 
   deploy:
     executor: docker-executor
