@@ -27,14 +27,14 @@ parameters:
     default: "build_test_deploy"
     type: enum
   env: 
-      description: "(cmd) Target environment"
-      default: "dev"
-      type: enum
-      enum: ["blue", "green", "red", "dev", "sandbox", "staging", "prod"]
+    description: "(cmd) Target environment"
+    default: "dev"
+    type: enum
+    enum: ["blue", "green", "red", "dev", "sandbox", "staging", "prod"]
   cmd_input:
     description: "(cmd) The command to run"
-    default: ""
     type: string
+    default: ""
 
 # ----------------------------------
 workflows:
@@ -117,7 +117,7 @@ jobs:
         default: << pipeline.parameters.cmd_input >>
     steps:
       - cf_cmd:
-          the_command: << parameters.cmd_input >>
+          the_command: << parameters.command >>
 
   build_tta_app:
     executor: docker-executor
