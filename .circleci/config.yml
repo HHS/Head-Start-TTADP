@@ -1,7 +1,7 @@
 version: 2.1
 executors:
   docker-executor:
-    docker:
+    docker: # primary container
       - image: cimg/node:20.18.2-browsers
   docker-postgres-executor:
     docker:
@@ -198,8 +198,6 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
       - run:
           name: Add GitHub to known_hosts
           command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
@@ -209,10 +207,12 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      - setup_remote_docker:
+          version: default
       - run:
           name: Monitor database
           command: |
-            ls -la /var/log/postgresql/
+            ls -la /var/log/ || true
             #docker attach  $(docker ps | grep postgres | awk '{print $1}')
           background: true
       - run:
@@ -372,7 +372,7 @@ jobs:
       - run:
           name: Watch the database logs
           command: |
-            ls -la /var/log/postgresql/
+            ls -la /var/log/ || true
             #docker attach  $(docker ps | grep postgres | awk '{print $1}')
             dockerize -wait tcp://localhost:5432 -timeout 1m
           background: true
