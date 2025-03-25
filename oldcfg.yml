@@ -1659,6 +1659,7 @@ jobs:
       - store_artifacts:
           path: tests/e2e
     resource_class: large
+    
   test_api:
     executor: docker-postgres-executor
     steps:

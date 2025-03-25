@@ -1,3 +1,5 @@
+# ----------------- Base Config -----------------
+
 version: 2.1
 executors:
   docker-executor:
@@ -20,6 +22,8 @@ executors:
     machine:
       image: ubuntu-2204:current
 
+# ----------------- Parameters -----------------
+
 parameters:
   action:
     description: "Desired job to run"
@@ -36,9 +40,8 @@ parameters:
     type: string
     default: ""
 
-# ----------------------------------
+# ----------------- Workflows -----------------
 workflows:
-# ----------------------------------
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
     # Some jobs (such as e2e tests and dynamic security scan) require running on the host machine
@@ -47,9 +50,7 @@ workflows:
         equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
       - build_tta_app
-      - build_similarity_api:
-          requires:
-            - build_tta_app
+      - build_similarity_api
       - test_similarity_api:
           requires:
             - build_similarity_api
@@ -102,11 +103,8 @@ workflows:
       - run_cmd:
           command: "echo 'hello world'"
 
-
-# ---------------------------------- 
+# ----------------- Jobs -----------------
 jobs:
-# ---------------------------------- 
-
   run_cmd:
     executor: docker-executor
     resource_class: large
@@ -367,11 +365,11 @@ jobs:
           # this job runs on the host machine
           version: default
       - run_with_db:
-          command: yarn e2e:ci
-          artifacts: tests/e2e
-      - run_with_db:
           command: yarn e2e:api
           artifacts: tests/api
+      - run_with_db:
+          command: yarn e2e:ci
+          artifacts: tests/e2e
       - run_with_db:
           command: yarn e2e:utils
           artifacts: tests/utilsTests
@@ -384,11 +382,11 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: Clean previous reports
-          command: |
-            rm -rf reports/server/*
-            rm -rf reports/similarity_api/*
+      # - run:
+      #     name: Clean previous reports
+      #     command: |
+      #       rm -rf reports/server/*
+      #       rm -rf reports/similarity_api/*
       - run:
           name: Start up local services
           command: ./bin/prod-style-server
