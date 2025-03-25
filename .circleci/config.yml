@@ -56,7 +56,7 @@ workflows:
       - test_e2e:
           requires:
             - build_tta_app
-            - test_backend
+            #- test_backend todo
 
       # Similarity API
       - build_similarity_api
@@ -66,9 +66,10 @@ workflows:
 
       - dynamic_security_scan:
           requires:
-            - build_tta_app
-            - build_similarity_api
             - test_backend
+            - test_cucumber
+            - test_frontend
+            - test_similarity_api
             - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
@@ -208,13 +209,13 @@ jobs:
           name: Run seeders
           command: yarn db:seed:ci
       # everything below this will be executed on the host machine
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Monitor database
-          background: true
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+      # - setup_remote_docker:
+      #     version: default
+      # - run:
+      #     name: Monitor database
+      #     background: true
+      #     command: |
+      #       docker attach  $(docker ps | grep postgres | awk '{print $1}')
       - run:
           name: Test backend
           command: |
@@ -367,14 +368,14 @@ jobs:
       - run:
           name: Wait for server to be running
           command: ./bin/ping-server 3000
-      # everything below this will be executed on the host machine
-      - setup_remote_docker:
-          version: default
-      - run:
-          name: Monitor database
-          background: true
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+      # # everything below this will be executed on the host machine
+      # - setup_remote_docker:
+      #     version: default
+      # - run:
+      #     name: Monitor database
+      #     background: true
+      #     command: |
+      #       docker attach  $(docker ps | grep postgres | awk '{print $1}')
       - run:
           name: Run playwright e2e:ci tests
           command: yarn e2e:ci
