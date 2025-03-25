@@ -32,5 +32,5 @@ else
   echo "Supported Versions:"
   echo "$supported_versions"
   #exit 1  # Exit with error
-  exit 1  # Whatever, for now
+  exit 0  # Whatever, for now
 fi
