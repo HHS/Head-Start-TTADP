@@ -429,7 +429,7 @@ jobs:
           name: Setup env vars
           command: |
             cfg_env="<< parameters.env >>"
-            if [ ${actual_env} == "dev-green" ]; then
+            if [ ${cfg_env} == "dev-green" ]; then
               cfg_env="dev"
             fi
             circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
