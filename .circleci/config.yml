@@ -207,14 +207,14 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      # everything below this will be executed on the host machine
       - setup_remote_docker:
           version: default
       - run:
           name: Monitor database
-          command: |
-            ls -la /var/log/ || true
-            #docker attach  $(docker ps | grep postgres | awk '{print $1}')
           background: true
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
       - run:
           name: Test backend
           command: |
@@ -344,8 +344,6 @@ jobs:
     executor: docker-postgres-executor
     resource_class: large
     steps:
-      - setup_remote_docker:
-          version: default
       - attach_workspace:
           at: .
       - run:
@@ -369,13 +367,14 @@ jobs:
       - run:
           name: Wait for server to be running
           command: ./bin/ping-server 3000
+      # everything below this will be executed on the host machine
+      - setup_remote_docker:
+          version: default
       - run:
-          name: Watch the database logs
-          command: |
-            ls -la /var/log/ || true
-            #docker attach  $(docker ps | grep postgres | awk '{print $1}')
-            dockerize -wait tcp://localhost:5432 -timeout 1m
+          name: Monitor database
           background: true
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
       - run:
           name: Run playwright e2e:ci tests
           command: yarn e2e:ci
