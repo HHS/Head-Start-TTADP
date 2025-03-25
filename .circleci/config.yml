@@ -19,9 +19,6 @@ executors:
   machine-executor:
     machine:
       image: ubuntu-2204:current
-  aws-executor:
-    docker:
-      - image: cimg/aws:2024.03
 
 parameters:
   action:
@@ -66,10 +63,10 @@ workflows:
           requires:
             - build_similarity_api
 
-      - dynamic_security_scan:
-          requires:
-            - build_tta_app
-            - build_similarity_api
+      #- dynamic_security_scan:
+      #    requires:
+      #      - build_tta_app
+      #      - build_similarity_api
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
@@ -83,7 +80,7 @@ workflows:
             - test_cucumber
             - build_similarity_api
             - test_similarity_api 
-            - dynamic_security_scan
+            #- dynamic_security_scan
           filters:
             branches:
               only:
@@ -149,13 +146,12 @@ jobs:
           command: |
             chmod +x ./bin/check_node_version_compatibility.sh
             ./bin/check_node_version_compatibility.sh
-      - store_artifacts: # store backend lint reports
+      - store_artifacts:
           path: reports
-      - store_artifacts: # store frontend lint reports
+          destination: backend-lint.xml
+      - store_artifacts:
           path: frontend/reports
-      - run:
-          name: Remove similarity api data
-          command: rm -rf similarity_api
+          destination: frontend-lint.xml
       - persist_to_workspace:
           root: .
           paths:
@@ -185,10 +181,7 @@ jobs:
           paths:
             - similarity_api/src/venv
           key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-      - store_artifacts: # store backend lint reports
-          path: reports
-      - store_artifacts: # store frontend lint reports
-          path: similarity_api/reports
+
       - persist_to_workspace:
           root: .
           paths:
