@@ -1,16 +1,9 @@
-#!/bin/bash
-
-# check_node_version_compatibility.sh
-# Script to fetch the required Node.js version and compare with buildpack
-
-# Read Node.js version from .nvmrc file at the root of the project and remove carriage returns and new lines
-node_version_required=$(cat .nvmrc | tr -d '\r' | tr -d '\n')
-
-# Fetch the latest release data from GitHub
-latest_release_info=$(curl -s https://api.github.com/repos/cloudfoundry/nodejs-buildpack/releases/latest)
 
 # Parse the release data to extract supported Node.js versions using jq, grep, awk, and sort
-supported_versions=$(echo "$latest_release_info" | jq -r '.body' | grep 'node' | awk '{print $4}' | grep -vP '[^.0-9]' | sort -u)
+supported_versions=$(cat raw.data | jq -r '.body' | grep 'node' | awk '{print $4}' | grep -v '[^.0-9]' | sort -u)
+
+supported_versions=$(cat raw.data | grep 'node')
+echo "versions: ${supported_versions}"
 
 # Check if the required version is supported by iterating over the array
 version_found=0
@@ -31,6 +24,5 @@ else
   echo "Required Node.js version $node_version_required is not supported."
   echo "Supported Versions:"
   echo "$supported_versions"
-  #exit 1  # Exit with error
-  exit 1  # Whatever, for now
+  exit 1  # Exit with error
 fi
