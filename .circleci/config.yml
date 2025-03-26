@@ -49,6 +49,7 @@ workflows:
     when:
       equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
+      - set_env_vars
       - build_tta_app
       - build_similarity_api
       - test_similarity_api:
@@ -88,6 +89,7 @@ workflows:
     when:
       equal: [ deploy, << pipeline.parameters.action >> ]
     jobs:
+      - set_env_vars
       - build_similarity_api
       - deploy:
           requires:
@@ -115,6 +117,31 @@ workflows:
 
 # ----------------- Jobs -----------------
 jobs:
+
+  set_env_vars:
+    executor: docker-executor
+    steps:
+      - checkout
+      - run:
+          name: Setup env vars
+          command: |
+            # $real_env maps target environment
+            # $cfg_env maps to the env used for config (ie dev-green -> dev)
+            # these values will be available in any subsequent bash env
+            real_env=${CIRCLE_BRANCH}
+            if [[ $real_env == *"main"* ]]; then real_env="staging"; fi]
+            if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
+            echo "export real_env=$real_env" >> "$BASH_ENV"
+            echo "export cfg_env=$cfg_env" >> "$BASH_ENV"
+            # substitute actual values from circle into ci.vars file
+            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
+            # iterate through ci.vars file and export each line, 
+            while read line; do
+              if [ -n "$line" ]; then
+                echo 'export $line' >> "$BASH_ENV"
+              fi
+            done < ./deployment_config/${cfg_env}_vars_ci.yml
+
   run_cmd:
     executor: docker-executor
     resource_class: large
@@ -129,13 +156,6 @@ jobs:
   build_tta_app:
     executor: docker-executor
     resource_class: large
-    parameters:
-      APP_VARS_FILE: 
-        default: ./deployment_config/<< pipeline.parameters.env >>_vars.yml
-        type: string
-      CI_VARS_FILE: 
-        default: ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml
-        type: string
     steps:
       - checkout
       - create_combined_yarnlock
@@ -421,13 +441,9 @@ jobs:
   deploy:
     executor: docker-executor
     resource_class: large
-    parameters:
-      env: 
-        type: string
     steps:
       - attach_workspace:
           at: .
-      - set_env_vars
       - run:
           name: Build backend assets
           command: yarn build
@@ -456,7 +472,6 @@ jobs:
             - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-                environment_name: << pipeline.parameters.env >>
 
 # ----------------- Commands -----------------
 
@@ -475,28 +490,7 @@ commands:
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
   
-  set_env_vars:
-    steps:
-      - checkout
-      - run:
-          name: Setup env vars
-          command: |
-            # $real_env maps target environment
-            # $cfg_env maps to the env used for config (ie dev-green -> dev)
-            # these values will be available in any subsequent bash env
-            real_env=${CIRCLE_BRANCH}
-            if [[ $real_env == *"main"* ]]; then real_env="staging"; fi]
-            if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
-            echo "export real_env=$real_env" >> "$BASH_ENV"
-            echo "export cfg_env=$cfg_env" >> "$BASH_ENV"
-            # substitute actual values from circle into ci.vars file
-            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
-            # iterate through ci.vars file and export each line, 
-            while read line; do
-              if [ -n "$line" ]; then
-                echo 'export $line' >> "$BASH_ENV"
-              fi
-            done < ./deployment_config/${cfg_env}_vars_ci.yml
+
 
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -599,7 +593,7 @@ commands:
             "{
               \"deployment\": {
                 \"revision\": \"<< pipeline.git.revision >>\",
-                \"description\": \"<< pipeline.parameters.env >> Successfully Deployed\"
+                \"description\": \"${real_env} Successfully Deployed\"
               }
             }"
 
@@ -653,13 +647,6 @@ commands:
           name: Notify Slack
           command: |
             set -x
-            # Ensure the $BASH_ENV file exists
-            if [ ! -f $BASH_ENV ]; then
-              touch $BASH_ENV
-            fi
-
-            source $BASH_ENV
-            cat $BASH_ENV
 
             # Evaluate message_text_script if provided
             if [ -n "<< parameters.message_text_file >>" ]; then
@@ -693,6 +680,7 @@ commands:
             else
               echo "Slack notification sent successfully"
             fi
+
   notify_slack_deploy:
     parameters:
       slack_bot_token:
@@ -701,16 +689,13 @@ commands:
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
-      environment_name:
-        description: "Deployed env"
-        type: string
     steps:
       - checkout
       - run:
           name: Generate Message
           command: |
             source ci.vars
-            env_name="<< parameters.environment_name >>"
+            env_name="$real_env"
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
@@ -740,6 +725,7 @@ commands:
                 fi
             fi
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
+
       - notify_slack:
           slack_bot_token: << parameters.slack_bot_token >>
           slack_channel: << parameters.slack_channel >>
