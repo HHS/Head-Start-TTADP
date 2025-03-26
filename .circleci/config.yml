@@ -145,7 +145,7 @@ jobs:
                 echo 'export "${line}"' >> "$BASH_ENV"
               fi
             done < ci.vars
-            echo $BASH_ENV
+            cat $BASH_ENV
             echo "api: $cg_api"
 
   run_cmd:
