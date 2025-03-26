@@ -142,10 +142,10 @@ jobs:
             # iterate through ci.vars file and export each line, 
             while read line; do
               if [ -n "$line" ]; then
-                echo "setting ${line}"
                 echo 'export "${line}"' >> "$BASH_ENV"
               fi
             done < ci.vars
+            echo $BASH_ENV
 
   run_cmd:
     executor: docker-executor
