@@ -75,7 +75,7 @@ workflows:
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
           env: << pipeline.git.branch >>
-          serial-group: << pipeline.id >>/deploy-lock
+          serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
             - dynamic_security_scan
           filters:
@@ -94,7 +94,7 @@ workflows:
       - deploy:
           requires:
             - build_similarity_api
-          serial-group: << pipeline.id >>/<< pipeline.git.branch >> /deploy-lock
+          serial-group: << pipeline.git.branch >>/deploy-lock
 
 
   run_input_cmd:
