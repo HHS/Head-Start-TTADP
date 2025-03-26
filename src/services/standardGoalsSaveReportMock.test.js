@@ -12,6 +12,7 @@ import {
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { saveStandardGoalsForReport } from './standardGoals';
 
+jest.mock('./reportCache');
 jest.mock('../services/goalTemplates', () => ({
   setFieldPromptsForCuratedTemplate: jest.fn(),
 }));
