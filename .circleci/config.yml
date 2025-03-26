@@ -146,6 +146,7 @@ jobs:
               fi
             done < ci.vars
             echo $BASH_ENV
+            echo "api: $cg_api"
 
   run_cmd:
     executor: docker-executor
