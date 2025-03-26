@@ -1,4 +1,5 @@
 env: ${real_env}
+shared_env: ${cfg_env}
 web_instances: 1
 web_memory: 2GB
 worker_instances: 1
