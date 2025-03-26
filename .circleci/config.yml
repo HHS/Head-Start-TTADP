@@ -142,6 +142,7 @@ jobs:
             # iterate through ci.vars file and export each line, 
             while read line; do
               if [ -n "$line" ]; then
+                echo "setting ${line}"
                 echo 'export "${line}"' >> "$BASH_ENV"
               fi
             done < ci.vars
@@ -186,35 +187,6 @@ jobs:
           root: .
           paths:
             - .
-  lint:
-    executor: docker-executor
-    resource_class: large
-    steps:
-      - run:
-          name: Lint backend
-          command: yarn lint:ci
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend lint:ci
-      - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - store_artifacts:
-          path: reports
-          destination: backend-lint.xml
-      - store_artifacts:
-          path: frontend/reports
-          destination: frontend-lint.xml
-
-
 
   build_similarity_api:
     executor: docker-python-executor
@@ -245,6 +217,36 @@ jobs:
           root: .
           paths:
             - similarity_api
+            
+  lint:
+    executor: docker-executor
+    resource_class: large
+    steps:
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - store_artifacts:
+          path: reports
+          destination: backend-lint.xml
+      - store_artifacts:
+          path: frontend/reports
+          destination: frontend-lint.xml
+
+
     
   test_backend:
     executor: docker-postgres-executor
@@ -536,7 +538,6 @@ commands:
           name: Start the server and watch logs
           background: true
           command: |
-            yarn build
             BYPASS_AUTH=true
             CURRENT_USER_ID=5 
             yarn start:ci
