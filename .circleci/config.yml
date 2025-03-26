@@ -129,7 +129,7 @@ jobs:
             # $cfg_env maps to the env used for config (ie dev-green -> dev)
             # these values will be available in any subsequent bash env
             real_env=${CIRCLE_BRANCH}
-            if [[ $real_env == *"main"* ]]; then real_env="staging"; fi]
+            if [[ $real_env == *"main"* ]]; then real_env="staging"; fi
             if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo 'export real_env="${real_env}"' >> "$BASH_ENV"
             echo 'export cfg_env="${cfg_env}"' >> "$BASH_ENV"
