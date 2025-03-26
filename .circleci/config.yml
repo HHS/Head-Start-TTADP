@@ -90,12 +90,12 @@ workflows:
     when:
       equal: [ deploy, << pipeline.parameters.action >> ]
     jobs:
-      #- build_similarity_api
-      #- build_tta_app
+      - build_similarity_api
+      - build_tta_app
       - deploy:
-          #requires:
-            #- build_similarity_api
-            #- build_tta_app
+          requires:
+            - build_similarity_api
+            - build_tta_app
           serial-group: << pipeline.git.branch >>/deploy-lock
 
 
@@ -220,8 +220,6 @@ jobs:
       - store_artifacts:
           path: frontend/reports
           destination: frontend-lint.xml
-
-
     
   test_backend:
     executor: docker-postgres-executor
