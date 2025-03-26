@@ -90,12 +90,12 @@ workflows:
     when:
       equal: [ deploy, << pipeline.parameters.action >> ]
     jobs:
-      - build_similarity_api
-      - build_tta_app
+      #- build_similarity_api
+      #- build_tta_app
       - deploy:
-          requires:
-            - build_similarity_api
-            - build_tta_app
+          #requires:
+            #- build_similarity_api
+            #- build_tta_app
           serial-group: << pipeline.git.branch >>/deploy-lock
 
 
@@ -433,6 +433,10 @@ jobs:
       - attach_workspace:
           at: .
       - set_env_vars
+      - install_cf_tools
+      - run:
+          name: Build backend assets
+          command: yarn build
       - when:
           condition:
             equal: [ << pipeline.git.branch >>, prod ]
@@ -440,7 +444,6 @@ jobs:
             - run:
                 name: Create production robots.txt
                 command: ./bin/robot-factory
-      - install_cf_tools
       - run:
           name: Build frontend assets
           command: yarn --cwd frontend run build
