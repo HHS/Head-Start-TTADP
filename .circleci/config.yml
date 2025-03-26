@@ -146,7 +146,6 @@ jobs:
               fi
             done < ci.vars
             cat $BASH_ENV
-            echo "api: $cg_api"
 
   run_cmd:
     executor: docker-executor
@@ -614,6 +613,9 @@ commands:
       - run:
           name: Login with service account
           command: |
+            echo ${cg_api}
+            cat $BASH_ENV
+            source $BASH_ENV
             cf login -a ${cg_api} \
               -u ${cg_username} \
               -p ${cg_password} \
