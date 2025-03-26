@@ -19,6 +19,7 @@ const processForEmbeddedResources = async (_sequelize, instance) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
   const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
     where: {
@@ -36,6 +37,7 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
   return { id: goalTemplate[0].id, name, creationMethod: goalTemplate[0].creationMethod };
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 const checkForCuratedGoal = async (sequelize, instance) => {
   // we don't want to be setting goalTemplateId if it's already set
   if (instance.goalTemplateId) return;
@@ -74,6 +76,8 @@ const autoPopulateOnApprovedAR = (_sequelize, instance, options) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// Evaluate when implemented.
 const preventNameChangeWhenOnApprovedAR = (_sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
@@ -101,6 +105,7 @@ const invalidateSimilarityScores = async (sequelize, instance, options) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 const propagateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)

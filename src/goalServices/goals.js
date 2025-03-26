@@ -1018,7 +1018,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   });
 }
 
-// TODO: Remove after standard goals is implemented.
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 export async function saveGoalsForReport(goals, report) {
   // this will be all the currently used objectives
   // so we can remove any objectives that are no longer being used
@@ -1330,6 +1330,8 @@ export async function updateGoalStatusById(
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = (await ActivityReport.findByPk(activityReportId)).toJSON();
+
+  // TODO: TTAHUB-3970: This should call the new saveStandardGoalsForReport function.
   await saveGoalsForReport(goals, report);
 
   // updating the goals is updating the report, sorry everyone
