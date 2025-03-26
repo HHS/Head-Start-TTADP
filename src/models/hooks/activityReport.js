@@ -45,6 +45,8 @@ const copyStatus = (instance) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// We should never have a goal in draft with templates.
 const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
@@ -158,6 +160,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       // Generate a distinct list of goal names.
       const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
       // Find or create templates for each of the distinct names.
+      // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
       const distinctTemplates = await Promise.all(distinctlyNamedGoals
         .map(async (goal) => findOrCreateGoalTemplate(
           sequelize,
@@ -209,6 +212,10 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       const distinctlyTitledObjectives = [...new Map(objectives
         .map((objective) => [objective.title, objective])).values()];
       // Find or create templates for each of the distinct titles.
+      // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+      // Probably we don't want to create an objective template every time.
+      // But have a finite list of hardcoded objective templates for each goal template.
+      // We need to check this with ohs. findOrCreateObjectiveTemplate().
       const distinctTemplates = await Promise.all(distinctlyTitledObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
@@ -595,6 +602,8 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     // and 2) goals that are "In Progress" are not moved backward
     // so we start with finding all the goals that *could* be changed
     // (goals in draft or not started)
+    // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+    // We can prob drop the draft check.
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
