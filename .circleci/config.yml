@@ -195,6 +195,8 @@ jobs:
     executor: docker-executor
     resource_class: large
     steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -457,8 +459,15 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
 
+# ----------------- Commands -----------------
+
+commands:
+
   set_env_vars:
-    executor: docker-executor
+    parameters:
+      env_target:
+        type: string
+        default: << pipeline.git.branch >>
     steps:
       - checkout
       - run:
@@ -467,7 +476,7 @@ jobs:
             # $real_env maps target environment
             # $cfg_env maps to the env used for config (ie dev-green -> dev)
             # these values will be available in any subsequent bash env
-            real_env=${CIRCLE_BRANCH}
+            real_env=${env_target}
             if [[ $real_env == *"main"* ]]; then real_env="staging"; fi
             if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo "export real_env=${real_env}" >> "$BASH_ENV"
@@ -482,9 +491,6 @@ jobs:
             done < ci.vars
             cat $BASH_ENV
 
-# ----------------- Commands -----------------
-
-commands:
   install_cf_tools:
     description: "Install Cloud Foundry CLI"
     steps:
