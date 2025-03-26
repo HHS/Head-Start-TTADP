@@ -34,7 +34,7 @@ parameters:
     description: "(cmd) Target environment"
     default: "dev"
     type: enum
-    enum: ["dev-blue", "dev-green", "dev-red", "dev", "sandbox", "staging", "prod"]
+    enum: ["dev-blue", "dev-green", "dev-red", "dev", "sandbox", "staging"]
   cmd_input:
     description: "(cmd) The command to run"
     type: string
@@ -93,8 +93,8 @@ workflows:
       - deploy:
           requires:
             - build_tta_app
-          env: "dev-green"
-          #serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
+          env: << pipeline.parameters.env >>
+          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
 
 
   run_input_cmd:
