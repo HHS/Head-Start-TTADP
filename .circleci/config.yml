@@ -478,8 +478,8 @@ commands:
           command: |
             # $real_env maps target environment
             # $cfg_env maps to the env used for config (ie dev-green -> dev)
-            real_env=${target}
-            cfg_env=${target}
+            real_env=<< parameters.target >>
+            cfg_env=<< parameters.target >>
             if [[ $real_env == *"main"* ]]; then real_env="staging"; fi
             if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo "export real_env=${real_env}" >> "$BASH_ENV"
