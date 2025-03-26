@@ -74,7 +74,6 @@ workflows:
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
-          env: << pipeline.git.branch >>
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
             - dynamic_security_scan
@@ -134,13 +133,13 @@ jobs:
             echo 'export real_env="${real_env}"' >> "$BASH_ENV"
             echo 'export cfg_env="${cfg_env}"' >> "$BASH_ENV"
             # substitute actual values from circle into ci.vars file
-            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
+            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.env > ci.vars
             # iterate through ci.vars file and export each line, 
             while read line; do
               if [ -n "$line" ]; then
                 echo 'export "${line}"' >> "$BASH_ENV"
               fi
-            done < ./deployment_config/${cfg_env}_vars_ci.yml
+            done < ci.vars
 
   run_cmd:
     executor: docker-executor
