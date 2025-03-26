@@ -44,9 +44,9 @@ applications:
       BUILD_NUMBER: ((BUILD_NUMBER))
       BUILD_TIMESTAMP: ((BUILD_TIMESTAMP))
     services:
-      - ttahub-((shared_env))
-      - ttahub-redis-((shared_env))
-      - ttahub-document-upload-((shared_env))
+      - ttahub-((env))
+      - ttahub-redis-((env))
+      - ttahub-document-upload-((env))
     processes:
       - type: web
         instances: ((web_instances))
@@ -64,7 +64,7 @@ applications:
       - python_buildpack
     path: similarity_api/src
     services:
-      - ttahub-((shared_env))
+      - ttahub-((env))
     env:
       NEW_RELIC_APP_NAME: tta-similarity-api-((env))
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
