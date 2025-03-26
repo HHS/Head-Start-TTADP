@@ -464,8 +464,11 @@ jobs:
 commands:
 
   set_env_vars:
+    # set env vars, based on (ci) template in deployment_config
+    # these will persist across steps in a job, but not across jobs
+    # these values will be available in any subsequent bash env
     parameters:
-      env_target:
+      target:
         type: string
         default: << pipeline.git.branch >>
     steps:
@@ -475,8 +478,8 @@ commands:
           command: |
             # $real_env maps target environment
             # $cfg_env maps to the env used for config (ie dev-green -> dev)
-            # these values will be available in any subsequent bash env
-            real_env=${env_target}
+            real_env=${target}
+            cfg_env=${target}
             if [[ $real_env == *"main"* ]]; then real_env="staging"; fi
             if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo "export real_env=${real_env}" >> "$BASH_ENV"
