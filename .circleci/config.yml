@@ -135,14 +135,14 @@ jobs:
             real_env=${CIRCLE_BRANCH}
             if [[ $real_env == *"main"* ]]; then real_env="staging"; fi
             if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
-            echo 'export real_env="${real_env}"' >> "$BASH_ENV"
-            echo 'export cfg_env="${cfg_env}"' >> "$BASH_ENV"
+            echo "export real_env=${real_env}" >> "$BASH_ENV"
+            echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
             # substitute actual values from circle into ci.vars file
             circleci env subst < ./deployment_config/${cfg_env}_vars_ci.env > ci.vars
             # iterate through ci.vars file and export each line, 
             while read line; do
-              if [ -n "$line" ]; then
-                echo 'export "${line}"' >> "$BASH_ENV"
+              if [ -n "${line}" ]; then
+                echo "export ${line}">>"$BASH_ENV"
               fi
             done < ci.vars
             cat $BASH_ENV
