@@ -88,14 +88,11 @@ workflows:
     when:
       equal: [ deploy, << pipeline.parameters.action >> ]
     jobs:
-      - build_tta_app
       - build_similarity_api
       - deploy:
           requires:
-            - build_tta_app
             - build_similarity_api
-          env: << pipeline.parameters.env >>
-          serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
+          serial-group: << pipeline.id >>/<< pipeline.git.branch >> /deploy-lock
 
 
   run_input_cmd:
@@ -430,17 +427,13 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: Setup env vars
-          command: |
-            if [ echo << parameters.env >> | grep "dev" ]; then cfg_env="dev"; fi
-            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
+      - set_env_vars
       - run:
           name: Build backend assets
           command: yarn build
       - when:
           condition:
-            equal: [ << pipeline.parameters.env >>, prod ]
+            equal: [ << pipeline.git.branch >>, prod ]
           steps:
             - run:
                 name: Create production robots.txt
@@ -449,23 +442,16 @@ jobs:
       - run:
           name: Build frontend assets
           command: yarn --cwd frontend run build
-          environment:
-            REACT_APP_GTM_ENABLED: $PROD_GTM_ENABLED
-            REACT_APP_GTM_ID: $GLOBAL_GTM_ID
-            REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
-            REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
-            REACT_APP_WEBSOCKET_URL: wss://ttahub.ohs.acf.hhs.gov
-            REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
       - cf_deploy
       - run:
           name: Run database migrations
           command: |
             set -x
-            cf run-task tta-smarthub-<< pipeline.parameters.env >> --command "yarn db:migrate:prod" --name migrate
+            cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
       - notify_new_relic
       - when:
           condition:
-            equal: [ << pipeline.parameters.env >>, prod ]
+            equal: [ << pipeline.git.branch >>, prod ]
           steps:
             - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
@@ -489,6 +475,28 @@ commands:
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
   
+  set_env_vars:
+    steps:
+      - checkout
+      - run:
+          name: Setup env vars
+          command: |
+            # $real_env maps target environment
+            # $cfg_env maps to the env used for config (ie dev-green -> dev)
+            # these values will be available in any subsequent bash env
+            real_env=${CIRCLE_BRANCH}
+            if [[ $real_env == *"main"* ]]; then real_env="staging"; fi]
+            if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
+            echo "export real_env=$real_env" >> "$BASH_ENV"
+            echo "export cfg_env=$cfg_env" >> "$BASH_ENV"
+            # substitute actual values from circle into ci.vars file
+            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
+            # iterate through ci.vars file and export each line, 
+            while read line; do
+              if [ -n "$line" ]; then
+                echo 'export $line' >> "$BASH_ENV"
+              fi
+            done < ./deployment_config/${cfg_env}_vars_ci.yml
 
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -602,9 +610,6 @@ commands:
       - run:
           name: Login with service account
           command: |
-            if [ echo ${CIRCLE_BRANCH} | grep "dev" ]; then cfg_env="dev"; fi
-            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
-            source ci.vars
             cf login -a ${cg_api} \
               -u ${cg_username} \
               -p ${cg_password} \
@@ -613,15 +618,13 @@ commands:
       - run:
           name: Push application
           command: |
-            source ci.vars
-            if [ echo ${CIRCLE_BRANCH} | grep "dev" ]; then cfg_env="dev"; fi
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             set -x
-            echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${cfg_env}]"
+            echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${real_env}]"
             cf push \
               --vars-file app.vars \
-              --var BUILD_BRANCH=$CIRCLE_BRANCH \
-              --var BUILD_COMMIT=$CIRCLE_SHA1 \
+              --var BUILD_BRANCH=${CIRCLE_BRANCH} \
+              --var BUILD_COMMIT=${CIRCLE_SHA1} \
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
               --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
