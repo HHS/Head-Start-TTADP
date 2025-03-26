@@ -641,7 +641,6 @@ commands:
               --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  
   notify_slack:
     description: "Notify Slack with message"
     parameters:
