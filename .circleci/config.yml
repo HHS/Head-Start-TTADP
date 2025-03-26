@@ -93,6 +93,7 @@ workflows:
       - deploy:
           requires:
             - build_tta_app
+            - build_similarity_api
           env: << pipeline.parameters.env >>
           serial-group: << pipeline.id >>/<< pipeline.parameters.env >>/deploy-lock
 
@@ -432,10 +433,7 @@ jobs:
       - run:
           name: Setup env vars
           command: |
-            cfg_env="<< parameters.env >>"
-            if [ ${cfg_env} == "dev-green" ]; then
-              cfg_env="dev"
-            fi
+            if [ echo << parameters.env >> | grep "dev" ]; then cfg_env="dev"; fi
             circleci env subst < ./deployment_config/${cfg_env}_vars_ci.yml > ci.vars
       - run:
           name: Build backend assets
@@ -602,15 +600,9 @@ commands:
       and push application using deployment configuration file."  
     steps:
       - run:
-          name: Check for prod
-          command: |
-            if [ "<< pipeline.parameters.env >>" == "prod" ] && [ "$CIRCLE_BRANCH" != "prod"]; then
-              echo "Can only deploy prod branch to prod environment"
-              exit 1
-            fi
-      - run:
           name: Login with service account
           command: |
+            if [ echo ${CIRCLE_BRANCH} | grep "dev" ]; then cfg_env="dev"; fi
             circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
             source ci.vars
             cf login -a ${cg_api} \
@@ -622,9 +614,10 @@ commands:
           name: Push application
           command: |
             source ci.vars
-            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars.yml > app.vars
+            if [ echo ${CIRCLE_BRANCH} | grep "dev" ]; then cfg_env="dev"; fi
+            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             set -x
-            echo "Deploying app@branch:[ $CIRCLE_BRANCH] to [<< pipeline.parameters.env >>]"
+            echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${cfg_env}]"
             cf push \
               --vars-file app.vars \
               --var BUILD_BRANCH=$CIRCLE_BRANCH \
