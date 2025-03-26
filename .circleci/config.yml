@@ -86,7 +86,7 @@ workflows:
       
   deploy_manual:
     when:
-      equal: [ build_test_deploy, << pipeline.parameters.action >> ]
+      equal: [ deploy, << pipeline.parameters.action >> ]
     jobs:
       - build_tta_app
       - build_similarity_api
