@@ -1,0 +1,80 @@
+@startuml
+
+!pragma useVerticalIf on
+title Import System Overview (with Processing Failure Handling)
+
+start
+
+:Import is scheduled or triggered;
+
+:Connect to SFTP and check for files;
+
+if (New files found?) then (yes)
+  repeat
+    :Attempt to stream file to S3;
+
+    if (Upload succeeds?) then (yes)
+      :Mark file as COLLECTED;
+    else (no)
+      :Mark file as UPLOAD_FAILED;
+      :Log error;
+      note right
+        Failed files are retried
+        up to 5 times in future runs
+      end note
+    endif
+
+  repeat while (More files)
+else (no)
+  :No new or eligible files;
+endif
+
+:Check if any files are ready to process;
+
+if (Files to process?) then (yes)
+  :Download zip from S3;
+  :Attempt to extract XML files;
+
+  if (Extraction succeeded?) then (yes)
+    :Log available data files;
+
+    repeat
+      :Remap and validate XML;
+      :Insert/update/delete DB records;
+      :Log schema, hash, counts;
+
+      if (Record-level errors?) then (yes)
+        :Track in error counts;
+        note right
+          Individual record errors do not
+          stop processing or retry
+        end note
+      endif
+
+    repeat while (More XML files)
+
+    :Mark importFile as PROCESSED;
+  else (no)
+    :Log error;
+    :Mark file as PROCESSING_FAILED;
+    note right
+      Failed processing will be retried
+      up to 5 times in future runs
+    end note
+  endif
+
+else (no)
+  :Skip processing step;
+endif
+
+:Check for post-processing actions;
+
+if (Has post-processing?) then (yes)
+  :Execute post-processing;
+  :Ex. createMonitoringGoals;
+endif
+
+:Import complete;
+
+stop
+@enduml
