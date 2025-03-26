@@ -52,6 +52,9 @@ workflows:
       - set_env_vars
       - build_tta_app
       - build_similarity_api
+      - lint:
+          requires:
+            - build_tta_app
       - test_similarity_api:
           requires:
             - build_similarity_api
@@ -90,9 +93,11 @@ workflows:
     jobs:
       - set_env_vars
       - build_similarity_api
+      - build_tta_app
       - deploy:
           requires:
             - build_similarity_api
+            - build_tta_app
           serial-group: << pipeline.git.branch >>/deploy-lock
 
 
@@ -172,6 +177,20 @@ jobs:
             - packages/common/node_modules
           key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
+          name: Check nodejs version compatibility with buildpack
+          command: |
+            chmod +x ./bin/check_node_version_compatibility.sh
+            ./bin/check_node_version_compatibility.sh
+      - run: yarn build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  lint:
+    executor: docker-executor
+    resource_class: large
+    steps:
+      - run:
           name: Lint backend
           command: yarn lint:ci
       - run:
@@ -188,21 +207,14 @@ jobs:
             cd frontend
             chmod 744 ./run-yarn-audit.sh
             ./run-yarn-audit.sh;
-      - run:
-          name: Check nodejs version compatibility with buildpack
-          command: |
-            chmod +x ./bin/check_node_version_compatibility.sh
-            ./bin/check_node_version_compatibility.sh
       - store_artifacts:
           path: reports
           destination: backend-lint.xml
       - store_artifacts:
           path: frontend/reports
           destination: frontend-lint.xml
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
+
+
 
   build_similarity_api:
     executor: docker-python-executor
@@ -443,10 +455,6 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - checkout
-      - run:
-          name: Build backend assets
-          command: yarn build
       - when:
           condition:
             equal: [ << pipeline.git.branch >>, prod ]
