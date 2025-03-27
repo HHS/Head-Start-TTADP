@@ -478,6 +478,7 @@ jobs:
 
       # - setup_remote_docker:
       #     version: default
+      - set_env_vars
       - run:
           name: Start up local services
           background: true
