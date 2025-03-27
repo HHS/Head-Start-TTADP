@@ -68,7 +68,12 @@ app.use((req, res, next) => {
       scriptSrcElem: ["'self'", `'nonce-${res.locals.nonce}'`, 'https://*.googletagmanager.com'],
       imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
       connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
-      defaultSrc: ["'self'", 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
+      defaultSrc: [
+        "'self'",
+        'wss://tta-smarthub-sandbox.app.cloud.gov',
+        'wss://tta-smarthub-dev.app.cloud.gov',
+        'wss://tta-smarthub-dev-green.app.cloud.gov',
+      ],
     },
   });
   cspMiddleware(req, res, next);
