@@ -27,7 +27,7 @@ executors:
 parameters:
   action:
     description: "Desired job to run"
-    enum: ["build_test_deploy", "deploy", "cmd"]
+    enum: ["build_test_deploy", "deploy", "cmd", "restore_dbs"]
     default: "build_test_deploy"
     type: enum
   env: 
@@ -118,6 +118,18 @@ workflows:
       - run_cmd:
           command: "echo 'hello world'"
 
+  backup_restore_db:
+    when:
+        equal: [ << pipeline.parameters.action >>, restore_dbs ]
+    jobs:
+      - backup_prod_db
+      - process_db:
+          requires:
+            - backup_prod_db
+      - restore_dbs:
+           requires:
+             - process_db
+
 # ----------------- Jobs -----------------
 jobs:
 
@@ -131,6 +143,70 @@ jobs:
     steps:
       - cf_cmd:
           the_command: << parameters.command >>
+
+  backup_prod_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run: exit 1
+      - cf_backup:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-prod
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production 
+
+  process_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run: exit 1
+      - cf_process:
+            auth_client_secret: PROD_AUTH_CLIENT_SECRET
+            cloudgov_username: CLOUDGOV_PROD_USERNAME
+            cloudgov_password: CLOUDGOV_PROD_PASSWORD
+            cloudgov_space: CLOUDGOV_PROD_SPACE
+
+  restore_dbs:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run: exit 1
+      - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 
   build_tta_app:
     executor: docker-executor
@@ -379,53 +455,60 @@ jobs:
           destination: uncovered-lines
     
   test_e2e:
-    executor: docker-postgres-executor
+    executor: machine-executor
     resource_class: large
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
+      # - run:
+      #     name: Start server
+      #     background: true
+      #     command: |
+      #       yarn build
+      #       yarn playwright install
+      #       BYPASS_AUTH=true 
+      #       CURRENT_USER_ID=5 
+      #       yarn start:ci
+      # - run:
+      #     name: Run migrations ci
+      #     command: yarn db:migrate:ci
+      # - run:
+      #     name: Seed database
+      #     command: yarn db:seed:ci
+
+      # - setup_remote_docker:
+      #     version: default
       - run:
-          name: Start server
+          name: Start up local services
           background: true
-          command: |
-            yarn build
-            yarn playwright install
-            BYPASS_AUTH=true 
-            CURRENT_USER_ID=5 
-            yarn start:ci
+          command: ./bin/prod-style-server
       - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
+          command: docker build -t tta-testing -f Dockerfile-Testing .
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
-      # - run:
-      #     name: Wait for backend to start
-      #     command: ./bin/ping-server 8080
       - run:
-          name: run e2e:ci
-          command: yarn e2e:ci
-      #  docker cp <container_name_or_id>:<path_inside_container> <path_on_host>
+          name: Wait for backend to start
+          command: ./bin/ping-server 8080
+
+      - run:
+          name: Wait for backend to start
+          command: ./bin/ping-server 8080
+
+      - run:
+          command: docker run -t tta-testing yarn e2e:ci
       - store_artifacts:
           path: tests/e2e
       - run:
-          name: run e2e:api
-          command: yarn e2e:api
+          command: docker run -t tta-testing yarn e2e:api
       - store_artifacts:
           path: tests/api
       - run:
-          name: run e2e:utils
-          command: yarn e2e:utils
+          command: docker run -t tta-testing yarn e2e:utils
       - store_artifacts:
           path: tests/utilsTests
       - run:
-          name: run cucumber:ci
-          command: yarn cucumber:ci
+          command: docker run -t tta-testing yarn cucumber:ci
       - store_artifacts:
           path:  reports/
     
@@ -832,3 +915,95 @@ commands:
 
             # Logout from Cloud Foundry
             cf logout
+
+
+  cf_backup:
+    description: "Backup database to S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "backup"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
+  cf_restore:
+    description: "Restore backup database from S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - run:
+          name: Validate Parameters
+          command: |
+            if [ "<< parameters.rds_service_name >>" = "ttahub-prod" ]; then
+              echo "Error: rds_service_name cannot be 'ttahub-prod'"
+              exit 1
+            fi
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "restore"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-restore"
+          success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+          timeout: "900"
+  cf_process:
+    description: "Process database from S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "process"
+          task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
+          task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
+          config: "process"
+          success_message: ':database: Restored data processed'
+          directory: "./"
+          timeout: "3000"
+  cf_retention:
+    description: "Delete Backup from S3 based on retention"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "retention"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
+          config: "<< parameters.backup_prefix >>-backup"
+          success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
