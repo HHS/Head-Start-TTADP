@@ -554,6 +554,7 @@ commands:
             BYPASS_AUTH=true
             CURRENT_USER_ID=5 
             yarn start:ci
+
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -562,10 +563,12 @@ commands:
           command: yarn db:seed:ci
       - run:
           name: Wait for frontend to be running
-          command: ./bin/ping-server 3000
+          command: ./bin/ping-server 3000     
       - run:
           name: Wait for backend to be running
-          command: ./bin/ping-server 8080
+          command: |
+            docker ps
+            ./bin/ping-server 8080
       - run:
           name: "Running: << parameters.command >>"
           command: << parameters.command >>

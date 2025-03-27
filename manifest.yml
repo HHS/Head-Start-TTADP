@@ -34,7 +34,7 @@ applications:
       SMTP_SECURE: ((SMTP_SECURE))
       SMTP_IGNORE_TLS: ((SMTP_IGNORE_TLS))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
-      NODE_MODULES_CACHE: false
+      NODE_MODULES_CACHE: "false"
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
       SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
       SMARTSHEET_ENDPOINT: ((SMARTSHEET_ENDPOINT))
@@ -59,7 +59,6 @@ applications:
   - name: tta-similarity-api-((env))
     strategy: rolling
     stack: cflinuxfs4
-    health-check-type: process
     buildpacks:
       - python_buildpack
     path: similarity_api/src
