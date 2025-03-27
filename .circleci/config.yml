@@ -69,6 +69,7 @@ workflows:
 
       - dynamic_security_scan:
           requires:
+            - lint
             - test_similarity_api
             - test_backend
             - test_frontend
@@ -383,11 +384,11 @@ jobs:
           # this job runs on the host machine
           version: default
       - run_with_db:
-          command: yarn e2e:api
-          artifacts: tests/api
-      - run_with_db:
           command: yarn e2e:ci
           artifacts: tests/e2e
+      - run_with_db:
+          command: yarn e2e:api
+          artifacts: tests/api
       - run_with_db:
           command: yarn e2e:utils
           artifacts: tests/utilsTests
@@ -512,7 +513,6 @@ commands:
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
   
 
-
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
       File is used as checksum source for part of caching key."
@@ -561,8 +561,11 @@ commands:
           name: Seed database
           command: yarn db:seed:ci
       - run:
-          name: Wait for server to be running
+          name: Wait for frontend to be running
           command: ./bin/ping-server 3000
+      - run:
+          name: Wait for backend to be running
+          command: ./bin/ping-server 8080
       - run:
           name: "Running: << parameters.command >>"
           command: << parameters.command >>
