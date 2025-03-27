@@ -154,7 +154,7 @@ jobs:
       - run:
           name: Install playwright dependencies
           command: |
-            npx playwright install
+            yarn playwright install
       - run:
           name: Check nodejs version compatibility with buildpack
           command: |
@@ -391,6 +391,7 @@ jobs:
           background: true
           command: |
             yarn build
+            yarn playwright install
             BYPASS_AUTH=true 
             CURRENT_USER_ID=5 
             yarn start:ci
