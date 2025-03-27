@@ -380,9 +380,9 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          # this job runs on the host machine
-          version: default
+      #- setup_remote_docker:
+      #    # this job runs on the host machine
+      #    version: default
       - run_with_db:
           command: yarn e2e:ci
           artifacts: tests/e2e
