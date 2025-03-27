@@ -375,13 +375,11 @@ jobs:
           destination: uncovered-lines
     
   test_e2e:
-    executor: docker-postgres-executor
+    executor: machine-executor
     resource_class: large
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
       - run:
           name: Install playwright dependencies
           command: |
@@ -391,10 +389,10 @@ jobs:
           command: ./bin/prod-style-server
       - run:
           name: Run migrations ci
-          command: yarn db:migrate:ci
+          command: docker compose exec server "yarn db:migrate:ci"
       - run:
           name: Seed database
-          command: yarn db:seed:ci
+          command: docker compose exec server "yarn db:seed:ci"
       - run:
           name: Wait for frontend to start
           command: ./bin/ping-server 3000
@@ -402,23 +400,24 @@ jobs:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
       - run:
-          name: yarn e2e:ci
-          command: yarn e2e:ci
+          name: run e2e:ci
+          command: docker compose run server "yarn e2e:ci"
+      #  docker cp <container_name_or_id>:<path_inside_container> <path_on_host>
       - store_artifacts:
           path: tests/e2e
       - run:
-          name: yarn e2e:api
-          command: yarn e2e:api
+          name: run e2e:api
+          command: docker compose run server "yarn e2e:api"
       - store_artifacts:
           path: tests/api
       - run:
-          name: yarn e2e:utils
-          command: yarn e2e:utils
+          name: run e2e:utils
+          command: docker compose run server "yarn e2e:utils"
       - store_artifacts:
           path: tests/utilsTests
       - run:
-          name: yarn cucumber:ci
-          command: yarn cucumber:ci
+          name: run cucumber:ci
+          command: docker compose run server "yarn cucumber:ci"
       - store_artifacts:
           path:  reports/
       # - run_with_db:
