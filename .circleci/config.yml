@@ -482,15 +482,14 @@ jobs:
           name: Start up local services
           background: true
           command: |
+            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > .env
             docker compose \
               --profile minimal_required_node \
               --profile minimal_required_postgres \
               --profile minimal_required_redis \
               --profile minimal_required_python \
               up
-
-      - run:
-          command: docker build -t tta-testing -f Dockerfile-Testing .
+            
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
@@ -503,7 +502,9 @@ jobs:
           command: ./bin/ping-server 8080
 
       - run:
-          command: docker run -t tta-testing yarn e2e:ci
+          command: |
+            docker build -t tta-testing -f Dockerfile-Testing .
+            docker run -t tta-testing yarn e2e:ci
       - store_artifacts:
           path: tests/e2e
       - run:
