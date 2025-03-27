@@ -482,14 +482,17 @@ jobs:
       - run:
           name: Start up local services
           background: true
-          command: |
-            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > .env
-            docker compose \
-              --profile minimal_required_node \
-              --profile minimal_required_postgres \
-              --profile minimal_required_redis \
-              --profile minimal_required_python \
-              up
+          # command: |
+          #   circleci env subst < ./deployment_config/${cfg_env}_vars.yml > .env
+          #   docker compose \
+          #     --profile minimal_required_node \
+          #     --profile minimal_required_postgres \
+          #     --profile minimal_required_redis \
+          #     --profile minimal_required_python \
+          #     up
+      - run:
+          name: Start up local services
+          command: ./bin/prod-style-server
             
       - run:
           name: Wait for server to start
