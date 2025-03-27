@@ -375,11 +375,13 @@ jobs:
           destination: uncovered-lines
     
   test_e2e:
-    executor: machine-executor
+    executor: docker-postgres-executor
     resource_class: large
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          version: default
       - run:
           name: Install playwright dependencies
           command: |
