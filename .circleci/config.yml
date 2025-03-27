@@ -375,26 +375,62 @@ jobs:
           destination: uncovered-lines
     
   test_e2e:
-    executor: docker-postgres-executor
+    executor: machine-executor
     resource_class: large
     steps:
       - attach_workspace:
           at: .
-      #- setup_remote_docker:
-      #    # this job runs on the host machine
-      #    version: default
-      - run_with_db:
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Start up local services
+          command: ./bin/prod-style-server
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for frontend to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Wait for backend to start
+          command: ./bin/ping-server 8080
+      - run:
+          name: yarn e2e:ci
           command: yarn e2e:ci
-          artifacts: tests/e2e
-      - run_with_db:
+      - store_artifacts:
+          path: tests/e2e
+      - run:
+          name: yarn e2e:api
           command: yarn e2e:api
-          artifacts: tests/api
-      - run_with_db:
+      - store_artifacts:
+          path: tests/api
+      - run:
+          name: yarn e2e:utils
           command: yarn e2e:utils
-          artifacts: tests/utilsTests
-      - run_with_db:
+      - store_artifacts:
+          path: tests/utilsTests
+      - run:
+          name: yarn cucumber:ci
           command: yarn cucumber:ci
-          artifacts: reports/
+      - store_artifacts:
+          path:  reports/
+      # - run_with_db:
+      #     command: yarn e2e:ci
+      #     artifacts: tests/e2e
+      # - run_with_db:
+      #     command: yarn e2e:api
+      #     artifacts: tests/api
+      # - run_with_db:
+      #     command: yarn e2e:utils
+      #     artifacts: tests/utilsTests
+      # - run_with_db:
+      #     command: yarn cucumber:ci
+      #     artifacts: reports/
     
   dynamic_security_scan:
     executor: machine-executor
@@ -567,7 +603,7 @@ commands:
           name: Wait for backend to be running
           command: |
             lsof -i -P -n | grep LISTEN
-            ./bin/ping-server 8080
+            ./bin/ping-server 8080 localhost /api
       - run:
           name: "Running: << parameters.command >>"
           command: << parameters.command >>
