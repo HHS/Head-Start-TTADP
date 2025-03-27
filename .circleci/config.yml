@@ -481,7 +481,7 @@ jobs:
       - run:
           name: Start up local services
           background: true
-          command: ./bin/prod-style-server
+          command: yarn docker:start
       - run:
           command: docker build -t tta-testing -f Dockerfile-Testing .
       - run:
