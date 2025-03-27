@@ -481,7 +481,16 @@ jobs:
       - run:
           name: Start up local services
           background: true
-          command: yarn docker:start
+          command: |
+            docker compose \
+              --profile minimal_required_node \
+              --profile minimal_required_postgres \
+              --profile minimal_required_redis \
+              --profile minimal_required_python \
+              --build \
+              --force-recreate \
+              up
+
       - run:
           command: docker build -t tta-testing -f Dockerfile-Testing .
       - run:
