@@ -259,6 +259,7 @@ function ActivityReport({
         if (activityReportId !== 'new') {
           let fetchedReport;
           try {
+            console.log('-------------------------------- called get report');
             fetchedReport = await getReport(activityReportId);
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.

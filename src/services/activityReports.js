@@ -331,20 +331,23 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: Recipient,
             as: 'recipient',
-            attributes: ['name'],
+            attributes: ['id', 'name'],
+            //attributes: ['name'],
           },
         ],
       },
     ],
   });
-
+  console.log('\n\n\n----------test 1');
   const activityRecipients = recipients.map((recipient) => {
+    const recipientId = recipient.id;
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
 
     return {
       id: activityRecipientId,
+      recipientId,
       activityRecipientId, // Create or Update Report Expect's this Field.
       name,
     };
