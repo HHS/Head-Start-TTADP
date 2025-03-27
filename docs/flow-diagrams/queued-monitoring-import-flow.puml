@@ -1,0 +1,48 @@
+@startuml
+
+title Queued Import Flow (via Bull Queue)
+!pragma useVerticalIf on
+
+start
+
+:Run `queueDownload <importId>`;
+:Enqueue job { type: IMPORT_DOWNLOAD };
+
+:Worker picks up IMPORT_DOWNLOAD;
+:Run `download(importId)`;
+:Connect to SFTP;
+if (Files found?) then (yes)
+  repeat
+    :Stream to S3;
+    if (Success?) then (yes)
+      :Mark as COLLECTED;
+    else (no)
+      :Mark as UPLOAD_FAILED;
+      :Log error;
+    endif
+  repeat while (More files)
+endif
+
+:Run `queueProcess <importId>`;
+:Enqueue job { type: IMPORT_PROCESS };
+
+:Worker picks up IMPORT_PROCESS;
+:Run `process(importId)`;
+if (Files to process?) then (yes)
+  repeat
+    :Download from S3;
+    :Unzip, extract XMLs;
+    :Process definitions;
+    :Insert/update/delete DB;
+  repeat while (More XMLs);
+  :Mark as PROCESSED;
+else (no)
+  :Skip processing;
+endif
+
+if (Post-processing exists?) then (yes)
+  :Run post-processing;
+endif
+
+stop
+@enduml
