@@ -493,13 +493,9 @@ jobs:
       - run:
           name: Start up local services
           command: ./bin/prod-style-server
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      - run:
-          name: Wait for backend to start
-          command: ./bin/ping-server 8080
-
+      # - run:
+      #     name: Wait for server to start
+      #     command: ./bin/ping-server 3000
       - run:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
