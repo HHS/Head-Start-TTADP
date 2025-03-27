@@ -42,12 +42,14 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 import './activitySummary.scss';
 import GroupAlert from '../../../components/GroupAlert';
 import { parseCheckboxEvent } from '../../../Constants';
+import SingleRecipientSelect from './components/SingleRecipientSelect';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
   groups,
 }) => {
+  console.log('recipients: ', recipients);
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
   const {
@@ -78,8 +80,10 @@ const ActivitySummary = ({
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
-
+  console.log("watchFormRecipients: ", watchFormRecipients);
+  console.log("raw grnats: ", rawGrants);
   const grants = rawGrants.map((recipient) => ({
+    id: recipient.id,
     label: recipient.name,
     options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
@@ -91,7 +95,7 @@ const ActivitySummary = ({
     label: entity.name,
     value: entity.activityRecipientId,
   }));
-
+ console.log("123 grants: ", grants);
   const disableRecipients = isEmpty(activityRecipientType);
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
@@ -210,14 +214,37 @@ const ActivitySummary = ({
     }
   }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
 
-  const renderRecipients = (marginTop = 2, marginBottom = 0) => (
-    <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
-      {!disableRecipients
-         && !connectionActive
-         && !selectedRecipients.length
-        ? <ConnectionError />
-        : null}
-      <FormItem
+  const getSelectedRecipient = () => {
+    console.log('watchFormRecipients in get selected 1: ', watchFormRecipients);
+    if (!watchFormRecipients.length) {
+      return null;
+    }
+    // Find recipient by id.
+    const recipientId = watchFormRecipients[0].id;
+    console.log('watchFormRecipients in get selected 2: ', recipientId);
+    console.log('selected to filter: ', selectedRecipients);
+    const selectedRecipient = selectedRecipients.find(
+      (recipient) => recipient.id === recipientId,
+    );
+    console.log('watchFormRecipients in get selected 3: ', selectedRecipient);
+    if (!selectedRecipient) {
+      return null;
+    }
+    console.log('watchFormRecipients in get selected 4: ', { value: selectedRecipient.id, label: selectedRecipient.label });
+    return { value: selectedRecipient.id, label: selectedRecipient.Label };
+  };
+ console.log("watchFormRecipients: ", watchFormRecipients[0]);
+
+ /*
+    <SingleRecipientSelect
+        selectedRecipient={getSelectedRecipient}
+        possibleRecipients={selectedRecipients}
+        disable={disableRecipients}
+      />
+      */
+
+      /*
+          <FormItem
         label={recipientLabel}
         name="activityRecipients"
       >
@@ -234,6 +261,20 @@ const ActivitySummary = ({
           onClick={() => setShouldValidateActivityRecipients(true)}
         />
       </FormItem>
+      */
+  console.log('\n\n\n\n---- Available recipients', selectedRecipients);
+  const renderRecipients = (marginTop = 2, marginBottom = 0) => (
+    <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
+      {!disableRecipients
+         && !connectionActive
+         && !selectedRecipients.length
+        ? <ConnectionError />
+        : null}
+      <SingleRecipientSelect
+        selectedRecipient={[]}
+        possibleRecipients={selectedRecipients || []}
+        disable={disableRecipients}
+      />
     </div>
   );
 
