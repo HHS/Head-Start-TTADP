@@ -487,8 +487,6 @@ jobs:
               --profile minimal_required_postgres \
               --profile minimal_required_redis \
               --profile minimal_required_python \
-              --build \
-              --force-recreate \
               up
 
       - run:
