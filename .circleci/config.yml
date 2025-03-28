@@ -679,7 +679,7 @@ commands:
       - run:
           name: Install playwright dependencies
           command: |
-            npx playwright install
+            yarn add playwright
       - run:
           name: Start the server and watch logs
           background: true
