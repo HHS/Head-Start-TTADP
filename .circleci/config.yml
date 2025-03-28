@@ -507,7 +507,7 @@ jobs:
           name: Starting testing server
           background: true
           command: |
-            docker run -t tta-testing -p 9999:9999 yarn start:testingonly
+            docker run -p 9999:9999 tta-testing yarn start:testingonly
       - run:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
