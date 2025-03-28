@@ -499,6 +499,7 @@ jobs:
               --profile minimal_required_postgres \
               --profile minimal_required_redis \
               --profile minimal_required_python \
+              --profile minimal_required_node \
               up
       - run:
           name: Build docker file
