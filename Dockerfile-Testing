@@ -13,5 +13,6 @@ RUN mkdir -p /home/node/.cache/yarn && \
 
 COPY . .
 RUN yarn install
+RUN yarn playwright install
 #RUN yarn add playwright
 
