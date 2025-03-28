@@ -676,10 +676,10 @@ commands:
       artifacts:
         type: string
     steps:
-      - run:
-          name: Install playwright dependencies
-          command: |
-            yarn add playwright
+      # - run:
+      #     name: Install playwright dependencies
+      #     command: |
+      #       yarn add playwright
       - run:
           name: Start the server and watch logs
           background: true
