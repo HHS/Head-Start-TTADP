@@ -494,7 +494,7 @@ jobs:
           name: Start up local services
           background: true
           command: |
-            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > .env
+            cp .env.example .env
             docker compose \
               --profile minimal_required_node \
               --profile minimal_required_postgres \
