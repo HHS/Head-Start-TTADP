@@ -490,17 +490,23 @@ jobs:
       #         --profile minimal_required_python \
       #         up
       - set_env_vars
+      # - run:
+      #     name: Start up local services
+      #     background: true
+      #     command: |
+      #       cp .env.example .env
+      #       npm install cross-env
+      #       docker compose \
+      #         --profile minimal_required_postgres \
+      #         --profile minimal_required_redis \
+      #         --profile minimal_required_python \
+      #         --profile minimal_required_node \
+      #         up
       - run:
           name: Start up local services
-          background: true
           command: |
-            cp .env.example .env
-            docker compose \
-              --profile minimal_required_postgres \
-              --profile minimal_required_redis \
-              --profile minimal_required_python \
-              --profile minimal_required_node \
-              up
+            ./bin/prod-style-server
+            docker compose start testingonly db
       - run:
           name: Build docker file
           command: docker build -t tta-testing -f Dockerfile-Testing .
@@ -517,7 +523,7 @@ jobs:
           command: |
             docker ps
             timeout 5m bash -c \
-            "until [[ '5' -eq $(docker ps --filter status=running | grep -c 'head-start') ]]; do \
+            "until [[ '3' -eq $(docker ps --filter status=running | grep -c 'head-start') ]]; do \
               echo 'waiting 30s' && sleep 30; \
             done"
             docker ps
@@ -525,7 +531,7 @@ jobs:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
       - run:
-          name: Wait for backend to start
+          name: Wait for testing server to start
           command: |
             docker ps
             ./bin/ping-server 9999
