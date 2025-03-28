@@ -140,8 +140,11 @@ describe('activityReportObjectiveCitation', () => {
   let grant;
   let recipient;
   let goal;
+  let nonMonitoringGoal;
   let objective;
+  let nonMonitoringObjective;
   let aro;
+  let nonMonitoringAro;
   const citationIds = [];
 
   beforeAll(async () => {
@@ -166,8 +169,23 @@ describe('activityReportObjectiveCitation', () => {
       createdVia: 'monitoring',
     });
 
+    nonMonitoringGoal = await Goal.create({
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.NOT_STARTED,
+      isFromSmartsheetTtaPlan: false,
+      onApprovedAR: false,
+      grantId: grant.id,
+      createdVia: 'activityReport',
+    });
+
     objective = await Objective.create({
       goalId: goal.id,
+      title: faker.datatype.string(200),
+      status: 'Not Started',
+    });
+
+    nonMonitoringObjective = await Objective.create({
+      goalId: nonMonitoringGoal.id,
       title: faker.datatype.string(200),
       status: 'Not Started',
     });
@@ -176,6 +194,22 @@ describe('activityReportObjectiveCitation', () => {
       objectiveId: objective.id,
       activityReportId: activityReport.id,
     });
+
+    nonMonitoringAro = await ActivityReportObjective.create({
+      objectiveId: nonMonitoringObjective.id,
+      activityReportId: activityReport.id,
+    });
+
+    const nonMonitoringCitation = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: nonMonitoringAro.id,
+      citation: 'Non Monitoring Citation 1',
+      monitoringReferences: [{
+        grantId: grant.id,
+        findingId: 1,
+        reviewName: 'Review 1',
+      }],
+    });
+    citationIds.push(nonMonitoringCitation.id);
   });
 
   afterAll(async () => {
@@ -185,9 +219,16 @@ describe('activityReportObjectiveCitation', () => {
       },
     });
 
-    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
-    await Objective.destroy({ where: { id: objective.id }, force: true });
-    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await ActivityReportObjective.destroy({
+      where: { objectiveId: [objective.id, nonMonitoringObjective.id] },
+    });
+    await Objective.destroy({
+      where: {
+        id: [objective.id, nonMonitoringObjective.id],
+      },
+      force: true,
+    });
+    await Goal.destroy({ where: { id: [goal.id, nonMonitoringGoal.id] }, force: true });
     await destroyReport(activityReport);
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
@@ -378,6 +419,44 @@ describe('activityReportObjectiveCitation', () => {
     expect(aroCitations[1].citation).toEqual('Citation 3');
     expect(aroCitations[1].monitoringReferences.length).toEqual(1);
     expect(aroCitations[1].monitoringReferences[0].grantId).toBe(grant.id);
+  });
+
+  it('correctly removes and prevents the saving of citations for non-monitoring goals', async () => {
+    // Get all the citations for nonMonitoringAro.
+    const nonMonitoringAroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: nonMonitoringAro.id,
+      },
+    });
+    expect(nonMonitoringAroCitations).toHaveLength(1);
+
+    const citationsToCreate = [
+      {
+        citation: 'Non-monitoring Citation to add',
+        monitoringReferences: [{
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1',
+        }],
+      },
+    ];
+
+    // Save the ActivityReportObjectiveCitation.
+    const result = await cacheCitations(
+      nonMonitoringObjective.id,
+      nonMonitoringAro.id,
+      citationsToCreate,
+    );
+
+    // Assert created.
+    expect(result).toEqual([]);
+
+    const createdAroCitations = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: nonMonitoringAro.id,
+      },
+    });
+    expect(createdAroCitations).toHaveLength(0);
   });
 });
 
