@@ -13,4 +13,5 @@ RUN mkdir -p /home/node/.cache/yarn && \
 
 COPY . .
 RUN yarn install
+RUN npx install playwright
 
