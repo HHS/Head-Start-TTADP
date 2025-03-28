@@ -578,6 +578,85 @@ describe('Submitter review page', () => {
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
     });
+
+    it('shows an error if some of the objectives are missing citations', async () => {
+      const mockSubmit = jest.fn();
+      const objectiveMissingCitation = [
+        {
+          id: 2,
+          citations: [],
+        },
+      ];
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [2],
+        objectiveMissingCitation,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+
+      // Get the 'Update report' button.
+      const button = await screen.findByRole('button', { name: 'Update report' });
+      userEvent.click(button);
+
+      // Expect submit not to be called.
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
+    });
+
+    it('shows an error if missing citations with multiple goals', async () => {
+      const mockSubmit = jest.fn();
+      const additionalGoals = [
+        {
+          isCurated: false,
+          prompts: [],
+          standard: 'normal',
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [3],
+          grantIds: [3],
+        },
+      ];
+
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        additionalGoals,
+        [],
+        [1],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+
+      // Get the 'Update report' button.
+      const button = await screen.findByRole('button', { name: 'Update report' });
+      userEvent.click(button);
+
+      // Expect submit not to be called.
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
+    });
   });
 
   describe('creator role when report is draft', () => {
