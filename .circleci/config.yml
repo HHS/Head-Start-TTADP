@@ -512,7 +512,9 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Wait for backend to start
-          command: ./bin/ping-server 9999
+          command: |
+            lsof -i -P -n | grep LISTEN
+            ./bin/ping-server 9999
       # - run:
       #     name: Wait for backend to start
       #     command: ./bin/ping-server 9999
