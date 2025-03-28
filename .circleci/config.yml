@@ -492,6 +492,7 @@ jobs:
       #         up
       - run:
           name: Start up local services
+          background: true
           command: |
             BYPASS_AUTH=true
             ./bin/prod-style-server
@@ -513,7 +514,7 @@ jobs:
       - run:
           name: Wait for backend to start
           command: |
-            lsof -i -P -n | grep LISTEN
+            docker ps
             ./bin/ping-server 9999
       # - run:
       #     name: Wait for backend to start
