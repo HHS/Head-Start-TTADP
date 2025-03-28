@@ -18,7 +18,6 @@ SIMILARITY_ENDPOINT: https://tta-similarity-api-prod.app.cloud.gov/compute
 SMARTSHEET_ENDPOINT: ""
 FORCE_CRON: "false"
 
-
 auth_client_id: PROD_AUTH_CLIENT_ID
 auth_client_secret: PROD_AUTH_CLIENT_SECRET
 cloudgov_username: CLOUDGOV_PROD_USERNAME
