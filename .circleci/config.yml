@@ -506,6 +506,7 @@ jobs:
           name: Start up local services
           command: |
             ./bin/prod-style-server
+            cp .env.example .env
             docker compose start testingonly db
       - run:
           name: Build docker file
