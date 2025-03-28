@@ -492,19 +492,17 @@ jobs:
       - set_env_vars
       - run:
           name: Start up local services
-          background: true
+          #background: true
           command: |
             cp .env.example .env
             docker compose \
-              --profile minimal_required_node \
               --profile minimal_required_postgres \
               --profile minimal_required_redis \
               --profile minimal_required_python \
               up
       - run:
           name: Build docker file
-          command: |
-            docker build -t tta-testing -f Dockerfile-Testing .
+          command: docker build -t tta-testing -f Dockerfile-Testing .
       # - run:
       #     name: Starting testing server
       #     background: true
@@ -513,6 +511,15 @@ jobs:
       # - run:
       #     name: Wait for server to start
       #     command: ./bin/ping-server 3000
+      - run:
+          name: Wait for containers to start
+          command: |
+            docker ps
+            timeout 5m bash -c \
+            "until [[ '5' -eq $(docker ps --filter status=running | grep -c 'head-start') ]]; do \
+              echo 'waiting 30s' && sleep 30; \
+            done"
+            docker ps
       - run:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
