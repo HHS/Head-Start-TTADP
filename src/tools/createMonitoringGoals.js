@@ -162,7 +162,7 @@ const createMonitoringGoals = async () => {
       }
 
       // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
-    . // or open Objectives
+      // or open Objectives
       const goalsToClose = await sequelize.query(`
       WITH
     grants_with_monitoring_goal AS (
