@@ -1,10 +1,10 @@
 #!/bin/bash
-# Usage: ./bin/ping-server <port> [hostname]
+# Usage: ./bin/ping-server <port> [hostname] [urlpath] [max_attempts]
 
 # Ensure port is provided
 if [ -z "$1" ]; then
   echo "Error: Port is required."
-  echo "Usage: $0 <port> [hostname]"
+  echo "Usage: $0 <port> [hostname] [urlpath] [max_attempts]"
   exit 1
 fi
 
