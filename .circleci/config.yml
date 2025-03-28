@@ -505,9 +505,9 @@ jobs:
       - run:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
-      - run:
-          name: Wait for backend to start
-          command: ./bin/ping-server 9999
+      # - run:
+      #     name: Wait for backend to start
+      #     command: ./bin/ping-server 9999
       - run:
           command: |
             docker run -t tta-testing yarn e2e:ci
