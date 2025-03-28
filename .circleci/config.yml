@@ -492,7 +492,7 @@ jobs:
       - set_env_vars
       - run:
           name: Start up local services
-          #background: true
+          background: true
           command: |
             cp .env.example .env
             docker compose \
