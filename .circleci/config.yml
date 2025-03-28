@@ -498,7 +498,10 @@ jobs:
       #     command: ./bin/ping-server 3000
       - run:
           name: Starting testing server
-          command: docker run -t yarn start:testingonly
+          background: true
+          command: |
+            docker build -t tta-testing -f Dockerfile-Testing .
+            docker run -t tta-testing yarn start:testingonly
       - run:
           name: Wait for backend to start
           command: ./bin/ping-server 8080
@@ -507,7 +510,6 @@ jobs:
           command: ./bin/ping-server 9999
       - run:
           command: |
-            docker build -t tta-testing -f Dockerfile-Testing .
             docker run -t tta-testing yarn e2e:ci
       - store_artifacts:
           path: tests/e2e
