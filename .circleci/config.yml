@@ -523,7 +523,7 @@ jobs:
           name: Wait for containers to start
           command: |
             docker ps
-            timeout 5m bash -c \
+            timeout 10m bash -c \
             "until [[ '3' -eq $(docker ps --filter status=running | grep -c 'head-start') ]]; do \
               echo 'waiting 30s' && sleep 30; \
             done"
