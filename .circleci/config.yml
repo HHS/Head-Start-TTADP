@@ -506,6 +506,9 @@ jobs:
           name: Start up local services
           command: |
             ./bin/prod-style-server
+      - run:
+          name: Start up testing server
+          command: |
             cp .env.example .env
             docker compose start testingonly db
       - run:
@@ -525,7 +528,7 @@ jobs:
             docker ps
             timeout 10m bash -c \
             "until [[ '3' -eq $(docker ps --filter status=running | grep -c 'head-start') ]]; do \
-              echo 'waiting 30s' && sleep 30; \
+              echo 'waiting 30s' && sleep 30 && docker ps; \
             done"
             docker ps
       - run:
