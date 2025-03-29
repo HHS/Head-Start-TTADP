@@ -14899,3 +14899,37 @@ CONTAINER ID   IMAGE                             COMMAND                  CREATE
 bb822f076825   head-start-ttadp-similarity_api   "gunicorn -w 4 -b 0.…"   Less than a second ago   Up Less than a second   5000/tcp, 0.0.0.0:9100->8080/tcp   head-start-ttadp-similarity_api-1
 92c4a6abb221   postgres:15.6                     "docker-entrypoint.s…"   4 minutes ago            Up 4 minutes            5432/tcp                           postgres_docker
 bb115d89c0c6   head-start-ttadp-server           "docker-entrypoint.s…"   2 hours ago              Up Less than a second   0.0.0.0:8080->8080/tcp             head-start-ttadp-server-1
+Starting server setup...
+Removing old build directory...
+Installing and building Node.js app...
+time="2025-03-28T18:15:42-07:00" level=warning msg="Found orphan containers ([head-start-ttadp-worker-1 head-start-ttadp-backend-1 head-start-ttadp-frontend-1 head-start-ttadp-redis-1 head-start-ttadp-testingonly-1 head-start-ttadp-aws-cli-1 head-start-ttadp-minio-1 head-start-ttadp-api-docs-1 head-start-ttadp-mailcatcher-1 head-start-ttadp-sftp-1 head-start-ttadp-clamav-rest-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container postgres_docker  Created
+ Container postgres_docker  Starting
+ Container postgres_docker  Started
+yarn install v1.22.22
+[1/5] Validating package.json...
+[2/5] Resolving packages...
+warning Resolution field "colors@1.4.0" is incompatible with requested version "colors@1.0.x"
+warning Resolution field "colors@1.4.0" is incompatible with requested version "colors@~1.2.1"
+success Already up-to-date.
+Done in 3.94s.
+time="2025-03-28T18:15:54-07:00" level=warning msg="Found orphan containers ([head-start-ttadp-worker-1 head-start-ttadp-backend-1 head-start-ttadp-frontend-1 head-start-ttadp-redis-1 head-start-ttadp-testingonly-1 head-start-ttadp-aws-cli-1 head-start-ttadp-minio-1 head-start-ttadp-api-docs-1 head-start-ttadp-mailcatcher-1 head-start-ttadp-sftp-1 head-start-ttadp-clamav-rest-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container postgres_docker  Running
+yarn install v1.22.22
+[1/5] Validating package.json...
+[2/5] Resolving packages...
+success Already up-to-date.
+Done in 3.56s.
+time="2025-03-28T18:16:01-07:00" level=warning msg="Found orphan containers ([head-start-ttadp-worker-1 head-start-ttadp-backend-1 head-start-ttadp-frontend-1 head-start-ttadp-redis-1 head-start-ttadp-testingonly-1 head-start-ttadp-aws-cli-1 head-start-ttadp-minio-1 head-start-ttadp-api-docs-1 head-start-ttadp-mailcatcher-1 head-start-ttadp-sftp-1 head-start-ttadp-clamav-rest-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container postgres_docker  Running
+yarn run v1.22.22
+$ tsc -p src
+Done in 109.63s.
+time="2025-03-28T18:17:55-07:00" level=warning msg="Found orphan containers ([head-start-ttadp-worker-1 head-start-ttadp-backend-1 head-start-ttadp-frontend-1 head-start-ttadp-redis-1 head-start-ttadp-testingonly-1 head-start-ttadp-aws-cli-1 head-start-ttadp-minio-1 head-start-ttadp-api-docs-1 head-start-ttadp-mailcatcher-1 head-start-ttadp-sftp-1 head-start-ttadp-clamav-rest-1]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container postgres_docker  Running
+yarn run v1.22.22
+$ INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client
+Creating an optimized production build...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
