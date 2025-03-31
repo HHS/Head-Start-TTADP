@@ -65,8 +65,9 @@ workflows:
             - build_tta_app
       - test_e2e:
           requires:
-            - build_tta_app
+            - test_frontend
             - test_backend
+            - test_similarity_api
 
       - dynamic_security_scan:
           requires:
