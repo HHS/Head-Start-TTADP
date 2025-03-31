@@ -501,9 +501,6 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 8080
       # - run:
       #     name: Wait for server to start
       #     command: |
