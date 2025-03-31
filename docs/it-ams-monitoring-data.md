@@ -9,7 +9,7 @@ The TTA Hub integrates with IT-AMS to retrieve and process monitoring data relat
 
 ## How the Integration Works
 1. IT-AMS generates XML data files containing monitoring reviews daily.
-2. The TTA Hub downloads the data via SFTP from `cloud.gov`.
+2. The TTA Hub downloads the data via SFTP from IT-AMS host.
 3. Relevant data is processed and stored in the PostgreSQL database at **8:30 AM EST**.
 4. The system matches reviews with grant recipients and auto-generates goals.
 5. The HSES system processes its copy at **8:00 AM EST** to ensure visibility.
@@ -34,6 +34,8 @@ The TTA Hub integrates with IT-AMS to retrieve and process monitoring data relat
 - **Schedule:** 8:30 AM EST.
 - **Trigger:** Runs automatically but may require manual execution if it fails.
 - **Issue:** The import job is complex, and manual imports are sometimes needed.
+
+*Note: For debugging purposes, the import currently runs on the following schedule: 2:30 AM, 8:30 AM, 2:30 PM, and 8:30 PM.
 
 ## FAQs
 ### Q: What does this feature do?
