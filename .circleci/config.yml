@@ -967,9 +967,7 @@ commands:
       - run:
           name: Login with service account
           command: |
-            circleci env subst < ./deployment_config/<< parameters.target_env >>_vars_ci.yml > ci.vars
-            source ci.vars
-            cf login -a ${cg_api} \
+              cf login -a ${cg_api} \
               -u ${cg_username} \
               -p ${cg_password} \
               -o ${cg_org} \
