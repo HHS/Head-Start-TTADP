@@ -453,8 +453,54 @@ jobs:
       - store_artifacts:
           path: frontend/coverage-artifacts/
           destination: uncovered-lines
-    
+
   test_e2e:
+    executor: docker-postgres-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: default
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true
+            CURRENT_USER_ID=5 
+            yarn start:ci
+          background: true
+      - run:
+          name: Build docker file
+          command: docker build -t tta-testing -f Dockerfile-Testing .
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          command: |
+            docker run -t tta-testing yarn e2e:ci
+      - store_artifacts:
+          path: tests/e2e
+      - run:
+          command: docker run -t tta-testing yarn e2e:api
+      - store_artifacts:
+          path: tests/api
+      - run:
+          command: docker run -t tta-testing yarn e2e:utils
+      - store_artifacts:
+          path: tests/utilsTests
+      - run:
+          command: docker run -t tta-testing yarn cucumber:ci
+      - store_artifacts:
+          path:  reports/
+
+
+  fail_e2e:
     executor: machine-executor
     resource_class: large
     steps:
