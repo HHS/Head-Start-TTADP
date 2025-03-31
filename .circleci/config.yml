@@ -153,14 +153,14 @@ jobs:
       - run:
           background: true 
           command: |
-            watch echo "$(docker ps)"
+            watch 'echo "$(docker ps)"'
       - run:
           background: true 
           command: |
-            watch echo "$(docker volume ls)"
+            watch 'echo "$(docker volume ls)"'
       - run:
           command: |
-            sleep 10m
+            timeout 10m watch echo 'waiting' && sleep 60s
 
   backup_prod_db:
     executor: docker-executor
@@ -976,11 +976,11 @@ commands:
       - run:
           name: "Run Task: << parameters.the_command >>"
           command: |
+            set -x
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
-            source app.vars
+
             cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} & 
-            set -x
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
               --command "<< parameters.the_command >>" \
