@@ -976,7 +976,7 @@ commands:
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             set -x
-            cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} & 
+            #cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} & 
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
               --command "<< parameters.the_command >>" \
@@ -986,7 +986,7 @@ commands:
               --wait && true
 
             rc=$?
-            sleep 60 # wait for logs
+            sleep 30 # wait for logs
             cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
             return $rc
               
