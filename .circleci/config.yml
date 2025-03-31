@@ -963,6 +963,8 @@ commands:
     steps:
       - checkout
       - install_cf_tools
+      - set_env_vars:
+          target: parameters.target_env
       - run:
           name: Login with service account
           command: |
