@@ -16,6 +16,7 @@ const config = {
   reporter: [
     ['list'],
     ['html', { outputFolder: './html-report', open: 'never' }],
+    ['junit', { outputFile: './report.xml' }]
   ],
   timeout: 300000,
   globalTimeout: 900000,
