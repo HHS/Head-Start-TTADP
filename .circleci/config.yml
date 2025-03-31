@@ -501,6 +501,9 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 9999
       # - run:
       #     name: Wait for server to start
       #     command: |
@@ -511,16 +514,22 @@ jobs:
             yarn e2e:ci
       - store_artifacts:
           path: tests/e2e # ci artifacts
+      - store_test_results:
+          path: tests/e2e/test-results
       - run: 
           command: |
             yarn e2e:api
       - store_artifacts:
           path: tests/api # api artifacts
+      - store_test_results:
+          path: tests/api/test-results
       - run:
           command: |
             yarn e2e:utils
       - store_artifacts:
           path: tests/utilsTests # utils artifacts
+      - store_test_results:
+          path: tests/utilsTests/test-results
       - run:
           command: |
             yarn cucumber:ci
