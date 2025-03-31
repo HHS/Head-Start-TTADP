@@ -1029,8 +1029,10 @@ commands:
             rc=$?
             echo "waiting for logs...."
             sleep 30 # wait for logs
-            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
+            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee logs.txt
             echo "script exited with code:$rc"
+            grep '"level":"error"' logs.txt
+            if [[ $? -eq 0 ]]; then echo "found error in logs" && exit 1; fi"
             exit $rc
               
       - run:
