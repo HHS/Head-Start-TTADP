@@ -485,25 +485,21 @@ jobs:
       #       ./bin/ping-server 9999
       - run:
           command: |
-            #docker run -t tta-testing yarn e2e:ci
             yarn e2e:ci
       - store_artifacts:
           path: tests/e2e # ci artifacts
       - run: 
           command: |
-            #docker run -t tta-testing yarn e2e:api
             yarn e2e:api
       - store_artifacts:
           path: tests/api # api artifacts
       - run:
           command: |
-            #docker run -t tta-testing yarn e2e:utils
             yarn e2e:utils
       - store_artifacts:
           path: tests/utilsTests # utils artifacts
       - run:
           command: |
-            #docker run -t tta-testing yarn cucumber:ci
             yarn cucumber:ci
       - store_artifacts:
           path:  reports/ # cucumber artifacts
