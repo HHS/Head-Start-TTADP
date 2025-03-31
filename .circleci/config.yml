@@ -1005,7 +1005,7 @@ commands:
               -s ${cg_space}
 
       - run:
-          name: "Run Task: << parameters.the_command >>"
+          name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
           command: |
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
