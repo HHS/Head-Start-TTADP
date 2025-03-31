@@ -1027,6 +1027,7 @@ commands:
             echo "waiting for logs...."
             sleep 30 # wait for logs
             cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
+            echo "script exited with code:$rc"
             exit $rc
               
       - run:
