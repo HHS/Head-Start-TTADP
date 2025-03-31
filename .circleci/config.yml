@@ -65,13 +65,13 @@ workflows:
             - build_tta_app
       - test_e2e:
           requires:
+            - build_tta_app
+      - dynamic_security_scan:
+          requires:
             - lint
             - test_frontend
             - test_backend
             - test_similarity_api
-
-      - dynamic_security_scan:
-          requires:
             - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
@@ -90,8 +90,13 @@ workflows:
     when: 
         equal: [ << pipeline.parameters.action >>, deploy ]
     jobs:
+      - build_tta_app
+      - build_similarity_api
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
+          requires:
+            - build_tta_app
+            - build_similarity_api
 
   run_input_cmd:
     when: 
