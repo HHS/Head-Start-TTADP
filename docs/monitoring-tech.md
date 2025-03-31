@@ -166,17 +166,19 @@ In short:
   "encoding": "utf16le",
   "fileName": "Review.xml",
   "remapDef": {
-    ".": "toHash.*",
-    "EndDate": "endDate",
-    "Outcome": "outcome",
-    "ReviewId": "reviewId",
-    "StatusId": "statusId",
-    "ContentId": "contentId",
-    "StartDate": "startDate",
-    "ReviewType": "reviewType",
-    "ReportDeliveryDate": "reportDeliveryDate"
-  },
-  "tableName": "MonitoringReviews"
+        ".": "toHash.*",
+        "Name": "name",
+        "EndDate": "endDate",
+        "Outcome": "outcome",
+        "ReviewId": "reviewId",
+        "StatusId": "statusId",
+        "ContentId": "contentId",
+        "StartDate": "startDate",
+        "ReviewType": "reviewType",
+        "ReportAttachmentId": "reportAttachmentId",
+        "ReportDeliveryDate": "reportDeliveryDate"
+      },
+    "tableName": "MonitoringReviews"
 }
 ```
 ---
