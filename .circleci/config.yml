@@ -86,6 +86,12 @@ workflows:
                 - dev-green
                 - sandbox
 
+  manual_deploy:
+    when: 
+        equal: [ << pipeline.parameters.action >>, deploy ]
+    jobs:
+      - deploy:
+          serial-group: << pipeline.git.branch >>/deploy-lock
 
   run_input_cmd:
     when: 
