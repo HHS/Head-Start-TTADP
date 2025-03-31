@@ -1,0 +1,80 @@
+services:
+  server:
+    build:
+      context: .
+    command: yarn start:web
+    user: ${CURRENT_USER:-root}
+    platform: linux/amd64
+    networks:
+      - smarthub
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=dss
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=secretpass
+      - POSTGRES_DB=ttasmarthub
+      - DATABASE_URL=postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
+      - SESSION_SECRET=notasecret
+      - BYPASS_SOCKETS="true"
+    volumes:
+      - ".:/app:rw"
+
+  similarity_api:
+    build:
+      context: ./similarity_api
+    profiles:
+      - minimal_required_python
+    ports:
+      - "9100:8080"
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - "./similarity_api/src:/app:rw"
+
+  db:
+    image: postgres:15.6
+    container_name: postgres_docker
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpass
+      POSTGRES_DB: ttasmarthub
+    networks:
+      - smarthub
+  redis:
+    image: redis:5.0.6-alpine
+    profiles:
+      - minimal_required_redis
+    command: ["redis-server", "--requirepass", "$REDIS_PASS"]
+    env_file: .env
+    ports:
+      - "6379:6379"
+  testingonly:
+    build:
+      context: .
+    profiles:
+      - full_stack
+    ports:
+      - "9999:9999"
+    depends_on:
+      - db
+    volumes:
+      - ".:/app:rw"
+    command: yarn start:testingonly
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=development
+
+networks:
+  smarthub:
+
+volumes:
+  dbdata: {}
+  minio-data: {}
+  yarn-cache: {}
+  node_modules-backend: {}
+  node_modules-frontend: {}

@@ -63,10 +63,10 @@ workflows:
       - test_backend:
           requires:
             - build_tta_app
-            - test_e2e
       - test_e2e:
           requires:
             - build_tta_app
+            - test_backend
 
       - dynamic_security_scan:
           requires:
@@ -448,7 +448,7 @@ jobs:
           path: frontend/coverage-artifacts/
           destination: uncovered-lines
 
-  test_e2e:
+  old_e2e:
     executor: docker-postgres-executor
     steps:
       - attach_workspace:
@@ -506,7 +506,7 @@ jobs:
           path:  reports/ # cucumber artifacts
 
 
-  fail_e2e:
+  test_e2e:
     executor: machine-executor
     resource_class: large
     steps:
