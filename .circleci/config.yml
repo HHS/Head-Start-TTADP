@@ -467,15 +467,15 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: default
+      # - setup_remote_docker:
+      #     version: default
       - run:
           name: Start server
           command: |
-            BYPASS_AUTH=true
-            CURRENT_USER_ID=5
             yarn build
             yarn playwright install
+            export BYPASS_AUTH=true
+            export CURRENT_USER_ID=5
             yarn start:ci
           background: true
       # - run:
@@ -490,6 +490,9 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 8080
       # - run:
       #     name: Wait for server to start
       #     command: |
