@@ -104,7 +104,6 @@ workflows:
     jobs:
       - run_cmd
 
-
   run_import:
     when: 
         equal: [ << pipeline.parameters.action >>, import ]
@@ -145,13 +144,19 @@ jobs:
           type: string
           default: << pipeline.parameters.env >>
     steps:
+      - run:
+          command: |
+            # only run in dev, for now
+            if [[ ${target_env} != dev ]]; then exit 1; fi
       - cf_cmd:
           the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
           target_env: << parameters.target_env >>
       - cf_cmd:
           the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
           target_env: << parameters.target_env >>
-    
+      - cf_cmd:
+          the_command: "yarn createMonitoringGoalsCLI"
+          target_env: << parameters.target_env >>    
 
   run_cmd:
     executor: docker-executor
