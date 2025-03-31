@@ -1,6 +1,5 @@
 FROM node:20.18.2
 WORKDIR /app
-
 # Install system dependencies
 RUN apt-get update && apt-get install lcov -y
 
@@ -11,8 +10,6 @@ RUN mkdir -p /home/node/.cache/yarn && \
     chown -R node:node /app && \
     chown -R node:node /app/node_modules
 
-COPY . .
+COPY . /app/
 RUN yarn install
-RUN yarn playwright install
-#RUN yarn add playwright
-
+RUN yarn build

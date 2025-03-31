@@ -1,73 +1,110 @@
+# backend - 8000
+# frontend - 8001
+# similarity - 8002
+# db - 5432
+# redis - 6379
+
 services:
-  server:
+  backend:
+    image: tta-backend
+    profiles:
+      - ci
     build:
       context: .
+      dockerfile: Dockerfile.ci
     command: yarn start:web
-    user: ${CURRENT_USER:-root}
-    platform: linux/amd64
     networks:
       - smarthub
     ports:
-      - "8080:8080"
+      - "8080:8000"
     depends_on:
       - db
     environment:
+      - REDIS_HOST=redis
       - POSTGRES_HOST=postgres_docker
-      - NODE_ENV=dss
       - POSTGRES_USERNAME=postgres
       - POSTGRES_PASSWORD=secretpass
       - POSTGRES_DB=ttasmarthub
       - DATABASE_URL=postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
       - SESSION_SECRET=notasecret
-      - BYPASS_SOCKETS="true"
-    volumes:
-      - ".:/app:rw"
 
-  similarity_api:
-    build:
-      context: ./similarity_api
+  frontend:
+    image: tta-frontend
     profiles:
-      - minimal_required_python
+      - ci
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.ci
+    command: yarn start
     ports:
-      - "9100:8080"
-    env_file: .env
+      - "3000:8001"
+    environment:
+      - BACKEND_PROXY=http://backend:8000
+
+  testingonly:
+    image: tta-testing
+    profiles:
+      - ci
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    ports:
+      - "9999:9999"
     depends_on:
       - db
-    volumes:
-      - "./similarity_api/src:/app:rw"
+    command: yarn start:testingonly
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=development
+
+  client:
+    image: tta-testing
+    profiles:
+      - ci
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    ports:
+      - "9999:9999"
+    depends_on:
+      - frontend
+    command: yarn playwright install
+
+  similarity_api:
+    image: tta-similarity
+    profiles:
+      - ci
+    build:
+      context: ./similarity_api
+      dockerfile: Dockerfile.ci
+    ports:
+      - "5000:8002"
+    #env_file: .env
+    depends_on:
+      - db
 
   db:
     image: postgres:15.6
+    profiles:
+      - ci
     container_name: postgres_docker
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secretpass
       POSTGRES_DB: ttasmarthub
+    ports:
+      - "5432:5432"
     networks:
       - smarthub
+    shm_size: 1g
+
   redis:
     image: redis:5.0.6-alpine
     profiles:
-      - minimal_required_redis
+      - ci
     command: ["redis-server", "--requirepass", "$REDIS_PASS"]
-    env_file: .env
     ports:
       - "6379:6379"
-  testingonly:
-    build:
-      context: .
-    profiles:
-      - full_stack
-    ports:
-      - "9999:9999"
-    depends_on:
-      - db
-    volumes:
-      - ".:/app:rw"
-    command: yarn start:testingonly
-    environment:
-      - POSTGRES_HOST=postgres_docker
-      - NODE_ENV=development
 
 networks:
   smarthub:
