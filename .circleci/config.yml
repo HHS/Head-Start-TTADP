@@ -535,7 +535,7 @@ jobs:
       - store_artifacts:
           path: tests/e2e # ci artifacts
       - store_test_results:
-          path: tests/e2e/test-results
+          path: tests/e2e
       - run: 
           command: |
             export TTA_SMART_HUB_URI=http://localhost:3000
@@ -543,7 +543,7 @@ jobs:
       - store_artifacts:
           path: tests/api # api artifacts
       - store_test_results:
-          path: tests/api/test-results
+          path: tests/api
       - run:
           command: |
             export TTA_SMART_HUB_URI=http://localhost:3000
@@ -551,7 +551,7 @@ jobs:
       - store_artifacts:
           path: tests/utilsTests # utils artifacts
       - store_test_results:
-          path: tests/utilsTests/test-results
+          path: tests/utilsTests
       - run:
           command: |
             yarn cucumber:ci
