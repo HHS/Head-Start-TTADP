@@ -976,7 +976,6 @@ commands:
             set -x
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
-
             cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} & 
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
@@ -985,6 +984,8 @@ commands:
               -m 2GB \
               -k 2GB \
               --wait
+            
+            sleep 60 # wait for logs
               
       - run:
           name: Logout of service account
