@@ -4,14 +4,17 @@ import { devices } from '@playwright/test';
 const config = {
   testDir: '.',
   outputDir: './test-results',
-  reporter: [['html', { outputFolder: './report', open: 'never' }]],
+  reporter: [
+    ['html', { outputFolder: './report', open: 'never' }],
+    ['junit', { outputFile: './report.xml' }]
+],
   projects: [
     {
       name: 'Desktop Chrome',
       use: {
         // see https://playwright.dev/docs/api/class-testoptions
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:9999/',
+        baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:9999/',
       },
     },
   ],
