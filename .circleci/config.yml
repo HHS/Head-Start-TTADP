@@ -147,7 +147,7 @@ jobs:
       - run:
           command: |
             # only run in dev, for now
-            if [[ ${target_env} != dev ]]; then exit 1; fi
+            if [[ << parameters.target_env >> != 'dev' ]]; then exit 1; fi
       - cf_cmd:
           the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
           target_env: << parameters.target_env >>
