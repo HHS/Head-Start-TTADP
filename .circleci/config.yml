@@ -63,10 +63,10 @@ workflows:
       - test_backend:
           requires:
             - build_tta_app
-            - test_e2e
       - test_e2e:
           requires:
             - build_tta_app
+            - test_backend
 
       - dynamic_security_scan:
           requires:
