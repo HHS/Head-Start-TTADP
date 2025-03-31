@@ -217,7 +217,7 @@ const GoalPicker = ({
   };
 
   const onKeep = async () => {
-    const savedObjectives = goalForEditing.objectives.map((o) => ({ ...o, citations: [] }));
+    const savedObjectives = goalForEditing.objectives.map((o) => ({ ...o }));
     // Clear the citations.
     onChangeGoal(selectedGoal);
     setValue('goalForEditing.objectives', savedObjectives);
