@@ -111,6 +111,8 @@ workflows:
     jobs:
       - run_cmd:
           command: "node ./build/server/src/tools/importSystemCLI.js download 1"
+      - run_cmd:
+          command: "node ./build/server/src/tools/importSystemCLI.js process 1"
 
   backup_restore_db:
     when:
