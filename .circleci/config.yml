@@ -109,11 +109,8 @@ workflows:
     when: 
         equal: [ << pipeline.parameters.action >>, import ]
     jobs:
-      - run_cmd:
-          command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-      - run_cmd:
-          command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-
+      - run_import_job
+  
   backup_restore_db:
     when:
         equal: [ << pipeline.parameters.action >>, restore_dbs ]
@@ -140,6 +137,21 @@ workflows:
 
 # ----------------- Jobs -----------------
 jobs:
+
+  run_import_job:
+    executor: docker-executor
+    parameters:
+      target_env:
+          type: string
+          default: << pipeline.parameters.env >>
+    steps:
+      - cf_cmd:
+          the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
+          target_env: << parameters.target_env >>
+      - cf_cmd:
+          the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
+          target_env: << parameters.target_env >>
+    
 
   run_cmd:
     executor: docker-executor
