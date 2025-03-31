@@ -191,9 +191,9 @@ const createMonitoringGoals = async () => {
       ON arg."activityReportId" = a.id
       AND a."calculatedStatus" NOT IN ('deleted', 'approved')
       LEFT JOIN "Objectives" o
-      ON gwmg."goalId" = o.id
+      ON gwmg."goalId" = o."goalId"
       AND o.status NOT IN ('Complete','Suspended')
-      AND "o.deletedAt" IS NULL
+      AND o."deletedAt" IS NULL
       WHERE a.id IS NULL
       AND o.id IS NULL
     ),
