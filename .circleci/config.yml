@@ -51,9 +51,6 @@ workflows:
     jobs:
       - build_tta_app
       - build_similarity_api
-      - watch:
-          requires:
-            - build_tta_app
       - lint:
           requires:
             - build_tta_app
