@@ -455,7 +455,7 @@ jobs:
           destination: uncovered-lines
 
   test_e2e:
-    executor: docker-postgres-executor
+    executor: docker-executor
     steps:
       - attach_workspace:
           at: .
@@ -482,22 +482,34 @@ jobs:
           name: Wait for server to start
           command: ./bin/ping-server 3000
       - run:
+          name: Wait for server to start
           command: |
-            docker run -t tta-testing yarn e2e:ci
-      - store_artifacts:
-          path: tests/e2e
+            docker ps
+            ./bin/ping-server 9999
       - run:
-          command: docker run -t tta-testing yarn e2e:api
+          command: |
+            #docker run -t tta-testing yarn e2e:ci
+            yarn e2e:ci
       - store_artifacts:
-          path: tests/api
+          path: tests/e2e # ci artifacts
+      - run: 
+          command: |
+            #docker run -t tta-testing yarn e2e:api
+            yarn e2e:api
+      - store_artifacts:
+          path: tests/api # api artifacts
       - run:
-          command: docker run -t tta-testing yarn e2e:utils
+          command: |
+            #docker run -t tta-testing yarn e2e:utils
+            yarn e2e:utils
       - store_artifacts:
-          path: tests/utilsTests
+          path: tests/utilsTests # utils artifacts
       - run:
-          command: docker run -t tta-testing yarn cucumber:ci
+          command: |
+            #docker run -t tta-testing yarn cucumber:ci
+            yarn cucumber:ci
       - store_artifacts:
-          path:  reports/
+          path:  reports/ # cucumber artifacts
 
 
   fail_e2e:
