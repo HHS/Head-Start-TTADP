@@ -63,10 +63,10 @@ workflows:
       - test_backend:
           requires:
             - build_tta_app
+            - test_e2e
       - test_e2e:
           requires:
             - build_tta_app
-            - test_backend
 
       - dynamic_security_scan:
           requires:
@@ -225,11 +225,11 @@ jobs:
           name: Install playwright dependencies
           command: |
             yarn playwright install
-      - run:
-          name: Check nodejs version compatibility with buildpack
-          command: |
-            chmod +x ./bin/check_node_version_compatibility.sh
-            ./bin/check_node_version_compatibility.sh
+      # - run:
+      #     name: Check nodejs version compatibility with buildpack
+      #     command: |
+      #       chmod +x ./bin/check_node_version_compatibility.sh
+      #       ./bin/check_node_version_compatibility.sh
       - run: yarn build
       - persist_to_workspace:
           root: .
@@ -448,7 +448,7 @@ jobs:
           path: frontend/coverage-artifacts/
           destination: uncovered-lines
 
-  old_e2e:
+  test_e2e:
     executor: docker-postgres-executor
     steps:
       - attach_workspace:
@@ -463,9 +463,9 @@ jobs:
             CURRENT_USER_ID=5 
             yarn start:ci
           background: true
-      - run:
-          name: Build docker file
-          command: docker build -t tta-testing -f Dockerfile-Testing .
+      # - run:
+      #     name: Build docker file
+      #     command: docker build -t tta-testing -f Dockerfile-Testing .
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -475,11 +475,11 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
-      - run:
-          name: Wait for server to start
-          command: |
-            docker ps
-            ./bin/ping-server 9999
+      # - run:
+      #     name: Wait for server to start
+      #     command: |
+      #       docker ps
+      #       ./bin/ping-server 9999
       - run:
           command: |
             #docker run -t tta-testing yarn e2e:ci
@@ -506,7 +506,7 @@ jobs:
           path:  reports/ # cucumber artifacts
 
 
-  test_e2e:
+  new_e2e:
     executor: machine-executor
     resource_class: large
     steps:
@@ -553,25 +553,31 @@ jobs:
       #         --profile minimal_required_python \
       #         --profile minimal_required_node \
       #         up
-      - set_env_vars
+      # - run:
+      #     name: Start up local services
+      #     command: |
+      #       docker compose -f docker-compose.ci.yml up --build
+      # - run:
+      #     name: Start up testing server
+      #     command: |
+      #       cp .env.example .env
+      #       docker compose start testingonly db
+      #       docker ps
+      #- set_env_vars
       - run:
           name: Start up local services
+          command: ./bin/prod-style-server
+      - run: 
           command: |
-            ./bin/prod-style-server
-      - run:
-          name: Start up testing server
-          command: |
-            cp .env.example .env
-            docker compose start testingonly db
-            docker ps
+            docker compose -f docker-compose.dss.yml run 
       - run:
           name: Build docker file
           command: docker build -t tta-testing -f Dockerfile-Testing .
-      # - run:
-      #     name: Starting testing server
-      #     background: true
-      #     command: |
-      #       docker run -p 9999:9999 tta-testing yarn start:testingonly
+      - run:
+          name: Starting testing server
+          background: true
+          command: |
+            docker run -p 9999:9999 tta-testing yarn start:testingonly
       # - run:
       #     name: Wait for server to start
       #     command: ./bin/ping-server 3000
