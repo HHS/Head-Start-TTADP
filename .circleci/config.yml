@@ -1008,7 +1008,7 @@ commands:
             rc=$?
             sleep 30 # wait for logs
             cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
-            return $rc
+            exit $rc
               
       - run:
           name: Logout of service account
