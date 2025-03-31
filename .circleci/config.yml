@@ -154,11 +154,11 @@ jobs:
       - run:
           background: true 
           command: |
-            watch docker ps
+            watch echo "$(docker ps)"
       - run:
           background: true 
           command: |
-            watch docker volume ls
+            watch echo "$(docker volume ls)"
       - run:
           command: |
             sleep 10m
