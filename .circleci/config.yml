@@ -157,9 +157,6 @@ jobs:
     executor: docker-executor
     resource_class: large
     parameters:
-      name:
-        type: string
-        default: 'run cmd'
       command:
         type: string
         default: << pipeline.parameters.cmd_input >>
