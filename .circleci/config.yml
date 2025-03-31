@@ -102,7 +102,6 @@ workflows:
         equal: [ << pipeline.parameters.action >>, import ]
     jobs:
       - run_cmd:
-          target_env: pipeline.parameters.env
           command: "node ./build/server/src/tools/importSystemCLI.js download 1"
 
   backup_restore_db:
