@@ -27,7 +27,7 @@ executors:
 parameters:
   action:
     description: "Desired job to run"
-    enum: ["build_test_deploy", "deploy", "cmd", "restore_dbs"]
+    enum: ["build_test_deploy", "deploy", "cmd", "restore_dbs", "import"]
     default: "build_test_deploy"
     type: enum
   env: 
@@ -87,18 +87,6 @@ workflows:
                 - dev
                 - dev-green
                 - sandbox
-      
-  deploy_manual:
-    when:
-      equal: [ deploy, << pipeline.parameters.action >> ]
-    jobs:
-      - build_similarity_api
-      - build_tta_app
-      - deploy:
-          requires:
-            - build_similarity_api
-            - build_tta_app
-          serial-group: << pipeline.git.branch >>/deploy-lock
 
 
   run_input_cmd:
@@ -107,17 +95,14 @@ workflows:
     jobs:
       - run_cmd
 
-  daily_task:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - tm/cleanup-circle # normally main
+
+  run_import:
+    when: 
+        equal: [ << pipeline.parameters.action >>, import ]
     jobs:
       - run_cmd:
-          command: "echo 'hello world'"
+          target_env: pipeline.parameters.env
+          command: "node ./build/server/src/tools/importSystemCLI.js download 1"
 
   backup_restore_db:
     when:
@@ -131,6 +116,18 @@ workflows:
            requires:
              - process_db
 
+  daily_task:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - tm/cleanup-circle # normally main
+    jobs:
+      - run_cmd:
+          command: "echo 'hello world'"
+
 # ----------------- Jobs -----------------
 jobs:
 
@@ -141,9 +138,14 @@ jobs:
       command:
         type: string
         default: << pipeline.parameters.cmd_input >>
+      target_env:
+        type: string
+        default: << pipeline.parameters.env >>
+
     steps:
       - cf_cmd:
           the_command: << parameters.command >>
+          target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -943,13 +945,16 @@ commands:
       the_command:
         description: "Command to run"
         type: string
+      target_env:
+        description: "Desired env to run cmd in"
+        type: string
     steps:
       - checkout
       - install_cf_tools
       - run:
           name: Login with service account
           command: |
-            circleci env subst < ./deployment_config/<< pipeline.parameters.env >>_vars_ci.yml > ci.vars
+            circleci env subst < ./deployment_config/<< parameters.target_env >>_vars_ci.yml > ci.vars
             source ci.vars
             cf login -a ${cg_api} \
               -u ${cg_username} \
@@ -961,10 +966,10 @@ commands:
           name: "Run Task: << parameters.the_command >>"
           command: |
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
-            cf logs tta-smarthub-<< pipeline.parameters.env >> | grep ${TASK_NAME} & 
+            cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} & 
             set -x
             cf run-task \
-              tta-smarthub-<< pipeline.parameters.env >> \
+              tta-smarthub-<< parameters.target_env >> \
               --command "<< parameters.the_command >>" \
               --name ${TASK_NAME} \
               -m 2GB \
