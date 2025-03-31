@@ -49,5 +49,5 @@ A: Yes, specialists can add objectives to automatically created monitoring goals
 A: If the automatic import fails, an engineer must manually run an import command in production.
 
 ## 📎 Additional Documentation
-For developer details, see: [Technical Documentation](docs/monitoring-tech.md)
+For developer details, see: [Technical Documentation](monitoring-tech.md)
 For diagram, see [High Level Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/sequence-diagrams/data-ingestion-monitoring-goal.puml)
