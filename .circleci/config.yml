@@ -65,16 +65,13 @@ workflows:
             - build_tta_app
       - test_e2e:
           requires:
+            - lint
             - test_frontend
             - test_backend
             - test_similarity_api
 
       - dynamic_security_scan:
           requires:
-            - lint
-            - test_similarity_api
-            - test_backend
-            - test_frontend
             - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
