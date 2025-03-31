@@ -161,7 +161,7 @@ jobs:
             watch docker volume ls
       - run:
           command: |
-            timeout 10m
+            sleep 10m
 
   backup_prod_db:
     executor: docker-executor
