@@ -458,9 +458,10 @@ jobs:
       - run:
           name: Start server
           command: |
-            yarn build
             BYPASS_AUTH=true
-            CURRENT_USER_ID=5 
+            CURRENT_USER_ID=5
+            yarn build
+            yarn playwright install
             yarn start:ci
           background: true
       # - run:
