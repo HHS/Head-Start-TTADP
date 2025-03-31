@@ -66,6 +66,7 @@ workflows:
       - test_e2e:
           requires:
             - build_tta_app
+            - test_backend
       - dynamic_security_scan:
           requires:
             - lint
