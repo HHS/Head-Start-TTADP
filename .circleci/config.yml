@@ -51,6 +51,9 @@ workflows:
     jobs:
       - build_tta_app
       - build_similarity_api
+      - watch:
+          requires:
+            - build_tta_app
       - lint:
           requires:
             - build_tta_app
@@ -144,6 +147,21 @@ jobs:
       - cf_cmd:
           the_command: << parameters.command >>
           target_env: << parameters.target_env >>
+
+  watch:
+    executor: machine-executor
+    steps: 
+      - run:
+          background: true 
+          command: |
+            watch docker ps
+      - run:
+          background: true 
+          command: |
+            watch docker volume ls
+      - run:
+          command: |
+            timeout 10m
 
   backup_prod_db:
     executor: docker-executor
