@@ -31,5 +31,5 @@ else
   echo "Required Node.js version $node_version_required is not supported."
   echo "Supported Versions:"
   echo "$supported_versions"
-  exit 1  # Whatever, for now
+  exit 1  # Exit with error
 fi
