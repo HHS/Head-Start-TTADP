@@ -14,7 +14,7 @@ const config = {
       use: {
         // see https://playwright.dev/docs/api/class-testoptions
         ...devices['Desktop Chrome'],
-        baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:9999/',
+        baseURL: 'http://localhost:9999/',
       },
     },
   ],
