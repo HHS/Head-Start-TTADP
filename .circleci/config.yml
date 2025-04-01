@@ -379,19 +379,11 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
-      # - run:
-      #     name: Test backend
-      #     command: |
-      #       chmod 744 ./bin/test-backend-ci
-      #       ./bin/test-backend-ci
       - run:
-          name: Run split tests
+          name: Test backend
           command: |
-            export JEST_JUNIT_ADD_FILE_ATTRIBUTE='true'
             chmod 744 ./bin/test-backend-ci
-            TESTFILES=$(circleci tests glob "src/**/*.test.js" | circleci tests split --split-by=timings)
-            echo "$TEST" | circleci tests run --command="./bin/test-backend-ci" --split-by=timings
-
+            ./bin/test-backend-ci
       - run:
           name: Check coverage for modified lines
           command: |
