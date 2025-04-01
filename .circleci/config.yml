@@ -281,8 +281,11 @@ jobs:
       - run:
           name: Add GitHub to known_hosts
           command: |
+            mkdir -p ~/.ssh/
             touch ~/.ssh/known_hosts
+            #sudo chmod 700 ~/.ssh/
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+            #sudo chmod 600 ~/.ssh/known_hosts
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
