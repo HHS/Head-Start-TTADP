@@ -10,6 +10,7 @@ import {
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
+import { sequelize } from '../../models';
 import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
@@ -185,6 +186,22 @@ export async function changeGoalStatus(req, res) {
     if (status) {
       res.sendStatus(status);
       return;
+    }
+
+    // If the goal is being suspended, automatically suspend any "in progress" objectives
+    if (newStatus === 'Suspended') {
+      // For each goal, find all "in progress" objectives and update them to "suspended"
+      await Promise.all(ids.map(async (goalId) => {
+        await sequelize.models.Objective.update(
+          { status: 'Suspended' },
+          {
+            where: {
+              goalId,
+              status: 'In Progress',
+            },
+          },
+        );
+      }));
     }
 
     const updatedGoal = await updateGoalStatusById(

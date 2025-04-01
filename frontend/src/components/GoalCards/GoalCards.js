@@ -7,11 +7,11 @@ import { Grid, Alert } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
-import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus, reopenGoal } from '../../fetchers/goals';
 import ReopenReasonModal from '../ReopenReasonModal';
 import { parseCheckboxEvent } from '../../Constants';
+import StandardGoalCard from './StandardGoalCard';
 
 function GoalCards({
   recipientId,
@@ -225,7 +225,21 @@ function GoalCards({
         />
         <div className="padding-x-3 padding-y-2 ttahub-goal-cards">
           {goals.map((goal, index) => (
-            <GoalCard
+            // <GoalCard
+            //   key={`goal-row-${goal.id}`}
+            //   goal={goal}
+            //   openMenuUp={
+            //         index >= goals.length - 2 && index !== 0
+            //       } // the last two should open "up"
+            //   recipientId={recipientId}
+            //   regionId={regionId}
+            //   showCloseSuspendGoalModal={showCloseSuspendGoalModal}
+            //   showReopenGoalModal={showReopenGoalModal}
+            //   performGoalStatusUpdate={performGoalStatusUpdate}
+            //   handleGoalCheckboxSelect={handleGoalCheckboxSelect}
+            //   isChecked={selectedGoalCheckBoxes[goal.id] || false}
+            // />
+            <StandardGoalCard
               key={`goal-row-${goal.id}`}
               goal={goal}
               openMenuUp={
@@ -234,7 +248,7 @@ function GoalCards({
               recipientId={recipientId}
               regionId={regionId}
               showCloseSuspendGoalModal={showCloseSuspendGoalModal}
-              showReopenGoalModal={showReopenGoalModal}
+              // showReopenGoalModal={showReopenGoalModal}
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
