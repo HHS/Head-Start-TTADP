@@ -75,9 +75,9 @@ workflows:
       - test_cucumber:
           requires:
             - build_tta_app
-      # - dynamic_security_scan:
-      #     requires:
-      #       - test_e2e
+      - dynamic_security_scan:
+           requires:
+             - test_e2e_base
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
