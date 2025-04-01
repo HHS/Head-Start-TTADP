@@ -55,9 +55,6 @@ workflows:
            requires:
             - build_and_lint
             - build_similarity_api
-      - lint:
-          requires:
-            - phase1
       - test_frontend:
           requires:
             - phase1
@@ -84,7 +81,6 @@ workflows:
             - phase1
       - phase2:
           requires:
-            - lint
             - test_frontend
             - test_backend
             - test_e2e_app
