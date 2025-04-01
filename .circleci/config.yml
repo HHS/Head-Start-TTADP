@@ -157,9 +157,6 @@ jobs:
       - cf_cmd:
           the_command: "yarn createMonitoringGoalsCLI"
           target_env: << parameters.target_env >>
-      - cf_cmd:
-          the_command: "false"
-          target_env: << parameters.target_env >>
 
   run_cmd:
     executor: docker-executor
@@ -1018,7 +1015,7 @@ commands:
       - run:
           name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
           command: |
-            TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
+            TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}-${RANDOM}"
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
