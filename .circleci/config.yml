@@ -41,11 +41,11 @@ parameters:
     default: ""
 
 # ----------------- Workflows -----------------
+
 workflows:
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
-    # Some jobs (such as e2e tests and dynamic security scan) require running on the host machine
-    # Therefore these jobs need to be scheduled in sequential order or they will interfere
+    # It will build, test, and then deploy if the branch matches to an environment
     when:
       equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
@@ -105,25 +105,8 @@ workflows:
                 - dev-green
                 - sandbox
 
-  manual_deploy:
-    when: 
-        equal: [ << pipeline.parameters.action >>, deploy ]
-    jobs:
-      - build_tta_app
-      - build_similarity_api
-      - deploy:
-          serial-group: << pipeline.git.branch >>/deploy-lock
-          requires:
-            - build_tta_app
-            - build_similarity_api
-
-  run_input_cmd:
-    when: 
-        equal: [ << pipeline.parameters.action >>, cmd ]
-    jobs:
-      - run_cmd
-
   run_import:
+    # run the data import job
     when: 
       equal: [ << pipeline.parameters.action >>, import ]
     triggers:
@@ -136,7 +119,15 @@ workflows:
     jobs:
       - run_import_job
   
+  run_input_cmd:
+    # run an arbitrary command in separate container, within the app execution environment
+    when: 
+        equal: [ << pipeline.parameters.action >>, cmd ]
+    jobs:
+      - run_cmd
+
   backup_restore_db:
+    # backup production db, process (anonymize) the data, then restore it into lower envs
     when:
         equal: [ << pipeline.parameters.action >>, restore_dbs ]
     jobs:
@@ -161,9 +152,11 @@ workflows:
           command: "echo 'hello world'"
 
 # ----------------- Jobs -----------------
+
 jobs:
 
   phase1:
+    # placeholder no-jobs, just for organization
     type: no-op
     executor:  docker-executor
     steps: []
@@ -174,6 +167,7 @@ jobs:
     steps: []
 
   run_import_job:
+    # data import
     executor: docker-executor
     parameters:
       target_env:
@@ -203,83 +197,10 @@ jobs:
       target_env:
         type: string
         default: << pipeline.parameters.env >>
-
     steps:
       - cf_cmd:
           the_command: << parameters.command >>
           target_env: << parameters.target_env >>
-
-  watch:
-    executor: machine-executor
-    steps: 
-      - run:
-          background: true 
-          command: |
-            watch 'echo "$(docker ps)"'
-      - run:
-          background: true 
-          command: |
-            watch 'echo "$(docker volume ls)"'
-      - run:
-          command: |
-            timeout 10m watch echo 'waiting' && sleep 60s
-
-  backup_prod_db:
-    executor: docker-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-            - v14-yarn-deps-
-      - run: yarn deps
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - run: exit 1
-      - cf_backup
-
-  process_db:
-    executor: docker-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-            # If checksum is new, restore partial cache
-            - v14-yarn-deps-
-      - run: yarn deps
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - run: exit 1
-      - cf_process:
-            auth_client_secret: PROD_AUTH_CLIENT_SECRET
-            cloudgov_username: CLOUDGOV_PROD_USERNAME
-            cloudgov_password: CLOUDGOV_PROD_PASSWORD
-            cloudgov_space: CLOUDGOV_PROD_SPACE
-
-  restore_dbs:
-    executor: docker-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-            - v14-yarn-deps-
-      - run: yarn deps
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - run: exit 1
-      - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-process
-          s3_service_name: ttahub-db-backups
-          backup_prefix: production
 
   build_tta_app:
     executor: docker-executor
@@ -466,7 +387,6 @@ jobs:
       - store_artifacts:
           path: reports/
     
-
   test_frontend:
     executor: docker-executor
     resource_class: large
@@ -483,7 +403,6 @@ jobs:
           command: |
             mkdir -p /home/circleci/.ssh
             ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
-
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
@@ -602,6 +521,64 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
 
+  backup_prod_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run: exit 1
+      - cf_backup
+
+  process_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run: exit 1
+      - cf_process:
+            auth_client_secret: PROD_AUTH_CLIENT_SECRET
+            cloudgov_username: CLOUDGOV_PROD_USERNAME
+            cloudgov_password: CLOUDGOV_PROD_PASSWORD
+            cloudgov_space: CLOUDGOV_PROD_SPACE
+
+  restore_dbs:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - run: exit 1
+      - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
+
+
 # ----------------- Commands -----------------
 
 commands:
@@ -688,7 +665,6 @@ commands:
       - store_test_results:
           path: << parameters.artifact_path >>
 
-
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
       File is used as checksum source for part of caching key."
@@ -712,7 +688,6 @@ commands:
           name: Combine requirements.txt files to single file
           command: cat similarity_api/src/requirements.txt > << parameters.filename >>
  
-
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
     parameters:
