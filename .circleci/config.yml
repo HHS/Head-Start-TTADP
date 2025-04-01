@@ -63,13 +63,16 @@ workflows:
       - test_similarity_api:
           requires:
             - build_similarity_api
+      # - phase1:
+      #     requires:
+      #       - lint
+      #       - test_frontend
+      #       - test_backend
+      #       - test_similarity_api
       - phase1:
-          requires:
-            - lint
-            - test_frontend
-            - test_backend
-            - test_similarity_api
-
+           requires:
+            - build_tta_app
+            - build_similarity_api
       - test_e2e_app:
           requires:
             - phase1
@@ -97,6 +100,7 @@ workflows:
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
+            - phase1
             - phase2
           filters:
             branches:
