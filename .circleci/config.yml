@@ -421,7 +421,6 @@ jobs:
     
   test_similarity_api:
     executor: docker-python-executor
-    resource_class: large
     steps:
       - attach_workspace:
           at: .
@@ -463,7 +462,6 @@ jobs:
 
   test_frontend:
     executor: docker-executor
-    resource_class: large
     steps:
       - attach_workspace:
           at: .
