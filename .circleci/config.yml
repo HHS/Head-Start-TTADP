@@ -271,9 +271,8 @@ jobs:
             - packages/common/node_modules
           key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
-          name: Install playwright dependencies
-          command: |
-            yarn playwright install
+          name: Ensure reports directory exists
+          command: mkdir reports
       # - run:
       #     name: Check nodejs version compatibility with buildpack
       #     command: |
@@ -636,7 +635,6 @@ commands:
       - run:
           name: Start server
           command: |
-            yarn build
             yarn playwright install
             export BYPASS_AUTH=true
             export CURRENT_USER_ID=5
