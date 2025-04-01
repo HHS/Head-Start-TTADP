@@ -49,11 +49,11 @@ workflows:
     when:
       equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
-      - build_tta_app
+      - build_and_lint
       - build_similarity_api
       - phase1:
            requires:
-            - build_tta_app
+            - build_and_lint
             - build_similarity_api
       - lint:
           requires:
@@ -139,18 +139,6 @@ workflows:
            requires:
              - process_db
 
-  daily_task:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - tm/cleanup-circle # normally main
-    jobs:
-      - run_cmd:
-          command: "echo 'hello world'"
-
 # ----------------- Jobs -----------------
 
 jobs:
@@ -202,7 +190,7 @@ jobs:
           the_command: << parameters.command >>
           target_env: << parameters.target_env >>
 
-  build_tta_app:
+  build_and_lint:
     executor: docker-executor
     steps:
       - checkout
@@ -229,6 +217,29 @@ jobs:
       #       chmod +x ./bin/check_node_version_compatibility.sh
       #       ./bin/check_node_version_compatibility.sh
       - run: yarn build
+      - run:
+          name: Lint backend
+          command: yarn lint:ci
+      - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Lint frontend
+          command: yarn --cwd frontend lint:ci
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - store_artifacts:
+          path: reports
+          destination: backend-lint.xml
+      - store_artifacts:
+          path: frontend/reports
+          destination: frontend-lint.xml      
       - persist_to_workspace:
           root: .
           paths:
@@ -262,35 +273,6 @@ jobs:
           root: .
           paths:
             - similarity_api
-            
-  lint:
-    executor: docker-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Lint backend
-          command: yarn lint:ci
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - run:
-          name: Lint frontend
-          command: yarn --cwd frontend lint:ci
-      - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - store_artifacts:
-          path: reports
-          destination: backend-lint.xml
-      - store_artifacts:
-          path: frontend/reports
-          destination: frontend-lint.xml
     
   test_backend:
     executor: docker-postgres-executor
