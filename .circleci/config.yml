@@ -643,6 +643,7 @@ commands:
           name: Start server
           command: |
             yarn playwright install
+            export PLAYWRIGHT_WORKERS=1
             export BYPASS_AUTH=true
             export CURRENT_USER_ID=5
             yarn start:ci
