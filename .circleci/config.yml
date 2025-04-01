@@ -280,7 +280,9 @@ jobs:
           at: .
       - run:
           name: Add GitHub to known_hosts
-          command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          command: |
+            touch ~/.ssh/known_hosts
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -295,8 +297,6 @@ jobs:
       - run:
           name: Check coverage for modified lines
           command: |
-            ls -la
-            pwd
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               chmod +x ./tools/check-coverage.js
               node -r esm ./tools/check-coverage.js \
