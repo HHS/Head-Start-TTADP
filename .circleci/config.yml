@@ -49,6 +49,8 @@ workflows:
     when:
       equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
+      - build_tta_app
+      - build_similarity_api
       - build_all:
           requires:
             - build_tta_app
