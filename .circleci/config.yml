@@ -193,7 +193,6 @@ jobs:
 
   run_cmd:
     executor: docker-executor
-    resource_class: large
     parameters:
       command:
         type: string
@@ -281,7 +280,6 @@ jobs:
 
   build_tta_app:
     executor: docker-executor
-    resource_class: large
     steps:
       - checkout
       - create_combined_yarnlock
@@ -314,7 +312,6 @@ jobs:
 
   build_similarity_api:
     executor: docker-python-executor
-    resource_class: large
     steps:
       - checkout
       - create_combined_pipfreeze
@@ -344,7 +341,6 @@ jobs:
             
   lint:
     executor: docker-executor
-    resource_class: large
     steps:
       - attach_workspace:
           at: .
@@ -375,6 +371,7 @@ jobs:
   test_backend:
     executor: docker-postgres-executor
     resource_class: large
+    parallelism: 3
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
@@ -386,11 +383,19 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      # - run:
+      #     name: Test backend
+      #     command: |
+      #       chmod 744 ./bin/test-backend-ci
+      #       ./bin/test-backend-ci
       - run:
-          name: Test backend
+          name: Run split tests
           command: |
+            export JEST_JUNIT_ADD_FILE_ATTRIBUTE='true'
             chmod 744 ./bin/test-backend-ci
-            ./bin/test-backend-ci
+            TESTFILES=$(circleci tests glob "src/**/*.test.js" | circleci tests split --split-by=timings)
+            echo "$TEST" | circleci tests run --command="./bin/test-backend-ci" --split-by=timings
+
       - run:
           name: Check coverage for modified lines
           command: |
@@ -543,6 +548,7 @@ jobs:
 
   dynamic_security_scan:
     executor: machine-executor
+    resource_class: large
     steps:
       - attach_workspace:
           at: .
@@ -577,7 +583,6 @@ jobs:
 
   deploy:
     executor: docker-executor
-    resource_class: large
     steps:
       - attach_workspace:
           at: .
