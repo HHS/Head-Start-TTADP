@@ -66,15 +66,19 @@ workflows:
       - test_e2e_app:
           requires:
             - build_tta_app
+            - test_backend
       - test_e2e_api:
           requires:
             - build_tta_app
+            - test_backend
       - test_e2e_utils:
           requires:
             - build_tta_app
+            - test_backend
       - test_cucumber:
           requires:
             - build_tta_app
+            - test_backend
       - dynamic_security_scan:
            requires:
             - lint
