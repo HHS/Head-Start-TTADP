@@ -1,53 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useController } from 'react-hook-form';
 import Select from 'react-select';
 import { Table, Checkbox } from '@trussworks/react-uswds';
 import FormItem from '../../../../components/FormItem';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import Req from '../../../../components/Req';
+import './SingleRecipientSelect.scss';
 
 export default function SingleRecipientSelect(
   {
-    selectedRecipient,
+    selectedRecipients,
     possibleRecipients,
     disable,
+    onChangeActivityRecipients,
   },
 ) {
-  console.log('>>>>>>>>selectedRecipient passed to single: ', possibleRecipients);
-  // Controller for activity recipients.
-  const {
-    field: {
-      onChange: onChangeActivityRecipients,
-      // onBlur: onBlurActivityRecipients,
-      value: activityRecipients,
-      // name: activityRecipientsInputName,
-    },
-  } = useController({
-    name: 'activityRecipients',
-    defaultValue: false,
-    rules: {
-      validate: {
-        notEmpty: (value) => (value && value.length) || 'Please select a recipient',
-      },
-    },
-  });
-
-  console.log('activityRecipients from FORM: ', activityRecipients);
-
   const [showRecipientGrants, setShowRecipientGrants] = useState(false);
   const [recipientGrants, setRecipientGrants] = useState([]);
   const [checkedCheckBoxes, setCheckedCheckBoxes] = useState([]);
   const [newSelectedRecipient, setNewSelectedRecipient] = useState(null);
 
+
+  // We need to create a useEffect that sets both the selected recipient and the grants when the selectedRecipients has a value.
+  useEffect(() => {
+    console.log("selectedRecipients use effect:", selectedRecipients);
+    if (selectedRecipients && selectedRecipients.length > 0) {
+      const selectedRecipient = possibleRecipients.find(
+        (recipient) => recipient.id === selectedRecipients[0].recipientId,
+      );
+      if (selectedRecipient) {
+        setNewSelectedRecipient(selectedRecipient);
+        setRecipientGrants(selectedRecipient.options);
+        setCheckedCheckBoxes(selectedRecipient.grantIds);
+        setShowRecipientGrants(true);
+      } else {
+        setNewSelectedRecipient(null);
+        setRecipientGrants([]);
+        setCheckedCheckBoxes([]);
+        setShowRecipientGrants(false);
+      }
+    }
+  }, [selectedRecipients, possibleRecipients]);
+
+
   const onRecipientChange = (selectedRecipientOption) => {
     // Set this recipients grants.
-    console.log('selectedRecipientOption>>>1', selectedRecipientOption);
     setRecipientGrants(selectedRecipientOption.grants);
 
     // Set the selected recipient.
     setNewSelectedRecipient(selectedRecipientOption);
 
+    // Clear the selected recipient grants.
+    setCheckedCheckBoxes([]);
+    onChangeActivityRecipients([]);
     // If a recipient has been selected we need to display the grants.
     if (selectedRecipientOption) {
       setShowRecipientGrants(true);
@@ -56,12 +62,9 @@ export default function SingleRecipientSelect(
     }
   };
 
-  console.log("NEW Selected Recipent>>>", selectedRecipient);
-
   const toggleGrantSelection = (grantChecked) => {
-    console.log('grantChecked>>>', grantChecked);
     // Update the checked grants.
-    const grantId = grantChecked.activityRecipientId;
+    const grantId = grantChecked.value;
     if (checkedCheckBoxes.includes(grantId)) {
       setCheckedCheckBoxes(checkedCheckBoxes.filter((id) => id !== grantId));
     } else {
@@ -69,32 +72,31 @@ export default function SingleRecipientSelect(
     }
 
     // We need to get all grants then call onChangeActivityRecipients function.
-    const checkedGrants = recipientGrants.filter((grant) => grant.id === grantId);
+    const checkedGrants = recipientGrants.filter((grant) => grant.value === grantId);
+    console.log('what we set in the form: ', checkedGrants);
     onChangeActivityRecipients(checkedGrants);
   };
 
+  console.log('checkedCheckBoxes', checkedCheckBoxes);
+
   const createGrantCheckBoxes = (grantsForCheckBoxes) => {
-    console.log('grantsForCheckBoxeszzzzzzzzzz>>>', grantsForCheckBoxes);
     const grantCheckBoxes = grantsForCheckBoxes.map((grant) => (
       <tr key={grant.id}>
         <td>
           <Checkbox
-            id={`${grant.activityRecipientId}-grant`}
-            name={grant.name}
-            label={grant.name}
-            onChange={toggleGrantSelection}
-            checked={checkedCheckBoxes.includes(grant.id)}
-            aria-label={`Select grant ${grant.name}`}
+            id={`${grant.value}-grant`}
+            name={grant.label}
+            label={grant.label}
+            onChange={() => toggleGrantSelection(grant)}
+            checked={checkedCheckBoxes.includes(grant.value)}
+            aria-label={`Select grant ${grant.label}`}
           />
-        </td>
-        <td>
-          <label htmlFor={`grant-${grant.id}`}>{grant.title}</label>
         </td>
       </tr>
     ));
 
     return (
-      <Table>
+      <Table className="single-recipient-select-table">
         <tbody>
           {grantCheckBoxes}
         </tbody>
@@ -102,14 +104,14 @@ export default function SingleRecipientSelect(
     );
   };
 
-  console.log("possibleRecipients333333333333", possibleRecipients);
+  //console.log("possibleRecipients333333333333", possibleRecipients);
   return (
     <FormItem
       label="Recipient name"
       name="activityRecipients"
       required
     >
-      <div aria-hidden={disable}>
+      <div className="single-recipient-select" aria-hidden={disable}>
         <Select
           placeholder=""
           inputId="selectedRecipient"
@@ -124,8 +126,8 @@ export default function SingleRecipientSelect(
             DropdownIndicator: null,
           }}
           className="usa-select"
-          closeMenuOnSelect={false}
-          value={newSelectedRecipient || selectedRecipient}
+          closeMenuOnSelect
+          value={newSelectedRecipient || selectedRecipients}
           getOptionLabel={(option) => option.label}
           getOptionValue={(option) => option.value}
         />
@@ -138,6 +140,8 @@ export default function SingleRecipientSelect(
           >
             <p className="usa-prose margin-bottom-0" data-testid="recipient-grants-label">
               Recipient&apos;s Grants
+              {' '}
+              <Req announce />
             </p>
               {
                 createGrantCheckBoxes(recipientGrants)
@@ -156,13 +160,12 @@ const RecipientPropType = PropTypes.shape({
 });
 
 SingleRecipientSelect.propTypes = {
-  // control: PropTypes.shape({}).isRequired,
-  selectedRecipient: RecipientPropType,
+  onChangeActivityRecipients: PropTypes.func.isRequired,
+  selectedRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,
   possibleRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,
   disable: PropTypes.bool,
 };
 
 SingleRecipientSelect.defaultProps = {
   disable: false,
-  selectedRecipient: null,
 };
