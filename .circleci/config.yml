@@ -345,7 +345,7 @@ jobs:
           destination: frontend-lint.xml
     
   test_backend:
-    executor: docker-postgres-executor
+    executor: docker-postgres-executor/backend
     resource_class: large
     environment:
       SFTP_EXPOSED_PORT: 2222
@@ -497,7 +497,7 @@ jobs:
           destination: uncovered-lines
 
   test_e2e:
-    executor: docker-postgres-executor
+    executor: docker-postgres-executor/e2e
     steps:
       - attach_workspace:
           at: .
@@ -1034,12 +1034,12 @@ commands:
             sleep 30 # wait for logs
             set -x
             cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee logs.txt
+            echo "script exited with code:$rc"
             grep '"level":"error"' logs.txt
             if [[ $? -eq 0 ]]; then
               echo "found error in logs"
-              exit 1
+              exit 5
             fi
-            echo "script exited with code:$rc"
             exit $rc
               
       - run:
