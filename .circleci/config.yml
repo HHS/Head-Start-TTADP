@@ -279,6 +279,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Add GitHub to known_hosts
+          command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
       - run:
