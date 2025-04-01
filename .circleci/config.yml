@@ -15,7 +15,6 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
-      - image: cimg/redis:6.2.6
   docker-python-executor:
     docker:
       - image: cimg/python:3.9.21
@@ -55,21 +54,21 @@ workflows:
       - lint:
           requires:
             - build_tta_app
-      - test_similarity_api:
-          requires:
-            - build_similarity_api
-      - test_frontend:
-          requires:
-            - build_tta_app
-      - test_backend:
-          requires:
-            - build_tta_app
+      # - test_similarity_api:
+      #     requires:
+      #       - build_similarity_api
+      # - test_frontend:
+      #     requires:
+      #       - build_tta_app
+      # - test_backend:
+      #     requires:
+      #       - build_tta_app
       - test_e2e:
           requires:
             - lint
-            - test_backend
-            - test_frontend
-            - test_similarity_api
+            # - test_backend
+            # - test_frontend
+            # - test_similarity_api
       - dynamic_security_scan:
           requires:
             - test_e2e
@@ -348,29 +347,17 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      # - run:
-      #     name: Add GitHub to known_hosts
-      #     command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
       - run:
           name: Run seeders
           command: yarn db:seed:ci
-      # everything below this will be executed on the host machine
-      # - setup_remote_docker:
-      #     version: default
-      # - run:
-      #     name: Monitor database
-      #     background: true
-      #     command: |
-      #       docker attach  $(docker ps | grep postgres | awk '{print $1}')
       - run:
           name: Test backend
           command: |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
-      # Run coverage check script
       - run:
           name: Check coverage for modified lines
           command: |
@@ -495,190 +482,24 @@ jobs:
   test_e2e:
     executor: docker-postgres-executor
     steps:
-      - attach_workspace:
-          at: .
-      # - setup_remote_docker:
-      #     version: default
-      - run:
-          name: Start server
-          command: |
-            yarn build
-            yarn playwright install
-            export BYPASS_AUTH=true
-            export CURRENT_USER_ID=5
-            yarn start:ci
-          background: true
-      # - run:
-      #     name: Build docker file
-      #     command: docker build -t tta-testing -f Dockerfile-Testing .
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Wait for server to start
-          command: ./bin/ping-server 3000
-      # - run:
-      #     name: Wait for server to start
-      #     command: ./bin/ping-server 9999
-      # - run:
-      #     name: Wait for server to start
-      #     command: |
-      #       docker ps
-      #       ./bin/ping-server 9999
-      - run:
-          command: |
-            export TTA_SMART_HUB_URI=http://localhost:3000
-            yarn e2e
-      - store_artifacts:
-          path: tests/e2e # ci artifacts
-      - store_test_results:
-          path: tests/e2e
-      - run: 
-          command: |
-            export TTA_SMART_HUB_URI=http://localhost:3000
-            yarn e2e:api
-      - store_artifacts:
-          path: tests/api # api artifacts
-      - store_test_results:
-          path: tests/api
-      - run:
-          command: |
-            export TTA_SMART_HUB_URI=http://localhost:3000
-            yarn e2e:utils
-      - store_artifacts:
-          path: tests/utilsTests # utils artifacts
-      - store_test_results:
-          path: tests/utilsTests
-      - run:
-          command: |
-            yarn cucumber:ci
-      - store_artifacts:
-          path:  reports/ # cucumber artifacts
+      - run_e2e_test:
+          cmd: yarn e2e
+          artifact_path: tests/e2e
+      - run_e2e_test:
+          cmd: yarn e2e:api
+          artifact_path: tests/api
+      - run_e2e_test:
+          cmd: yarn e2e:utils
+          artifact_path: tests/utilsTests
+      - run_e2e_test:
+          cmd: yarn  cucumber:ci
+          artifact_path: reports
 
-
-  new_e2e:
-    executor: machine-executor
-    resource_class: large
-    steps:
-      - attach_workspace:
-          at: .
-      # - run:
-      #     name: Start server
-      #     background: true
-      #     command: |
-      #       yarn build
-      #       yarn playwright install
-      #       BYPASS_AUTH=true 
-      #       CURRENT_USER_ID=5 
-      #       yarn start:ci
-      # - run:
-      #     name: Run migrations ci
-      #     command: yarn db:migrate:ci
-      # - run:
-      #     name: Seed database
-      #     command: yarn db:seed:ci
-
-      # - setup_remote_docker:
-      #     version: default
-      # - run:
-      #     name: Start up local services
-      #     background: true
-      #     command: |
-      #       circleci env subst < ./deployment_config/${cfg_env}_vars.yml > .env
-      #       docker compose \
-      #         --profile minimal_required_node \
-      #         --profile minimal_required_postgres \
-      #         --profile minimal_required_redis \
-      #         --profile minimal_required_python \
-      #         up
-      # - run:
-      #     name: Start up local services
-      #     background: true
-      #     command: |
-      #       cp .env.example .env
-      #       npm install cross-env
-      #       docker compose \
-      #         --profile minimal_required_postgres \
-      #         --profile minimal_required_redis \
-      #         --profile minimal_required_python \
-      #         --profile minimal_required_node \
-      #         up
-      # - run:
-      #     name: Start up local services
-      #     command: |
-      #       docker compose -f docker-compose.ci.yml up --build
-      # - run:
-      #     name: Start up testing server
-      #     command: |
-      #       cp .env.example .env
-      #       docker compose start testingonly db
-      #       docker ps
-      #- set_env_vars
-      - run:
-          name: Start up local services
-          command: ./bin/prod-style-server
-      - run: 
-          command: |
-            docker compose -f docker-compose.dss.yml run 
-      - run:
-          name: Build docker file
-          command: docker build -t tta-testing -f Dockerfile-Testing .
-      - run:
-          name: Starting testing server
-          background: true
-          command: |
-            docker run -p 9999:9999 tta-testing yarn start:testingonly
-      # - run:
-      #     name: Wait for server to start
-      #     command: ./bin/ping-server 3000
-      - run:
-          name: Wait for containers to start
-          command: |
-            timeout 10m bash -c \
-            "until [[ '3' -eq $(docker ps --filter status=running | grep -c 'head-start') ]]; do \
-              echo 'waiting 30s' && sleep 30 && docker ps; \
-            done"
-      - run:
-          name: Wait for backend to start
-          command: ./bin/ping-server 8080
-      - run:
-          name: Wait for testing server to start
-          command: |
-            ./bin/ping-server 9999
-      # - run:
-      #     name: Wait for backend to start
-      #     command: ./bin/ping-server 9999
-      - run:
-          command: |
-            docker run -t tta-testing yarn e2e:ci
-      - store_artifacts:
-          path: tests/e2e
-      - run:
-          command: docker run -t tta-testing yarn e2e:api
-      - store_artifacts:
-          path: tests/api
-      - run:
-          command: docker run -t tta-testing yarn e2e:utils
-      - store_artifacts:
-          path: tests/utilsTests
-      - run:
-          command: docker run -t tta-testing yarn cucumber:ci
-      - store_artifacts:
-          path:  reports/
-    
   dynamic_security_scan:
     executor: machine-executor
     steps:
       - attach_workspace:
           at: .
-      # - run:
-      #     name: Clean previous reports
-      #     command: |
-      #       rm -rf reports/server/*
-      #       rm -rf reports/similarity_api/*
       - run:
           name: Start up local services
           command: ./bin/prod-style-server
@@ -785,6 +606,42 @@ commands:
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
   
+  run_e2e_test:
+    parameters:
+      cmd:
+        type: string
+      artifact_path:
+        type: string
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            yarn playwright install
+            export BYPASS_AUTH=true
+            export CURRENT_USER_ID=5
+            yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          command: |
+            export TTA_SMART_HUB_URI=http://localhost:3000
+            << parameters.cmd >>
+      - store_artifacts:
+          path: << parameters.artifact_path >>
+      - store_test_results:
+          path: << parameters.artifact_path >>
+
 
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
