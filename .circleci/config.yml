@@ -70,7 +70,9 @@ workflows:
             - test_backend
             - test_similarity_api
 
-      - check_host
+      - check_host:
+          requires:
+            - phase1
       - test_e2e_app:
           requires:
             - phase1
