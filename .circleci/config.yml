@@ -658,7 +658,7 @@ commands:
           name: Wait for server to start
           command: ./bin/ping-server 3000
       - run:
-          name: << parameters.command >>
+          name: << parameters.cmd >>
           command: |
             export TTA_SMART_HUB_URI=http://localhost:3000
             export PLAYWRIGHT_WORKERS=1
