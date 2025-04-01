@@ -10,7 +10,7 @@ executors:
       - image: cimg/node:20.18.2-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: cimg/postgres:15.6
+      - image: cimg/postgres:15.12
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
