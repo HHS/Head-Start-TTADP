@@ -561,6 +561,7 @@ jobs:
 
   deploy:
     executor: docker-executor
+    resource_class: large
     steps:
       - attach_workspace:
           at: .
