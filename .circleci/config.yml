@@ -1033,7 +1033,7 @@ commands:
             echo "waiting for logs...."
             sleep 30 # wait for logs
             set -x
-            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | logs.txt
+            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee logs.txt
             grep '"level":"error"' logs.txt
             if [[ $? -eq 0 ]]; then
               echo "found error in logs"
