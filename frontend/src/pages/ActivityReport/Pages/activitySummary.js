@@ -4,7 +4,7 @@ import React, {
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useController } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
   Fieldset,
@@ -61,6 +61,23 @@ const ActivitySummary = ({
     clearErrors,
   } = useFormContext();
 
+  const {
+    field: {
+      onChange: onChangeActivityRecipients,
+      // onBlur: onBlurActivityRecipients,
+      value: activityRecipients,
+      // name: activityRecipientsInputName,
+    },
+  } = useController({
+    name: 'activityRecipients',
+    defaultValue: false,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || 'Please select a recipient',
+      },
+    },
+  });
+
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
@@ -80,8 +97,8 @@ const ActivitySummary = ({
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
-  console.log("watchFormRecipients: ", watchFormRecipients);
-  console.log("raw grnats: ", rawGrants);
+  // console.log("watchFormRecipients: ", watchFormRecipients);
+  // console.log("raw grnats: ", rawGrants);
   const grants = rawGrants.map((recipient) => ({
     id: recipient.id,
     label: recipient.name,
@@ -95,7 +112,7 @@ const ActivitySummary = ({
     label: entity.name,
     value: entity.activityRecipientId,
   }));
- console.log("123 grants: ", grants);
+ // console.log("123 grants: ", grants);
   const disableRecipients = isEmpty(activityRecipientType);
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
@@ -215,34 +232,25 @@ const ActivitySummary = ({
   }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
 
   const getSelectedRecipient = () => {
-    console.log('watchFormRecipients in get selected 1: ', watchFormRecipients);
+    //console.log('watchFormRecipients in get selected 1: ', watchFormRecipients);
     if (!watchFormRecipients.length) {
       return null;
     }
     // Find recipient by id.
     const recipientId = watchFormRecipients[0].id;
-    console.log('watchFormRecipients in get selected 2: ', recipientId);
-    console.log('selected to filter: ', selectedRecipients);
+    //console.log('watchFormRecipients in get selected 2: ', recipientId);
+    //console.log('selected to filter: ', selectedRecipients);
     const selectedRecipient = selectedRecipients.find(
       (recipient) => recipient.id === recipientId,
     );
-    console.log('watchFormRecipients in get selected 3: ', selectedRecipient);
+    //console.log('watchFormRecipients in get selected 3: ', selectedRecipient);
     if (!selectedRecipient) {
       return null;
     }
-    console.log('watchFormRecipients in get selected 4: ', { value: selectedRecipient.id, label: selectedRecipient.label });
+    //console.log('watchFormRecipients in get selected 4: ', { value: selectedRecipient.id, label: selectedRecipient.label });
     return { value: selectedRecipient.id, label: selectedRecipient.Label };
   };
- console.log("watchFormRecipients: ", watchFormRecipients[0]);
-
- /*
-    <SingleRecipientSelect
-        selectedRecipient={getSelectedRecipient}
-        possibleRecipients={selectedRecipients}
-        disable={disableRecipients}
-      />
-      */
-
+ //console.log("watchFormRecipients: ", watchFormRecipients[0]);
       /*
           <FormItem
         label={recipientLabel}
@@ -262,7 +270,7 @@ const ActivitySummary = ({
         />
       </FormItem>
       */
-  console.log('\n\n\n\n---- Available recipients', selectedRecipients);
+  console.log('Form recipients passed to comp: ', activityRecipients);
   const renderRecipients = (marginTop = 2, marginBottom = 0) => (
     <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
       {!disableRecipients
@@ -271,9 +279,10 @@ const ActivitySummary = ({
         ? <ConnectionError />
         : null}
       <SingleRecipientSelect
-        selectedRecipient={[]}
+        selectedRecipient={activityRecipients}
         possibleRecipients={selectedRecipients || []}
         disable={disableRecipients}
+        onChangeActivityRecipients={onChangeActivityRecipients}
       />
     </div>
   );
