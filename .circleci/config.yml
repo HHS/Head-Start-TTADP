@@ -345,7 +345,7 @@ jobs:
           destination: frontend-lint.xml
     
   test_backend:
-    executor: docker-postgres-executor/backend
+    executor: docker-postgres-executor
     resource_class: large
     environment:
       SFTP_EXPOSED_PORT: 2222
@@ -497,7 +497,7 @@ jobs:
           destination: uncovered-lines
 
   test_e2e:
-    executor: docker-postgres-executor/e2e
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
