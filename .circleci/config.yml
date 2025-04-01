@@ -51,35 +51,53 @@ workflows:
     jobs:
       - build_tta_app
       - build_similarity_api
-      - build_all:
+      - lint:
           requires:
             - build_tta_app
-            - build_similarity_api
-      - test_basic:
+      - test_frontend:
           requires:
-            - build_all
+            - build_tta_app
+      - test_backend:
+          requires:
+            - build_tta_app
+      - test_similarity_api:
+          requires:
+            - build_similarity_api
+      - test_simple:
+          requires:
             - lint
             - test_frontend
             - test_backend
             - test_similarity_api
-      - test_e2e:
+
+      - test_e2e_app:
           requires:
-            - test_basic
+            - test_simple
+      - test_e2e_api:
+          requires:
+            - test_simple
+      - test_e2e_utils:
+          requires:
+            - test_simple
+      - test_cucumber:
+          requires:
+            - test_simple
+      - dynamic_security_scan:
+          requires:
+            - test_simple
+      - test_complex:
+          requires:
             - test_e2e_app
             - test_e2e_api
             - test_e2e_utils
-            - test_cucumber
+            - test_e2e_cucumber
             - dynamic_security_scan
-      
-      # - dynamic_security_scan:
-      #      requires:
-      #       - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
-            - dynamic_security_scan
+            - test_complex
           filters:
             branches:
               only:
@@ -138,17 +156,12 @@ workflows:
 # ----------------- Jobs -----------------
 jobs:
 
-  build_all:
+  test_simple:
     type: no-op
     executor:  docker-executor
     steps: []
 
-  test_basic:
-    type: no-op
-    executor:  docker-executor
-    steps: []
-
-  test_e2e:
+  test_complex:
     type: no-op
     executor:  docker-executor
     steps: []
