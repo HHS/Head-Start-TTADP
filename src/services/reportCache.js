@@ -175,10 +175,14 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
     ],
   });
 
-  if (!goal || goal.createdVia !== 'monitoring') {
+  if (!goal) {
+    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
+    return [];
+  }
+
+  if (goal.createdVia !== 'monitoring') {
     // If this is no longer a monitoring goal associated with this objective,
     // we don't (and shouldn't) save any citations.
-    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
     return [];
   }
 
