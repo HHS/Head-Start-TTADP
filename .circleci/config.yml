@@ -1021,7 +1021,6 @@ commands:
           command: |
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}"
             circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
-            #cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} & 
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
               --command "<< parameters.the_command >>" \
@@ -1033,7 +1032,13 @@ commands:
             rc=$?
             echo "waiting for logs...."
             sleep 30 # wait for logs
-            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
+            set -x
+            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | logs.txt
+            grep '"level":"error"' logs.txt
+            if [[ $? -eq 0 ]]; then
+              echo "found error in logs"
+              exit 1
+            fi
             echo "script exited with code:$rc"
             exit $rc
               
