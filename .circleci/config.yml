@@ -70,9 +70,6 @@ workflows:
             - test_backend
             - test_similarity_api
 
-      - check_host:
-          requires:
-            - phase1
       - test_e2e_app:
           requires:
             - phase1
@@ -95,7 +92,6 @@ workflows:
             - test_e2e_utils
             - test_cucumber
             - dynamic_security_scan
-            - check_host
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
@@ -572,14 +568,6 @@ jobs:
           command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
       - store_artifacts:
           path: reports
-
-  check_host:
-    executor: machine-executor
-    steps:
-      - run:
-          command: |
-            ls -la /var/lib/postgresql/data
-            docker ps
 
   deploy:
     executor: docker-executor
