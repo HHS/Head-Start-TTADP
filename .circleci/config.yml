@@ -65,17 +65,12 @@ workflows:
             - build_tta_app
       - test_e2e:
           requires:
-            - build_tta_app
+            - lint
             - test_backend
             - test_frontend
-            - test_backend
             - test_similarity_api
       - dynamic_security_scan:
           requires:
-            - lint
-            - test_frontend
-            - test_backend
-            - test_similarity_api
             - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
@@ -1038,9 +1033,9 @@ commands:
             grep '"level":"error"' logs.txt
             if [[ $? -eq 0 ]]; then
               echo "found error in logs"
-              exit 5
+              exit 1
             fi
-            exit $rc
+            return $rc
               
       - run:
           name: Logout of service account
