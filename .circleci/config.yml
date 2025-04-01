@@ -77,12 +77,6 @@ workflows:
             - build_tta_app
       - dynamic_security_scan:
            requires:
-             - build_tta_app
-
-      # repeat again with different filters for prod/staging and pass the env
-      - deploy:
-          serial-group: << pipeline.git.branch >>/deploy-lock
-          requires:
             - lint
             - test_frontend
             - test_backend
@@ -90,6 +84,11 @@ workflows:
             - test_e2e_api
             - test_e2e_utils
             - test_cucumber
+
+      # repeat again with different filters for prod/staging and pass the env
+      - deploy:
+          serial-group: << pipeline.git.branch >>/deploy-lock
+          requires:
             - dynamic_security_scan
           filters:
             branches:
