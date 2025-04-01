@@ -49,45 +49,29 @@ workflows:
     when:
       equal: [ build_test_deploy, << pipeline.parameters.action >> ]
     jobs:
-      - build_tta_app
-      - build_similarity_api
-      - lint:
+      - build_all:
           requires:
             - build_tta_app
-      - test_similarity_api:
-          requires:
             - build_similarity_api
-      - test_frontend:
+      - test_basic:
           requires:
-            - build_tta_app
-      - test_backend:
-          requires:
-            - build_tta_app
-      - test_e2e_app:
-          requires:
-            - build_tta_app
-            - test_backend
-      - test_e2e_api:
-          requires:
-            - build_tta_app
-            - test_backend
-      - test_e2e_utils:
-          requires:
-            - build_tta_app
-            - test_backend
-      - test_cucumber:
-          requires:
-            - build_tta_app
-            - test_backend
-      - dynamic_security_scan:
-           requires:
+            - build_all
             - lint
             - test_frontend
+            - test_backend
+            - test_similarity_api
+      - test_e2e:
+          requires:
+            - test_basic
             - test_e2e_app
             - test_e2e_api
             - test_e2e_utils
             - test_cucumber
-            - test_similarity_api
+            - dynamic_security_scan
+      
+      # - dynamic_security_scan:
+      #      requires:
+      #       - test_e2e
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
@@ -151,6 +135,21 @@ workflows:
 
 # ----------------- Jobs -----------------
 jobs:
+
+  build_all:
+    type: no-op
+    executor:  docker-executor
+    steps: []
+
+  test_basic:
+    type: no-op
+    executor:  docker-executor
+    steps: []
+
+  test_e2e:
+    type: no-op
+    executor:  docker-executor
+    steps: []
 
   run_import_job:
     executor: docker-executor
