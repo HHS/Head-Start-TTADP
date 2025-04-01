@@ -367,7 +367,6 @@ jobs:
   test_backend:
     executor: docker-postgres-executor
     resource_class: large
-    parallelism: 3
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
