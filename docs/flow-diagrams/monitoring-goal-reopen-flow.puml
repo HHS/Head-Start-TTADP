@@ -1,0 +1,30 @@
+@startuml
+!pragma useVerticalIf on
+title Reopen Monitoring Goals Flow
+
+start
+
+:Start DB transaction;
+
+:Find monitoring goals\nwith status Closed or Suspended;
+
+if (Any found?) then (yes)
+  :Check if associated review is Complete;
+  :Check if finding is Active;
+  :Check reportDeliveryDate >= Jan 21, 2025;
+  :Check goal.createdVia = 'monitoring';
+
+  if (All conditions met?) then (yes)
+    :Update goal status to 'Not Started';
+    :Log reason: 'Active monitoring citations';
+  else (no)
+    :Skip goal;
+  endif
+else (no)
+  :No goals to reopen;
+endif
+
+:Commit transaction;
+
+stop
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+!pragma useVerticalIf on
+title Monitoring Goal Closure Logic
+
+start
+
+:Select open Monitoring goals\ncreated via 'monitoring';
+
+:Exclude goals associated with\nunapproved Activity Reports;
+
+:Exclude goals with Objectives\nnot in 'Closed' or 'Suspended' status;
+
+:Filter to goals with no active monitoring citations:
+- Review status = 'Complete'
+- Finding status = 'Active'
+- Report delivery date ≥ 2025-01-21;
+
+if (Any active citations remain?) then (yes)
+  :Exclude those goals;
+endif
+
+:Remaining goals meet all closure criteria;
+
+:Set status to 'Closed'\nReason: 'No active monitoring citations';
+
+stop
+@enduml
