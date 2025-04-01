@@ -144,6 +144,7 @@ async function saveReportRecipients(
   activityRecipientIds,
   activityRecipientType,
 ) {
+  console.log("activity recipient type: ", activityRecipientType);
   const newRecipients = activityRecipientIds.map((activityRecipientId) => {
     const activityRecipient = {
       activityReportId,
@@ -158,6 +159,8 @@ async function saveReportRecipients(
     }
     return activityRecipient;
   });
+
+  console.log("\n\n\n------- new recips: ", newRecipients);
 
   const where = {
     activityReportId,
@@ -340,6 +343,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
   });
   console.log('\n\n\n----------test 1');
   const activityRecipients = recipients.map((recipient) => {
+    console.log("\n\n\n---- test 2", recipient);
     const recipientId = recipient.id;
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
@@ -350,6 +354,8 @@ export async function activityReportAndRecipientsById(activityReportId) {
       recipientId,
       activityRecipientId, // Create or Update Report Expect's this Field.
       name,
+      // We need the actual id of the recipient to narrow down what grants are selected on the FE.
+      recipientIdForLookUp: recipient.grant.recipientId,
     };
   });
 

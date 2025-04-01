@@ -97,14 +97,14 @@ const ActivitySummary = ({
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
-  // console.log("watchFormRecipients: ", watchFormRecipients);
-  // console.log("raw grnats: ", rawGrants);
+
   const grants = rawGrants.map((recipient) => ({
     id: recipient.id,
     label: recipient.name,
     options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
       label: grant.name,
+      recipientIdForLookUp: recipient.id,
     })),
   }));
 
@@ -112,7 +112,6 @@ const ActivitySummary = ({
     label: entity.name,
     value: entity.activityRecipientId,
   }));
- // console.log("123 grants: ", grants);
   const disableRecipients = isEmpty(activityRecipientType);
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
@@ -231,45 +230,6 @@ const ActivitySummary = ({
     }
   }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
 
-  const getSelectedRecipient = () => {
-    //console.log('watchFormRecipients in get selected 1: ', watchFormRecipients);
-    if (!watchFormRecipients.length) {
-      return null;
-    }
-    // Find recipient by id.
-    const recipientId = watchFormRecipients[0].id;
-    //console.log('watchFormRecipients in get selected 2: ', recipientId);
-    //console.log('selected to filter: ', selectedRecipients);
-    const selectedRecipient = selectedRecipients.find(
-      (recipient) => recipient.id === recipientId,
-    );
-    //console.log('watchFormRecipients in get selected 3: ', selectedRecipient);
-    if (!selectedRecipient) {
-      return null;
-    }
-    //console.log('watchFormRecipients in get selected 4: ', { value: selectedRecipient.id, label: selectedRecipient.label });
-    return { value: selectedRecipient.id, label: selectedRecipient.Label };
-  };
- //console.log("watchFormRecipients: ", watchFormRecipients[0]);
-      /*
-          <FormItem
-        label={recipientLabel}
-        name="activityRecipients"
-      >
-        <MultiSelect
-          name="activityRecipients"
-          disabled={disableRecipients}
-          control={control}
-          valueProperty="activityRecipientId"
-          labelProperty="name"
-          simple={false}
-          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
-          options={selectedRecipients}
-          placeholderText={placeholderText}
-          onClick={() => setShouldValidateActivityRecipients(true)}
-        />
-      </FormItem>
-      */
   console.log('Form recipients passed to comp: ', activityRecipients);
   const renderRecipients = (marginTop = 2, marginBottom = 0) => (
     <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
@@ -279,7 +239,7 @@ const ActivitySummary = ({
         ? <ConnectionError />
         : null}
       <SingleRecipientSelect
-        selectedRecipient={activityRecipients}
+        selectedRecipients={activityRecipients}
         possibleRecipients={selectedRecipients || []}
         disable={disableRecipients}
         onChangeActivityRecipients={onChangeActivityRecipients}

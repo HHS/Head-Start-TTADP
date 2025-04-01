@@ -266,6 +266,7 @@ function ActivityReport({
             history.push('/something-went-wrong/500');
           }
           report = convertReportToFormData(fetchedReport);
+          console.log("convert to form data1: ", report);
         } else {
           report = {
             ...defaultValues,
@@ -311,6 +312,7 @@ function ActivityReport({
         );
 
         // Add recipientIds to groups.
+        // TODO remove for standard goals.
         const groupsWithRecipientIds = groups.map((group) => ({
           ...group,
           // Match groups to grants as recipients could have multiple grants.
@@ -565,6 +567,7 @@ function ActivityReport({
   const onResetToDraft = async () => {
     const fetchedReport = await resetToDraft(reportId.current);
     const report = convertReportToFormData(fetchedReport);
+    console.log("convert to form data2: ", report);
     updateFormData(report, true);
     updateEditable(true);
   };
