@@ -66,19 +66,15 @@ workflows:
       - test_e2e_app:
           requires:
             - build_tta_app
-            - test_backend
       - test_e2e_api:
           requires:
             - build_tta_app
-            - test_backend
       - test_e2e_utils:
           requires:
             - build_tta_app
-            - test_backend
       - test_cucumber:
           requires:
             - build_tta_app
-            - test_backend
       - dynamic_security_scan:
            requires:
             - lint
@@ -497,6 +493,7 @@ jobs:
 
   test_e2e_app:
     executor: docker-postgres-executor
+    resource_class: large
     steps:
       - run_e2e_test:
           cmd: yarn e2e
@@ -520,7 +517,7 @@ jobs:
     executor: docker-postgres-executor
     steps:
       - run_e2e_test:
-          cmd: yarn  cucumber:ci
+          cmd: yarn cucumber:ci
           artifact_path: reports
 
   dynamic_security_scan:
@@ -647,7 +644,6 @@ commands:
           name: Start server
           command: |
             yarn playwright install
-            export PLAYWRIGHT_WORKERS=1
             export BYPASS_AUTH=true
             export CURRENT_USER_ID=5
             yarn start:ci
@@ -662,8 +658,10 @@ commands:
           name: Wait for server to start
           command: ./bin/ping-server 3000
       - run:
+          name: << parameters.command >>
           command: |
             export TTA_SMART_HUB_URI=http://localhost:3000
+            export PLAYWRIGHT_WORKERS=1
             << parameters.cmd >>
       - store_artifacts:
           path: << parameters.artifact_path >>
