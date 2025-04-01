@@ -63,7 +63,7 @@ workflows:
       - test_similarity_api:
           requires:
             - build_similarity_api
-      - test_simple:
+      - phase1:
           requires:
             - lint
             - test_frontend
@@ -72,20 +72,20 @@ workflows:
 
       - test_e2e_app:
           requires:
-            - test_simple
+            - phase1
       - test_e2e_api:
           requires:
-            - test_simple
+            - phase1
       - test_e2e_utils:
           requires:
-            - test_simple
+            - phase1
       - test_cucumber:
           requires:
-            - test_simple
+            - phase1
       - dynamic_security_scan:
           requires:
-            - test_simple
-      - test_complex:
+            - phase1
+      - phase2:
           requires:
             - test_e2e_app
             - test_e2e_api
@@ -97,7 +97,7 @@ workflows:
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
-            - test_complex
+            - phase2
           filters:
             branches:
               only:
@@ -156,12 +156,12 @@ workflows:
 # ----------------- Jobs -----------------
 jobs:
 
-  test_simple:
+  phase1:
     type: no-op
     executor:  docker-executor
     steps: []
 
-  test_complex:
+  phase2:
     type: no-op
     executor:  docker-executor
     steps: []
