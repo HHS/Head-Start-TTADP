@@ -90,7 +90,7 @@ workflows:
             - test_e2e_app
             - test_e2e_api
             - test_e2e_utils
-            - test_e2e_cucumber
+            - test_cucumber
             - dynamic_security_scan
 
       # repeat again with different filters for prod/staging and pass the env
