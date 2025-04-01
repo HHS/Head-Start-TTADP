@@ -125,7 +125,14 @@ workflows:
 
   run_import:
     when: 
-        equal: [ << pipeline.parameters.action >>, import ]
+      equal: [ << pipeline.parameters.action >>, import ]
+    triggers:
+    - schedule:
+        cron: "0 0 * * *"
+        filters:
+          branches:
+            only:
+              - dev # add more
     jobs:
       - run_import_job
   
