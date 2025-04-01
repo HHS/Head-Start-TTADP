@@ -1033,9 +1033,8 @@ commands:
             grep '"level":"error"' logs.txt
             if [[ $? -eq 0 ]]; then
               echo "found error in logs"
-              exit 1
             fi
-            return $rc
+            exit $rc
               
       - run:
           name: Logout of service account
