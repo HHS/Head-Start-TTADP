@@ -54,15 +54,15 @@ workflows:
       - lint:
           requires:
             - build_tta_app
-      # - test_similarity_api:
-      #     requires:
-      #       - build_similarity_api
-      # - test_frontend:
-      #     requires:
-      #       - build_tta_app
-      # - test_backend:
-      #     requires:
-      #       - build_tta_app
+      - test_similarity_api:
+          requires:
+            - build_similarity_api
+      - test_frontend:
+          requires:
+            - build_tta_app
+      - test_backend:
+          requires:
+            - build_tta_app
       - test_e2e_app:
           requires:
             - build_tta_app
@@ -83,6 +83,13 @@ workflows:
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
+            - lint
+            - test_frontend
+            - test_backend
+            - test_e2e_app
+            - test_e2e_api
+            - test_e2e_utils
+            - test_cucumber
             - dynamic_security_scan
           filters:
             branches:
