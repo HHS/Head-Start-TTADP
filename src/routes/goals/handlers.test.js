@@ -567,6 +567,50 @@ describe('goal handlers', () => {
       await changeGoalStatus(req, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
     });
+
+    it('automatically suspends in-progress objectives when goal is suspended', async () => {
+      db.Objective.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
+      const req = {
+        body: {
+          goalIds: [100000],
+          newStatus: 'Suspended',
+          closeSuspendReason: 'Temporarily paused',
+          closeSuspendContext: 'Will resume later',
+          oldStatus: 'In Progress',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      updateGoalStatusById.mockResolvedValueOnce({ id: 100000, status: 'Suspended' });
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+        objectives: [],
+        grant: { regionId: 2 },
+      });
+
+      await changeGoalStatus(req, mockResponse);
+
+      expect(db.Objective.update).toHaveBeenCalledWith(
+        { status: 'Suspended' },
+        {
+          where: {
+            goalId: 100000,
+            status: 'In Progress',
+          },
+        },
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith({ id: 100000, status: 'Suspended' });
+    });
   });
 
   describe('deleteGoal', () => {

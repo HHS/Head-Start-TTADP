@@ -294,7 +294,7 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
 
 const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
   const changed = instance.changed();
-  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED];
+  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED];
   if (Array.isArray(changed)
     && changed.includes('status')
     && NO_GOOD_STATUSES.includes(instance.status)) {

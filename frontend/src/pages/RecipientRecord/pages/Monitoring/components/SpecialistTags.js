@@ -8,10 +8,17 @@ export default function SpecialistTags({ specialists }) {
   return specialists.map((specialist) => {
     if (!specialist.name) return null;
 
+    const roleNames = specialist.roles.reduce((acc, role) => {
+      if (role && role.role && role.role.name) {
+        acc.push(role.role.name);
+      }
+      return acc;
+    }, []).filter(Boolean);
+
     return (
-      <Tag key={uniqueId('specialist-tag-')} className="text-ink text-normal border usa-prose margin-top-0 margin-bottom-1 margin-right-1 bg-base-lightest radius-sm padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
+      <Tag key={uniqueId('specialist-tag-')} className="text-ink text-normal usa-prose margin-top-0 margin-bottom-1 margin-right-1 bg-base-lightest radius-sm padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
         <Tooltip
-          displayText={specialist.roles.join(', ')}
+          displayText={roleNames.join(', ')}
           screenReadDisplayText={false}
           buttonLabel="reveal the full name of this user"
           tooltipText={specialist.name}
