@@ -221,7 +221,6 @@ const history = createMemoryHistory();
 
 const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
   const goalBuckets = !goals ? [] : goals.map((g) => ({ id: g.id, goalIds: g.ids }));
-  const perPageChange = jest.fn();
   render(
     <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>

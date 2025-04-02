@@ -25,7 +25,6 @@ function ObjectiveCard({
   const {
     title,
     endDate,
-    reasons = [],
     topics = [],
     status,
     // grantNumbers,
@@ -216,7 +215,6 @@ objectivePropTypes.defaultProps = {
   goalStatus: null,
   arLegacyId: null,
   endDate: null,
-  reasons: [],
   grantNumbers: [],
   activityReports: [],
   supportType: '',
