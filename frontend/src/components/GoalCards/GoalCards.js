@@ -248,7 +248,7 @@ function GoalCards({
               recipientId={recipientId}
               regionId={regionId}
               showCloseSuspendGoalModal={showCloseSuspendGoalModal}
-              // showReopenGoalModal={showReopenGoalModal}
+              showReopenGoalModal={showReopenGoalModal}
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
