@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { blur } from './common';
 
 test.describe('Recipient record', () => {
-  test('create a basic goal', async ({ page }) => {  
+  test('create a basic goal', async ({ page }) => {
     await page.goto('http://localhost:3000/');
 
     // navigate through the recipient record tabs
@@ -27,7 +27,7 @@ test.describe('Recipient record', () => {
 
     await page.getByLabel('Recipient\'s goal *').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: /Save and continue/i }).click();
-  
+
      // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
@@ -69,7 +69,7 @@ test.describe('Recipient record', () => {
 
     await page.getByLabel('Recipient\'s goal *').fill('This is the second goal for this recipient');
 
-    await page.getByRole('button', { name: /Save and continue/i }).click();    
+    await page.getByRole('button', { name: /Save and continue/i }).click();
 
     // goal source
     await page.getByLabel(/Goal source/i).selectOption('Recipient request');
@@ -87,17 +87,17 @@ test.describe('Recipient record', () => {
       hasText: 'This is the second goal for this recipient' }
     );
 
-    await goal.getByRole('button').first().click();
+    await goal.getByTestId('goal-status-dropdown').click();
     await goal.getByText(/closed/i).click();
 
     // expect error
     await expect(page.getByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i)).toBeVisible();
-    await goal.getByTestId('expander-button').click(); 
+    await goal.getByTestId('expander-button').click();
     const objective = goal.getByTestId('objectiveList').first();
-    await objective.getByRole('button', { name: 'Change status for objective' }).click();
+    await objective.getByTestId('objective-status-dropdown').click();
     await objective.getByRole('button', { name: /complete/i }).click();
     await page.waitForTimeout(3000);
-    await goal.getByRole('button').first().click();
+    await goal.getByTestId('goal-status-dropdown').click();
     await goal.getByText(/closed/i).click();
     await page.waitForTimeout(3000);
     await page.getByText(/tta complete/i).click();
