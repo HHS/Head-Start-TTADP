@@ -183,9 +183,6 @@ export default function ViewGoalDetails({
                   <ReadOnlyField label="TTA objective">
                     {objective.title}
                   </ReadOnlyField>
-                  <ReadOnlyField label="Objective status">
-                    {objective.status}
-                  </ReadOnlyField>
 
                   {/* Display Reports */}
                   {!objective.activityReportObjectives
@@ -196,18 +193,18 @@ export default function ViewGoalDetails({
                     ) : (
                       objective.activityReportObjectives.length > 0 && (
                         <div className="margin-top-2">
-                          <h4>Reports</h4>
-                          <ul className="usa-list">
+                          <ReadOnlyField label="Reports">
                             {objective.activityReportObjectives
                               .filter((aro) => aro.activityReport)
-                              .map((aro) => (
-                                <li key={`report-${aro.activityReport.id}`}>
+                              .map((aro, reportIndex, array) => (
+                                <React.Fragment key={`report-${aro.activityReport.id}`}>
                                   <Link to={`/activity-reports/${aro.activityReport.id}`}>
                                     {aro.activityReport.displayId}
                                   </Link>
-                                </li>
+                                  {reportIndex < array.length - 1 && ', '}
+                                </React.Fragment>
                               ))}
-                          </ul>
+                          </ReadOnlyField>
                         </div>
                       )
                     )}
@@ -218,8 +215,7 @@ export default function ViewGoalDetails({
                         (aro) => aro.topics && aro.topics.length > 0,
                       ) ? null : (
                         <div className="margin-top-2">
-                          <h4>Topics</h4>
-                          <ul className="usa-list">
+                          <ReadOnlyField label="Topics">
                             {objective.activityReportObjectives
                               .flatMap((aro) => aro.topics || [])
                               .filter(
@@ -227,10 +223,13 @@ export default function ViewGoalDetails({
                                   (t) => t.id === topic.id,
                                 ),
                               )
-                              .map((topic) => (
-                                <li key={`topic-${topic.id}`}>{topic.name}</li>
+                              .map((topic, topicIndex, array) => (
+                                <React.Fragment key={`topic-${topic.id}`}>
+                                  {topic.name}
+                                  {topicIndex < array.length - 1 && ', '}
+                                </React.Fragment>
                               ))}
-                          </ul>
+                          </ReadOnlyField>
                         </div>
                     )}
 
@@ -240,25 +239,31 @@ export default function ViewGoalDetails({
                         (aro) => aro.resources && aro.resources.length > 0,
                       ) ? null : (
                         <div className="margin-top-2">
-                          <h4>Resources</h4>
-                          <ul className="usa-list">
-                            {objective.activityReportObjectives
-                              .flatMap((aro) => aro.resources || [])
-                              .filter(
-                                (resource, i, self) => i === self.findIndex(
-                                  (r) => r.id === resource.id,
-                                ),
-                              )
-                              .map((resource) => (
-                                <li key={`resource-${resource.id}`}>
-                                  <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                                    {resource.title || resource.url}
-                                  </a>
-                                </li>
-                              ))}
-                          </ul>
+                          <ReadOnlyField label="Resources">
+                            <ul className="usa-list margin-top-0">
+                              {objective.activityReportObjectives
+                                .flatMap((aro) => aro.resources || [])
+                                .filter(
+                                  (resource, i, self) => i === self.findIndex(
+                                    (r) => r.id === resource.id,
+                                  ),
+                                )
+                                .map((resource) => (
+                                  <li key={`resource-${resource.id}`}>
+                                    <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                      {resource.title || resource.url}
+                                    </a>
+                                  </li>
+                                ))}
+                            </ul>
+                          </ReadOnlyField>
                         </div>
                     )}
+
+                  {/* Display Objective Status */}
+                  <ReadOnlyField label="Objective status" className="margin-top-2">
+                    {objective.status}
+                  </ReadOnlyField>
                 </div>
               ))}
             </div>
