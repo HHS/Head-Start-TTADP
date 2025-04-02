@@ -10,6 +10,7 @@ import {
   getSimilarGoalsByText,
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
+  getGoalHistory,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 import { checkRegionIdParam, checkRecipientIdParam, checkGoalTemplateIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -50,5 +51,7 @@ router.get(
 );
 
 router.put('/reopen', transactionWrapper(reopenGoal));
+
+router.get('/:goalId/history', transactionWrapper(getGoalHistory));
 
 export default router;
