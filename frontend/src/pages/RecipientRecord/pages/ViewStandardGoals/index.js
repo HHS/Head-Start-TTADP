@@ -131,12 +131,13 @@ export default function ViewGoalDetails({
 
     return {
       id: `goal-${goal.id}`,
-      title: `${goal.status} - ${moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}`,
+      title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0, // Expand the most recent goal by default
+      className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
           <div className="goal-updates-section">
-            <h3>Goal updates</h3>
+            <h3 className="smart-hub-serif">Goal updates</h3>
             {statusUpdates.length > 0 ? (
               <ul className="usa-list">
                 {statusUpdates.map((update) => (
@@ -145,9 +146,8 @@ export default function ViewGoalDetails({
                       {update.oldStatus ? `${update.oldStatus} → ${update.newStatus}` : update.newStatus}
                     </strong>
                     {' on '}
-                    {moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}
+                    <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
                     {update.user ? ` by ${update.user.name}` : ''}
-                    {update.reason ? `: ${update.reason}` : ''}
                   </li>
                 ))}
               </ul>
@@ -157,19 +157,20 @@ export default function ViewGoalDetails({
           </div>
 
           <div className="goal-status-section">
-            <h3>Goal status</h3>
-            <p>{goal.status}</p>
+            <ReadOnlyField label="Goal status">
+              {goal.status}
+            </ReadOnlyField>
           </div>
 
           {objectives.length > 0 && (
             <div className="objective-section">
-              <h3>Objective summary</h3>
               {objectives.map((objective) => (
                 <div key={objective.id} className="margin-bottom-3">
+                  <h3 className="smart-hub-serif">Objective summary</h3>
                   <ReadOnlyField label="TTA objective">
                     {objective.title}
                   </ReadOnlyField>
-                  <ReadOnlyField label="Status">
+                  <ReadOnlyField label="Objective status">
                     {objective.status}
                   </ReadOnlyField>
                 </div>
@@ -222,9 +223,12 @@ export default function ViewGoalDetails({
 
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
         <div className="margin-bottom-5">
-          <h2 className="margin-top-0 margin-bottom-3">{goalTemplateName}</h2>
+          <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
           <ReadOnlyField label="Recipient grant numbers">
             {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
+          </ReadOnlyField>
+          <ReadOnlyField label="Recipient's goal">
+            {firstGoal.name || goalTemplateName}
           </ReadOnlyField>
         </div>
 
