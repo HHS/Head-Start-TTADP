@@ -230,7 +230,7 @@ describe('ViewGoalDetails', () => {
       renderViewGoalDetails();
     });
 
-    expect(screen.getAllByText(/Not Started.*In Progress/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Started on/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Goal updates').length).toBeGreaterThan(0);
   });
 
