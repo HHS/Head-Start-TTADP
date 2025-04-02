@@ -14,6 +14,7 @@ import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import IncompletePages from '../../../../../components/IncompletePages';
 import UserContext from '../../../../../UserContext';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 
 const NeedsAction = ({
   additionalNotes,
@@ -24,6 +25,9 @@ const NeedsAction = ({
   displayId,
   reportId,
   availableApprovers,
+  grantsMissingMonitoring,
+  grantsMissingCitations,
+
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
@@ -37,9 +41,12 @@ const NeedsAction = ({
   const approvers = watch('approvers');
 
   const submit = async () => {
+    const hasCitationIssues = grantsMissingMonitoring.length
+    || grantsMissingCitations.length;
+
     if (!submitCR) {
       setShowCreatorRoleError(true);
-    } else if (!hasIncompletePages) {
+    } else if (!hasIncompletePages && !hasCitationIssues) {
       await onSubmit({
         additionalNotes: creatorNotes,
         creatorRole: submitCR,
@@ -144,6 +151,11 @@ const NeedsAction = ({
             lockExistingValues
           />
         </FormItem>
+        <MissingCitationAlerts
+          reportId={reportId}
+          grantsMissingMonitoring={grantsMissingMonitoring}
+          grantsMissingCitations={grantsMissingCitations}
+        />
       </div>
       <div className="margin-top-3">
         <Button className="margin-bottom-4" onClick={submit}>Update report</Button>
@@ -167,6 +179,8 @@ NeedsAction.propTypes = {
   creatorRole: PropTypes.string,
   displayId: PropTypes.string.isRequired,
   reportId: PropTypes.string.isRequired,
+  grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
+  grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 NeedsAction.defaultProps = {
