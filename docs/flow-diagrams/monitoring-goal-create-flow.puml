@@ -1,0 +1,35 @@
+@startuml
+!pragma useVerticalIf on
+title Create Monitoring Goals Logic
+
+start
+
+:Load Monitoring Goal Template;
+
+if (Template not found?) then (yes)
+  :Log error;
+  stop
+endif
+
+:Begin DB Transaction;
+
+:Find grants with active monitoring citations\nand no existing Monitoring goal;
+
+note right
+  Review must have:
+  - Status: 'Complete'
+  - Delivery Date: Jan 21, 2025 or later
+  - Review Type: FA-1, FA-2, RAN, 'AIAN-DEF', 'Follow-up', 'FA1-FR', 'FA2-CR', 'Special'
+  - At least one active finding
+end note
+
+if (Matching grants found?) then (yes)
+  :Insert new Goals using Monitoring template;
+  :Mark status as 'Not Started';
+  :Set source as 'monitoring';
+endif
+
+:Commit Transaction;
+
+stop
+@enduml
