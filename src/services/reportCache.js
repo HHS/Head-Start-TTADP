@@ -162,21 +162,33 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
     hookMetadata: { objectiveId },
   });
 
+  // Get the goal for this objective.
+  const goal = await Goal.findOne({
+    attributes: ['grantId', 'createdVia'],
+    include: [
+      {
+        model: Objective,
+        as: 'objectives',
+        where: { id: objectiveId },
+        required: true,
+      },
+    ],
+  });
+
+  if (!goal) {
+    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
+    return [];
+  }
+
+  if (goal.createdVia !== 'monitoring') {
+    // If this is no longer a monitoring goal associated with this objective,
+    // we don't (and shouldn't) save any citations.
+    return [];
+  }
+
   // Create citations to save.
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
-    const goal = await Goal.findOne({
-      attributes: ['grantId'],
-      include: [
-        {
-          model: Objective,
-          as: 'objectives',
-          where: { id: objectiveId },
-          required: true,
-        },
-      ],
-    });
-
     const grantForThisCitation = goal.grantId;
     // Get all the citations for the grant.
     const citationsToSave = citations.reduce((acc, citation) => {
