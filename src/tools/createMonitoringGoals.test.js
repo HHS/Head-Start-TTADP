@@ -18,6 +18,7 @@ import {
   MonitoringFindingStatus,
   MonitoringFindingGrant,
   Goal,
+  Objective,
   GrantRelationshipToActive,
   ActivityReport,
   ActivityReportGoal,
@@ -80,6 +81,8 @@ describe('createMonitoringGoals', () => {
   let recipientForCase16;
   let recipientForCase17;
 
+  let recipientForCase18;
+
   const startingReportDeliveryDate = new Date('2023-12-01');
 
   const goalTemplateName = '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
@@ -115,6 +118,7 @@ describe('createMonitoringGoals', () => {
   // These will have a createdVia = 'activityReport' and should NOT be open or closed via this job.
   let grantWithNonMonitoringGoalToOpen16;
   let grantWithNonMonitoringGoalToClose17;
+  let grantWithOpenObjectives18;
 
   const grantThatNeedsMonitoringGoalNumber1 = faker.datatype.string(4);
   const grantThatAlreadyHasMonitoringGoalNumber2 = faker.datatype.string(4);
@@ -138,6 +142,7 @@ describe('createMonitoringGoals', () => {
 
   const grantWithNonMonitoringGoalToOpenNumber16 = uuidv4();
   const grantWithNonMonitoringGoalToCloseNumber17 = uuidv4();
+  const grantWithOpenObjectivesNumber18 = uuidv4();
 
   let goalForReopen12;
   let goalForClose13;
@@ -176,6 +181,11 @@ describe('createMonitoringGoals', () => {
     });
 
     recipientForCase17 = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+
+    recipientForCase18 = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
@@ -392,6 +402,16 @@ describe('createMonitoringGoals', () => {
         endDate: new Date(),
         status: 'Active',
       },
+      {
+        // 18
+        id: faker.datatype.number({ min: 9999 }),
+        number: grantWithOpenObjectivesNumber18,
+        recipientId: recipientForCase18.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
     ]);
 
     [
@@ -416,6 +436,7 @@ describe('createMonitoringGoals', () => {
       grantWithApprovedReportsButOpenCitations15,
       grantWithNonMonitoringGoalToOpen16,
       grantWithNonMonitoringGoalToClose17,
+      grantWithOpenObjectives18,
     ] = grants;
 
     // Create an activity report that uses grantToNotCloseMonitoringGoal14.
@@ -516,6 +537,7 @@ describe('createMonitoringGoals', () => {
 
     const grantWithNonMonitoringGoalToOpenNumberGranteeId16 = uuidv4();
     const grantWithNonMonitoringGoalToCloseNumberGranteeId17 = uuidv4();
+    const grantWithOpenObjectivesNumberGranteeId18 = uuidv4();
 
     // reviewId GUID.
     const grantThatNeedsMonitoringGoalNumberReviewId1 = uuidv4();
@@ -539,6 +561,7 @@ describe('createMonitoringGoals', () => {
     const grantWithApprovedReportsButOpenCitationsNumberReviewId15 = uuidv4();
     const grantWithNonMonitoringGoalToOpenNumberReviewId16 = uuidv4();
     const grantWithNonMonitoringGoalToCloseNumberReviewId17 = uuidv4();
+    const grantWithOpenObjectivesNumberReviewId18 = uuidv4();
 
     // MonitoringReviewGrantee.
     await MonitoringReviewGrantee.bulkCreate([
@@ -783,6 +806,18 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
+      {
+        // 18
+        id: faker.datatype.number({ min: 999999 }),
+        grantNumber: grantWithOpenObjectivesNumber18,
+        reviewId: grantWithOpenObjectivesNumberReviewId18,
+        granteeId: grantWithOpenObjectivesNumberGranteeId18,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
     ], { individualHooks: true });
 
     // Create 9 statusId variables made up of 6 random numbers and set each one to its corresponding statusId below in MonitoringReview.bulkCreate.
@@ -806,6 +841,7 @@ describe('createMonitoringGoals', () => {
     const status15 = 18;
     const status16 = 19;
     const status17 = 20;
+    const status18 = 21;
 
     // MonitoringReview.
     // Allowed review types:
@@ -1140,6 +1176,22 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
+      {
+        // 18
+        reviewId: grantWithOpenObjectivesNumberReviewId18,
+        contentId: uuidv4(),
+        statusId: status18,
+        name: faker.random.words(3),
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        reportDeliveryDate: new Date(),
+        reportAttachmentId: uuidv4(),
+        outcome: faker.random.words(5),
+        hash: uuidv4(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
     ], { individualHooks: true });
 
     // MonitoringReviewStatus.
@@ -1284,6 +1336,13 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
+      {
+        // 18
+        statusId: status18,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
     ], { individualHooks: true });
 
     // MonitoringFindingHistory.
@@ -1307,6 +1366,7 @@ describe('createMonitoringGoals', () => {
     const findingId15 = uuidv4();
     const findingId16 = uuidv4();
     const findingId17 = uuidv4();
+    const findingId18 = uuidv4();
 
     // Exclude findingId10C from the findingIds array below.
     await MonitoringFindingHistory.bulkCreate([
@@ -1579,6 +1639,19 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
+      {
+        // 18
+        reviewId: grantWithOpenObjectivesNumberReviewId18,
+        findingHistoryId: uuidv4(),
+        findingId: findingId18,
+        statusId: status18,
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: faker.random.words(5),
+        hash: uuidv4(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
     ], { individualHooks: true });
 
     // MonitoringFinding.
@@ -1763,6 +1836,15 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
+      {
+        // 18
+        findingId: findingId18,
+        statusId: status18,
+        findingType: faker.random.word(),
+        hash: uuidv4(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
     ], { individualHooks: true });
 
     // MonitoringFindingStatus.
@@ -1890,6 +1972,13 @@ describe('createMonitoringGoals', () => {
         // 17
         statusId: status17,
         name: 'Active',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      {
+        // 18
+        statusId: status18,
+        name: 'Closed',
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
@@ -2186,6 +2275,20 @@ describe('createMonitoringGoals', () => {
         sourceCreatedAt: new Date(),
         sourceUpdatedAt: new Date(),
       },
+      {
+        // 18
+        findingId: findingId18,
+        granteeId: grantWithOpenObjectivesNumberGranteeId18,
+        statusId: status18,
+        findingType: faker.random.word(),
+        source: faker.random.word(),
+        correctionDeadLine: new Date(),
+        reportedDate: new Date(),
+        closedDate: null,
+        hash: uuidv4(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
     ], { individualHooks: true });
 
     // Retrieve the goal template.
@@ -2300,6 +2403,23 @@ describe('createMonitoringGoals', () => {
       activityReportId: dontCloseGoalCitations.id,
       goalId: goalWithActiveCitationsAndApprovedReport.id,
       isActivelyEdited: false,
+    });
+
+    // Create a goal with an open objective for case 18.
+    const goalWithOpenObjectives = await Goal.create({
+      id: faker.datatype.number({ min: 9999 }),
+      name: goalTemplateName,
+      grantId: grantWithOpenObjectives18.id,
+      goalTemplateId: goalTemplate.id,
+      status: 'In Progress',
+      createdVia: 'monitoring',
+    });
+
+    await Objective.create({
+      id: faker.datatype.number({ min: 9999 }),
+      goalId: goalWithOpenObjectives.id,
+      name: 'Don\'t attempt to close the goal linked to this objective',
+      status: 'In Progress',
     });
   });
 
@@ -2448,6 +2568,10 @@ describe('createMonitoringGoals', () => {
     const grant17Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToClose17.id } });
     expect(grant17Goals.length).toBe(1);
     expect(grant17Goals[0].status).toBe('Not started');
+
+    const grant18Goals = await Goal.findAll({ where: { grantId: grantWithOpenObjectives18.id } });
+    expect(grant18Goals.length).toBe(1);
+    expect(grant18Goals[0].status).toBe('In Progress');
   };
 
   it('creates monitoring goals for grants that need them', async () => {
