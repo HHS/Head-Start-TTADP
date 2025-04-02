@@ -370,7 +370,6 @@ export async function getGoalHistory(req, res) {
       return;
     }
 
-    // Find all goals with the same template and grant
     const goalsWithDetails = await sequelize.models.Goal.findAll({
       where: {
         goalTemplateId: goal.goalTemplateId,
@@ -391,6 +390,37 @@ export async function getGoalHistory(req, res) {
         {
           model: sequelize.models.Objective,
           as: 'objectives',
+          required: false,
+          include: [
+            {
+              model: sequelize.models.ActivityReportObjective,
+              as: 'activityReportObjectives',
+              required: false,
+              include: [
+                {
+                  model: sequelize.models.ActivityReport,
+                  as: 'activityReport',
+                  attributes: ['id', 'displayId', 'startDate', 'endDate', 'calculatedStatus'],
+                },
+                {
+                  model: sequelize.models.Topic,
+                  as: 'topics',
+                  attributes: ['id', 'name'],
+                },
+                {
+                  model: sequelize.models.Resource,
+                  as: 'resources',
+                  attributes: ['id', 'url', 'title'],
+                },
+              ],
+            },
+            {
+              model: sequelize.models.ActivityReport,
+              as: 'activityReports',
+              required: false,
+              attributes: ['id', 'displayId', 'startDate', 'endDate', 'calculatedStatus'],
+            },
+          ],
         },
         {
           model: sequelize.models.Grant,

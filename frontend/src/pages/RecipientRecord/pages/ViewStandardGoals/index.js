@@ -109,13 +109,18 @@ export default function ViewGoalDetails({
     );
   }
 
-  // Get the goal template name from the first goal in history
-  const firstGoal = goalHistory[0] || {};
+  // Sort goal history by createdAt in descending order (newest first)
+  // Not strictly necessary since the backend returns these in order already
+  const sortedGoalHistory = [...goalHistory].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+  );
+
+  const firstGoal = sortedGoalHistory[0] || {};
   const goalTemplate = firstGoal.goalTemplate || {};
   const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
 
   // Create accordion items from goal history
-  const accordionItems = goalHistory.map((goal, index) => {
+  const accordionItems = sortedGoalHistory.map((goal, index) => {
     const statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
       ? goal.statusChanges.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       : [];
@@ -181,6 +186,79 @@ export default function ViewGoalDetails({
                   <ReadOnlyField label="Objective status">
                     {objective.status}
                   </ReadOnlyField>
+
+                  {/* Display Reports */}
+                  {!objective.activityReportObjectives
+                      || objective.activityReportObjectives.length === 0 ? (
+                        <div className="margin-top-2">
+                          <p className="usa-prose">This objective has not been used in any activity reports.</p>
+                        </div>
+                    ) : (
+                      objective.activityReportObjectives.length > 0 && (
+                        <div className="margin-top-2">
+                          <h4>Reports</h4>
+                          <ul className="usa-list">
+                            {objective.activityReportObjectives
+                              .filter((aro) => aro.activityReport)
+                              .map((aro) => (
+                                <li key={`report-${aro.activityReport.id}`}>
+                                  <Link to={`/activity-reports/${aro.activityReport.id}`}>
+                                    {aro.activityReport.displayId}
+                                  </Link>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      )
+                    )}
+
+                  {/* Display Topics */}
+                  {!objective.activityReportObjectives
+                      || !objective.activityReportObjectives.some(
+                        (aro) => aro.topics && aro.topics.length > 0,
+                      ) ? null : (
+                        <div className="margin-top-2">
+                          <h4>Topics</h4>
+                          <ul className="usa-list">
+                            {objective.activityReportObjectives
+                              .flatMap((aro) => aro.topics || [])
+                              .filter(
+                                (topic, i, self) => i === self.findIndex(
+                                  (t) => t.id === topic.id,
+                                ),
+                              )
+                              .map((topic) => (
+                                <li key={`topic-${topic.id}`}>{topic.name}</li>
+                              ))}
+                          </ul>
+                        </div>
+                    )}
+
+                  {/* Display Resources */}
+                  {!objective.activityReportObjectives
+                      || !objective.activityReportObjectives.some(
+                        (aro) => aro.resources && aro.resources.length > 0,
+                      ) ? null : (
+                        <div className="margin-top-2">
+                          <h4>Resources</h4>
+                          <ul className="usa-list">
+                            {objective.activityReportObjectives
+                              .flatMap((aro) => aro.resources || [])
+                              .filter(
+                                (resource, i, self) => i === self.findIndex(
+                                  (r) => r.id === resource.id,
+                                ),
+                              )
+                              .map((resource) => (
+                                <li key={`resource-${resource.id}`}>
+                                  <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                    {resource.title || resource.url}
+                                  </a>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                    )}
                 </div>
               ))}
             </div>
