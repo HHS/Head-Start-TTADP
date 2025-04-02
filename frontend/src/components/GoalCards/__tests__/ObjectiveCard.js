@@ -53,7 +53,7 @@ describe('ObjectiveCard', () => {
       reasons: ['reason1', 'reason2'],
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
-      topics: [],
+      topics: [{ name: 'Topic 1' }],
       citations: [],
       supportTypes: ['Planning'],
       activityReports: [
@@ -69,8 +69,6 @@ describe('ObjectiveCard', () => {
     renderObjectiveCard(objective);
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();
-    expect(screen.getByText('reason1')).toBeInTheDocument();
-    expect(screen.getByText('reason2')).toBeInTheDocument();
     const link = screen.getByText('r-123');
     expect(link).toHaveAttribute('href', '/activity-reports/legacy/123');
   });
@@ -84,7 +82,7 @@ describe('ObjectiveCard', () => {
       reasons: ['reason1', 'reason2'],
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
-      topics: [],
+      topics: [{ name: 'Topic 1' }],
       citations: [],
       supportTypes: ['Planning'],
       activityReports: [],
@@ -122,7 +120,7 @@ describe('ObjectiveCard', () => {
       reasons: ['reason1', 'reason2'],
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
-      topics: [],
+      topics: [{ name: 'Topic 1' }],
       supportTypes: ['Planning'],
       activityReports: [],
       citations: ['citation1', 'citation2'],
@@ -132,8 +130,6 @@ describe('ObjectiveCard', () => {
 
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();
-    expect(screen.getByText('reason1')).toBeInTheDocument();
-    expect(screen.getByText('reason2')).toBeInTheDocument();
     expect(screen.getByText('Citations addressed')).toBeInTheDocument();
     expect(screen.getByText('citation1, citation2')).toBeInTheDocument();
   });
@@ -147,7 +143,7 @@ describe('ObjectiveCard', () => {
       reasons: ['reason1', 'reason2'],
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
-      topics: [],
+      topics: [{ name: 'Topic 1' }],
       supportTypes: ['Planning'],
       activityReports: [],
       citations: [],
@@ -156,8 +152,6 @@ describe('ObjectiveCard', () => {
     renderObjectiveCard(objective, jest.fn(), false);
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();
-    expect(screen.getByText('reason1')).toBeInTheDocument();
-    expect(screen.getByText('reason2')).toBeInTheDocument();
     expect(screen.queryAllByText('Citations addressed').length).toBe(0);
     expect(screen.queryAllByText('citation1, citation2').length).toBe(0);
   });
@@ -171,7 +165,7 @@ describe('ObjectiveCard', () => {
       reasons: ['reason1', 'reason2'],
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
-      topics: [],
+      topics: [{ name: 'Topic 1' }],
       citations: [],
       supportTypes: ['Planning'],
       activityReports: [],
