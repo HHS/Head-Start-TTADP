@@ -337,8 +337,9 @@ export async function getSimilarGoalsForRecipient(req, res) {
 }
 
 /**
- * Retrieves the history of a specific goal instance
+ * Retrieves the history of goals with the same template as the specified goal
  * This handler is used by ViewStandardGoals to display goal status changes
+ * Returns an array of goals with the same goalTemplateId for this specific grant
  */
 export async function getGoalHistory(req, res) {
   try {
@@ -369,7 +370,12 @@ export async function getGoalHistory(req, res) {
       return;
     }
 
-    const goalWithDetails = await sequelize.models.Goal.findByPk(id, {
+    // Find all goals with the same template and grant
+    const goalsWithDetails = await sequelize.models.Goal.findAll({
+      where: {
+        goalTemplateId: goal.goalTemplateId,
+        grantId: goal.grantId,
+      },
       include: [
         {
           model: sequelize.models.GoalStatusChange,
@@ -399,14 +405,15 @@ export async function getGoalHistory(req, res) {
           as: 'responses',
         },
       ],
+      order: [['createdAt', 'DESC']],
     });
 
-    if (!goalWithDetails) {
-      res.sendStatus(httpCodes.NOT_FOUND);
+    if (!goalsWithDetails.length) {
+      res.json([]);
       return;
     }
 
-    res.json(goalWithDetails);
+    res.json(goalsWithDetails);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_GOAL_HISTORY`);
   }
