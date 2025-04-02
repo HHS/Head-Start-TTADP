@@ -21,6 +21,7 @@ import {
   getSimilarGoalsByText,
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
+  getGoalHistory,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -1287,6 +1288,252 @@ describe('goal handlers', () => {
       });
 
       await getSimilarGoalsByText(req, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('getGoalHistory', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      currentUserId.mockReset();
+      userById.mockReset();
+      db.Goal.findByPk = jest.fn();
+      db.Grant.findByPk = jest.fn();
+      db.Goal.findAll = jest.fn();
+    });
+
+    it('handles success', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      const mockGoalsWithDetails = [
+        {
+          id: 1,
+          name: 'Goal 1',
+          status: 'In Progress',
+          statusChanges: [
+            {
+              id: 1,
+              oldStatus: 'Draft',
+              newStatus: 'In Progress',
+              user: {
+                name: 'Test User',
+              },
+            },
+          ],
+        },
+      ];
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findAll.mockResolvedValueOnce(mockGoalsWithDetails);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(db.Goal.findByPk).toHaveBeenCalledWith(1);
+      expect(db.Grant.findByPk).toHaveBeenCalledWith(100);
+      expect(db.Goal.findAll).toHaveBeenCalledWith(expect.objectContaining({
+        where: {
+          goalTemplateId: 10,
+          grantId: 100,
+        },
+      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(mockGoalsWithDetails);
+    });
+
+    it('returns 404 when goal is not found', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(null);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+    });
+
+    it('returns 404 when grant is not found', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(null);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+    });
+
+    it('returns 401 when user does not have permission in the region', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 3, // Different region than the grant
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+    });
+
+    it('returns empty array when no goals with same template are found', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findAll.mockResolvedValueOnce([]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
+    });
+
+    it('handles errors', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+
+      await getGoalHistory(req, mockResponse);
+
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
     });
   });
