@@ -136,9 +136,24 @@ export default function ViewGoalDetails({
                 {statusUpdates.map((update) => (
                   <li key={update.id}>
                     <strong>
-                      {update.oldStatus ? `${update.oldStatus} → ${update.newStatus}` : update.newStatus}
+                      {(() => {
+                        switch (update.newStatus) {
+                          case 'Not Started':
+                            return 'Added on';
+                          case 'In Progress':
+                            return 'Started on';
+                          case 'Suspended':
+                            return 'Suspended on';
+                          case 'Closed':
+                            return 'Closed on';
+                          case 'Complete':
+                            return 'Completed on';
+                          default:
+                            return `${update.newStatus} on`;
+                        }
+                      })()}
                     </strong>
-                    {' on '}
+                    {' '}
                     <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
                     {update.user ? ` by ${update.user.name}` : ''}
                   </li>
