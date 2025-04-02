@@ -105,12 +105,12 @@ workflows:
     when: 
         equal: [ << pipeline.parameters.action >>, deploy ]
     jobs:
-      - build_tta_app
+      - build_and_lint
       - build_similarity_api
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
-            - build_tta_app
+            - build_and_lint
             - build_similarity_api
 
   run_import_cron:
