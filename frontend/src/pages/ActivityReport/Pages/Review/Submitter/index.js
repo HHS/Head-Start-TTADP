@@ -230,6 +230,8 @@ const Submitter = ({
               displayId={displayId}
               reportId={id}
               availableApprovers={availableApprovers}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
             />
           )}
         {approved

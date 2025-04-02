@@ -161,7 +161,8 @@ const createMonitoringGoals = async () => {
         })));
       }
 
-      // 3. Close monitoring goals that no longer have any active citations and un-approved reports.
+      // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
+      // or open Objectives
       const goalsToClose = await sequelize.query(`
       WITH
     grants_with_monitoring_goal AS (
@@ -178,7 +179,7 @@ const createMonitoringGoals = async () => {
       AND g.status != 'Closed'
       AND g."createdVia" = 'monitoring'
     ),
-    with_no_active_reports AS (
+    with_no_active_ars_or_objectives AS (
       SELECT
         gwmg."grantId",
         gwmg.number,
@@ -189,14 +190,19 @@ const createMonitoringGoals = async () => {
       LEFT JOIN "ActivityReports" a
       ON arg."activityReportId" = a.id
       AND a."calculatedStatus" NOT IN ('deleted', 'approved')
+      LEFT JOIN "Objectives" o
+      ON gwmg."goalId" = o."goalId"
+      AND o.status NOT IN ('Complete','Suspended')
+      AND o."deletedAt" IS NULL
       WHERE a.id IS NULL
+      AND o.id IS NULL
     ),
     with_active_citations AS (
       SELECT
         wnar."grantId",
         wnar.number,
         wnar."goalId"
-      FROM with_no_active_reports wnar
+      FROM with_no_active_ars_or_objectives wnar
       JOIN "GrantRelationshipToActive" grta
       ON wnar."grantId" = grta."grantId"
       OR wnar."grantId" = grta."activeGrantId"
@@ -228,7 +234,7 @@ const createMonitoringGoals = async () => {
         wnar."grantId",
         wnar.number,
         wnar."goalId"
-      FROM with_no_active_reports wnar
+      FROM with_no_active_ars_or_objectives wnar
       EXCEPT
       SELECT
         wac."grantId",
