@@ -101,10 +101,7 @@ workflows:
                 - dev-green
                 - sandbox
 
-  run_import:
-    # run the data import job
-    when: 
-      equal: [ << pipeline.parameters.action >>, import ]
+  run_import_cron:
     triggers:
     - schedule:
         cron: "0 0 * * *"
@@ -114,7 +111,15 @@ workflows:
               - dev # add more
     jobs:
       - run_import_job
-  
+
+  run_import_manual:
+    # run the data import job
+    when: 
+      equal: [ << pipeline.parameters.action >>, import ]
+    jobs:
+      - run_import_job
+
+
   run_input_cmd:
     # run an arbitrary command in separate container, within the app execution environment
     when: 
