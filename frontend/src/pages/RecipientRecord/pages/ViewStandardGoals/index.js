@@ -31,7 +31,6 @@ export default function ViewGoalDetails({
   const { user } = useContext(UserContext);
   const location = useLocation();
 
-  // Extract goalId from URL query parameters
   const getQueryParams = () => {
     const searchParams = new URLSearchParams(location.search);
     const goalId = searchParams.get('goalId');
@@ -39,12 +38,11 @@ export default function ViewGoalDetails({
   };
 
   const { goalId } = getQueryParams();
-  // Check if user has permission to view this page
+
   const canView = user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
   ).length > 0;
 
-  // Fetch goal history data
   useEffect(() => {
     async function fetchGoalHistory() {
       if (!goalId) {
@@ -64,8 +62,7 @@ export default function ViewGoalDetails({
         }
 
         const data = await response.json();
-        // Put the goal in an array to maintain compatibility with the existing component
-        setGoalHistory([data]);
+        setGoalHistory(data);
       } catch (err) {
         setFetchError('There was an error fetching goal history');
         console.error(err);
@@ -75,7 +72,6 @@ export default function ViewGoalDetails({
       }
     }
 
-    // Always try to fetch if we have the required parameters
     if (goalId) {
       fetchGoalHistory();
     } else {
@@ -104,7 +100,6 @@ export default function ViewGoalDetails({
     return null;
   }
 
-  // If no goal history found
   if (goalHistory.length === 0) {
     return (
       <Alert role="alert" className="margin-y-2" type="info">
@@ -114,25 +109,22 @@ export default function ViewGoalDetails({
   }
 
   // Get the goal template name from the first goal in history
-  // Get the goal template name
   const firstGoal = goalHistory[0] || {};
   const goalTemplate = firstGoal.goalTemplate || {};
   const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
 
   // Create accordion items from goal history
   const accordionItems = goalHistory.map((goal, index) => {
-    // Format the status updates
     const statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
       ? goal.statusChanges.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       : [];
 
-    // Format the objectives
     const objectives = goal.objectives || [];
 
     return {
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
-      expanded: index === 0, // Expand the most recent goal by default
+      expanded: index === 0,
       className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
