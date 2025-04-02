@@ -101,6 +101,18 @@ workflows:
                 - dev-green
                 - sandbox
 
+  manual_deploy:
+    when: 
+        equal: [ << pipeline.parameters.action >>, deploy ]
+    jobs:
+      - build_tta_app
+      - build_similarity_api
+      - deploy:
+          serial-group: << pipeline.git.branch >>/deploy-lock
+          requires:
+            - build_tta_app
+            - build_similarity_api
+
   run_import_cron:
     triggers:
     - schedule:
@@ -118,7 +130,6 @@ workflows:
       equal: [ << pipeline.parameters.action >>, import ]
     jobs:
       - run_import_job
-
 
   run_input_cmd:
     # run an arbitrary command in separate container, within the app execution environment
