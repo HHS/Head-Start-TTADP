@@ -99,6 +99,7 @@ export default function GoalStatusDropdown({
       className={className}
       icon={icon}
       display={display}
+      buttonTestId="goal-status-dropdown"
     />
   );
 }
