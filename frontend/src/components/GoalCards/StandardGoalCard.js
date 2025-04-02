@@ -80,7 +80,7 @@ export default function StandardGoalCard({
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
 
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${id}`;
-  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?id[]=${id}`;
+  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
 
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompletedOrSuspended) {

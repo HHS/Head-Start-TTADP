@@ -22,6 +22,7 @@ import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
+import ViewGoalDetails from './pages/ViewStandardGoals';
 import GoalNameForm from '../../components/GoalNameForm';
 import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
@@ -281,6 +282,17 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 recipient={recipientData}
               />
             </>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard"
+          render={() => (
+            <FeatureFlag flag="standard_goals_update" renderNotFound>
+              <ViewGoalDetails
+                regionId={regionId}
+                recipient={recipientData}
+              />
+            </FeatureFlag>
           )}
         />
         <Route

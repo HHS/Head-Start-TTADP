@@ -1,0 +1,252 @@
+import React, {
+  useEffect,
+  useState,
+  useContext,
+} from 'react';
+import { DECIMAL_BASE } from '@ttahub/common';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { Link, useLocation } from 'react-router-dom';
+import { Alert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import moment from 'moment';
+import Container from '../../../../components/Container';
+import colors from '../../../../colors';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
+import ReadOnlyField from '../../../../components/ReadOnlyField';
+import { Accordion } from '../../../../components/Accordion';
+import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
+import './index.scss';
+
+export default function ViewGoalDetails({
+  recipient,
+  regionId,
+}) {
+  const [fetchError, setFetchError] = useState('');
+  const [goalHistory, setGoalHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const { user } = useContext(UserContext);
+  const location = useLocation();
+
+  // Extract goalId from URL query parameters
+  const getQueryParams = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const goalId = searchParams.get('goalId');
+    return { goalId };
+  };
+
+  const { goalId } = getQueryParams();
+  // Check if user has permission to view this page
+  const canView = user.permissions.filter(
+    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
+  ).length > 0;
+
+  // Fetch goal history data
+  useEffect(() => {
+    async function fetchGoalHistory() {
+      if (!goalId) {
+        setFetchError('Missing required parameters');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setAppLoadingText('Loading goal history');
+        setIsAppLoading(true);
+
+        const response = await fetch(`/api/goals/${goalId}/history`);
+
+        if (!response.ok) {
+          throw new Error(`Error fetching goal history: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Put the goal in an array to maintain compatibility with the existing component
+        setGoalHistory([data]);
+      } catch (err) {
+        setFetchError('There was an error fetching goal history');
+        console.error(err);
+      } finally {
+        setIsAppLoading(false);
+        setLoading(false);
+      }
+    }
+
+    // Always try to fetch if we have the required parameters
+    if (goalId) {
+      fetchGoalHistory();
+    } else {
+      setFetchError('Missing required parameters');
+      setLoading(false);
+    }
+  }, [goalId, setAppLoadingText, setIsAppLoading]);
+
+  if (!canView) {
+    return (
+      <Alert role="alert" className="margin-y-2" type="error">
+        You don&apos;t have permission to view this page
+      </Alert>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <Alert role="alert" className="margin-y-2" type="error">
+        {fetchError}
+      </Alert>
+    );
+  }
+
+  if (loading) {
+    return null;
+  }
+
+  // If no goal history found
+  if (goalHistory.length === 0) {
+    return (
+      <Alert role="alert" className="margin-y-2" type="info">
+        No goal history found
+      </Alert>
+    );
+  }
+
+  // Get the goal template name from the first goal in history
+  // Get the goal template name
+  const firstGoal = goalHistory[0] || {};
+  const goalTemplate = firstGoal.goalTemplate || {};
+  const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
+
+  // Create accordion items from goal history
+  const accordionItems = goalHistory.map((goal, index) => {
+    // Format the status updates
+    const statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
+      ? goal.statusChanges.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      : [];
+
+    // Format the objectives
+    const objectives = goal.objectives || [];
+
+    return {
+      id: `goal-${goal.id}`,
+      title: `${goal.status} - ${moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}`,
+      expanded: index === 0, // Expand the most recent goal by default
+      content: (
+        <div className="goal-history-content">
+          <div className="goal-updates-section">
+            <h3>Goal updates</h3>
+            {statusUpdates.length > 0 ? (
+              <ul className="usa-list">
+                {statusUpdates.map((update) => (
+                  <li key={update.id}>
+                    <strong>
+                      {update.oldStatus ? `${update.oldStatus} → ${update.newStatus}` : update.newStatus}
+                    </strong>
+                    {' on '}
+                    {moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}
+                    {update.user ? ` by ${update.user.name}` : ''}
+                    {update.reason ? `: ${update.reason}` : ''}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No status updates available</p>
+            )}
+          </div>
+
+          <div className="goal-status-section">
+            <h3>Goal status</h3>
+            <p>{goal.status}</p>
+          </div>
+
+          {objectives.length > 0 && (
+            <div className="objective-section">
+              <h3>Objective summary</h3>
+              {objectives.map((objective) => (
+                <div key={objective.id} className="margin-bottom-3">
+                  <ReadOnlyField label="TTA objective">
+                    {objective.title}
+                  </ReadOnlyField>
+                  <ReadOnlyField label="Status">
+                    {objective.status}
+                  </ReadOnlyField>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {goal.responses && goal.responses.length > 0 && (
+            <div className="responses-section">
+              <h3>Root causes</h3>
+              {goal.responses.map((response) => (
+                <div key={response.id}>
+                  {Array.isArray(response.response) ? (
+                    <ul className="usa-list">
+                      {response.response.map((item) => (
+                        <li key={`root-cause-${item}`}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>{response.response}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
+    };
+  });
+
+  return (
+    <>
+      <Link
+        className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
+        to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
+      >
+        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+        <span>Back to RTTAPA</span>
+      </Link>
+
+      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
+        TTA Goals for
+        {' '}
+        {recipient.name}
+        {' '}
+        - Region
+        {' '}
+        {regionId}
+      </h1>
+
+      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
+        <div className="margin-bottom-5">
+          <h2 className="margin-top-0 margin-bottom-3">{goalTemplateName}</h2>
+          <ReadOnlyField label="Recipient grant numbers">
+            {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
+          </ReadOnlyField>
+        </div>
+
+        <Accordion
+          bordered
+          items={accordionItems}
+        />
+      </Container>
+    </>
+  );
+}
+
+ViewGoalDetails.propTypes = {
+  recipient: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    grants: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        numberWithProgramTypes: PropTypes.string,
+      }),
+    ),
+  }).isRequired,
+  regionId: PropTypes.string.isRequired,
+};

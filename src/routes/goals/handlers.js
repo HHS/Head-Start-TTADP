@@ -336,6 +336,82 @@ export async function getSimilarGoalsForRecipient(req, res) {
   }
 }
 
+/**
+ * Retrieves the history of a specific goal instance
+ * This handler is used by ViewStandardGoals to display goal status changes
+ */
+export async function getGoalHistory(req, res) {
+  try {
+    const { goalId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    const id = parseInt(goalId, DECIMAL_BASE);
+
+    const goal = await sequelize.models.Goal.findByPk(id);
+    if (!goal) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const grantRecord = await sequelize.models.Grant.findByPk(goal.grantId);
+    if (!grantRecord) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const hasPermissionInRegion = user.permissions.some(
+      (permission) => permission.regionId === grantRecord.regionId,
+    );
+
+    if (!hasPermissionInRegion) {
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+      return;
+    }
+
+    const goalWithDetails = await sequelize.models.Goal.findByPk(id, {
+      include: [
+        {
+          model: sequelize.models.GoalStatusChange,
+          as: 'statusChanges',
+          include: [
+            {
+              model: sequelize.models.User,
+              as: 'user',
+              attributes: ['name'],
+            },
+          ],
+        },
+        {
+          model: sequelize.models.Objective,
+          as: 'objectives',
+        },
+        {
+          model: sequelize.models.Grant,
+          as: 'grant',
+        },
+        {
+          model: sequelize.models.GoalTemplate,
+          as: 'goalTemplate',
+        },
+        {
+          model: sequelize.models.GoalFieldResponse,
+          as: 'responses',
+        },
+      ],
+    });
+
+    if (!goalWithDetails) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    res.json(goalWithDetails);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:GET_GOAL_HISTORY`);
+  }
+}
+
 export async function getSimilarGoalsByText(req, res) {
   try {
     const { regionId } = req.params;
