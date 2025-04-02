@@ -163,6 +163,7 @@ jobs:
           type: string
           default: << pipeline.parameters.env >>
     steps:
+      - checkout
       - run:
           command: |
             # only run in dev, for now
