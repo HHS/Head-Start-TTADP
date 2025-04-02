@@ -893,10 +893,10 @@ commands:
               --wait && true
 
             rc=$?
-            echo "script exited with code:$rc"
             echo "waiting for logs...."
             sleep 30 # wait for logs
             cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
+            echo "script exited with code:$rc"
             exit ${rc}
               
       - run:
@@ -955,7 +955,7 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
-          timeout: "900"
+          timeout: "1800"
   cf_process:
     description: "Process database from S3"
     parameters:
