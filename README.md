@@ -27,7 +27,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 - [Infrastructure](#infrastructure)
 - [Reference](#reference)
 
-### Running With Docker
+### Running With Docker (preferred)
 
 For a full list of available yarn commands, see [here](#yarn-commands)
 
@@ -63,21 +63,22 @@ On a Mac with Brew installed Docker, yarn commands may fail due to the absence o
 
 **Apple Silicon & Chromium**
 
-If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`, see the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
-
-On a Mac with Apple Silicon, puppeteer install fails with the message:
-`"The chromium binary is not available for arm64"`
-
-See [docker-compose.override.yml](docker-compose.override.yml) and uncomment the relevant lines to skip downloading chromium and use the host's binary instead.
+If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
 
 You will need to have chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
 
-To ~/.zshrc (or your particular shell config), you'll need to add:
+To ~/.zshrc (or your particular shell config) you'll need to add:
 
 ```sh
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
+
+Don't forget to run `source ~/.zshrc` or the equivalent after adding the above environment variables.
+
+**Cross-env**
+
+If you get an error running the frontend docker image saying that `cross-env` cannot be found, you can install it with `npm install -g cross-env`.
 
 #### Running Natively
 
