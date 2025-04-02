@@ -26,6 +26,7 @@ import {
   recipientsByUserId,
   allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
+import { standardGoalsForRecipient } from '../../services/standardGoals';
 import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import SCOPES from '../../middleware/scopeConstants';
 import { currentUserId } from '../../services/currentUser';
@@ -41,6 +42,10 @@ jest.mock('../../services/goalSimilarityGroup');
 
 jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
+}));
+
+jest.mock('../../services/standardGoals', () => ({
+  standardGoalsForRecipient: jest.fn(),
 }));
 
 jest.mock('../../services/recipient', () => ({
@@ -227,7 +232,7 @@ describe('getGoalsByActivityRecipient', () => {
     jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValueOnce(true);
     recipientById.mockResolvedValue(recipientWhere);
     getUserReadRegions.mockResolvedValue([1]);
-    getGoalsByActivityRecipient.mockResolvedValue(recipientWhere);
+    standardGoalsForRecipient.mockResolvedValue(recipientWhere);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
@@ -248,7 +253,7 @@ describe('getGoalsByActivityRecipient', () => {
     };
     recipientById.mockResolvedValue(null);
     getUserReadRegions.mockResolvedValue([1]);
-    getGoalsByActivityRecipient.mockResolvedValue(null);
+    standardGoalsForRecipient.mockResolvedValue(null);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
