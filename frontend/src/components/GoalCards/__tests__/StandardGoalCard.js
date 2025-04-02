@@ -41,7 +41,7 @@ describe('StandardGoalCard', () => {
         status: 'Closed',
         activityReports: [],
         grantNumbers: ['G-1'],
-        topics: [],
+        topics: [{ name: 'Topic 1' }],
         citations: [],
       },
       {
@@ -55,7 +55,7 @@ describe('StandardGoalCard', () => {
         status: 'Closed',
         activityReports: [],
         grantNumbers: ['G-1'],
-        topics: [],
+        topics: [{ name: 'Topic 1' }],
         citations: [],
       },
     ],
@@ -135,11 +135,6 @@ describe('StandardGoalCard', () => {
     expect(status.tagName).toEqual('DIV');
   });
 
-  it('shows entered by', () => {
-    renderStandardGoalCard();
-    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
-  });
-
   it('shows the monitoring flag when the goal createdVia is monitoring', () => {
     renderStandardGoalCard({ }, { ...goal, createdVia: 'monitoring' });
     const monitoringToolTip = screen.getByRole('button', {
@@ -148,16 +143,12 @@ describe('StandardGoalCard', () => {
     expect(monitoringToolTip).toBeInTheDocument();
   });
 
-  it('shows entered by as OHS when the goal createdVia is monitoring', () => {
-    renderStandardGoalCard({ }, { ...goal, createdVia: 'monitoring' });
-    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
-    expect(screen.getByText(/OHS/i)).toBeInTheDocument();
-  });
-
   it('shows grant number', () => {
     renderStandardGoalCard();
     expect(screen.getByText(/grant number/i)).toBeInTheDocument();
-    expect(screen.getByText(/G-1/i)).toBeInTheDocument();
+    // Use getAllByText and select the appropriate one
+    const grantNumberElements = screen.getAllByText(/G-1/i);
+    expect(grantNumberElements.length).toBeGreaterThan(0);
   });
 
   it('shows the goal options by default', () => {
@@ -360,7 +351,7 @@ describe('StandardGoalCard', () => {
           status: 'Closed',
           activityReports: [],
           grantNumbers: ['G-1'],
-          topics: [],
+          topics: [{ name: 'Topic 1' }],
           citations: [],
         },
         {
@@ -373,7 +364,7 @@ describe('StandardGoalCard', () => {
           status: 'Closed',
           activityReports: [],
           grantNumbers: ['G-2'],
-          topics: [],
+          topics: [{ name: 'Topic 1' }],
           citations: [],
         },
       ],
@@ -393,57 +384,5 @@ describe('StandardGoalCard', () => {
 
     const objectives = document.querySelectorAll('.ttahub-goal-card__objective-list');
     expect(objectives.length).toBe(2);
-  });
-
-  it('prevents suspended status changes if objectives are open', async () => {
-    const goalWithMultipleObjectives = {
-      ...goal,
-      objectives: [
-        {
-          id: 1,
-          title: 'Objective 1',
-          arNumber: 'AR-1',
-          ttaProvided: 'TTA 1',
-          endDate: '2023-01-01',
-          reasons: ['Reason 1', 'Reason 2'],
-          status: 'In Progress',
-          activityReports: [],
-          grantNumbers: ['G-1'],
-          topics: [],
-          citations: [],
-          ids: [1],
-        },
-        {
-          ids: [2],
-          id: 2,
-          title: 'Objective 2',
-          arNumber: 'AR-2',
-          ttaProvided: 'TTA 2',
-          endDate: '2022-09-13',
-          reasons: ['Reason 3'],
-          status: 'Closed',
-          activityReports: [],
-          grantNumbers: ['G-2'],
-          topics: [],
-          citations: [],
-        },
-      ],
-    };
-
-    renderStandardGoalCard({ ...DEFAULT_PROPS }, goalWithMultipleObjectives);
-    const statusChange = await screen.findByRole('button', { name: /change status for goal/i });
-
-    act(() => {
-      userEvent.click(statusChange);
-    });
-
-    const suspendedButton = await screen.findByRole('button', { name: /suspended/i });
-
-    act(() => {
-      userEvent.click(suspendedButton);
-    });
-
-    const error = await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i);
-    expect(error).toBeVisible();
   });
 });

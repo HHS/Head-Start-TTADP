@@ -25,7 +25,7 @@ function ObjectiveCard({
   const {
     title,
     endDate,
-    // reasons,
+    reasons = [],
     topics = [],
     status,
     // grantNumbers,

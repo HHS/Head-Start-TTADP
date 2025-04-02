@@ -80,7 +80,7 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => statusFilter.renderInput('1', 'test', [], apply));
       const statusInput = await screen.findByLabelText('Select status to filter by');
-      await selectEvent.select(statusInput, ['Draft']);
+      await selectEvent.select(statusInput, ['Not started']);
       expect(apply).toHaveBeenCalled();
     });
 
