@@ -594,7 +594,7 @@ commands:
             echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
             echo "export full_env=${full_env}" >> "$BASH_ENV"
             # convert yml cfg to env style
-            ./tools/parse-env.js -i ./deployment_config/${cfg_env}_vars.yml -o ./temp.vars
+            ./tools/parse-env.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
             # substitute actual values from circle into ci.vars file
             circleci env subst < ./temp.vars > env.vars
             # iterate through ci.vars file and export each line, 
