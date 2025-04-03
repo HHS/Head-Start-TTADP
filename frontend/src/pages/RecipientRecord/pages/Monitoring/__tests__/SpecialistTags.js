@@ -17,9 +17,9 @@ jest.mock('../../../../../components/Tooltip', () => ({
 
 describe('SpecialistTags', () => {
   const renderSpecialistTags = (specialists) => {
-    const specialistsWithCorrectRoles = specialists.map(s => ({
+    const specialistsWithCorrectRoles = specialists.map((s) => ({
       ...s,
-      roles: s.roles ? s.roles.map(roleName => ({ role: { name: roleName } })) : [],
+      roles: s.roles ? s.roles.map((roleName) => ({ role: { name: roleName } })) : [],
     }));
     render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
   };
@@ -63,24 +63,18 @@ describe('SpecialistTags', () => {
   });
 
   it('handles specialists with empty or invalid roles in the input array', () => {
-    const specialists = [
-      { name: 'Bad Role', roles: [null, undefined, 'Valid Role', ''] },
+    const specialistsWithCorrectRoles = [
+      { name: 'Bad Role', roles: [null, undefined, { role: { name: 'Valid Role' } }, { role: { name: '' } }] },
       { name: 'No Roles', roles: [] },
     ];
-
-     const specialistsWithCorrectRoles = [
-      { name: 'Bad Role', roles: [null, undefined, { role: { name: 'Valid Role' } }, { role: { name: ''} }] },
-      { name: 'No Roles', roles: [] },
-     ];
-     render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
-
+    render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
 
     expect(screen.getByText('Valid Role')).toBeInTheDocument();
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
     expect(screen.queryByText(/undefined/)).not.toBeInTheDocument();
 
     const tooltips = screen.getAllByTestId('tooltip');
-    const noRolesTooltip = tooltips.find(t => t.getAttribute('data-tooltip-text') === 'No Roles');
+    const noRolesTooltip = tooltips.find((t) => t.getAttribute('data-tooltip-text') === 'No Roles');
     expect(noRolesTooltip).toBeInTheDocument();
     expect(noRolesTooltip).toHaveTextContent('');
 
@@ -93,13 +87,10 @@ describe('SpecialistTags', () => {
   });
 
   it('handles roles array containing non-string values gracefully', () => {
-    const specialists = [
-      { name: 'Mixed Roles', roles: ['Role A', null, { invalid: 'data' }, 'Role B', undefined] },
-    ];
-     const specialistsWithCorrectRoles = [
+    const specialistsWithCorrectRoles = [
       { name: 'Mixed Roles', roles: [{ role: { name: 'Role A' } }, null, { invalid: 'data' }, { role: { name: 'Role B' } }, undefined] },
-     ];
-     render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
+    ];
+    render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
 
     expect(screen.getByText('Role A, Role B')).toBeInTheDocument();
     expect(screen.getByTestId('tooltip')).toHaveAttribute('data-tooltip-text', 'Mixed Roles');
