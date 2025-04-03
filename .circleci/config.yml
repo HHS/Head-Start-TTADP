@@ -27,18 +27,9 @@ executors:
 parameters:
   action:
     description: "Desired job to run"
-    enum: ["build_test_deploy", "deploy", "cmd", "restore_dbs", "import"]
+    enum: ["build_test_deploy", "deploy", "restore_dbs", "import"]
     default: "build_test_deploy"
     type: enum
-  env: 
-    description: "(cmd) Target environment"
-    default: "dev"
-    type: enum
-    enum: ["dev-blue", "dev-green", "dev-red", "dev", "sandbox", "staging"]
-  cmd_input:
-    description: "(cmd) The command to run"
-    type: string
-    default: ""
 
 # ----------------- Workflows -----------------
 
@@ -112,7 +103,9 @@ workflows:
             - build_and_lint
             - build_similarity_api
 
-  run_import_cron:
+  import_data:
+    when: 
+      equal: [ << pipeline.parameters.action >>, import ]
     triggers:
     - schedule:
         cron: "0 0 * * *"
@@ -120,22 +113,9 @@ workflows:
           branches:
             only:
               - dev # add more
+              
     jobs:
       - run_import_job
-
-  run_import_manual:
-    # run the data import job
-    when: 
-      equal: [ << pipeline.parameters.action >>, import ]
-    jobs:
-      - run_import_job
-
-  run_input_cmd:
-    # run an arbitrary command in separate container, within the app execution environment
-    when: 
-        equal: [ << pipeline.parameters.action >>, cmd ]
-    jobs:
-      - run_cmd
 
   backup_restore_db:
     # backup production db, process (anonymize) the data, then restore it into lower envs
@@ -564,6 +544,11 @@ jobs:
       - run: exit 1
       - cf_restore:
           target_env: 'dev'
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
+      - cf_restore:
+          target_env: 'dev-green'
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: production
