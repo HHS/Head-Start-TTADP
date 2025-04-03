@@ -4,7 +4,7 @@ import React, {
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
-import { useFormContext, useController } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
   Fieldset,
@@ -42,14 +42,12 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 import './activitySummary.scss';
 import GroupAlert from '../../../components/GroupAlert';
 import { parseCheckboxEvent } from '../../../Constants';
-import SingleRecipientSelect from './components/SingleRecipientSelect';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
   groups,
 }) => {
-  console.log('recipients: ', recipients);
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
   const {
@@ -60,23 +58,6 @@ const ActivitySummary = ({
     getValues,
     clearErrors,
   } = useFormContext();
-
-  const {
-    field: {
-      onChange: onChangeActivityRecipients,
-      // onBlur: onBlurActivityRecipients,
-      value: activityRecipients,
-      // name: activityRecipientsInputName,
-    },
-  } = useController({
-    name: 'activityRecipients',
-    defaultValue: false,
-    rules: {
-      validate: {
-        notEmpty: (value) => (value && value.length) || 'Please select a recipient',
-      },
-    },
-  });
 
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
@@ -99,12 +80,10 @@ const ActivitySummary = ({
   const { connectionActive } = useContext(NetworkContext);
 
   const grants = rawGrants.map((recipient) => ({
-    id: recipient.id,
     label: recipient.name,
     options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
       label: grant.name,
-      recipientIdForLookUp: recipient.id,
     })),
   }));
 
@@ -112,6 +91,7 @@ const ActivitySummary = ({
     label: entity.name,
     value: entity.activityRecipientId,
   }));
+
   const disableRecipients = isEmpty(activityRecipientType);
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
@@ -230,7 +210,6 @@ const ActivitySummary = ({
     }
   }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
 
-  console.log('Form recipients passed to comp: ', activityRecipients);
   const renderRecipients = (marginTop = 2, marginBottom = 0) => (
     <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
       {!disableRecipients
@@ -238,12 +217,23 @@ const ActivitySummary = ({
          && !selectedRecipients.length
         ? <ConnectionError />
         : null}
-      <SingleRecipientSelect
-        selectedRecipients={activityRecipients}
-        possibleRecipients={selectedRecipients || []}
-        disable={disableRecipients}
-        onChangeActivityRecipients={onChangeActivityRecipients}
-      />
+      <FormItem
+        label={recipientLabel}
+        name="activityRecipients"
+      >
+        <MultiSelect
+          name="activityRecipients"
+          disabled={disableRecipients}
+          control={control}
+          valueProperty="activityRecipientId"
+          labelProperty="name"
+          simple={false}
+          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
+          options={selectedRecipients}
+          placeholderText={placeholderText}
+          onClick={() => setShouldValidateActivityRecipients(true)}
+        />
+      </FormItem>
     </div>
   );
 

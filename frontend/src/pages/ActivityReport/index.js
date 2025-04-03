@@ -259,14 +259,12 @@ function ActivityReport({
         if (activityReportId !== 'new') {
           let fetchedReport;
           try {
-            console.log('-------------------------------- called get report');
             fetchedReport = await getReport(activityReportId);
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
             history.push('/something-went-wrong/500');
           }
           report = convertReportToFormData(fetchedReport);
-          console.log("convert to form data1: ", report);
         } else {
           report = {
             ...defaultValues,
@@ -567,7 +565,6 @@ function ActivityReport({
   const onResetToDraft = async () => {
     const fetchedReport = await resetToDraft(reportId.current);
     const report = convertReportToFormData(fetchedReport);
-    console.log("convert to form data2: ", report);
     updateFormData(report, true);
     updateEditable(true);
   };

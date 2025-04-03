@@ -92,10 +92,12 @@ export default function SingleRecipientSelect(
     } else {
       updatedCheckBoxes = [...checkedCheckBoxes, grantId];
     }
+    // Update the state with the new checked boxes
+    setCheckedCheckBoxes(updatedCheckBoxes);
+
     // We need to get all grants then call onChangeActivityRecipients function.
     const checkedGrants = recipientGrants.filter(
-      (grant) => updatedCheckBoxes.includes(grant.value)
-      || (grantId === grant.value && !checkedCheckBoxes.includes(grantId)),
+      (grant) => updatedCheckBoxes.includes(grant.value),
     );
     const newSelectedGrants = checkedGrants.map((grant) => ({
       ...grant,
@@ -110,10 +112,11 @@ export default function SingleRecipientSelect(
 
   const createGrantCheckBoxes = (grantsForCheckBoxes) => {
     const grantCheckBoxes = grantsForCheckBoxes.map((grant) => (
-      <tr key={grant.id}>
+      <tr key={grant.value}>
         <td>
           <Checkbox
             id={`${grant.value}-grant`}
+            key={`${grant.value}-grant-key`}
             name={grant.label}
             label={grant.label}
             onChange={() => toggleGrantSelection(grant)}

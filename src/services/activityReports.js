@@ -144,7 +144,6 @@ async function saveReportRecipients(
   activityRecipientIds,
   activityRecipientType,
 ) {
-  console.log("activity recipient type: ", activityRecipientType);
   const newRecipients = activityRecipientIds.map((activityRecipientId) => {
     const activityRecipient = {
       activityReportId,
@@ -159,8 +158,6 @@ async function saveReportRecipients(
     }
     return activityRecipient;
   });
-
-  console.log("\n\n\n------- new recips: ", newRecipients);
 
   const where = {
     activityReportId,
@@ -335,15 +332,13 @@ export async function activityReportAndRecipientsById(activityReportId) {
             model: Recipient,
             as: 'recipient',
             attributes: ['id', 'name'],
-            //attributes: ['name'],
+            // attributes: ['name'],
           },
         ],
       },
     ],
   });
-  console.log('\n\n\n----------test 1');
   const activityRecipients = recipients.map((recipient) => {
-    console.log("\n\n\n---- test 2", recipient);
     const recipientId = recipient.id;
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
