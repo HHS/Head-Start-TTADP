@@ -6,6 +6,7 @@ worker_memory: 512M
 similarity_api_instances: 1
 similarity_api_memory: 1GB
 similarity_api_disk_quota: 6GB
+
 LOG_LEVEL: info
 AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
@@ -18,32 +19,45 @@ SIMILARITY_ENDPOINT: https://tta-similarity-api-staging.app.cloud.gov/compute
 SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
 FORCE_CRON: "false"
 
-auth_client_id: STAGING_AUTH_CLIENT_ID
-auth_client_secret: STAGING_AUTH_CLIENT_SECRET
-cloudgov_username: CLOUDGOV_STAGING_USERNAME
-cloudgov_password: CLOUDGOV_STAGING_PASSWORD
-cloudgov_space: CLOUDGOV_STAGING_SPACE
+app_name: tta-smarthub-staging
+app_url: https://tta-smarthub-staging.app.cloud.gov/
+git_url: https://github.com/HHS/Head-Start-TTADP
 
-new_relic_license: NEW_RELIC_LICENSE_KEY
-session_secret: STAGING_SESSION_SECRET
-jwt_secret: STAGING_JWT_SECRET
-hses_data_file_url: HSES_DATA_FILE_URL
-hses_data_username: HSES_DATA_USERNAME
-hses_data_password: HSES_DATA_PASSWORD
-smtp_host: STAGING_SMTP_HOST
-smtp_port: STAGING_SMTP_PORT
-smtp_host_test: SMTP_HOST_TEST
-smtp_port_test: SMTP_PORT_TEST
-smtp_secure: SMTP_SECURE
-smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
-from_email_address: FROM_EMAIL_ADDRESS
-smtp_user: SMTP_USER
-smtp_password: SMTP_PASSWORD
-suppress_error_logging: SUPPRESS_ERROR_LOGGING
-itams_md_host: ITAMS_MD_HOST
-itams_md_port: ITAMS_MD_PORT
-itams_md_username: ITAMS_MD_USERNAME
-itams_md_password: ITAMS_MD_PASSWORD
-smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
+cg_username: ${CLOUDGOV_STAGING_USERNAME}
+cg_password: ${CLOUDGOV_STAGING_PASSWORD}
+cg_space: ${CLOUDGOV_STAGING_SPACE}
+cg_api: https://api.fr.cloud.gov
+cg_org: hhs-acf-ohs-tta
 
-staging_new_relic_app_id: "868729138"
+AUTH_CLIENT_ID: ${STAGING_AUTH_CLIENT_ID}
+AUTH_CLIENT_SECRET: ${STAGING_AUTH_CLIENT_SECRET}
+
+SESSION_SECRET: ${STAGING_SESSION_SECRET}
+JWT_SECRET: ${STAGING_JWT_SECRET}
+HSES_DATA_FILE_URL: ${HSES_DATA_FILE_URL}
+HSES_DATA_USERNAME: ${HSES_DATA_USERNAME}
+HSES_DATA_PASSWORD: ${HSES_DATA_PASSWORD}
+SMTP_HOST: ${STAGING_SMTP_HOST}
+SMTP_PORT: ${STAGING_SMTP_PORT}
+SMTP_HOST_TEST: ${SMTP_HOST_TEST}
+SMTP_PORT_TEST: ${SMTP_PORT_TEST}
+SMTP_SECURE: ${SMTP_SECURE}
+SMTP_IGNORE_TLS: ${STAGING_SMTP_IGNORE_TLS}
+FROM_EMAIL_ADDRESS: ${FROM_EMAIL_ADDRESS}
+SMTP_USER: ${SMTP_USER}
+SMTP_PASSWORD: ${SMTP_PASSWORD}
+ITAMS_MD_HOST: ${ITAMS_MD_HOST}
+ITAMS_MD_PORT: ${ITAMS_MD_PORT}
+ITAMS_MD_USERNAME: ${ITAMS_MD_USERNAME}
+ITAMS_MD_PASSWORD: ${ITAMS_MD_PASSWORD}
+SMARTSHEET_ACCESS_TOKEN: ${SMARTSHEET_ACCESS_TOKEN}
+
+new_relic_app_id: "868729138"
+new_relic_license: ${NEW_RELIC_LICENSE_KEY}
+
+REACT_APP_GTM_ENABLED: ${STAGING_GTM_ENABLED}
+REACT_APP_GTM_ID: ${GLOBAL_GTM_ID}
+REACT_APP_GTM_AUTH: ${STAGING_GTM_AUTH}
+REACT_APP_GTM_PREVIEW: ${STAGING_GTM_PREVIEW}
+REACT_APP_WEBSOCKET_URL: ${WEBSOCKET_URL}
+REACT_APP_INCLUDE_ACCESSIBILITY_CSS: "false"
