@@ -523,7 +523,11 @@ jobs:
           name: Build backend assets
           command: yarn build
       - run: exit 1
-      - cf_backup
+      - cf_backup:
+          target_env: prod
+          rds_service_name: ttahub-prod
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 
   process_db:
     executor: docker-executor
@@ -559,10 +563,7 @@ jobs:
           command: yarn build
       - run: exit 1
       - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
+          target_env: 'dev'
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: production
@@ -595,7 +596,7 @@ commands:
             echo "export full_env=${full_env}" >> "$BASH_ENV"
             # convert yml cfg to env style
             ./tools/parse-env.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
-            # substitute actual values from circle into ci.vars file
+            # substitute actual values from circle into env.vars file
             circleci env subst < ./temp.vars > env.vars
             # iterate through ci.vars file and export each line, 
             while read line; do
@@ -742,11 +743,10 @@ commands:
       - run:
           name: Push application
           command: |
-            #circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
-            set -x
+            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
             cf push \
-              --vars-file env.vars \
+              --vars-file app.vars \
               --var BUILD_BRANCH=${CIRCLE_BRANCH} \
               --var BUILD_COMMIT=${CIRCLE_SHA1} \
               --var BUILD_NUMBER=<< pipeline.number >> \
@@ -887,7 +887,7 @@ commands:
           name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
           command: |
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}-${RANDOM}"
-            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+            
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
               --command "<< parameters.the_command >>" \
@@ -916,16 +916,17 @@ commands:
             # Logout from Cloud Foundry
             cf logout
 
-
   cf_backup:
     description: "Backup database to S3"
+    parameters:
+      target_env: { type: string }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
     steps:
       - cf_automation_task:
-          auth_client_secret: ${AUTH_CLIENT_SECRET}
-          cloudgov_username: ${cg_username}
-          cloudgov_password: ${cg_password}
-          cloudgov_space: ${cg_space}
           task_name: "backup"
+          target_env: << parameters.target_env >>
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-backup"
@@ -934,10 +935,7 @@ commands:
   cf_restore:
     description: "Restore backup database from S3"
     parameters:
-      auth_client_secret: { type: env_var_name }
-      cloudgov_username: { type: env_var_name }
-      cloudgov_password: { type: env_var_name }
-      cloudgov_space: { type: env_var_name }
+      target_env: { type: string }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
       backup_prefix: { type: string }
@@ -950,29 +948,21 @@ commands:
               exit 1
             fi
       - cf_automation_task:
-          auth_client_secret: << parameters.auth_client_secret >>
-          cloudgov_username: << parameters.cloudgov_username >>
-          cloudgov_password: << parameters.cloudgov_password >>
-          cloudgov_space: << parameters.cloudgov_space >>
+          target_env: << parameters.target_env >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
           timeout: "1800"
+
   cf_process:
     description: "Process database from S3"
     parameters:
-      auth_client_secret: { type: env_var_name }
-      cloudgov_username: { type: env_var_name }
-      cloudgov_password: { type: env_var_name }
-      cloudgov_space: { type: env_var_name }
+      target_env: { type: string }
     steps:
       - cf_automation_task:
-          auth_client_secret: << parameters.auth_client_secret >>
-          cloudgov_username: << parameters.cloudgov_username >>
-          cloudgov_password: << parameters.cloudgov_password >>
-          cloudgov_space: << parameters.cloudgov_space >>
+          target_env: << parameters.target_env >>
           task_name: "process"
           task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
           task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
@@ -984,18 +974,12 @@ commands:
   cf_retention:
     description: "Delete Backup from S3 based on retention"
     parameters:
-      auth_client_secret: { type: env_var_name }
-      cloudgov_username: { type: env_var_name }
-      cloudgov_password: { type: env_var_name }
-      cloudgov_space: { type: env_var_name }
+      target_env: { type: string }
       s3_service_name: { type: string }
       backup_prefix: { type: string }
     steps:
       - cf_automation_task:
-          auth_client_secret: << parameters.auth_client_secret >>
-          cloudgov_username: << parameters.cloudgov_username >>
-          cloudgov_password: << parameters.cloudgov_password >>
-          cloudgov_space: << parameters.cloudgov_space >>
+          target_env: << parameters.target_env >>
           task_name: "retention"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
@@ -1005,20 +989,11 @@ commands:
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
-      auth_client_secret:
-        description: "Name of CircleCi project environment variable that holds authentication client secret"
-        type: env_var_name
-      cloudgov_username:
-        description: "Name of CircleCi project environment variable that holds deployer username for Cloud Foundry space"
-        type: env_var_name
-      cloudgov_password:
-        description: "Name of CircleCi project environment variable that holds deployer password for Cloud Foundry space"
-        type: env_var_name
-      cloudgov_space:
-        description: "Name of CircleCi project environment variable that holds name of Cloud Foundry space to target for application deployment"
-        type: env_var_name
       task_name:
         description: "Name of the automation task to run"
+        type: string
+      target_env:
+        description: "Desired env to run task in"
         type: string
       task_command:
         description: "Command to run for the automation task"
@@ -1041,153 +1016,154 @@ commands:
         type: string
         default: "./automation"
     steps:
-        - run:
-            command: |
-              echo "Running "<< parameters.task_command >>"
-      # - run:
-      #     name: Install Dependencies
-      #     command: |
-      #       set -e
-      #       set -u
-      #       set -o pipefail
-      #       set -o noglob
-      #       set -o noclobber
+      - run:
+          command: echo "Running "<< parameters.task_command >>"
+      - set_env_vars: 
+          target: << parameters.target_env >>
+      - run:
+          name: Install Dependencies
+          command: |
+            set -e
+            set -u
+            set -o pipefail
+            set -o noglob
+            set -o noclobber
 
-      #       # update
-      #       sudo apt-get update
-      #       # Install uuid-runtime to have access to uuidgen
-      #       # Install pv wget
-      #       sudo apt-get install -y pv uuid-runtime wget coreutils jq
+            # update
+            sudo apt-get update
+            # Install uuid-runtime to have access to uuidgen
+            # Install pv wget
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq
 
-      #       # Install Cloud Foundry CLI
-      #       wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-      #       echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-      #       sudo apt-get update
-      #       sudo apt-get install -y cf8-cli
-      #       # Install plugin needed for connect-to-service
-      #       cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install -y cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
 
-      #       # The line you want to ensure exists in the /etc/hosts file
-      #       line="127.0.0.1        localhost"
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
 
-      #       # Check if the line already exists
-      #       if ! grep -qF "$line" /etc/hosts; then
-      #           # If the line does not exist, append it
-      #           echo "$line" | sudo tee -a /etc/hosts > /dev/null
-      #           echo "Line added to /etc/hosts"
-      #       else
-      #           echo "Line already exists in /etc/hosts"
-      #       fi
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
 
-      #       # cleanup
-      #       sudo rm -rf /var/lib/apt/lists/*
-      # - run:
-      #     name: Login with service account
-      #     command: |
-      #       cf login -a << pipeline.parameters.cg_api >> \
-      #         -u ${<< parameters.cloudgov_username >>} \
-      #         -p ${<< parameters.cloudgov_password >>} \
-      #         -o << pipeline.parameters.cg_org >> \
-      #         -s ${<< parameters.cloudgov_space >>}
-      # - run:
-      #     name: Acquire Lock
-      #     command: |
-      #       chmod +x ./automation/ci/scripts/*-lock.sh
-      #       ./automation/ci/scripts/acquire-lock.sh \
-      #         "tta-automation" \
-      #         "<< pipeline.git.branch >>" \
-      #         "<< pipeline.number >>" \
-      #         "$CIRCLE_JOB"
-      # - run:
-      #     name: Start Log Monitoring
-      #     command: |
-      #       #!/bin/bash
+            # cleanup
+            sudo rm -rf /var/lib/apt/lists/*
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: Acquire Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/acquire-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Start Log Monitoring
+          command: |
+            #!/bin/bash
 
-      #       CONTROL_FILE="/tmp/stop_tail"
-      #       rm -f $CONTROL_FILE
+            CONTROL_FILE="/tmp/stop_tail"
+            rm -f $CONTROL_FILE
 
-      #       # Function to start tailing logs
-      #       start_log_tailing() {
-      #           echo "Starting cf logs for tta-automation..."
-      #           cf logs tta-automation &
-      #           TAIL_PID=$!
-      #       }
+            # Function to start tailing logs
+            start_log_tailing() {
+                echo "Starting cf logs for tta-automation..."
+                cf logs tta-automation &
+                TAIL_PID=$!
+            }
 
-      #       # Start tailing logs for the first time
-      #       start_log_tailing
+            # Start tailing logs for the first time
+            start_log_tailing
 
-      #       # Monitor the cf logs process
-      #       while [ ! -f $CONTROL_FILE ]; do
-      #           # Check if the cf logs process is still running
-      #           if ! kill -0 $TAIL_PID 2>/dev/null; then
-      #               echo "cf logs command has stopped unexpectedly. Restarting..."
-      #               start_log_tailing
-      #           fi
-      #           sleep 1
-      #       done
+            # Monitor the cf logs process
+            while [ ! -f $CONTROL_FILE ]; do
+                # Check if the cf logs process is still running
+                if ! kill -0 $TAIL_PID 2>/dev/null; then
+                    echo "cf logs command has stopped unexpectedly. Restarting..."
+                    start_log_tailing
+                fi
+                sleep 1
+            done
 
-      #       # Kill the cf logs command
-      #       kill -9 $TAIL_PID
-      #       echo "cf logs command for tta-automation has been terminated."
-      #     background: true
-      # - run:
-      #     name: cf_lambda - script to trigger task
-      #     command: |
-      #       set -x
-      #       json_data=$(jq -n \
-      #         --arg directory "<< parameters.directory >>" \
-      #         --arg config "<< parameters.config >>" \
-      #         --arg task_name "<< parameters.task_name >>" \
-      #         --arg command "<< parameters.task_command >>" \
-      #         --arg timeout_active_tasks "<< parameters.timeout >>" \
-      #         --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
-      #         --argjson args '<< parameters.task_args >>' \
-      #         '{
-      #           directory: $directory,
-      #           config: $config,
-      #           task_name: $task_name,
-      #           command: $command,
-      #           timeout_active_tasks: $timeout_active_tasks,
-      #           timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
-      #           args: $args
-      #         }')
+            # Kill the cf logs command
+            kill -9 $TAIL_PID
+            echo "cf logs command for tta-automation has been terminated."
+          background: true
+      - run:
+          name: cf_lambda - script to trigger task
+          command: |
+            set -x
+            json_data=$(jq -n \
+              --arg directory "<< parameters.directory >>" \
+              --arg config "<< parameters.config >>" \
+              --arg task_name "<< parameters.task_name >>" \
+              --arg command "<< parameters.task_command >>" \
+              --arg timeout_active_tasks "<< parameters.timeout >>" \
+              --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
+              --argjson args '<< parameters.task_args >>' \
+              '{
+                directory: $directory,
+                config: $config,
+                task_name: $task_name,
+                command: $command,
+                timeout_active_tasks: $timeout_active_tasks,
+                timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
+                args: $args
+              }')
 
-      #       # Set execute permission
-      #       find ./automation -name "*.sh" -exec chmod +x {} \;
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
 
-      #       ./automation/ci/scripts/cf_lambda.sh "$json_data"
-      # - run:
-      #     name: Generate Message
-      #     command: |
-      #       if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
-      #         PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-      #         echo "<< parameters.success_message >> before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
-      #       else
-      #         echo "<< parameters.success_message >> successful!" > /tmp/message_file
-      #       fi
-      # - notify_slack:
-      #     slack_bot_token: $SLACK_BOT_TOKEN
-      #     slack_channel: "acf-head-start-eng"
-      #     message_text_file: "/tmp/message_file"
-      # - run:
-      #     name: Release Lock
-      #     command: |
-      #       chmod +x ./automation/ci/scripts/*-lock.sh
-      #       ./automation/ci/scripts/release-lock.sh \
-      #         "tta-automation" \
-      #         "<< pipeline.git.branch >>" \
-      #         "<< pipeline.number >>" \
-      #         "$CIRCLE_JOB"
-      # - run:
-      #     name: Logout of service account
-      #     command: |
-      #       # Signal the log monitoring to stop
-      #       CONTROL_FILE="/tmp/stop_tail"
-      #       touch $CONTROL_FILE
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+      - run:
+          name: Generate Message
+          command: |
+            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+              echo "<< parameters.success_message >> before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
+            else
+              echo "<< parameters.success_message >> successful!" > /tmp/message_file
+            fi
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text_file: "/tmp/message_file"
+      - run:
+          name: Release Lock
+          command: |
+            chmod +x ./automation/ci/scripts/*-lock.sh
+            ./automation/ci/scripts/release-lock.sh \
+              "tta-automation" \
+              "<< pipeline.git.branch >>" \
+              "<< pipeline.number >>" \
+              "$CIRCLE_JOB"
+      - run:
+          name: Logout of service account
+          command: |
+            # Signal the log monitoring to stop
+            CONTROL_FILE="/tmp/stop_tail"
+            touch $CONTROL_FILE
 
-      #       # Wait for the log monitoring process to terminate
-      #       sleep 5
+            # Wait for the log monitoring process to terminate
+            sleep 5
 
-      #       # Logout from Cloud Foundry
-      #       cf logout
+            # Logout from Cloud Foundry
+            cf logout
 
