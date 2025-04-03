@@ -585,6 +585,7 @@ commands:
       - run:
           name: Set env vars
           command: |
+            npm install yargs
             # $cfg_env maps to the primary "level" (dev, staging, prod)
             # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
             full_env=<< parameters.target >>
