@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
-import { Tag } from '@trussworks/react-uswds';
+import { uniqueId } from "lodash";
 import colors from '../../../../../colors';
 import DataCard from '../../../../../components/DataCard';
 import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
 import FindingWithinReview from './FindingWithinReview';
 import SpecialistTags from './SpecialistTags';
+import Tag from "../../../../../components/Tag";
 import ToggleTtaActivityButton from './ToggleTtaActivityButton';
 
 export default function ReviewCard({ review, regionId }) {
@@ -24,9 +24,7 @@ export default function ReviewCard({ review, regionId }) {
           {' '}
           {review.name}
         </h3>
-        <Tag className="margin-left-1 text-ink text-normal border radius-sm" background={colors.baseLightest}>
-          {review.reviewType}
-        </Tag>
+        <Tag>{review.reviewType}</Tag>
       </div>
       <DescriptionList>
         <DescriptionItem title="Grants on review">
