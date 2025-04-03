@@ -719,7 +719,6 @@ commands:
       - run:
           name: Login with service account
           command: |
-            set -x
             cf login -a ${cg_api} \
               -u ${cg_username} \
               -p ${cg_password} \
