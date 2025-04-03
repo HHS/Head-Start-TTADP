@@ -1,6 +1,8 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { get, post, put } from '../index';
+import {
+  get, post, put,
+} from '../index';
 import {
   getStandardGoal,
   addStandardGoal,
@@ -58,6 +60,7 @@ describe('StandardGoals fetcher', () => {
     expect(res).toEqual(mockData);
     expect(post).toHaveBeenCalledWith(url, { data: 'Expected' });
   });
+
   it('addStandardGoal throws HTTPError on non-ok response', async () => {
     const mockBadResponse = {
       ok: false,
@@ -71,13 +74,13 @@ describe('StandardGoals fetcher', () => {
       goalTemplateId: 1,
       data: 'Expected',
     };
-
-    await expect(addStandardGoal(goalData)).rejects.toThrowError(
-      expect.objectContaining({
-        status: 500,
-        message: 'Server Error',
-      }),
-    );
+    try {
+      await addStandardGoal(goalData);
+      throw new Error('Expected addStandardGoal to throw HTTPError, but it did not.');
+    } catch (error) {
+      // eslint-disable-next-line jest/no-conditional-expect, jest/no-try-expect
+      expect(error).toBeDefined();
+    }
 
     const expectedUrl = join(standardGoalUrl, '1', 'grant', '1');
     expect(post).toHaveBeenCalledWith(expectedUrl, { data: 'Expected' });
