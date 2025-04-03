@@ -238,7 +238,6 @@ export const convertReportToFormData = (fetchedReport) => {
   } else {
     otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
   }
-  console.log("fetchedReport.activityRecipients: ", fetchedReport.activityRecipients);
   const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
     activityRecipientId: ar.id,
     name: ar.name,
