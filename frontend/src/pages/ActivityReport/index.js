@@ -49,7 +49,7 @@ import UserContext from '../../UserContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
-  activityRecipientType: '',
+  activityRecipientType: 'recipient',
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
@@ -114,6 +114,7 @@ export const formatReportWithSaveBeforeConversion = async (
         version: 2,
         approverUserIds: approverIds,
         pageState: data.pageState,
+        activityRecipientType: 'recipient',
       }, {},
     );
 
@@ -484,6 +485,7 @@ function ActivityReport({
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,
+            activityRecipientType: 'recipient',
           },
         );
 
@@ -512,21 +514,19 @@ function ActivityReport({
 
         let reportData = updatedReport;
 
-        // if we are dealing with a recipient report, we need to do a little magic to
         // format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
-        if (updatedReport.activityRecipientType === 'recipient') {
-          const { goalForEditing, goals } = convertGoalsToFormData(
-            updatedReport.goalsAndObjectives,
-            updatedReport.activityRecipients.map((r) => r.activityRecipientId),
-          );
+        const { goalForEditing, goals } = convertGoalsToFormData(
+          updatedReport.goalsAndObjectives,
+          updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+        );
 
-          reportData = {
-            ...updatedReport,
-            goalForEditing,
-            goals,
-          };
-        }
+        reportData = {
+          ...updatedReport,
+          goalForEditing,
+          goals,
+        };
+
         updateFormData(reportData, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);

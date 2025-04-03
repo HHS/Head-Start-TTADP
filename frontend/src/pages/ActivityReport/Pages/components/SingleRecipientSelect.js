@@ -13,6 +13,7 @@ export default function SingleRecipientSelect(
     selectedRecipients,
     possibleRecipients,
     onChangeActivityRecipients,
+    onBlurActivityRecipients,
   },
 ) {
   const [showRecipientGrants, setShowRecipientGrants] = useState(false);
@@ -24,12 +25,11 @@ export default function SingleRecipientSelect(
   //  recipient and the grants when the selectedRecipients has a value.
   useEffect(() => {
     // If we have selected recipients.
-    if (selectedRecipients && selectedRecipients.length > 0) {
+    if (selectedRecipients && selectedRecipients.length > 0 && possibleRecipients.length) {
       // Find the recipient.
       const selectedRecipientFromOptions = possibleRecipients.find(
         (recipient) => recipient.id === selectedRecipients[0].recipientIdForLookUp,
       );
-
       // Get the grant ids for the recipient.
       const selectedGrantIds = selectedRecipients.map((g) => g.activityRecipientId);
 
@@ -122,6 +122,7 @@ export default function SingleRecipientSelect(
             onChange={() => toggleGrantSelection(grant)}
             checked={checkedCheckBoxes.includes(grant.value)}
             aria-label={`Select grant ${grant.label}`}
+            onBlur={onBlurActivityRecipients}
           />
         </td>
       </tr>
@@ -144,7 +145,7 @@ export default function SingleRecipientSelect(
     >
       <div className="single-recipient-select">
         <Select
-          placeholder=""
+          placeholder="- Select -"
           inputId="selectedRecipient"
           onChange={onRecipientChange}
           options={possibleRecipients.map((recipient) => ({
@@ -161,6 +162,7 @@ export default function SingleRecipientSelect(
           value={newSelectedRecipient || selectedRecipients}
           getOptionLabel={(option) => option.label}
           getOptionValue={(option) => option.value}
+          onBlur={onBlurActivityRecipients}
         />
         {
           showRecipientGrants && (
@@ -201,4 +203,5 @@ SingleRecipientSelect.propTypes = {
   selectedRecipients: PropTypes.arrayOf(SelectedRecipientsPropType).isRequired,
   possibleRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,
   onChangeActivityRecipients: PropTypes.func.isRequired,
+  onBlurActivityRecipients: PropTypes.func.isRequired,
 };
