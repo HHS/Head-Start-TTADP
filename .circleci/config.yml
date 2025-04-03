@@ -71,17 +71,20 @@ workflows:
       - dynamic_security_scan:
           # this seems to cause issues if it runs at the same time as other jobs
           requires:
+            - build_and_lint
+            - build_similarity_api
+
+      # repeat again with different filters for prod/staging and pass the env
+      - deploy:
+          serial-group: << pipeline.git.branch >>/deploy-lock
+          requires:
             - test_frontend
             - test_backend
             - test_e2e_app
             - test_e2e_api
             - test_e2e_utils
             - test_cucumber
-
-      # repeat again with different filters for prod/staging and pass the env
-      - deploy:
-          serial-group: << pipeline.git.branch >>/deploy-lock
-          requires:
+            - test_similarity_api
             - dynamic_security_scan
           filters:
             branches:
