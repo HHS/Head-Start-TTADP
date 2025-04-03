@@ -51,35 +51,42 @@ workflows:
     jobs:
       - build_and_lint
       - build_similarity_api
-      - build-done:
+      - test_frontend:
           requires:
             - build_and_lint
             - build_similarity_api
-      - test_frontend:
-          requires:
-            - build-done
       - test_backend:
           requires:
-            - build-done
+            - build_and_lint
+            - build_similarity_api
       - test_similarity_api:
           requires:
-            - build-done
+            - build_and_lint
+            - build_similarity_api
       - test_e2e_app:
           requires:
-            - build-done
+            - build_and_lint
+            - build_similarity_api
       - test_e2e_api:
           requires:
-            - build-done
+            - build_and_lint
+            - build_similarity_api
       - test_e2e_utils:
           requires:
-            - build-done
+            - build_and_lint
+            - build_similarity_api
       - test_cucumber:
           requires:
-            - build-done
+            - build_and_lint
+            - build_similarity_api
       - dynamic_security_scan:
           requires:
-            - build-done
-      - test-done:
+            - build_and_lint
+            - build_similarity_api
+
+      # repeat again with different filters for prod/staging and pass the env
+      - deploy:
+          serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
             - test_frontend
             - test_backend
@@ -88,12 +95,6 @@ workflows:
             - test_e2e_utils
             - test_cucumber
             - dynamic_security_scan
-
-      # repeat again with different filters for prod/staging and pass the env
-      - deploy:
-          serial-group: << pipeline.git.branch >>/deploy-lock
-          requires:
-            - test-done
           filters:
             branches:
               only:
@@ -154,16 +155,6 @@ workflows:
 # ----------------- Jobs -----------------
 
 jobs:
-
-  build-done:
-    # no-op job, just for organization
-    executor:  docker-executor
-    steps: []
-
-  test-done:
-    # no-op job, just for organization
-    executor:  docker-executor
-    steps: []
 
   run_import_job:
     # data import

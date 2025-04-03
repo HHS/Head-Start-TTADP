@@ -1,0 +1,56 @@
+#!/bin/bash
+USAGE=$(cat <<EOF
+./bin/deploy <env_name> [unlock]
+Given one arg, will push+deploy your current branch to the given environment (lower-envs only)
+Alternatively, if 'unlock' is specified, will push+deploy main to the given environment
+Ex: ./bin/deploy dev-green (push your branch)
+Ex: ./bin/deploy dev-green unlock (push main)
+EOF
+)
+
+if [ -z "$1" ]; then
+  echo "Error: env_name is required."
+  echo "Usage: $USAGE"
+  exit 1
+fi
+
+UNLOCK=0
+if [[ -n "$2" ]]; then
+    if [[ $2 == "unlock" ]]; then
+        UNLOCK=1
+    else
+        echo "Only 'unlock' is accepted for the second arg"
+        exit 1
+ 
+    fi
+fi
+
+ENV_NAME=$1
+
+VALID_ENVS=("dev" "dev-red" "dev-green" "dev-blue" "sandbox")
+found=false
+for item in "${VALID_ENVS[@]}"; do
+  if [[ "$item" == "$ENV_NAME" ]]; then
+    found=true
+    break
+  fi
+done
+
+if [ "$found" == "false" ]; then
+  echo "Error: Invalid env_name. Valid options are: ${VALID_ENVS[*]}"
+  exit 1
+fi
+
+if ((UNLOCK)); then
+  BRANCH="main"
+  echo "Unlocking [$ENV_NAME] with branch [main]"
+else
+  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  echo "Deploying to [$ENV_NAME] with branch [$BRANCH]"
+fi
+
+#git push --force origin HEAD:$ENV_NAME
+#if [ $? -ne 0 ]; then
+#    echo "Error: Failed to push to $ENV_NAME"
+#    exit 1
+#fi
