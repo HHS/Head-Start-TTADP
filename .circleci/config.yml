@@ -102,7 +102,7 @@ workflows:
                 - sandbox
 
   manual_deploy:
-    when: 
+    when:
         equal: [ << pipeline.parameters.action >>, deploy ]
     jobs:
       - build_and_lint
