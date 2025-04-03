@@ -44,10 +44,15 @@ export default function ViewGoalDetails({
   ).length > 0;
 
   useEffect(() => {
+    let isSubscribed = true; // Flag to track component mount status
+
     async function fetchGoalHistory() {
       if (!goalId) {
-        setFetchError('Missing required parameters');
-        setLoading(false);
+        // This path is unlikely given the outer check, but included for completeness
+        if (isSubscribed) {
+          setFetchError('Missing required parameters');
+          setLoading(false);
+        }
         return;
       }
 
@@ -62,23 +67,35 @@ export default function ViewGoalDetails({
         }
 
         const data = await response.json();
-        setGoalHistory(data);
+        if (isSubscribed) {
+          setGoalHistory(data);
+        }
       } catch (err) {
-        setFetchError('There was an error fetching goal history');
+        if (isSubscribed) {
+          setFetchError('There was an error fetching goal history');
+        }
         // eslint-disable-next-line no-console
         console.error(err);
       } finally {
-        setIsAppLoading(false);
-        setLoading(false);
+        if (isSubscribed) {
+          setIsAppLoading(false);
+          setLoading(false);
+        }
       }
     }
 
     if (goalId) {
       fetchGoalHistory();
     } else {
+      // No goalId provided
       setFetchError('Missing required parameters');
       setLoading(false);
     }
+
+    // Cleanup function
+    return () => {
+      isSubscribed = false;
+    };
   }, [goalId, setAppLoadingText, setIsAppLoading]);
 
   if (!canView) {
@@ -131,13 +148,14 @@ export default function ViewGoalDetails({
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
+      handleToggle: () => {}, // Add dummy handler to satisfy prop-types
       className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
           <div className="goal-updates-section">
             <h3 className="smart-hub-serif">Goal updates</h3>
             {statusUpdates.length > 0 ? (
-              <ul className="usa-list">
+              <ul className="usa-list" aria-label="Goal status updates">
                 {statusUpdates.map((update) => (
                   <li key={update.id}>
                     <strong>
@@ -239,24 +257,24 @@ export default function ViewGoalDetails({
                         (aro) => aro.resources && aro.resources.length > 0,
                       ) ? null : (
                         <div className="margin-top-2">
-                          <ReadOnlyField label="Resources">
-                            <ul className="usa-list margin-top-0">
-                              {objective.activityReportObjectives
-                                .flatMap((aro) => aro.resources || [])
-                                .filter(
-                                  (resource, i, self) => i === self.findIndex(
-                                    (r) => r.id === resource.id,
-                                  ),
-                                )
-                                .map((resource) => (
-                                  <li key={`resource-${resource.id}`}>
-                                    <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                                      {resource.title || resource.url}
-                                    </a>
-                                  </li>
-                                ))}
-                            </ul>
-                          </ReadOnlyField>
+                          {/* Render label and list separately to avoid nesting ul in p */}
+                          <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
+                          <ul className="usa-list margin-top-0">
+                            {objective.activityReportObjectives
+                              .flatMap((aro) => aro.resources || [])
+                              .filter(
+                                (resource, i, self) => i === self.findIndex(
+                                  (r) => r.id === resource.id,
+                                ),
+                              )
+                              .map((resource) => (
+                                <li key={`resource-${resource.id}`}>
+                                  <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                    {resource.title || resource.url}
+                                  </a>
+                                </li>
+                              ))}
+                          </ul>
                         </div>
                     )}
 
@@ -272,19 +290,19 @@ export default function ViewGoalDetails({
           {goal.responses && goal.responses.length > 0 && (
             <div className="responses-section">
               <h3>Root causes</h3>
-              {goal.responses.map((response) => (
-                <div key={response.id}>
-                  {Array.isArray(response.response) ? (
-                    <ul className="usa-list">
-                      {response.response.map((item) => (
-                        <li key={`root-cause-${item}`}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>{response.response}</p>
-                  )}
-                </div>
-              ))}
+                {goal.responses.map((response) => (
+                  <div key={response.id}>
+                    {Array.isArray(response.response) ? (
+                      <ul className="usa-list">
+                        {response.response.map((item) => (
+                          <li key={`root-cause-${item}`}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>{response.response}</p>
+                    )}
+                  </div>
+                ))}
             </div>
           )}
         </div>
