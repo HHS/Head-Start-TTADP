@@ -4,34 +4,21 @@
 /* eslint-disable no-console */
 
 const fs = require('fs');
-const events = require('events');
 const readline = require('readline');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
+const { parseArgs } = require('node:util');
 
-/* read in a yaml file, parse it, and write it to a file in env format */
-
-function parseArgs() {
-  return yargs(hideBin(process.argv))
-    .option('in_file', {
-      alias: 'i',
-      describe: 'yaml file to parse',
-      type: 'string',
-      demandOption: true,
-    })
-    .option('out_file', {
-      alias: 'o',
-      describe: 'env file to write',
-      type: 'string',
-      demandOption: true,
-    })
-    .check((argv) => {
-      if (!fs.existsSync(argv.in_file)) {
-        throw new Error(`File does not exist: ${argv.env_file}`);
-      }
-      return true;
-    })
-    .argv;
+function parse() {
+  const args = process.argv.slice(2);
+  const parsedArgs = parseArgs({
+    args,
+    allowPositionals: true,
+  });
+  if (parsedArgs.positionals.length !== 2) {
+    console.error(`Got ${parsedArgs.positionals}`);
+    console.error('Usage: parse-env <in_file> <out_file>');
+    process.exit(1);
+  }
+  return parsedArgs.positionals;
 }
 
 async function processLineByLine(in_file, out_file) {
@@ -56,7 +43,7 @@ async function processLineByLine(in_file, out_file) {
     // everything before the first colon
     const key = line.split(':')[0];
     // everything after
-    const value = line.split(':').slice(1).join('');
+    const value = line.split(':').slice(1).join(':');
     if (key && value) {
       i += 1;
       outStream.write(`${key.trim()}=${value.trim()}\n`);
@@ -67,8 +54,8 @@ async function processLineByLine(in_file, out_file) {
 }
 
 async function main() {
-  const argv = parseArgs();
-  processLineByLine(argv.in_file, argv.out_file);
+  const argv = parse();
+  processLineByLine(argv[0], argv[1]);
 }
 
 if (require.main === module) {
