@@ -70,8 +70,7 @@ workflows:
             - build_similarity_api
       - dynamic_security_scan:
           requires:
-            - build_and_lint
-            - build_similarity_api
+            - test_backend
 
       # repeat again with different filters for prod/staging and pass the env
       - deploy:
@@ -696,10 +695,10 @@ commands:
   notify_new_relic:
     description: "Notify new relic of a deploy"
     steps:
+      - set_env_vars
       - run:
           name: Notify New Relic
           command: |
-            source ci.vars
             curl -X POST "https://api.newrelic.com/v2/applications/${new_relic_app_id}/deployments.json" \
             -H "X-Api-Key: $NEW_RELIC_REST_API_KEY" -i \
             -H "Content-Type: application/json" \
