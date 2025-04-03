@@ -49,8 +49,8 @@ else
   echo "Deploying to [$ENV_NAME] with branch [$BRANCH]"
 fi
 
-#git push --force origin HEAD:$ENV_NAME
-#if [ $? -ne 0 ]; then
-#    echo "Error: Failed to push to $ENV_NAME"
-#    exit 1
-#fi
+git push --force origin HEAD:$ENV_NAME
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to push to $ENV_NAME"
+    exit 1
+fi

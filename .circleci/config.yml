@@ -54,11 +54,9 @@ workflows:
       - test_frontend:
           requires:
             - build_and_lint
-            - build_similarity_api
       - test_backend:
           requires:
             - build_and_lint
-            - build_similarity_api
       - test_similarity_api:
           requires:
             - build_and_lint
@@ -596,7 +594,7 @@ commands:
             echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
             echo "export full_env=${full_env}" >> "$BASH_ENV"
             # substitute actual values from circle into ci.vars file
-            circleci env subst < ./deployment_config/${cfg_env}_vars.env > env.vars
+            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > env.vars
             # iterate through ci.vars file and export each line, 
             while read line; do
               if [ -n "${line}" ]; then
@@ -728,7 +726,6 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."  
     steps:
-      - set_env_vars
       - run:
           name: Login with service account
           command: |
