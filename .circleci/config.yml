@@ -50,7 +50,6 @@ workflows:
             - build_and_lint
       - test_similarity_api:
           requires:
-            - build_and_lint
             - build_similarity_api
       - test_e2e_app:
           requires:
@@ -174,6 +173,7 @@ jobs:
 
   build_and_lint:
     executor: docker-executor
+    resource_class: large
     steps:
       - checkout
       - create_combined_yarnlock
@@ -1022,7 +1022,7 @@ commands:
             fi
       - notify_slack:
           slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-head-start-eng"
+          slack_channel: "acf-head-start-alerts"
           message_text_file: "/tmp/message_file"
       - run:
           name: Release Lock
