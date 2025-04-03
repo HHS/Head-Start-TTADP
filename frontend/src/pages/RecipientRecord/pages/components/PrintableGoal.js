@@ -6,7 +6,6 @@ import STATUSES from '../../../../components/GoalCards/components/StatusDropdown
 import List from './List';
 
 export default function PrintableGoal({ goal }) {
-  console.log(goal);
   const key = goal.status || 'Needs Status';
   const { icon } = STATUSES[key] ? STATUSES[key] : STATUSES['Needs Status'];
   const allTopics = goal.objectives && Array.isArray(goal.objectives)
