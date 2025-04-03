@@ -1010,7 +1010,6 @@ commands:
           config: "<< parameters.backup_prefix >>-backup"
           success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
 
-
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
