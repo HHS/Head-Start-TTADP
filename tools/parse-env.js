@@ -53,7 +53,10 @@ async function processLineByLine(in_file, out_file) {
     if (line.length === 0) {
       continue; // skip empty lines
     }
-    const [key, value] = line.split(':');
+    // everything before the first colon
+    const key = line.split(':')[0];
+    // everything after
+    const value = line.split(':').slice(1).join('');
     if (key && value) {
       i += 1;
       outStream.write(`${key.trim()}=${value.trim()}\n`);
