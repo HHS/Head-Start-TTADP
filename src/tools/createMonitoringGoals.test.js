@@ -2589,7 +2589,7 @@ describe('createMonitoringGoals', () => {
     // Mock GoalTemplate.findOne to throw an error:
     GoalTemplate.findOne = jest.fn().mockRejectedValueOnce(new Error('Test error'));
     jest.spyOn(auditLogger, 'error');
-    await expect(createMonitoringGoals()).rejects.toMatch('error');
+    await expect(createMonitoringGoals()).rejects.toMatch(new Error('Test error'));
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error creating monitoring:'));
   });
 });
