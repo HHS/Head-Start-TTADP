@@ -113,13 +113,13 @@ workflows:
             only:
               - dev # add more   
     jobs:
-      - run_import_job
+      - run_import_job: { target_env: dev }
 
   import_data_manual:
     when: 
       equal: [ << pipeline.parameters.action >>, import ]
     jobs:
-      - run_import_job
+      - run_import_job: { target_env: dev } # todo 
 
   backup_restore_db:
     # backup production db, process (anonymize) the data, then restore it into lower envs
