@@ -233,7 +233,7 @@ const convertObjectivesWithoutGoalsToFormData = (
 export const convertReportToFormData = (fetchedReport) => {
   let grantIds = [];
   let otherEntities = [];
-  if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
+  if (fetchedReport.activityRecipients) {
     grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
   } else {
     otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);

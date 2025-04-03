@@ -100,10 +100,6 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'activity-summary', true);
 
-    // change some data
-    const other = await screen.findByRole('radio', { name: /other entity/i });
-    act(() => userEvent.click(other));
-
     let virt = await screen.findByRole('radio', { name: /virtual/i });
     expect(virt.checked).toBe(false);
 
