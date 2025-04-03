@@ -51,35 +51,35 @@ workflows:
     jobs:
       - build_and_lint
       - build_similarity_api
-      - phase1:
-           requires:
+      - build-done:
+          requires:
             - build_and_lint
             - build_similarity_api
       - test_frontend:
           requires:
-            - phase1
+            - build-done
       - test_backend:
           requires:
-            - phase1
+            - build-done
       - test_similarity_api:
           requires:
-            - phase1
+            - build-done
       - test_e2e_app:
           requires:
-            - phase1
+            - build-done
       - test_e2e_api:
           requires:
-            - phase1
+            - build-done
       - test_e2e_utils:
           requires:
-            - phase1
+            - build-done
       - test_cucumber:
           requires:
-            - phase1
+            - build-done
       - dynamic_security_scan:
           requires:
-            - phase1
-      - phase2:
+            - build-done
+      - test-done:
           requires:
             - test_frontend
             - test_backend
@@ -93,7 +93,7 @@ workflows:
       - deploy:
           serial-group: << pipeline.git.branch >>/deploy-lock
           requires:
-            - phase2
+            - test-done
           filters:
             branches:
               only:
@@ -155,14 +155,13 @@ workflows:
 
 jobs:
 
-  phase1:
-    # placeholder no-jobs, just for organization
-    type: no-op
+  build-done:
+    # no-op job, just for organization
     executor:  docker-executor
     steps: []
 
-  phase2:
-    type: no-op
+  test-done:
+    # no-op job, just for organization
     executor:  docker-executor
     steps: []
 
@@ -597,23 +596,22 @@ commands:
       - run:
           name: Set env vars
           command: |
-            # $real_env maps target environment
-            # $cfg_env maps to the env used for config (ie dev-green -> dev)
-            real_env=<< parameters.target >>
+            # $cfg_env maps to the primary "level" (dev, staging, prod)
+            # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
             cfg_env=<< parameters.target >>
-            if [[ $real_env == *"main"* ]]; then real_env="staging"; fi
-            if [[ $real_env == *"dev"* ]]; then cfg_env="dev"; fi
-            echo "export real_env=${real_env}" >> "$BASH_ENV"
+            full_env=<< parameters.target >>
+            if [[ $cfg_env == *"main"* ]]; then cfg_env="staging"; fi
+            if [[ $cfg_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
+            echo "export full_env=${full_env}" >> "$BASH_ENV"
             # substitute actual values from circle into ci.vars file
-            circleci env subst < ./deployment_config/${cfg_env}_vars_ci.env > ci.vars
+            circleci env subst < ./deployment_config/${cfg_env}_vars.env > env.vars
             # iterate through ci.vars file and export each line, 
             while read line; do
               if [ -n "${line}" ]; then
                 echo "export ${line}">>"$BASH_ENV"
               fi
-            done < ci.vars
-            cat $BASH_ENV
+            done < env.vars
 
   install_cf_tools:
     description: "Install Cloud Foundry CLI"
@@ -731,7 +729,7 @@ commands:
             "{
               \"deployment\": {
                 \"revision\": \"<< pipeline.git.revision >>\",
-                \"description\": \"${real_env} Successfully Deployed\"
+                \"description\": \"${full_env} Successfully Deployed\"
               }
             }"
 
@@ -739,6 +737,7 @@ commands:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."  
     steps:
+      - set_env_vars
       - run:
           name: Login with service account
           command: |
@@ -750,11 +749,11 @@ commands:
       - run:
           name: Push application
           command: |
-            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+            #circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             set -x
-            echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${real_env}]"
+            echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
             cf push \
-              --vars-file app.vars \
+              --vars-file env.vars \
               --var BUILD_BRANCH=${CIRCLE_BRANCH} \
               --var BUILD_COMMIT=${CIRCLE_SHA1} \
               --var BUILD_NUMBER=<< pipeline.number >> \
@@ -832,7 +831,7 @@ commands:
           name: Generate Message
           command: |
             source ci.vars
-            env_name="$real_env"
+            env_name="$full_env"
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
