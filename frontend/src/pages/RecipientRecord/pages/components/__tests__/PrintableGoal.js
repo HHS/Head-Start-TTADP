@@ -11,10 +11,10 @@ describe('PrintableGoal', () => {
 
   it('will display a goal with an uncertain status', async () => {
     const goal = {
-      goalStatus: 'Uncertain',
+      status: 'Uncertain',
       goalNumbers: ['2'],
-      goalText: 'asdfasdf',
-      grantNumbers: ['3'],
+      name: 'asdfasdf',
+      grant: { number: '3' },
       goalTopics: ['Topic'],
       objectives: [],
     };
@@ -25,8 +25,8 @@ describe('PrintableGoal', () => {
   it('will display a goal with no status', async () => {
     const goal = {
       goalNumbers: ['2'],
-      goalText: 'asdfasdf',
-      grantNumbers: ['3'],
+      name: 'asdfasdf',
+      grant: { number: '3' },
       goalTopics: ['Topic'],
       objectives: [],
     };
