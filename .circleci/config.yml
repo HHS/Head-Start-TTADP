@@ -587,9 +587,9 @@ commands:
           command: |
             # $cfg_env maps to the primary "level" (dev, staging, prod)
             # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
-            cfg_env=<< parameters.target >>
             full_env=<< parameters.target >>
-            if [[ $cfg_env == *"main"* ]]; then cfg_env="staging"; fi
+            if [[ $full_env == *"main"* ]]; then cfg_env="staging"; fi
+            cfg_env=${full_env}
             if [[ $cfg_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
             echo "export full_env=${full_env}" >> "$BASH_ENV"
@@ -603,7 +603,7 @@ commands:
                 echo "export ${line}">>"$BASH_ENV"
               fi
             done < env.vars
-            cat env.vars
+            cat $BASH_ENV
 
   install_cf_tools:
     description: "Install Cloud Foundry CLI"
