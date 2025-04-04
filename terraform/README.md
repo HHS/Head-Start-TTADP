@@ -172,7 +172,7 @@ _Tip: You run terraform files from the directory in which they are stored. For e
    If you need to bind an identity provider:
 
    ```
-   # this can be reused
+   # a provider can be reused within the same space
     cf create-service cloud-gov-identity-provider oauth-client oauth-provider-dev
 
     # create a service key for each env
@@ -186,8 +186,8 @@ _Tip: You run terraform files from the directory in which they are stored. For e
             ]
         }'
 
-    # retrieve an existing key & token
-    cf service-key <SERVICE_INSTANCE_NAME> <SERVICE_KEY_NAME>
+    # retrieve created id & secret
+    cf service-key oauth-provider-dev oauth-key-dev-green
    ```
 
 <!-- Links -->
