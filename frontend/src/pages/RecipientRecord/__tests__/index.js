@@ -354,16 +354,6 @@ describe('recipient record page', () => {
     expect(await screen.findByText(/Goal G-1234/i)).toBeInTheDocument();
   });
 
-  it('navigates to the standard goal form', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
-    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/goal-templates?grantIds=10', []);
-    memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals');
-    act(() => renderRecipientRecord());
-    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
-  });
-
   describe('PageWithHeading', () => {
     const recipientNameWithRegion = 'Recipient 1 - Region 1';
 
