@@ -766,9 +766,11 @@ commands:
             if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
               exit 0; 
             fi
-            current_owner=$(cat environments/${current_env}) 
-            if [ "${current_owner}" != "${CIRCLE_USERNAME}" ]; then 
-              echo "owner changed from ${current_owner}->${CIRCLE_USERNAME}"
+            if [ -f ./environments/${current_env} ]; then
+              current_owner=$(cat ./environments/${current_env})
+              if [ "${current_owner}" != "${CIRCLE_USERNAME}" ]; then 
+                echo "owner changed from ${current_owner}->${CIRCLE_USERNAME}"
+              fi
             fi
             echo "${CIRCLE_USERNAME}" > environments/${current_env}
       - save_cache:
