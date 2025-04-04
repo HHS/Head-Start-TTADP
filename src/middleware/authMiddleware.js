@@ -25,8 +25,16 @@ export const hsesAuth = new ClientOAuth2({
 export function login(req, res) {
   const referrer = req.headers.referer;
   req.session.referrerPath = referrer ? new URL(referrer).pathname : '';
-  const uri = hsesAuth.code.getUri();
-  res.redirect(uri);
+
+  const queryParams = new URLSearchParams({
+    response_type: 'code',
+    client_id: process.env.AUTH_CLIENT_ID,
+    redirect_uri: `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`,
+    scope: 'openid email profile:name',
+  });
+
+  const authUrl = `${process.env.AUTH_BASE}/oidc/openid_connect/authorize?${queryParams.toString()}`;
+  res.redirect(authUrl);
 }
 
 /**

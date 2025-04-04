@@ -8,6 +8,7 @@ applications:
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
+      PRIVATE_JWK_BASE64: ((PRIVATE_JWK_BASE64))
       AUTH_CLIENT_SECRET: ((AUTH_CLIENT_SECRET))
       LOG_JSON_FORMAT: "true"
       LOG_LEVEL: ((LOG_LEVEL))
