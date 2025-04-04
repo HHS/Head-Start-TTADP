@@ -471,6 +471,7 @@ jobs:
       - attach_workspace:
           at: .
       - set_env_vars
+      - write_envs
       - install_cf_tools
       - run:
           name: Build backend assets
@@ -486,7 +487,6 @@ jobs:
           name: Build frontend assets
           command: yarn --cwd frontend run build
       - cf_deploy
-      - write_envs
       - run:
           name: Run database migrations
           command: |
