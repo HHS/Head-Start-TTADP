@@ -486,6 +486,7 @@ jobs:
           name: Build frontend assets
           command: yarn --cwd frontend run build
       - cf_deploy
+      - write_envs
       - run:
           name: Run database migrations
           command: |
@@ -746,11 +747,25 @@ commands:
               --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
               --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+      
 
   say_ok:
     steps:
       - run:
           command: echo "ok"
+
+  write_envs:
+    steps:
+      - restore_cache:
+          key: 'environment-owners'
+      - run:
+          command: |
+            mkdir -p environments
+            echo "${CIRCLE_USERNAME}" > environments/<< pipeline.git.branch >>
+      - save_cache:
+          key: 'environment-owners'
+          paths:
+            - environments
 
   cf_cmd:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
