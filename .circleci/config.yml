@@ -47,21 +47,20 @@ workflows:
     when: << pipeline.parameters.build_test_deploy >>
     jobs:
       - build_and_lint
-      - test_frontend:
-          requires:
-            - build_and_lint
-      - test_backend:
-          requires:
-            - build_and_lint
       - build_similarity_api
-      - test_similarity_api:
-          requires:
-            - build_similarity_api
       - build_check:
           requires:
-            - test_frontend
-            - test_backend
-            - test_similarity_api
+            - build_and_lint
+            - build_similarity_api
+      - test_frontend:
+          requires:
+            - build_check
+      - test_backend:
+          requires:
+            - build_check
+      - test_similarity_api:
+          requires:
+            - build_check
       - test_e2e_app:
           requires:
             - build_check
@@ -79,6 +78,9 @@ workflows:
             - build_check
       - full_check:
           requires:
+            - test_frontend
+            - test_backend
+            - test_similarity_api
             - test_e2e_app
             - test_e2e_api
             - test_e2e_utils
