@@ -20,32 +20,15 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown')
     await page.keyboard.press('Enter');
 
     await blur(page);
 
-    await page.getByLabel('Recipient\'s goal *').fill('This is the first goal for this recipient');
-    await page.getByRole('button', { name: /Save and continue/i }).click();
-
-     // save first goal, without an objective
-    // click inside of the grants multi-select dropdown
-    await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown')
+    await page.getByLabel('Select recipient\'s goal *').click();
     await page.keyboard.press('Enter');
 
-    // goal source
-    await page.getByLabel(/Goal source/i).selectOption('Recipient request');
-
-    // add an objective
-    await page.getByRole('button', { name: 'Add new objective' }).click();
-    await page.getByLabel('TTA objective *').fill('A new objective');
-
-    await page.getByRole('button', { name: /Save and continue/i }).click();
-    await page.getByRole('button', { name: 'Submit goal' }).click();
-
     // verify the goal appears in the table
-    await expect(page.getByText('This is the first goal for this recipient')).toBeVisible();
+    await expect(page.getByText('The recipient will implement')).toBeVisible();
   });
 
   // TODO: This test will need to be reworked once the "new goal" form is changed to the
