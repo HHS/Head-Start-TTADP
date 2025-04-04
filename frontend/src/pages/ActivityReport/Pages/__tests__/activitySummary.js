@@ -142,7 +142,6 @@ describe('isPageComplete', () => {
     virtualDeliveryType: '',
     activityRecipients: [{}],
     targetPopulations: ['people'],
-    reason: ['reason'],
     ttaType: ['tta'],
     participants: ['participant'],
     duration: 1,

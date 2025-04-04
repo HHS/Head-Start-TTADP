@@ -50,7 +50,6 @@ export const formData = () => ({
     recipientIdForLookUp: 1,
   }],
   numberOfParticipants: '1',
-  reason: ['reason 1'],
   activityRecipientType: 'recipient',
   collaborators: [],
   participants: ['CEO / CFO / Executive'],

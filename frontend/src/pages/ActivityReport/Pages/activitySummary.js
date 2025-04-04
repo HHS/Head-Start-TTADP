@@ -16,7 +16,6 @@ import {
 import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
-  REASONS as reasons,
   LANGUAGES,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
@@ -220,47 +219,6 @@ const ActivitySummary = ({
               required="Select at least one"
               options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
               placeholderText="- Select -"
-            />
-          </FormItem>
-        </div>
-      </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Reason for activity">
-        <div id="reasons" />
-        <div className="margin-top-2">
-          <FormItem
-            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by recipient."
-            name="requester"
-            fieldSetWrapper
-          >
-            <Radio
-              id="recipientRequest"
-              name="requester"
-              label="Recipient"
-              value="recipient"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
-            />
-            <Radio
-              id="requestorRegionalOffice"
-              name="requester"
-              label="Regional Office"
-              value="regionalOffice"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
-            />
-          </FormItem>
-        </div>
-        <div className="margin-top-2">
-          <FormItem
-            label="Reasons "
-            name="reason"
-          >
-            <MultiSelect
-              name="reason"
-              control={control}
-              options={reasons.map((reason) => ({ value: reason, label: reason }))}
-              required="Select at least one"
-              placeholderText={placeholderText}
             />
           </FormItem>
         </div>
@@ -524,14 +482,6 @@ const sections = [
     ],
   },
   {
-    title: 'Reason for activity',
-    anchor: 'reasons',
-    items: [
-      { label: 'Requested by', name: 'requester' },
-      { label: 'Reasons', name: 'reason', sort: true },
-    ],
-  },
-  {
     title: 'Activity date',
     anchor: 'date',
     items: [
@@ -602,7 +552,6 @@ export const isPageComplete = (formData, formState) => {
     // arrays
     activityRecipients,
     targetPopulations: targetPopulationsArray,
-    reason,
     ttaType,
     participants,
     language,
@@ -634,7 +583,6 @@ export const isPageComplete = (formData, formState) => {
   const arraysToValidate = [
     activityRecipients,
     targetPopulationsArray,
-    reason,
     ttaType,
     participants,
     language,
