@@ -747,6 +747,7 @@ commands:
           name: Push application
           command: |
             circleci env subst < ./deployment_config/${full_env}_vars.yml > app.vars
+            cat app.var
             echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
             cf push \
               --vars-file app.vars \
