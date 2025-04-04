@@ -27,6 +27,8 @@ test.describe('Recipient record', () => {
     await page.getByText('Select recipient\'s goal *').click();
     await page.keyboard.press('Enter');
 
+    await page.getByRole('button', { name: 'Add goal' }).click();
+
     // verify the goal appears in the table
     await expect(page.getByText('The recipient will implement')).toBeVisible();
   });
