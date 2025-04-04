@@ -758,6 +758,7 @@ commands:
       - restore_cache:
           key: 'environment-owners'
       - run:
+          name: Write owner into file
           command: |
             mkdir -p environments
             current_env="<< pipeline.git.branch >>""
