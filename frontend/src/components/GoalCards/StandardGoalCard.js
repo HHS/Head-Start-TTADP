@@ -79,7 +79,7 @@ export default function StandardGoalCard({
   const history = useHistory();
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
 
-  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${id}`;
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
 
   const onUpdateGoalStatus = (newStatus) => {
