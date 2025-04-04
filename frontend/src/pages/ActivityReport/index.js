@@ -78,6 +78,7 @@ const defaultValues = {
   approvers: [],
   recipientGroup: null,
   language: [],
+  activityReason: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
