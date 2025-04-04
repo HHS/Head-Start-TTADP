@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext, useController } from 'react-hook-form';
+import { useFormContext, useController, Controller } from 'react-hook-form';
 import { isUndefined } from 'lodash';
 import {
   Fieldset,
@@ -17,7 +17,9 @@ import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
   LANGUAGES,
+  ACTIVITY_REASONS,
 } from '@ttahub/common';
+import Select from 'react-select';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -35,6 +37,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
 import SingleRecipientSelect from './components/SingleRecipientSelect';
+import selectOptionsReset from '../../../components/selectOptionsReset';
 
 const ActivitySummary = ({
   recipients,
@@ -204,6 +207,50 @@ const ActivitySummary = ({
                 // database, so we do this weirdo mapping thing here
                 value: user.id, label: user.name, roles: user.roles.map((r) => r.fullName),
               }))}
+            />
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
+            label="Why was this activity requested? "
+            name="activityReason"
+            required={false}
+          >
+            <Controller
+              render={({ onChange: controllerOnChange, value, onBlur }) => (
+                <Select
+                  value={value ? { value, label: value } : null}
+                  inputId="activityReason"
+                  name="activityReason"
+                  className="usa-select"
+                  placeholder="- Select -"
+                  styles={selectOptionsReset}
+                  components={{
+                    DropdownIndicator: null,
+                  }}
+                  onChange={(selected) => {
+                    controllerOnChange(selected ? selected.value : null);
+                  }}
+                  inputRef={register({ required: 'Select at least one reason for activity' })}
+                  options={ACTIVITY_REASONS.map((reason) => ({
+                    value: reason, label: reason,
+                  }))}
+                  onBlur={onBlur}
+                  required
+                  isMulti={false}
+                />
+              )}
+              control={control}
+              rules={{
+                validate: (value) => {
+                  if (!value || value.length === 0) {
+                    return 'Select a reason for activity';
+                  }
+                  return true;
+                },
+              }}
+              name="activityReason"
+              defaultValue={null}
             />
           </FormItem>
         </div>
@@ -478,6 +525,9 @@ const sections = [
       {
         label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
       },
+      {
+        label: 'Reason for the activity', name: 'activityReason',
+      },
       { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
     ],
   },
@@ -548,6 +598,7 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
+    activityReason,
 
     // arrays
     activityRecipients,
@@ -569,6 +620,7 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
+    activityReason,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
