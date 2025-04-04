@@ -293,6 +293,10 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
+
+        // If the report creator is in the collaborators list, remove them.
+        const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
@@ -323,7 +327,7 @@ function ActivityReport({
             grants: [],
             otherEntities: [],
           },
-          collaborators: collaborators || [],
+          collaborators: filteredCollaborators || [],
           availableApprovers: availableApprovers || [],
           groups: groupsWithRecipientIds || [],
         });
