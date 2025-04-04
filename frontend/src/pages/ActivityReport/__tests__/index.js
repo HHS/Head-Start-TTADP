@@ -1144,4 +1144,35 @@ describe('ActivityReport', () => {
       expect(reportData.endDate).toBe('10/04/2020');
     });
   });
+
+  describe('collaborators', () => {
+    it('does not add the report creator to the selectable collaborator options', async () => {
+      const userId = 1;
+      const collaborators = [
+        { id: 1, name: 'Creator User', roles: [{ fullName: 'Creator' }] },
+        { id: 2, name: 'Other User', roles: [{ fullName: 'Other User' }] },
+      ];
+
+      fetchMock.get('/api/users/collaborators?region=1', collaborators, { overwriteRoutes: true });
+
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        userId,
+        activityReportCollaborators: [],
+      });
+
+      renderActivityReport('1');
+
+      // Click the multiselect and verify the options.
+      await waitFor(() => {
+        const select = screen.getByLabelText(/collaborating specialists/i);
+        userEvent.click(select);
+      });
+
+      // Expect 'Other User' to be visible and 'Creator User' to be hidden.
+      expect(screen.getByText('Other User')).toBeVisible();
+      expect(screen.queryByText('Creator User')).not.toBeInTheDocument();
+    });
+  });
 });
