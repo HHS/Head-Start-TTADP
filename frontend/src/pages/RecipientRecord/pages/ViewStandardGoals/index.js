@@ -126,8 +126,6 @@ export default function ViewGoalDetails({
     );
   }
 
-  // Sort goal history by createdAt in descending order (newest first)
-  // Not strictly necessary since the backend returns these in order already
   const sortedGoalHistory = [...goalHistory].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   );
@@ -138,9 +136,34 @@ export default function ViewGoalDetails({
 
   // Create accordion items from goal history
   const accordionItems = sortedGoalHistory.map((goal, index) => {
-    const statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
-      ? goal.statusChanges.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    let statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
+      ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       : [];
+
+    // the initial status change will have an oldStatus of null
+    const hasInitialStatusChange = statusUpdates.some((update) => update.oldStatus === null);
+
+    // Find the creator collaborator
+    const creatorCollaborator = goal.goalCollaborators && goal.goalCollaborators.find(
+      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
+    );
+
+    // this shouldn't happen because:
+    // a) a migration creates these for historical goals
+    // b) a hook creates the initial status change for newly created goals
+    // but just in case, we add a virtual initial status change
+    if (!hasInitialStatusChange) {
+      const virtualInitialStatus = {
+        id: `virtual-${goal.id}`,
+        goalId: goal.id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        createdAt: goal.createdAt,
+        user: creatorCollaborator ? creatorCollaborator.user : null,
+      };
+
+      statusUpdates = [virtualInitialStatus, ...statusUpdates];
+    }
 
     const objectives = goal.objectives || [];
 
@@ -183,7 +206,24 @@ export default function ViewGoalDetails({
                 ))}
               </ul>
             ) : (
-              <p>No status updates available</p>
+              <ul className="usa-list" aria-label="Goal status updates">
+                <li>
+                  <strong>
+                    {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
+                  </strong>
+                  {' '}
+                  on
+                  {' '}
+                  <strong>{moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                  {goal.goalCollaborators && goal.goalCollaborators.some(
+                    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
+                  )
+                    ? ` by ${goal.goalCollaborators.find(
+                      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
+                    ).user.name}`
+                    : ''}
+                </li>
+              </ul>
             )}
           </div>
 

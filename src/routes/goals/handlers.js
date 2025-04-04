@@ -434,6 +434,22 @@ export async function getGoalHistory(req, res) {
           model: sequelize.models.GoalFieldResponse,
           as: 'responses',
         },
+        {
+          model: sequelize.models.GoalCollaborator,
+          as: 'goalCollaborators',
+          include: [
+            {
+              model: sequelize.models.User,
+              as: 'user',
+              attributes: ['name'],
+            },
+            {
+              model: sequelize.models.CollaboratorType,
+              as: 'collaboratorType',
+              attributes: ['name'],
+            },
+          ],
+        },
       ],
       order: [['createdAt', 'DESC']],
     });
