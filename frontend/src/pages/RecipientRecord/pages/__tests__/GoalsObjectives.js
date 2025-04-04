@@ -40,6 +40,9 @@ describe('Goals and Objectives', () => {
     objectives: [],
     goalCollaborators: [],
     ids: [4598],
+    onAR: false,
+    grant: { number: '12345' },
+    previousStatus: null,
   },
   ];
 
@@ -55,6 +58,9 @@ describe('Goals and Objectives', () => {
     objectives: [],
     goalCollaborators: [],
     ids: [4599],
+    onAR: false,
+    grant: { number: '12345' },
+    previousStatus: null,
   },
   {
     id: 4600,
@@ -68,6 +74,9 @@ describe('Goals and Objectives', () => {
     reasons: ['Monitoring | Deficiency'],
     objectives: [],
     goalCollaborators: [],
+    onAR: false,
+    grant: { number: '12346' },
+    previousStatus: null,
   },
   ];
 
@@ -84,6 +93,9 @@ describe('Goals and Objectives', () => {
       reasons: ['Monitoring | Deficiency'],
       objectives: [],
       goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12347' },
+      previousStatus: null,
     },
   ];
 
@@ -367,15 +379,18 @@ describe('Goals and Objectives', () => {
     const response = [{
       id: 4598,
       ids: [4598],
-      goalStatus: 'Not Started',
-      createdOn: '2021-06-15',
-      goalText: 'This is goal text 1.',
+      status: 'Not Started',
+      createdAt: '2021-06-15',
+      name: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
     },
     ];
 
@@ -473,15 +488,18 @@ describe('Goals and Objectives', () => {
     const goalToUse = {
       id: 1,
       ids: [1, 2],
-      goalStatus: 'Not Started',
-      createdOn: '2021-06-15',
-      goalText: '',
+      status: 'Not Started',
+      createdAt: '2021-06-15',
+      name: '',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
     };
     const goalCount = 60;
     const goalsToDisplay = [];
@@ -662,7 +680,6 @@ describe('Goals and Objectives', () => {
 
     // Assert the select all check box is not checked.
     expect(selectAllNext).not.toBeChecked();
-
     // Shows 11 selected.
     expect(await screen.findByText(/11 selected/i)).toBeVisible();
   });
