@@ -720,12 +720,12 @@ describe('Goals by Recipient Test', () => {
 
   describe('Retrieves All Goals', () => {
     it('Uses default sorting', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { sortDir: 'asc' });
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { sortBy: 'name', sortDir: 'asc' });
       expect(goalRows[0].goalText).toBe('Goal 1');
     });
 
     it('honors offset', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { offset: 1, sortDir: 'asc' });
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { sortBy: 'name', offset: 1, sortDir: 'asc' });
       expect(goalRows[0].goalText).toBe('Goal 2');
     });
 
