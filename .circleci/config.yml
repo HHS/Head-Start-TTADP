@@ -746,7 +746,7 @@ commands:
       - run:
           name: Push application
           command: |
-            circleci env subst < ./deployment_config/${full_env}_vars.yml > app.vars
+            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
             cat app.vars
             echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
             cf push \
@@ -756,7 +756,6 @@ commands:
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
-      
 
   say_ok:
     steps:
