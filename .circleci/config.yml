@@ -471,7 +471,6 @@ jobs:
       - attach_workspace:
           at: .
       - set_env_vars
-      - write_envs
       - install_cf_tools
       - run:
           name: Build backend assets
@@ -487,6 +486,7 @@ jobs:
           name: Build frontend assets
           command: yarn --cwd frontend run build
       - cf_deploy
+      - write_envs
       - run:
           name: Run database migrations
           command: |
@@ -761,7 +761,15 @@ commands:
       - run:
           command: |
             mkdir -p environments
-            echo "${CIRCLE_USERNAME}" > environments/<< pipeline.git.branch >>
+            CURRENT_ENV = << pipeline.git.branch >>
+            if [ $CURRENT_ENV == 'main' ] || [ $CURRENT_ENV == 'prod' ]; then 
+              exit 0; 
+            fi
+            current_owner=$(cat environments/${CURRENT_ENV}) 
+            if [ ${CURRENT_OWNER} != "${CIRCLE_USERNAME}"]; then 
+              echo "owner changed from ${CURRENT_OWNER}->${CIRCLE_USERNAME}"
+            fi
+            echo "${CIRCLE_USERNAME}" > environments/${CURRENT_ENV}
       - save_cache:
           key: 'environment-owners'
           paths:
