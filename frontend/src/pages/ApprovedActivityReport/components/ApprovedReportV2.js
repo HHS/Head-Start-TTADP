@@ -205,11 +205,10 @@ export default function ApprovedReportV2({ data }) {
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
   const participantCount = data.numberOfParticipants.toString();
-  const reasons = formatSimpleArray(data.reason);
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const duration = `${data.duration} hours`;
-  const requester = formatRequester(data.requester);
+  // const requester = formatRequester(data.requester);
 
   const goalSections = calculateGoalsAndObjectives(data);
 
@@ -292,10 +291,9 @@ export default function ApprovedReportV2({ data }) {
             striped: true,
           },
           {
-            heading: 'Reason for activity',
+            heading: 'Why was the activity requested?',
             data: {
-              'Who requested the activity': requester,
-              Reasons: reasons,
+              Reason: data.activityReason,
             },
             striped: false,
           },

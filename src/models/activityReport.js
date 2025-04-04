@@ -145,6 +145,9 @@ export default (sequelize, DataTypes) => {
     deliveryMethod: {
       type: DataTypes.STRING,
     },
+    activityReason: {
+      type: DataTypes.STRING,
+    },
     version: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -177,9 +180,6 @@ export default (sequelize, DataTypes) => {
     },
     virtualDeliveryType: {
       type: DataTypes.STRING,
-    },
-    reason: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
     },
     participants: {
       type: DataTypes.ARRAY(DataTypes.STRING),

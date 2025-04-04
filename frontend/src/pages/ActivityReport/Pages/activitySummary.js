@@ -1,11 +1,10 @@
 import React, {
-  useState, useEffect, useRef, useContext,
+  useState, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
-import { isEmpty, isUndefined } from 'lodash';
+import { useFormContext, useController, Controller } from 'react-hook-form';
+import { isUndefined } from 'lodash';
 import {
   Fieldset,
   Radio,
@@ -13,23 +12,20 @@ import {
   TextInput,
   Checkbox,
   Label,
-  Dropdown,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
-  REASONS as reasons,
-  DECIMAL_BASE,
   LANGUAGES,
+  ACTIVITY_REASONS,
 } from '@ttahub/common';
+import Select from 'react-select';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
-  otherEntityParticipants,
   recipientParticipants,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
-import { NOT_STARTED } from '../../../components/Navigator/constants';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
@@ -40,13 +36,12 @@ import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
-import GroupAlert from '../../../components/GroupAlert';
-import { parseCheckboxEvent } from '../../../Constants';
+import SingleRecipientSelect from './components/SingleRecipientSelect';
+import selectOptionsReset from '../../../components/selectOptionsReset';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
-  groups,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
@@ -56,118 +51,49 @@ const ActivitySummary = ({
     setValue,
     control,
     getValues,
-    clearErrors,
+    // clearErrors,
   } = useFormContext();
 
-  const [useGroup, setUseGroup] = useState(false);
-  const [showGroupInfo, setShowGroupInfo] = useState(false);
-  const [groupRecipientIds, setGroupRecipientIds] = useState([]);
-  const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
-  const activityRecipientType = watch('activityRecipientType');
-  const watchFormRecipients = watch('activityRecipients');
-  const watchGroup = watch('recipientGroup');
+  const {
+    field: {
+      onChange: onChangeActivityRecipients,
+      onBlur: onBlurActivityRecipients,
+      value: activityRecipients,
+      // name: activityRecipientsInputName,
+    },
+  } = useController({
+    name: 'activityRecipients',
+    defaultValue: false,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || 'Please select a recipient and grant',
+      },
+    },
+  });
+
   const startDate = watch('startDate');
   const endDate = watch('endDate');
-  const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
 
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
 
-  const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
+  const { grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
 
   const grants = rawGrants.map((recipient) => ({
+    id: recipient.id,
     label: recipient.name,
     options: recipient.grants.map((grant) => ({
       value: grant.activityRecipientId,
       label: grant.name,
+      recipientIdForLookUp: recipient.id,
     })),
   }));
-
-  const otherEntities = rawOtherEntities.map((entity) => ({
-    label: entity.name,
-    value: entity.activityRecipientId,
-  }));
-
-  const disableRecipients = isEmpty(activityRecipientType);
-  const otherEntitySelected = activityRecipientType === 'other-entity';
-  const selectedRecipients = otherEntitySelected ? otherEntities : grants;
-  const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = otherEntitySelected ? 'Other entities ' : 'Recipient names ';
-  const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
-  const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
+  const selectedRecipients = grants;
   const placeholderText = '- Select -';
-
-  const resetGroup = (checkUseGroup = true) => {
-    setValue('recipientGroup', null, { shouldValidate: false });
-    setGroupRecipientIds([]);
-    setValue('activityRecipients', [], { shouldValidate: false });
-    setShowGroupInfo(false);
-    if (checkUseGroup) {
-      setUseGroup(true);
-    }
-  };
-
-  useEffect(() => {
-    if (previousActivityRecipientType.current !== activityRecipientType
-      && previousActivityRecipientType.current !== ''
-      && previousActivityRecipientType.current !== null) {
-      setValue('activityRecipients', [], { shouldValidate: false });
-      setValue('recipientGroup', null, { shouldValidate: false });
-      setGroupRecipientIds([]);
-      setShowGroupInfo(false);
-      setValue('participants', [], { shouldValidate: false });
-      // Goals and objectives (page 3) has required fields when the recipient
-      // type is recipient, so we need to make sure that page is set as "not started"
-      // when recipient type is changed and we need to clear out any previously
-      // selected goals and objectives
-      setValue('goals', []);
-      setValue('objectivesWithoutGoals', []);
-      setValue('pageState', { ...pageState, 3: NOT_STARTED });
-    }
-    previousActivityRecipientType.current = activityRecipientType;
-  }, [activityRecipientType, setValue, pageState]);
-
-  const handleGroupChange = (event) => {
-    const { value: groupId } = event.target;
-    const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
-
-    // Get all selectedRecipients the have ids in the recipientIds array.
-    const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
-      const groupRecipients = curr.options.filter(
-        (option) => groupToUse.recipients.includes(parseInt(option.value, DECIMAL_BASE)),
-      );
-      return [...acc, ...groupRecipients];
-    }, []);
-
-    // Set selected recipients.
-    const recipientsToSet = selectedGroupRecipients.map((r) => (
-      { ...r, name: r.label, activityRecipientId: r.value }));
-    setValue('activityRecipients', recipientsToSet, { shouldValidate: true });
-    setGroupRecipientIds(recipientsToSet.map((r) => (r.id)));
-  };
-
-  useDeepCompareEffect(() => {
-    // Get all selected recipients that are NOT in the watchGroup.recipients array.
-    const usedRecipientIds = watchFormRecipients.map((r) => r.id);
-    const selectedRecipientsNotInGroup = usedRecipientIds.filter(
-      (option) => !groupRecipientIds.includes(option),
-    );
-
-    // If the user changes recipients manually while using groups.
-    if (useGroup
-      && watchGroup
-      && (groupRecipientIds.length !== watchFormRecipients.length
-        || selectedRecipientsNotInGroup.length > 0)) {
-      setShowGroupInfo(true);
-      setUseGroup(false);
-      setValue('recipientGroup', null, { shouldValidate: false });
-      setGroupRecipientIds([]);
-    }
-  }, [groupRecipientIds, setValue, useGroup, watchFormRecipients, watchGroup]);
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
@@ -176,13 +102,6 @@ const ActivitySummary = ({
     // uncontrolled end date input
     // it's a little clumsy, but it does work
     setEndDateKey(`endDate-${newEnd}`);
-  };
-
-  const toggleUseGroup = (event) => {
-    const { checked } = parseCheckboxEvent(event);
-    // Reset.
-    resetGroup(false);
-    setUseGroup(checked);
   };
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
@@ -198,43 +117,6 @@ const ActivitySummary = ({
         ),
       })}
     />
-  );
-
-  useEffect(() => {
-    if (!shouldValidateActivityRecipients) return;
-
-    if (disableRecipients) {
-      setValue('activityRecipients', [], { shouldValidate: true });
-    } else {
-      clearErrors('activityRecipients');
-    }
-  }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
-
-  const renderRecipients = (marginTop = 2, marginBottom = 0) => (
-    <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
-      {!disableRecipients
-         && !connectionActive
-         && !selectedRecipients.length
-        ? <ConnectionError />
-        : null}
-      <FormItem
-        label={recipientLabel}
-        name="activityRecipients"
-      >
-        <MultiSelect
-          name="activityRecipients"
-          disabled={disableRecipients}
-          control={control}
-          valueProperty="activityRecipientId"
-          labelProperty="name"
-          simple={false}
-          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
-          options={selectedRecipients}
-          placeholderText={placeholderText}
-          onClick={() => setShouldValidateActivityRecipients(true)}
-        />
-      </FormItem>
-    </div>
   );
 
   const validateCitations = () => {
@@ -276,83 +158,35 @@ const ActivitySummary = ({
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
-        <div id="activity-for" />
+        <div className="margin-top-2 margin-bottom-0">
+          {!connectionActive
+         && !selectedRecipients.length
+            ? <ConnectionError />
+            : null}
+          <SingleRecipientSelect
+            selectedRecipients={activityRecipients}
+            possibleRecipients={selectedRecipients || []}
+            onChangeActivityRecipients={onChangeActivityRecipients}
+            onBlurActivityRecipients={onBlurActivityRecipients}
+          />
+        </div>
+        <div id="other-participants" />
         <div className="margin-top-2">
           <FormItem
-            label="Was this activity for a recipient or other entity?"
-            name="activityRecipientType"
-            fieldSetWrapper
+            label="Recipient participants"
+            name="participants"
           >
-            <Radio
-              id="category-recipient"
-              name="activityRecipientType"
-              label="Recipient"
-              value="recipient"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
-              required
-            />
-            <Radio
-              id="category-other-entity"
-              name="activityRecipientType"
-              label="Other entity"
-              value="other-entity"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
+            <MultiSelect
+              name="participants"
+              control={control}
+              placeholderText={placeholderText}
+              options={
+            recipientParticipants.map((participant) => ({ value: participant, label: participant }))
+            }
+              required="Select at least one"
             />
           </FormItem>
         </div>
-        {
-        showGroupInfo && (
-          <GroupAlert resetGroup={resetGroup} />
-        )
-        }
-        {
-        !useGroup
-          ? renderRecipients()
-          : (
-            <div className="margin-top-2">
-              <FormItem
-                label="Group name"
-                name="recipientGroup"
-              >
-                <Dropdown
-                  required
-                  control={control}
-                  id="recipientGroup"
-                  name="recipientGroup"
-                  inputRef={register({ required: 'Select a group' })}
-                  onAbort={resetGroup}
-                  onChange={handleGroupChange}
-                >
-                  <option value="" disabled selected hidden>- Select -</option>
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id}>{group.name}</option>
-                  ))}
-                </Dropdown>
-              </FormItem>
-            </div>
-          )
-        }
-        {
-          activityRecipientType === 'recipient' && !showGroupInfo && groups.length > 0
-           && (
-           <div className="smart-hub-activity-summary-use-group margin-top-1">
-             <Checkbox
-               id="use-group"
-               label="Use group"
-               className="smart-hub--report-checkbox"
-               onChange={toggleUseGroup}
-               checked={useGroup}
-             />
-           </div>
-           )
-        }
-        {
-          activityRecipientType === 'recipient' && useGroup
-            ? renderRecipients(1, 5)
-            : null
-        }
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
@@ -378,6 +212,50 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
+            label="Why was this activity requested? "
+            name="activityReason"
+            required={false}
+          >
+            <Controller
+              render={({ onChange: controllerOnChange, value, onBlur }) => (
+                <Select
+                  value={value ? { value, label: value } : null}
+                  inputId="activityReason"
+                  name="activityReason"
+                  className="usa-select"
+                  placeholder="- Select -"
+                  styles={selectOptionsReset}
+                  components={{
+                    DropdownIndicator: null,
+                  }}
+                  onChange={(selected) => {
+                    controllerOnChange(selected ? selected.value : null);
+                  }}
+                  inputRef={register({ required: 'Select at least one reason for activity' })}
+                  options={ACTIVITY_REASONS.map((reason) => ({
+                    value: reason, label: reason,
+                  }))}
+                  onBlur={onBlur}
+                  required
+                  isMulti={false}
+                />
+              )}
+              control={control}
+              rules={{
+                validate: (value) => {
+                  if (!value || value.length === 0) {
+                    return 'Select a reason for activity';
+                  }
+                  return true;
+                },
+              }}
+              name="activityReason"
+              defaultValue={null}
+            />
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
             label="Target populations addressed "
             name="targetPopulations"
             required
@@ -388,47 +266,6 @@ const ActivitySummary = ({
               required="Select at least one"
               options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
               placeholderText="- Select -"
-            />
-          </FormItem>
-        </div>
-      </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Reason for activity">
-        <div id="reasons" />
-        <div className="margin-top-2">
-          <FormItem
-            label="Who requested this activity? Use &quot;Regional Office&quot; for TTA not requested by recipient."
-            name="requester"
-            fieldSetWrapper
-          >
-            <Radio
-              id="recipientRequest"
-              name="requester"
-              label="Recipient"
-              value="recipient"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
-            />
-            <Radio
-              id="requestorRegionalOffice"
-              name="requester"
-              label="Regional Office"
-              value="regionalOffice"
-              className="smart-hub--report-checkbox"
-              inputRef={register({ required: 'Select one' })}
-            />
-          </FormItem>
-        </div>
-        <div className="margin-top-2">
-          <FormItem
-            label="Reasons "
-            name="reason"
-          >
-            <MultiSelect
-              name="reason"
-              control={control}
-              options={reasons.map((reason) => ({ value: reason, label: reason }))}
-              required="Select at least one"
-              placeholderText={placeholderText}
             />
           </FormItem>
         </div>
@@ -616,23 +453,6 @@ const ActivitySummary = ({
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Participants">
-        <div id="other-participants" />
-        <div className="margin-top-2">
-          <FormItem
-            label={participantsLabel}
-            name="participants"
-          >
-            <MultiSelect
-              name="participants"
-              control={control}
-              placeholderText={placeholderText}
-              options={
-              participants.map((participant) => ({ value: participant, label: participant }))
-            }
-              required="Select at least one"
-            />
-          </FormItem>
-        </div>
         <div>
           <FormItem
             label="Number of participants involved"
@@ -693,12 +513,6 @@ ActivitySummary.propTypes = {
       }),
     ),
   }).isRequired,
-  groups: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-    }),
-  ).isRequired,
 };
 
 const sections = [
@@ -711,15 +525,10 @@ const sections = [
       {
         label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
       },
+      {
+        label: 'Reason for the activity', name: 'activityReason',
+      },
       { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
-    ],
-  },
-  {
-    title: 'Reason for activity',
-    anchor: 'reasons',
-    items: [
-      { label: 'Requested by', name: 'requester' },
-      { label: 'Reasons', name: 'reason', sort: true },
     ],
   },
   {
@@ -789,11 +598,11 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
+    activityReason,
 
     // arrays
     activityRecipients,
     targetPopulations: targetPopulationsArray,
-    reason,
     ttaType,
     participants,
     language,
@@ -811,6 +620,7 @@ export const isPageComplete = (formData, formState) => {
     activityRecipientType,
     requester,
     deliveryMethod,
+    activityReason,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -825,7 +635,6 @@ export const isPageComplete = (formData, formState) => {
   const arraysToValidate = [
     activityRecipients,
     targetPopulationsArray,
-    reason,
     ttaType,
     participants,
     language,
