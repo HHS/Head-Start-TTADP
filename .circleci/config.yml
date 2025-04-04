@@ -25,19 +25,11 @@ executors:
 # ----------------- Parameters -----------------
 
 parameters:
-  build_test_deploy:
-    type: boolean
-    default: true
-  manual_deploy:
-    type: boolean
-    default: false
-  restore_dbs:
-    type: boolean
-    default: false
-  import_data:
-    type: boolean
-    default: false
-
+  action:
+    type: enum
+    enum: [build_test_deploy, manual_deploy, import_data, backup_restore_db]
+    default: build_test_deploy
+    
 # ----------------- Workflows -----------------
 
 workflows:
