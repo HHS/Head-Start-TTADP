@@ -46,6 +46,8 @@ const baseGoals = [{
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 101,
+  grant: { id: 1, number: 'Grant 1' },
 },
 {
   id: 8547,
@@ -59,6 +61,8 @@ const baseGoals = [{
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 102,
+  grant: { id: 2, number: 'Grant 2' },
 },
 {
   id: 65478,
@@ -72,6 +76,8 @@ const baseGoals = [{
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 103,
+  grant: { id: 3, number: 'Grant 3' },
 },
 {
   id: 65479,
@@ -85,6 +91,8 @@ const baseGoals = [{
   reasons: ['COVID-19 response'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 104,
+  grant: { id: 4, number: 'Grant 4' },
 },
 {
   id: 65480,
@@ -98,6 +106,8 @@ const baseGoals = [{
   reasons: ['New Recipient'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 105,
+  grant: { id: 5, number: 'Grant 5' },
 },
 {
   id: 65481,
@@ -111,6 +121,8 @@ const baseGoals = [{
   reasons: ['School Readiness Goals'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 106,
+  grant: { id: 6, number: 'Grant 6' },
 },
 ];
 
@@ -124,6 +136,8 @@ const goalWithObjectives = [{
   objectiveCount: 4,
   goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+  goalTemplateId: 201,
+  grant: { id: 7, number: 'Grant 7' },
   objectives: [{
     title: 'Objective 1 Title',
     endDate: '06/14/2021',
@@ -542,7 +556,12 @@ describe('Goals Table', () => {
   describe('Context Menu', () => {
     beforeEach(async () => {
       fetchMock.restore();
-      renderTable({ goals: [baseGoals[0], baseGoals[3]], goalsCount: 1 }, defaultUser);
+      const goalForEditTest = {
+        ...baseGoals[0],
+        goalTemplateId: 123,
+        grant: { id: 456 },
+      };
+      renderTable({ goals: [goalForEditTest, baseGoals[3]], goalsCount: 2 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
