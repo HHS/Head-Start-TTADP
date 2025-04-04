@@ -37,10 +37,6 @@ parameters:
   import_data:
     type: boolean
     default: false
-  target_env:
-    type: enum
-    enum: ['dev', 'dev-green', 'dev-blue', 'prod', 'staging', 'sandbox']
-    default: 'dev'
 
 # ----------------- Workflows -----------------
 
@@ -129,8 +125,7 @@ workflows:
 
   backup_restore_db:
     # backup production db, process (anonymize) the data, then restore it into lower envs
-    when:
-        equal: [ << pipeline.parameters.action >>, restore_dbs ]
+    when: << pipeline.parameters.restore_dbs >>
     jobs:
       - backup_prod_db
       - process_db:
@@ -146,11 +141,11 @@ jobs:
 
   build_check:
     executor: docker-executor
-    steps: []
+    steps: [ say_ok ]
 
   full_check:
     executor: docker-executor
-    steps: []
+    steps: [ say_ok ]
 
   run_import_job:
     # data import
@@ -158,7 +153,7 @@ jobs:
     parameters:
       target_env:
           type: string
-          default: << pipeline.parameters.env >>
+          default: << pipeline.git.branch >>
     steps:
       - checkout
       - run:
@@ -752,6 +747,10 @@ commands:
               --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
 
+  say_ok:
+    steps:
+      - run:
+          command: echo "ok"
 
   cf_cmd:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
