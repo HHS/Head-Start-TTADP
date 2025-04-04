@@ -25,11 +25,19 @@ executors:
 # ----------------- Parameters -----------------
 
 parameters:
-  action:
-    description: "Desired job to run"
-    enum: ["build_test_deploy", "deploy", "restore_dbs", "import"]
-    default: "build_test_deploy"
+  build_test_deploy:
+    type: boolean
+    default: true
+  restore_dbs:
+    type: boolean
+    default: false
+  import_data:
+    type: boolean
+    default: false
+  target_env:
     type: enum
+    enum: ['dev', 'dev-green', 'dev-blue', 'prod', 'staging', 'sandbox']
+    default: 'dev'
 
 # ----------------- Workflows -----------------
 
@@ -37,54 +45,51 @@ workflows:
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
     # It will build, test, and then deploy if the branch matches to an environment
-    when:
-      equal: [ build_test_deploy, << pipeline.parameters.action >> ]
+    when: << pipeline.parameters.build_test_deploy >>
     jobs:
       - build_and_lint
-      - build_similarity_api
       - test_frontend:
           requires:
             - build_and_lint
       - test_backend:
           requires:
             - build_and_lint
+      - build_similarity_api
       - test_similarity_api:
           requires:
             - build_similarity_api
-      - test_e2e_app:
-          requires:
-            - build_and_lint
-            - build_similarity_api
-      - test_e2e_api:
-          requires:
-            - build_and_lint
-            - build_similarity_api
-      - test_e2e_utils:
-          requires:
-            - build_and_lint
-            - build_similarity_api
-      - test_cucumber:
-          requires:
-            - build_and_lint
-            - build_similarity_api
-      - dynamic_security_scan:
-          # this seems to cause issues if it runs at the same time as other jobs
-          requires:
-            - build_and_lint
-            - build_similarity_api
-
-      # repeat again with different filters for prod/staging and pass the env
-      - deploy:
-          serial-group: << pipeline.git.branch >>/deploy-lock
+      - build_check:
           requires:
             - test_frontend
             - test_backend
+            - test_similarity_api
+      - test_e2e_app:
+          requires:
+            - build_check
+      - test_e2e_api:
+          requires:
+            - build_check
+      - test_e2e_utils:
+          requires:
+            - build_check
+      - test_cucumber:
+          requires:
+            - build_check
+      - dynamic_security_scan:
+          requires:
+            - build_check
+      - full_check:
+          requires:
             - test_e2e_app
             - test_e2e_api
             - test_e2e_utils
             - test_cucumber
-            - test_similarity_api
             - dynamic_security_scan
+
+      - deploy:
+          serial-group: << pipeline.git.branch >>/deploy-lock
+          requires:
+            - full_check
           filters:
             branches:
               only:
@@ -115,11 +120,10 @@ workflows:
     jobs:
       - run_import_job: { target_env: dev }
 
-  import_data_manual:
-    when: 
-      equal: [ << pipeline.parameters.action >>, import ]
+  import_data:
+    when: << pipeline.parameters.import_data >>
     jobs:
-      - run_import_job: { target_env: dev } # todo 
+      - run_import_job: { target_env: dev }
 
   backup_restore_db:
     # backup production db, process (anonymize) the data, then restore it into lower envs
@@ -137,6 +141,14 @@ workflows:
 # ----------------- Jobs -----------------
 
 jobs:
+
+  build_check:
+    executor: docker-executor
+    steps: []
+
+  full_check:
+    executor: docker-executor
+    steps: []
 
   run_import_job:
     # data import
@@ -166,10 +178,8 @@ jobs:
     parameters:
       command:
         type: string
-        default: << pipeline.parameters.cmd_input >>
       target_env:
         type: string
-        default: << pipeline.parameters.env >>
     steps:
       - cf_cmd:
           the_command: << parameters.command >>
@@ -273,9 +283,7 @@ jobs:
           command: |
             mkdir -p ~/.ssh/
             touch ~/.ssh/known_hosts
-            #sudo chmod 700 ~/.ssh/
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-            #sudo chmod 600 ~/.ssh/known_hosts
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
