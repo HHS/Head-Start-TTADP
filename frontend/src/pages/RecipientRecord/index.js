@@ -12,7 +12,6 @@ import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
-import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
 import { getIdParamArray, GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
@@ -303,20 +302,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
               recipient={recipientData}
             />
           )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
-          render={({ location }) => {
-            const goalIds = getIdParamArray(location.search);
-
-            return (
-              <GoalForm
-                regionId={regionId}
-                recipient={recipientData}
-                goalIds={goalIds}
-              />
-            );
-          }}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId/restart"
