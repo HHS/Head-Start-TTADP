@@ -24,7 +24,7 @@ test.describe('Recipient record', () => {
 
     await blur(page);
 
-    await page.getByLabel('Select recipient\'s goal *').click();
+    await page.getByText('Select recipient\'s goal *').click();
     await page.keyboard.press('Enter');
 
     // verify the goal appears in the table
