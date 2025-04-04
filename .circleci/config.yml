@@ -28,6 +28,9 @@ parameters:
   build_test_deploy:
     type: boolean
     default: true
+  manual_deploy:
+    type: boolean
+    default: false
   restore_dbs:
     type: boolean
     default: false
@@ -98,8 +101,7 @@ workflows:
                 - sandbox
 
   manual_deploy:
-    when:
-        equal: [ << pipeline.parameters.action >>, deploy ]
+    when: << pipeline.parameters.manual_deploy >>
     jobs:
       - build_and_lint
       - build_similarity_api
