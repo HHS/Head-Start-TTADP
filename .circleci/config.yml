@@ -93,7 +93,7 @@ workflows:
                 - dev-red
                 - sandbox
 
-  manual_deploy:
+  deploy_manual:
     when:
       equal: [<< pipeline.parameters.action >>, "manual_deploy"]
     jobs:
@@ -116,7 +116,7 @@ workflows:
     jobs:
       - run_import_job: { target_env: dev }
 
-  import_data:
+  import_data_manual:
     when:
       equal: [<< pipeline.parameters.action >>, "import_data"]
     jobs:
@@ -760,15 +760,15 @@ commands:
       - run:
           command: |
             mkdir -p environments
-            CURRENT_ENV = << pipeline.git.branch >>
-            if [ $CURRENT_ENV == 'main' ] || [ $CURRENT_ENV == 'prod' ]; then 
+            current_env="<< pipeline.git.branch >>""
+            if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
               exit 0; 
             fi
-            current_owner=$(cat environments/${CURRENT_ENV}) 
-            if [ ${CURRENT_OWNER} != "${CIRCLE_USERNAME}"]; then 
-              echo "owner changed from ${CURRENT_OWNER}->${CIRCLE_USERNAME}"
+            current_owner=$(cat environments/${current_env}) 
+            if [ "${current_owner}" != "${CIRCLE_USERNAME}" ]; then 
+              echo "owner changed from ${current_owner}->${CIRCLE_USERNAME}"
             fi
-            echo "${CIRCLE_USERNAME}" > environments/${CURRENT_ENV}
+            echo "${CIRCLE_USERNAME}" > environments/${current_env}
       - save_cache:
           key: 'environment-owners'
           paths:
