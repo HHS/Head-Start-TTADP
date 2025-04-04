@@ -27,7 +27,7 @@ executors:
 parameters:
   action:
     type: enum
-    enum: [build_test_deploy, manual_deploy, import_data, backup_restore_db]
+    enum: [build_test_deploy, deploy_manual, import_data, backup_restore_db]
     default: build_test_deploy
     
 # ----------------- Workflows -----------------
@@ -95,7 +95,7 @@ workflows:
 
   deploy_manual:
     when:
-      equal: [<< pipeline.parameters.action >>, "manual_deploy"]
+      equal: [<< pipeline.parameters.action >>, "deploy_manual"]
     jobs:
       - build_and_lint
       - build_similarity_api
