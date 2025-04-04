@@ -94,6 +94,8 @@ workflows:
               only:
                 - dev
                 - dev-green
+                - dev-blue
+                - dev-red
                 - sandbox
 
   manual_deploy:
