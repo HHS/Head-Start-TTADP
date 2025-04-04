@@ -69,7 +69,6 @@ const defaultValues = {
   otherResources: [],
   participantCategory: '',
   participants: [],
-  reason: [],
   requester: '',
   specialistNextSteps: [{ id: null, note: '' }],
   startDate: null,
