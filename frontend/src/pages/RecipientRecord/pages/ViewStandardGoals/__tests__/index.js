@@ -34,6 +34,14 @@ const mockGoalHistory = [
       id: 1,
       number: '012345 HS',
     },
+    goalCollaborators: [
+      {
+        goalId: 1,
+        userId: 1,
+        collaboratorType: { name: 'Creator' },
+        user: { id: 1, name: 'Test User' },
+      },
+    ],
     objectives: [
       {
         id: 1,
@@ -70,7 +78,7 @@ const mockGoalHistory = [
         activityReportObjectives: null,
       },
     ],
-    // status changes out of order to test sorting
+    // status changes out of order to test sorting, added 'Closed' status
     statusChanges: [
       {
         id: 2, goalId: 1, userId: 1, oldStatus: 'Not Started', newStatus: 'In Progress', createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User' },
@@ -82,10 +90,13 @@ const mockGoalHistory = [
         id: 3, goalId: 1, userId: 2, oldStatus: 'In Progress', newStatus: 'Suspended', createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User' },
       },
       {
-        id: 4, goalId: 1, userId: 1, oldStatus: 'Suspended', newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null, // User might be null
+        id: 4, goalId: 1, userId: 1, oldStatus: 'Suspended', newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null,
       },
       {
-        id: 5, goalId: 1, userId: 1, oldStatus: 'Complete', newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User' }, // Default case
+        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: 'Closed', createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User' },
+      },
+      {
+        id: 5, goalId: 1, userId: 1, oldStatus: 'Closed', newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User' },
       },
     ],
     responses: [
@@ -102,7 +113,54 @@ const mockGoalHistory = [
     goalTemplate: null,
     grant: null,
     objectives: [],
+    statusChanges: [
+      {
+        id: 10, goalId: 2, userId: null, oldStatus: null, newStatus: 'Not Started', createdAt: '2024-12-01T00:00:00.000Z', user: null,
+      },
+    ],
+    goalCollaborators: [],
+    responses: null,
+  },
+  {
+    id: 4,
+    name: 'Goal with Creator No User',
+    status: 'Not Started',
+    createdAt: '2024-11-01T00:00:00.000Z',
+    goalTemplate: null,
+    grant: null,
+    objectives: [],
+    statusChanges: [
+      {
+        id: 11, goalId: 4, userId: null, oldStatus: null, newStatus: 'Not Started', createdAt: '2024-11-01T00:00:00.000Z', user: null,
+      },
+    ],
+    goalCollaborators: [
+      {
+        goalId: 4,
+        userId: 99,
+        collaboratorType: { name: 'Creator' },
+        user: null,
+      },
+    ],
+    responses: null,
+  },
+  {
+    id: 5,
+    name: 'Goal with Creator, No Status Changes',
+    status: 'Not Started',
+    createdAt: '2024-10-01T00:00:00.000Z',
+    goalTemplate: null,
+    grant: null,
+    objectives: [],
     statusChanges: [],
+    goalCollaborators: [
+      {
+        goalId: 5,
+        userId: 100,
+        collaboratorType: { name: 'Creator' },
+        user: { id: 100, name: 'Pizza Man' },
+      },
+    ],
     responses: null,
   },
 ];
@@ -117,6 +175,7 @@ const historyWithNulls = [
     responses: [],
   },
   mockGoalHistory[1],
+  mockGoalHistory[3], // Include G-5
 ];
 
 describe('ViewGoalDetails', () => {
@@ -203,12 +262,13 @@ describe('ViewGoalDetails', () => {
       renderViewGoalDetails();
     });
     const accordionButtons = await screen.findAllByRole('button', { name: /G-\d+ \|/ });
-    expect(accordionButtons).toHaveLength(2);
-    // expecting G-1 (latest) then G-2 (older) based on createdAt
-    expect(accordionButtons[0]).toHaveTextContent('G-1 | In Progress');
-    expect(accordionButtons[1]).toHaveTextContent('G-2 | Closed');
+    expect(accordionButtons).toHaveLength(4); // Added goal G-4 and G-5
+    // expecting G-1 (latest), G-2, G-4, then G-5 (oldest) based on createdAt
+    expect(accordionButtons[0]).toHaveTextContent('G-1 | In Progress'); // 2025-01-15
+    expect(accordionButtons[1]).toHaveTextContent('G-2 | Closed'); // 2024-12-01
+    expect(accordionButtons[2]).toHaveTextContent('G-4 | Not Started'); // 2024-11-01
+    expect(accordionButtons[3]).toHaveTextContent('G-5 | Not Started'); // 2024-10-01
   });
-
   test('handles missing query parameters', async () => {
     await act(async () => {
       renderViewGoalDetails(DEFAULT_USER, ''); // no goalId
@@ -276,27 +336,14 @@ describe('ViewGoalDetails', () => {
     const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
-    // check sorting (newest first based on createdAt) and formatting
-    expect(updates[0]).toHaveTextContent(`Unknown Status on ${formatDate('2025-01-14T00:00:00.000Z')} by Test User`);
-    expect(updates[1]).toHaveTextContent(`Completed on ${formatDate('2025-01-12T00:00:00.000Z')}`);
+    // check sorting (component sorts ascending) and formatting
+    expect(updates).toHaveLength(6);
+    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`);
+    expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`);
     expect(updates[2]).toHaveTextContent(`Suspended on ${formatDate('2025-01-10T00:00:00.000Z')} by Another User`);
-    expect(updates[3]).toHaveTextContent(`Started on ${formatDate('2025-01-02T00:00:00.000Z')} by Test User`);
-    expect(updates[4]).toHaveTextContent(`Added on ${formatDate('2025-01-01T00:00:00.000Z')} by Test User`);
-  });
-
-  test('renders "No status updates available" when statusChanges is empty or null', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
-    await act(async () => {
-      renderViewGoalDetails();
-    });
-    const accordionButton = await screen.findByRole('button', { name: /G-2 \| Closed/i });
-    await act(async () => {
-      userEvent.click(accordionButton); // expand the second accordion item (G-2)
-    });
-
-    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
-    expect(within(accordionContent).getByText('No status updates available')).toBeInTheDocument();
+    expect(updates[3]).toHaveTextContent(`Completed on ${formatDate('2025-01-12T00:00:00.000Z')}`); // User is null, so no 'by'
+    expect(updates[4]).toHaveTextContent(`Closed on ${formatDate('2025-01-13T00:00:00.000Z')} by Another User`); // Check Closed status
+    expect(updates[5]).toHaveTextContent(`Unknown Status on ${formatDate('2025-01-14T00:00:00.000Z')} by Test User`);
   });
 
   test('renders objective information including reports, topics, and resources', async () => {
@@ -312,7 +359,7 @@ describe('ViewGoalDetails', () => {
     const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
     expect(within(objective1).getByText('Objective summary')).toBeInTheDocument();
     expect(within(objective1).getByText('Implement new curriculum')).toBeInTheDocument();
-    expect(within(objective1).getByText('In Progress')).toBeInTheDocument(); // Objective status
+    expect(within(objective1).getByText('In Progress')).toBeInTheDocument();
 
     // reports
     const reportsField = within(objective1).getByText('Reports').closest('div');
@@ -364,7 +411,6 @@ describe('ViewGoalDetails', () => {
     expect(within(firstAccordionContent).getByText('Root cause 1')).toBeInTheDocument();
     expect(within(firstAccordionContent).getByText('Root cause 2')).toBeInTheDocument();
   });
-
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null
     fetchMock.get(goalHistoryUrl, mockGoalHistory); // G-2 has responses: null
@@ -391,5 +437,26 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => {
       expect(within(accordionContentEmpty).queryByText('Root causes')).not.toBeInTheDocument();
     });
+  });
+
+  test('renders fallback status update with creator name when statusChanges is empty', async () => {
+    fetchMock.get(goalHistoryUrl, mockGoalHistory);
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    // find the accordion button for G-5
+    const accordionButtonG5 = await screen.findByRole('button', { name: /G-5 \| Not Started/i });
+    await act(async () => { userEvent.click(accordionButtonG5); });
+    await waitFor(() => expect(accordionButtonG5).toHaveAttribute('aria-expanded', 'true'));
+
+    const accordionContentG5 = document.getElementById(accordionButtonG5.getAttribute('aria-controls'));
+    const updatesList = within(accordionContentG5).getByRole('list', { name: /Goal status updates/i });
+    const updates = within(updatesList).getAllByRole('listitem');
+
+    // G-5 has no statusChanges, so it uses the fallback rendering
+    // It has a creator with a user object, so it should display 'by Pizza Man'
+    expect(updates).toHaveLength(1);
+    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2024-10-01T00:00:00.000Z')} by Pizza Man`);
   });
 });

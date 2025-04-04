@@ -47,15 +47,6 @@ export default function ViewGoalDetails({
     let isSubscribed = true; // Flag to track component mount status
 
     async function fetchGoalHistory() {
-      if (!goalId) {
-        // This path is unlikely given the outer check, but included for completeness
-        if (isSubscribed) {
-          setFetchError('Missing required parameters');
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
         setAppLoadingText('Loading goal history');
         setIsAppLoading(true);
@@ -136,34 +127,9 @@ export default function ViewGoalDetails({
 
   // Create accordion items from goal history
   const accordionItems = sortedGoalHistory.map((goal, index) => {
-    let statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
+    const statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
       ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       : [];
-
-    // the initial status change will have an oldStatus of null
-    const hasInitialStatusChange = statusUpdates.some((update) => update.oldStatus === null);
-
-    // Find the creator collaborator
-    const creatorCollaborator = goal.goalCollaborators && goal.goalCollaborators.find(
-      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
-    );
-
-    // this shouldn't happen because:
-    // a) a migration creates these for historical goals
-    // b) a hook creates the initial status change for newly created goals
-    // but just in case, we add a virtual initial status change
-    if (!hasInitialStatusChange) {
-      const virtualInitialStatus = {
-        id: `virtual-${goal.id}`,
-        goalId: goal.id,
-        oldStatus: null,
-        newStatus: 'Not Started',
-        createdAt: goal.createdAt,
-        user: creatorCollaborator ? creatorCollaborator.user : null,
-      };
-
-      statusUpdates = [virtualInitialStatus, ...statusUpdates];
-    }
 
     const objectives = goal.objectives || [];
 
