@@ -36,7 +36,7 @@ workflows:
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
     # It will build, test, and then deploy if the branch matches to an environment
-    when: << pipeline.parameters.build_test_deploy >>
+    when: << pipeline.parameters.action >> == "build_test_deploy"
     jobs:
       - build_and_lint
       - build_similarity_api
@@ -93,7 +93,7 @@ workflows:
                 - sandbox
 
   manual_deploy:
-    when: << pipeline.parameters.manual_deploy >>
+    when: << pipeline.parameters.action >> == "manual_deploy"
     jobs:
       - build_and_lint
       - build_similarity_api
@@ -115,13 +115,13 @@ workflows:
       - run_import_job: { target_env: dev }
 
   import_data:
-    when: << pipeline.parameters.import_data >>
+    when: << pipeline.parameters.action >> == "import_data"
     jobs:
       - run_import_job: { target_env: dev }
 
   backup_restore_db:
     # backup production db, process (anonymize) the data, then restore it into lower envs
-    when: << pipeline.parameters.restore_dbs >>
+    when: << pipeline.parameters.action >> == "backup_restore_db"
     jobs:
       - backup_prod_db
       - process_db:
