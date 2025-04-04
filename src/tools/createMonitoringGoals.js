@@ -263,6 +263,7 @@ const createMonitoringGoals = async () => {
     // eslint-disable-next-line no-console
     console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
     auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
+    throw error;
   }
 };
 
