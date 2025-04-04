@@ -760,8 +760,9 @@ commands:
       - run:
           name: Write owner into file
           command: |
+            set -x
             mkdir -p environments
-            current_env="<< pipeline.git.branch >>""
+            current_env="<< pipeline.git.branch >>"
             if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
               exit 0; 
             fi
