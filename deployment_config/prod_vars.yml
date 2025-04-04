@@ -9,7 +9,6 @@ similarity_api_disk_quota: 6GB
 
 app_name: tta-smarthub-prod
 app_url: https://tta-smarthub-prod.app.cloud.gov/
-git_url: https://github.com/HHS/Head-Start-TTADP
 cg_api: https://api.fr.cloud.gov
 cg_org: hhs-acf-ohs-tta
 

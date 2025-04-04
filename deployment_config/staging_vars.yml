@@ -21,7 +21,6 @@ FORCE_CRON: "false"
 
 app_name: tta-smarthub-staging
 app_url: https://tta-smarthub-staging.app.cloud.gov/
-git_url: https://github.com/HHS/Head-Start-TTADP
 
 cg_username: ${CLOUDGOV_STAGING_USERNAME}
 cg_password: ${CLOUDGOV_STAGING_PASSWORD}

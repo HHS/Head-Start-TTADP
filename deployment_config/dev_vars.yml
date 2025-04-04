@@ -14,7 +14,6 @@ cg_api: https://api.fr.cloud.gov
 cg_username: ${CLOUDGOV_DEV_USERNAME}
 cg_password: ${CLOUDGOV_DEV_PASSWORD}
 cg_space: ${CLOUDGOV_DEV_SPACE}
-git_url: https://github.com/HHS/Head-Start-TTADP
 new_relic_app_id: 867221900
 
 LOG_LEVEL: info
