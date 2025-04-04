@@ -127,13 +127,13 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
     jobs:
-      - backup_prod_db
-      - process_db:
-          requires:
-            - backup_prod_db
-      - restore_dbs:
-           requires:
-             - process_db
+      # - backup_prod_db
+      # - process_db:
+      #     requires:
+      #       - backup_prod_db
+      - restore_dbs
+          #  requires:
+          #    - process_db
 
 # ----------------- Jobs -----------------
 
@@ -552,13 +552,23 @@ jobs:
           name: Build backend assets
           command: yarn build
       - run: exit 1
+      # - cf_restore:
+      #     target_env: 'dev'
+      #     rds_service_name: ttahub-process
+      #     s3_service_name: ttahub-db-backups
+      #     backup_prefix: production
       - cf_restore:
-          target_env: 'dev'
+          target_env: 'dev-green'
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: production
       - cf_restore:
-          target_env: 'dev-green'
+          target_env: 'dev-red'
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
+      - cf_restore:
+          target_env: 'dev-blue'
           rds_service_name: ttahub-process
           s3_service_name: ttahub-db-backups
           backup_prefix: production
@@ -736,7 +746,7 @@ commands:
       - run:
           name: Push application
           command: |
-            circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+            circleci env subst < ./deployment_config/${full_env}_vars.yml > app.vars
             echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
             cf push \
               --vars-file app.vars \
@@ -744,7 +754,6 @@ commands:
               --var BUILD_COMMIT=${CIRCLE_SHA1} \
               --var BUILD_NUMBER=<< pipeline.number >> \
               --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
-              --var SMTP_IGNORE_TLS="${SMTP_IGNORE_TLS}" \
               --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
       
 
@@ -1059,10 +1068,10 @@ commands:
             else
               echo "<< parameters.success_message >> successful!" > /tmp/message_file
             fi
-      - notify_slack:
-          slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-head-start-alerts"
-          message_text_file: "/tmp/message_file"
+      # - notify_slack:
+      #     slack_bot_token: $SLACK_BOT_TOKEN
+      #     slack_channel: "acf-head-start-alerts"
+      #     message_text_file: "/tmp/message_file"
       - run:
           name: Release Lock
           command: |
