@@ -1396,6 +1396,7 @@ jobs:
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
+                private_jwk_base64: SANDBOX_PRIVATE_JWK_BASE64
                 auth_client_secret: DEV_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_DEV_USERNAME
                 cloudgov_password: CLOUDGOV_DEV_PASSWORD
@@ -1464,6 +1465,7 @@ jobs:
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
+                private_jwk_base64: SANDBOX_PRIVATE_JWK_BASE64
                 auth_client_secret: STAGING_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_STAGING_USERNAME
                 cloudgov_password: CLOUDGOV_STAGING_PASSWORD
@@ -1530,6 +1532,7 @@ jobs:
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
+                private_jwk_base64: SANDBOX_PRIVATE_JWK_BASE64
                 auth_client_secret: PROD_AUTH_CLIENT_SECRET
                 cloudgov_username: CLOUDGOV_PROD_USERNAME
                 cloudgov_password: CLOUDGOV_PROD_PASSWORD
