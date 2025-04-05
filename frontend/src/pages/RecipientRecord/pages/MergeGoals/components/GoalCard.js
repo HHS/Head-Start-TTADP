@@ -10,7 +10,6 @@ import { goalPropTypes } from '../../../../../components/GoalCards/constants';
 import FlagStatus from '../../../../../components/GoalCards/FlagStatus';
 import STATUSES from '../../../../../components/GoalCards/components/StatusDropdownStatuses';
 import './GoalCard.css';
-import '../../../../../components/GoalCards/GoalCard.scss';
 import UserContext from '../../../../../UserContext';
 import isAdmin from '../../../../../permissions';
 
