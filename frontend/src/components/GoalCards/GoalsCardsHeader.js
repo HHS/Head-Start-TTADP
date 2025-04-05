@@ -35,7 +35,6 @@ export default function GoalCardsHeader({
   handlePageChange,
   perPageChange,
   allSelectedGoalIds,
-  goalBuckets,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -51,10 +50,6 @@ export default function GoalCardsHeader({
     if (!goalsToPrint.length) {
       goalsToPrint = pageGoalIds;
     }
-    // Get all the goals and associated goals from the buckets.
-    goalsToPrint = goalBuckets.filter(
-      (bucket) => goalsToPrint.includes(bucket.id),
-    ).map((bucket) => bucket.goalIds).flat();
 
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
       sortConfig, selectedGoalIds: goalsToPrint,
@@ -226,10 +221,6 @@ GoalCardsHeader.propTypes = {
   handlePageChange: PropTypes.func.isRequired,
   pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   allSelectedGoalIds: PropTypes.shape({ id: PropTypes.bool }).isRequired,
-  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    goalIds: PropTypes.arrayOf(PropTypes.number),
-  })).isRequired,
   perPageChange: PropTypes.func.isRequired,
 };
 
