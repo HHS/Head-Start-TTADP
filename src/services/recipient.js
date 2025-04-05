@@ -641,14 +641,14 @@ export async function getGoalsByActivityRecipient(
     [Op.or]: [
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
-      { createdVia: ['rtr', 'admin', 'merge'] },
+      { createdVia: ['rtr', 'admin'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
     ],
     [Op.and]: scopes,
   };
 
   // If we have specified goals only retrieve those else all for recipient.
-  if (sortBy !== 'mergedGoals' && goalIds?.length) {
+  if (goalIds?.length) {
     goalWhere = {
       id: goalIds,
       ...goalWhere,
@@ -696,7 +696,6 @@ export async function getGoalsByActivityRecipient(
           WHEN "Goal"."status" = 'Suspended' THEN 6
           ELSE 7 END`),
       'status_sort'],
-      [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
       [sequelize.literal(`COALESCE("Goal"."goalTemplateId", 0) = ${feiResponse.feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
     ],
     where: goalWhere,
