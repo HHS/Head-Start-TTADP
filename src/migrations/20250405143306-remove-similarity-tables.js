@@ -8,6 +8,10 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
+      await queryInterface.dropTable('ZALGoalSimilarityGroupGoals', { transaction });
+      await queryInterface.dropTable('ZALGoalSimilarityGroups', { transaction });
+      await queryInterface.dropTable('ZALSimScoreGoalCaches', { transaction });
+
       await queryInterface.dropTable('GoalSimilarityGroupGoals', { transaction });
       await queryInterface.dropTable('GoalSimilarityGroups', { transaction });
       await queryInterface.dropTable('SimScoreGoalCaches', { transaction });
