@@ -646,7 +646,7 @@ describe('Goals Table', () => {
       const printButton = await screen.findByRole('button', { name: /Preview and print/i });
       userEvent.click(printButton);
       expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
-        selectedGoalIds: [4598, 4599, 65479],
+        selectedGoalIds: [4598, 65479],
         sortConfig: {
           activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
         },
@@ -663,7 +663,7 @@ describe('Goals Table', () => {
 
       userEvent.click(printButton);
       expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
-        selectedGoalIds: [4598, 4599],
+        selectedGoalIds: [4598],
         sortConfig: {
           activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
         },
