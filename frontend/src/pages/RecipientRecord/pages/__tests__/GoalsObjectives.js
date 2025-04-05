@@ -120,7 +120,7 @@ describe('Goals and Objectives', () => {
     ],
   };
 
-  const renderGoalsAndObjectives = (ids = [], canMergeGoals = false) => {
+  const renderGoalsAndObjectives = (ids = []) => {
     const userForContext = {
       ...user,
     };
@@ -138,7 +138,6 @@ describe('Goals and Objectives', () => {
                   state: { ids }, hash: '', pathname: '', search: '',
                 }}
                 recipientName="test"
-                canMergeGoals={canMergeGoals}
               />
             </FilterContext.Provider>
           </UserContext.Provider>
@@ -193,27 +192,6 @@ describe('Goals and Objectives', () => {
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
       { rows: [], count: 0 },
     );
-    const similarityResponse = [
-      {
-        goals: [
-          { ids: [1] },
-          { ids: [2] },
-          { ids: [3] },
-          { ids: [4] },
-          { ids: [5] },
-        ],
-        ids: [1, 2, 3, 4, 5],
-      },
-      {
-        goals: [
-          { ids: [1] },
-          { ids: [2] },
-        ],
-        ids: [1, 2],
-      },
-    ];
-
-    fetchMock.get('/api/goals/similar/region/1/recipient/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {
@@ -223,12 +201,6 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-  });
-
-  it('shows merge goals when prop is passed', async () => {
-    act(() => renderGoalsAndObjectives([], true));
-    expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-    expect(await screen.findByText(/We found groups of similar goals that might be duplicates/i)).toBeVisible();
   });
 
   it('renders correctly when filter is changed', async () => {

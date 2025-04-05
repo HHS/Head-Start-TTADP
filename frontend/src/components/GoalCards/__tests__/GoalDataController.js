@@ -48,7 +48,6 @@ describe('GoalDataController', () => {
     regionId: String(REGION_ID),
     hasActiveGrants: true,
     showNewGoals: false,
-    canMergeGoals: true,
   };
   const history = createMemoryHistory();
 
@@ -91,21 +90,6 @@ describe('GoalDataController', () => {
 
   afterEach(async () => {
     fetchMock.restore();
-  });
-
-  it('fetches goals in the correct order if specified in history state', async () => {
-    const url = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=mergedGoals&sortDir=asc&offset=0&limit=10&goalIds=1&goalIds=2`;
-    fetchMock.get(url, response);
-    act(() => {
-      renderTest(
-        {}, // props
-        {
-          mergedGoals: [1, 2], // location state
-        },
-      );
-    });
-
-    expect(fetchMock.called(url)).toBe(true);
   });
 
   it('fetches goals in the correct order if no location state specified', async () => {

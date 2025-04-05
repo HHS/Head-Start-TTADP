@@ -15,7 +15,6 @@ export default function GoalsObjectives({
   regionId,
   recipient,
   location,
-  canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
@@ -66,7 +65,6 @@ export default function GoalsObjectives({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
           showNewGoals={showNewGoals || false}
-          canMergeGoals={canMergeGoals}
         />
       </div>
     </>
@@ -83,5 +81,4 @@ GoalsObjectives.propTypes = {
     })).isRequired,
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
-  canMergeGoals: PropTypes.bool.isRequired,
 };

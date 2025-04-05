@@ -234,7 +234,6 @@ const setGoals = jest.fn();
 const history = createMemoryHistory();
 
 const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
-  const goalBuckets = !goals ? [] : goals.map((g) => ({ id: g.id, goalIds: g.ids }));
   render(
     <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -259,9 +258,6 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             }}
             setGoals={setGoals}
             allGoalIds={allGoalIds || goals.map((g) => g.id)}
-            shouldDisplayMergeSuccess={false}
-            dismissMergeSuccess={jest.fn()}
-            goalBuckets={goalBuckets}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>

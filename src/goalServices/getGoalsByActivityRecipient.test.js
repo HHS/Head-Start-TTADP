@@ -819,40 +819,6 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx.length).toBe(3);
     });
 
-    it('Retrieves and sorts for merged goals by Recipient', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
-        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20, goalIds: [goalIds[9]],
-      });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
-      expect(goalRowsx[0].id).toBe(goalIds[9]);
-      expect(goalRowsx[1].id).toBe(goalIds[11]);
-      expect(goalRowsx[2].id).toBe(goalIds[10]);
-    });
-
-    it('Retrieves and sorts for merged goals by Recipient with garbage parameters', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
-        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20, goalIds: [goalIds[9], false],
-      });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
-      expect(goalRowsx[0].id).toBe(goalIds[9]);
-    });
-
-    it('Retrieves and sorts for merged goals by Recipient with no goal ids', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
-        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20,
-      });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
-    });
-
     it('Retrieves Specified Goals for Recipient', async () => {
       const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
         sortBy: 'createdOn',
