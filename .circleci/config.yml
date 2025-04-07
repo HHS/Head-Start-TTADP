@@ -1018,10 +1018,10 @@ commands:
           name: Login with service account
           command: |
             cf login -a << parameters.cg_api >> \
-              -u << parameters.cg_username >> \
-              -p << parameters.cg_password >> \
+              -u ${<< parameters.cg_username} >> \
+              -p ${<< parameters.cg_password} >> \
               -o << parameters.cg_org >> \
-              -s << parameters.cg_space >>
+              -s ${<< parameters.cg_space} >>
       - run:
           name: Start Log Monitoring
           command: |
