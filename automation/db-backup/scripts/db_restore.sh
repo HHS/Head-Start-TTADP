@@ -293,6 +293,7 @@ function rds_prep() {
   rds_data=$(process_json "${json_blob}" '."aws-rds"')
   parameters_validate "${rds_data}" "rds_data"
   local server_data
+  log "INFO" "Finding server data for ${db_server} in ${rds_data}"
   server_data=$(find_json_object "${rds_data}" "name" "${db_server}")
   parameters_validate "${server_data}" 'server_data'
   local db_host
@@ -609,7 +610,7 @@ function perform_restore() {
         exit 1
     }
 
-    set -x
+    #set -x
     set -o pipefail
 
     log "INFO" "Reset database before restore"
