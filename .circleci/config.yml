@@ -560,20 +560,33 @@ jobs:
       #     s3_service_name: ttahub-db-backups
       #     backup_prefix: production
       - cf_restore:
-          target_env: 'dev-green'
-          rds_service_name: ttahub-process
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-dev
           s3_service_name: ttahub-db-backups
-          backup_prefix: production
-      - cf_restore:
-          target_env: 'dev-red'
-          rds_service_name: ttahub-process
-          s3_service_name: ttahub-db-backups
-          backup_prefix: production
-      - cf_restore:
-          target_env: 'dev-blue'
-          rds_service_name: ttahub-process
-          s3_service_name: ttahub-db-backups
-          backup_prefix: production
+          backup_prefix: processed
+    # - cf_migrate:
+    #       app_name: tta-smarthub-dev
+    #       cloudgov_username: CLOUDGOV_DEV_USERNAME
+    #       cloudgov_password: CLOUDGOV_DEV_PASSWORD
+    #       cloudgov_space: CLOUDGOV_DEV_SPACE      
+    #   - cf_restore:
+    #       target_env: 'dev-green'
+    #       rds_service_name: ttahub-process
+    #       s3_service_name: ttahub-db-backups
+    #       backup_prefix: production
+    #   - cf_restore:
+    #       target_env: 'dev-red'
+    #       rds_service_name: ttahub-process
+    #       s3_service_name: ttahub-db-backups
+    #       backup_prefix: production
+    #   - cf_restore:
+    #       target_env: 'dev-blue'
+    #       rds_service_name: ttahub-process
+    #       s3_service_name: ttahub-db-backups
+    #       backup_prefix: production
 
 
 # ----------------- Commands -----------------
@@ -878,7 +891,10 @@ commands:
   cf_restore:
     description: "Restore backup database from S3"
     parameters:
-      target_env: { type: string }
+      auth_client_secret: { type: string }
+      cloudgov_username: { type: string }
+      cloudgov_password: { type: string }
+      cloudgov_space: { type: string }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
       backup_prefix: { type: string }
@@ -891,7 +907,10 @@ commands:
               exit 1
             fi
       - cf_automation_task:
-          target_env: << parameters.target_env >>
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
@@ -923,6 +942,10 @@ commands:
       target_env:
         description: "Desired env to run task in"
         type: string
+      cg_api:
+        description: "Cloud Foundry API endpoint"
+        type: string
+        default: https://api.fr.cloud.gov
       task_command:
         description: "Command to run for the automation task"
         type: string
@@ -943,11 +966,15 @@ commands:
         description: 'directory to root to push'
         type: string
         default: "./automation"
+    environment:
+      cg_api: << parameters.cg_api >>
+      cg_username: << parameters.cg_username >>
+      cg_password: << parameters.cg_password >>
+      cg_org: << parameters.cg_org >>
+      cg_space: << parameters.cg_space >>
     steps:
       - run:
           command: echo "Running << parameters.task_command >>"
-      - set_env_vars: 
-          target: << parameters.target_env >>
       - run:
           name: Install Dependencies
           command: |
@@ -1028,7 +1055,6 @@ commands:
       - run:
           name: cf_lambda - script to trigger task
           command: |
-            set -x
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
               --arg config "<< parameters.config >>" \
