@@ -561,9 +561,9 @@ jobs:
       #     backup_prefix: production
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cloudgov_username: CLOUDGOV_PROD_USERNAME
-          cloudgov_password: CLOUDGOV_PROD_PASSWORD
-          cloudgov_space: CLOUDGOV_PROD_SPACE
+          cg_username: CLOUDGOV_PROD_USERNAME
+          cg_password: CLOUDGOV_PROD_PASSWORD
+          cg_space: CLOUDGOV_PROD_SPACE
           rds_service_name: ttahub-dev
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
@@ -891,10 +891,10 @@ commands:
   cf_restore:
     description: "Restore backup database from S3"
     parameters:
-      auth_client_secret: { type: string }
-      cloudgov_username: { type: string }
-      cloudgov_password: { type: string }
-      cloudgov_space: { type: string }
+      auth_client_secret: { type: env_var_name }
+      cg_username: { type: env_var_name }
+      cg_password: { type: env_var_name }
+      cg_space: { type: env_var_name }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
       backup_prefix: { type: string }
@@ -908,10 +908,9 @@ commands:
             fi
       - cf_automation_task:
           auth_client_secret: << parameters.auth_client_secret >>
-          cg_username: << parameters.cloudgov_username >>
-          cg_password: << parameters.cloudgov_password >>
-          cg_space: << parameters.cloudgov_space >>
-          cg_org: << parameters.cloudgov_org >>
+          cg_username: << parameters.cg_username >>
+          cg_password: << parameters.cg_password >>
+          cg_space: << parameters.cg_space >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
@@ -1024,10 +1023,10 @@ commands:
           name: Login with service account
           command: |
             cf login -a << parameters.cg_api >> \
-              -u << parameters.cloudgov_username >> \
-              -p << parameters.cloudgov_password >> \
-              -o << parameters.cloudgov_org >> \
-              -s << parameters.cloudgov_space >>
+              -u << parameters.cg_username >> \
+              -p << parameters.cg_password >> \
+              -o << parameters.cg_org >> \
+              -s << parameters.cg_space >>
       - run:
           name: Start Log Monitoring
           command: |
