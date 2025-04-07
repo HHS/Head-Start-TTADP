@@ -969,7 +969,7 @@ commands:
       - run:
           name: Login with service account
           command: |
-            cf login -a << pipeline.parameters.cg_api >> \
+            cf login -a << parameters.cg_api >> \
               -u ${<< parameters.cg_username >>} \
               -p ${<< parameters.cg_password >>} \
               -o ${<< parameters.cg_org >>} \
