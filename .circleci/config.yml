@@ -572,7 +572,7 @@ jobs:
           cg_username: CLOUDGOV_DEV_USERNAME
           cg_password: CLOUDGOV_DEV_PASSWORD
           cg_space: CLOUDGOV_DEV_SPACE
-          cg_org: "ttahub-dev"
+          cg_org: "hhs-acf-ohs-tta"
     # - cf_migrate:
     #       app_name: tta-smarthub-dev
     #       cloudgov_username: CLOUDGOV_DEV_USERNAME
