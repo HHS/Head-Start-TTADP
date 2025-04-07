@@ -1115,7 +1115,7 @@ commands:
               --argjson args '<< parameters.task_args >>' \
               '{
                 directory: $directory,
-                config: $cfg_prefix,
+                config: $config,
                 task_name: $task_name,
                 command: $command,
                 timeout_active_tasks: $timeout_active_tasks,
