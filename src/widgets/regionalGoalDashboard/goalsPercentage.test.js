@@ -33,7 +33,7 @@ describe('goalsPercentage', () => {
         onApprovedAR: true,
       }));
 
-      response = await goalsPercentage({ goal: { id: goals.map((g) => g.id) } });
+      response = await goalsPercentage({ goal: [{ id: goals.map((g) => g.id) }] });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log('goalsPercentageTest: ', error);
