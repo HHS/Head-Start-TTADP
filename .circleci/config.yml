@@ -564,9 +564,14 @@ jobs:
           cg_username: CLOUDGOV_PROD_USERNAME
           cg_password: CLOUDGOV_PROD_PASSWORD
           cg_space: CLOUDGOV_PROD_SPACE
-          rds_service_name: ttahub-dev
+          rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev-blue
+          cloudgov_username: CLOUDGOV_DEV_USERNAME
+          cloudgov_password: CLOUDGOV_DEV_PASSWORD
+          cloudgov_space: CLOUDGOV_DEV_SPACE
     # - cf_migrate:
     #       app_name: tta-smarthub-dev
     #       cloudgov_username: CLOUDGOV_DEV_USERNAME
