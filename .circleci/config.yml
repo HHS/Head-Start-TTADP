@@ -569,9 +569,9 @@ jobs:
           backup_prefix: processed
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
-          cloudgov_username: CLOUDGOV_DEV_USERNAME
-          cloudgov_password: CLOUDGOV_DEV_PASSWORD
-          cloudgov_space: CLOUDGOV_DEV_SPACE
+          cg_username: CLOUDGOV_DEV_USERNAME
+          cg_password: CLOUDGOV_DEV_PASSWORD
+          cg_space: CLOUDGOV_DEV_SPACE
     # - cf_migrate:
     #       app_name: tta-smarthub-dev
     #       cloudgov_username: CLOUDGOV_DEV_USERNAME
@@ -945,15 +945,15 @@ commands:
         description: "Name of Cloud Foundry cloud.gov application; must match
           application name specified in manifest"
         type: string
-      cloudgov_username:
+      cg_username:
         description: "Name of CircleCi project environment variable that
           holds deployer username for cloudgov space"
         type: env_var_name
-      cloudgov_password:
+      cg_password:
         description: "Name of CircleCi project environment variable that
           holds deployer password for cloudgov space"
         type: env_var_name
-      cloudgov_space:
+      cg_space:
         description: "Name of CircleCi project environment variable that
           holds name of cloudgov space to target for application deployment"
         type: env_var_name
