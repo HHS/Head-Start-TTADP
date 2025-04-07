@@ -949,19 +949,22 @@ commands:
         description: "Cloud Foundry API endpoint"
         type: string
         default: https://api.fr.cloud.gov
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that holds authentication client secret"
+        type: env_var_name
       cg_username:
         description: "Cloud Gov username"
-        type: string
+        type: env_var_name
       cg_password:
         description: "Cloud Gov password"
-        type: string
+        type: env_var_name
       cg_org:
         description: "Cloud Gov Org"
         type: string
         default: hhs-acf-ohs-tta
       cg_space:
         description: "Cloud Gov Space"
-        type: string
+        type: env_var_name
       config:
         description: "Config prefix for the automation task"
         type: string
