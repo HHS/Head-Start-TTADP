@@ -128,10 +128,13 @@ workflows:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
     jobs:
       # - backup_prod_db
+      #    serial-group: "tta-db-lock"
       # - process_db:
+      #    serial-group: "tta-db-lock"
       #     requires:
       #       - backup_prod_db
-      - restore_dbs
+      - restore_dbs:
+          serial-group: "tta-db-lock"
           #  requires:
           #    - process_db
 
@@ -991,15 +994,6 @@ commands:
               -o ${cg_org} \
               -s ${cg_space}
       - run:
-          name: Acquire Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/acquire-lock.sh \
-              "tta-automation" \
-              "${CIRCLE_BRANCH}" \
-              "<< pipeline.number >>" \
-              "$CIRCLE_JOB"
-      - run:
           name: Start Log Monitoring
           command: |
             #!/bin/bash
@@ -1070,15 +1064,6 @@ commands:
       #     slack_bot_token: $SLACK_BOT_TOKEN
       #     slack_channel: "acf-head-start-alerts"
       #     message_text_file: "/tmp/message_file"
-      - run:
-          name: Release Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/release-lock.sh \
-              "tta-automation" \
-              "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>" \
-              "$CIRCLE_JOB"
       - run:
           name: Logout of service account
           command: |
