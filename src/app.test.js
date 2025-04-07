@@ -1,9 +1,8 @@
 import request from 'supertest';
+import axios from 'axios';
 import app from './app';
-import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 
-jest.mock('./middleware/authMiddleware');
 jest.mock('./services/currentUser');
 jest.mock('axios');
 jest.mock('smartsheet');
@@ -12,15 +11,31 @@ describe('TTA Hub server', () => {
   const ORIGINAL_ENV = process.env;
 
   beforeEach(() => {
-    jest.resetModules(); // clear the cache
-    process.env = { ...ORIGINAL_ENV }; // make a copy
+    jest.resetModules();
+    process.env = { ...ORIGINAL_ENV };
 
-    hsesAuth.code.getToken.mockResolvedValue({ sign: jest.fn().mockReturnValue({}) });
-    retrieveUserDetails.mockResolvedValue({ id: 1 });
+    // Mock token response
+    axios.post.mockResolvedValue({
+      data: {
+        accessToken: 'fake-access-token',
+      },
+    });
+
+    // Mock user info
+    axios.get.mockResolvedValue({
+      data: {
+        id: 'mock-user-id',
+        name: 'Test User',
+      },
+    });
+
+    retrieveUserDetails.mockResolvedValue({
+      id: 1,
+    });
   });
 
-  afterAll(async () => {
-    process.env = ORIGINAL_ENV; // restore original env
+  afterAll(() => {
+    process.env = ORIGINAL_ENV;
   });
 
   afterEach(() => {
@@ -28,11 +43,15 @@ describe('TTA Hub server', () => {
   });
 
   test('retrieves user details to login', async () => {
-    // Ensure authorization is required, do not bypass authorization check
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'false';
 
-    const resp = await request(app).get('/oauth2-client/login/oauth2/code/');
+    const resp = await request(app)
+      .get('/oauth2-client/login/oauth2/code/?code=test-code')
+      .set('Cookie', ['session=mock-session']);
+
+    expect(axios.post).toHaveBeenCalled();
+    expect(axios.get).toHaveBeenCalled();
     expect(retrieveUserDetails).toHaveBeenCalled();
     expect(resp.status).toBe(302);
   });
