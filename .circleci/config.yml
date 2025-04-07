@@ -942,7 +942,7 @@ commands:
         default: "./automation"
     steps:
       - run:
-          command: echo "Running "<< parameters.task_command >>"
+          command: echo "Running << parameters.task_command >>"
       - set_env_vars: 
           target: << parameters.target_env >>
       - run:
