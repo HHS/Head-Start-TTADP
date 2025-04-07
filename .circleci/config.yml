@@ -939,9 +939,6 @@ commands:
       task_name:
         description: "Name of the automation task to run"
         type: string
-      target_env:
-        description: "Desired env to run task in"
-        type: string
       task_command:
         description: "Command to run for the automation task"
         type: string
