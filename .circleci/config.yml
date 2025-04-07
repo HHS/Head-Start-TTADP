@@ -1008,7 +1008,7 @@ commands:
       cg_org:
         type: string
         default: "hhs-acf-ohs-tta"
-      config:
+      cfg_prefix:
         description: "Config prefix for the automation task"
         type: string
       success_message:
@@ -1107,7 +1107,7 @@ commands:
           command: |
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
-              --arg config "<< parameters.config >>" \
+              --arg config "<< parameters.cfg_prefix >>" \
               --arg task_name "<< parameters.task_name >>" \
               --arg command "<< parameters.task_command >>" \
               --arg timeout_active_tasks "<< parameters.timeout >>" \
@@ -1115,7 +1115,7 @@ commands:
               --argjson args '<< parameters.task_args >>' \
               '{
                 directory: $directory,
-                config: $config,
+                config: $cfg_prefix,
                 task_name: $task_name,
                 command: $command,
                 timeout_active_tasks: $timeout_active_tasks,

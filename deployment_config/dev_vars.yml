@@ -16,7 +16,7 @@ cg_password: ${CLOUDGOV_DEV_PASSWORD}
 cg_space: ${CLOUDGOV_DEV_SPACE}
 new_relic_app_id: 867221900
 
-LOG_LEVEL: info
+LOG_LEVEL: debug
 SUPPRESS_ERROR_LOGGING: "false"
 SEND_NOTIFICATIONS: "true"
 FORCE_CRON: "false"
