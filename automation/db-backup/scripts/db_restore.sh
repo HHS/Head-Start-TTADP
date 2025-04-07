@@ -365,7 +365,7 @@ function aws_s3_prep() {
   log "INFO" "Processing JSON data for S3 configuration."
   local s3_data
   s3_data=$(process_json "${json_blob}" '."s3"')
-  parameters_validate "${s3_data}"
+  parameters_validate "${s3_data}" 's3_data'
   local server_data
   server_data=$(find_json_object "${s3_data}" "name" "${s3_server}")
   parameters_validate "${server_data}" 'server_data'
