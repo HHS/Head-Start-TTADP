@@ -95,7 +95,6 @@ describe('Import Cron Enrollment', () => {
   });
   test('should register cron jobs in production with instanceId "0" and contextId 1', async () => {
     // Prepare a fake schedule list.
-    console.log('heh');
     const mockSchedules = [
       { id: 1, name: 'Import One', schedule: '0 0 * * *' },
       { id: 2, name: 'Import Two', schedule: '30 1 * * *' },
