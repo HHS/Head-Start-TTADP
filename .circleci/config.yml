@@ -572,6 +572,7 @@ jobs:
           cg_username: CLOUDGOV_DEV_USERNAME
           cg_password: CLOUDGOV_DEV_PASSWORD
           cg_space: CLOUDGOV_DEV_SPACE
+          cg_org: "ttahub-dev"
     # - cf_migrate:
     #       app_name: tta-smarthub-dev
     #       cloudgov_username: CLOUDGOV_DEV_USERNAME
@@ -957,39 +958,24 @@ commands:
         description: "Name of CircleCi project environment variable that
           holds name of cloudgov space to target for application deployment"
         type: env_var_name
+      cg_org:
+        description: "Name of cloudgov org to target"
+        type: string
     steps:
       - run:
           name: Login with service account
           command: |
             cf login -a << pipeline.parameters.cg_api >> \
-              -u ${<< parameters.cloudgov_username >>} \
-              -p ${<< parameters.cloudgov_password >>} \
-              -o << pipeline.parameters.cg_org >> \
+              -u ${<< parameters.cg_username >>} \
+              -p ${<< parameters.cg_password >>} \
+              -o ${<< parameters.cg_org >>} \
               -s ${<< parameters.cloudgov_space >>}
-      - run:
-          name: Acquire Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/acquire-lock.sh \
-              "<< parameters.app_name >>" \
-              "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>" \
-              "$CIRCLE_JOB"
       - run:
           name: Migrate database
           command: |
             cf run-task << parameters.app_name >> \
               --command "yarn db:migrate:prod" \
               --name "migrate"
-      - run:
-          name: Release Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/release-lock.sh \
-              "<< parameters.app_name >>" \
-              "<< pipeline.git.branch >>" \
-              "<< pipeline.number >>" \
-              "$CIRCLE_JOB"
 
   cf_automation_task:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
