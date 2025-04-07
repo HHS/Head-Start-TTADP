@@ -252,7 +252,7 @@ run_script() {
     fi
 
     log "INFO" "Execute the script with any passed arguments and capture its output"
-    script_output=$("$script_path" "$@")
+    script_output=$("$script_path" "$@" 2>&1)
     local script_exit_status=$?
 
     log "INFO" "Check the exit status of the script"
