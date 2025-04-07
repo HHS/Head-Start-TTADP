@@ -978,14 +978,6 @@ commands:
       - run:
           command: echo "Running << parameters.task_command >>"
       - run:
-          name: Login with service account
-          command: |
-            cf login -a << parameters.cg_api >> \
-              -u << parameters.cg_username >> \
-              -p << parameters.cg_password >> \
-              -o << parameters.cg_org >> \
-              -s << parameters.cg_space >>
-      - run:
           name: Install Dependencies
           command: |
             set -e
@@ -1022,6 +1014,14 @@ commands:
 
             # cleanup
             sudo rm -rf /var/lib/apt/lists/*
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << parameters.cg_api >> \
+              -u << parameters.cg_username >> \
+              -p << parameters.cg_password >> \
+              -o << parameters.cg_org >> \
+              -s << parameters.cg_space >>
       - run:
           name: Start Log Monitoring
           command: |
