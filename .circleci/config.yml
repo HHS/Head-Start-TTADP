@@ -559,14 +559,22 @@ jobs:
       #     rds_service_name: ttahub-process
       #     s3_service_name: ttahub-db-backups
       #     backup_prefix: production
+      # - cf_restore:
+      #     auth_client_secret: PROD_AUTH_CLIENT_SECRET
+      #     cg_username: CLOUDGOV_PROD_USERNAME
+      #     cg_password: CLOUDGOV_PROD_PASSWORD
+      #     cg_space: CLOUDGOV_PROD_SPACE
+      #     rds_service_name: ttahub-dev-blue
+      #     s3_service_name: ttahub-db-backups
+      #     backup_prefix: processed
       - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cg_username: CLOUDGOV_PROD_USERNAME
-          cg_password: CLOUDGOV_PROD_PASSWORD
-          cg_space: CLOUDGOV_PROD_SPACE
+          auth_client_secret: DEV_AUTH_CLIENT_SECRET
+          cg_username: CLOUDGOV_DEV_USERNAME
+          cg_password: CLOUDGOV_DEV_PASSWORD
+          cg_space: CLOUDGOV_DEV_SPACE
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
-          backup_prefix: processed
+          backup_prefix: processed      
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
           cg_username: CLOUDGOV_DEV_USERNAME
