@@ -293,7 +293,6 @@ function rds_prep() {
   rds_data=$(process_json "${json_blob}" '."aws-rds"')
   parameters_validate "${rds_data}" "rds_data"
   local server_data
-  log "INFO" "Finding server data for ${db_server} in ${rds_data}"
   server_data=$(find_json_object "${rds_data}" "name" "${db_server}")
   parameters_validate "${server_data}" 'server_data'
   local db_host
@@ -532,15 +531,17 @@ function perform_restore() {
     export_validate "VCAP_SERVICES"
 
     log "INFO" "Verify or install awscli"
-    run_script 'awscli_install.sh' '../../common/scripts/' || {
+    run_script 'awscli_install.sh' '../../common/scripts/ > install.log' || {
         log "ERROR" "Failed to install or verify awscli"
+        log "echo $(cat install.log)"
         set -e
         exit 1
     }
 
     log "INFO" "Verify or install postgrescli"
-    run_script 'postgrescli_install.sh' '../../common/scripts/' || {
+    run_script 'postgrescli_install.sh' '../../common/scripts/ > install.log' || {
         log "ERROR" "Failed to install or verify postgrescli"
+        log "echo $(cat install.log)"
         set -e
         exit 1
     }
