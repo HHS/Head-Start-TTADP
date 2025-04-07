@@ -32,5 +32,8 @@ export default function GoalStatusChangeAlert({
 GoalStatusChangeAlert.propTypes = {
   editLink: PropTypes.string.isRequired,
   internalLeftMargin: PropTypes.string.isRequired,
-  invalidStatusChangeAttempted: PropTypes.bool.isRequired,
+  invalidStatusChangeAttempted: PropTypes.bool,
+};
+GoalStatusChangeAlert.defaultProps = {
+  invalidStatusChangeAttempted: false,
 };
