@@ -47,6 +47,15 @@ jest.mock('../../services/users', () => ({
 
 jest.mock('../../policies/user');
 
+jest.mock('bull', () => {
+  return jest.fn().mockImplementation(() => ({
+    add: jest.fn(),
+    process: jest.fn(),
+    on: jest.fn(),
+    close: jest.fn(),
+  }));
+});
+
 const app = express();
 app.use(express.json());
 app.get('/listQueries', listQueries);
