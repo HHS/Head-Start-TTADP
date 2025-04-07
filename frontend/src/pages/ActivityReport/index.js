@@ -65,6 +65,8 @@ const defaultValues = {
   recipients: [],
   nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
+  numberOfParticipantsInPerson: null,
+  numberOfParticipantsVirtually: null,
   objectivesWithoutGoals: [],
   otherResources: [],
   participantCategory: '',

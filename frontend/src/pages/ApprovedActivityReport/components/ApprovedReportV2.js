@@ -6,7 +6,7 @@ import {
   DATEPICKER_VALUE_FORMAT,
 } from '../../../Constants';
 import {
-  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
+  reportDataPropTypes, formatSimpleArray, mapAttachments,
 } from '../helpers';
 import ReadOnlyContent from '../../../components/ReadOnlyContent';
 import RenderReviewCitations from '../../ActivityReport/Pages/components/RenderReviewCitations';
@@ -182,7 +182,6 @@ function calculateGoalsAndObjectives(report) {
 
   return sections;
 }
-
 export default function ApprovedReportV2({ data }) {
   const {
     reportId, ttaType, deliveryMethod, virtualDeliveryType,
@@ -190,11 +189,6 @@ export default function ApprovedReportV2({ data }) {
 
   // first table
   const isRecipient = data.activityRecipientType === 'recipient';
-  let recipientType = isRecipient ? 'Recipient' : 'Other entity';
-  if (data.activityRecipients.length > 1) {
-    recipientType = isRecipient ? 'Recipients' : 'Other entities';
-  }
-
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
@@ -205,6 +199,9 @@ export default function ApprovedReportV2({ data }) {
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
   const participantCount = data.numberOfParticipants.toString();
+  const participantVirtualCount = data.numberOfParticipantsVirtually
+    ? data.numberOfParticipantsVirtually.toString()
+    : null;
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const duration = `${data.duration} hours`;
@@ -229,6 +226,18 @@ export default function ApprovedReportV2({ data }) {
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
+
+  const getNumberOfParticipants = () => {
+    let numberOfParticipants = { 'Number of participants attending in person': participantCount };
+    if (deliveryMethod === 'hybrid') {
+      numberOfParticipants = {
+        ...numberOfParticipants,
+        'Number of participants attending virtually': participantVirtualCount,
+      };
+    }
+    return numberOfParticipants;
+  };
+
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
@@ -284,18 +293,12 @@ export default function ApprovedReportV2({ data }) {
           {
             heading: 'Who was the activity for?',
             data: {
-              'Recipient or other entity': recipientType,
-              'Recipient names': arRecipients,
+              Recipient: arRecipients,
+              'Recipient participants': attendees,
+              'Why activity requested': data.activityReason,
               'Target populations': targetPopulations,
             },
             striped: true,
-          },
-          {
-            heading: 'Why was the activity requested?',
-            data: {
-              Reason: data.activityReason,
-            },
-            striped: false,
           },
           {
             heading: 'Activity date',
@@ -316,19 +319,12 @@ export default function ApprovedReportV2({ data }) {
           {
             heading: 'Training or technical assistance',
             data: {
-              'TTA provided': formatTtaType(ttaType),
-              'Language used': languages,
-              'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
+              'TTA type': formatTtaType(ttaType),
+              'Languages used': languages,
+              'Delivery method': formatDelivery(deliveryMethod, virtualDeliveryType),
+              ...getNumberOfParticipants(deliveryMethod),
             },
             striped: true,
-          },
-          {
-            heading: 'Participants',
-            data: {
-              Participants: attendees,
-              'Number of participants': participantCount,
-            },
-            striped: false,
           },
         ]}
       />

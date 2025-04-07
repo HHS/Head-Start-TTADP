@@ -993,10 +993,14 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   const updatedFields = { ...allFields, ...resources };
-  if (report) {
-    savedReport = await update(updatedFields, report);
-  } else {
-    savedReport = await create(updatedFields);
+  try {
+    if (report) {
+      savedReport = await update(updatedFields, report);
+    } else {
+      savedReport = await create(updatedFields);
+    }
+  } catch (error) {
+    console.log("\n\n\n------ Error for report:", error);
   }
   if (activityReportCollaborators) {
     const { id } = savedReport;

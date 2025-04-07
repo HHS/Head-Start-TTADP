@@ -141,6 +141,15 @@ export default (sequelize, DataTypes) => {
     },
     numberOfParticipants: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    numberOfParticipantsInPerson: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    numberOfParticipantsVirtually: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     deliveryMethod: {
       type: DataTypes.STRING,

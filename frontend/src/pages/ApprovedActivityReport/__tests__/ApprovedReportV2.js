@@ -65,6 +65,7 @@ describe('Approved Activity Report V2 component', () => {
     participants: ['Commander of Pants', 'Princess of Castles'],
     language: [],
     numberOfParticipants: 3,
+    numberOfParticipantsVirtually: 2,
     reason: ['Needed it'],
     startDate: '1968-08-01',
     endDate: '1969-08-02',
@@ -235,8 +236,7 @@ describe('Approved Activity Report V2 component', () => {
       ...report, deliveryMethod: 'in-person',
     }}
     />);
-
-    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
+    expect(screen.queryAllByText(/In Person/i).length).toBe(2);
   });
 
   it('language', async () => {
@@ -264,6 +264,12 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
+
+    // Expect 'Number of participants attending in person' to be in the document
+    expect(await screen.findByText(/Number of participants attending in person/i)).toBeInTheDocument();
+
+    // Expect 'Number of participants attending virtually' to be in the document
+    expect(await screen.findByText(/Number of participants attending virtually/i)).toBeInTheDocument();
   });
 
   it('submitted date shown', async () => {
