@@ -1,4 +1,3 @@
-const { EMAIL_ACTIONS } = require('../constants');
 const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
@@ -9,7 +8,12 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
       // Add activiyReason to the ActivityReports table.
       await queryInterface.sequelize.query(`
-            ALTER TABLE "ActivityReports" ADD COLUMN IF NOT EXISTS "activityReason" VARCHAR(255);
+            ALTER TABLE "ActivityReports" ADD COLUMN IF NOT EXISTS "activityReason" INTEGER;
+        `, { transaction });
+
+      // Add integer column numberOfParticipantsInPerson to the ActivityReports table.
+      await queryInterface.sequelize.query(`
+            ALTER TABLE "ActivityReports" ADD COLUMN IF NOT EXISTS "numberOfParticipantsInPerson" INTEGER;
         `, { transaction });
     });
   },

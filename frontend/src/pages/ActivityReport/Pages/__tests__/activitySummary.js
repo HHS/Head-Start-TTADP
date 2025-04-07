@@ -149,6 +149,7 @@ describe('isPageComplete', () => {
     startDate: '09/01/2020',
     endDate: '09/01/2020',
     language: ['English'],
+    activityReason: 'recipient requested',
   };
 
   it('returns true if validated by hook form', async () => {
@@ -157,7 +158,7 @@ describe('isPageComplete', () => {
   });
 
   it('validates strings', async () => {
-    const result = isPageComplete({ ...FORM_DATA, requester: null }, { isValid: false });
+    const result = isPageComplete({ ...FORM_DATA, activityReason: null }, { isValid: false });
     expect(result).toBe(false);
   });
 

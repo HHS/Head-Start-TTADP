@@ -38,6 +38,7 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 import './activitySummary.scss';
 import SingleRecipientSelect from './components/SingleRecipientSelect';
 import selectOptionsReset from '../../../components/selectOptionsReset';
+import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
 
 const ActivitySummary = ({
   recipients,
@@ -73,7 +74,8 @@ const ActivitySummary = ({
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
-  const isVirtual = watch('deliveryMethod') === 'virtual';
+  const deliveryMethod = watch('deliveryMethod');
+
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
 
   const selectedGoals = watch('goals');
@@ -388,7 +390,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Delivery method"
+            label="What was the delivery method for this activity?"
             name="deliveryMethod"
             fieldSetWrapper
           >
@@ -419,68 +421,13 @@ const ActivitySummary = ({
               inputRef={register({ required: 'Select one' })}
             />
           </FormItem>
-          <div aria-live="polite">
-            {isVirtual && (
-            <div className="margin-top-2">
-              <FormItem
-                label="Optional: Specify how the virtual event was conducted."
-                name="virtualDeliveryType"
-                fieldSetWrapper
-                required={false}
-              >
-                <Radio
-                  id="virtual-deliver-method-video"
-                  name="virtualDeliveryType"
-                  label="Video"
-                  value="video"
-                  className="smart-hub--report-checkbox"
-                  required={false}
-                  inputRef={register()}
-                />
-                <Radio
-                  id="virtual-deliver-method-telephone"
-                  name="virtualDeliveryType"
-                  label="Telephone"
-                  value="telephone"
-                  className="smart-hub--report-checkbox"
-                  required={false}
-                  inputRef={register()}
-                />
-              </FormItem>
-            </div>
-            )}
-          </div>
         </div>
-      </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Participants">
         <div>
-          <FormItem
-            label="Number of participants involved"
-            name="numberOfParticipants"
-          >
-            <Grid row gap>
-              <Grid col={5}>
-                <TextInput
-                  id="numberOfParticipants"
-                  name="numberOfParticipants"
-                  type="number"
-                  min={1}
-                  required
-                  inputRef={
-                    register({
-                      required: 'Enter number of participants',
-                      valueAsNumber: true,
-                      min: {
-                        value: 1,
-                        message: 'Number of participants can not be zero or negative',
-                      },
-                    })
-                  }
-                />
-              </Grid>
-            </Grid>
-          </FormItem>
-
+          <ParticipantsNumberOfParticipants
+            isHybrid={deliveryMethod === 'hybrid'}
+            register={register}
+            isDeliveryMethodSelected={['virtual', 'hybrid', 'in-person'].includes(deliveryMethod)}
+          />
         </div>
       </Fieldset>
     </>
@@ -515,61 +462,71 @@ ActivitySummary.propTypes = {
   }).isRequired,
 };
 
-const sections = [
-  {
-    title: 'Who was the activity for?',
-    anchor: 'activity-for',
-    items: [
-      { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
-      { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
-      {
-        label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
-      },
-      {
-        label: 'Reason for the activity', name: 'activityReason',
-      },
-      { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
-    ],
-  },
-  {
-    title: 'Activity date',
-    anchor: 'date',
-    items: [
-      { label: 'Start date', name: 'startDate' },
-      { label: 'End date', name: 'endDate' },
-      { label: 'Duration', name: 'duration' },
-    ],
-  },
-  {
-    title: 'Training or Technical Assistance',
-    anchor: 'tta',
-    items: [
-      { label: 'TTA provided', name: 'ttaType' },
-      { label: 'Language used', name: 'language' },
-      { label: 'Conducted', name: 'deliveryMethod' },
-    ],
-  },
-  {
-    title: 'Other participants',
-    anchor: 'other-participants',
-    items: [
-      { label: 'Recipient participants', name: 'participants', sort: true },
-      { label: 'Number of participants', name: 'numberOfParticipants' },
-    ],
-  },
-];
+const getNumberOfParticipants = (deliveryMethod) => {
+  const numberOfParticipants = [
+    { label: 'Number of participants attending in person', name: 'numberOfParticipants' },
+  ];
+  if (deliveryMethod === 'hybrid') {
+    numberOfParticipants.push(
+      { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually' },
+    );
+  }
+  return numberOfParticipants;
+};
+
+const getSections = (formData) => {
+  const { deliveryMethod } = formData;
+  return [
+    {
+      title: 'Who was the activity for?',
+      anchor: 'activity-for',
+      items: [
+        { label: 'Recipient', name: 'activityRecipients', path: 'name' },
+        { label: 'Recipient participants', name: 'participants', sort: true },
+        {
+          label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
+        },
+        {
+          label: 'Why activity requested', name: 'activityReason',
+        },
+        { label: 'Target populations', name: 'targetPopulations', sort: true },
+      ],
+    },
+    {
+      title: 'Activity date',
+      anchor: 'date',
+      items: [
+        { label: 'Start date', name: 'startDate' },
+        { label: 'End date', name: 'endDate' },
+        { label: 'Duration', name: 'duration' },
+      ],
+    },
+    {
+      title: 'Training or technical assistance',
+      anchor: 'tta',
+      items: [
+        { label: 'TTA type', name: 'ttaType' },
+        { label: 'Language used', name: 'language' },
+        { label: 'Delivery method', name: 'deliveryMethod' },
+        ...getNumberOfParticipants(deliveryMethod),
+
+      ],
+    },
+  ];
+};
 
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
     context,
     calculatedStatus,
+    deliveryMethod,
   } = watch();
 
   const canEdit = reportIsEditable(calculatedStatus);
   return (
     <>
-      <ReviewPage sections={sections} path="activity-summary" />
+      <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
       <Section
         hidePrint={isUndefined(context)}
         key="context"
@@ -596,7 +553,6 @@ export const isPageComplete = (formData, formState) => {
   const {
     // strings
     activityRecipientType,
-    requester,
     deliveryMethod,
     activityReason,
 
@@ -618,7 +574,6 @@ export const isPageComplete = (formData, formState) => {
 
   const stringsToValidate = [
     activityRecipientType,
-    requester,
     deliveryMethod,
     activityReason,
   ];
@@ -656,7 +611,6 @@ export const isPageComplete = (formData, formState) => {
   if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
     return false;
   }
-
   return true;
 };
 
