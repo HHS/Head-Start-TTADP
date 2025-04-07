@@ -2476,7 +2476,7 @@ describe('createMonitoringGoals', () => {
 
     // CASE 6: Does not create a monitoring goal for a grant that has a monitoring review with a status that is not complete.
     const grant6Goals = await Goal.findAll({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
-    console.log('grant6Goals in CI:', grant6Goals.map(g => g.toJSON()));
+    console.log('grant6Goals in CI:', grant6Goals.map((g) => g.toJSON()));
     expect(grant6Goals.length).toBe(0);
 
     // CASE 7: Does not create a monitoring goal for a grant that has a monitoring finding with a status that is not active.
