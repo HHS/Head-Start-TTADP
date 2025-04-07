@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from "lodash";
-import colors from '../../../../../colors';
+import { uniqueId } from 'lodash';
 import DataCard from '../../../../../components/DataCard';
 import DescriptionItem from './DescriptionItem';
 import DescriptionList from './DescriptionList';
 import FindingWithinReview from './FindingWithinReview';
 import SpecialistTags from './SpecialistTags';
-import Tag from "../../../../../components/Tag";
+import Tag from '../../../../../components/Tag';
 import ToggleTtaActivityButton from './ToggleTtaActivityButton';
 
 export default function ReviewCard({ review, regionId }) {
