@@ -969,7 +969,7 @@ commands:
               -u ${<< parameters.cg_username >>} \
               -p ${<< parameters.cg_password >>} \
               -o ${<< parameters.cg_org >>} \
-              -s ${<< parameters.cloudgov_space >>}
+              -s ${<< parameters.cg_space >>}
       - run:
           name: Migrate database
           command: |
