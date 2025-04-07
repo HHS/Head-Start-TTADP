@@ -889,7 +889,7 @@ commands:
           task_name: "process"
           task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
           task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
-          config: "process"
+          cfg_prefix: "process"
           success_message: ':database: Restored data processed'
           directory: "./"
           timeout: "3000"
@@ -920,7 +920,7 @@ commands:
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-          config: "<< parameters.backup_prefix >>-restore"
+          cfg_prefix: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
           timeout: "1800"
 
@@ -936,7 +936,7 @@ commands:
           task_name: "retention"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
-          config: "<< parameters.backup_prefix >>-backup"
+          cfg_prefix: "<< parameters.backup_prefix >>-backup"
           success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
 
   cf_migrate:
