@@ -435,16 +435,16 @@ describe('GoalCard', () => {
     expect(screen.queryAllByText(/2023-01-01/i).length).toBe(2);
   });
 
-  it("renders a merged goal", () => {
+  it('renders a merged goal', () => {
     const mergedGoal = {
       ...goal,
-      createdVia: "merge",
+      createdVia: 'merge',
     };
 
     renderGoalCard({ ...DEFAULT_PROPS }, mergedGoal);
-    const tags = screen.getAllByText("Merged");
+    const tags = screen.getAllByText('Merged');
     expect(tags.length).toBe(1);
-    expect(tags[0].textContent).toBe("Merged");
+    expect(tags[0].textContent).toBe('Merged');
     expect(tags[0]).toBeVisible();
   });
 
