@@ -261,7 +261,6 @@ run_script() {
         set -e
         return $script_exit_status
     else
-        echo "$script_output"
         set -e
         return 0
     fi
@@ -531,17 +530,15 @@ function perform_restore() {
     export_validate "VCAP_SERVICES"
 
     log "INFO" "Verify or install awscli"
-    run_script 'awscli_install.sh' '../../common/scripts/ > install.log' || {
+    run_script 'awscli_install.sh' '../../common/scripts/' || {
         log "ERROR" "Failed to install or verify awscli"
-        log "echo $(cat install.log)"
         set -e
         exit 1
     }
 
     log "INFO" "Verify or install postgrescli"
-    run_script 'postgrescli_install.sh' '../../common/scripts/ > install.log' || {
+    run_script 'postgrescli_install.sh' '../../common/scripts/' || {
         log "ERROR" "Failed to install or verify postgrescli"
-        log "echo $(cat install.log)"
         set -e
         exit 1
     }
