@@ -22,6 +22,9 @@ process.env.REACT_APP_WEBSOCKET_URL = 'wss://test';
 window.MutationObserver = MutationObserver;
 jest.setTimeout(50000);
 
+// mock scrollTo as it's not implemented in JSDOM (and needed by Routes.js tests)
+document.documentElement.scrollTo = jest.fn();
+
 afterEach(() => {
   if (global.gc) global.gc();
 });
