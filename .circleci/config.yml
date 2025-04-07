@@ -551,7 +551,6 @@ jobs:
       - run:
           name: Build backend assets
           command: yarn build
-      - run: exit 1
       # - cf_restore:
       #     target_env: 'dev'
       #     rds_service_name: ttahub-process
