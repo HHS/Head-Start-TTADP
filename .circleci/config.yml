@@ -961,6 +961,10 @@ commands:
       cg_org:
         description: "Name of cloudgov org to target"
         type: string
+      cg_api:
+        description: "Cloud Foundry API endpoint"
+        type: string
+        default: "https://api.fr.cloud.gov"
     steps:
       - run:
           name: Login with service account
