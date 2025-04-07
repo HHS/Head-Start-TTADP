@@ -908,9 +908,10 @@ commands:
             fi
       - cf_automation_task:
           auth_client_secret: << parameters.auth_client_secret >>
-          cloudgov_username: << parameters.cloudgov_username >>
-          cloudgov_password: << parameters.cloudgov_password >>
-          cloudgov_space: << parameters.cloudgov_space >>
+          cg_username: << parameters.cloudgov_username >>
+          cg_password: << parameters.cloudgov_password >>
+          cg_space: << parameters.cloudgov_space >>
+          cg_org: << parameters.cloudgov_org >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
@@ -942,15 +943,28 @@ commands:
       target_env:
         description: "Desired env to run task in"
         type: string
-      cg_api:
-        description: "Cloud Foundry API endpoint"
-        type: string
-        default: https://api.fr.cloud.gov
       task_command:
         description: "Command to run for the automation task"
         type: string
       task_args:
         description: "Arguments for the automation task"
+        type: string
+      cg_api:
+        description: "Cloud Foundry API endpoint"
+        type: string
+        default: https://api.fr.cloud.gov
+      cg_username:
+        description: "Cloud Gov username"
+        type: string
+      cg_password:
+        description: "Cloud Gov password"
+        type: string
+      cg_org:
+        description: "Cloud Gov Org"
+        type: string
+        default: hhs-acf-ohs-tta
+      cg_space:
+        description: "Cloud Gov Space"
         type: string
       config:
         description: "Config prefix for the automation task"
@@ -966,12 +980,6 @@ commands:
         description: 'directory to root to push'
         type: string
         default: "./automation"
-    environment:
-      cg_api: << parameters.cg_api >>
-      cg_username: << parameters.cg_username >>
-      cg_password: << parameters.cg_password >>
-      cg_org: << parameters.cg_org >>
-      cg_space: << parameters.cg_space >>
     steps:
       - run:
           command: echo "Running << parameters.task_command >>"
@@ -1015,11 +1023,11 @@ commands:
       - run:
           name: Login with service account
           command: |
-            cf login -a ${cg_api} \
-              -u ${cg_username} \
-              -p ${cg_password} \
-              -o ${cg_org} \
-              -s ${cg_space}
+            cf login -a << parameters.cg_api >> \
+              -u << parameters.cloudgov_username >> \
+              -p << parameters.cloudgov_password >> \
+              -o << parameters.cloudgov_org >> \
+              -s << parameters.cloudgov_space >>
       - run:
           name: Start Log Monitoring
           command: |
