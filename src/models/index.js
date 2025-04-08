@@ -65,11 +65,11 @@ fs
   });
 
 const descriptiveDetails = () => {
-  const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : null;
-  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : null;
-  const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : null;
-  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : null;
-  const descriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : null;
+  const loggedUser = httpContext.get('loggedUser') || null;
+  const transactionId = httpContext.get('transactionId') || null;
+  const sessionSig = httpContext.get('sessionSig') || null;
+  const impersonationId = httpContext.get('impersonationUserId') || null;
+  const descriptor = httpContext.get('auditDescriptor') || null;
 
   return {
     ...(descriptor && { descriptor }),
