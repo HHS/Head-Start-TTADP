@@ -950,7 +950,7 @@ commands:
             fi
       - cf_automation_task:
           target_env: << parameters.target_env >>
-          task_name: "restore s3:<< parameters.backup_prefix >> to rds:<< parameters.rds_service_name >>"
+          task_name: "restore-s3:<< parameters.backup_prefix >>-to-rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           cfg_prefix: "<< parameters.backup_prefix >>-restore"
