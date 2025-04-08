@@ -637,6 +637,19 @@ jobs:
       - cf_cmd:
           the_command: "yarn createMonitoringGoalsCLI"
           target_env: << parameters.target_env >>
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - install_cf_tools      
+      - cf_login:
+          target_env: << parameters.target_env >>
+      - run: |
+          cf connect-to-service tta-smarthub-<< parameters.target_env >> ttahub-<< parameters.target_env >>
+          SELECT LEFT(r.name,35) recipient, "regionId" region, \
+            COUNT(*) cnt FROM "Goals" g JOIN "Grants" gr ON g."grantId" = gr.id \
+            JOIN "Recipients" r ON gr."recipientId" = r.id \
+            WHERE "createdVia" = 'monitoring' \
+            AND g."createdAt" > (NOW() - INTERVAL '1 hour') \
+            GROUP BY 1,2 ORDER BY 2,1;
 
 # ----------------- Commands -----------------
 
