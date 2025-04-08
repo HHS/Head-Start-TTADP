@@ -8,7 +8,7 @@ import { devices } from '@playwright/test';
 const config = {
   testDir: '.',
   outputDir: './test-results',
-  workers: 1, // this was originally set to 3, but changed to 2 when I saw data collisions, but tests have been improved since then so I think it's safe to go back to 3
+  workers: 1, // setting to a higher number may result in test failures, ymmv
   expect: {
     timeout: 20000,
   },

@@ -3,6 +3,12 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-console */
 
+/* accepts 2 args: a yaml filepath and an output filepath
+  * parses the yaml file and writes the env-format file
+  * usage: parse-env <in_file> <out_file>
+  * example: parse-env ./config.yaml ./config.env
+  */
+
 const fs = require('fs');
 const readline = require('readline');
 const { parseArgs } = require('node:util');
