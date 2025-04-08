@@ -966,8 +966,8 @@ commands:
           holds name of cloudgov space to target for application deployment"
         type: env_var_name
       cg_org:
-        description: "Name of cloudgov org to target"
         type: string
+        default: "hhs-acf-ohs-tta"
       cg_api:
         description: "Cloud Foundry API endpoint"
         type: string
@@ -979,7 +979,7 @@ commands:
             cf login -a << parameters.cg_api >> \
               -u ${<< parameters.cg_username >>} \
               -p ${<< parameters.cg_password >>} \
-              -o ${<< parameters.cg_org >>} \
+              -o << parameters.cg_org >> \
               -s ${<< parameters.cg_space >>}
       - run:
           name: Migrate database
