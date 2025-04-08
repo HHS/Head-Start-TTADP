@@ -154,7 +154,16 @@ export default function SingleRecipientSelect(
             value: recipient.id,
             grants: recipient.options,
           }))}
-          styles={selectOptionsReset}
+          styles={{
+            ...selectOptionsReset,
+            placeholder: (baseStyles) => ({
+              ...baseStyles,
+              color: 'black',
+              fontSize: '1rem',
+              fontWeight: '400',
+              lineHeight: '1.3',
+            }),
+          }}
           components={{
             DropdownIndicator: null,
           }}
