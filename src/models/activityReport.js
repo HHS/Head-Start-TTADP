@@ -157,6 +157,10 @@ export default (sequelize, DataTypes) => {
     activityReason: {
       type: DataTypes.STRING,
     },
+    reason: {
+      // Keep this for historical data in the db.
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
     version: {
       type: DataTypes.INTEGER,
       allowNull: false,
