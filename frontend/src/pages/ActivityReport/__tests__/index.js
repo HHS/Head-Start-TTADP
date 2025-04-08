@@ -1172,4 +1172,22 @@ describe('ActivityReport', () => {
       expect(screen.queryByText('Creator User')).not.toBeInTheDocument();
     });
   });
+
+  describe('reason for activity', () => {
+    it('shows the reason for activity', async () => {
+      const data = formData();
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        reasonForActivity: null,
+      });
+      renderActivityReport(1);
+
+      // We can select an activity reason.
+      const reasonSelect = await screen.findByLabelText(/why was this activity requested?/i);
+      act(() => userEvent.click(reasonSelect));
+      const reasonOption = await screen.findByText('Recipient requested');
+      act(() => userEvent.click(reasonOption));
+      expect(screen.getByText('Recipient requested')).toBeVisible();
+    });
+  });
 });
