@@ -216,7 +216,7 @@ const ActivitySummary = ({
           <FormItem
             label="Why was this activity requested? "
             name="activityReason"
-            required={false}
+            required
           >
             <Controller
               render={({ onChange: controllerOnChange, value, onBlur }) => (
