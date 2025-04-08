@@ -139,6 +139,23 @@ workflows:
           requires:
             - process_db
 
+  restore_db_cron:
+    # backup production db, process (anonymize) the data, then restore it into lower envs
+    triggers:
+    - schedule:
+            cron: "0 0 * * *"
+    jobs:
+      - backup_prod_db:
+          serial-group: "tta-automation-lock"
+      - process_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_prod_db
+      - restore_dbs:
+          serial-group: "tta-automation-lock"
+          requires:
+            - process_db
+
 # ----------------- Jobs -----------------
 
 jobs:
@@ -481,8 +498,6 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-            # If checksum is new, restore partial cache
             - v14-yarn-deps-
       - run: yarn deps
       - run:
@@ -1082,16 +1097,9 @@ commands:
               -p ${cg_password} \
               -o ${cg_org} \
               -s ${cg_space}
-      # - run:
-      #     name: Login with service account
-      #     command: |
-      #       cf login -a << parameters.cg_api >> \
-      #         -u ${<< parameters.cg_username >>} \
-      #         -p ${<< parameters.cg_password >>} \
-      #         -o << parameters.cg_org >> \
-      #         -s ${<< parameters.cg_space >>}
       - run:
           name: Watch task logs
+          background: true
           command: |
             #!/bin/bash
 
@@ -1121,7 +1129,6 @@ commands:
             # Kill the cf logs command
             kill -9 $TAIL_PID
             echo "cf logs command for tta-automation has been terminated."
-          background: true
       - run:
           name: "Run task: << parameters.task_name >> @ << parameters.target_env >>, << parameters.task_args >>"
           command: |
