@@ -546,17 +546,18 @@ jobs:
           s3_service_name: ttahub-db-backups
           backup_prefix: production
 
-  restore_dev_db:
+  restore_dbs:
     executor: docker-executor
     steps:
       - checkout
       - restore_cache:
           keys:
             - v14-yarn-deps-
-      - run: yarn deps
       - run:
           name: Build backend assets
-          command: yarn build
+          command: |
+            yarn deps
+            yarn build
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
           # cg_username: CLOUDGOV_PROD_USERNAME
@@ -573,86 +574,6 @@ jobs:
           cg_space: CLOUDGOV_DEV_SPACE
           cg_org: "hhs-acf-ohs-tta"
 
-  restore_dev_green_db:
-    executor: docker-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-
-      - run: yarn deps
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          # cg_username: CLOUDGOV_PROD_USERNAME
-          # cg_password: CLOUDGOV_PROD_PASSWORD
-          # cg_space: CLOUDGOV_PROD_SPACE
-          target_env: "prod"
-          rds_service_name: ttahub-dev-green
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-      - cf_migrate:
-          app_name: tta-smarthub-dev-green
-          cg_username: CLOUDGOV_DEV_USERNAME
-          cg_password: CLOUDGOV_DEV_PASSWORD
-          cg_space: CLOUDGOV_DEV_SPACE
-          cg_org: "hhs-acf-ohs-tta"
-
-  restore_dev_blue_db:
-    executor: docker-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-
-      - run: yarn deps
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          # cg_username: CLOUDGOV_PROD_USERNAME
-          # cg_password: CLOUDGOV_PROD_PASSWORD
-          # cg_space: CLOUDGOV_PROD_SPACE
-          target_env: "prod"
-          rds_service_name: ttahub-dev-blue
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-      - cf_migrate:
-          app_name: tta-smarthub-dev-blue
-          cg_username: CLOUDGOV_DEV_USERNAME
-          cg_password: CLOUDGOV_DEV_PASSWORD
-          cg_space: CLOUDGOV_DEV_SPACE
-          cg_org: "hhs-acf-ohs-tta"
-
-  restore_dev_red_db:
-    executor: docker-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-
-      - run: yarn deps
-      - run:
-          name: Build backend assets
-          command: yarn build
-      - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          # cg_username: CLOUDGOV_PROD_USERNAME
-          # cg_password: CLOUDGOV_PROD_PASSWORD
-          # cg_space: CLOUDGOV_PROD_SPACE
-          target_env: "prod"
-          rds_service_name: ttahub-dev-red
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-      - cf_migrate:
-          app_name: tta-smarthub-dev-red
-          cg_username: CLOUDGOV_DEV_USERNAME
-          cg_password: CLOUDGOV_DEV_PASSWORD
-          cg_space: CLOUDGOV_DEV_SPACE
-          cg_org: "hhs-acf-ohs-tta"
 
 # ----------------- Commands -----------------
 
@@ -1007,34 +928,47 @@ commands:
         description: "Name of Cloud Foundry cloud.gov application; must match
           application name specified in manifest"
         type: string
-      cg_username:
-        description: "Name of CircleCi project environment variable that
-          holds deployer username for cloudgov space"
-        type: env_var_name
-      cg_password:
-        description: "Name of CircleCi project environment variable that
-          holds deployer password for cloudgov space"
-        type: env_var_name
-      cg_space:
-        description: "Name of CircleCi project environment variable that
-          holds name of cloudgov space to target for application deployment"
-        type: env_var_name
-      cg_org:
+      target_env:
+        description: "Desired env to run cmd in"
         type: string
-        default: "hhs-acf-ohs-tta"
+      # cg_username:
+      #   description: "Name of CircleCi project environment variable that
+      #     holds deployer username for cloudgov space"
+      #   type: env_var_name
+      # cg_password:
+      #   description: "Name of CircleCi project environment variable that
+      #     holds deployer password for cloudgov space"
+      #   type: env_var_name
+      # cg_space:
+      #   description: "Name of CircleCi project environment variable that
+      #     holds name of cloudgov space to target for application deployment"
+      #   type: env_var_name
+      # cg_org:
+      #   type: string
+      #   default: "hhs-acf-ohs-tta"
       cg_api:
         description: "Cloud Foundry API endpoint"
         type: string
         default: "https://api.fr.cloud.gov"
     steps:
+      # - run:
+      #     name: Login with service account
+      #     command: |
+      #       cf login -a << parameters.cg_api >> \
+      #         -u ${<< parameters.cg_username >>} \
+      #         -p ${<< parameters.cg_password >>} \
+      #         -o << parameters.cg_org >> \
+      #         -s ${<< parameters.cg_space >>}
+      - set_env_vars:
+          target: << parameters.target_env >>
       - run:
           name: Login with service account
           command: |
-            cf login -a << parameters.cg_api >> \
-              -u ${<< parameters.cg_username >>} \
-              -p ${<< parameters.cg_password >>} \
-              -o << parameters.cg_org >> \
-              -s ${<< parameters.cg_space >>}
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
       - run:
           name: Migrate database
           command: |
@@ -1155,7 +1089,7 @@ commands:
               -o ${cg_org} \
               -s ${cg_space}
       - run:
-          name: Start Log Monitoring
+          name: Watch task logs
           command: |
             #!/bin/bash
 
@@ -1187,7 +1121,7 @@ commands:
             echo "cf logs command for tta-automation has been terminated."
           background: true
       - run:
-          name: cf_lambda - script to trigger task
+          name: "Run task: << parameters.task_name >> @ << parameters.target_env >>"
           command: |
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
