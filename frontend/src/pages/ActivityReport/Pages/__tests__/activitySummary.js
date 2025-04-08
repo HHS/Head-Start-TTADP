@@ -18,7 +18,7 @@ const RenderActivitySummary = ({ passedGroups = null, passedGoals = [] }) => {
       activityRecipients: [],
       targetPopulations: [],
       activityReportCollaborators: [],
-      reason: [],
+      activityReason: null,
     },
   });
 
@@ -184,6 +184,11 @@ describe('isPageComplete', () => {
 
   it('validates language', async () => {
     const result = isPageComplete({ ...FORM_DATA, language: [] }, { isValid: false });
+    expect(result).toBe(false);
+  });
+
+  it('validates language has value', async () => {
+    const result = isPageComplete({ ...FORM_DATA, language: null }, { isValid: false });
     expect(result).toBe(false);
   });
 });
