@@ -143,7 +143,11 @@ workflows:
     # backup production db, process (anonymize) the data, then restore it into lower envs
     triggers:
     - schedule:
-            cron: "0 0 * * *"
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
     jobs:
       - backup_prod_db:
           serial-group: "tta-automation-lock"
