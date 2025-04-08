@@ -512,7 +512,8 @@ jobs:
   process_temp_db:
     executor: docker-executor
     steps:
-      - cf_process
+      - cf_process:
+          target_env: prod
 
   backup_temp_db:
     executor: docker-executor
@@ -924,6 +925,8 @@ commands:
 
   cf_process:
     description: "Process database from S3"
+    parameters:
+      target_env: { type: string }
     steps:
     - cf_automation_task:
         target_env: << parameters.target_env >>
