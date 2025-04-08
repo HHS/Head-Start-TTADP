@@ -162,7 +162,6 @@ export default function SingleRecipientSelect(
           value={newSelectedRecipient || selectedRecipients}
           getOptionLabel={(option) => option.label}
           getOptionValue={(option) => option.value}
-          onBlur={onBlurActivityRecipients}
         />
         {
           showRecipientGrants && (

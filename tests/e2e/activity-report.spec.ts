@@ -89,7 +89,6 @@ interface ActivitySummaryConfig {
 }
 
 const defaultActivitySummaryConfig = {
-  recipients: 2,
   ttaType: 'Training',
 } as ActivitySummaryConfig;
 
@@ -102,50 +101,52 @@ async function activitySummary(
   page: Page,
   config: ActivitySummaryConfig = defaultActivitySummaryConfig,
 ) {
-  const { recipients, ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
+  const { ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
 
-  await page.getByRole('group', { name: /Was this activity for a recipient or other entity\?/i }).locator('label').filter({ hasText: 'Recipient' }).click();
-  await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
-
-  if (recipients) {
-  // select recipients
-    for (let i = 0; i < recipients; i++) {
-      await page.keyboard.press('Enter'); 
-    }
-  } else {
-    await page.keyboard.press('Enter');
-  }
+  // Recipient and grants.
+  await page.getByText('Recipient name *- Select -').click();
+  await page.getByText('Agency 1.a in region 1, Inc.', { exact: true }).click();
+  await page.getByText('Agency 1.a in region 1, Inc. - 01HP044444 - EHS').click();
+  await page.getByText('Agency 1.a in region 1, Inc. - 01HP044445 - Migrant HS').click();
 
   await blur(page);
 
+  // Recipient participants.
+  await page.getByText('Recipient participants *-').click();
+  await page.getByText('Center Director / Site Director', { exact: true }).click();
+  await page.getByText('Coach', { exact: true }).click();
+  await blur(page);
+  // await page.getByLabel('Recipient participants *').press('Escape');
+
+  // Why as the activity requested?
+  await page.getByText('Why was this activity').click();
+  await page.getByText('Recipient requested', { exact: true }).click();
+
+  // Target  populations addressed.
   await page.getByText('Target populations addressed *- Select -').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
 
-  await page.getByRole('group', { name: /Who requested this activity\? Use "Regional Office" for TTA not requested by recipient/i }).locator('label').filter({ hasText: 'Recipient' }).click();
-  await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').click();
-  await page.keyboard.type('Change in scope');
-  await page.keyboard.press('Enter');
-  await blur(page);
-
+  // Start and End Date.
   await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
   await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
+
+  // Duration.
   await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
+
+  // TTA type.
   await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText(ttaType || 'Training').click();
   await page.getByText('Virtual').click();
-  await page.getByText('Video').click();
-  await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
-  await blur(page);
 
+  // Language.
   await page.getByText('Language used *- Select -').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
 
-  await page.getByLabel('Number of participants involved *').fill('5');
+  // Number of participants involved.
+  await page.getByLabel('Number of participants  *').fill('5');
 }
 
 async function nextSteps(page: Page, isForOtherEntity: boolean = false) {
