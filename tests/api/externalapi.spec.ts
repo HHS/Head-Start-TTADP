@@ -8,7 +8,7 @@ test('get /v1/activity-reports/display/R01-AR-9999', async ({ request }) => {
   );
 
   expect(response.status()).toBe(200);
-
+  console.log('Response:', await response.json());
   const schema = Joi.object({
     data: Joi.object({
       id: Joi.string().required(),
