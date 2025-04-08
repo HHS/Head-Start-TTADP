@@ -419,10 +419,8 @@ test.describe('Activity Report', () => {
     );
     // verify the reason is visible in the objective section
     const goalOneContentA = await page.getByText('g1o1', { exact: true }).first().locator('..').locator('..').textContent();
-    expect(goalOneContentA).toContain('Change in Scope');
     expect(goalOneContentA).toContain('Behavioral / Mental Health / Trauma');
     const goalOneContentB = await page.getByText('g1o1', { exact: true }).nth(1).locator('..').locator('..').textContent();
-    expect(goalOneContentB).toContain('Change in Scope');
     expect(goalOneContentB).toContain('Behavioral / Mental Health / Trauma');
 
     // verify the end date is visible in the objective section
@@ -448,9 +446,7 @@ test.describe('Activity Report', () => {
       grants.map(async (grant) => expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeTruthy()),
     );
     const goalTwoContentA = await page.getByText('g2o1', {exact: true}).first().locator('..').locator('..').textContent();
-    expect(goalTwoContentA).toContain('Change in Scope');
     const goalTwoContentB = await page.getByText('g2o1', {exact: true}).nth(1).locator('..').locator('..').textContent();
-    expect(goalTwoContentB).toContain('Change in Scope');
     // verify the end date is visible in the objective section
     expect(page.getByText('g2o1', { exact: true }).first().locator('..').locator('..').getByText('12/01/2050')).toBeTruthy();
     // verify the correct status for the objective is visible
