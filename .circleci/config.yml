@@ -502,6 +502,7 @@ jobs:
   backup_prod_db:
     executor: docker-executor
     steps:
+      - checkout
       - cf_backup:
           target_env: prod
           rds_service_name: ttahub-prod
@@ -641,13 +642,14 @@ jobs:
       - cf_login:
           target_env: << parameters.target_env >>
       - run: |
-          cf connect-to-service tta-smarthub-<< parameters.target_env >> ttahub-<< parameters.target_env >>
-          SELECT LEFT(r.name,35) recipient, "regionId" region, \
+          cf connect-to-service tta-smarthub-<< parameters.target_env >> ttahub-<< parameters.target_env <<EOF
+            SELECT LEFT(r.name,35) recipient, "regionId" region, \
             COUNT(*) cnt FROM "Goals" g JOIN "Grants" gr ON g."grantId" = gr.id \
             JOIN "Recipients" r ON gr."recipientId" = r.id \
             WHERE "createdVia" = 'monitoring' \
             AND g."createdAt" > (NOW() - INTERVAL '1 hour') \
             GROUP BY 1,2 ORDER BY 2,1;
+            EOF
 
 # ----------------- Commands -----------------
 
