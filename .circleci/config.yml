@@ -112,7 +112,8 @@ workflows:
         filters:
           branches:
             only:
-              - dev # add more   
+              - dev
+              - prod
     jobs:
       - run_import_job: { target_env: dev }
 
@@ -128,9 +129,9 @@ workflows:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
     jobs:
       # - backup_prod_db
-      #    serial-group: "tta-db-lock"
+      #    serial-group: "tta-automation-lock"
       # - process_db:
-      #    serial-group: "tta-db-lock"
+      #    serial-group: "tta-automation-lock"
       #     requires:
       #       - backup_prod_db
       - restore_dev_db:
@@ -514,7 +515,6 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             - v14-yarn-deps-
       - run: yarn deps
       - run:
@@ -559,9 +559,10 @@ jobs:
           command: yarn build
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cg_username: CLOUDGOV_PROD_USERNAME
-          cg_password: CLOUDGOV_PROD_PASSWORD
-          cg_space: CLOUDGOV_PROD_SPACE
+          # cg_username: CLOUDGOV_PROD_USERNAME
+          # cg_password: CLOUDGOV_PROD_PASSWORD
+          # cg_space: CLOUDGOV_PROD_SPACE
+          target_env: "prod"
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
@@ -585,9 +586,10 @@ jobs:
           command: yarn build
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cg_username: CLOUDGOV_PROD_USERNAME
-          cg_password: CLOUDGOV_PROD_PASSWORD
-          cg_space: CLOUDGOV_PROD_SPACE
+          # cg_username: CLOUDGOV_PROD_USERNAME
+          # cg_password: CLOUDGOV_PROD_PASSWORD
+          # cg_space: CLOUDGOV_PROD_SPACE
+          target_env: "prod"
           rds_service_name: ttahub-dev-green
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
@@ -611,9 +613,10 @@ jobs:
           command: yarn build
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cg_username: CLOUDGOV_PROD_USERNAME
-          cg_password: CLOUDGOV_PROD_PASSWORD
-          cg_space: CLOUDGOV_PROD_SPACE
+          # cg_username: CLOUDGOV_PROD_USERNAME
+          # cg_password: CLOUDGOV_PROD_PASSWORD
+          # cg_space: CLOUDGOV_PROD_SPACE
+          target_env: "prod"
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
@@ -637,9 +640,10 @@ jobs:
           command: yarn build
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          cg_username: CLOUDGOV_PROD_USERNAME
-          cg_password: CLOUDGOV_PROD_PASSWORD
-          cg_space: CLOUDGOV_PROD_SPACE
+          # cg_username: CLOUDGOV_PROD_USERNAME
+          # cg_password: CLOUDGOV_PROD_PASSWORD
+          # cg_space: CLOUDGOV_PROD_SPACE
+          target_env: "prod"
           rds_service_name: ttahub-dev-red
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
@@ -953,9 +957,10 @@ commands:
     description: "Restore backup database from S3"
     parameters:
       auth_client_secret: { type: env_var_name }
-      cg_username: { type: env_var_name }
-      cg_password: { type: env_var_name }
-      cg_space: { type: env_var_name }
+      target_env: { type: string }
+      # cg_username: { type: env_var_name }
+      # cg_password: { type: env_var_name }
+      # cg_space: { type: env_var_name }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
       backup_prefix: { type: string }
@@ -969,9 +974,10 @@ commands:
             fi
       - cf_automation_task:
           auth_client_secret: << parameters.auth_client_secret >>
-          cg_username: << parameters.cg_username >>
-          cg_password: << parameters.cg_password >>
-          cg_space: << parameters.cg_space >>
+          # cg_username: << parameters.cg_username >>
+          # cg_password: << parameters.cg_password >>
+          # cg_space: << parameters.cg_space >>
+          target_env: << parameters.target_env >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
@@ -1035,51 +1041,11 @@ commands:
             cf run-task << parameters.app_name >> \
               --command "yarn db:migrate:prod" \
               --name "migrate"
-
-  cf_automation_task:
-    description: "Login to Cloud Foundry space, run automation task, and send notification"
-    parameters:
-      task_name:
-        description: "Name of the automation task to run"
-        type: string
-      task_command:
-        description: "Command to run for the automation task"
-        type: string
-      task_args:
-        description: "Arguments for the automation task"
-        type: string
-      cg_api:
-        description: "Cloud Foundry API endpoint"
-        type: string
-        default: "https://api.fr.cloud.gov"
-      auth_client_secret:
-        type: env_var_name
-      cg_username:
-        type: env_var_name
-      cg_password:
-        type: env_var_name
-      cg_space:
-        type: env_var_name
-      cg_org:
-        type: string
-        default: "hhs-acf-ohs-tta"
-      cfg_prefix:
-        description: "Config prefix for the automation task"
-        type: string
-      success_message:
-        description: "Success message for Slack notification"
-        type: string
-      timeout:
-        description: "Max duration allowed for task"
-        type: string
-        default: "1800"
-      directory:
-        description: 'directory to root to push'
-        type: string
-        default: "./automation"
+  
+  install_automation_deps:
     steps:
-      - run:
-          command: echo "Running << parameters.task_command >>"
+      - attach_workspace:
+          at: .
       - run:
           name: Install Dependencies
           command: |
@@ -1117,14 +1083,74 @@ commands:
 
             # cleanup
             sudo rm -rf /var/lib/apt/lists/*
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  cf_automation_task:
+    description: "Login to Cloud Foundry space, run automation task, and send notification"
+    parameters:
+      task_name:
+        description: "Name of the automation task to run"
+        type: string
+      task_command:
+        description: "Command to run for the automation task"
+        type: string
+      task_args:
+        description: "Arguments for the automation task"
+        type: string
+      cg_api:
+        description: "Cloud Foundry API endpoint"
+        type: string
+        default: "https://api.fr.cloud.gov"
+      auth_client_secret:
+        type: env_var_name
+      # cg_username:
+      #   type: env_var_name
+      # cg_password:
+      #   type: env_var_name
+      # cg_space:
+      #   type: env_var_name
+      # cg_org:
+      #   type: string
+      #   default: "hhs-acf-ohs-tta"
+      cfg_prefix:
+        description: "Config prefix for the automation task"
+        type: string
+      success_message:
+        description: "Success message for Slack notification"
+        type: string
+      timeout:
+        description: "Max duration allowed for task"
+        type: string
+        default: "1800"
+      directory:
+        description: 'directory to root to push'
+        type: string
+        default: "./automation"
+    steps:
+      - run:
+          command: echo "Running << parameters.task_command >>"
+      - install_automation_deps
+      - set_env_vars:
+          target: << parameters.target_env >>
+      # - run:
+      #     name: Login with service account
+      #     command: |
+      #       cf login -a << parameters.cg_api >> \
+      #         -u ${<< parameters.cg_username >>} \
+      #         -p ${<< parameters.cg_password >>} \
+      #         -o << parameters.cg_org >> \
+      #         -s ${<< parameters.cg_space >>}
       - run:
           name: Login with service account
           command: |
-            cf login -a << parameters.cg_api >> \
-              -u ${<< parameters.cg_username >>} \
-              -p ${<< parameters.cg_password >>} \
-              -o << parameters.cg_org >> \
-              -s ${<< parameters.cg_space >>}
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
       - run:
           name: Start Log Monitoring
           command: |
