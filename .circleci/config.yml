@@ -912,7 +912,6 @@ commands:
         type: string
         default: 'prod'
     steps:
-      - run: './automation/cf/scripts/idol.sh'
       - cf_automation_task:
           target_env: << parameters.target_env >>
           task_name: "process"
