@@ -106,8 +106,8 @@ async function activitySummary(
   // Recipient and grants.
   await page.getByText('Recipient name *- Select -').click();
   await page.getByText('Agency 1.a in region 1, Inc.', { exact: true }).click();
-  await page.getByText('Agency 1.a in region 1, Inc. - 01HP044444 - EHS').click();
-  await page.getByText('Agency 1.a in region 1, Inc. - 01HP044445 - Migrant HS').click();
+  await page.getByText(/Agency 1.a in region 1, Inc. - 01HP044444/i).click();
+  await page.getByText(/Agency 1.a in region 1, Inc. - 01HP044445/i).click();
 
   await blur(page);
 
