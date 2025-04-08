@@ -20,9 +20,8 @@ function log() {
 # Parameter Validation
 function parameters_validate() {
     local param="$1"
-    local param_name="$2"
     if [[ -z "${param}" ]]; then
-        log "ERROR" "Parameter ${2} is unset or empty."
+        log "ERROR" "Parameter is unset or empty @ $(caller)."
         set -e
         exit 1
     fi
@@ -225,7 +224,7 @@ run_script() {
     local script_dir="$2"
     shift 2  # Shift the first two arguments out, leaving any additional arguments
 
-    parameters_validate "${script_name}" "script_name"
+    parameters_validate "${script_name}"
 
     log "INFO" "Resolve the full path of the script"
     local script_path
@@ -284,31 +283,31 @@ function rds_prep() {
   local db_server=$2
 
   log "INFO" "Preparing RDS configurations."
-  parameters_validate "${json_blob}" "json_blob"
-  parameters_validate "${db_server}" "db_server"
+  parameters_validate "${json_blob}"
+  parameters_validate "${db_server}"
 
   log "INFO" "Extracting RDS data from provided JSON."
   local rds_data
   rds_data=$(process_json "${json_blob}" '."aws-rds"')
-  parameters_validate "${rds_data}" "rds_data"
+  parameters_validate "${rds_data}"
   local server_data
   server_data=$(find_json_object "${rds_data}" "name" "${db_server}")
-  parameters_validate "${server_data}" 'server_data'
+  parameters_validate "${server_data}"
   local db_host
   db_host=$(process_json "${server_data}" ".credentials.host" "-r")
-  parameters_validate "${db_host}" "db_host"
+  parameters_validate "${db_host}"
   local db_port
   db_port=$(process_json "${server_data}" ".credentials.port" "-r")
-  parameters_validate "${db_port}" 'db_port'
+  parameters_validate "${db_port}"
   local db_username
   db_username=$(process_json "${server_data}" ".credentials.username" "-r")
-  parameters_validate "${db_username}" "db_username"
+  parameters_validate "${db_username}"
   local db_password
   db_password=$(process_json "${server_data}" ".credentials.password" "-r")
-  parameters_validate "${db_password}" 'db_password'
+  parameters_validate "${db_password}"
   local db_name
   db_name=$(process_json "${server_data}" ".credentials.name" "-r")
-  parameters_validate "${db_name}" 'db_name'
+  parameters_validate "${db_name}"
 
   log "INFO" "Configuring PostgreSQL client environment."
   export PGHOST="${db_host}"
@@ -359,28 +358,28 @@ function aws_s3_prep() {
   local s3_server=$2
 
   log "INFO" "Preparing AWS S3 configurations using input parameters."
-  parameters_validate "${json_blob}" 'json_blob'
-  parameters_validate "${s3_server}" 's3_server'
+  parameters_validate "${json_blob}"
+  parameters_validate "${s3_server}"
 
   log "INFO" "Processing JSON data for S3 configuration."
   local s3_data
   s3_data=$(process_json "${json_blob}" '."s3"')
-  parameters_validate "${s3_data}" 's3_data'
+  parameters_validate "${s3_data}"
   local server_data
   server_data=$(find_json_object "${s3_data}" "name" "${s3_server}")
-  parameters_validate "${server_data}" 'server_data'
+  parameters_validate "${server_data}" 
   local s3_access_key_id
   s3_access_key_id=$(process_json "${server_data}" ".credentials.access_key_id" "-r")
-  parameters_validate "${s3_access_key_id}" 's3_access_key_id'
+  parameters_validate "${s3_access_key_id}"
   local s3_secret_access_key
   s3_secret_access_key=$(process_json "${server_data}" ".credentials.secret_access_key" "-r")
-  parameters_validate "${s3_secret_access_key}" 's3_secret_access_key'
+  parameters_validate "${s3_secret_access_key}"
   local s3_bucket
   s3_bucket=$(process_json "${server_data}" ".credentials.bucket" "-r")
-  parameters_validate "${s3_bucket}" 's3_bucket'
+  parameters_validate "${s3_bucket}"
   local s3_region
   s3_region=$(process_json "${server_data}" ".credentials.region" "-r")
-  parameters_validate "${s3_region}" 's3_region'
+  parameters_validate "${s3_region}"
   log "INFO" "Setting AWS CLI environment variables."
   export AWS_ACCESS_KEY_ID="${s3_access_key_id}"
   export AWS_SECRET_ACCESS_KEY="${s3_secret_access_key}"
@@ -449,7 +448,7 @@ function aws_s3_download_password() {
     log "INFO" "Downloading backup password from S3..."
     local password
     password=$(aws s3 cp "s3://${password_file_path}" -)
-    parameters_validate "${password}" 'password'
+    parameters_validate "${password}"
 
     echo "${password}"
 }
@@ -523,9 +522,9 @@ function perform_restore() {
     local aws_s3_server=$3
 
     log "INFO" "Validate parameters and exports"
-    parameters_validate "${backup_filename_prefix}" "backup_filename_prefix"
-    parameters_validate "${rds_server}" "rds_server"
-    parameters_validate "${aws_s3_server}" "aws_s3_server"
+    parameters_validate "${backup_filename_prefix}"
+    parameters_validate "${rds_server}"
+    parameters_validate "${aws_s3_server}"
 
     export_validate "VCAP_SERVICES"
 
@@ -588,10 +587,10 @@ function perform_restore() {
     md5_file_path="${backup_file_path%.zenc}.md5"
     sha256_file_path="${backup_file_path%.zenc}.sha256"
     password_file_path="${backup_file_path%.zenc}.pwd"
-    parameters_validate "${backup_file_path}" "backup_file_path"
-    parameters_validate "${md5_file_path}" "md5_file_path"
-    parameters_validate "${sha256_file_path}" "sha256_file_path"
-    parameters_validate "${password_file_path}" "password_file_path"
+    parameters_validate "${backup_file_path}"
+    parameters_validate "${md5_file_path}"
+    parameters_validate "${sha256_file_path}"
+    parameters_validate "${password_file_path}"
 
     log "INFO" "Downloading backup password"
     local backup_password
