@@ -413,7 +413,7 @@ function unbind_all_services() {
 
     # Get the list of services bound to the application
     local services
-    services=$(cf services | grep "$app_name" | awk '{print $1}') >&2
+    services=$(cf services | grep "$app_name" | awk '{print $1}') >&2 || true
 
     if [[ -z "$services" ]]; then
         return 0
