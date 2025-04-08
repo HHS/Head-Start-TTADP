@@ -123,7 +123,7 @@ workflows:
     jobs:
       - run_import_job: { target_env: dev }
 
-  backup_restore_db:
+  restore_db_manual:
     # backup production db, process (anonymize) the data, then restore it into lower envs
     when:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
@@ -464,11 +464,11 @@ jobs:
       - restore_cache:
           keys:
             - v14-yarn-deps-
-      - run: yarn deps
       - run:
           name: Build backend assets
-          command: yarn build
-      - run: exit 1
+          command: |
+            yarn deps
+            yarn build
       - cf_backup:
           target_env: prod
           rds_service_name: ttahub-prod
@@ -887,13 +887,15 @@ commands:
           target_env: << parameters.target_env >>
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-          config: "<< parameters.backup_prefix >>-backup"
+          cfg_prefix: "<< parameters.backup_prefix >>-backup"
           success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
 
   cf_process:
     description: "Process database from S3"
     parameters:
       target_env: { type: string }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
     steps:
       - cf_automation_task:
           target_env: << parameters.target_env >>
