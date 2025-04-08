@@ -488,11 +488,7 @@ jobs:
       - run:
           name: Build backend assets
           command: yarn build
-      - run: exit 1
-      - cf_process:
-          rds_service_name: ttahub-process
-          s3_service_name: ttahub-db-backups
-          backup_prefix: production
+      - cf_process
 
   restore_dbs:
     executor: docker-executor
@@ -893,9 +889,9 @@ commands:
   cf_process:
     description: "Process database from S3"
     parameters:
-      target_env: { type: string }
-      rds_service_name: { type: string }
-      s3_service_name: { type: string }
+      target_env:
+        type: string
+        default: 'prod'
     steps:
       - cf_automation_task:
           target_env: << parameters.target_env >>
