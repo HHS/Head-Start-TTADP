@@ -563,10 +563,11 @@ jobs:
           backup_prefix: processed
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
-          cg_username: CLOUDGOV_DEV_USERNAME
-          cg_password: CLOUDGOV_DEV_PASSWORD
-          cg_space: CLOUDGOV_DEV_SPACE
-          cg_org: "hhs-acf-ohs-tta"
+          target_env: 'dev'
+          # cg_username: CLOUDGOV_DEV_USERNAME
+          # cg_password: CLOUDGOV_DEV_PASSWORD
+          # cg_space: CLOUDGOV_DEV_SPACE
+          # cg_org: "hhs-acf-ohs-tta"
 
 
 # ----------------- Commands -----------------
