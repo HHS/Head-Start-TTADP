@@ -141,8 +141,8 @@ workflows:
           #   - backup_prod_db
       - process_temp_db:
           serial-group: "tta-automation-lock"
-          # requires:
-          #   - backup_prod_db
+          requires:
+             - restore_prod_to_temp
       - backup_temp_db:
           serial-group: "tta-automation-lock"
           requires:
