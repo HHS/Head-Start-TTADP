@@ -308,7 +308,7 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
     });
 
     if (objectives.length > 0) {
-      throw new Error('Cannot close a goal with open objectives.');
+      throw new Error(`Cannot close a goal ${instance.id} with open objectives. ${objectives[0].id} is open.`);
     }
   }
 };
