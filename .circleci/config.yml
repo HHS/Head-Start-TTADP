@@ -637,8 +637,6 @@ jobs:
       - cf_cmd:
           the_command: "yarn createMonitoringGoalsCLI"
           target_env: << parameters.target_env >>
-      - set_env_vars:
-          target_env: << parameters.target_env >>
       - install_cf_tools      
       - cf_login:
           target_env: << parameters.target_env >>
@@ -813,6 +811,23 @@ commands:
                 \"description\": \"${full_env} Successfully Deployed\"
               }
             }"
+
+  cf_login:
+    description: "Login to Cloud Foundry space with service account credentials"
+    parameters:
+      target_env:
+        type: string
+        default: << pipeline.git.branch >>
+    steps:
+      - set_env_vars
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
