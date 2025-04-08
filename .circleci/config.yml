@@ -514,6 +514,12 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - v15-yarn-deps-
+      - run: |
+          yarn deps
+          yarn build
       - cf_process:
           target_env: prod
 
