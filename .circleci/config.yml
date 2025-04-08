@@ -915,7 +915,7 @@ commands:
           target_env: << parameters.target_env >>
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-          cfg_prefix: "<< parameters.backup_prefix >>-backup"
+          config: "<< parameters.backup_prefix >>-backup"
           success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
 
   cf_process:
@@ -928,7 +928,7 @@ commands:
         task_name: "process"
         task_command: "cd /home/vcap/app/automation/nodejs/scripts; bash ./run.sh"
         task_args: '["/home/vcap/app/build/server/src/tools/processDataCLI.js"]'
-        cfg_prefix: "process"
+        config: "process"
         success_message: ':database: Restored data processed'
         directory: "./"
         timeout: "3000"
@@ -953,7 +953,7 @@ commands:
           task_name: "restore-s3:<< parameters.backup_prefix >>-to-rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-          cfg_prefix: "<< parameters.backup_prefix >>-restore"
+          config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
           timeout: "1800"
 
@@ -969,7 +969,7 @@ commands:
           task_name: "retention"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_retention.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.s3_service_name >>"]'
-          cfg_prefix: "<< parameters.backup_prefix >>-backup"
+          config: "<< parameters.backup_prefix >>-backup"
           success_message: ':database: "<< parameters.backup_prefix >>" retention processed'
 
   cf_migrate:
@@ -1059,8 +1059,8 @@ commands:
       target_env:
         description: "Environment to run the task in"
         type: string
-      cfg_prefix:
-        description: "Config prefix for the automation task"
+      config:
+        description: "Config to use for the automation task"
         type: string
       success_message:
         description: "Success message for Slack notification"
@@ -1126,7 +1126,7 @@ commands:
           command: |
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
-              --arg config "<< parameters.cfg_prefix >>" \
+              --arg config "<< parameters.config >>" \
               --arg task_name "<< parameters.task_name >>" \
               --arg command "<< parameters.task_command >>" \
               --arg timeout_active_tasks "<< parameters.timeout >>" \
