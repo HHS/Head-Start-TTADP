@@ -1,6 +1,6 @@
 #!/bin/bash
-# set -x
-# set -e
+
+set -e
 set -u
 set -o pipefail
 set -o noglob
@@ -727,6 +727,5 @@ main() {
   # Currently only turning off to aid in speeding up cycle time
   # delete_app "tta-automation"
 }
-
 
 main "$@"
