@@ -503,6 +503,7 @@ jobs:
   restore_prod_to_temp:
     executor: docker-executor
     steps:
+      - checkout
       - cf_restore:
           target_env: prod
           rds_service_name: ttahub-process
@@ -512,12 +513,14 @@ jobs:
   process_temp_db:
     executor: docker-executor
     steps:
+      - checkout
       - cf_process:
           target_env: prod
 
   backup_temp_db:
     executor: docker-executor
     steps:
+      - checkout
       - cf_backup:
           target_env: prod
           rds_service_name: ttahub-process
@@ -528,14 +531,6 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v14-yarn-deps-
-      - run:
-          name: Build backend assets
-          command: |
-            yarn deps
-            yarn build
       # - cf_restore: #dev
       #     target_env: "prod"
       #     rds_service_name: ttahub-dev
