@@ -128,8 +128,8 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
     jobs:
-      - backup_prod_db:
-          serial-group: "tta-automation-lock"
+      # - backup_prod_db:
+      #     serial-group: "tta-automation-lock"
       - process_db:
           serial-group: "tta-automation-lock"
           requires:
