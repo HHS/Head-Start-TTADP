@@ -134,13 +134,7 @@ workflows:
       #    serial-group: "tta-automation-lock"
       #     requires:
       #       - backup_prod_db
-      - restore_dev_db:
-          serial-group: "tta-automation-lock"
-      - restore_dev_green_db:
-          serial-group: "tta-automation-lock"
-      - restore_dev_blue_db:
-          serial-group: "tta-automation-lock"
-      - restore_dev_red_db:
+      - restore_dbs:
           serial-group: "tta-automation-lock"
 
 # ----------------- Jobs -----------------
