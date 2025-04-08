@@ -196,12 +196,12 @@ class ActivityReports{
  legacyId : varchar(255)
  nonECLKCResourcesUsed : text[]
  numberOfParticipants : integer
-!issue='column missing from model' <color:#d54309>numberOfParticipantsInPerson</color>: integer
-!issue='column missing from model' <color:#d54309>numberOfParticipantsVirtually</color>: integer
+ numberOfParticipantsInPerson : integer
+ numberOfParticipantsVirtually : integer
  pageState : json
  participants : varchar(255)[]
  programTypes : varchar(255)[]
-!issue='column missing from model' <color:#d54309>reason</color>: varchar(255)[]
+ reason : varchar(255)[]
  requester : varchar(255)
  startDate : date
  submissionStatus : enum
