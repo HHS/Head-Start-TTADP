@@ -950,7 +950,7 @@ commands:
             fi
       - cf_automation_task:
           target_env: << parameters.target_env >>
-          task_name: "restore"
+          task_name: "restore s3:<< parameters.backup_prefix >> to rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           cfg_prefix: "<< parameters.backup_prefix >>-restore"
@@ -1122,7 +1122,7 @@ commands:
             kill -9 $TAIL_PID
             echo "cf logs command for tta-automation has been terminated."
       - run:
-          name: "Run task: << parameters.task_name >> @ << parameters.target_env >>, << parameters.task_args >>"
+          name: "Running << parameters.task_name >> in << parameters.target_env >>, args:<< parameters.task_args >>"
           command: |
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
