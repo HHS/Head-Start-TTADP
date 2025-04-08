@@ -967,7 +967,7 @@ commands:
               -o ${cg_org} \
               -s ${cg_space}
       - run:
-          name: Migrate database
+          name: "Migrate database: << parameters.app_name >>"
           command: |
             cf run-task << parameters.app_name >> \
               --command "yarn db:migrate:prod" \
@@ -1107,7 +1107,7 @@ commands:
             echo "cf logs command for tta-automation has been terminated."
           background: true
       - run:
-          name: "Run task: << parameters.task_name >> @ << parameters.target_env >>"
+          name: "Run task: << parameters.task_name >> @ << parameters.target_env >>, << parameters.task_args >>"
           command: |
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
