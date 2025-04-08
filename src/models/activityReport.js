@@ -160,6 +160,7 @@ export default (sequelize, DataTypes) => {
     reason: {
       // Keep this for historical data in the db.
       type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true,
     },
     version: {
       type: DataTypes.INTEGER,
@@ -227,11 +228,12 @@ export default (sequelize, DataTypes) => {
             this.activityRecipientType,
             this.requester,
             this.targetPopulations,
-            this.reason,
             this.participants,
             this.topics,
             this.ttaType,
             this.creatorRole,
+            this.activityReason,
+            this.language,
           ];
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {

@@ -45,7 +45,7 @@ async function getRegionNumber(page: Page) {
  * @param page - the page object
  */
 async function getRecipient(page: Page) {
-  const recipient = page.locator('[aria-label="Activity participants 1"]');
+  const recipient = page.locator('[aria-label="Recipient 1"]');
   const text = await recipient.textContent();
   return text ? text.split('-')[0].trim() : '';
 }
@@ -343,12 +343,11 @@ test.describe('Activity Report', () => {
     await expect(page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(1)).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(2)).toBeVisible();
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Change in Scope', { exact: true })).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual', { exact: true })).toBeVisible();
-    await expect(page.getByText('Recipient or other entity', { exact: true })).toBeVisible();
-    await expect(page.getByText('Activity participants', { exact: true })).toBeVisible();
+    await expect(page.getByText('Recipient participants', { exact: true })).toBeVisible();
     await expect(page.getByText('Collaborating specialists', { exact: true })).toBeVisible();
-    await expect(page.getByText('Target populations addressed', { exact: true })).toBeVisible();
+    await expect(page.getByText('Target populations', { exact: true })).toBeVisible();
+    await expect(page.getByText('Why activity requested', { exact: true })).toBeVisible();
 
     await expect(page.getByText('Goal summary').first()).toBeVisible();
     await expect(page.getByText('Goal summary').nth(1)).toBeVisible();
@@ -375,7 +374,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText(/date approved/i)).toBeVisible();
 
-    const recipients = await page.locator('span:near(div:text("Recipient names"))').first().textContent();
+    const recipients = await page.locator('span:near(div:text("Recipient"))').first().textContent();
     const grants = getGrants(recipients || '');
 
     // navigate to the Recipient TTA Records page
