@@ -1089,7 +1089,7 @@ commands:
             - .
 
   cf_automation_task:
-    description: "Login to Cloud Foundry space, run automation task, and send notification"
+    description: "Running [<< parameters.task_name >>] in [<< parameters.target_env >>]"
     parameters:
       task_name:
         description: "Name of the automation task to run"
@@ -1115,6 +1115,9 @@ commands:
       # cg_org:
       #   type: string
       #   default: "hhs-acf-ohs-tta"
+      target_env:
+        description: "Environment to run the task in"
+        type: string
       cfg_prefix:
         description: "Config prefix for the automation task"
         type: string
