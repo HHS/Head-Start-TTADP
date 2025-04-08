@@ -1,10 +1,3 @@
-jest.mock('bull', () => jest.fn().mockImplementation(() => ({
-  add: jest.fn(),
-  process: jest.fn(),
-  on: jest.fn(),
-  close: jest.fn(),
-})));
-
 import request from 'supertest';
 import express from 'express';
 import {
@@ -32,6 +25,8 @@ import {
 } from './handlers';
 import User from '../../policies/user';
 
+jest.mock('bull');
+
 jest.mock('../../services/ssdi', () => ({
   checkFolderPermissions: jest.fn(),
   listQueryFiles: jest.fn(),
@@ -53,13 +48,6 @@ jest.mock('../../services/users', () => ({
 }));
 
 jest.mock('../../policies/user');
-
-jest.mock('bull', () => jest.fn().mockImplementation(() => ({
-  add: jest.fn(),
-  process: jest.fn(),
-  on: jest.fn(),
-  close: jest.fn(),
-})));
 
 const app = express();
 app.use(express.json());
