@@ -553,10 +553,16 @@ jobs:
             yarn deps
             yarn build
       - cf_restore:
-          auth_client_secret: PROD_AUTH_CLIENT_SECRET
-          # cg_username: CLOUDGOV_PROD_USERNAME
-          # cg_password: CLOUDGOV_PROD_PASSWORD
-          # cg_space: CLOUDGOV_PROD_SPACE
+          #auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          target_env: "prod"
+          rds_service_name: ttahub-dev
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev
+          target_env: 'dev'
+      - cf_restore:
+          #auth_client_secret: PROD_AUTH_CLIENT_SECRET
           target_env: "prod"
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
@@ -564,10 +570,24 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
           target_env: 'dev'
-          # cg_username: CLOUDGOV_DEV_USERNAME
-          # cg_password: CLOUDGOV_DEV_PASSWORD
-          # cg_space: CLOUDGOV_DEV_SPACE
-          # cg_org: "hhs-acf-ohs-tta"
+      - cf_restore:
+          #auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          target_env: "prod"
+          rds_service_name: ttahub-dev-green
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev-green
+          target_env: 'dev'
+      - cf_restore:
+          #auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          target_env: "prod"
+          rds_service_name: ttahub-dev-red
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev-red
+          target_env: 'dev'
 
 
 # ----------------- Commands -----------------
@@ -880,7 +900,7 @@ commands:
   cf_restore:
     description: "Restore backup database from S3"
     parameters:
-      auth_client_secret: { type: env_var_name }
+     #auth_client_secret: { type: env_var_name }
       target_env: { type: string }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
@@ -894,7 +914,7 @@ commands:
               exit 1
             fi
       - cf_automation_task:
-          auth_client_secret: << parameters.auth_client_secret >>
+          #auth_client_secret: << parameters.auth_client_secret >>
           target_env: << parameters.target_env >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
@@ -1031,8 +1051,8 @@ commands:
       task_args:
         description: "Arguments for the automation task"
         type: string
-      auth_client_secret:
-        type: env_var_name
+      # auth_client_secret:
+      #   type: env_var_name
       target_env:
         description: "Environment to run the task in"
         type: string
