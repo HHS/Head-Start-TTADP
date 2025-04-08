@@ -111,7 +111,7 @@ export default function SingleRecipientSelect(
   };
 
   const createGrantCheckBoxes = (grantsForCheckBoxes) => {
-    const grantCheckBoxes = grantsForCheckBoxes.map((grant) => (
+    const grantCheckBoxes = grantsForCheckBoxes.map((grant, index) => (
       <tr key={grant.value}>
         <td>
           <Checkbox
@@ -123,6 +123,7 @@ export default function SingleRecipientSelect(
             checked={checkedCheckBoxes.includes(grant.value)}
             aria-label={`Select grant ${grant.label}`}
             onBlur={onBlurActivityRecipients}
+            data-testid={`recipient-grant-checkbox-${index}`}
           />
         </td>
       </tr>
