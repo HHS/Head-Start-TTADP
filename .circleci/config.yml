@@ -133,10 +133,14 @@ workflows:
       #    serial-group: "tta-db-lock"
       #     requires:
       #       - backup_prod_db
-      - restore_dbs:
-          serial-group: "tta-db-lock"
-          #  requires:
-          #    - process_db
+      - restore_dev_db:
+          serial-group: "tta-db-lock-dev"
+      - restore_dev_green_db:
+          serial-group: "tta-db-lock-dev-green"
+      - restore_dev_blue_db:
+          serial-group: "tta-db-lock-dev-blue"
+      - restore_dev_red_db:
+          serial-group: "tta-db-lock-dev-red"
 
 # ----------------- Jobs -----------------
 
@@ -542,7 +546,7 @@ jobs:
           s3_service_name: ttahub-db-backups
           backup_prefix: production
 
-  restore_dbs:
+  restore_dev_db:
     executor: docker-executor
     steps:
       - checkout
@@ -553,11 +557,6 @@ jobs:
       - run:
           name: Build backend assets
           command: yarn build
-      # - cf_restore:
-      #     target_env: 'dev'
-      #     rds_service_name: ttahub-process
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: production
       - cf_restore:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
           cg_username: CLOUDGOV_PROD_USERNAME
@@ -566,41 +565,90 @@ jobs:
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
-      # - cf_restore:
-      #     auth_client_secret: DEV_AUTH_CLIENT_SECRET
-      #     cg_username: CLOUDGOV_DEV_USERNAME
-      #     cg_password: CLOUDGOV_DEV_PASSWORD
-      #     cg_space: CLOUDGOV_DEV_SPACE
-      #     rds_service_name: ttahub-dev-blue
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: processed      
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
           cg_username: CLOUDGOV_DEV_USERNAME
           cg_password: CLOUDGOV_DEV_PASSWORD
           cg_space: CLOUDGOV_DEV_SPACE
           cg_org: "hhs-acf-ohs-tta"
-    # - cf_migrate:
-    #       app_name: tta-smarthub-dev
-    #       cloudgov_username: CLOUDGOV_DEV_USERNAME
-    #       cloudgov_password: CLOUDGOV_DEV_PASSWORD
-    #       cloudgov_space: CLOUDGOV_DEV_SPACE      
-    #   - cf_restore:
-    #       target_env: 'dev-green'
-    #       rds_service_name: ttahub-process
-    #       s3_service_name: ttahub-db-backups
-    #       backup_prefix: production
-    #   - cf_restore:
-    #       target_env: 'dev-red'
-    #       rds_service_name: ttahub-process
-    #       s3_service_name: ttahub-db-backups
-    #       backup_prefix: production
-    #   - cf_restore:
-    #       target_env: 'dev-blue'
-    #       rds_service_name: ttahub-process
-    #       s3_service_name: ttahub-db-backups
-    #       backup_prefix: production
 
+  restore_dev_green_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cg_username: CLOUDGOV_PROD_USERNAME
+          cg_password: CLOUDGOV_PROD_PASSWORD
+          cg_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-dev-green
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev-green
+          cg_username: CLOUDGOV_DEV_USERNAME
+          cg_password: CLOUDGOV_DEV_PASSWORD
+          cg_space: CLOUDGOV_DEV_SPACE
+          cg_org: "hhs-acf-ohs-tta"
+
+  restore_dev_blue_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cg_username: CLOUDGOV_PROD_USERNAME
+          cg_password: CLOUDGOV_PROD_PASSWORD
+          cg_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-dev-blue
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev-blue
+          cg_username: CLOUDGOV_DEV_USERNAME
+          cg_password: CLOUDGOV_DEV_PASSWORD
+          cg_space: CLOUDGOV_DEV_SPACE
+          cg_org: "hhs-acf-ohs-tta"
+
+  restore_dev_red_db:
+    executor: docker-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cg_username: CLOUDGOV_PROD_USERNAME
+          cg_password: CLOUDGOV_PROD_PASSWORD
+          cg_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-dev-red
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev-red
+          cg_username: CLOUDGOV_DEV_USERNAME
+          cg_password: CLOUDGOV_DEV_PASSWORD
+          cg_space: CLOUDGOV_DEV_SPACE
+          cg_org: "hhs-acf-ohs-tta"
 
 # ----------------- Commands -----------------
 
