@@ -32,15 +32,16 @@ describe('ttaByCitations', () => {
   let citations;
 
   beforeAll(async () => {
-    await Recipient.findOrCreate({
+    const testRecipient = await Recipient.findOrCreate({
       where: { id: RECIPIENT_ID },
       defaults: {
         id: RECIPIENT_ID,
         name: 'RECIPIENT',
       },
     });
+    console.log(testRecipient);
 
-    await Grant.findOrCreate({
+    const testGrant = await Grant.findOrCreate({
       where: { number: GRANT_NUMBER },
       defaults: {
         id: GRANT_ID,
@@ -54,17 +55,26 @@ describe('ttaByCitations', () => {
       },
     });
 
+    console.log(testGrant);
+
     const {
       reviewId: createdReviewId,
       findingId: createdFindingId,
       granteeId,
     } = await createMonitoringData(GRANT_NUMBER);
 
+    console.log('createdReviewId', createdReviewId);
+    console.log('createdFindingId', createdFindingId);
+    console.log('granteeId', granteeId);
+
     const result = await createAdditionalMonitoringData(
       createdFindingId,
       createdReviewId,
       granteeId,
     );
+    console.log('result', result);
+    console.log('result findingId', result.findingId);
+    console.log('result reviewId', result.reviewId);
     findingId = result.findingId;
     reviewId = result.reviewId;
 
@@ -72,6 +82,12 @@ describe('ttaByCitations', () => {
       GRANT_NUMBER,
       findingId,
     );
+
+    console.log('arocResult', arocResult);
+    console.log('arocResult goal', arocResult.goal);
+    console.log('arocResult objectives', arocResult.objectives);
+    console.log('arocResult reports', arocResult.reports);
+    console.log('arocResult topic', arocResult.topic);
 
     goal = arocResult.goal;
     objectives = arocResult.objectives;
@@ -85,9 +101,9 @@ describe('ttaByCitations', () => {
     await destroyAdditionalMonitoringData(findingId, reviewId);
     await destroyReportAndCitationData(
       goal,
+      topic,
       objectives,
       reports,
-      topic,
       citations,
     );
 
