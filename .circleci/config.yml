@@ -3,7 +3,7 @@
 version: 2.1
 executors:
   docker-executor:
-    docker: # primary container
+    docker:
       - image: cimg/node:20.18.2-browsers
   docker-postgres-executor:
     docker:
@@ -128,61 +128,20 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
     jobs:
-      # - backup_prod_db
-      #    serial-group: "tta-automation-lock"
-      # - process_db:
-      #    serial-group: "tta-automation-lock"
-      #     requires:
-      #       - backup_prod_db
+      - backup_prod_db:
+          serial-group: "tta-automation-lock"
+      - process_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_prod_db
       - restore_dbs:
           serial-group: "tta-automation-lock"
+          requires:
+            - process_db
 
 # ----------------- Jobs -----------------
 
 jobs:
-
-  build_check:
-    executor: docker-executor
-    steps: [ say_ok ]
-
-  full_check:
-    executor: docker-executor
-    steps: [ say_ok ]
-
-  run_import_job:
-    # data import
-    executor: docker-executor
-    parameters:
-      target_env:
-          type: string
-          default: << pipeline.git.branch >>
-    steps:
-      - checkout
-      - run:
-          command: |
-            # only run in dev, for now
-            if [[ << parameters.target_env >> != 'dev' ]]; then exit 1; fi
-      - cf_cmd:
-          the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-          target_env: << parameters.target_env >>
-      - cf_cmd:
-          the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-          target_env: << parameters.target_env >>
-      - cf_cmd:
-          the_command: "yarn createMonitoringGoalsCLI"
-          target_env: << parameters.target_env >>
-
-  run_cmd:
-    executor: docker-executor
-    parameters:
-      command:
-        type: string
-      target_env:
-        type: string
-    steps:
-      - cf_cmd:
-          the_command: << parameters.command >>
-          target_env: << parameters.target_env >>
 
   build_and_lint:
     executor: docker-executor
@@ -206,11 +165,6 @@ jobs:
       - run:
           name: Ensure reports directory exists
           command: mkdir reports
-      # - run:
-      #     name: Check nodejs version compatibility with buildpack
-      #     command: |
-      #       chmod +x ./bin/check_node_version_compatibility.sh
-      #       ./bin/check_node_version_compatibility.sh
       - run: yarn build
       - run:
           name: Lint backend
@@ -552,7 +506,7 @@ jobs:
           command: |
             yarn deps
             yarn build
-      - cf_restore:
+      - cf_restore: #dev
           target_env: "prod"
           rds_service_name: ttahub-dev
           s3_service_name: ttahub-db-backups
@@ -560,7 +514,7 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-dev
           target_env: 'dev'
-      - cf_restore:
+      - cf_restore: #dev-blue
           target_env: "prod"
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
@@ -568,15 +522,15 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
           target_env: 'dev'
-      - cf_restore:
+      - cf_restore: #dev-green
           target_env: "prod"
           rds_service_name: ttahub-dev-green
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
-      - cf_migrate:
+      - cf_migrate: 
           app_name: tta-smarthub-dev-green
           target_env: 'dev'
-      - cf_restore:
+      - cf_restore: #dev-red
           target_env: "prod"
           rds_service_name: ttahub-dev-red
           s3_service_name: ttahub-db-backups
@@ -584,7 +538,66 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-dev-red
           target_env: 'dev'
+      - cf_restore: #sandbox
+          target_env: "prod"
+          rds_service_name: ttahub-sandbox
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-sandbox
+          target_env: 'sandbox'
+      - cf_restore: #staging
+          target_env: "prod"
+          rds_service_name: ttahub-staging
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-staging
+          target_env: 'staging'
 
+  run_cmd:
+    # run given command in the target environment
+    executor: docker-executor
+    parameters:
+      command:
+        type: string
+      target_env:
+        type: string
+    steps:
+      - cf_cmd:
+          the_command: << parameters.command >>
+          target_env: << parameters.target_env >>
+
+  build_check:
+    executor: docker-executor
+    steps: [ say_ok ]
+
+  full_check:
+    executor: docker-executor
+    steps: [ say_ok ]
+
+  run_import_job:
+    # run the data import / monitoring job in target environment
+    executor: docker-executor
+    parameters:
+      target_env:
+          type: string
+          default: << pipeline.git.branch >>
+    steps:
+      - checkout
+      - run:
+          command: |
+            # only run in dev, for now
+            if [[ << parameters.target_env >> != 'dev' ]]; then exit 1; fi
+      - cf_cmd:
+          the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
+          target_env: << parameters.target_env >>
+      - cf_cmd:
+          the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
+          target_env: << parameters.target_env >>
+      - cf_cmd:
+          the_command: "yarn createMonitoringGoalsCLI"
+          target_env: << parameters.target_env >>
 
 # ----------------- Commands -----------------
 
