@@ -406,7 +406,7 @@ async function destroyReportAndCitationData(
   citations: { id: number }[] = [],
 ) {
   await ActivityReportObjectiveCitation.destroy({
-    where: { id: { [Op.in]: citations.map((c) => c.id) }, },
+    where: { id: { [Op.in]: citations.map((c) => c.id) } },
     force: true,
     individualHooks: true,
   });
@@ -418,7 +418,6 @@ async function destroyReportAndCitationData(
       individualHooks: true,
     });
 
-
     await Topic.destroy({
       where: { id: topic.id },
       force: true,
@@ -427,13 +426,13 @@ async function destroyReportAndCitationData(
   }
 
   await ActivityReportCollaborator.destroy({
-    where: { activityReportId: { [Op.in]: reports.map((r) => r.id) }, },
+    where: { activityReportId: { [Op.in]: reports.map((r) => r.id) } },
     force: true,
     individualHooks: true,
   });
 
   await ActivityReportObjective.destroy({
-    where: { objectiveId: { [Op.in]: objectives.map((o) => o.id) }, },
+    where: { objectiveId: { [Op.in]: objectives.map((o) => o.id) } },
     force: true,
     individualHooks: true,
   });
@@ -441,7 +440,7 @@ async function destroyReportAndCitationData(
   await Promise.all(reports.map((report) => destroyReport(report)));
 
   await Objective.destroy({
-    where: { id: { [Op.in]: objectives.map((o) => o.id) }, },
+    where: { id: { [Op.in]: objectives.map((o) => o.id) } },
     force: true,
     individualHooks: true,
   });
