@@ -226,7 +226,16 @@ const ActivitySummary = ({
                   name="activityReason"
                   className="usa-select"
                   placeholder="- Select -"
-                  styles={selectOptionsReset}
+                  styles={{
+                    ...selectOptionsReset,
+                    placeholder: (baseStyles) => ({
+                      ...baseStyles,
+                      color: 'black',
+                      fontSize: '1rem',
+                      fontWeight: '400',
+                      lineHeight: '1.3',
+                    }),
+                  }}
                   components={{
                     DropdownIndicator: null,
                   }}
