@@ -579,16 +579,24 @@ commands:
     # these will persist across steps in a job, but not across jobs
     # these values will be available in any subsequent bash env
     parameters:
-      target:
+      target_env:
         type: string
         default: << pipeline.git.branch >>
+      filename:
+        description: "Filename to write env vars to"
+        type: string
+        default: "env.vars"
+      do_export:
+        description: "Export env vars to bash env"
+        type: boolean
+        default: true
     steps:
       - run:
           name: Set env vars
           command: |
             # $cfg_env maps to the primary "level" (dev, staging, prod)
             # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
-            export full_env=<< parameters.target >>
+            export full_env=<< parameters.target_env >>
             if [[ $full_env == *"main"* ]]; then cfg_env="staging"; fi
             export cfg_env=${full_env}
             if [[ $cfg_env == *"dev"* ]]; then cfg_env="dev"; fi
@@ -600,7 +608,7 @@ commands:
             circleci env subst < ./temp.vars > env.vars
             # iterate through ci.vars file and export each line, 
             while read line; do
-              if [ -n "${line}" ]; then
+              if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
                 echo "export ${line}">>"$BASH_ENV"
               fi
             done < env.vars
@@ -795,7 +803,7 @@ commands:
       - checkout
       - install_cf_tools
       - set_env_vars:
-          target: << parameters.target_env >>
+          target_env: << parameters.target_env >>
       - run:
           name: Login with service account
           command: |
@@ -874,9 +882,6 @@ commands:
     parameters:
       auth_client_secret: { type: env_var_name }
       target_env: { type: string }
-      # cg_username: { type: env_var_name }
-      # cg_password: { type: env_var_name }
-      # cg_space: { type: env_var_name }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
       backup_prefix: { type: string }
@@ -890,9 +895,6 @@ commands:
             fi
       - cf_automation_task:
           auth_client_secret: << parameters.auth_client_secret >>
-          # cg_username: << parameters.cg_username >>
-          # cg_password: << parameters.cg_password >>
-          # cg_space: << parameters.cg_space >>
           target_env: << parameters.target_env >>
           task_name: "restore"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
@@ -955,7 +957,7 @@ commands:
       #         -o << parameters.cg_org >> \
       #         -s ${<< parameters.cg_space >>}
       - set_env_vars:
-          target: << parameters.target_env >>
+          target_env: << parameters.target_env >>
       - run:
           name: Login with service account
           command: |
@@ -1018,7 +1020,7 @@ commands:
             - .
 
   cf_automation_task:
-    description: "Running [<< parameters.task_name >>] in [<< parameters.target_env >>]"
+    description: "Running [<< parameters.task_name >>] in [<< parameters.target_env >>: << parameters.task_args >>]"
     parameters:
       task_name:
         description: "Name of the automation task to run"
@@ -1029,21 +1031,8 @@ commands:
       task_args:
         description: "Arguments for the automation task"
         type: string
-      cg_api:
-        description: "Cloud Foundry API endpoint"
-        type: string
-        default: "https://api.fr.cloud.gov"
       auth_client_secret:
         type: env_var_name
-      # cg_username:
-      #   type: env_var_name
-      # cg_password:
-      #   type: env_var_name
-      # cg_space:
-      #   type: env_var_name
-      # cg_org:
-      #   type: string
-      #   default: "hhs-acf-ohs-tta"
       target_env:
         description: "Environment to run the task in"
         type: string
@@ -1066,7 +1055,17 @@ commands:
           command: echo "Running << parameters.task_command >>"
       - install_automation_deps
       - set_env_vars:
-          target: << parameters.target_env >>
+          target_env: << parameters.target_env >>
+          do_export: false
+      - run:
+          name: Login with service account
+          command: |
+            source env.vars
+            cf login -a ${cg_api} \
+              -u ${cg_username} \
+              -p ${cg_password} \
+              -o ${cg_org} \
+              -s ${cg_space}
       # - run:
       #     name: Login with service account
       #     command: |
@@ -1075,14 +1074,6 @@ commands:
       #         -p ${<< parameters.cg_password >>} \
       #         -o << parameters.cg_org >> \
       #         -s ${<< parameters.cg_space >>}
-      - run:
-          name: Login with service account
-          command: |
-            cf login -a ${cg_api} \
-              -u ${cg_username} \
-              -p ${cg_password} \
-              -o ${cg_org} \
-              -s ${cg_space}
       - run:
           name: Watch task logs
           command: |
