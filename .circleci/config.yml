@@ -133,16 +133,16 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
     jobs:
-      # - backup_prod_db:
-      #     serial-group: "tta-automation-lock"
-      # - restore_prod_to_temp:
-      #     serial-group: "tta-automation-lock"
-          # requires:
-          #   - backup_prod_db
+      - backup_prod_db:
+          serial-group: "tta-automation-lock"
+      - restore_prod_to_temp:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_prod_db
       - process_temp_db:
           serial-group: "tta-automation-lock"
-          # requires:
-          #    - restore_prod_to_temp
+          requires:
+             - restore_prod_to_temp
       - backup_temp_db:
           serial-group: "tta-automation-lock"
           requires:
@@ -152,26 +152,34 @@ workflows:
           requires:
             - backup_temp_db
 
-  # restore_db_cron:
-  #   # backup production db, process (anonymize) the data, then restore it into lower envs
-  #   triggers:
-  #   - schedule:
-  #         cron: "0 0 * * *"
-  #         filters:
-  #           branches:
-  #             only:
-  #               - main
-  #   jobs:
-  #     - backup_prod_db:
-  #         serial-group: "tta-automation-lock"
-  #     - process_db:
-  #         serial-group: "tta-automation-lock"
-  #         requires:
-  #           - backup_prod_db
-  #     - restore_dbs:
-  #         serial-group: "tta-automation-lock"
-  #         requires:
-  #           - process_db
+  restore_db_cron:
+    # backup production db, process (anonymize) the data, then restore it into lower envs
+    triggers:
+    - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - backup_prod_db:
+          serial-group: "tta-automation-lock"
+      - restore_prod_to_temp:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_prod_db
+      - process_temp_db:
+          serial-group: "tta-automation-lock"
+          requires:
+             - restore_prod_to_temp
+      - backup_temp_db:
+          serial-group: "tta-automation-lock"
+          requires:
+            - process_temp_db
+      - restore_lower_dbs:
+          serial-group: "tta-automation-lock"
+          requires:
+            - backup_temp_db
 
 # ----------------- Jobs -----------------
 
@@ -537,18 +545,15 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
-      # - cf_restore: #dev
-      #     target_env: "prod"
-      #     rds_service_name: ttahub-dev
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: processed
-      # - cf_migrate:
-      #     app_name: tta-smarthub-dev
-      #     target_env: 'dev'
-      # - cf_process:
-      #     app_name: tta-smarthub-dev
-      #     target_env: 'dev'
-      - cf_restore: #dev-blue
+      - cf_restore: # dev
+          target_env: "prod"
+          rds_service_name: ttahub-dev
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+      - cf_migrate:
+          app_name: tta-smarthub-dev
+          target_env: 'dev'
+      - cf_restore: # dev-blue
           rds_service_name: ttahub-dev-blue
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
@@ -556,38 +561,38 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-dev-blue
           target_env: 'dev'
-      # - cf_restore: #dev-green
-      #     target_env: "prod"
-      #     rds_service_name: ttahub-dev-green
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: processed
-      # - cf_migrate: 
-      #     app_name: tta-smarthub-dev-green
-      #     target_env: 'dev'
-      # - cf_restore: #dev-red
-      #     target_env: "prod"
-      #     rds_service_name: ttahub-dev-red
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: processed
-      # - cf_migrate:
-      #     app_name: tta-smarthub-dev-red
-      #     target_env: 'dev'
-      # - cf_restore: #sandbox
-      #     target_env: "prod"
-      #     rds_service_name: ttahub-sandbox
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: processed
-      # - cf_migrate:
-      #     app_name: tta-smarthub-sandbox
-      #     target_env: 'sandbox'
-      # - cf_restore: #staging
-      #     target_env: "prod"
-      #     rds_service_name: ttahub-staging
-      #     s3_service_name: ttahub-db-backups
-      #     backup_prefix: processed
-      # - cf_migrate:
-      #     app_name: tta-smarthub-staging
-      #     target_env: 'staging'
+      - cf_restore: # dev-green
+          rds_service_name: ttahub-dev-green
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+          target_env: "prod"
+      - cf_migrate: 
+          app_name: tta-smarthub-dev-green
+          target_env: 'dev'
+      - cf_restore: # dev-red
+          rds_service_name: ttahub-dev-red
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+          target_env: "prod"
+      - cf_migrate:
+          app_name: tta-smarthub-dev-red
+          target_env: 'dev'
+      - cf_restore: # sandbox
+          rds_service_name: ttahub-sandbox
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+          target_env: "prod"
+      - cf_migrate:
+          app_name: tta-smarthub-sandbox
+          target_env: 'sandbox'
+      - cf_restore: # staging
+          rds_service_name: ttahub-staging
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
+          target_env: "prod"
+      - cf_migrate:
+          app_name: tta-smarthub-staging
+          target_env: 'staging'
 
   run_cmd:
     # run given command in the target environment
@@ -1161,10 +1166,10 @@ commands:
             else
               echo "<< parameters.success_message >> successful!" > /tmp/message_file
             fi
-      # - notify_slack:
-      #     slack_bot_token: $SLACK_BOT_TOKEN
-      #     slack_channel: "acf-head-start-alerts"
-      #     message_text_file: "/tmp/message_file"
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-alerts"
+          message_text_file: "/tmp/message_file"
       - run:
           name: Logout of service account
           command: |
