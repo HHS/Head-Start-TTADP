@@ -1,7 +1,7 @@
 import request from 'supertest';
 import axios from 'axios';
 import app from './app';
-import { retrieveUserDetails } from './services/currentUser';
+import * as currentUser from './services/currentUser';
 
 jest.mock('./services/currentUser');
 jest.mock('axios');
@@ -37,9 +37,9 @@ describe('TTA Hub server', () => {
       },
     });
 
-    retrieveUserDetails.mockResolvedValue({
-      id: 1,
-    });
+    // retrieveUserDetails.mockResolvedValue({
+    //   id: 1,
+    // });
   });
 
   // afterAll(() => {
@@ -52,16 +52,17 @@ describe('TTA Hub server', () => {
   });
 
   test('retrieves user details to login', async () => {
+    const spy = jest.spyOn(currentUser, 'retrieveUserDetails').mockResolvedValue({ id: 1 });
     // process.env.NODE_ENV = 'test';
     // process.env.BYPASS_AUTH = 'false';
-
+    expect(jest.isMockFunction(spy)).toBe(true);
     const resp = await request(app)
       .get('/oauth2-client/login/oauth2/code/?code=test-code')
       .set('Cookie', ['session=mock-session']);
 
     expect(axios.post).toHaveBeenCalled();
     expect(axios.get).toHaveBeenCalled();
-    expect(retrieveUserDetails).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
     expect(resp.status).toBe(302);
   });
 });

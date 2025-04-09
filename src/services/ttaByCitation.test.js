@@ -33,6 +33,13 @@ describe('ttaByCitations', () => {
 
   beforeAll(async () => {
     const roleName = 'SS';
+    await db.Role.findOrCreate({
+      where: { name: 'SS' },
+      defaults: {
+        fullName: 'System Specialist',
+        isSpecialist: true,
+      },
+    });
     const role = await db.Role.findOne({ where: { name: roleName } });
 
     if (!role) {
