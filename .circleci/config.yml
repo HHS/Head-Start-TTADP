@@ -649,7 +649,12 @@ jobs:
             WHERE "createdVia" = 'monitoring' \
             AND g."createdAt" > (NOW() - INTERVAL '1 hour') \
             GROUP BY 1,2 ORDER BY 2,1;
-          EOF
+          EOF > monitoring-goals.results
+      - notify_slack:
+          slack_channel: "tm-test"
+          message_text: |
+            New monitoring goals:
+            ```$(cat monitoring-goals.results)```
 
 # ----------------- Commands -----------------
 
@@ -1220,6 +1225,7 @@ commands:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
@@ -1228,7 +1234,7 @@ commands:
         type: string
         default: ""
       message_text_file:
-        description: "message text_file"
+        description: "message text_file.  If provided, this will be used instead of message_text"
         type: string
         default: ""
     steps:
