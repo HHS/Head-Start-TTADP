@@ -283,6 +283,7 @@
     "@sideway/address": "^5.0.0",
     "@sideway/formula": "^3.0.1",
     "@types/jest": "^29.5.12",
+    "@types/node": "^20.17.30",
     "@typescript-eslint/eslint-plugin": "^5.13.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.0.0",
