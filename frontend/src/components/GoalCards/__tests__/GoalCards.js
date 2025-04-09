@@ -234,7 +234,6 @@ const setGoals = jest.fn();
 const history = createMemoryHistory();
 
 const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
-  const goalBuckets = !goals ? [] : goals.map((g) => ({ id: g.id, goalIds: g.ids }));
   render(
     <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -259,9 +258,6 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             }}
             setGoals={setGoals}
             allGoalIds={allGoalIds || goals.map((g) => g.id)}
-            shouldDisplayMergeSuccess={false}
-            dismissMergeSuccess={jest.fn()}
-            goalBuckets={goalBuckets}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -650,7 +646,7 @@ describe('Goals Table', () => {
       const printButton = await screen.findByRole('button', { name: /Preview and print/i });
       userEvent.click(printButton);
       expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
-        selectedGoalIds: [4598, 4599, 65479],
+        selectedGoalIds: [4598, 65479],
         sortConfig: {
           activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
         },
@@ -667,7 +663,7 @@ describe('Goals Table', () => {
 
       userEvent.click(printButton);
       expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
-        selectedGoalIds: [4598, 4599],
+        selectedGoalIds: [4598],
         sortConfig: {
           activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
         },

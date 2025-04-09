@@ -5,9 +5,6 @@ import {
   reopenGoal,
   retrieveGoalsByIds,
   deleteGoal,
-  mergeGoalHandler,
-  getSimilarGoalsForRecipient,
-  getSimilarGoalsByText,
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
   getGoalHistory,
@@ -23,26 +20,8 @@ router.post(
   transactionWrapper(createGoalsFromTemplate),
 );
 router.get('/', transactionWrapper(retrieveGoalsByIds));
-router.get(
-  '/recipient/:recipientId/region/:regionId/nudge',
-  checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(getSimilarGoalsByText),
-);
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
-router.post(
-  '/recipient/:recipientId/region/:regionId/merge',
-  checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(mergeGoalHandler),
-);
 router.delete('/', transactionWrapper(deleteGoal));
-router.get(
-  '/similar/region/:regionId/recipient/:recipientId',
-  checkRegionIdParam,
-  checkRecipientIdParam,
-  transactionWrapper(getSimilarGoalsForRecipient),
-);
 
 router.get(
   '/region/:regionId/incomplete',

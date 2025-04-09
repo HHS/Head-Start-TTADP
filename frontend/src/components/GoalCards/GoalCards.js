@@ -27,10 +27,6 @@ function GoalCards({
   allGoalIds,
   perPage,
   perPageChange,
-  canMergeGoals,
-  shouldDisplayMergeSuccess,
-  dismissMergeSuccess,
-  goalBuckets,
 }) {
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
@@ -161,10 +157,6 @@ function GoalCards({
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
           draftSelectedRttapa={draftSelectedRttapa}
-          canMergeGoals={canMergeGoals}
-          shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
-          dismissMergeSuccess={dismissMergeSuccess}
-          goalBuckets={goalBuckets}
           allSelectedGoalIds={selectedGoalCheckBoxes}
         />
         <div className="padding-x-3 padding-y-2 ttahub-goal-cards">
@@ -223,18 +215,10 @@ GoalCards.propTypes = {
   allGoalIds: PropTypes.arrayOf(PropTypes.number),
   perPage: PropTypes.number,
   perPageChange: PropTypes.func.isRequired,
-  canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool,
-  dismissMergeSuccess: PropTypes.func.isRequired,
-  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    goalIds: PropTypes.arrayOf(PropTypes.number),
-  })).isRequired,
 };
 
 GoalCards.defaultProps = {
   allGoalIds: [],
-  shouldDisplayMergeSuccess: false,
   perPage: 10,
   error: '',
 };
