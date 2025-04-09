@@ -648,9 +648,7 @@ jobs:
             > monitoring-goals.results
       - notify_slack:
           slack_channel: "tm-test"
-          message_text: |
-            New monitoring goals:
-            ```$(cat monitoring-goals.results)```
+          message_text_file: monitoring-goals.results
 
 # ----------------- Commands -----------------
 
