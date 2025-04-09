@@ -44,6 +44,7 @@ export default function StandardGoalCard({
     ids = [id],
     status,
     createdAt,
+    latestStatusChangeDate,
     name,
     objectives = [],
     goalCollaborators = [],
@@ -330,7 +331,7 @@ export default function StandardGoalCard({
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeLabel()}</p>
-                    <p className="usa-prose margin-y-0">{moment(createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+                    <p className="usa-prose margin-y-0">{moment(latestStatusChangeDate || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
                   </div>
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">

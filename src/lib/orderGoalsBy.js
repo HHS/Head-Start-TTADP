@@ -12,19 +12,19 @@ import {
 // b) it's the first aliased variable due to the way Sequelize minifies arrays
 
 // storing this in a constant so it looks a little less magical/stupid
-export const STATUS_SORT = '_0';
-export const MERGED_ID = '_1';
+export const STATUS_SORT = '_1';
+// export const MERGED_ID = '_1';
 
 const orderGoalsBy = (sortBy, sortDir) => {
   let result = '';
   switch (sortBy) {
-    case 'mergedGoals':
-      result = [
-        [sequelize.col(MERGED_ID), 'ASC'],
-        [sequelize.col(STATUS_SORT), sortDir],
-        [sequelize.col('createdAt'), 'DESC'],
-      ];
-      break;
+    // case 'mergedGoals':
+    //   result = [
+    //     [sequelize.col(MERGED_ID), 'ASC'],
+    //     [sequelize.col(STATUS_SORT), sortDir],
+    //     [sequelize.col('createdAt'), 'DESC'],
+    //   ];
+    //   break;
     case 'goalStatus':
       result = [
         [sequelize.col(STATUS_SORT), sortDir],
