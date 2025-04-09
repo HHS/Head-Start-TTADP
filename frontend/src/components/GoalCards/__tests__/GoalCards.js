@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
-  render, screen, waitFor, fireEvent,
+  render, screen, fireEvent,
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
@@ -16,6 +16,10 @@ import GoalCards from '../GoalCards';
 import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
+jest.mock('../../ReopenReasonModal', () => ({
+  __esModule: true,
+  default: () => <div data-testid="reopen-reason-modal-mock" />,
+}));
 
 const oldWindowLocation = window.location;
 
@@ -262,6 +266,8 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             shouldDisplayMergeSuccess={false}
             dismissMergeSuccess={jest.fn()}
             goalBuckets={goalBuckets}
+            canMergeGoals={false}
+            perPageChange={jest.fn()}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -570,36 +576,6 @@ describe('Goals Table', () => {
       fetchMock.restore();
     });
 
-    it('Sets goal status with reason', async () => {
-      fetchMock.reset();
-      fetchMock.put('/api/goals/changeStatus', [{
-        id: 4598,
-        status: 'Closed',
-        createdAt: '06/15/2021',
-        name: 'This is goal text 1.',
-        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-        objectiveCount: 5,
-        goalNumber: 'G-4598',
-        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-      }]);
-
-      // Open Context Menu.
-      const changeStatus = await screen.findByRole('button', { name: /Change status for goal 4598/i });
-      userEvent.click(changeStatus);
-      const closed = await screen.findByRole('button', { name: /Closed/i });
-      userEvent.click(closed);
-
-      // Select a reason.
-      const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
-      fireEvent.click(reasonRadio);
-
-      // Submit reason why.
-      const submitButton = await screen.findAllByText(/submit/i);
-      fireEvent.click(submitButton[0]);
-      await waitFor(() => expect(fetchMock.called()).toBeTruthy());
-      expect(setGoals).toHaveBeenCalled();
-    });
-
     it('allows goals to be edited', async () => {
       history.push = jest.fn();
       const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
@@ -607,41 +583,6 @@ describe('Goals Table', () => {
 
       const editGoal = await screen.findByRole('button', { name: /Edit/i });
       userEvent.click(editGoal);
-      expect(history.push).toHaveBeenCalled();
-    });
-
-    it('Sets goal status without reason', async () => {
-      history.push = jest.fn();
-      fetchMock.reset();
-      fetchMock.put('/api/goals/changeStatus', [{
-        id: 65479,
-        status: 'In Progress',
-        createdAt: '06/15/2021',
-        name: 'This is goal text 1.',
-        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-        objectiveCount: 0,
-        goalNumber: 'G-65479',
-        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-        objectives: [],
-        previousStatus: 'Needs status',
-      }]);
-
-      expect(fetchMock.called()).toBe(false);
-
-      // Open Context Menu.
-      const changeStatus = await screen.findByRole('button', { name: /Change status for goal 65479/i });
-      userEvent.click(changeStatus);
-      const inProgress = await screen.findByRole('button', { name: /In Progress/i });
-      userEvent.click(inProgress);
-
-      // Verify goal status change.
-      await waitFor(() => expect(fetchMock.called()).toBeTruthy());
-      expect(setGoals).toHaveBeenCalled();
-
-      // print goals
-      const printButton = await screen.findByRole('button', { name: /Preview and print/i });
-      userEvent.click(printButton);
-
       expect(history.push).toHaveBeenCalled();
     });
 

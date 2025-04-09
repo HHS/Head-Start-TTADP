@@ -62,7 +62,7 @@ export default function StandardGoalCard({
   const closeSuspendModalRef = useRef();
   const [resetModalValues, setResetModalValues] = useState(false);
 
-  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
+  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
   const sortedObjectives = [...objectives];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
@@ -296,7 +296,7 @@ export default function StandardGoalCard({
           )}
           {/* Alert for invalid status change attempt */}
           <GoalStatusChangeAlert
-            internalLeftMargin={30}
+            internalLeftMargin="3rem"
             editLink={editLink}
             invalidStatusChangeAttempted={invalidStatusChangeAttempted}
           />
