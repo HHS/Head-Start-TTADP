@@ -649,7 +649,7 @@ jobs:
             WHERE "createdVia" = 'monitoring' \
             AND g."createdAt" > (NOW() - INTERVAL '1 hour') \
             GROUP BY 1,2 ORDER BY 2,1;
-            EOF
+          EOF
 
 # ----------------- Commands -----------------
 
