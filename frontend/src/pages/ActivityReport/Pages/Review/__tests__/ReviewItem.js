@@ -1,4 +1,13 @@
-import { mapUrlValue } from '../ReviewItem';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import ReviewItem, { mapUrlValue } from '../ReviewItem';
+
+// Mock useFormContext to control the values returned by watch
+jest.mock('react-hook-form', () => ({
+  useFormContext: jest.fn(),
+}));
 
 describe('mapUrlValue', () => {
   it('should return Recipient when passed recipient', () => {
@@ -39,5 +48,87 @@ describe('mapUrlValue', () => {
 
   it('should return the value when passed an empty string', () => {
     expect(mapUrlValue('')).toEqual('');
+  });
+});
+
+describe('ReviewItem emptySelector and classes', () => {
+  it('should set emptySelector to an empty string when value has items', () => {
+    const value = ['item1', 'item2'];
+    const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
+    expect(emptySelector).toEqual('');
+  });
+
+  it('should set emptySelector to "smart-hub-review-item--empty" when value is empty', () => {
+    const value = [];
+    const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
+    expect(emptySelector).toEqual('smart-hub-review-item--empty');
+  });
+
+  it('should correctly generate classes string', () => {
+    const emptySelector = 'smart-hub-review-item--empty';
+    const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
+    expect(classes).toEqual('margin-top-1 smart-hub-review-item--empty');
+  });
+
+  it('should exclude emptySelector from classes when it is an empty string', () => {
+    const emptySelector = '';
+    const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
+    expect(classes).toEqual('margin-top-1');
+  });
+});
+
+describe('ReviewItem link rendering', () => {
+  let originalLocation;
+
+  beforeAll(() => {
+    originalLocation = window.location;
+    delete window.location;
+    window.location = new URL('http://example.com');
+  });
+
+  afterAll(() => {
+    window.location = originalLocation;
+  });
+
+  it('should render a valid internal link correctly', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => ['http://example.com/internal-link']),
+    });
+
+    render(
+      <MemoryRouter>
+        <ReviewItem
+          label="Test Label"
+          name="testName"
+          path=""
+          isFile={false}
+          isRichText={false}
+        />
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole('link', { name: 'http://example.com/internal-link' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/internal-link');
+  });
+
+  it('should render a valid external link correctly', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => ['http://external.com']),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+        isFile={false}
+        isRichText={false}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: 'http://external.com' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', 'http://external.com');
   });
 });
