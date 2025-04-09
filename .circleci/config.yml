@@ -645,14 +645,14 @@ jobs:
           name: Get goals from DB
           command: |
             ./bin/query-monitoring.sh tta-smarthub-<< parameters.target_env >> ttahub-<< parameters.target_env >>  \
-            > monitoring-goals.results
+            > out.txt
             # print results for debugging
-            cat monitoring-goals.results
+            cat out.txt
             # remove first 4 lines of output
-            tail -n +5 monitoring-goals.results > monitoring-goals.results
+            tail -n +5 out.txt > monitoring-goals.txt
       - notify_slack:
           slack_channel: "tm-test"
-          message_text_file: monitoring-goals.results
+          message_text_file: monitoring-goals.txt
 
 # ----------------- Commands -----------------
 
@@ -1188,7 +1188,6 @@ commands:
 
             # Set execute permission
             find ./automation -name "*.sh" -exec chmod +x {} \;
-
             ./automation/ci/scripts/cf_lambda.sh "$json_data"
       - run:
           name: Generate Message
@@ -1215,7 +1214,6 @@ commands:
 
             # Logout from Cloud Foundry
             cf logout
-
 
   notify_slack:
     description: "Notify Slack with message"
