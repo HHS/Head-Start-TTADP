@@ -189,4 +189,70 @@ describe('SingleRecipientSelect', () => {
     const grantCheckbox = screen.getByLabelText('Select grant Recipient 1 - Grant 1');
     expect(grantCheckbox).toBeChecked();
   });
+
+  it('renders blank state when none of the selected recipients are in the possible recipients', async () => {
+    const selectedRecipients = [
+      {
+        recipientIdForLookUp: 300,
+        activityRecipientId: 123,
+        name: 'Unknown Recipient',
+      },
+    ];
+    render(<RenderTest selectedRecipients={selectedRecipients} />);
+
+    // Ensure the recipent drop down has the placeholder text - Select - .
+    const selectElement = screen.getByRole('combobox');
+    // Assert select element is blank.
+    expect(selectElement).toHaveTextContent('');
+  });
+
+  it('unselects grants when a grant is unchcked', async () => {
+    const onChangeActivityRecipients = jest.fn();
+
+    render(<RenderTest onChangeActivityRecipients={onChangeActivityRecipients} />);
+
+    // Select a recipient
+    const selectElement = screen.getByRole('combobox');
+    userEvent.click(selectElement);
+    userEvent.click(screen.getByText('Recipient 1'));
+
+    // Select a grant
+    const grant1Checkbox = screen.getByLabelText('Select grant Recipient 1 - Grant 1');
+    userEvent.click(grant1Checkbox);
+
+    // Unselect the grant
+    userEvent.click(grant1Checkbox);
+
+    // Check that onChangeActivityRecipients was called with an empty array
+    expect(onChangeActivityRecipients).toHaveBeenCalledWith([]);
+  });
+
+  it('clears all selected grants when a different recipient is selected', async () => {
+    const onChangeActivityRecipients = jest.fn();
+
+    render(<RenderTest onChangeActivityRecipients={onChangeActivityRecipients} />);
+
+    // Select a recipient
+    const selectElement = screen.getByRole('combobox');
+    userEvent.click(selectElement);
+    userEvent.click(screen.getByText('Recipient 1'));
+
+    // Select a grant
+    const grant1Checkbox = screen.getByLabelText('Select grant Recipient 1 - Grant 1');
+    userEvent.click(grant1Checkbox);
+
+    // Change to a different recipient
+    userEvent.click(selectElement);
+    userEvent.click(screen.getByText('Recipient 2'));
+
+    // Check that onChangeActivityRecipients was called with the new recipient and no grants
+    expect(onChangeActivityRecipients).toHaveBeenCalledWith([]);
+  });
+
+  it('does not show grants when no recipient is selected', () => {
+    render(<RenderTest />);
+
+    // Check that the grants section is not displayed initially
+    expect(screen.queryByTestId('recipient-grants-label')).not.toBeInTheDocument();
+  });
 });
