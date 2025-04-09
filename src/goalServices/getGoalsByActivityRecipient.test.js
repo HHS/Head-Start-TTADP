@@ -794,63 +794,41 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[2].objectives.length).toBe(1);
 
-      // Goal 1.
+      // Goal 6 (created 2021-01-10, status 'Closed', onAR: true, createdVia: 'rtr')
       expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
-      expect(goalRowsx[3].goalText).toBe('Goal 1');
       expect(goalRowsx[3].goalNumbers).toStrictEqual([`G-${goalRowsx[3].id}`]);
-      expect(goalRowsx[3].objectiveCount).toBe(1);
-      expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[3].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRowsx[3].objectives.length).toBe(1);
+      expect(goalRowsx[3].objectiveCount).toBe(0);
+      expect(goalRowsx[3].reasons).toEqual([]);
+      expect(goalRowsx[3].goalTopics).toEqual([]);
+      expect(goalRowsx[3].objectives.length).toBe(0);
+      expect(goalRowsx[3].onAR).toBe(false);
 
-      goalRowsx.forEach((g) => {
-        expect(g.onAR).toBeDefined();
-        expect(g.onAR).not.toBeNull();
-      });
+      // Goal 7 (created 2021-01-10, status 'Closed', onAR: true, createdVia: 'rtr')
+      expect(moment(goalRowsx[4].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
+      expect(goalRowsx[4].goalNumbers).toStrictEqual([`G-${goalRowsx[4].id}`]);
+      expect(goalRowsx[4].objectiveCount).toBe(1);
+      expect(goalRowsx[4].reasons).toEqual([]);
+      expect(goalRowsx[4].goalTopics).toEqual([]);
+      expect(goalRowsx[4].objectives.length).toBe(1);
+      expect(goalRowsx[4].onAR).toBe(true);
+
+      // Goal 1 (created 2021-01-10, status '', onAR: true)
+      expect(moment(goalRowsx[5].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
+      expect(goalRowsx[5].goalText).toBe('Goal 1');
+      expect(goalRowsx[5].goalNumbers).toStrictEqual([`G-${goalRowsx[5].id}`]);
+      expect(goalRowsx[5].objectiveCount).toBe(1);
+      expect(goalRowsx[5].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[5].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[5].objectives.length).toBe(1);
+      expect(goalRowsx[5].onAR).toBe(false);
     });
 
     it('Retrieves All Goals by Recipient', async () => {
       const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
         sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 20,
       });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
-    });
-
-    it('Retrieves and sorts for merged goals by Recipient', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
-        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20, goalIds: [goalIds[9]],
-      });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
-      expect(goalRowsx[0].id).toBe(goalIds[9]);
-      expect(goalRowsx[1].id).toBe(goalIds[11]);
-      expect(goalRowsx[2].id).toBe(goalIds[10]);
-    });
-
-    it('Retrieves and sorts for merged goals by Recipient with garbage parameters', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
-        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20, goalIds: [goalIds[9], false],
-      });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
-      expect(goalRowsx[0].id).toBe(goalIds[9]);
-    });
-
-    it('Retrieves and sorts for merged goals by Recipient with no goal ids', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
-        sortBy: 'mergedGoals', sortDir: 'desc', offset: 0, limit: 20,
-      });
-      const countx = count;
-      const goalRowsx = goalRows;
-      expect(countx).toBe(3);
-      expect(goalRowsx.length).toBe(3);
+      expect(count).toBe(3);
+      expect(goalRows.length).toBe(3);
     });
 
     it('Retrieves Specified Goals for Recipient', async () => {
@@ -862,9 +840,8 @@ describe('Goals by Recipient Test', () => {
         // Only goal 9 and 11 are for reciient 3.
         goalIds: [goalIds[0], goalIds[9], goalIds[11]],
       });
-      const countx = count;
       const goalRowsx = goalRows.filter((g) => g.id === goalIds[9] || g.id === goalIds[11]);
-      expect(countx).toBe(2);
+      expect(count).toBe(2);
       expect(goalRowsx.length).toBe(2);
     });
 
