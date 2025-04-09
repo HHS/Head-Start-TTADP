@@ -33,14 +33,7 @@ describe('ttaByCitations', () => {
 
   beforeAll(async () => {
     const roleName = 'SS';
-    const [role] = await db.Role.findOrCreate({
-      where: { name: roleName },
-      defaults: {
-        name: roleName,
-        fullName: 'System Specialist',
-        isSpecialist: true,
-      },
-    });
+    let role = await db.Role.findOne({ where: { name: roleName } });
     await db.UserRole.upsert({
       userId: 1,
       roleId: role.id,
