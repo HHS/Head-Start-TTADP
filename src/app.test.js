@@ -1,8 +1,7 @@
 import request from 'supertest';
 import axios from 'axios';
-import * as currentUserService from './services/currentUser';
 import app from './app';
-// import { retrieveUserDetails } from './services/currentUser';
+import { retrieveUserDetails } from './services/currentUser';
 
 jest.mock('./services/currentUser');
 jest.mock('axios');
@@ -38,7 +37,7 @@ describe('TTA Hub server', () => {
       },
     });
 
-    currentUserService.retrieveUserDetails.mockResolvedValue({
+    retrieveUserDetails.mockResolvedValue({
       id: 1,
     });
   });
@@ -62,7 +61,7 @@ describe('TTA Hub server', () => {
 
     expect(axios.post).toHaveBeenCalled();
     expect(axios.get).toHaveBeenCalled();
-    expect(currentUserService.retrieveUserDetails).toHaveBeenCalled();
+    expect(retrieveUserDetails).toHaveBeenCalled();
     expect(resp.status).toBe(302);
   });
 });

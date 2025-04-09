@@ -32,6 +32,19 @@ describe('ttaByCitations', () => {
   let citations;
 
   beforeAll(async () => {
+    const roleName = 'SS';
+    const [role] = await db.Role.findOrCreate({
+      where: { name: roleName },
+      defaults: {
+        name: roleName,
+        fullName: 'System Specialist',
+        isSpecialist: true,
+      },
+    });
+    await db.UserRole.findOrCreate({
+      where: { userId: 1, roleId: role.id },
+    });
+
     const testRecipient = await Recipient.findOrCreate({
       where: { id: RECIPIENT_ID },
       defaults: {
