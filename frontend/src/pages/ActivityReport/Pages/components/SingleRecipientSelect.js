@@ -39,7 +39,7 @@ export default function SingleRecipientSelect(
       );
 
       // If we have grants set them else clear them.
-      if (selectedRecipientGrants) {
+      if (selectedRecipientGrants.length) {
         setNewSelectedRecipient(selectedRecipientFromOptions);
         setRecipientGrants(selectedRecipientFromOptions.options);
         setCheckedCheckBoxes(selectedGrantIds);
@@ -66,8 +66,6 @@ export default function SingleRecipientSelect(
     // If a recipient has been selected we need to display the grants.
     if (selectedRecipientOption) {
       setShowRecipientGrants(true);
-    } else {
-      setShowRecipientGrants(false);
     }
 
     // If the recipient has one grant auto select it.
