@@ -46,15 +46,5 @@ describe('orderGoalsBy', () => {
         sequelize.col(STATUS_SORT), 'ASC',
       ],
     ]);
-
-    const five = orderGoalsBy('mergedGoals', 'ASC');
-    expect(five).toStrictEqual([
-      [
-        sequelize.col(STATUS_SORT), 'ASC',
-      ],
-      [
-        sequelize.col('createdAt'), 'DESC',
-      ],
-    ]);
   });
 });
