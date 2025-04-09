@@ -8,7 +8,7 @@ SELECT LEFT(r.name,35) recipient, "regionId" region, \
     JOIN "Grants" gr ON g."grantId" = gr.id \
     JOIN "Recipients" r ON gr."recipientId" = r.id \
     WHERE "createdVia" = 'monitoring' \
-    AND g."createdAt" > (NOW() - INTERVAL '24 hours') \
+    AND g."createdAt" > (NOW() - INTERVAL '72 hours') \
     GROUP BY 1,2 \
     ORDER BY 2,1;
 EOF
