@@ -358,6 +358,14 @@ export async function standardGoalsForRecipient(
       'status',
       'createdAt',
       'goalTemplateId',
+      [
+        sequelize.literal(`(
+          SELECT MAX("createdAt")
+          FROM "GoalStatusChanges"
+          WHERE "goalId" = "Goal"."id"
+        )`),
+        'latestStatusChangeDate',
+      ],
       [sequelize.literal(`
         CASE
           WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
