@@ -3,7 +3,6 @@ import axios from 'axios';
 import app from './app';
 import * as currentUser from './services/currentUser';
 
-jest.mock('./services/currentUser');
 jest.mock('axios');
 jest.mock('smartsheet');
 
