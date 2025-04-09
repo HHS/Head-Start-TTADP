@@ -4,7 +4,6 @@ import React, {
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext, useController, Controller } from 'react-hook-form';
-import { isUndefined } from 'lodash';
 import {
   Fieldset,
   Radio,
@@ -30,9 +29,6 @@ import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
-import HtmlReviewItem from './Review/HtmlReviewItem';
-import Section from './Review/ReviewSection';
-import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
@@ -511,6 +507,17 @@ const getSections = (formData) => {
       ],
     },
     {
+      title: 'Context',
+      anchor: 'context',
+      items: [
+        {
+          label: 'Context',
+          name: 'context',
+          isRichText: true,
+        },
+      ],
+    },
+    {
       title: 'Training or technical assistance',
       anchor: 'tta',
       items: [
@@ -527,28 +534,12 @@ const getSections = (formData) => {
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    context,
-    calculatedStatus,
     deliveryMethod,
   } = watch();
 
-  const canEdit = reportIsEditable(calculatedStatus);
   return (
     <>
       <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
-      <Section
-        hidePrint={isUndefined(context)}
-        key="context"
-        basePath="activity-summary"
-        anchor="context"
-        title="Context"
-        canEdit={canEdit}
-      >
-        <HtmlReviewItem
-          label="Context"
-          name="context"
-        />
-      </Section>
     </>
   );
 };
