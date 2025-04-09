@@ -115,13 +115,13 @@ workflows:
               - dev
               - prod
     jobs:
-      - run_import_job: { target_env: dev }
+      - run_import_job: { target_env: << pipeline.git.branch >> }
 
   import_data_manual:
     when:
       equal: [<< pipeline.parameters.action >>, "import_data"]
     jobs:
-      - run_import_job: { target_env: dev }
+      - run_import_job: { target_env: staging }
 
   restore_db_manual:
     # backup prod db
@@ -625,10 +625,6 @@ jobs:
           default: << pipeline.git.branch >>
     steps:
       - checkout
-      - run:
-          command: |
-            # only run in dev, for now
-            if [[ << parameters.target_env >> != 'dev' ]]; then exit 1; fi
       - cf_cmd:
           the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
           target_env: << parameters.target_env >>
