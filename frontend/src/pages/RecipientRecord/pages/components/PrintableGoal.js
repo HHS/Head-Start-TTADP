@@ -6,15 +6,19 @@ import STATUSES from '../../../../components/GoalCards/components/StatusDropdown
 import List from './List';
 
 export default function PrintableGoal({ goal }) {
-  const key = goal.goalStatus || 'Needs Status';
+  const key = goal.status || 'Needs Status';
   const { icon } = STATUSES[key] ? STATUSES[key] : STATUSES['Needs Status'];
+  const allTopics = goal.objectives && Array.isArray(goal.objectives)
+    ? goal.objectives.flatMap((o) => (o.topics && Array.isArray(o.topics) ? o.topics : []))
+    : [];
+  const uniqueTopics = [...new Set(allTopics)];
 
   return (
     <div className="ttahub-printable-goal padding-x-3 padding-top-3 padding-bottom-2 margin-top-5 no-break-within">
       <h2 className="margin-top-0 padding-bottom-1 border-bottom-1px">
         Goal
         {' '}
-        {goal.goalNumbers.join(', ')}
+        {goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${goal.id}`}
       </h2>
       <div className={ROW_CLASS}>
         <p className={FIRST_COLUMN_CLASS}>Goal status</p>
@@ -24,22 +28,24 @@ export default function PrintableGoal({ goal }) {
         </p>
       </div>
       <div className={ROW_CLASS}>
-        <p className={FIRST_COLUMN_CLASS}>Grant numbers</p>
-        <p className={SECOND_COLUMN_CLASS}>{goal.grantNumbers.join(', ')}</p>
+        <p className={FIRST_COLUMN_CLASS}>Grant number</p>
+        <p className={SECOND_COLUMN_CLASS}>{goal.grant.number}</p>
       </div>
       <div className={ROW_CLASS}>
         <p className={FIRST_COLUMN_CLASS}>Recipient&apos;s goal</p>
-        <p className={SECOND_COLUMN_CLASS}>{goal.goalText}</p>
+        <p className={SECOND_COLUMN_CLASS}>{goal.name}</p>
       </div>
+      {uniqueTopics.length > 0 && (
       <div className={ROW_CLASS}>
         <p className={FIRST_COLUMN_CLASS}>Topics</p>
-        <List className={SECOND_COLUMN_CLASS} list={goal.goalTopics} />
+        <List className={SECOND_COLUMN_CLASS} list={uniqueTopics} />
       </div>
+      )}
       { goal.objectives.length > 0 ? (
         <h3 className="padding-x-1">
           Objectives for goal
           {' '}
-          {goal.goalNumbers.join(', ')}
+          {`G-${goal.id}`}
         </h3>
       ) : null }
       {goal.objectives.map(((objective) => (
@@ -54,11 +60,16 @@ export default function PrintableGoal({ goal }) {
 
 PrintableGoal.propTypes = {
   goal: PropTypes.shape({
-    goalNumbers: PropTypes.arrayOf(PropTypes.string),
-    goalStatus: PropTypes.string,
-    grantNumbers: PropTypes.arrayOf(PropTypes.string),
-    goalText: PropTypes.string,
-    goalTopics: PropTypes.arrayOf(PropTypes.string),
-    objectives: PropTypes.arrayOf(PropTypes.shape({})),
+    id: PropTypes.number,
+    goalNumbers: PropTypes.arrayOf(PropTypes.string), // Optional now
+    status: PropTypes.string,
+    grant: PropTypes.shape({
+      number: PropTypes.string,
+    }),
+    name: PropTypes.string,
+    objectives: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+      topics: PropTypes.arrayOf(PropTypes.string),
+    })),
   }).isRequired,
 };
