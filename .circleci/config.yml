@@ -113,7 +113,7 @@ workflows:
           branches:
             only:
               - dev
-              - prod
+              # - prod - todo enable this
     jobs:
       - run_import_job: { target_env: << pipeline.git.branch >> }
 
@@ -121,6 +121,7 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "import_data"]
     jobs:
+      - run_import_job: { target_env: dev }
       - run_import_job: { target_env: staging }
 
   restore_db_manual:
@@ -634,13 +635,13 @@ jobs:
       - cf_cmd:
           the_command: "yarn createMonitoringGoalsCLI"
           target_env: << parameters.target_env >>
-      - install_cf_tools      
+      - install_cf_tools    
       - cf_login:
           target_env: << parameters.target_env >>
       - run: 
           name: Get goals from DB
           command: |
-            ./bin/query-monitoring.sh tta-smarthub-<< parameters.target_env >> ttahub-<< parameters.target_env >>  \
+            ./bin/query-monitoring.sh ${app_name} ${cg_space} \
             > out.txt
             # print results for debugging
             cat out.txt
