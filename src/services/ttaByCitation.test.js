@@ -41,8 +41,9 @@ describe('ttaByCitations', () => {
         isSpecialist: true,
       },
     });
-    await db.UserRole.findOrCreate({
-      where: { userId: 1, roleId: role.id },
+    await db.UserRole.upsert({
+      userId: 1,
+      roleId: role.id,
     });
 
     const testRecipient = await Recipient.findOrCreate({
