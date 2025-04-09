@@ -24,6 +24,7 @@ const createOverviewFieldArray = (data) => ([
     ariaLabel: 'Display details about recipients without TTA',
   },
   {
+    key: 'recipients-with-standard-fei-goals',
     icon: faBus,
     showTooltip: false,
     label1: 'Recipients with OHS standard FEI goal',
@@ -72,13 +73,13 @@ export function QualityAssuranceDashboardOverview({
 QualityAssuranceDashboardOverview.propTypes = {
   data: PropTypes.shape({
     recipientsWithNoTTA: PropTypes.shape({
-      pct: PropTypes.number,
+      pct: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
     recipientsWithOhsStandardFeiGoals: PropTypes.shape({
-      pct: PropTypes.number,
+      pct: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
     recipientsWithOhsStandardClass: PropTypes.shape({
-      pct: PropTypes.number,
+      pct: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
   }),
   loading: PropTypes.bool,

@@ -18,7 +18,10 @@ export default function DisplayTableToggle({ displayTable, setDisplayTable, titl
 }
 
 DisplayTableToggle.propTypes = {
-  displayTable: PropTypes.bool.isRequired,
+  displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
+};
+DisplayTableToggle.defaultProps = {
+  displayTable: false,
 };
