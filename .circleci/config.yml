@@ -649,11 +649,14 @@ jobs:
             # remove first 4 lines of output
             tail -n +5 out.txt >> monitoring-goals.txt
             echo "```" >> monitoring-goals.txt
-      - notify_slack:
-          slack_channel: "tm-test"
-          message_text_file: monitoring-goals.txt
-          when: 
+      - when:
+          condition:
             equal: [ << parameters.target_env >>, "prod"]
+          steps:
+            - notify_slack:
+                slack_channel: "tm-test"
+                message_text_file: monitoring-goals.txt
+
 
 # ----------------- Commands -----------------
 
