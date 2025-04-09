@@ -3,17 +3,18 @@ import React, {
   useMemo,
   useState,
   useEffect,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { Checkbox } from '@trussworks/react-uswds';
+import { Checkbox, Alert } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { goalPropTypes } from './constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
-import { deleteGoal } from '../../fetchers/goals';
+import { deleteGoal, updateGoalStatus } from '../../fetchers/goals';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
 import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
@@ -25,14 +26,13 @@ import FlagStatus from './FlagStatus';
 import ExpanderButton from '../ExpanderButton';
 import ObjectiveCard from './ObjectiveCard';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 
 export default function StandardGoalCard({
   goal,
   recipientId,
   regionId,
-  showCloseSuspendGoalModal,
   showReopenGoalModal,
-  performGoalStatusUpdate,
   handleGoalCheckboxSelect,
   isChecked,
   // eslint-disable-next-line max-len
@@ -55,6 +55,12 @@ export default function StandardGoalCard({
   const isMonitoringGoal = goal.createdVia === 'monitoring';
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const [localStatus, setLocalStatus] = useState(status);
+  const [targetStatusForModal, setTargetStatusForModal] = useState('');
+  const [statusChangeError, setStatusChangeError] = useState(false);
+  const closeSuspendModalRef = useRef();
+  const [resetModalValues, setResetModalValues] = useState(false);
+
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
   const sortedObjectives = [...objectives];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
@@ -63,6 +69,11 @@ export default function StandardGoalCard({
     atLeastOneObjectiveIsNotCompletedOrSuspended,
     dispatchStatusChange,
   } = useObjectiveStatusMonitor(objectives);
+
+  // Sync local status if goal prop changes externally
+  useEffect(() => {
+    setLocalStatus(status);
+  }, [status]);
 
   useEffect(() => {
     if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
@@ -82,20 +93,46 @@ export default function StandardGoalCard({
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
 
+  const changeGoalStatus = async (newStatus, reason = null, context = null) => {
+    try {
+      setStatusChangeError(false);
+      // API expects: goalIds (array), newStatus, oldStatus, closeSuspendReason, closeSuspendContext
+      await updateGoalStatus(ids, newStatus, localStatus, reason, context);
+      setLocalStatus(newStatus);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating goal status:', err);
+      setStatusChangeError(true);
+    }
+  };
+
   const onUpdateGoalStatus = (newStatus) => {
+    // prevent closing if objectives aren't complete/suspended
     if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompletedOrSuspended) {
       setInvalidStatusChangeAttempted(true);
       return;
     }
-
     setInvalidStatusChangeAttempted(false);
 
-    if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
-      // Must provide reason for Close or Suspend.
-      showCloseSuspendGoalModal(newStatus, [id], status);
+    // check if the new status requires a reason modal
+    if (['Closed', 'Suspended'].includes(newStatus)) {
+      setTargetStatusForModal(newStatus);
+      setResetModalValues(!resetModalValues);
+      closeSuspendModalRef.current.toggleModal(true);
     } else {
-      performGoalStatusUpdate(ids, newStatus, status);
+      changeGoalStatus(newStatus);
     }
+  };
+
+  const handleModalSubmit = (
+    goalIdsFromModal,
+    statusFromModal,
+    oldStatusFromModal,
+    reason,
+    context,
+  ) => {
+    changeGoalStatus(statusFromModal, reason, context);
+    closeSuspendModalRef.current.toggleModal(false);
   };
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
@@ -107,14 +144,14 @@ export default function StandardGoalCard({
   const contextMenuLabel = `Actions for goal ${id}`;
   const menuItems = [];
 
-  if (status !== 'Closed' && hasEditButtonPermissions) {
+  if (localStatus !== 'Closed' && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
         history.push(editLink);
       },
     });
-  } else if (status === 'Closed' && hasEditButtonPermissions && showReopenGoalModal) {
+  } else if (localStatus === 'Closed' && hasEditButtonPermissions && showReopenGoalModal) {
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
@@ -138,7 +175,7 @@ export default function StandardGoalCard({
     return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(status)) {
+  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(localStatus)) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
@@ -158,7 +195,7 @@ export default function StandardGoalCard({
 
   // Determine the status change label based on current status
   const getStatusChangeLabel = () => {
-    switch (status) {
+    switch (localStatus) {
       case 'Not Started':
         return 'Added on';
       case 'In Progress':
@@ -168,13 +205,13 @@ export default function StandardGoalCard({
       case 'Closed':
         return 'Closed on';
       default:
-        return 'Added on';
+        return 'Added on'; // Default or Draft status
     }
   };
 
   // Determine who changed the status
   const getStatusChangeBy = () => {
-    switch (status) {
+    switch (localStatus) {
       case 'Not Started':
         return 'Added by';
       case 'In Progress':
@@ -184,7 +221,7 @@ export default function StandardGoalCard({
       case 'Closed':
         return 'Closed by';
       default:
-        return 'Added by';
+        return 'Added by'; // Default or Draft status
     }
   };
 
@@ -212,7 +249,7 @@ export default function StandardGoalCard({
   };
 
   return (
-    <DataCard testId="goalCard" className="ttahub-goal-card" errorBorder={erroneouslySelected || deleteError}>
+    <DataCard testId="goalCard" className="ttahub-goal-card position-relative" errorBorder={erroneouslySelected || deleteError || statusChangeError}>
       <div className="display-flex">
         <div className="flex-0" style={{ visibility: readonly ? 'hidden' : 'visible' }}>
           <Checkbox
@@ -235,7 +272,7 @@ export default function StandardGoalCard({
                 <GoalStatusDropdown
                   showReadOnlyStatus={readonly}
                   goalId={id}
-                  status={status}
+                  status={localStatus}
                   onUpdateGoalStatus={onUpdateGoalStatus}
                   previousStatus={previousStatus || 'Not Started'}
                   regionId={regionId}
@@ -250,6 +287,13 @@ export default function StandardGoalCard({
               </div>
             </div>
           </div>
+          {/* Alert for API errors */}
+          {statusChangeError && (
+            <Alert type="error" slim className="margin-top-1 margin-left-5">
+              There was an error updating the goal status. Please try again.
+            </Alert>
+          )}
+          {/* Alert for invalid status change attempt */}
           <GoalStatusChangeAlert
             internalLeftMargin={30}
             editLink={editLink}
@@ -320,12 +364,22 @@ export default function StandardGoalCard({
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
-          goalStatus={status}
+          goalStatus={localStatus}
           regionId={parseInt(regionId, DECIMAL_BASE)}
           dispatchStatusChange={dispatchStatusChange}
           isMonitoringGoal={isMonitoringGoal}
         />
       ))}
+      {/* Modal for Close/Suspend Reason */}
+      <CloseSuspendReasonModal
+        modalRef={closeSuspendModalRef}
+        id={`close-suspend-reason-modal-${id}`}
+        goalIds={ids}
+        newStatus={targetStatusForModal}
+        oldGoalStatus={localStatus}
+        onSubmit={handleModalSubmit}
+        resetValues={resetModalValues}
+      />
     </DataCard>
   );
 }
@@ -334,9 +388,7 @@ StandardGoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
-  showCloseSuspendGoalModal: PropTypes.func.isRequired,
   showReopenGoalModal: PropTypes.func,
-  performGoalStatusUpdate: PropTypes.func.isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
   readonly: PropTypes.bool,
