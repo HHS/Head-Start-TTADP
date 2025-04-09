@@ -193,12 +193,17 @@ export async function changeGoalStatus(req, res) {
       // For each goal, find all "in progress" objectives and update them to "suspended"
       await Promise.all(ids.map(async (goalId) => {
         await sequelize.models.Objective.update(
-          { status: 'Suspended' },
+          {
+            status: 'Suspended',
+            closeSuspendReason, // propagate reason from goal
+            closeSuspendContext, // propagate context from goal
+          },
           {
             where: {
               goalId,
               status: 'In Progress',
             },
+            individualHooks: true,
           },
         );
       }));
