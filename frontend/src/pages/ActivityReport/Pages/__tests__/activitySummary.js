@@ -134,6 +134,41 @@ describe('activity summary', () => {
   });
 });
 
+describe('ReviewSection', () => {
+  it('should display both participant fields when deliveryMethod is hybrid', () => {
+    // Create a wrapper component to use the hook
+    const TestComponent = () => {
+      const hookForm = useForm({
+        mode: 'onChange',
+        defaultValues: {
+          deliveryMethod: 'hybrid',
+          numberOfParticipants: 10,
+          numberOfParticipantsVirtually: 15,
+        },
+      });
+
+      return (
+        <FormProvider {...hookForm}>
+          <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
+            <activitySummary.reviewSection />
+          </NetworkContext.Provider>
+        </FormProvider>
+      );
+    };
+
+    render(<TestComponent />);
+
+    expect(screen.getByText('Number of participants attending in person')).toBeInTheDocument();
+    expect(screen.getByText('Number of participants attending virtually')).toBeInTheDocument();
+
+    const inPersonValue = screen.getByText('10');
+    const virtualValue = screen.getByText('15');
+
+    expect(inPersonValue).toBeInTheDocument();
+    expect(virtualValue).toBeInTheDocument();
+  });
+});
+
 describe('isPageComplete', () => {
   const FORM_DATA = {
     activityRecipientType: 'specialist',
