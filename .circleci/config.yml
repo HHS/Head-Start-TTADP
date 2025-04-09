@@ -113,7 +113,7 @@ workflows:
           branches:
             only:
               - dev
-              # - prod - todo enable this
+              - prod - todo enable this
     jobs:
       - run_import_job: { target_env: << pipeline.git.branch >> }
 
@@ -122,7 +122,6 @@ workflows:
       equal: [<< pipeline.parameters.action >>, "import_data"]
     jobs:
       - run_import_job: { target_env: dev }
-      - run_import_job: { target_env: staging }
 
   restore_db_manual:
     # backup prod db
@@ -645,11 +644,16 @@ jobs:
             > out.txt
             # print results for debugging
             cat out.txt
+            # construct output file
+            echo "New monitoring goals: ```" > monitoring-goals.txt
             # remove first 4 lines of output
-            tail -n +5 out.txt > monitoring-goals.txt
+            tail -n +5 out.txt >> monitoring-goals.txt
+            echo "```" >> monitoring-goals.txt
       - notify_slack:
           slack_channel: "tm-test"
           message_text_file: monitoring-goals.txt
+          when: 
+            equal: [ << parameters.target_env >>, "prod"]
 
 # ----------------- Commands -----------------
 
