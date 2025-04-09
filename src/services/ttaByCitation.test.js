@@ -33,19 +33,19 @@ describe('ttaByCitations', () => {
 
   beforeAll(async () => {
     const roleName = 'SS';
-    let role = await db.Role.findOne({ where: { name: roleName } });
+    const role = await db.Role.findOne({ where: { name: roleName } });
 
     if (!role) {
-      role = await db.Role.create({
-        name: roleName,
-        fullName: 'System Specialist',
-        isSpecialist: true,
-      });
+      throw new Error(`Role ${roleName} not found`);
     }
-    await db.UserRole.upsert({
-      userId: 1,
-      roleId: role.id,
+
+    const existing = await db.UserRole.findOne({
+      where: { userId: 1, roleId: role.id },
     });
+
+    if (!existing) {
+      await db.UserRole.create({ userId: 1, roleId: role.id });
+    }
 
     const testRecipient = await Recipient.findOrCreate({
       where: { id: RECIPIENT_ID },
