@@ -36,6 +36,7 @@ describe('ttaByCitations', () => {
     await db.Role.findOrCreate({
       where: { name: roleName },
       defaults: {
+        id: 16,
         name: roleName,
         fullName: 'System Specialist',
         isSpecialist: true,
