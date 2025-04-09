@@ -33,7 +33,7 @@ describe('ttaByCitations', () => {
 
   beforeAll(async () => {
     const roleName = 'SS';
-    let role = await db.Role.findOne({ where: { name: roleName } });
+    const role = await db.Role.findOne({ where: { name: roleName } });
     await db.UserRole.upsert({
       userId: 1,
       roleId: role.id,
