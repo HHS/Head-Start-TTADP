@@ -907,16 +907,29 @@ commands:
               exit 0; 
             fi
             if [ -f ./environments/${current_env} ]; then
-              current_owner=$(cat ./environments/${current_env})
-              if [ "${current_owner}" != "${CIRCLE_USERNAME}" ]; then 
-                echo "owner changed from ${current_owner}->${CIRCLE_USERNAME}"
+              old_owner=$(cat ./environments/${current_env})
+              new_owner="${CIRCLE_USERNAME}"
+              if [ "${old_owner}" != "${new_owner}" ]; then 
+                echo "owner changed from ${old_owner}->${new_owner}"
+                echo "${new_owner}" > environments/${current_env}
+                msg = ""
+                cd environments
+                for file in *; do 
+                  if [ ! -d ${file} ]; then 
+                    msg="${file}: $(cat ${file})\n${msg}"
+                  fi; 
+                done
+                printf ${msg} > msg.txt
               fi
             fi
-            echo "${CIRCLE_USERNAME}" > environments/${current_env}
       - save_cache:
           key: 'environment-owners'
           paths:
             - environments
+      - notify_slack:
+          slack_channel: "tm-test"
+          message_text_file: msg.txt
+          
 
   cf_cmd:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
@@ -1279,7 +1292,7 @@ commands:
             # Ensure all parameters are provided
             if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
               echo "Missing required parameters. Notification will not be sent."
-              exit 1
+              exit 0
             fi
 
             response=$(curl -s -X POST \
@@ -1296,6 +1309,7 @@ commands:
 
             if [ "$ok" != "true" ]; then
               echo "Slack notification failed: $error"
+              exit 1
             else
               echo "Slack notification sent successfully"
             fi
