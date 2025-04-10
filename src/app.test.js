@@ -26,12 +26,8 @@ describe('TTA Hub server', () => {
 
   test('retrieves user details to login', async () => {
     const spy = jest.spyOn(currentUser, 'retrieveUserDetails').mockResolvedValue({ id: 1 });
-    jest.spyOn(axios, 'post').mockImplementation(() => {
-      return Promise.resolve({ data: { accessToken: 'fake-access-token' } });
-    });
-    jest.spyOn(axios, 'get').mockImplementation(() => {
-      return Promise.resolve({ data: { id: 'mock-user-id', name: 'Test User' } });
-    });
+    jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve({ data: { accessToken: 'fake-access-token' } }));
+    jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve({ data: { id: 'mock-user-id', name: 'Test User' } }));
     const resp = await request(app)
       .get('/oauth2-client/login/oauth2/code/?code=test-code')
       .set('Cookie', ['session=mock-session']);
