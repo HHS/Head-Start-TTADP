@@ -783,7 +783,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/node-20-upgrade"
+    default: "al/ttahub-3969-misc-ar-changes-for-standard-goals"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
     default: "al-await-zip-in-monitoring-job"
