@@ -8,7 +8,6 @@ export default function Tag({
   children, className, clickable, handleClick,
 }) {
   const tagClass = classnames(
-    'ttahub-tag',
     className,
     'bg-base-lightest',
     'border',
