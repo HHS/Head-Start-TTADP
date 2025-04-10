@@ -366,15 +366,6 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
-          name: Acquire Lock
-          command: |
-            chmod +x ./automation/ci/scripts/*-lock.sh
-            ./automation/ci/scripts/acquire-lock.sh \
-              "<< parameters.app_name >>" \
-              "<< parameters.build_branch >>" \
-              "<< pipeline.number >>" \
-              "$CIRCLE_JOB"
-      - run:
           name: Push application with deployment vars
           command: |
             set -x
