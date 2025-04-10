@@ -29,7 +29,12 @@ parameters:
     type: enum
     enum: [build_test_deploy, deploy_manual, import_data, backup_restore_db]
     default: build_test_deploy
-    
+  target_env:
+    description: "Target environment to run the job in"
+    type: enum
+    enum: [dev, dev-blue, dev-green, dev-red, sandbox, staging, prod]
+    default: dev
+
 # ----------------- Workflows -----------------
 
 workflows:
@@ -80,8 +85,9 @@ workflows:
             - test_cucumber
             - dynamic_security_scan
 
-      - deploy:
+      - deploy_job:
           serial-group: << pipeline.git.branch >>/deploy-lock
+          target_env: << pipeline.git.branch >>
           requires:
             - full_check
           filters:
@@ -92,6 +98,8 @@ workflows:
                 - dev-blue
                 - dev-red
                 - sandbox
+                - main
+                - prod
 
   deploy_manual:
     when:
@@ -99,11 +107,13 @@ workflows:
     jobs:
       - build_and_lint
       - build_similarity_api
-      - deploy:
-          serial-group: << pipeline.git.branch >>/deploy-lock
+      - deploy_job:
+          serial-group: << pipeline.parameters.target_env >>/deploy-lock
+          target_env: << pipeline.parameters.target_env >>
           requires:
             - build_and_lint
             - build_similarity_api
+          
 
   import_data_cron:
     triggers:
@@ -462,13 +472,17 @@ jobs:
       - store_artifacts:
           path: reports
 
-  deploy:
+  deploy_job:
     executor: docker-executor
     resource_class: large
+    parameters:
+      target_env:
+        type: string
     steps:
       - attach_workspace:
           at: .
-      - set_env_vars
+      - set_env_vars:
+          target_env: << parameters.target_env >>
       - install_cf_tools
       - run:
           name: Build backend assets
@@ -483,14 +497,16 @@ jobs:
       - run:
           name: Build frontend assets
           command: yarn --cwd frontend run build
-      - cf_deploy
+      - cf_deploy:
+          target_env: << parameters.target_env >>
       - write_envs
       - run:
           name: Run database migrations
           command: |
             set -x
             cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
-      - notify_new_relic
+      - notify_new_relic:
+          target_env: << parameters.target_env >>
       - when:
           condition:
             equal: [ << pipeline.git.branch >>, prod ]
@@ -669,7 +685,6 @@ commands:
     parameters:
       target_env:
         type: string
-        default: << pipeline.git.branch >>
       filename:
         description: "Filename to write env vars to"
         type: string
@@ -805,8 +820,12 @@ commands:
 
   notify_new_relic:
     description: "Notify new relic of a deploy"
+    parameters:
+      target_env:
+        type: string
     steps:
-      - set_env_vars
+      - set_env_vars:
+          target_env: << parameters.target_env >>
       - run:
           name: Notify New Relic
           command: |
@@ -828,7 +847,8 @@ commands:
         type: string
         default: << pipeline.git.branch >>
     steps:
-      - set_env_vars
+      - set_env_vars:
+          target_env: << parameters.target_env >>
       - run:
           name: Login with service account
           command: |
@@ -840,9 +860,13 @@ commands:
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
-      and push application using deployment configuration file."  
+      and push application using deployment configuration file."
+    parameters:
+      target_env:
+        type: string
     steps:
-      - set_env_vars
+      - set_env_vars:
+          target_env: << parameters.target_env >>
       - run:
           name: Login with service account
           command: |
