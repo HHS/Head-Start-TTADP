@@ -212,5 +212,8 @@ RootCauseFeiGoals.propTypes = {
       response_count: PropTypes.number,
       percentage: PropTypes.number,
     })),
-  }).isRequired,
+  }),
+};
+RootCauseFeiGoals.defaultProps = {
+  data: undefined,
 };
