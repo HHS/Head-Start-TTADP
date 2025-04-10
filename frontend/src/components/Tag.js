@@ -3,14 +3,22 @@ import PropTypes from 'prop-types';
 import { Tag as TrussTag } from '@trussworks/react-uswds';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import classnames from 'classnames';
-import './Tag.scss';
 
 export default function Tag({
   children, className, clickable, handleClick,
 }) {
-  const tagClass = classnames('ttahub-tag', className, {
-    'ttahub-tag-underline': clickable,
-  });
+  const tagClass = classnames(
+    'ttahub-tag',
+    className,
+    'bg-base-lightest',
+    'border',
+    'border-base',
+    'text-ink',
+    'display-inline-flex',
+    'text-normal',
+    'text-center',
+    { 'text-underline': clickable },
+  );
   return (
     <TrussTag className={tagClass} onClick={handleClick}>
       {children}
