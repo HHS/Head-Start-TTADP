@@ -910,7 +910,7 @@ commands:
             if [ -f ./environments/${current_env} ]; then
               old_owner=$(cat ./environments/${current_env})
               new_owner="${CIRCLE_USERNAME}"
-              if [ "${old_owner}" != "${new_owner}" ]; then 
+              if [ "${old_owner}" != "${new_owner}" ]; then
                 echo "owner changed from ${old_owner}->${new_owner}"
                 echo "${new_owner}" > environments/${current_env}
                 msg = ""
@@ -922,6 +922,8 @@ commands:
                 done
                 cd ..
                 printf ${msg} > msg.txt
+              else
+                echo "owner not changed: ${old_owner}=${new_owner}"
               fi
             fi
       - save_cache:
