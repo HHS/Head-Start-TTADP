@@ -919,6 +919,7 @@ commands:
                     msg="${file}: $(cat ${file})\n${msg}"
                   fi; 
                 done
+                cd ..
                 printf ${msg} > msg.txt
               fi
             fi
@@ -928,7 +929,7 @@ commands:
             - environments
       - notify_slack:
           slack_channel: "tm-test"
-          message_text_file: msg.txt
+          message_text: msg.txt
           
 
   cf_cmd:
