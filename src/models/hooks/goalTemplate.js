@@ -36,6 +36,10 @@ const autoPopulateTemplateNameModifiedAt = (sequelize, instance, options) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// Going forward, all goals will be standard goals.
+// We determine what the creation method is going to be for standard goals.
+// Automatic, created, system generated or something different all together (check with Nathan).
 const autoPopulateCreationMethod = (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -48,7 +52,9 @@ const autoPopulateCreationMethod = (sequelize, instance, options) => {
     }
   }
 };
-
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// We will never have createdVia = 'Automatic' for standard goals.
+// Automatic implies that we created a template from a goal that didn't have one.
 const propagateTemplateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
