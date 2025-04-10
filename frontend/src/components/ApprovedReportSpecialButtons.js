@@ -76,14 +76,11 @@ export default function ApprovedReportSpecialButtons({
 }
 
 ApprovedReportSpecialButtons.propTypes = {
-  UnlockModal: PropTypes.node,
+  UnlockModal: PropTypes.func,
   user: PropTypes.shape({
-    permissions: PropTypes.arrayOf(PropTypes.string),
+    permissions: PropTypes.arrayOf(PropTypes.shape()), // Object of unknown shape
   }),
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]),
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]),
   showUnlockReports: PropTypes.bool,
   onCompleteEvent: PropTypes.func,
   showCompleteEvent: PropTypes.bool,

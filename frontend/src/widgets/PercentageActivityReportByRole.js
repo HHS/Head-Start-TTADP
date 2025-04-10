@@ -140,6 +140,8 @@ export default function PercentageActivityReportByRole({ data }) {
     exportRows,
   );
 
+  if (!data) return null;
+
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle marginY={0}>
@@ -202,10 +204,15 @@ PercentageActivityReportByRole.propTypes = {
     totalNumberOfReports: PropTypes.number,
     totalPercentage: PropTypes.number,
     filteredReports: PropTypes.number,
-    records: PropTypes.arrayOf(PropTypes.shape({
-      role_name: PropTypes.string,
-      role_count: PropTypes.number,
-      percentage: PropTypes.number,
-    })),
-  }).isRequired,
+    records: PropTypes.arrayOf(
+      PropTypes.shape({
+        role_name: PropTypes.string,
+        role_count: PropTypes.number,
+        percentage: PropTypes.number,
+      }),
+    ),
+  }),
+};
+PercentageActivityReportByRole.defaultProps = {
+  data: undefined,
 };

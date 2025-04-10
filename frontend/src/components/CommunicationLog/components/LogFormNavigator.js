@@ -238,7 +238,7 @@ LogFormNavigator.propTypes = {
   redirectPathOnSave: PropTypes.func.isRequired,
   reportFetched: PropTypes.bool.isRequired,
   setReportFetched: PropTypes.func.isRequired,
-  lastSaveTime: PropTypes.string,
+  lastSaveTime: PropTypes.shape(), // Moment object
   updateLastSaveTime: PropTypes.func.isRequired,
   showSavedDraft: PropTypes.bool.isRequired,
   updateShowSavedDraft: PropTypes.func.isRequired,
