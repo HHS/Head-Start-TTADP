@@ -1,4 +1,3 @@
-import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Tag from '../Tag';
@@ -6,11 +5,9 @@ import Tag from '../Tag';
 describe('Tag', () => {
   const renderTag = ({ clickable, handleClick }) => {
     render(
-      <div data-testid="tag-container">
-        <Tag clickable={clickable} handleClick={handleClick}>
-          Tag Content
-        </Tag>
-      </div>,
+      <Tag clickable={clickable} handleClick={handleClick}>
+        Tag Content
+      </Tag>,
     );
   };
 
@@ -22,12 +19,14 @@ describe('Tag', () => {
     renderTag({});
     expect(await screen.findByText(/Tag Content/i)).toBeVisible();
   });
-  it('renders with underline', async () => {
+
+  it('renders with underline', () => {
     renderTag({ clickable: true });
-    await expect(
-      document.querySelector('.ttahub-tag-underline'),
+    expect(
+      document.querySelector('.text-underline'),
     ).toBeInTheDocument();
   });
+
   it('handles click events', async () => {
     const handleClick = jest.fn();
     renderTag({ handleClick });
