@@ -3,7 +3,14 @@ import axios from 'axios';
 import app from './app';
 import * as currentUser from './services/currentUser';
 
-jest.mock('axios');
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    post: jest.fn().mockResolvedValue({ data: { accessToken: 'fake-access-token' } }),
+    get: jest.fn().mockResolvedValue({ data: { id: 'mock-user-id', name: 'Test User' } }),
+  },
+}));
+
 jest.mock('smartsheet');
 
 describe('TTA Hub server', () => {
@@ -12,38 +19,16 @@ describe('TTA Hub server', () => {
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...ORIGINAL_ENV };
-
-    // Ensure all env vars used in the route are set
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'false';
-    process.env.REDIRECT_URI_HOST = 'http://localhost:3000';
+    process.env.REDIRECT_URI_HOST = 'http://localhost:8080';
     process.env.AUTH_BASE = 'https://mock-auth.com';
     process.env.AUTH_CLIENT_ID = 'mock-client-id';
-    process.env.TTA_SMART_HUB_URI = 'http://localhost:3000';
+    process.env.TTA_SMART_HUB_URI = 'http://localhost:8080';
 
-    // Mock token response
-    axios.post.mockResolvedValue({
-      data: {
-        accessToken: 'fake-access-token',
-      },
-    });
-
-    // Mock user info
-    axios.get.mockResolvedValue({
-      data: {
-        id: 'mock-user-id',
-        name: 'Test User',
-      },
-    });
-
-    // retrieveUserDetails.mockResolvedValue({
-    //   id: 1,
-    // });
+    axios.post.mockResolvedValue({ data: { accessToken: 'fake-access-token' } });
+    axios.get.mockResolvedValue({ data: { id: 'mock-user-id', name: 'Test User' } });
   });
-
-  // afterAll(() => {
-  //   process.env = ORIGINAL_ENV;
-  // });
 
   afterEach(() => {
     jest.resetAllMocks();
@@ -52,9 +37,6 @@ describe('TTA Hub server', () => {
 
   test('retrieves user details to login', async () => {
     const spy = jest.spyOn(currentUser, 'retrieveUserDetails').mockResolvedValue({ id: 1 });
-    // process.env.NODE_ENV = 'test';
-    // process.env.BYPASS_AUTH = 'false';
-    expect(jest.isMockFunction(spy)).toBe(true);
     const resp = await request(app)
       .get('/oauth2-client/login/oauth2/code/?code=test-code')
       .set('Cookie', ['session=mock-session']);
