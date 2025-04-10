@@ -735,7 +735,7 @@ const sections = [
     title: 'Training or Technical Assistance',
     anchor: 'tta',
     items: [
-      { label: 'TTA provided', name: 'ttaType' },
+      { label: 'TTA type', name: 'ttaType' },
       { label: 'Language used', name: 'language' },
       { label: 'Conducted', name: 'deliveryMethod' },
     ],

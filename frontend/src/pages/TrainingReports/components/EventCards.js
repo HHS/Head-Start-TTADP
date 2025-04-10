@@ -36,7 +36,7 @@ function EventCards({
 }
 
 EventCards.propTypes = {
-  events: PropTypes.arrayOf(PropTypes.shape(eventPropTypes)).isRequired,
+  events: PropTypes.arrayOf(eventPropTypes),
   onRemoveSession: PropTypes.func.isRequired,
   onDeleteEvent: PropTypes.func.isRequired,
   removeEventFromDisplay: PropTypes.func.isRequired,
@@ -48,5 +48,8 @@ EventCards.propTypes = {
     setMessage: PropTypes.func.isRequired,
     setParentMessage: PropTypes.func.isRequired,
   }).isRequired,
+};
+EventCards.defaultProps = {
+  events: [],
 };
 export default EventCards;
