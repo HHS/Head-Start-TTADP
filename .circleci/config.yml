@@ -930,8 +930,7 @@ commands:
             - environments
       - notify_slack:
           slack_channel: "tm-test"
-          message_text: msg.txt
-          
+          message_text_file: msg.txt
 
   cf_cmd:
     description: "Login to Cloud Foundry space, run automation task, and send notification"
