@@ -903,6 +903,7 @@ commands:
           command: |
             mkdir -p environments
             current_env="<< pipeline.git.branch >>"
+            touch msg.txt
             if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
               exit 0; 
             fi
