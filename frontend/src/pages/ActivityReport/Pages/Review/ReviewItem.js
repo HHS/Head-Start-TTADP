@@ -122,7 +122,7 @@ const ReviewItem = ({
 
   return (
     <div className={`grid-row ${classes} margin-bottom-3 desktop:margin-bottom-0`}>
-      <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
+      <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold">
         {label}
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">

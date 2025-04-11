@@ -100,11 +100,8 @@ const ReviewSubmit = ({
             error={error}
             onSaveForm={onSaveForm}
             lastSaveTime={lastSaveTime}
-          >
-            <>
-              <Accordion bordered={false} items={items} multiselectable />
-            </>
-          </Submitter>
+            reviewItems={items || []}
+          />
         )}
       {(isApprover && !isDraft)
         && (
