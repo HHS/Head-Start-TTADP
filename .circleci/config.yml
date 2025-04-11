@@ -113,7 +113,6 @@ workflows:
           requires:
             - build_and_lint
             - build_similarity_api
-          
 
   import_data_cron:
     triggers:
@@ -122,8 +121,7 @@ workflows:
         filters:
           branches:
             only:
-              - dev
-              - prod - todo enable this
+              - prod
     jobs:
       - run_import_job: { target_env: << pipeline.git.branch >> }
 
@@ -131,7 +129,7 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "import_data"]
     jobs:
-      - run_import_job: { target_env: dev }
+      - run_import_job: { target_env: << pipeline.parameters.target_env >> }
 
   restore_db_manual:
     # backup prod db
