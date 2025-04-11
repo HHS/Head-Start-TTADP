@@ -104,7 +104,7 @@ async function activitySummary(
   const { ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
 
   // Recipient and grants.
-  await page.getByText('Recipient name *- Select -').click();
+  await page.getByText('Recipient *- Select -').click();
   await page.getByText('Agency 1.a in region 1, Inc.', { exact: true }).click();
   await page.getByText(/Agency 1.a in region 1, Inc. - 01HP044444/i).click();
   await page.getByText(/Agency 1.a in region 1, Inc. - 01HP044445/i).click();
