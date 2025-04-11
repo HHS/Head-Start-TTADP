@@ -7,13 +7,12 @@ import join from 'url-join';
 import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import axios from 'axios';
-import { SignJWT, importJWK } from 'jose';
 
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import signClientAssertion from './lib/auth/signClientAssertion';
 
 import { registerEventListener } from './processHandler';
-// import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
 
@@ -88,26 +87,6 @@ app.use('/api', require('./routes/apiDirectory').default);
 // Disable "X-Powered-By" header
 app.disable('x-powered-by');
 
-// Utility to sign client_assertion
-async function signClientAssertion() {
-  const base64 = process.env.PRIVATE_JWK_BASE64;
-  const jwk = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
-  const key = await importJWK(jwk, 'RS256');
-  const now = Math.floor(Date.now() / 1000);
-  const tokenEndpoint = `${process.env.AUTH_BASE}/oidc/api/openid_connect/token`;
-
-  return new SignJWT({
-    iss: process.env.AUTH_CLIENT_ID,
-    sub: process.env.AUTH_CLIENT_ID,
-    aud: tokenEndpoint,
-    jti: crypto.randomUUID(),
-  })
-    .setProtectedHeader({ alg: 'RS256' })
-    .setIssuedAt(now)
-    .setExpirationTime(now + 300)
-    .sign(key);
-}
-
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
   // try {
@@ -118,9 +97,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
     const { code } = req.query;
     const redirectUri = `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`;
     const tokenEndpoint = `${process.env.AUTH_BASE}/oidc/api/openid_connect/token`;
-
     const clientAssertion = await signClientAssertion();
-
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
@@ -129,7 +106,6 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
       client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
       client_assertion: clientAssertion,
     });
-
     const tokenResponse = await axios.post(tokenEndpoint, params.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
@@ -141,7 +117,6 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    // const dbUser = await retrieveUserDetails(user);
     const dbUser = await retrieveUserDetails(userInfo.data);
     req.session.userId = dbUser.id;
     req.session.uuid = uuidv4();

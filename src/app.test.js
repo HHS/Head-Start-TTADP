@@ -4,6 +4,10 @@ import app from './app';
 import * as currentUser from './services/currentUser';
 
 jest.mock('smartsheet');
+jest.mock('./lib/auth/signClientAssertion', () => ({
+  __esModule: true,
+  default: jest.fn().mockResolvedValue('mock.jwt.token'),
+}));
 
 describe('TTA Hub server', () => {
   const ORIGINAL_ENV = process.env;
@@ -24,10 +28,11 @@ describe('TTA Hub server', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  test('retrieves user details to login', async () => {
+  it('retrieves user details to login', async () => {
     const spy = jest.spyOn(currentUser, 'retrieveUserDetails').mockResolvedValue({ id: 1 });
     jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve({ data: { accessToken: 'fake-access-token' } }));
     jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve({ data: { id: 'mock-user-id', name: 'Test User' } }));
+
     const resp = await request(app)
       .get('/oauth2-client/login/oauth2/code/?code=test-code')
       .set('Cookie', ['session=mock-session']);
