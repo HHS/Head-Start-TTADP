@@ -219,6 +219,7 @@ const Submitter = ({
               reportId={id}
               displayId={displayId}
               approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
         {needsAction
@@ -232,6 +233,7 @@ const Submitter = ({
               displayId={displayId}
               reportId={id}
               availableApprovers={availableApprovers}
+              reviewItems={reviewItems}
             />
           )}
         {approved
@@ -239,6 +241,7 @@ const Submitter = ({
             <Approved
               additionalNotes={additionalNotes}
               approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
