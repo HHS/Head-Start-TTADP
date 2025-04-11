@@ -1,15 +1,25 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import * as React from 'react';
-import {
-  List,
-  Datagrid,
-  TextField,
-  DateField,
-  Show,
-  SimpleShowLayout,
-  TopToolbar,
-  ListButton,
-} from 'react-admin';
+
+let List = null;
+let Datagrid = null;
+let TextField = null;
+let DateField = null;
+let Show = null;
+let SimpleShowLayout = null;
+let TopToolbar = null;
+let ListButton = null;
+
+import('react-admin').then((RA) => {
+  List = RA.List;
+  Datagrid = RA.Datagrid;
+  TextField = RA.TextField;
+  DateField = RA.DateField;
+  Show = RA.Show;
+  SimpleShowLayout = RA.SimpleShowLayout;
+  TopToolbar = RA.TopToolbar;
+  ListButton = RA.ListButton;
+});
 
 // eslint-disable-next-line react/prop-types
 const RequestErrorShowActions = ({ basePath }) => (

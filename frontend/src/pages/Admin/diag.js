@@ -1,11 +1,15 @@
 import React from 'react';
-import {
-  Admin, Resource,
-} from 'react-admin';
 import dp from './dataProvider';
 import RequestErrors, { RequestErrorShow } from './requestErrors';
 import Container from '../../components/Container';
 import './diag.css';
+
+let Admin = null;
+let Resource = null;
+import('react-admin').then((RA) => {
+  Admin = RA.Admin;
+  Resource = RA.Resource;
+});
 
 function Diag() {
   return (
