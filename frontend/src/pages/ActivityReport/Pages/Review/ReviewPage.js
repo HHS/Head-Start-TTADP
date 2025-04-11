@@ -33,6 +33,7 @@ const ReviewPage = ({ sections, path }) => {
                 path={item.path}
                 name={item.name}
                 sortValues={item.sort}
+                isRichText={item.isRichText}
               />
             ))}
           </Section>

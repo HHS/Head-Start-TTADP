@@ -49,7 +49,7 @@ import UserContext from '../../UserContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
-  activityRecipientType: '',
+  activityRecipientType: 'recipient',
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
@@ -65,11 +65,12 @@ const defaultValues = {
   recipients: [],
   nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
+  numberOfParticipantsInPerson: null,
+  numberOfParticipantsVirtually: null,
   objectivesWithoutGoals: [],
   otherResources: [],
   participantCategory: '',
   participants: [],
-  reason: [],
   requester: '',
   specialistNextSteps: [{ id: null, note: '' }],
   startDate: null,
@@ -79,6 +80,7 @@ const defaultValues = {
   approvers: [],
   recipientGroup: null,
   language: [],
+  activityReason: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -114,6 +116,7 @@ export const formatReportWithSaveBeforeConversion = async (
         version: 2,
         approverUserIds: approverIds,
         pageState: data.pageState,
+        activityRecipientType: 'recipient',
       }, {},
     );
 
@@ -292,6 +295,10 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
+
+        // If the report creator is in the collaborators list, remove them.
+        const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
@@ -310,6 +317,7 @@ function ActivityReport({
         );
 
         // Add recipientIds to groups.
+        // TODO remove for standard goals.
         const groupsWithRecipientIds = groups.map((group) => ({
           ...group,
           // Match groups to grants as recipients could have multiple grants.
@@ -321,7 +329,7 @@ function ActivityReport({
             grants: [],
             otherEntities: [],
           },
-          collaborators: collaborators || [],
+          collaborators: filteredCollaborators || [],
           availableApprovers: availableApprovers || [],
           groups: groupsWithRecipientIds || [],
         });
@@ -483,6 +491,7 @@ function ActivityReport({
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,
+            activityRecipientType: 'recipient',
           },
         );
 
@@ -511,21 +520,19 @@ function ActivityReport({
 
         let reportData = updatedReport;
 
-        // if we are dealing with a recipient report, we need to do a little magic to
         // format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
-        if (updatedReport.activityRecipientType === 'recipient') {
-          const { goalForEditing, goals } = convertGoalsToFormData(
-            updatedReport.goalsAndObjectives,
-            updatedReport.activityRecipients.map((r) => r.activityRecipientId),
-          );
+        const { goalForEditing, goals } = convertGoalsToFormData(
+          updatedReport.goalsAndObjectives,
+          updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+        );
 
-          reportData = {
-            ...updatedReport,
-            goalForEditing,
-            goals,
-          };
-        }
+        reportData = {
+          ...updatedReport,
+          goalForEditing,
+          goals,
+        };
+
         updateFormData(reportData, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);

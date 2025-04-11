@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { HashLink } from 'react-router-hash-link';
+import './ReviewSection.scss';
 
 const Section = ({
   title, children, basePath, anchor, hidePrint, canEdit, isLastSection,
@@ -14,20 +15,20 @@ const Section = ({
 
   return (
     <div className={classes}>
-      <div className="grid-row border-bottom padding-bottom-1 margin-bottom-105">
+      <div className="smart-hub-review-section--edit-link">
+        {canEdit && (
+        <HashLink
+          aria-label={`Edit form section "${title}"`}
+          to={`${basePath}#${anchor}`}
+          className="smart-hub-edit-link pull-right no-print"
+        >
+          Edit
+        </HashLink>
+        )}
+      </div>
+      <div className="grid-row border-bottom padding-bottom-1">
         <div className="grid-col-12 desktop:grid-col-6">
-          <b className="margin-y-1">{title}</b>
-        </div>
-        <div className="grid-col-12 desktop:grid-col-6 display-flex flex-align-end flex-column flex-justify-center">
-          {canEdit && (
-          <HashLink
-            aria-label={`Edit form section "${title}"`}
-            to={`${basePath}#${anchor}`}
-            className="smart-hub-edit-link pull-right no-print"
-          >
-            Edit
-          </HashLink>
-          )}
+          <h3 className="margin-y-1">{title}</h3>
         </div>
       </div>
       {children}
