@@ -4,7 +4,6 @@ import React, {
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
-import Plotly from 'plotly.js-basic-dist';
 import { DECIMAL_BASE } from '@ttahub/common';
 import colors from '../colors';
 import LegendControl from './LegendControl';
@@ -199,7 +198,9 @@ export default function LineGraph({
       .filter((trace) => Boolean(trace));
 
     // draw the plot
-    Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
+    import('plotly.js-basic-dist').then((Plotly) => {
+      Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
+    }).catch((e) => console.log('Dynamic import failed:', e));
   }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData]);
 
   if (!hasData) {
