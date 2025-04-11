@@ -1,11 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Plotly from 'plotly.js-basic-dist';
 import { DECIMAL_BASE } from '@ttahub/common';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 
-const Graph = createPlotlyComponent(Plotly);
+let Graph = null;
+import('plotly.js-basic-dist').then((Plotly) => {
+  Graph = createPlotlyComponent(Plotly);
+}).catch((e) => console.log('Dynamic import failed:', e));
 
 export default function ResourceUseSparkline({ dataPoints }) {
   const titles = [];

@@ -1,14 +1,20 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
-import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import NoResultsFound from '../components/NoResultsFound';
 import colors from '../colors';
 import './BarGraph.css';
 
-const Plot = createPlotlyComponent(Plotly);
-const BottomAxis = createPlotlyComponent(Plotly);
+let Plot = null;
+let BottomAxis = null;
+
+import('plotly.js-basic-dist')
+  .then((Plotly) => {
+    Plot = createPlotlyComponent(Plotly);
+    BottomAxis = createPlotlyComponent(Plotly);
+  })
+  .catch((e) => console.log('Dynamic import failed:', e));
 
 function BarGraph({
   data,
