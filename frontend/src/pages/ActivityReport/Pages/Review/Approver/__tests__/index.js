@@ -103,7 +103,7 @@ describe('Approver review page', () => {
   describe('when the report is submitted', () => {
     it('displays the submit review component', async () => {
       renderReview(REPORT_STATUSES.SUBMITTED, () => { }, false);
-      expect(await screen.findByText('Review and approve report')).toBeVisible();
+      expect(await screen.findByText('Review and approve')).toBeVisible();
     });
 
     it('allows the approver to submit a review and redirects them after', async () => {

@@ -6,6 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import { useHistory } from 'react-router';
+import { Accordion } from '../../../../../components/Accordion';
 import RichEditor from '../../../../../components/RichEditor';
 import ApproverSelect from './components/ApproverSelect';
 import FormItem from '../../../../../components/FormItem';
@@ -24,6 +25,7 @@ const NeedsAction = ({
   displayId,
   reportId,
   availableApprovers,
+  reviewItems,
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
@@ -71,6 +73,9 @@ const NeedsAction = ({
     <>
       <h2>Review and submit</h2>
       <IndicatesRequiredField />
+      {reviewItems && reviewItems.length > 0 && (
+      <Accordion bordered items={reviewItems} multiselectable />
+      )}
       <div className="margin-bottom-2">
         {
           !userHasOneRole
@@ -167,6 +172,11 @@ NeedsAction.propTypes = {
   creatorRole: PropTypes.string,
   displayId: PropTypes.string.isRequired,
   reportId: PropTypes.string.isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.node.isRequired,
+  })).isRequired,
 };
 
 NeedsAction.defaultProps = {
