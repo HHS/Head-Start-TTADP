@@ -1,0 +1,21 @@
+/* eslint-disable no-multi-str */
+/* eslint-disable no-console */
+
+import { sequelize } from '../models';
+import { auditLogger } from '../logger';
+
+const runQuery = async () => {
+  const result = await sequelize.literal(`(
+    SELECT LEFT(r.name,35) recipient, "regionId" region,
+      COUNT(*) cnt FROM "Goals" g
+      JOIN "Grants" gr ON g."grantId" = gr.id
+      JOIN "Recipients" r ON gr."recipientId" = r.id
+      WHERE "createdVia" = 'monitoring'
+      AND g."createdAt" > (NOW() - INTERVAL '24 hours')
+      GROUP BY 1,2
+      ORDER BY 2,1
+    )`);
+  auditLogger.info(`Monitoring data: ${JSON.stringify(result)}`);
+};
+
+export default runQuery;
