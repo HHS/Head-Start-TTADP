@@ -477,8 +477,9 @@ jobs:
       target_env:
         type: string
     steps:
-      - attach_workspace:
-          at: .
+      # - attach_workspace:
+      #     at: .
+      - checkout
       - set_env_vars:
           target_env: << parameters.target_env >>
       - install_cf_tools
