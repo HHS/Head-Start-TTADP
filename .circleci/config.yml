@@ -649,7 +649,7 @@ jobs:
           the_command: "yarn createMonitoringGoalsCLI"
           target_env: << parameters.target_env >>
       - cf_cmd:
-          the_command: "node ./build/server/src/tools/queryMonitoringCLI.js"
+          the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
           target_env: << parameters.target_env >>
 
       # - install_cf_tools    
