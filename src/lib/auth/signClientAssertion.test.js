@@ -1,5 +1,5 @@
-import signClientAssertion from './signClientAssertion';
 import { importJWK, SignJWT } from 'jose';
+import signClientAssertion from './signClientAssertion';
 
 jest.mock('jose');
 jest.mock('crypto', () => ({
@@ -34,7 +34,7 @@ describe('signClientAssertion', () => {
     importJWK.mockResolvedValue(mockKey);
 
     const mockSign = jest.fn().mockResolvedValue('signed.jwt.token');
-    const mockSetProtectedHeader = jest.fn().mockReturnValue({ 
+    const mockSetProtectedHeader = jest.fn().mockReturnValue({
       setIssuedAt: jest.fn().mockReturnValue({
         setExpirationTime: jest.fn().mockReturnValue({
           sign: mockSign,
