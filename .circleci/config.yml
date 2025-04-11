@@ -105,14 +105,14 @@ workflows:
     when:
       equal: [<< pipeline.parameters.action >>, "deploy_manual"]
     jobs:
-      - build_and_lint
-      - build_similarity_api
+      # - build_and_lint
+      # - build_similarity_api
       - deploy_job:
           serial-group: << pipeline.parameters.target_env >>/deploy-lock
           target_env: << pipeline.parameters.target_env >>
-          requires:
-            - build_and_lint
-            - build_similarity_api
+          # requires:
+          #   - build_and_lint
+          #   - build_similarity_api
 
   import_data_cron:
     triggers:
