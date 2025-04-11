@@ -882,4 +882,8 @@ describe('cacheObjectiveMetadata', () => {
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
+
+  it('placeholder - should implement actual test', () => {
+    expect(true).toBe(true);
+  });
 });
