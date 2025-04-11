@@ -117,7 +117,7 @@ workflows:
   import_data_cron:
     triggers:
     - schedule:
-        cron: "0 0 * * *"
+        cron: "0 11 * * *" # 11AM UTC = 7AM EST
         filters:
           branches:
             only:
