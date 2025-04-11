@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid';
+import { Op } from 'sequelize';
 import db from '../models';
 import {
   createGoal, createReport, destroyGoal, destroyReport,
@@ -399,37 +400,39 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
 
 async function destroyReportAndCitationData(
   goal:{ id: number },
-  objectives: { id: number }[],
-  reports: { id: number }[],
   topic: { id: number },
-  citations: { id: number }[],
+  objectives: { id: number }[] = [],
+  reports: { id: number }[] = [],
+  citations: { id: number }[] = [],
 ) {
   await ActivityReportObjectiveCitation.destroy({
-    where: { id: citations.map((c) => c.id) },
+    where: { id: { [Op.in]: citations.map((c) => c.id) } },
     force: true,
     individualHooks: true,
   });
 
-  await ActivityReportObjectiveTopic.destroy({
-    where: { topicId: topic.id },
-    force: true,
-    individualHooks: true,
-  });
+  if (topic) {
+    await ActivityReportObjectiveTopic.destroy({
+      where: { topicId: topic.id },
+      force: true,
+      individualHooks: true,
+    });
 
-  await Topic.destroy({
-    where: { id: topic.id },
-    force: true,
-    individualHooks: true,
-  });
+    await Topic.destroy({
+      where: { id: topic.id },
+      force: true,
+      individualHooks: true,
+    });
+  }
 
   await ActivityReportCollaborator.destroy({
-    where: { activityReportId: reports.map((r) => r.id) },
+    where: { activityReportId: { [Op.in]: reports.map((r) => r.id) } },
     force: true,
     individualHooks: true,
   });
 
   await ActivityReportObjective.destroy({
-    where: { objectiveId: objectives.map((o) => o.id) },
+    where: { objectiveId: { [Op.in]: objectives.map((o) => o.id) } },
     force: true,
     individualHooks: true,
   });
@@ -437,12 +440,13 @@ async function destroyReportAndCitationData(
   await Promise.all(reports.map((report) => destroyReport(report)));
 
   await Objective.destroy({
-    where: { id: objectives.map((o) => o.id) },
+    where: { id: { [Op.in]: objectives.map((o) => o.id) } },
     force: true,
     individualHooks: true,
   });
-
-  await destroyGoal(goal);
+  if (goal) {
+    await destroyGoal(goal);
+  }
 }
 
 export {

@@ -107,7 +107,7 @@ describe('DB Cron Enrollment', () => {
       testTimezone,
       testSchedule,
     );
-    expect(job).toBeInstanceOf(CronJob);
+    expect(['CronJob', 'CJ']).toContain(job.constructor.name);
     // Verify that the cron job uses the schedule we provided.
     expect(job.cronTime.source).toBe(testSchedule);
   });

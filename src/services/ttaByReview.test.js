@@ -84,9 +84,9 @@ describe('ttaByReviews', () => {
 
     await destroyReportAndCitationData(
       goal,
+      topic,
       objectives,
       reports,
-      topic,
       citations,
     );
 
