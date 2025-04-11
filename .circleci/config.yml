@@ -698,7 +698,7 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
-          timeout: "900"
+          timeout: "1800"
   cf_process:
     description: "Process database from S3"
     parameters:
@@ -875,6 +875,11 @@ jobs:
             cd frontend
             chmod 744 ./run-yarn-audit.sh
             ./run-yarn-audit.sh;
+      # - run:
+      #     name: Check nodejs version compatibility with buildpack
+      #     command: |
+      #       chmod +x ./bin/check_node_version_compatibility.sh
+      #       ./bin/check_node_version_compatibility.sh
       - store_artifacts: # store backend lint reports
           path: reports
       - store_artifacts: # store frontend lint reports

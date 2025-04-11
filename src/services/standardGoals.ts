@@ -40,7 +40,7 @@ interface IObjective {
   objectiveTemplateId?: number;
 }
 
-export async function removeObjectives(objectivesToRemove, reportId) {
+export async function removeObjectivesFromReport(objectivesToRemove, reportId) {
   if (!objectivesToRemove.length) {
     return Promise.resolve();
   }
@@ -133,7 +133,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   // attempt to remove objectives that are no longer associated with any ARs
   // and weren't created on the RTR as a planning exercise
-  await removeObjectives(objectiveIdsToRemove, reportId);
+  await removeObjectivesFromReport(objectiveIdsToRemove, reportId);
 }
 
 /** *
