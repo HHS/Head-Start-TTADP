@@ -226,7 +226,7 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       fetchMock.post('/api/activity-reports', { id: 1 });
       await screen.findByRole('group', { name: 'Who was the activity for?' });
-      const recipientName = await screen.findByText(/recipient name/i);
+      const recipientName = await screen.findByText('Recipient');
       const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 

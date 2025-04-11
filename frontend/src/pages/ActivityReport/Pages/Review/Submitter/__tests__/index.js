@@ -161,7 +161,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Submit Report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {

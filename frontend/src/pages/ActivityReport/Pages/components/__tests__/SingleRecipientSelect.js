@@ -71,7 +71,7 @@ describe('SingleRecipientSelect', () => {
 
   it('renders correctly with default props', () => {
     render(<RenderTest />);
-    expect(screen.getByText(/recipient name/i)).toBeInTheDocument();
+    expect(screen.getByText('Recipient')).toBeInTheDocument();
   });
 
   it('populates the dropdown with the correct recipient options', async () => {

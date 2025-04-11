@@ -138,7 +138,7 @@ export default function SingleRecipientSelect(
 
   return (
     <FormItem
-      label="Recipient name"
+      label="Recipient"
       name="activityRecipients"
       required
     >

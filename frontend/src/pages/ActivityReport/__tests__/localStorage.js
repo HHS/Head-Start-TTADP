@@ -130,7 +130,7 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'review', true);
 
-    await screen.findByRole('heading', { name: /submit report/i, timeout: 4000 });
+    await screen.findByRole('heading', { name: /Review and submit/i, timeout: 4000 });
 
     let submit = await screen.findByRole('button', { name: /submit for approval/i });
     expect(submit).toBeDisabled();
