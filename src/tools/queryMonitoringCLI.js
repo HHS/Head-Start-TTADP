@@ -3,7 +3,7 @@
 
 import { sequelize } from '../models';
 
-const result = sequelize.query(
+const result = await sequelize.query(
   'SELECT LEFT(r.name,35) recipient, "regionId" region, \
         COUNT(*) cnt FROM "Goals" g \
         JOIN "Grants" gr ON g."grantId" = gr.id \

@@ -945,6 +945,9 @@ commands:
       target_env:
         description: "Desired env to run cmd in"
         type: string
+      logfile:
+        type: string
+        default: log.txt
     steps:
       - checkout
       - install_cf_tools
@@ -975,7 +978,7 @@ commands:
             rc=$?
             echo "waiting for logs...."
             sleep 30 # wait for logs
-            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME}
+            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
             echo "script exited with code:$rc"
             exit ${rc}
               
