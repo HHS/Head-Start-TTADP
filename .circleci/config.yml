@@ -32,7 +32,7 @@ parameters:
   target_env:
     description: "Target environment to run the job in"
     type: enum
-    enum: [dev, dev-blue, dev-green, dev-red, sandbox, staging, prod]
+    enum: [dev, dev-blue, dev-green, dev-red, sandbox]
     default: dev
 
 # ----------------- Workflows -----------------
@@ -650,28 +650,32 @@ jobs:
       - cf_cmd:
           the_command: "yarn createMonitoringGoalsCLI"
           target_env: << parameters.target_env >>
-      - install_cf_tools    
-      - cf_login:
+      - cf_cmd:
+          the_command: "node ./build/server/src/tools/queryMonitoringCLI.js"
           target_env: << parameters.target_env >>
-      - run: 
-          name: Get goals from DB
-          command: |
-            ./bin/query-monitoring.sh ${app_name} ${cg_space} \
-            > out.txt
-            # print results for debugging
-            cat out.txt
-            # construct output file
-            echo "New monitoring goals: ```" > monitoring-goals.txt
-            # remove first 4 lines of output
-            tail -n +5 out.txt >> monitoring-goals.txt
-            echo "```" >> monitoring-goals.txt
-      - when:
-          condition:
-            equal: [ << parameters.target_env >>, "prod"]
-          steps:
-            - notify_slack:
-                slack_channel: "tm-test"
-                message_text_file: monitoring-goals.txt
+
+      # - install_cf_tools    
+      # - cf_login:
+      #     target_env: << parameters.target_env >>
+      # - run: 
+      #     name: Get goals from DB
+      #     command: |
+      #       ./bin/query-monitoring.sh ${app_name} ${cg_space} \
+      #       > out.txt
+      #       # print results for debugging
+      #       cat out.txt
+      #       # construct output file
+      #       echo "New monitoring goals: ```" > monitoring-goals.txt
+      #       # remove first 4 lines of output
+      #       tail -n +5 out.txt >> monitoring-goals.txt
+      #       echo "```" >> monitoring-goals.txt
+      # - when:
+      #     condition:
+      #       equal: [ << parameters.target_env >>, "prod"]
+      #     steps:
+      #       - notify_slack:
+      #           slack_channel: "tm-test"
+      #           message_text_file: monitoring-goals.txt
 
 
 # ----------------- Commands -----------------
