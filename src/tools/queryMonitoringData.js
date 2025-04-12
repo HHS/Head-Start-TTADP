@@ -5,6 +5,7 @@ import { sequelize } from '../models';
 import { auditLogger } from '../logger';
 
 const runQuery = async () => {
+  console.info('Getting recent monitoring goals');
   const result = await sequelize.literal(`(
     SELECT LEFT(r.name,35) recipient, "regionId" region,
       COUNT(*) cnt FROM "Goals" g
