@@ -965,6 +965,7 @@ commands:
       - run:
           name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
           command: |
+            set +e
             TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}-${RANDOM}"
             
             cf run-task \
