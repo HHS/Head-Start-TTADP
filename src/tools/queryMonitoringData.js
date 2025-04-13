@@ -2,21 +2,20 @@
 /* eslint-disable no-console */
 
 import { sequelize } from '../models';
-import { auditLogger } from '../logger';
 
 const runQuery = async () => {
   console.info('Getting recent monitoring goals');
-  const result = await sequelize.literal(`(
-    SELECT LEFT(r.name,35) recipient, "regionId" region,
+  const result = await sequelize.query(
+    `SELECT LEFT(r.name,35) recipient, "regionId" region,
       COUNT(*) cnt FROM "Goals" g
       JOIN "Grants" gr ON g."grantId" = gr.id
       JOIN "Recipients" r ON gr."recipientId" = r.id
       WHERE "createdVia" = 'monitoring'
       AND g."createdAt" > (NOW() - INTERVAL '24 hours')
-      GROUP BY 1,2
-      ORDER BY 2,1
-    )`);
-  auditLogger.info(`Monitoring data: ${JSON.stringify(result)}`);
+      GROUP BY 1,2 ORDER BY 2,1;`,
+    { raw: true },
+  );
+  console.info(`Monitoring data: ${result}`);
 };
 
 export default runQuery;
