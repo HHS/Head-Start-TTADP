@@ -147,7 +147,9 @@ export function TopicFrequencyGraphWidget({
 
     // draw the plot
     import('plotly.js-basic-dist').then((Plotly) => {
-      Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
+      if (bars.current) {
+        Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
+      }
     }).catch((e) => console.log('Dynamic import failed:', e));
   }, [data, order, setOrder, showAccessibleData]);
 
