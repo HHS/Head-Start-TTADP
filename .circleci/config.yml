@@ -652,9 +652,10 @@ jobs:
           the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
           target_env: << parameters.target_env >>
           logfile: cmd_log.txt
-      - command: |
-          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results
+      - run:
+          command: |
+            results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
+            echo $results
       # - when:
       #     condition:
       #       equal: [ << parameters.target_env >>, "prod"]
