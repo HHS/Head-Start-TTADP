@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tag as TrussTag } from '@trussworks/react-uswds';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import classnames from 'classnames';
 
 export default function Tag({
