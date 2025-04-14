@@ -471,7 +471,7 @@ Our project includes four deployed Postgres databases, one to interact with each
 
    On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
    This indicates you are in an open psql session, the command-line interface to PostgreSQL.
-   You will need to have the pg/redis client installed locally and findable in you PATH.
+   You will need to have the pg/redis client installed locally and findable in your $PATH.
    Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
 
 ##### Option B: Run script as task
