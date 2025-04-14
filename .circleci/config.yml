@@ -123,7 +123,7 @@ workflows:
             only:
               - prod
     jobs:
-      - run_import_job: { target_env: << pipeline.git.branch >> }
+      - run_import_job: { target_env: prod }
 
   import_data_manual:
     when:
@@ -655,7 +655,7 @@ jobs:
       - run:
           command: |
             results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-            echo $results
+            echo $results > monitoring-goals.txt
       - when:
           condition:
              equal: [ << parameters.target_env >>, "prod"]
