@@ -15,7 +15,7 @@ const queryMonitoringData = async () => {
       GROUP BY 1,2 ORDER BY 2,1;`,
     { raw: true },
   );
-  console.info(`Recent Monitoring Goals: ${JSON.stringify(result)[0]}`);
+  console.info(`Recent Monitoring Goals: ${JSON.stringify(result[0])}`);
 };
 
 export default queryMonitoringData;
