@@ -4,6 +4,9 @@ import { validateUserAuthForAccess } from '../services/accessValidation';
 import { hsesAuth } from './authMiddleware';
 import { currentUserId, retrieveUserDetails } from '../services/currentUser';
 import { unauthorized } from '../serializers/errorResponses';
+import handleErrors from '../lib/apiErrorHandler';
+
+const namespace = 'MIDDLEWARE:TOKEN';
 
 const retrieveUserFromHSES = async (req) => {
   const { authorization } = req.headers;
@@ -30,7 +33,10 @@ const tokenMiddleware = async (req, res, next) => {
       title: 'Unauthenticated User',
       detail: 'User token is missing or did not map to a known user',
     });
-  } else if (await validateUserAuthForAccess(userId)) {
+  } else if (await validateUserAuthForAccess(userId)
+    .catch((error) => {
+      handleErrors(req, res, error, namespace);
+    })) {
     auditLogger.info(`User ${userId} making API request`);
     res.locals.userId = userId;
     next();
