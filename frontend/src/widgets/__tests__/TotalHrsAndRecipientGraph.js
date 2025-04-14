@@ -115,4 +115,26 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     fireEvent.click(checkbox);
     expect(setSelected).toHaveBeenCalled();
   });
+
+  it('toggles between graph data and tabular data', async () => {
+    expect(() => {
+      act(() => {
+        renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
+      });
+    }).not.toThrow();
+
+    // Starts off showing graph data
+    const xAxisTitle = await screen.findByText('Date range');
+    expect(xAxisTitle).toBeInTheDocument();
+
+    // Find the button to show the table
+    const menuButton = screen.getByTestId('ellipsis-button');
+    fireEvent.click(menuButton);
+    const tableButton = screen.getByText('Display table');
+    fireEvent.click(tableButton);
+
+    // Find the table heading and expect it to be there
+    const tableHeading = await screen.findByText('TTA Provided');
+    expect(tableHeading).toBeInTheDocument();
+  });
 });
