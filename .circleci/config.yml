@@ -656,14 +656,13 @@ jobs:
           command: |
             results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
             echo $results
-      # - when:
-      #     condition:
-      #       equal: [ << parameters.target_env >>, "prod"]
-      #     steps:
-      #       - notify_slack:
-      #           slack_channel: "tm-test"
-      #           message_text_file: monitoring-goals.txt
-
+      - when:
+          condition:
+             equal: [ << parameters.target_env >>, "prod"]
+          steps:
+             - notify_slack:
+                slack_channel: "tm-test" # adjust to main channel when verified
+                message_text_file: monitoring-goals.txt
 
 # ----------------- Commands -----------------
 
