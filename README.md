@@ -448,8 +448,12 @@ Our project includes four deployed Postgres databases, one to interact with each
 1. If you haven't used the the cloud foundry plugin [cf-service-connect][cf-service-connect] before, install it now
 
    ```bash
-   # Example install for macOS
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
+   # Mac OSX ARM
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_darwin_arm64 
+   # Mac OSX non-ARM
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_darwin_amd64
+   # Windows
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_windows_386
    ```
 
 1. Connect to your desired database
