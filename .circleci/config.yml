@@ -540,8 +540,10 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
+      - create_combined_yarnlock
       - restore_cache:
           keys:
+            - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             - v15-yarn-deps-
       - run: |
           yarn deps
