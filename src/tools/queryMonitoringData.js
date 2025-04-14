@@ -1,9 +1,10 @@
 /* eslint-disable no-multi-str */
 /* eslint-disable no-console */
 
+import { query } from 'express';
 import { sequelize } from '../models';
 
-const runQuery = async () => {
+const queryMonitoringData = async () => {
   console.info('Getting recent monitoring goals');
   const result = await sequelize.query(
     `SELECT LEFT(r.name,35) recipient, "regionId" region,
@@ -15,7 +16,7 @@ const runQuery = async () => {
       GROUP BY 1,2 ORDER BY 2,1;`,
     { raw: true },
   );
-  console.info(`Monitoring data: ${result}`);
+  console.info(`Monitoring data: ${JSON.stringify(result)}`);
 };
 
-export default runQuery;
+export default queryMonitoringData;
