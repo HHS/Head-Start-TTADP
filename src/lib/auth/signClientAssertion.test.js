@@ -26,7 +26,7 @@ describe('signClientAssertion', () => {
       ext: true,
     })).toString('base64');
   });
-  
+
   it('generates a signed JWT using the imported JWK', async () => {
     const mockKey = { kid: 'mock-key' };
     jose.importJWK.mockResolvedValue(mockKey);
