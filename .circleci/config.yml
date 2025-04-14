@@ -18,6 +18,9 @@ executors:
   docker-python-executor:
     docker:
       - image: cimg/python:3.9.21
+  docker-base:
+    docker:
+      - image: cimg/base:2021.04
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -623,11 +626,11 @@ jobs:
           target_env: << parameters.target_env >>
 
   build_check:
-    executor: docker-executor
+    executor: docker-base
     steps: [ say_ok ]
 
   full_check:
-    executor: docker-executor
+    executor: docker-base
     steps: [ say_ok ]
 
   run_import_job:
