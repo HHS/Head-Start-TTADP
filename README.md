@@ -455,13 +455,20 @@ Our project includes four deployed Postgres databases, one to interact with each
 1. Connect to your desired database
 
    ```bash
+   # list services (ie postgres, redis, etc)
+   cf services
    cf connect-to-service <app_name> <service_instance_name>
-   # Example for sandbox
+   # Example for sandbox pg
    cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
+   # Example for sandbox redis
+   cf connect-to-service tta-smarthub-sandbox ttahub-redis-sandbox
+   # ctrl-d to disconnect
    ```
 
    On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
    This indicates you are in an open psql session, the command-line interface to PostgreSQL.
+   You will need to have the pg/redis client installed locally and findable in you PATH.
+   Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
 
 ##### Option B: Run script as task
 
