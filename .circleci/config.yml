@@ -651,22 +651,10 @@ jobs:
       - cf_cmd:
           the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
           target_env: << parameters.target_env >>
-
-      # - install_cf_tools    
-      # - cf_login:
-      #     target_env: << parameters.target_env >>
-      # - run: 
-      #     name: Get goals from DB
-      #     command: |
-      #       ./bin/query-monitoring.sh ${app_name} ${cg_space} \
-      #       > out.txt
-      #       # print results for debugging
-      #       cat out.txt
-      #       # construct output file
-      #       echo "New monitoring goals: ```" > monitoring-goals.txt
-      #       # remove first 4 lines of output
-      #       tail -n +5 out.txt >> monitoring-goals.txt
-      #       echo "```" >> monitoring-goals.txt
+          logfile: cmd_log.txt
+      - command: |
+          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
+          echo $results
       # - when:
       #     condition:
       #       equal: [ << parameters.target_env >>, "prod"]
@@ -947,7 +935,7 @@ commands:
         type: string
       logfile:
         type: string
-        default: log.txt
+        default: cmd_log.txt
     steps:
       - checkout
       - install_cf_tools

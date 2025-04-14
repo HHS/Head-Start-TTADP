@@ -1,7 +1,6 @@
 /* eslint-disable no-multi-str */
 /* eslint-disable no-console */
 
-import { query } from 'express';
 import { sequelize } from '../models';
 
 const queryMonitoringData = async () => {
@@ -16,7 +15,7 @@ const queryMonitoringData = async () => {
       GROUP BY 1,2 ORDER BY 2,1;`,
     { raw: true },
   );
-  console.info(`Monitoring data: ${JSON.stringify(result)}`);
+  console.info(`Recent Monitoring Goals: ${JSON.stringify(result)[0]}`);
 };
 
 export default queryMonitoringData;
