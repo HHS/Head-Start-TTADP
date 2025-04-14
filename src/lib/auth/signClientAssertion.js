@@ -3,6 +3,10 @@ import crypto from 'crypto';
 
 export default async function signClientAssertion() {
   const base64 = process.env.PRIVATE_JWK_BASE64;
+  if (!base64) {
+    throw new Error('PRIVATE_JWK_BASE64 env var not set');
+  }
+
   const jwk = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
   const key = await importJWK(jwk, 'RS256');
   const now = Math.floor(Date.now() / 1000);
