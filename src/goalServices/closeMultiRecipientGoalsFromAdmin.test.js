@@ -107,12 +107,24 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
   });
 
   afterAll(async () => {
-    const goalIds = goals.map((goal) => goal.id);
-    await Objective.destroy({ where: { goalId: goalIds }, force: true });
-    await Goal.destroy({ where: { id: goalIds }, force: true });
-    await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
-    await Recipient.destroy({ where: { id: recipient.id }, force: true });
-    await Region.destroy({ where: { id: region.id }, force: true });
+    if (goals?.length) {
+      const goalIds = goals.map((goal) => goal.id);
+      await Objective.destroy({ where: { goalId: goalIds }, force: true });
+      await Goal.destroy({ where: { id: goalIds }, force: true });
+    }
+
+    if (grant) {
+      await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
+    }
+
+    if (recipient) {
+      await Recipient.destroy({ where: { id: recipient.id }, force: true });
+    }
+
+    if (region) {
+      await Region.destroy({ where: { id: region.id }, force: true });
+    }
+
     await db.sequelize.close();
   });
 

@@ -32,7 +32,31 @@ describe('ttaByCitations', () => {
   let citations;
 
   beforeAll(async () => {
-    await Recipient.findOrCreate({
+    const roleName = 'SS';
+    await db.Role.findOrCreate({
+      where: { name: roleName },
+      defaults: {
+        id: 16,
+        name: roleName,
+        fullName: 'System Specialist',
+        isSpecialist: true,
+      },
+    });
+    const role = await db.Role.findOne({ where: { name: roleName } });
+
+    if (!role) {
+      throw new Error(`Role ${roleName} not found`);
+    }
+
+    const existing = await db.UserRole.findOne({
+      where: { userId: 1, roleId: role.id },
+    });
+
+    if (!existing) {
+      await db.UserRole.create({ userId: 1, roleId: role.id });
+    }
+
+    const testRecipient = await Recipient.findOrCreate({
       where: { id: RECIPIENT_ID },
       defaults: {
         id: RECIPIENT_ID,
@@ -40,7 +64,7 @@ describe('ttaByCitations', () => {
       },
     });
 
-    await Grant.findOrCreate({
+    const testGrant = await Grant.findOrCreate({
       where: { number: GRANT_NUMBER },
       defaults: {
         id: GRANT_ID,
@@ -65,6 +89,7 @@ describe('ttaByCitations', () => {
       createdReviewId,
       granteeId,
     );
+
     findingId = result.findingId;
     reviewId = result.reviewId;
 
@@ -85,9 +110,9 @@ describe('ttaByCitations', () => {
     await destroyAdditionalMonitoringData(findingId, reviewId);
     await destroyReportAndCitationData(
       goal,
+      topic,
       objectives,
       reports,
-      topic,
       citations,
     );
 

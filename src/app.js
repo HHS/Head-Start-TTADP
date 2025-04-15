@@ -6,12 +6,13 @@ import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import axios from 'axios';
 
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import signClientAssertion from './lib/auth/signClientAssertion';
 
 import { registerEventListener } from './processHandler';
-import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
 
@@ -75,6 +76,7 @@ app.use((req, res, next) => {
 });
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
+  app.use(express.static(path.join(__dirname, '..', 'public')));
   app.use('/index.html', serveIndex);
   app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
@@ -87,12 +89,35 @@ app.disable('x-powered-by');
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
+  // try {
+  //   const user = await hsesAuth.code.getToken(req.originalUrl);
+  //   // user will have accessToken and refreshToken
+  //   logger.debug(`HSES AccessToken: ${user.accessToken}`);
   try {
-    const user = await hsesAuth.code.getToken(req.originalUrl);
-    // user will have accessToken and refreshToken
-    logger.debug(`HSES AccessToken: ${user.accessToken}`);
+    const { code } = req.query;
+    const redirectUri = `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`;
+    const tokenEndpoint = `${process.env.AUTH_BASE}/oidc/api/openid_connect/token`;
+    const clientAssertion = await signClientAssertion();
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: process.env.AUTH_CLIENT_ID,
+      client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+      client_assertion: clientAssertion,
+    });
+    const tokenResponse = await axios.post(tokenEndpoint, params.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
 
-    const dbUser = await retrieveUserDetails(user);
+    const { accessToken } = tokenResponse.data;
+    // Retrieve user info
+    const userInfo = await axios.get(`${process.env.AUTH_BASE}/oidc/api/openid_connect/userinfo`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const dbUser = await retrieveUserDetails(userInfo.data);
     req.session.userId = dbUser.id;
     req.session.uuid = uuidv4();
     auditLogger.info(`User ${dbUser.id} logged in`);
