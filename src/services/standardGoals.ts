@@ -391,13 +391,11 @@ export async function standardGoalsForRecipient(
         model: GoalCollaborator,
         as: 'goalCollaborators',
         attributes: ['id'],
-        // separate: true,
         required: true,
         include: [
           {
             model: CollaboratorType,
             as: 'collaboratorType',
-            // required: true,
             where: {
               name: 'Creator',
             },
@@ -412,13 +410,11 @@ export async function standardGoalsForRecipient(
               {
                 model: UserRole,
                 as: 'userRoles',
-                // required: true,
                 include: [
                   {
                     model: Role,
                     as: 'role',
                     attributes: ['name'],
-                    // required: true,
                   },
                 ],
                 attributes: ['id'],
@@ -434,7 +430,6 @@ export async function standardGoalsForRecipient(
         attributes: ['response', 'goalId'],
       },
       {
-        // required: true,
         model: Grant,
         as: 'grant',
         attributes: [
@@ -459,7 +454,6 @@ export async function standardGoalsForRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
-        // separate: true,
         order: [
           [sequelize.col('activityReportObjectives.activityReport.endDate'), 'DESC'],
           ['createdAt', 'DESC'],
@@ -491,7 +485,6 @@ export async function standardGoalsForRecipient(
                 model: Topic,
                 as: 'topics',
                 attributes: ['name'],
-                // required: false,
               },
               {
                 model: ActivityReportObjectiveCitation,
