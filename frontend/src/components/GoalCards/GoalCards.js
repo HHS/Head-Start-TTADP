@@ -169,20 +169,6 @@ function GoalCards({
         />
         <div className="padding-x-3 padding-y-2 ttahub-goal-cards">
           {goals.map((goal, index) => (
-            // <GoalCard
-            //   key={`goal-row-${goal.id}`}
-            //   goal={goal}
-            //   openMenuUp={
-            //         index >= goals.length - 2 && index !== 0
-            //       } // the last two should open "up"
-            //   recipientId={recipientId}
-            //   regionId={regionId}
-            //   showCloseSuspendGoalModal={showCloseSuspendGoalModal}
-            //   showReopenGoalModal={showReopenGoalModal}
-            //   performGoalStatusUpdate={performGoalStatusUpdate}
-            //   handleGoalCheckboxSelect={handleGoalCheckboxSelect}
-            //   isChecked={selectedGoalCheckBoxes[goal.id] || false}
-            // />
             <StandardGoalCard
               key={`goal-row-${goal.id}`}
               goal={goal}

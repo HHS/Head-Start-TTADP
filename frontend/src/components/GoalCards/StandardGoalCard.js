@@ -35,8 +35,7 @@ export default function StandardGoalCard({
   showReopenGoalModal,
   handleGoalCheckboxSelect,
   isChecked,
-  // eslint-disable-next-line max-len
-  readonly, // previously we had 'hideCheckbox' and 'showReadOnlyStatus' and 'hideGoalOptions', which all mean "this is readonly"
+  readonly,
   erroneouslySelected,
 }) {
   const {
