@@ -80,7 +80,7 @@ GoalsObjectives.propTypes = {
     grants: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
       numberWithProgramTypes: PropTypes.string.isRequired,
-    })).isRequired,
+    })),
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
   canMergeGoals: PropTypes.bool.isRequired,

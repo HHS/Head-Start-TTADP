@@ -442,7 +442,7 @@ describe('GoalCard', () => {
     };
 
     renderGoalCard({ ...DEFAULT_PROPS }, mergedGoal);
-    const tags = document.querySelectorAll('.usa-tag.usa-tag--merged-goal');
+    const tags = screen.getAllByText('Merged');
     expect(tags.length).toBe(1);
     expect(tags[0].textContent).toBe('Merged');
     expect(tags[0]).toBeVisible();
