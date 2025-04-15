@@ -261,7 +261,9 @@ LineGraph.propTypes = {
       name: PropTypes.string,
       x: PropTypes.arrayOf(PropTypes.string),
       y: PropTypes.arrayOf(PropTypes.number),
-      month: PropTypes.string,
+      month: PropTypes.oneOfType([
+        PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.arrayOf(PropTypes.bool),
+      ]),
       id: PropTypes.string,
     }),
   ),
