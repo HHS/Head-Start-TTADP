@@ -25,6 +25,8 @@ import {
 } from './handlers';
 import User from '../../policies/user';
 
+jest.mock('bull');
+
 jest.mock('../../services/ssdi', () => ({
   checkFolderPermissions: jest.fn(),
   listQueryFiles: jest.fn(),
