@@ -342,8 +342,8 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
-  pageGoalIds: PropTypes.number.isRequired,
-  showRttapaValidation: PropTypes.bool.isRequired,
+  pageGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  showRttapaValidation: PropTypes.bool,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
   activePage: PropTypes.number.isRequired,
   offset: PropTypes.number.isRequired,
@@ -354,18 +354,21 @@ GoalCardsHeader.propTypes = {
   shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
   allSelectedGoalIds: PropTypes.shape({ id: PropTypes.bool }).isRequired,
-  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    goals: PropTypes.arrayOf(PropTypes.number),
-  })).isRequired,
+  goalBuckets: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      goals: PropTypes.arrayOf(PropTypes.number),
+    }),
+  ).isRequired,
   perPageChange: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
   allGoalsChecked: false,
   count: 0,
-  selectAllGoalCheckboxSelect: () => { },
-  selectAllGoals: () => { },
+  selectAllGoalCheckboxSelect: () => {},
+  selectAllGoals: () => {},
   numberOfSelectedGoals: 0,
   shouldDisplayMergeSuccess: false,
+  showRttapaValidation: false,
 };
