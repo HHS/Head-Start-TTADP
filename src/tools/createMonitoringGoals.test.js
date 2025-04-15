@@ -2433,7 +2433,7 @@ describe('createMonitoringGoals', () => {
     await sequelize.close();
   });
 
-  it('logs an error is the monitoring goal template doesn\'t exist', async () => {
+  it('logs an error if the monitoring goal template does not exist', async () => {
     // Get the current function for the GoalTemplate.findOne method and but it back later.
     const originalFindOne = GoalTemplate.findOne;
     // Mock the GoalTemplate.findOne method to return null.
