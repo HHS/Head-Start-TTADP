@@ -2539,6 +2539,7 @@ describe('createMonitoringGoals', () => {
     expect(grant13Goals[0].goalTemplateId).toBe(goalTemplate.id);
     expect(grant13Goals[0].status).toBe('Not started');
 
+    /* Commenting out temporarily since we're not auto-closing goals
     // Ensure the correct GoalChangeStatus has been created.
     const goalChangeStatus13 = await GoalStatusChange.findOne({ where: { goalId: goalForClose13.id } });
     expect(goalChangeStatus13).not.toBeNull();
@@ -2547,6 +2548,7 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus13.newStatus).toBe('Closed');
     expect(goalChangeStatus13.userName).toBe('system');
     expect(goalChangeStatus13.reason).toBe('No active monitoring citations');
+    */
 
     // CASE 14: Monitoring goal with no active citations but has a unapproved report (don't close).
     const grant14Goals = await Goal.findAll({ where: { grantId: grantToNotCloseMonitoringGoal14.id } });
