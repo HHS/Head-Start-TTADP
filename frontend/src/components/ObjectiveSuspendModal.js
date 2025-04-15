@@ -103,9 +103,8 @@ ObjectiveSuspendModal.propTypes = {
   onChangeSuspendContext: PropTypes.func.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
-  error: PropTypes.shape({ message: PropTypes.string }),
+  error: PropTypes.node,
 };
-
 ObjectiveSuspendModal.defaultProps = {
-  error: null,
+  error: undefined,
 };

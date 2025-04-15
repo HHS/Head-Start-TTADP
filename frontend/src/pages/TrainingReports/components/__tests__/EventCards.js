@@ -434,4 +434,33 @@ describe('EventCards', () => {
     userEvent.click(confirmBtn);
     expect(deleteFunction).toHaveBeenCalledWith('1234', 1);
   });
+
+  it('renders an Alert message if there is one', () => {
+    const renderECWithAlert = (
+      events = defaultEvents,
+      eventType = EVENT_STATUS.NOT_STARTED,
+      user = DEFAULT_USER,
+      onDeleteEvent = jest.fn(),
+    ) => {
+      render((
+        <MemoryRouter>
+          <UserContext.Provider value={{ user }}>
+            <EventCards
+              events={events}
+              eventType={eventType}
+              onRemoveSession={jest.fn()}
+              onDeleteEvent={onDeleteEvent}
+              removeEventFromDisplay={jest.fn()}
+              alerts={{
+                message: { type: 'info', text: 'Test Alert' },
+                setMessage: jest.fn(),
+                setParentMessage: jest.fn(),
+              }}
+            />
+          </UserContext.Provider>
+        </MemoryRouter>));
+    };
+    renderECWithAlert();
+    expect(screen.getByText('Test Alert')).toBeInTheDocument();
+  });
 });

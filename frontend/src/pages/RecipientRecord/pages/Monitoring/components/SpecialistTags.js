@@ -1,7 +1,7 @@
 import React from 'react';
-import { Tag } from '@trussworks/react-uswds';
-import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
+import Tag from '../../../../../components/Tag';
 import Tooltip from '../../../../../components/Tooltip';
 
 export default function SpecialistTags({ specialists }) {
@@ -16,13 +16,13 @@ export default function SpecialistTags({ specialists }) {
     }, []).filter(Boolean);
 
     return (
-      <Tag key={uniqueId('specialist-tag-')} className="text-ink text-normal usa-prose margin-top-0 margin-bottom-1 margin-right-1 bg-base-lightest radius-sm padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
+      <Tag key={uniqueId('specialist-tag-')} clickable>
         <Tooltip
           displayText={roleNames.join(', ')}
           screenReadDisplayText={false}
           buttonLabel="reveal the full name of this user"
           tooltipText={specialist.name}
-          underlineStyle="solid"
+          hideUnderline
           buttonClassName="display-flex"
           className="ttahub-goal-card__entered-by-tooltip"
         />
@@ -32,8 +32,10 @@ export default function SpecialistTags({ specialists }) {
 }
 
 SpecialistTags.propTypes = {
-  specialists: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    roles: PropTypes.arrayOf(PropTypes.string),
-  })).isRequired,
+  specialists: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      roles: PropTypes.arrayOf(PropTypes.string),
+    }),
+  ).isRequired,
 };
