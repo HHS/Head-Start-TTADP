@@ -2533,11 +2533,11 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus12.userName).toBe('system');
     expect(goalChangeStatus12.reason).toBe('Active monitoring citations');
 
-    // CASE 13: Closes monitoring goal that no longer has any active citations.
+    // CASE 13: Does not auto-close monitoring goal that no longer has any active citations.
     const grant13Goals = await Goal.findAll({ where: { grantId: grantClosedMonitoringGoal13.id } });
     expect(grant13Goals.length).toBe(1);
     expect(grant13Goals[0].goalTemplateId).toBe(goalTemplate.id);
-    expect(grant13Goals[0].status).toBe('Closed');
+    expect(grant13Goals[0].status).toBe('Not started');
 
     // Ensure the correct GoalChangeStatus has been created.
     const goalChangeStatus13 = await GoalStatusChange.findOne({ where: { goalId: goalForClose13.id } });
