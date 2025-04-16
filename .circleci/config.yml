@@ -30,7 +30,7 @@ executors:
 parameters:
   action:
     type: enum
-    enum: [build_test_deploy, deploy_manual, import_data, backup_restore_db]
+    enum: [build_test_deploy, deploy_manual, import_data, restore_db]
     default: build_test_deploy
   target_env:
     description: "Target environment to run the job in"
@@ -143,7 +143,7 @@ workflows:
     # restore temp into lower envs
     # run migrations
     when:
-      equal: [<< pipeline.parameters.action >>, "backup_restore_db"]
+      equal: [<< pipeline.parameters.action >>, "restore_db"]
     jobs:
       - backup_prod_db:
           serial-group: "tta-automation-lock"
