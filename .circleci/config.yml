@@ -1239,7 +1239,7 @@ commands:
             cf logout
 
   notify_slack:
-    description: "Notify Slack with message"
+    description: "Notify Slack @ << parameters.slack_channel >>"
     parameters:
       slack_bot_token:
         description: "Slack bot token"
