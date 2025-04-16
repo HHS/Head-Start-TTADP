@@ -35,7 +35,7 @@ parameters:
   target_env:
     description: "Target environment to run the job in"
     type: enum
-    enum: [dev, dev-blue, dev-green, dev-red, sandbox]
+    enum: [dev, dev-blue, dev-green, dev-red, sandbox, staging]
     default: dev
 
 # ----------------- Workflows -----------------
@@ -213,6 +213,11 @@ workflows:
       - restore_db_job:
           serial-group: "tta-automation-lock"
           target_env: "sandbox"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          serial-group: "tta-automation-lock"
+          target_env: "staging"
           requires:
             - backup_temp_db
 
