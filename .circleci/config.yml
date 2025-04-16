@@ -1002,7 +1002,7 @@ commands:
         timeout: "3000"
 
   cf_restore:
-    description: "Restore backup database from S3"
+    description: "Restore db from S3 to << parameters.target_env >>"
     parameters:
       target_env: { type: string }
       rds_service_name: { type: string }
@@ -1010,14 +1010,13 @@ commands:
       backup_prefix: { type: string }
     steps:
       - run:
-          name: Validate Parameters
+          name: Validate Parameters (<< parameters.target_env >>)
           command: |
             if [ "<< parameters.rds_service_name >>" = "ttahub-prod" ]; then
               echo "Error: rds_service_name cannot be 'ttahub-prod'"
               exit 1
             fi
       - cf_automation_task:
-          name: Restore data to << parameters.target_env >> DB
           target_env: << parameters.target_env >>
           task_name: "restore_s3:<< parameters.backup_prefix >>_to_rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
@@ -1114,7 +1113,7 @@ commands:
             sudo rm -rf /var/lib/apt/lists/*
 
   cf_automation_task:
-    description: "Running [<< parameters.task_name >>] in [<< parameters.target_env >>: << parameters.task_args >>]"
+    description: "Running [<< parameters.task_name >>] from [<< parameters.target_env >>: << parameters.task_args >>]"
     parameters:
       task_name:
         description: "Name of the automation task to run"
