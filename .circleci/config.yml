@@ -146,8 +146,6 @@ workflows:
       - restore_db_job:
           serial-group: "tta-automation-lock"
           target_env: << pipeline.parameters.target_env >>
-          requires:
-            - backup_temp_db
 
   restore_db_cron:
     # backup prod db
