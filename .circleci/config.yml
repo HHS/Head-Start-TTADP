@@ -599,6 +599,7 @@ jobs:
           backup_prefix: processed
       - cf_migrate:
           app_name: tta-smarthub-<< parameters.target_env >>
+          target_env: << parameters.target_env >>
 
 
   run_cmd:
