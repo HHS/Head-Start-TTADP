@@ -921,7 +921,7 @@ commands:
           message_text_file: msg.txt
 
   cf_cmd:
-    description: "Login to Cloud Foundry space, run automation task, and send notification"
+    description: "Login, run task, send notification"
     parameters:
       the_command:
         description: "Command to run"
@@ -1026,8 +1026,9 @@ commands:
               exit 1
             fi
       - cf_automation_task:
+          name: Restore data to << parameters.target_env >> DB
           target_env: << parameters.target_env >>
-          task_name: "restore-s3:<< parameters.backup_prefix >>-to-rds:<< parameters.rds_service_name >>"
+          task_name: "restore_s3-<< parameters.backup_prefix >>_to_rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
@@ -1151,8 +1152,6 @@ commands:
         type: string
         default: "./automation"
     steps:
-      - run:
-          command: echo "Running << parameters.task_command >>"
       - install_automation_deps
       - set_env_vars:
           target_env: << parameters.target_env >>
@@ -1199,7 +1198,10 @@ commands:
             kill -9 $TAIL_PID
             echo "cf logs command for tta-automation has been terminated."
       - run:
-          name: "Running << parameters.task_name >> in << parameters.target_env >>, args:<< parameters.task_args >>"
+          name: |
+            "Running << parameters.task_name >> in << parameters.target_env >>, \
+                args:<< parameters.task_args >>, \
+                cmd: << parameters.task_command >>"
           command: |
             json_data=$(jq -n \
               --arg directory "<< parameters.directory >>" \
