@@ -124,7 +124,7 @@ workflows:
         filters:
           branches:
             only:
-              - prod
+              - main
     jobs:
       - run_import_job: { target_env: prod }
 
@@ -605,14 +605,6 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-sandbox
           target_env: 'sandbox'
-      - cf_restore: # staging
-          rds_service_name: ttahub-staging
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-          target_env: "prod"
-      - cf_migrate:
-          app_name: tta-smarthub-staging
-          target_env: 'staging'
 
   run_cmd:
     # run given command in the target environment
