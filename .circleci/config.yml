@@ -529,7 +529,8 @@ jobs:
           command: yarn --cwd frontend run build
       - cf_deploy:
           target_env: << parameters.target_env >>
-      - write_envs
+      - write_envs:
+          target_env: << parameters.target_env >>
       - run:
           name: Run database migrations
           command: |
@@ -684,14 +685,13 @@ commands:
       - run:
           name: Set env vars
           command: |
-            # $cfg_env maps to the primary "level" (dev, staging, prod)
             # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
+            # $cfg_env maps to the primary "level" (dev, staging, prod)
             export full_env=<< parameters.target_env >>
-            if [[ $full_env == *"main"* ]]; then cfg_env="staging"; fi
             export cfg_env=${full_env}
-            if [[ $cfg_env == *"dev"* ]]; then cfg_env="dev"; fi
-            echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
+            if [[ $full_env == *"dev"* ]]; then cfg_env="dev"; fi
             echo "export full_env=${full_env}" >> "$BASH_ENV"
+            echo "export cfg_env=${cfg_env}" >> "$BASH_ENV"
             # convert yml cfg to env style
             ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
             # substitute actual values from circle into env.vars file
@@ -832,7 +832,6 @@ commands:
     parameters:
       target_env:
         type: string
-        default: << pipeline.git.branch >>
     steps:
       - set_env_vars:
           target_env: << parameters.target_env >>
@@ -882,6 +881,9 @@ commands:
           command: echo "ok"
 
   write_envs:
+    parameters:
+      target_env:
+        type: string
     steps:
       - restore_cache:
           key: 'environment-owners'
@@ -889,7 +891,7 @@ commands:
           name: Write owner into file
           command: |
             mkdir -p environments
-            current_env="<< pipeline.git.branch >>"
+            current_env="<< parameters.target_env >>"
             touch msg.txt
             if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
               exit 0; 
@@ -1028,7 +1030,7 @@ commands:
       - cf_automation_task:
           name: Restore data to << parameters.target_env >> DB
           target_env: << parameters.target_env >>
-          task_name: "restore_s3-<< parameters.backup_prefix >>_to_rds:<< parameters.rds_service_name >>"
+          task_name: "restore_s3:<< parameters.backup_prefix >>_to_rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
