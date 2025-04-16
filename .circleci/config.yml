@@ -118,6 +118,7 @@ workflows:
             - build_similarity_api
 
   import_data_cron:
+    when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
         cron: "0 11 * * *" # 11AM UTC = 7AM EST
@@ -166,6 +167,7 @@ workflows:
 
   restore_db_cron:
     # backup production db, process (anonymize) the data, then restore it into lower envs
+    when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
           cron: "0 0 * * *"
