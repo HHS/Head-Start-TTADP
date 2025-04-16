@@ -654,7 +654,6 @@ jobs:
              equal: [ << parameters.target_env >>, "prod"]
           steps:
              - notify_slack:
-                slack_channel: "tm-test" # adjust to main channel when verified
                 message_text_file: monitoring-goals.txt
 
 # ----------------- Commands -----------------
@@ -914,7 +913,6 @@ commands:
           paths:
             - environments
       - notify_slack:
-          slack_channel: "tm-test"
           message_text_file: msg.txt
 
   cf_cmd:
@@ -1230,7 +1228,7 @@ commands:
             fi
       - notify_slack:
           slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-head-start-alerts"
+          slack_channel: "acf-head-start-alerts-lower"
           message_text_file: "/tmp/message_file"
       - run:
           name: Logout of service account
@@ -1254,6 +1252,7 @@ commands:
         default: $SLACK_BOT_TOKEN
       slack_channel:
         description: "Slack channel name to post the message to"
+        default: "acf-head-start-alerts-lower"
         type: string
       message_text:
         description: "Message text to post to Slack"
