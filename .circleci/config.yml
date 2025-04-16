@@ -586,7 +586,7 @@ jobs:
     steps:
       - checkout
       - cf_restore:
-          target_env: << parameters.target_env >>
+          target_env: prod # this is the source of the backup
           rds_service_name: ttahub-<< parameters.target_env >>
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
