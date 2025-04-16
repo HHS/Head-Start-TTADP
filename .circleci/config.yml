@@ -1016,12 +1016,15 @@ commands:
             fi
       - cf_automation_task:
           target_env: << parameters.target_env >>
-          task_name: "restore s3:<< parameters.backup_prefix >> -> rds:<< parameters.rds_service_name >>"
+          task_name: "restore_s3:<< parameters.backup_prefix >>->rds:<< parameters.rds_service_name >>"
           task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
           timeout: "1800"
+      - notify_slack:
+          message_text: "Restored DB:<< parameters.rds_service_name >> from << parameters.backup_prefix >> data"
+        
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -1114,6 +1117,7 @@ commands:
     description: "Running [<< parameters.task_name >>] from [<< parameters.target_env >>: << parameters.task_args >>]"
     parameters:
       task_name:
+        # do not include spaces in the task_name or it will break the status parsing
         description: "Name of the automation task to run"
         type: string
       task_command:
@@ -1187,8 +1191,9 @@ commands:
             echo "cf logs command for tta-automation has been terminated."
       - run:
           name: |
-            "Running << parameters.task_name >> in << parameters.target_env >>\n
-                args:<< parameters.task_args >>\n
+            "Running cmd: << parameters.task_name >> 
+                in << parameters.target_env >>
+                args:<< parameters.task_args >>
                 cmd: << parameters.task_command >>"
           command: |
             json_data=$(jq -n \
@@ -1212,19 +1217,6 @@ commands:
             # Set execute permission
             find ./automation -name "*.sh" -exec chmod +x {} \;
             ./automation/ci/scripts/cf_lambda.sh "$json_data"
-      - run:
-          name: Generate Message
-          command: |
-            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
-              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-              echo "<< parameters.success_message >> before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
-            else
-              echo "<< parameters.success_message >> successful!" > /tmp/message_file
-            fi
-      - notify_slack:
-          slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-head-start-alerts-lower"
-          message_text_file: "/tmp/message_file"
       - run:
           name: Logout of service account
           command: |
