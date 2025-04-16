@@ -158,8 +158,9 @@ workflows:
           serial-group: "tta-automation-lock"
           requires:
             - process_temp_db
-      - restore_lower_dbs:
+      - restore_db_job:
           serial-group: "tta-automation-lock"
+          target_env: << pipeline.parameters.target_env >>
           requires:
             - backup_temp_db
 
@@ -187,8 +188,29 @@ workflows:
           serial-group: "tta-automation-lock"
           requires:
             - process_temp_db
-      - restore_lower_dbs:
+      - restore_db_job:
           serial-group: "tta-automation-lock"
+          target_env: "dev"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          serial-group: "tta-automation-lock"
+          target_env: "dev-green"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          serial-group: "tta-automation-lock"
+          target_env: "dev-blue"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          serial-group: "tta-automation-lock"
+          target_env: "dev-red"
+          requires:
+            - backup_temp_db
+      - restore_db_job:
+          serial-group: "tta-automation-lock"
+          target_env: "sandbox"
           requires:
             - backup_temp_db
 
@@ -561,50 +583,21 @@ jobs:
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
 
-  restore_lower_dbs:
+  restore_db_job:
     executor: docker-executor
+    parameters:
+      target_env:
+        type: string
     steps:
       - checkout
-      - cf_restore: # dev
-          target_env: "prod"
-          rds_service_name: ttahub-dev
+      - cf_restore:
+          target_env: << parameters.target_env >>
+          rds_service_name: ttahub-<< parameters.target_env >>
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
       - cf_migrate:
-          app_name: tta-smarthub-dev
-          target_env: 'dev'
-      - cf_restore: # dev-blue
-          rds_service_name: ttahub-dev-blue
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-          target_env: "prod"
-      - cf_migrate:
-          app_name: tta-smarthub-dev-blue
-          target_env: 'dev'
-      - cf_restore: # dev-green
-          rds_service_name: ttahub-dev-green
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-          target_env: "prod"
-      - cf_migrate: 
-          app_name: tta-smarthub-dev-green
-          target_env: 'dev'
-      - cf_restore: # dev-red
-          rds_service_name: ttahub-dev-red
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-          target_env: "prod"
-      - cf_migrate:
-          app_name: tta-smarthub-dev-red
-          target_env: 'dev'
-      - cf_restore: # sandbox
-          rds_service_name: ttahub-sandbox
-          s3_service_name: ttahub-db-backups
-          backup_prefix: processed
-          target_env: "prod"
-      - cf_migrate:
-          app_name: tta-smarthub-sandbox
-          target_env: 'sandbox'
+          app_name: tta-smarthub-<< parameters.target_env >>
+
 
   run_cmd:
     # run given command in the target environment
