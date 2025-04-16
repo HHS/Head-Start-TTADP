@@ -21,7 +21,7 @@ function log() {
 function parameters_validate() {
     local param="$1"
     if [[ -z "${param}" ]]; then
-        log "ERROR" "Parameter is unset or empty."
+        log "ERROR" "Parameter is unset or empty @ $(caller)."
         set -e
         exit 1
     fi
@@ -251,7 +251,7 @@ run_script() {
     fi
 
     log "INFO" "Execute the script with any passed arguments and capture its output"
-    script_output=$("$script_path" "$@")
+    script_output=$("$script_path" "$@" 2>&1)
     local script_exit_status=$?
 
     log "INFO" "Check the exit status of the script"
@@ -260,7 +260,6 @@ run_script() {
         set -e
         return $script_exit_status
     else
-        echo "$script_output"
         set -e
         return 0
     fi
@@ -368,7 +367,7 @@ function aws_s3_prep() {
   parameters_validate "${s3_data}"
   local server_data
   server_data=$(find_json_object "${s3_data}" "name" "${s3_server}")
-  parameters_validate "${server_data}"
+  parameters_validate "${server_data}" 
   local s3_access_key_id
   s3_access_key_id=$(process_json "${server_data}" ".credentials.access_key_id" "-r")
   parameters_validate "${s3_access_key_id}"
@@ -381,7 +380,6 @@ function aws_s3_prep() {
   local s3_region
   s3_region=$(process_json "${server_data}" ".credentials.region" "-r")
   parameters_validate "${s3_region}"
-
   log "INFO" "Setting AWS CLI environment variables."
   export AWS_ACCESS_KEY_ID="${s3_access_key_id}"
   export AWS_SECRET_ACCESS_KEY="${s3_secret_access_key}"
@@ -609,7 +607,7 @@ function perform_restore() {
         exit 1
     }
 
-    set -x
+    #set -x
     set -o pipefail
 
     log "INFO" "Reset database before restore"
