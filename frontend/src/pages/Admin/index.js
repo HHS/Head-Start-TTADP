@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Switch, Route } from 'react-router';
 import { NavLink } from 'react-router-dom';
 import User from './users';
 import Cdi from './cdi';
-import Diag from './diag';
 import Flags from './Flags';
 import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
@@ -15,6 +14,18 @@ import Courses from './Courses';
 import CourseEdit from './CourseEdit';
 import FeedPreview from './FeedPreview';
 import BuildInfo from '../../components/BuildInfo';
+
+// Dynamically import this page to reduce the initial bundle size
+const Diag = React.lazy(() => import('./diag'));
+
+// eslint-disable-next-line react/prop-types
+function DiagPage({ match }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Diag match={match} />
+    </Suspense>
+  );
+}
 
 function Admin() {
   return (
@@ -77,7 +88,7 @@ function Admin() {
         />
         <Route
           path="/admin/diag/"
-          render={({ match }) => <Diag match={match} />}
+          render={({ match }) => <DiagPage match={match} />}
         />
         <Route
           path="/admin/flags/"
