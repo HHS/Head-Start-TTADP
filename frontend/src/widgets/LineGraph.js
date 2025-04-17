@@ -200,7 +200,7 @@ export default function LineGraph({
     // draw the plot
     import('plotly.js-basic-dist').then((Plotly) => {
       if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-    }).catch((e) => console.log('Dynamic import failed:', e));
+    });
   }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData, lines]);
 
   if (!hasData) {

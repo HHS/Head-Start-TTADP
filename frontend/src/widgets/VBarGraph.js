@@ -10,7 +10,7 @@ import './VBarGraph.css';
 let Plot = null;
 import('plotly.js-basic-dist').then((Plotly) => {
   Plot = createPlotlyComponent(Plotly);
-}).catch((e) => console.log('Dynamic import failed:', e));
+});
 
 function VBarGraph({
   data,
