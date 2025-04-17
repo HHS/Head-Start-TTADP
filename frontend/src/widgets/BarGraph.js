@@ -13,8 +13,7 @@ import('plotly.js-basic-dist')
   .then((Plotly) => {
     Plot = createPlotlyComponent(Plotly);
     BottomAxis = createPlotlyComponent(Plotly);
-  })
-  .catch((e) => console.log('Dynamic import failed:', e));
+  });
 
 function BarGraph({
   data,

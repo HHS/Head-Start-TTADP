@@ -7,7 +7,7 @@ import colors from '../colors';
 let Graph = null;
 import('plotly.js-basic-dist').then((Plotly) => {
   Graph = createPlotlyComponent(Plotly);
-}).catch((e) => console.log('Dynamic import failed:', e));
+});
 
 export default function ResourceUseSparkline({ dataPoints }) {
   const titles = [];

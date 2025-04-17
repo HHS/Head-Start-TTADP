@@ -150,7 +150,7 @@ export function TopicFrequencyGraphWidget({
       if (bars.current) {
         Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
       }
-    }).catch((e) => console.log('Dynamic import failed:', e));
+    });
   }, [data, order, setOrder, showAccessibleData]);
 
   /**
