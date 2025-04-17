@@ -5,6 +5,7 @@ import {
   render,
   screen,
   act,
+  fireEvent,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -143,6 +144,17 @@ describe('Topic & Frequency Graph Widget', () => {
         count: 0,
       },
     ].reverse());
+  });
+
+  it('shows accessibility/tabular data', async () => {
+    const data = [...TEST_DATA];
+    renderArGraphOverview({ data });
+
+    const tableButton = await screen.findByText('Display table');
+    expect(tableButton).toBeInTheDocument();
+    fireEvent.click(tableButton);
+    const graphButton = await screen.findByText('Display graph');
+    expect(graphButton).toBeInTheDocument();
   });
 
   it('handles undefined data', async () => {
