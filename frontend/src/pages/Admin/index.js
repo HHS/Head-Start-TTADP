@@ -18,15 +18,6 @@ import BuildInfo from '../../components/BuildInfo';
 // Dynamically import this page to reduce the initial bundle size
 const Diag = React.lazy(() => import('./diag'));
 
-// eslint-disable-next-line react/prop-types
-function DiagPage({ match }) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Diag match={match} />
-    </Suspense>
-  );
-}
-
 function Admin() {
   return (
     <>
@@ -88,7 +79,11 @@ function Admin() {
         />
         <Route
           path="/admin/diag/"
-          render={({ match }) => <DiagPage match={match} />}
+          render={({ match }) => (
+            <Suspense fallback={<div>Loading...</div>}>
+              <Diag match={match} />
+            </Suspense>
+          )}
         />
         <Route
           path="/admin/flags/"
