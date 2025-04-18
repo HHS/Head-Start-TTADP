@@ -941,13 +941,12 @@ commands:
               -u ${cg_username} \
               -p ${cg_password} \
               -o ${cg_org} \
-              -s ${cg_space}
-
+              -s ${cg_space}            
       - run:
           name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
           command: |
-            TASK_NAME="ci-task-${CIRCLE_BUILD_NUM}-${RANDOM}"
-            
+            set +e
+            TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
             cf run-task \
               tta-smarthub-<< parameters.target_env >> \
               --command "<< parameters.the_command >>" \
@@ -958,8 +957,9 @@ commands:
 
             rc=$?
             echo "waiting for logs...."
-            sleep 30 # wait for logs
+            sleep 15 # wait for logs
             cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
+            cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | grep -i "error" 
             echo "script exited with code:$rc"
             exit ${rc}
               
