@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
-import useSpellCheck from '../../hooks/useSpellCheck';
 import './FilterSelect.css';
 
 export default function FilterSelect({
@@ -12,15 +11,6 @@ export default function FilterSelect({
   selectedValues,
   mapByValue,
 }) {
-  /**
-   * unfortunately, given our support for ie11, we can't
-   * upgrade to react-select v5, which support a spellcheck
-   * attribute. Here is an awkward solution I've concocted
-   * in it's stead.
-  */
-
-  useSpellCheck(inputId);
-
   const key = mapByValue ? 'value' : 'label';
 
   const value = [selectedValues].flat().map((selection) => (
