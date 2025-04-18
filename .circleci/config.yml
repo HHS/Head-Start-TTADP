@@ -117,7 +117,7 @@ workflows:
       - deploy_job:
           name: deploy (<< pipeline.parameters.target_env >>)
           serial-group: << pipeline.parameters.target_env >>/deploy-lock
-          target_env: << pipeline.parameters.target_env >>
+          target_env: "<< pipeline.parameters.target_env >>"
           requires:
             - build_and_lint
             - build_similarity_api
@@ -140,7 +140,7 @@ workflows:
       and << pipeline.trigger_source >> == "api"
     jobs:
       - run_import_job: 
-          target_env: << pipeline.parameters.target_env >>
+          target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_manual:
     # this skips the prod backup and operates from the last production backup
@@ -152,7 +152,7 @@ workflows:
     jobs:
       - restore_db_job:
           serial-group: "tta-automation-lock"
-          target_env: << pipeline.parameters.target_env >>
+          target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_cron:
     # backup prod db
@@ -601,15 +601,12 @@ jobs:
       - checkout
       - cf_restore:
           target_env: prod # this is the source of the backup
-          rds_service_name: ttahub-<< parameters.target_env >>
+          rds_service_name: "ttahub-<< parameters.target_env >>"
           s3_service_name: ttahub-db-backups
           backup_prefix: processed
       - cf_migrate:
-          app_name: tta-smarthub-<< parameters.target_env >>
+          app_name: "tta-smarthub-<< parameters.target_env >>"
           target_env: << parameters.target_env >>
-      - notify_slack:
-          when: on_fail
-          message_text: "Failed restore to << parameters.target_env >> database"
 
   run_cmd:
     # run given command in the target environment
@@ -622,7 +619,7 @@ jobs:
     steps:
       - cf_cmd:
           the_command: << parameters.command >>
-          target_env: << parameters.target_env >>
+          target_env: "<< parameters.target_env >>"
 
   build_check:
     executor: docker-base
@@ -1037,7 +1034,13 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
-          timeout: "1800"        
+          timeout: "1800"
+      - run:
+          when: on_fail
+          command: echo "Failed db restore to << parameters.target_env >>" > message.txt
+      - notify_slack:
+          message_text_file: message.txt 
+
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
