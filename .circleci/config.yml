@@ -115,7 +115,7 @@ workflows:
       - build_and_lint
       - build_similarity_api
       - deploy_job:
-          name: deploy (<< parameters.target_env >>)
+          name: deploy (<< pipeline.parameters.target_env >>)
           serial-group: << pipeline.parameters.target_env >>/deploy-lock
           target_env: << pipeline.parameters.target_env >>
           requires:
