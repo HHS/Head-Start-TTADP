@@ -106,22 +106,23 @@ function SideNav({
           >
             Autosaved on:
             <br />
-            <ul className="margin-y-0">
               {lastSaveTime && (
-              <li>
-                our network at
-                {' '}
-                {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-              </li>
+                <>
+                  <span>
+                    • our network at
+                    {' '}
+                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                  </span>
+                  <br />
+                </>
               )}
               { savedToStorageTime && (
-              <li>
-                your computer at
+              <span>
+                • your computer at
                 {' '}
                 {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
-              </li>
+              </span>
               )}
-            </ul>
           </Alert>
         )}
     </Sticky>
