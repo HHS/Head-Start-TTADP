@@ -89,7 +89,7 @@ workflows:
             - dynamic_security_scan
 
       - deploy_job:
-          serial-group: << pipeline.git.branch >>/deploy-lock
+          serial-group: deploy-lock/staging
           target_env: "staging"
           requires:
             - full_check
@@ -99,7 +99,7 @@ workflows:
                 - main
 
       - deploy_job:
-          serial-group: << pipeline.git.branch >>/deploy-lock
+          serial-group: deploy-lock/prod
           target_env: "prod"
           requires:
             - full_check
@@ -131,13 +131,15 @@ workflows:
             only:
               - main
     jobs:
-      - run_import_job: { target_env: prod }
+      - run_import_job: 
+          target_env: prod
 
   import_data_manual:
     when:
       equal: [<< pipeline.parameters.action >>, "import_data"]
     jobs:
-      - run_import_job: { target_env: << pipeline.parameters.target_env >> }
+      - run_import_job: 
+          target_env: << pipeline.parameters.target_env >>
 
   restore_db_manual:
     # this skips the prod backup and operates from the last production backup
@@ -627,7 +629,6 @@ jobs:
     parameters:
       target_env:
           type: string
-          default: << pipeline.git.branch >>
     steps:
       - checkout
       - cf_cmd:
