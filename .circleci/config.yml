@@ -87,7 +87,6 @@ workflows:
             - test_e2e_utils
             - test_cucumber
             - dynamic_security_scan
-
       - deploy_job:
           name: autodeploy_staging
           serial-group: deploy-lock/staging
@@ -98,7 +97,6 @@ workflows:
             branches:
               only:
                 - main
-
       - deploy_job:
           name: autodeploy_prod
           serial-group: deploy-lock/prod
@@ -117,6 +115,7 @@ workflows:
       - build_and_lint
       - build_similarity_api
       - deploy_job:
+          name: deploy (<< parameters.target_env >>)
           serial-group: << pipeline.parameters.target_env >>/deploy-lock
           target_env: << pipeline.parameters.target_env >>
           requires:
@@ -652,6 +651,7 @@ jobs:
           command: |
             results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
             echo $results > monitoring-goals.txt
+            cat monitoring-goals.txt
       - when:
           condition:
              equal: [ << parameters.target_env >>, "prod"]
