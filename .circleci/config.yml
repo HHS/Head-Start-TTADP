@@ -602,7 +602,9 @@ jobs:
       - cf_migrate:
           app_name: tta-smarthub-<< parameters.target_env >>
           target_env: << parameters.target_env >>
-
+      - notify_slack:
+          when: on_fail
+          message_text: "Failed restore to << parameters.target_env >> database"
 
   run_cmd:
     # run given command in the target environment
@@ -1029,10 +1031,7 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
-          timeout: "1800"
-      - notify_slack:
-          message_text: "Restored DB:<< parameters.rds_service_name >> from << parameters.backup_prefix >> data"
-        
+          timeout: "1800"        
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
