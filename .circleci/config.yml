@@ -89,6 +89,7 @@ workflows:
             - dynamic_security_scan
 
       - deploy_job:
+          name: autodeploy_staging
           serial-group: deploy-lock/staging
           target_env: "staging"
           requires:
@@ -99,6 +100,7 @@ workflows:
                 - main
 
       - deploy_job:
+          name: autodeploy_prod
           serial-group: deploy-lock/prod
           target_env: "prod"
           requires:
