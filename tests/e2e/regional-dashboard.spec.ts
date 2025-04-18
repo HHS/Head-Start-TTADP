@@ -4,6 +4,7 @@ test('Regional Dashboard', async ({ page }) => {
   //navigate to the dashboard
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Regional Dashboard' }).click();
+  await page.waitForLoadState("domcontentloaded");
 
   // get page URL
   const url = page.url();
@@ -41,7 +42,7 @@ test('Regional Dashboard', async ({ page }) => {
 
   // print a screenshot of the TTA hours graph
   await page.getByRole('button', { name: 'Open Actions for Total TTA hours' }).click();
-  
+
   await Promise.all([
     page.waitForEvent('download'),
     page.locator('#rd-save-screenshot').click()
