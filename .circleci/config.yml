@@ -90,19 +90,23 @@ workflows:
 
       - deploy_job:
           serial-group: << pipeline.git.branch >>/deploy-lock
-          target_env: << pipeline.git.branch >>
+          target_env: "staging"
           requires:
             - full_check
           filters:
             branches:
               only:
-                - dev
-                - dev-green
-                - dev-blue
-                - dev-red
-                - sandbox
                 - main
-                - prod
+
+      - deploy_job:
+          serial-group: << pipeline.git.branch >>/deploy-lock
+          target_env: "prod"
+          requires:
+            - full_check
+          filters:
+            branches:
+              only:
+                - production
 
   deploy_manual:
     when:
@@ -121,7 +125,7 @@ workflows:
     when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
-        cron: "0 11 * * *" # 11AM UTC = 7AM EST
+        cron: "0 11 * * *" # 1PM UTC = 9AM EST
         filters:
           branches:
             only:
@@ -141,7 +145,7 @@ workflows:
     # restore temp backup into lower env dbs
     # run migrations
     when:
-      equal: [<< pipeline.parameters.action >>, "restore_db"]
+      equal: [ << pipeline.parameters.action >>, "restore_db" ]
     jobs:
       - restore_db_job:
           serial-group: "tta-automation-lock"
@@ -157,7 +161,7 @@ workflows:
     when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
-          cron: "0 0 * * *"
+          cron: "0 4 * * *" # 4AM UTC = 12AM EST
           filters:
             branches:
               only:
@@ -489,6 +493,7 @@ jobs:
       - store_artifacts:
           path: reports
 
+
   deploy_job:
     executor: docker-executor
     resource_class: large
@@ -506,7 +511,7 @@ jobs:
           command: yarn build
       - when:
           condition:
-            equal: [ << pipeline.git.branch >>, prod ]
+            equal: [ << parameters.target_env >>, prod ]
           steps:
             - run:
                 name: Create production robots.txt
@@ -527,7 +532,7 @@ jobs:
           target_env: << parameters.target_env >>
       - when:
           condition:
-            equal: [ << pipeline.git.branch >>, prod ]
+            equal: [ << parameters.target_env >>, prod ]
           steps:
             - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
@@ -670,7 +675,7 @@ commands:
         default: true
     steps:
       - run:
-          name: Set env vars
+          name: Set env vars (<< parameters.target_env >>)
           command: |
             # $full_env maps to the full env name (dev-blue, dev-green, etc), or same as cfg
             # $cfg_env maps to the primary "level" (dev, staging, prod)
