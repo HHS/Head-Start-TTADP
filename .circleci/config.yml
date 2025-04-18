@@ -109,8 +109,8 @@ workflows:
                 - production
 
   deploy_manual:
-    when:
-      equal: [<< pipeline.parameters.action >>, "deploy_manual"]
+    when: << pipeline.parameters.action >> == "deploy_manual"
+        and << pipeline.trigger_source >> == "api"
     jobs:
       - build_and_lint
       - build_similarity_api
@@ -136,8 +136,8 @@ workflows:
           target_env: prod
 
   import_data_manual:
-    when:
-      equal: [<< pipeline.parameters.action >>, "import_data"]
+    when: << pipeline.parameters.action >> == "import_data"
+      and << pipeline.trigger_source >> == "api"
     jobs:
       - run_import_job: 
           target_env: << pipeline.parameters.target_env >>
@@ -147,8 +147,8 @@ workflows:
     # with the assumption that prod backup already runs nightly
     # restore temp backup into lower env dbs
     # run migrations
-    when:
-      equal: [ << pipeline.parameters.action >>, "restore_db" ]
+    when: << pipeline.parameters.action >> == "restore_db"
+        and << pipeline.trigger_source >> == "api"
     jobs:
       - restore_db_job:
           serial-group: "tta-automation-lock"
@@ -185,32 +185,38 @@ workflows:
           requires:
             - process_temp_db
       - restore_db_job:
-          serial-group: "tta-automation-lock"
+          name: restore (dev)
+          serial-group: "tta-automation-lock-dev"
           target_env: "dev"
           requires:
             - backup_temp_db
       - restore_db_job:
-          serial-group: "tta-automation-lock"
+          name: restore (dev-green)
+          serial-group: "tta-automation-lock-dev-green"
           target_env: "dev-green"
           requires:
             - backup_temp_db
       - restore_db_job:
-          serial-group: "tta-automation-lock"
+          name: restore (dev-blue)
+          serial-group: "tta-automation-lock-dev-blue"
           target_env: "dev-blue"
           requires:
             - backup_temp_db
       - restore_db_job:
-          serial-group: "tta-automation-lock"
+          name: restore (dev-red)
+          serial-group: "tta-automation-lock-dev-red"
           target_env: "dev-red"
           requires:
             - backup_temp_db
       - restore_db_job:
-          serial-group: "tta-automation-lock"
+          name: restore (sandbox)
+          serial-group: "tta-automation-lock-sandbox"
           target_env: "sandbox"
           requires:
             - backup_temp_db
       - restore_db_job:
-          serial-group: "tta-automation-lock"
+          name: restore (staging)
+          serial-group: "tta-automation-lock-staging"
           target_env: "staging"
           requires:
             - backup_temp_db
