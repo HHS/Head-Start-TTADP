@@ -109,15 +109,15 @@ workflows:
                 - production
 
   deploy_manual:
-    when: << pipeline.parameters.action >> == "deploy_manual"
-        and << pipeline.trigger_source >> == "api"
+    when: pipeline.parameters.action == "deploy_manual" 
+          and pipeline.trigger_source == "api"
     jobs:
       - build_and_lint
       - build_similarity_api
       - deploy_job:
           name: deploy (<< pipeline.parameters.target_env >>)
           serial-group: << pipeline.parameters.target_env >>/deploy-lock
-          target_env: "<< pipeline.parameters.target_env >>"
+          target_env: pipeline.parameters.target_env
           requires:
             - build_and_lint
             - build_similarity_api
@@ -136,23 +136,23 @@ workflows:
           target_env: prod
 
   import_data_manual:
-    when: << pipeline.parameters.action >> == "import_data"
-      and << pipeline.trigger_source >> == "api"
+    when: pipeline.parameters.action == "import_data"
+          and pipeline.trigger_source == "api"
     jobs:
       - run_import_job: 
-          target_env: "<< pipeline.parameters.target_env >>"
+          target_env: pipeline.parameters.target_env
 
   restore_db_manual:
     # this skips the prod backup and operates from the last production backup
     # with the assumption that prod backup already runs nightly
     # restore temp backup into lower env dbs
     # run migrations
-    when: << pipeline.parameters.action >> == "restore_db"
-        and << pipeline.trigger_source >> == "api"
+    when: pipeline.parameters.action == "restore_db"
+        and pipeline.trigger_source == "api"
     jobs:
       - restore_db_job:
           serial-group: "tta-automation-lock"
-          target_env: "<< pipeline.parameters.target_env >>"
+          target_env: pipeline.parameters.target_env
 
   restore_db_cron:
     # backup prod db
