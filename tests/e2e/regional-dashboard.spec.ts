@@ -4,7 +4,7 @@ test('Regional Dashboard', async ({ page }) => {
   //navigate to the dashboard
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Regional Dashboard' }).click();
-  await page.waitForLoadState("domcontentloaded");
+  await page.waitForURL(/region\.in/i);
 
   // get page URL
   const url = page.url();
