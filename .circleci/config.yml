@@ -29,17 +29,12 @@ executors:
 
 parameters:
   action:
-    description: |
-      Choose the workflow to run -\\n
-      * build_test_deploy: Build app, run all tests, auto-deploy if prod/staging
-      * deploy_manual: Build and deploy from this branch to target env
-      * restore_db: Restore latest DB snapshot to target env DB
-      * import_data: Download and process HSES data in target env
+    description: "Choose the workflow to run"
     type: enum
     enum: [ build_test_deploy, deploy_manual, import_data, restore_db ]
     default: build_test_deploy
   target_env:
-    description: "Target environment to run the job in"
+    description: "Target environment to run the workflow in"
     type: enum
     enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
     default: dev
@@ -50,8 +45,7 @@ workflows:
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
     # It will build, test, and then deploy if the branch matches to an environment
-    when:
-      equal: [ << pipeline.parameters.action >>, "build_test_deploy" ]
+    when: pipeline.parameters.action == "build_test_deploy"
     jobs:
     - build_and_lint
     - build_similarity_api
