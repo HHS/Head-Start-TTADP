@@ -49,35 +49,37 @@ workflows:
     jobs:
     - build_and_lint
     - build_similarity_api
-    - build_check:
+    - checkpoint:
+        name: build_done
         requires:
         - build_and_lint
         - build_similarity_api
     - test_frontend:
         requires:
-        - build_check
+        - build_done
     - test_backend:
         requires:
-        - build_check
+        - build_done
     - test_similarity_api:
         requires:
-        - build_check
+        - build_done
     - test_e2e_app:
         requires:
-        - build_check
+        - build_done
     - test_e2e_api:
         requires:
-        - build_check
+        - build_done
     - test_e2e_utils:
         requires:
-        - build_check
+        - build_done
     - test_cucumber:
         requires:
-        - build_check
+        - build_done
     - dynamic_security_scan:
         requires:
-        - build_check
-    - full_check:
+        - build_done
+    - checkpoint:
+        name: tests_done
         requires:
         - test_frontend
         - test_backend
@@ -92,7 +94,7 @@ workflows:
         serial-group: deploy-lock/staging
         target_env: "staging"
         requires:
-        - full_check
+        - tests_done
         filters:
           branches:
             only:
@@ -102,7 +104,7 @@ workflows:
         serial-group: deploy-lock/prod
         target_env: "prod"
         requires:
-        - full_check
+        - tests_done
         filters:
           branches:
             only:
@@ -116,7 +118,7 @@ workflows:
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
-        target_env: pipeline.parameters.target_env
+        target_env: "<< pipeline.parameters.target_env >>"
         requires:
         - build_and_lint
         - build_similarity_api
@@ -138,7 +140,7 @@ workflows:
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
-        target_env: pipeline.parameters.target_env
+        target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
@@ -147,7 +149,7 @@ workflows:
     jobs:
     - restore_db_job:
         serial-group: tta-automation-lock
-        target_env: pipeline.parameters.target_env
+        target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_cron:
     # backup prod db
@@ -615,11 +617,8 @@ jobs:
         the_command: << parameters.command >>
         target_env: "<< parameters.target_env >>"
 
-  build_check:
-    executor: docker-base
-    steps: [ no-op ]
-
-  full_check:
+  # no-op job used for checkpointing others
+  checkpoint:
     executor: docker-base
     steps: [ no-op ]
 
