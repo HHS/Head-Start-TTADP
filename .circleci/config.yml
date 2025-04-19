@@ -44,7 +44,8 @@ parameters:
 workflows:
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
-    # It will build, test, and then deploy if the branch matches to an environment
+    # It will build the app, run all tests, then deploy if the branch matches
+    # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
     - build_and_lint
@@ -111,6 +112,7 @@ workflows:
             - production
 
   deploy_only:
+    # job to be triggered manually, will build the app and deploy to target env
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
@@ -124,6 +126,7 @@ workflows:
         - build_similarity_api
 
   import_data_cron:
+    # scheduled job to download and process monitoring data
     when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
@@ -137,6 +140,7 @@ workflows:
         target_env: prod
 
   import_data_manual:
+    # for manual testing of the data import workflow
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
@@ -152,11 +156,12 @@ workflows:
         target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_cron:
-    # backup prod db
+    # scheduled job to ensure lower envs have a recent copy of the database
+    # backup prod db to snapshot
     # restore prod db to temp db
-    # process (anonymize) the data
-    # backup temp db
-    # restore temp into lower env dbs
+    # process (anonymize) the data in temp db
+    # backup temp db to snapshot
+    # restore temp snapshot to lower env dbs
     # run migrations
     when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
