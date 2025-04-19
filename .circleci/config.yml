@@ -30,7 +30,7 @@ executors:
 parameters:
   action:
     description: |
-      Choose the workflow to run -
+      Choose the workflow to run -\\n
       * build_test_deploy: Build app, run all tests, auto-deploy if prod/staging
       * deploy_manual: Build and deploy from this branch to target env
       * restore_db: Restore latest DB snapshot to target env DB
