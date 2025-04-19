@@ -34,7 +34,7 @@ parameters:
     enum: [ build_test_deploy, deploy_manual, import_data, restore_db ]
     default: build_test_deploy
   target_env:
-    description: "Target environment to run the workflow in"
+    description: "Environment to target"
     type: enum
     enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
     default: dev
