@@ -31,7 +31,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_manual, import_data, restore_db ]
+    enum: [ build_test_deploy, deploy_only, import_data, restore_db ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
@@ -110,8 +110,8 @@ workflows:
             only:
             - production
 
-  deploy_manual:
-    when: pipeline.parameters.action == "deploy_manual" and pipeline.trigger_source == "api"
+  deploy_only:
+    when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
     - build_similarity_api
