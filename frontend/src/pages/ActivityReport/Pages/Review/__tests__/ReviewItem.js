@@ -132,3 +132,107 @@ describe('ReviewItem link rendering', () => {
     expect(link).toHaveAttribute('href', 'http://external.com');
   });
 });
+
+describe('ReviewItem "None provided" tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should show "None provided" when value is null', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => null),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+      />,
+    );
+
+    expect(screen.getByText('None provided')).toBeInTheDocument();
+  });
+
+  it('should show "None provided" when value is undefined', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => undefined),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+      />,
+    );
+
+    expect(screen.getByText('None provided')).toBeInTheDocument();
+  });
+
+  it('should show "None provided" when value is an empty array', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => []),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+      />,
+    );
+
+    expect(screen.getByText('None provided')).toBeInTheDocument();
+  });
+
+  it('should show "None provided" when value is an empty rich text string (<p></p>)', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => '<p></p>'),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+        isRichText
+      />,
+    );
+
+    expect(screen.getByText('None provided')).toBeInTheDocument();
+  });
+
+  it('should show "None provided" when values with path all resolve to undefined', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => [{ wrongKey: 'value' }, { alsoWrong: 'data' }]),
+    });
+
+    render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path="correctKey"
+      />,
+    );
+
+    expect(screen.getByText('None provided')).toBeInTheDocument();
+  });
+
+  it('should apply "smart-hub-review-item--empty" class when no value is provided', () => {
+    useFormContext.mockReturnValue({
+      watch: jest.fn(() => null),
+    });
+
+    const { container } = render(
+      <ReviewItem
+        label="Test Label"
+        name="testName"
+        path=""
+      />,
+    );
+
+    const divElement = container.querySelector('.smart-hub-review-item--empty');
+    expect(divElement).toBeInTheDocument();
+  });
+});
