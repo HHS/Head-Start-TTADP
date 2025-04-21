@@ -130,7 +130,7 @@ workflows:
     when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
-        cron: "0 11 * * *" # 1PM UTC = 9AM EST
+        cron: "0 13 * * *" # 1PM UTC = 9AM EST
         filters:
           branches:
             only:
@@ -1014,7 +1014,7 @@ commands:
     - run:
         name: Validate Parameters (<< parameters.target_env >>)
         command: |
-          if [ "<< parameters.rds_service_name >>" = "ttahub-prod" ]; then
+          if [ "<< parameters.rds_service_name >>" == "ttahub-prod" ]; then
             echo "Error: rds_service_name cannot be 'ttahub-prod'"
             exit 1
           fi
