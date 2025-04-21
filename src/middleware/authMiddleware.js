@@ -59,7 +59,9 @@ export default async function authMiddleware(req, res, next) {
 
   try {
     const hasAccess = await validateUserAuthForAccess(Number(userId));
-    if (!hasAccess) {
+    if (hasAccess) {
+      next();
+    } else {
       auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
       res.sendStatus(403);
     }
@@ -68,5 +70,4 @@ export default async function authMiddleware(req, res, next) {
     // it needs to be awaited before exiting the process here
     await handleErrors(req, res, error, namespace);
   }
-  next();
 }
