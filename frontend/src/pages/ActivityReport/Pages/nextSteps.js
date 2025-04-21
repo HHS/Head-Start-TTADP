@@ -96,7 +96,10 @@ const ReviewSection = ({ activityRecipientType }) => (
 );
 
 ReviewSection.propTypes = {
-  activityRecipientType: PropTypes.string.isRequired,
+  activityRecipientType: PropTypes.string,
+};
+ReviewSection.defaultProps = {
+  activityRecipientType: null,
 };
 
 export default {

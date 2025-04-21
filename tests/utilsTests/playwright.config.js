@@ -4,7 +4,10 @@ import { devices } from '@playwright/test';
 const config = {
   testDir: '.',
   outputDir: './test-results',
-  reporter: [['html', { outputFolder: './report', open: 'never' }]],
+  reporter: [
+    ['html', { outputFolder: './report', open: 'never' }],
+    ['junit', { outputFile: './report.xml' }]
+],
   projects: [
     {
       name: 'Desktop Chrome',

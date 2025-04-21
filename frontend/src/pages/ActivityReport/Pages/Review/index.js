@@ -146,7 +146,7 @@ ReviewSubmit.propTypes = {
   }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    role: PropTypes.arrayOf(PropTypes.string).isRequired,
+    role: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({

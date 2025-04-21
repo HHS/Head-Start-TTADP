@@ -8,5 +8,8 @@ command: "./cf/scripts/idol.sh"
 bound_services:
   - ttahub-db-backups
   - ttahub-dev
+  - ttahub-dev-green
+  - ttahub-dev-red
+  - ttahub-dev-blue
   - ttahub-sandbox
   # - ttahub-staging
