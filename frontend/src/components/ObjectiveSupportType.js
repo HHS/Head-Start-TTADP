@@ -20,7 +20,7 @@ export default function ObjectiveSupportType({
       <SupportTypeDrawer
         drawerTriggerRef={supportTypeDrawerTriggerRef}
       />
-      <div className="display-flex">
+      <div className="display-flex flex-align-start">
         <Label htmlFor={inputName}>
           Support type
           <Req />
