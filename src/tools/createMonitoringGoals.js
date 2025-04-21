@@ -163,6 +163,7 @@ const createMonitoringGoals = async () => {
 
       // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives
+      /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
       const goalsToClose = await sequelize.query(`
       WITH
     grants_with_monitoring_goal AS (
@@ -258,11 +259,13 @@ const createMonitoringGoals = async () => {
           context: null,
         })));
       }
+      */
     });
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
     auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
+    throw error;
   }
 };
 
