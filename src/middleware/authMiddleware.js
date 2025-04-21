@@ -5,17 +5,7 @@ import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import handleErrors from '../lib/apiErrorHandler';
 
-/**
- * Authentication Middleware
- *
- * This middleware handles user authentication using the request session
- * uid that gets set after successful login via HSES. Non-authenticated
- * users who attempt to access a page that requires authentication will be
- * served a 401
- * @param {*} req - request
- * @param {*} res - response
- * @param {*} next - next middleware
- */
+const namespace = 'MIDDLEWARE:AUTH';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
@@ -42,8 +32,17 @@ export function login(req, res) {
   res.redirect(uri);
 }
 
-const namespace = 'MIDDLEWARE:AUTH';
-
+/**
+ * Authentication Middleware
+ *
+ * This middleware handles user authentication using the request session
+ * uid that gets set after successful login via HSES. Non-authenticated
+ * users who attempt to access a page that requires authentication will be
+ * served a 401
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
 export default async function authMiddleware(req, res, next) {
   const userId = await currentUserId(req, res);
 
@@ -56,18 +55,20 @@ export default async function authMiddleware(req, res, next) {
   if (!userId) {
     // user not found / not authenticated
     res.sendStatus(401);
-  } else if (!await validateUserAuthForAccess(Number(userId))
-    .catch((error) => {
-      // unrecoverable, ie database error
-      res.send(500);
-      handleErrors(req, res, error, namespace);
-      process.exit(1);
-    })) {
-    // user lacks permission to access this resource
-    auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
-    res.sendStatus(403);
-  } else {
-    // user authenticated and has access
-    next();
   }
+
+  try {
+    const hasAccess = await validateUserAuthForAccess(Number(userId));
+    if (!hasAccess) {
+      auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    // handleErrors returns a promise, and sends a 500 status to the client
+    // it needs to be awaited before exiting the process here
+    await handleErrors(req, res, error, namespace);
+    auditLogger.error(`Unrecoverable error in authMiddleware: ${error}. Exiting process.`);
+    process.exit(1);
+  }
+  next();
 }
