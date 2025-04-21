@@ -134,7 +134,7 @@ const ReviewItem = ({
   const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
 
   return (
-    <div className={`grid-row ${classes} margin-bottom-3 desktop:margin-bottom-0`}>
+    <div className={`grid-row grid-gap ${classes} margin-bottom-3 desktop:margin-bottom-0`}>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold">
         {label}
       </div>

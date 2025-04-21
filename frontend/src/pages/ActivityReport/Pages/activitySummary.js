@@ -468,8 +468,9 @@ ActivitySummary.propTypes = {
 };
 
 const getNumberOfParticipants = (deliveryMethod) => {
+  const labelToUse = deliveryMethod === 'hybrid' ? 'Number of participants attending in person' : 'Number of participants';
   const numberOfParticipants = [
-    { label: 'Number of participants attending in person', name: 'numberOfParticipants' },
+    { label: labelToUse, name: 'numberOfParticipants' },
   ];
   if (deliveryMethod === 'hybrid') {
     numberOfParticipants.push(
