@@ -599,7 +599,7 @@ function ActivityReport({
       </Alert>
       )}
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
-      <Grid row className="flex-justify">
+      <Grid row>
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
@@ -610,9 +610,9 @@ function ActivityReport({
             {author}
           </div>
         </Grid>
-        <Grid col="auto" className="flex-align-self-center">
+        <Grid col="auto" className="flex-align-self-center margin-left-2">
           {formData.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
+            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
       </Grid>

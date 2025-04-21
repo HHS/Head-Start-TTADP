@@ -9,6 +9,8 @@ import {
   isValidURL, isExternalURL, isInternalGovernmentLink, getEditorState,
 } from '../../../../utils';
 
+const noneProvided = 'None provided';
+
 export const mapUrlValue = (v) => {
   let result = v;
   switch (v) {
@@ -62,6 +64,14 @@ const ReviewItem = ({
     values = value;
   }
 
+  // If we don't have a value set none provided.
+  if ((!value && !values)
+      || (Array.isArray(values) && !values.length)
+      || (value && typeof value === 'string' && value.includes('<p></p>'))) {
+    values = [noneProvided];
+    value = noneProvided;
+  }
+
   if (!Array.isArray(value)) {
     values = [value];
   }
@@ -72,9 +82,12 @@ const ReviewItem = ({
       linkNameValues = [linkNameValues];
     }
   }
-
   if (path) {
     values = values.map((v) => _.get(v, path));
+    // If values has no length or only contains undefined values set to none provided..
+    if (!values.length || values.every((v) => v === undefined)) {
+      values = [noneProvided];
+    }
   }
 
   if (sortValues) {
@@ -117,7 +130,7 @@ const ReviewItem = ({
     return <Link to={localLink.pathname}>{linkNameToUse}</Link>;
   });
 
-  const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
+  const emptySelector = value && value !== noneProvided ? '' : 'smart-hub-review-item--empty';
   const classes = ['margin-top-1', emptySelector].filter((x) => x !== '').join(' ');
 
   return (

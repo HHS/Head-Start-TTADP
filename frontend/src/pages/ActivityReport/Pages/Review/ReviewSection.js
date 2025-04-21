@@ -26,7 +26,7 @@ const Section = ({
         </HashLink>
         )}
       </div>
-      <div className="grid-row border-bottom padding-bottom-1">
+      <div className="grid-row padding-bottom-1">
         <div className="grid-col-12 desktop:grid-col-6">
           <h3 className="margin-y-1">{title}</h3>
         </div>

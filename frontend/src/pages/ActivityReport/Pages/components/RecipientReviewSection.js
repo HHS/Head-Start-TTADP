@@ -26,8 +26,8 @@ const RecipientReviewSection = () => {
       anchor: 'goal-summary',
       items: [
         { label: 'Recipient\'s goal', name: 'name' },
-        { label: 'Goal source', name: 'source' },
         { label: 'Goal number', name: 'goalNumber' },
+        { label: 'Goal source', name: 'source' },
         { label: 'Root cause', name: 'promptsForReview' },
       ],
     },

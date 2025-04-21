@@ -117,7 +117,7 @@ const Draft = ({
       <p className="usa-prose margin-top-2 margin-bottom-3">
         Review the information in each section before submitting for approval.
         <br />
-        Once submitted, the report is editable until an approver views it.
+        Once submitted, you will no longer be able to edit the report.
       </p>
       {reviewItems && reviewItems.length > 0 && (
       <Accordion bordered items={reviewItems} multiselectable />
