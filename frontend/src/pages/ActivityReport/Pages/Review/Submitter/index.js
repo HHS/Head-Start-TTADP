@@ -234,6 +234,8 @@ const Submitter = ({
               reportId={id}
               availableApprovers={availableApprovers}
               reviewItems={reviewItems}
+              grantsMissingMonitoring={grantsMissingMonitoring()}
+              grantsMissingCitations={grantsMissingCitations()}
             />
           )}
         {approved
