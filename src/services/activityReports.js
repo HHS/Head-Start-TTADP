@@ -332,7 +332,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
             model: Recipient,
             as: 'recipient',
             attributes: ['id', 'name'],
-            // attributes: ['name'],
           },
         ],
       },
