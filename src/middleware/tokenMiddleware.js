@@ -41,12 +41,13 @@ const tokenMiddleware = async (req, res, next) => {
       auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
       return unauthorized(res, 'User does not have appropriate permissions to view this resource');
     }
-    auditLogger.info(`User ${userId} making API request`);
-    res.locals.userId = userId;
   } catch (error) {
     // handleErrors returns a promise, and sends a 500 status to the client
-    return await handleErrors(req, res, error, namespace);
+    await handleErrors(req, res, error, namespace);
+    auditLogger.error(`Unrecoverable error in tokenMiddleware: ${error}.`);
   }
+  auditLogger.info(`User ${userId} making API request`);
+  res.locals.userId = userId;
   return next();
 };
 

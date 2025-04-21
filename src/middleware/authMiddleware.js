@@ -67,8 +67,6 @@ export default async function authMiddleware(req, res, next) {
     // handleErrors returns a promise, and sends a 500 status to the client
     // it needs to be awaited before exiting the process here
     await handleErrors(req, res, error, namespace);
-    auditLogger.error(`Unrecoverable error in authMiddleware: ${error}. Exiting process.`);
-    process.exit(1);
   }
   next();
 }
