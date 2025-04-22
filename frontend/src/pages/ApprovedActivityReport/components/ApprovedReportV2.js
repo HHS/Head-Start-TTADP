@@ -145,11 +145,6 @@ function calculateGoalsAndObjectives(report) {
           ...goalSection.heading,
           data: {
             ...goalSection.data,
-            Source: (
-              <>
-                { goal.activityReportGoals[0].source}
-              </>
-            ),
           },
           striped: true,
         };
@@ -228,7 +223,8 @@ export default function ApprovedReportV2({ data }) {
   const creator = data.author.fullName;
 
   const getNumberOfParticipants = () => {
-    let numberOfParticipants = { 'Number of participants attending in person': participantCount };
+    const isHybrid = deliveryMethod === 'hybrid';
+    let numberOfParticipants = { [isHybrid ? 'Number of participants attending in person' : 'Number of participants attending']: participantCount };
     if (deliveryMethod === 'hybrid') {
       numberOfParticipants = {
         ...numberOfParticipants,

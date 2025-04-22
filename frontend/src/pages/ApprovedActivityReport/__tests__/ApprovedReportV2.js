@@ -169,24 +169,6 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
   });
 
-  it('shows the goal close date and goal source', async () => {
-    render(<ApprovedReportV2 data={{
-      ...report,
-      goalsAndObjectives: [{
-        name: 'Goal without close date',
-        goalNumbers: ['1'],
-        objectives: mockObjectives,
-        endDate: '05/02/2023',
-        activityReportGoals: [{
-          endDate: '05/03/2023',
-          source: null,
-        }],
-      }],
-    }}
-    />);
-    expect(await screen.findByText('Source')).toBeInTheDocument();
-  });
-
   it('does not show the goal source label if there are no responses', async () => {
     render(<ApprovedReportV2 data={{
       ...report,
@@ -236,7 +218,7 @@ describe('Approved Activity Report V2 component', () => {
       ...report, deliveryMethod: 'in-person',
     }}
     />);
-    expect(screen.queryAllByText(/In Person/i).length).toBe(2);
+    expect(screen.getByText(/In Person/i)).toBeVisible();
   });
 
   it('language', async () => {
