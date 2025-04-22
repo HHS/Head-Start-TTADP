@@ -30,6 +30,12 @@ When('I select {string}', async (inputLabel) => {
   await element[0].click();
 });
 
+Then('I see text containing {string}', async (string) => {
+  const page = scope.context.currentPage;
+  const pageContent = await page.content();
+  assertTrue(pageContent.includes(string), `Expected page to contain text "${string}", but it did not.`);
+});
+
 Then('I see {string} as an option in the {string} multiselect', async (expectedOption, dropdownLabel) => {
   const page = scope.context.currentPage;
   const selector = `//label[text()='${dropdownLabel}']//div`;
