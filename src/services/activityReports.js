@@ -331,22 +331,25 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: Recipient,
             as: 'recipient',
-            attributes: ['name'],
+            attributes: ['id', 'name'],
           },
         ],
       },
     ],
   });
-
   const activityRecipients = recipients.map((recipient) => {
+    const recipientId = recipient.id;
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
 
     return {
       id: activityRecipientId,
+      recipientId,
       activityRecipientId, // Create or Update Report Expect's this Field.
       name,
+      // We need the actual id of the recipient to narrow down what grants are selected on the FE.
+      recipientIdForLookUp: recipient.grant.recipientId,
     };
   });
 
@@ -989,11 +992,13 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   const updatedFields = { ...allFields, ...resources };
+
   if (report) {
     savedReport = await update(updatedFields, report);
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(
