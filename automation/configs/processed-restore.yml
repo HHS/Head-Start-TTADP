@@ -12,4 +12,4 @@ bound_services:
   - ttahub-dev-red
   - ttahub-dev-blue
   - ttahub-sandbox
-  # - ttahub-staging
+  - ttahub-staging
