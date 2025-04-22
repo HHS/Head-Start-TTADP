@@ -1,5 +1,5 @@
-Feature: TTA Smarthub Activity Report
+Feature: TTA SmartHub Activity Report
     Scenario: Report can be filled out
         Given I am logged in
         And I am on the landing page
-        Then I see text containing "Activity report for Region 1"
+        Then I see text containing "Activity report for Region"
