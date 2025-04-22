@@ -20,6 +20,7 @@ import db, {
   GoalTemplateFieldPrompt,
   Topic,
   Course,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import {
   cacheGoalMetadata,
