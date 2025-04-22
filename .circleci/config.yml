@@ -129,15 +129,14 @@ workflows:
     # scheduled job to download and process monitoring data
     triggers:
     - schedule:
-        #cron: "0 13 * * *" # 1PM UTC = 9AM EST
-        cron: "0 8 * * *" # 1PM UTC = 9AM EST
+        cron: "0 13 * * *" # 1PM UTC = 9AM EST
         filters:
           branches:
             only:
-            - tm/fix-schedule-trigger
+            - main
     jobs:
     - run_import_job:
-        target_env: dev-green
+        target_env: 'prod'
 
   import_data_manual:
     # for manual testing of the data import workflow
