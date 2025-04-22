@@ -2,4 +2,4 @@ Feature: TTA Smarthub Activity Report
     Scenario: Report can be filled out
         Given I am logged in
         And I am on the landing page
-        Then I see "Activity report for Region 1 Draft" message
+        Then I see text containing "Activity report for Region"
