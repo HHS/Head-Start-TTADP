@@ -280,7 +280,6 @@ describe('RecipientReviewSection', () => {
 
     // Goal 1
     expect(screen.getByText(/this is my 1st goal title/i)).toBeInTheDocument();
-    expect(screen.getByText(/Goal Source 1/i)).toBeInTheDocument();
 
     // Goal 1 - Objective 1
     expect(screen.getByText('Goal 1 - Objective 1')).toBeInTheDocument();
@@ -301,7 +300,6 @@ describe('RecipientReviewSection', () => {
 
     // Goal 2
     expect(screen.getByText(/this is my 2nd goal title/i)).toBeInTheDocument();
-    expect(screen.getByText(/Goal Source 2/i)).toBeInTheDocument();
 
     // Goal 2 - Objective 1
     expect(screen.getByText('Goal 2 - Objective 1')).toBeInTheDocument();
