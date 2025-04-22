@@ -180,6 +180,7 @@ class ActivityReports{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  * version : integer : 2
+ activityReason : varchar(255)
  activityRecipientType : varchar(255)
  additionalNotes : text
  approvedAt : timestamp with time zone
@@ -195,6 +196,8 @@ class ActivityReports{
  legacyId : varchar(255)
  nonECLKCResourcesUsed : text[]
  numberOfParticipants : integer
+ numberOfParticipantsInPerson : integer
+ numberOfParticipantsVirtually : integer
  pageState : json
  participants : varchar(255)[]
  programTypes : varchar(255)[]

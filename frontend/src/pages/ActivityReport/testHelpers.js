@@ -36,9 +36,20 @@ export const formData = () => ({
     4: 'in-progress',
   },
   endDate: moment().format('YYYY-MM-DD'),
-  activityRecipients: ['Recipient Name 1'],
+
+  // value: 14826,
+  // label: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
+  // recipientIdForLookUp: 933,
+  // name: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
+  // activityRecipientId: 14826
+  activityRecipients: [{
+    value: 1,
+    activityRecipientId: 1,
+    label: 'Recipient Name 1',
+    name: 'Recipient Name 1',
+    recipientIdForLookUp: 1,
+  }],
   numberOfParticipants: '1',
-  reason: ['reason 1'],
   activityRecipientType: 'recipient',
   collaborators: [],
   participants: ['CEO / CFO / Executive'],
@@ -98,7 +109,11 @@ export const renderActivityReport = (id, currentPage = 'activity-summary', showL
 };
 
 export const recipients = {
-  grants: [{ name: 'recipient', grants: [{ activityRecipientId: 1, name: 'Recipient Name' }] }],
+  grants: [{
+    id: 1,
+    name: 'Recipient Name',
+    grants: [{ activityRecipientId: 1, name: 'Recipient Name', number: 'number' }],
+  }],
   otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
 };
 
