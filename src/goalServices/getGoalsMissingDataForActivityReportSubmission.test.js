@@ -46,21 +46,21 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
       status: GOAL_STATUS.IN_PROGRESS,
       name: goalTitle,
       grantId: activeGrant.id,
-      goalTemplateId: template.id,
+      // goalTemplateId: template.id,
     });
 
     goalTwo = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       name: goalTitle,
       grantId: activeGrant.id,
-      goalTemplateId: template.id,
+      // goalTemplateId: template.id,
     });
 
     goalThree = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       name: goalTitle,
       grantId: activeGrant.id,
-      goalTemplateId: template.id,
+      // goalTemplateId: template.id,
     });
 
     const prompt = await GoalTemplateFieldPrompt.create({
