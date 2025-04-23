@@ -136,7 +136,7 @@ workflows:
             - main
     jobs:
     - run_import_job:
-        target_env: 'prod'
+        target_env: "prod"
 
   import_data_manual:
     # for manual testing of the data import workflow
