@@ -10,7 +10,7 @@ module.exports = {
       // of "grantId" and "goalTemplateId" where the "status" is not equal to 'Closed'.
       await queryInterface.sequelize.query(`
                 CREATE UNIQUE INDEX IF NOT EXISTS "unique_grantId_goalTemplateId" ON "Goals" ("grantId", "goalTemplateId")
-                WHERE "status" != 'Closed' AND "deletedAt" IS NULL;
+                WHERE "status" != 'Closed' AND "goalTemplateId" IS NOT NULL AND "deletedAt" IS NULL;
             `, { transaction });
     });
   },
