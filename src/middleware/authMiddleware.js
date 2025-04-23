@@ -55,6 +55,7 @@ export default async function authMiddleware(req, res, next) {
   if (!userId) {
     // user not found / not authenticated
     res.sendStatus(401);
+    return;
   }
 
   try {
