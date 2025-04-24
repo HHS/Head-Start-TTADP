@@ -1260,7 +1260,12 @@ commands:
 
           # Evaluate message_text_script if provided
           if [ -n "<< parameters.message_text_file >>" ]; then
-            MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            if [ -f "/path/to/your/file" ]; then
+              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            else
+              echo "<< parameters.message_text_file >> does not exist"
+              exit 0
+            fi
           else
             MESSAGE_TEXT="<< parameters.message_text >>"
           fi
