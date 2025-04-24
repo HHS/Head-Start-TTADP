@@ -111,15 +111,13 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
   // Find all topics with missing ids
   const topicsNeedingLookup = topics.filter((t) => !t.id && t.name);
+  let resolvedTopics = [];
   if (topicsNeedingLookup.length > 0) {
     auditLogger.info(
       'Some topics were missing IDs and required a lookup. '
       + `ObjectiveId: ${objectiveId}, AROId: ${activityReportObjectiveId}, `
       + `Raw topics: ${JSON.stringify(topicsNeedingLookup)}`,
     );
-  }
-
-  if (topicsNeedingLookup.length > 0) {
     const topicNames = topicsNeedingLookup.map((t) => t.name);
     const foundTopics = await Topic.findAll({
       where: { name: topicNames },
