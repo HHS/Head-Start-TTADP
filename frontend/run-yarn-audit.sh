@@ -39,7 +39,7 @@ new=$(yarn audit --level low --json --groups dependencies | jq -s 'map(select(.t
 
 if [ "$curr" = "$new" ]; then
     echo
-	echo Ignorning known vulnerabilities
+	echo Ignoring known vulnerabilities
 	exit 0
 fi
 
