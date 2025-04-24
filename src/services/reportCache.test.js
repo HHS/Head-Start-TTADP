@@ -20,6 +20,7 @@ import db, {
   GoalTemplateFieldPrompt,
   Topic,
   Course,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import {
   cacheGoalMetadata,
@@ -110,16 +111,79 @@ describe('cacheCourses', () => {
 
 describe('cacheTopics', () => {
   let mockAuditLoggerError;
-  beforeAll(() => {
+  let mockAuditLoggerInfo;
+  let mockFindAll;
+  let mockCreate;
+  let mockDestroy;
+  let mockFindAllAROTopics;
+
+  beforeEach(() => {
     mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
-  });
-  afterAll(() => {
-    mockAuditLoggerError.mockRestore();
+    mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation();
+
+    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([
+      { id: 101, name: 'Topic 1' },
+    ]);
+
+    mockFindAllAROTopics = jest.spyOn(ActivityReportObjectiveTopic, 'findAll').mockResolvedValue([]);
+
+    mockCreate = jest.spyOn(ActivityReportObjectiveTopic, 'create').mockResolvedValue({});
+    mockDestroy = jest.spyOn(ActivityReportObjectiveTopic, 'destroy').mockResolvedValue(1);
   });
 
-  it('logs and error when topics are missing ids', async () => {
-    await expect(cacheTopics(1, 1, [{ name: 'Topic 1', id: null }])).rejects.toThrow();
-    expect(mockAuditLoggerError).toHaveBeenCalledWith('Error saving ARO topics: [{"name":"Topic 1","id":null}] for objectiveId: 1 and activityReportObjectiveId: 1');
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('resolves missing topic IDs by name', async () => {
+    const topics = [{ name: 'Topic 1' }];
+
+    await cacheTopics(1, 1, topics);
+
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining('Some topics were missing IDs'));
+    expect(mockFindAll).toHaveBeenCalledWith({ where: { name: ['Topic 1'] } });
+    expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
+  });
+
+  it('logs an error if topic name cannot be resolved', async () => {
+    mockFindAll.mockResolvedValue([]); // simulate no matches found
+
+    const topics = [{ name: 'Unknown Topic' }];
+    await cacheTopics(42, 99, topics);
+
+    expect(mockAuditLoggerError).toHaveBeenCalledWith(
+      expect.stringContaining('Could not resolve topic names: Unknown Topic'),
+    );
+  });
+
+  it('does nothing if all topics already exist and are unchanged', async () => {
+    mockFindAllAROTopics.mockResolvedValue([{ topicId: 101 }]);
+
+    const topics = [{ id: 101, name: 'Topic 1' }];
+    await cacheTopics(1, 1, topics);
+
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockDestroy).not.toHaveBeenCalled();
+  });
+
+  it('adds and removes topics correctly', async () => {
+    mockFindAllAROTopics.mockResolvedValue([
+      { topicId: 200 },
+      { topicId: 300 },
+    ]);
+
+    const topics = [{ id: 101, name: 'Topic 1' }];
+    await cacheTopics(1, 1, topics);
+
+    expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
+    expect(mockDestroy).toHaveBeenCalledWith({
+      where: {
+        activityReportObjectiveId: 1,
+        topicId: { [Op.in]: [200, 300] },
+      },
+      individualHooks: true,
+      hookMetadata: { objectiveId: 1 },
+    });
   });
 });
 
