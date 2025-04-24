@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
-  "private": true,
   "engines": {
     "node": "20.18.2"
   },
@@ -366,7 +365,7 @@
     "pg": "^8.3.3",
     "plantuml-encoder": "^1.4.0",
     "pug": "^3.0.3",
-    "redis": "^4.7.0",
+    "redis": "^4.0.6",
     "sax": "^1.3.0",
     "sequelize": "^6.29.0",
     "sequelize-cli": "^6.2.0",
