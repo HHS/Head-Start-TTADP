@@ -127,7 +127,6 @@ workflows:
 
   import_data_cron:
     # scheduled job to download and process monitoring data
-    when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
         cron: "0 13 * * *" # 1PM UTC = 9AM EST
@@ -137,7 +136,7 @@ workflows:
             - main
     jobs:
     - run_import_job:
-        target_env: prod
+        target_env: "prod"
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -163,7 +162,6 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
-    when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
