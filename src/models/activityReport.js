@@ -251,17 +251,7 @@ export default (sequelize, DataTypes) => {
           if (!draftStatuses.includes(this.submissionStatus)) {
             // Require fields when report is not a draft
             if (requiredForSubmission.includes(null)) {
-              const nullFields = requiredForSubmission
-                .map((field, i) => {
-                  const fieldNames = [
-                    'numberOfParticipants', 'deliveryMethod', 'duration', 'endDate',
-                    'startDate', 'activityRecipientType', 'requester', 'targetPopulations',
-                    'participants', 'topics', 'ttaType', 'creatorRole', 'activityReason', 'language',
-                  ];
-                  return field === null ? fieldNames[i] : null;
-                })
-                .filter(Boolean);
-              throw new Error(`Missing required field(s): ${nullFields.join(', ')}`);
+              throw new Error('Missing required field(s)');
             }
           }
         },
