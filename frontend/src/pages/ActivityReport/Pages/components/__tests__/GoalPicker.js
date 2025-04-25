@@ -34,7 +34,6 @@ const defaultGoalForEditing = {
 };
 
 const GP = ({
-  availableGoals,
   selectedGoals,
   goalForEditing,
   goalTemplates,
@@ -71,7 +70,6 @@ const GP = ({
         <FormProvider {...hookForm}>
           <Router history={history}>
             <GoalPicker
-              availableGoals={availableGoals}
               goalTemplates={goalTemplates}
               grantIds={[1]}
               reportId={1}
@@ -84,14 +82,12 @@ const GP = ({
 };
 
 const renderGoalPicker = (
-  availableGoals,
   selectedGoals = defaultSelectedGoals,
   goalForEditing = defaultGoalForEditing,
   goalTemplates = [],
 ) => {
   render(
     <GP
-      availableGoals={availableGoals}
       selectedGoals={selectedGoals}
       goalForEditing={goalForEditing}
       goalTemplates={goalTemplates}

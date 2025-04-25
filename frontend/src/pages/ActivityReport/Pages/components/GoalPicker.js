@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { v4 as uuidv4 } from 'uuid';
-import { uniqBy } from 'lodash';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
-  Label, Button, Checkbox, Alert,
+  Label, Button, Alert,
 } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
@@ -45,7 +44,6 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals,
   grantIds,
   reportId,
   goalTemplates,
@@ -57,7 +55,6 @@ const GoalPicker = ({
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
   const [templatePrompts, setTemplatePrompts] = useState(false);
-  const [useOhsStandardGoal, setOhsStandardGoal] = useState(false);
   const activityRecipientType = watch('activityRecipientType');
 
   const [citationOptions, setCitationOptions] = useState([]);
@@ -72,26 +69,6 @@ const GoalPicker = ({
 
   const modalRef = useRef();
   const [selectedGoal, setSelectedGoal] = useState(null);
-
-  const { selectedIds, selectedNames } = (selectedGoals || []).reduce((acc, goal) => {
-    const { id, name } = goal;
-    const newSelectedIds = [...acc.selectedIds, id];
-    const newSelectedNames = [...acc.selectedNames, name];
-
-    return {
-      selectedIds: newSelectedIds,
-      selectedNames: newSelectedNames,
-    };
-  }, {
-    selectedIds: [],
-    selectedNames: [],
-  });
-
-  // excludes already selected goals from the dropdown by name and ID
-  const allAvailableGoals = availableGoals
-    .filter((goal) => goal.goalIds.every((id) => (
-      !selectedIds.includes(id)
-    )) && !selectedNames.includes(goal.name));
 
   const {
     field: {
@@ -165,27 +142,6 @@ const GoalPicker = ({
     }
     fetchCitations();
   }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
-
-  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
-
-  // We need options with the number and also we need to add the
-  // goal templates and "create new goal" to the front of all the options
-  const options = [
-    newGoal(grantIds),
-    ...uniqueAvailableGoals.map(({
-      goalNumber,
-      ...goal
-    }) => (
-      {
-        value: goal.id,
-        number: goalNumber,
-        label: goal.name,
-        objectives: [],
-        isNew: false,
-        ...goal,
-      }
-    )),
-  ];
 
   const onChangeGoal = async (goal) => {
     try {
@@ -278,8 +234,6 @@ const GoalPicker = ({
     isMonitoringGoal,
     goalTemplates]);
 
-  const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
-
   return (
     <>
       <Modal
@@ -330,7 +284,7 @@ const GoalPicker = ({
           )
        }
         <Label>
-          Select recipient&apos;s goal
+          Select goal
           <Req />
           <Select
             name="goalForEditing"
@@ -341,7 +295,7 @@ const GoalPicker = ({
               validate: validateGoals,
             }}
             className="usa-select"
-            options={pickerOptions}
+            options={goalTemplates}
             styles={{
               ...selectOptionsReset,
               option: (provided) => ({
@@ -354,14 +308,6 @@ const GoalPicker = ({
             required
           />
         </Label>
-        <Checkbox
-          label="Use OHS standard goal"
-          id="useOhsStandardGoal"
-          name="useOhsStandardGoal"
-          checked={useOhsStandardGoal}
-          className="margin-top-1"
-          onChange={() => setOhsStandardGoal(!useOhsStandardGoal)}
-        />
         {goalForEditing ? (
           <div>
             <GoalForm
@@ -396,10 +342,6 @@ GoalPicker.propTypes = {
     })),
   })).isRequired,
   grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  availableGoals: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
   reportId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,
