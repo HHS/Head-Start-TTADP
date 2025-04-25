@@ -166,6 +166,50 @@ describe('Goals DB service', () => {
       ]);
     });
 
+    it('includes topic id and name in objective topics', async () => {
+      Goal.findAll = jest.fn().mockResolvedValue([
+        {
+          id: mockGoalId,
+          name: 'This is a test goal',
+          status: 'Draft',
+          objectives: [{
+            id: 1,
+            title: 'Test objective with topics',
+            status: GOAL_STATUS.IN_PROGRESS,
+            goalId: mockGoalId,
+            activityReportObjectives: [],
+            toJSON: jest.fn().mockReturnValue({
+              id: 1,
+              title: 'Test objective with topics',
+              status: GOAL_STATUS.IN_PROGRESS,
+              goalId: mockGoalId,
+            }),
+          }],
+        },
+      ]);
+
+      wasGoalPreviouslyClosed.mockReturnValue(false);
+
+      const mockTopics = [
+        { id: 100, name: 'Family Engagement' },
+        { id: 200, name: 'Health & Safety' },
+      ];
+
+      extractObjectiveAssociationsFromActivityReportObjectives.mockImplementation((_, field) => {
+        if (field === 'topics') return mockTopics;
+        return [];
+      });
+
+      reduceGoals.mockImplementation((goals) => goals);
+
+      const result = await goalsByIdsAndActivityReport(mockGoalId, mockActivityReportId);
+
+      expect(result[0].objectives[0].topics).toEqual([
+        { id: 100, name: 'Family Engagement' },
+        { id: 200, name: 'Health & Safety' },
+      ]);
+    });
+
     it('should return an empty array when no goals are found', async () => {
       Goal.findAll = jest.fn().mockResolvedValue([]);
       reduceGoals.mockReturnValue([]);
