@@ -283,7 +283,7 @@ describe('TR overview widget', () => {
         recipients: [{ value: grant1.id }, { value: grant2.id }],
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
-        numberOfParticipants: '25',
+        numberOfParticipants: 'twenty-five',
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       },
     });
