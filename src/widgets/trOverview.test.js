@@ -259,7 +259,7 @@ describe('TR overview widget', () => {
     });
   });
 
-  it('ignores numberOfParticipants if an empty string', async () => {
+  it('ignores numberOfParticipants if a string', async () => {
     // - session report 7
     await createSessionReport({
       eventId: trainingReport3.id,
@@ -270,6 +270,20 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: '',
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+    });
+
+    // - session report 8
+    await createSessionReport({
+      eventId: trainingReport3.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: [{ value: grant1.id }, { value: grant2.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: '25',
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       },
     });
