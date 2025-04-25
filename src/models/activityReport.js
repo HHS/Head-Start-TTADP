@@ -219,8 +219,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
-          const requiredForSubmission = [
-            this.numberOfParticipants,
+          let requiredForSubmission = [
             this.deliveryMethod,
             this.duration,
             this.endDate,
@@ -235,11 +234,34 @@ export default (sequelize, DataTypes) => {
             this.activityReason,
             this.language,
           ];
+
+          if (this.deliveryMethod === 'hybrid') {
+            requiredForSubmission = [
+              this.numberOfParticipantsInPerson,
+              this.numberOfParticipantsVirtually,
+              ...requiredForSubmission,
+            ];
+          } else {
+            requiredForSubmission = [
+              this.numberOfParticipants,
+              ...requiredForSubmission,
+            ];
+          }
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
             // Require fields when report is not a draft
             if (requiredForSubmission.includes(null)) {
-              throw new Error('Missing required field(s)');
+              const nullFields = requiredForSubmission
+                .map((field, i) => {
+                  const fieldNames = [
+                    'numberOfParticipants', 'deliveryMethod', 'duration', 'endDate',
+                    'startDate', 'activityRecipientType', 'requester', 'targetPopulations',
+                    'participants', 'topics', 'ttaType', 'creatorRole', 'activityReason', 'language',
+                  ];
+                  return field === null ? fieldNames[i] : null;
+                })
+                .filter(Boolean);
+              throw new Error(`Missing required field(s): ${nullFields.join(', ')}`);
             }
           }
         },
