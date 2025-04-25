@@ -12,16 +12,12 @@ import { useFormContext, useController } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
 import { IN_PROGRESS } from '../../../components/Navigator/constants';
-import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
+import { setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals, validatePrompts } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
-import { validateObjectives } from './components/objectiveValidator';
-import ConnectionError from '../../../components/ConnectionError';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
-import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
-import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
@@ -32,7 +28,6 @@ import Modal from '../../../components/Modal';
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
 const Buttons = ({
-  formData,
   isAppLoading,
   onContinue,
   onSaveDraft,
@@ -44,9 +39,6 @@ const Buttons = ({
     isObjectivesFormClosed,
   } = useContext(GoalFormContext);
 
-  const { activityRecipientType } = formData;
-  const isOtherEntityReport = activityRecipientType === 'other-entity';
-
   const showSaveGoalsAndObjButton = (
     !isGoalFormClosed
     && !isObjectivesFormClosed
@@ -55,7 +47,7 @@ const Buttons = ({
   if (showSaveGoalsAndObjButton) {
     return (
       <>
-        <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+        <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>Save goal</Button>
         <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={() => onSaveDraft(false)}>Save draft</Button>
         <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
       </>
@@ -97,12 +89,10 @@ const GoalsObjectives = ({
     isGoalFormClosed,
     isObjectivesFormClosed,
     toggleGoalForm,
-    toggleObjectiveForm,
   } = useContext(GoalFormContext);
 
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
-  const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const startDate = watch('startDate');
   const pageState = getValues('pageState');
   const goalForEditing = watch('goalForEditing');
@@ -114,11 +104,6 @@ const GoalsObjectives = ({
     hasGrant,
   } = useFormGrantData(activityRecipientType, activityRecipients);
 
-  const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
-
-  const [fetchError, setFetchError] = useState(false);
-  const [availableGoals, updateAvailableGoals] = useState([]);
   const [goalTemplates, setGoalTemplates] = useState([]);
   const [goalToRemove, setGoalToRemove] = useState(null);
 
@@ -162,34 +147,6 @@ const GoalsObjectives = ({
     };
 
     fetchGoalTemplates();
-  }, [grantIds, hasGrant, isRecipientReport]);
-
-  useDeepCompareEffect(() => {
-    const fetch = async () => {
-      try {
-        if (isRecipientReport && hasGrant) {
-          const fetchedGoals = await getGoals(grantIds);
-          const formattedGoals = fetchedGoals.map((g) => {
-            // if the goal is on an "old" grant, we should
-            // treat it like a new goal for now
-            let isNew = false;
-
-            if (grantIds.some((id) => g.grantIds.includes(id))) {
-              isNew = true;
-            }
-
-            return { ...g, isNew, grantIds };
-          });
-
-          updateAvailableGoals(formattedGoals);
-        }
-
-        setFetchError(false);
-      } catch (error) {
-        setFetchError(true);
-      }
-    };
-    fetch();
   }, [grantIds, hasGrant, isRecipientReport]);
 
   const showGoals = isRecipientReport && hasGrant;
@@ -302,33 +259,20 @@ const GoalsObjectives = ({
     grants: [],
   }));
 
-  const oeObjectiveEdit = (objectives) => {
-    const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);
-    const objectivesForEdit = objectives.map((obj) => (
-      {
-        ...obj,
-        recipientIds, // We need the other-entity ids to save on BE.
-      }));
-    setValue('objectivesWithoutGoals', objectivesForEdit);
-    toggleObjectiveForm(false);
-  };
-
   const isFormOpen = (
     isRecipientReport && !isGoalFormClosed
-  ) || (
-    isOtherEntityReport && !isObjectivesFormClosed
-  );
+  ) || !isObjectivesFormClosed;
 
   const startDateHasValue = startDate && startDate !== 'Invalid date';
 
-  const alertIsDisplayed = (!isOtherEntityReport && !isRecipientReport)
+  const alertIsDisplayed = !isRecipientReport
     || !startDateHasValue
     || (isRecipientReport && !showGoals);
   const determineReportTypeAlert = () => {
     const messages = [];
 
     // Check that the report type is set.
-    if ((!isOtherEntityReport && !isRecipientReport)
+    if (!isRecipientReport
     || (isRecipientReport && !showGoals)) {
       messages.push('Who the activity was for');
     }
@@ -359,7 +303,7 @@ const GoalsObjectives = ({
   return (
     <>
       <Helmet>
-        <title>Goals and Objectives</title>
+        <title>Goals and Objectives123</title>
       </Helmet>
       <Modal
         modalRef={modalRef}
@@ -380,6 +324,8 @@ const GoalsObjectives = ({
       <IndicatesRequiredField />
       ) }
 
+      <span className="usa-prose">Using a goal on an Activity Report will set the goal’s status to In progress.</span>
+
       {
         determineReportTypeAlert()
       }
@@ -387,27 +333,6 @@ const GoalsObjectives = ({
       {/**
         * on non-recipient reports, only objectives are shown
       */}
-      {!isRecipientReport && isOtherEntityReport && !isObjectivesFormClosed
-      && (
-      <OtherEntity
-        recipientIds={activityRecipientIds}
-        reportId={reportId}
-      />
-      )}
-      {/**
-        * on other-entity, read only objective view.
-      */}
-      {!isRecipientReport
-        && isObjectivesFormClosed
-        // && objectivesWithoutGoals
-        && objectivesWithoutGoals.length
-        ? (
-          <ReadOnlyOtherEntityObjectives
-            onEdit={oeObjectiveEdit}
-            objectives={objectivesWithoutGoals}
-          />
-        )
-        : null}
 
       {/**
         * all goals for review
@@ -430,12 +355,9 @@ const GoalsObjectives = ({
       {showGoals && !isGoalFormClosed && startDateHasValue
         ? (
           <>
-            <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>
-            { fetchError && (<ConnectionError />)}
             <Fieldset className="margin-0">
               <GoalPicker
                 grantIds={grantIds}
-                availableGoals={availableGoals}
                 reportId={reportId}
                 goalTemplates={goalTemplates}
               />
@@ -472,13 +394,7 @@ const ReviewSection = () => (
 export default {
   position: 2,
   label: 'Goals and objectives',
-  titleOverride: (formData) => {
-    const { activityRecipientType } = formData;
-    if (activityRecipientType === 'other-entity') {
-      return 'Objectives and topics';
-    }
-    return 'Goals and objectives';
-  },
+  titleOverride: 'Goals and objectives',
   path: 'goals-objectives',
   review: false,
   isPageComplete: (formData) => {
@@ -490,22 +406,18 @@ export default {
       return false;
     }
 
-    if (activityRecipientType === 'other-entity') {
-      return validateObjectives(formData.objectivesWithoutGoals) === true;
-    }
-
     // if the goal form is open (i.e. the goal for editing is set), the page cannot be complete
     // at least as far as my thinking goes
-    if (activityRecipientType === 'recipient' && formData.goalForEditing) {
+    if (formData.goalForEditing) {
       return false;
     }
 
-    return activityRecipientType === 'recipient' && validateGoals(formData.goals, NOOP, hasMultipleGrants) === true;
+    return validateGoals(formData.goals, NOOP, hasMultipleGrants) === true;
   },
   reviewSection: () => <ReviewSection />,
   render: (
     _additionalData,
-    formData,
+    _formData,
     reportId,
     isAppLoading,
     onContinue,
@@ -522,7 +434,6 @@ export default {
       />
       <DraftAlert />
       <Buttons
-        formData={formData}
         isAppLoading={isAppLoading || false}
         onContinue={onContinue}
         onSaveDraft={onSaveDraft}
