@@ -567,6 +567,8 @@ export const isPageComplete = (formData, formState) => {
     // numbers
     duration,
     numberOfParticipants,
+    numberOfParticipantsInPerson,
+    numberOfParticipantsVirtually,
 
     // dates
     startDate,
@@ -602,10 +604,24 @@ export const isPageComplete = (formData, formState) => {
 
   const numbersToValidate = [
     duration,
-    numberOfParticipants,
   ];
 
   if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
+    return false;
+  }
+
+  // Handle custom validation for number of participants.
+  let participantsToValidate = [];
+  if (deliveryMethod === 'hybrid') {
+    participantsToValidate = [
+      numberOfParticipantsInPerson,
+      numberOfParticipantsVirtually,
+    ];
+  } else {
+    participantsToValidate = [numberOfParticipants];
+  }
+
+  if (!participantsToValidate.every((num) => num && Number.isNaN(num) === false)) {
     return false;
   }
 
