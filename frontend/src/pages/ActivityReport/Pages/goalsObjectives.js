@@ -24,6 +24,7 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 import { NOOP } from '../../../Constants';
 import useFormGrantData, { calculateFormGrantData } from '../../../hooks/useFormGrantData';
 import Modal from '../../../components/Modal';
+import ConnectionError from '../../../components/ConnectionError';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -104,6 +105,7 @@ const GoalsObjectives = ({
     hasGrant,
   } = useFormGrantData(activityRecipientType, activityRecipients);
 
+  const [fetchError, setFetchError] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState([]);
   const [goalToRemove, setGoalToRemove] = useState(null);
 
@@ -126,7 +128,9 @@ const GoalsObjectives = ({
     const fetchGoalTemplates = async () => {
       if (isRecipientReport && hasGrant) {
         try {
+          console.log('\n\n\n>>>> Before fetching goal templates >>>>');
           const fetchedGoalTemplates = await getGoalTemplates(grantIds);
+          console.log('\n\n\n>>>> After fetching goal templates >>>>', fetchedGoalTemplates);
 
           // format goalTemplates
           const formattedGoalTemplates = fetchedGoalTemplates.map((gt) => ({
@@ -139,8 +143,10 @@ const GoalsObjectives = ({
           }));
 
           setGoalTemplates(formattedGoalTemplates);
+          setFetchError(false);
         } catch (err) {
-        // eslint-disable-next-line no-console
+          setFetchError(true);
+          // eslint-disable-next-line no-console
           console.error(err);
         }
       }
@@ -178,7 +184,6 @@ const GoalsObjectives = ({
       setValue('goalForEditing', '');
       setValue('goalName', '');
       setValue('goalEndDate', '');
-      setValue('goalSource', '');
       toggleGoalForm(false);
     }
   };
@@ -196,13 +201,11 @@ const GoalsObjectives = ({
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
-      const source = getValues('goalSource');
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
           name,
           endDate,
-          source,
           objectives: goalForEditingObjectives,
         }],
         setError,
@@ -229,7 +232,6 @@ const GoalsObjectives = ({
     // make this goal the editable goal
     setValue('goalForEditing', goal);
     setValue('goalEndDate', goal.endDate);
-    setValue('goalSource', goal.source);
     setValue('goalName', goal.name);
 
     toggleGoalForm(false);
@@ -303,7 +305,7 @@ const GoalsObjectives = ({
   return (
     <>
       <Helmet>
-        <title>Goals and Objectives123</title>
+        <title>Goals and Objectives</title>
       </Helmet>
       <Modal
         modalRef={modalRef}
@@ -355,6 +357,7 @@ const GoalsObjectives = ({
       {showGoals && !isGoalFormClosed && startDateHasValue
         ? (
           <>
+            { fetchError && (<ConnectionError />)}
             <Fieldset className="margin-0">
               <GoalPicker
                 grantIds={grantIds}
@@ -394,14 +397,14 @@ const ReviewSection = () => (
 export default {
   position: 2,
   label: 'Goals and objectives',
-  titleOverride: 'Goals and objectives',
+  titleOverride: () => ('Goals and objectives'),
   path: 'goals-objectives',
   review: false,
   isPageComplete: (formData) => {
     const { activityRecipientType, activityRecipients } = formData;
 
     const { hasMultipleGrants } = calculateFormGrantData(activityRecipientType, activityRecipients);
-
+    console.log('activityRecipientType333', activityRecipientType);
     if (!activityRecipientType) {
       return false;
     }

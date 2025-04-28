@@ -15,7 +15,6 @@ import {
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import GoalSource from '../../../../components/GoalForm/GoalSource';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function GoalForm({
@@ -43,7 +42,6 @@ export default function GoalForm({
 
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
-  const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -65,24 +63,6 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
-  const {
-    field: {
-      onChange: onUpdateGoalSource,
-      onBlur: onBlurGoalSource,
-      value: goalSource,
-      name: goalSourceInputName,
-    },
-  } = useController({
-    name: 'goalSource',
-    rules: activityRecipientType === 'recipient' ? {
-      required: {
-        value: true,
-        message: 'Select a goal source',
-      },
-    } : {},
-    defaultValue: '',
-  });
-
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -92,10 +72,6 @@ export default function GoalForm({
     goal.name,
     onUpdateText,
   ]);
-
-  useEffect(() => {
-    onUpdateGoalSource(goal.source ? goal.source : defaultSource);
-  }, [goal.source, onUpdateGoalSource, defaultSource]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -125,7 +101,6 @@ export default function GoalForm({
 
   const prompts = combinePrompts(templatePrompts, goal.prompts);
   const isCurated = goal.isCurated || false;
-  const { isSourceEditable } = goal;
 
   return (
     <>
@@ -154,27 +129,6 @@ export default function GoalForm({
         isMultiRecipientReport={isMultiRecipientReport}
         userCanEdit
       />
-
-      <FormFieldThatIsSometimesReadOnly
-        permissions={isCurated ? [
-          isSourceEditable,
-          !goal.onApprovedAR || !goal.source,
-          !isMonitoringGoal,
-        ] : [!goal.onApprovedAR || !goal.source]}
-        label="Goal source"
-        value={goalSource}
-      >
-        <GoalSource
-          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-          source={goalSource}
-          validateGoalSource={onBlurGoalSource}
-          onChangeGoalSource={onUpdateGoalSource}
-          inputName={goalSourceInputName}
-          goalStatus={status}
-          isLoading={isAppLoading}
-          isMultiRecipientGoal={isMultiRecipientReport}
-        />
-      </FormFieldThatIsSometimesReadOnly>
 
       <Objectives
         objectiveOptions={objectiveOptions}

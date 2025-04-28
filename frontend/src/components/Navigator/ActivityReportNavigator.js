@@ -171,7 +171,6 @@ const ActivityReportNavigator = ({
 
   const {
     grantIds,
-    hasMultipleGrants,
   } = useFormGrantData('recipient', recipients);
 
   const { isDirty, isValid } = formState;
@@ -253,7 +252,6 @@ const ActivityReportNavigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-    const source = getValues('goalSource');
     const promptTitles = getValues('goalPrompts');
     let prompts = [];
     const promptErrors = getPromptErrors(promptTitles, errors);
@@ -270,7 +268,6 @@ const ActivityReportNavigator = ({
       ...goalForEditing,
       isActivelyBeingEditing: true,
       name,
-      source,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
@@ -312,7 +309,6 @@ const ActivityReportNavigator = ({
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
     const promptErrors = getPromptErrors(promptTitles, errors);
-    const source = getValues('goalSource');
 
     if (promptErrors) {
       return;
@@ -355,7 +351,6 @@ const ActivityReportNavigator = ({
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
-      source,
     };
 
     let allGoals = packageGoals(
@@ -441,14 +436,12 @@ const ActivityReportNavigator = ({
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
-    const source = getValues('goalSource');
 
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: false,
       name,
       endDate,
-      source,
       objectives,
       regionId: formData.regionId,
     };
@@ -460,7 +453,6 @@ const ActivityReportNavigator = ({
     const areGoalsValid = validateGoals(
       [goal],
       setError,
-      hasMultipleGrants,
     );
 
     if (areGoalsValid !== true) {
@@ -486,7 +478,6 @@ const ActivityReportNavigator = ({
       setValue('goalEndDate', '');
       setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
-      setValue('goalSource', '');
 
       // set goals to form data as appropriate
       setValue('goals', packageGoals(
@@ -522,6 +513,7 @@ const ActivityReportNavigator = ({
   const onSaveAndContinueGoalsAndObjectives = async () => {
     setSavingLoadScreen();
     try {
+      console.log('Saving goals and objectives...');
       // Save goals for recipient report.
       await onSaveAndContinueGoals();
     } finally {

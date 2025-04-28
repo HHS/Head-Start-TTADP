@@ -558,6 +558,7 @@ describe('GoalPicker', () => {
     });
 
     it('correctly hides the monitoring warning if non monitoring recipients are selected with another goal', async () => {
+      console.log('----- start of test checking for monitoring warning -----');
       fetchMock.get('/api/goal-templates/1/prompts?goalIds=1&goalIds=2', []);
       fetchMock.get('/api/goal-templates/1/source?grantIds=2&grantIds=1', {
         source: 'Federal monitoring issues, including CLASS and RANs',
@@ -648,7 +649,7 @@ describe('GoalPicker', () => {
       act(() => {
         renderGoalPicker(availableGoals, [{ id: 1, grantId: 1 }], goalForEditing, availableTemplates, [{ activityRecipientId: 2, name: 'Grant 2 Name' }]);
       });
-      let selector = screen.queryByLabelText(/Select recipient's goal*/i);
+      let selector = screen.queryByLabelText(/select goal*/i);
       expect(selector).toBeVisible();
 
       // Check box to use curated goals.
