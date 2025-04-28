@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { TextInput } from '@trussworks/react-uswds';
-import FormItem from '../../../components/FormItem';
+import FormItem from './FormItem';
 
 export default function ParticipantsNumberOfParticipants({
   register,

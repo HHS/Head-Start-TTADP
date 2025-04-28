@@ -19,6 +19,7 @@ const Submitter = ({
   onSaveForm,
   pages,
   lastSaveTime,
+  reviewItems,
 }) => {
   const {
     additionalNotes,
@@ -185,7 +186,7 @@ const Submitter = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!draft}>
+      <Container skipTopPadding className="margin-top-0 padding-top-2" skipBottomPadding={!draft}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -207,6 +208,7 @@ const Submitter = ({
               creatorRole={creatorRole}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
+              reviewItems={reviewItems}
             />
           )}
         {submitted
@@ -217,6 +219,7 @@ const Submitter = ({
               reportId={id}
               displayId={displayId}
               approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
         {needsAction
@@ -230,6 +233,7 @@ const Submitter = ({
               displayId={displayId}
               reportId={id}
               availableApprovers={availableApprovers}
+              reviewItems={reviewItems}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
             />
@@ -239,6 +243,7 @@ const Submitter = ({
             <Approved
               additionalNotes={additionalNotes}
               approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
@@ -282,7 +287,11 @@ Submitter.propTypes = {
     })),
   }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    content: PropTypes.node,
+  })).isRequired,
 };
 
 Submitter.defaultProps = {

@@ -153,6 +153,8 @@ const destroyLinkedSimilarityGroups = async (sequelize, instance, options) => {
   });
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// There wont be any more merge goals.
 const updateOnARAndOnApprovedARForMergedGoals = async (sequelize, instance) => {
   const changed = instance.changed();
 
