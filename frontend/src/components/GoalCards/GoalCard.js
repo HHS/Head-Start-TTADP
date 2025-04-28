@@ -30,7 +30,7 @@ import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import DataCard from '../DataCard';
 import Tag from '../Tag';
-import Tooltip from '../Tooltip';
+import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 
 export const ObjectiveSwitch = ({
   objective,
@@ -254,127 +254,45 @@ export default function GoalCard({
   };
 
   const renderEnteredBy = () => {
-    const tags = [];
+    let specialists = [];
 
     if (isMonitoringGoal) {
-      // monitoring goals: show a single "System-generated" tag with "OHS" role
-      tags.push(
-        <Tag key="system-generated-tag" clickable>
-          <Tooltip
-            displayText="OHS"
-            screenReadDisplayText={false}
-            buttonLabel="reveal the full name of this user"
-            tooltipText="System-generated"
-            hideUnderline
-            buttonClassName="display-flex"
-            className="ttahub-goal-card__entered-by-tooltip"
-          />
-        </Tag>,
-      );
+      specialists = [
+        {
+          name: 'System-generated',
+          roles: ['OHS'],
+        },
+      ];
     } else if (collaborators && collaborators.length > 0) {
       const creatorsWithName = collaborators.filter((c) => c.goalCreatorName);
 
       if (creatorsWithName.length > 0) {
-        creatorsWithName.forEach((c) => {
+        specialists = creatorsWithName.map((c) => {
+          let roles = [];
+
           if (c.goalCreatorRoles) {
             // convert roles to array, handling different possible formats
-            let rolesArray = [];
-
             if (typeof c.goalCreatorRoles === 'string') {
               // e.g. "GS, ECS"
-              rolesArray = c.goalCreatorRoles.split(',').map((r) => r.trim());
+              roles = c.goalCreatorRoles.split(',').map((r) => r.trim());
             } else if (Array.isArray(c.goalCreatorRoles)) {
               // already an array
-              rolesArray = c.goalCreatorRoles;
+              roles = c.goalCreatorRoles;
             } else {
               // something else, try to flatten it
-              rolesArray = [c.goalCreatorRoles].flat().filter(Boolean);
+              roles = [c.goalCreatorRoles].flat().filter(Boolean);
             }
-
-            // separate tag for each role
-            if (rolesArray.length > 0) {
-              rolesArray.forEach((role) => {
-                tags.push(
-                  <Tag key={`${c.goalCreatorName}-${role}`} clickable>
-                    <Tooltip
-                      displayText={role}
-                      screenReadDisplayText={false}
-                      buttonLabel="reveal the full name of this user"
-                      tooltipText={c.goalCreatorName}
-                      hideUnderline
-                      buttonClassName="display-flex"
-                      className="ttahub-goal-card__entered-by-tooltip"
-                    />
-                  </Tag>,
-                );
-              });
-            } else {
-              // roles array is empty after processing
-              tags.push(
-                <Tag key={`${c.goalCreatorName}-unavailable`} clickable>
-                  <Tooltip
-                    displayText="Unavailable"
-                    screenReadDisplayText={false}
-                    buttonLabel="reveal the full name of this user"
-                    tooltipText={c.goalCreatorName}
-                    hideUnderline
-                    buttonClassName="display-flex"
-                    className="ttahub-goal-card__entered-by-tooltip"
-                  />
-                </Tag>,
-              );
-            }
-          } else {
-            // user has no roles
-            tags.push(
-              <Tag key={`${c.goalCreatorName}-unavailable`} clickable>
-                <Tooltip
-                  displayText="Unavailable"
-                  screenReadDisplayText={false}
-                  buttonLabel="reveal the full name of this user"
-                  tooltipText={c.goalCreatorName}
-                  hideUnderline
-                  buttonClassName="display-flex"
-                  className="ttahub-goal-card__entered-by-tooltip"
-                />
-              </Tag>,
-            );
           }
+
+          return {
+            name: c.goalCreatorName,
+            roles,
+          };
         });
-      } else {
-        // legacy goal, no creator data
-        tags.push(
-          <Tag key="unknown-unavailable" clickable>
-            <Tooltip
-              displayText="Unavailable"
-              screenReadDisplayText={false}
-              buttonLabel="reveal the full name of this user"
-              tooltipText="Unknown"
-              hideUnderline
-              buttonClassName="display-flex"
-              className="ttahub-goal-card__entered-by-tooltip"
-            />
-          </Tag>,
-        );
       }
-    } else {
-      // legacy goal, no collaborators data
-      tags.push(
-        <Tag key="unknown-unavailable" clickable>
-          <Tooltip
-            displayText="Unavailable"
-            screenReadDisplayText={false}
-            buttonLabel="reveal the full name of this user"
-            tooltipText="Unknown"
-            hideUnderline
-            buttonClassName="display-flex"
-            className="ttahub-goal-card__entered-by-tooltip"
-          />
-        </Tag>,
-      );
     }
 
-    return <>{tags}</>;
+    return <SpecialistTags specialists={specialists} />;
   };
 
   return (
