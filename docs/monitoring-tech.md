@@ -26,7 +26,7 @@ The import system automatically collects ZIP files from an external SFTP source 
 
 4. **Post-Processing Phase** (optional)
 
-   - Executes tasks like creating, reopening and closing Monitoring Goals
+   - Executes tasks like creating and reopening Monitoring Goals
 
 ---
 
@@ -92,7 +92,6 @@ Runs post-processing functions defined in `Import.postProcessingActions`. Exampl
 - `createMonitoringGoals`
   - creates monitoring goals
   - reopens monitoring goals
-  - closes monitoring goals
 
 **Monitoring Goal Logic**
 ======================
@@ -135,25 +134,6 @@ In short:
 #### Goal Reopening flow diagram
 
 [`monitoring-goal-reopen-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-reopen-flow.puml)
-
-
-### When Monitoring Goals Are Closed
----------------------------------
-
-An existing monitoring goal is closed if:
-
-* The goal is not already closed
-* The goal has no associated activity reports in 'approved' or 'draft'
-* There are no active findings for the grant (even across historical findings)
-* There are no open objectives associated with the goal (accomplished via a hook)
-
-In short:
-
-"If a monitoring goal has no active findings and no in-progress reports => close it."
-
-#### Goal Closing flow diagram
-
-[`monitoring-goal-closing-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-close-flow.puml)
 
 ---
 
