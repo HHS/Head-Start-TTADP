@@ -220,7 +220,7 @@ ReportsTable.propTypes = {
   reports: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
-      regionId: PropTypes.string,
+      regionId: PropTypes.number, // JSON parsed into a number
       activityRecipients: PropTypes.arrayOf(PropTypes.shape(
         { activityRecipientId: PropTypes.number },
       )),
