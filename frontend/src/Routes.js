@@ -461,11 +461,16 @@ Routes.propTypes = {
   loggedOut: PropTypes.bool,
   timedOut: PropTypes.bool,
   notifications: PropTypes.shape({
-    whatsNew: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number,
-      title: PropTypes.string,
-      message: PropTypes.string,
-    })),
+    whatsNew: PropTypes.oneOfType([
+      PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.number,
+          title: PropTypes.string,
+          message: PropTypes.string,
+        }),
+      ),
+      PropTypes.string, // Sometimes an HTML string
+    ]),
   }),
 };
 

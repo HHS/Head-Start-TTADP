@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
-import { Checkbox, Tag } from '@trussworks/react-uswds';
+import { Checkbox } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
@@ -19,14 +19,17 @@ import FlagStatus from './FlagStatus';
 import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import { goalPropTypes } from './constants';
-import colors from '../../colors';
-import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
+import isAdmin, {
+  hasApproveActivityReportInRegion,
+  canEditOrCreateGoals,
+} from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 import DataCard from '../DataCard';
+import Tag from '../Tag';
 import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 
 export const ObjectiveSwitch = ({
@@ -101,43 +104,66 @@ export default function GoalCard({
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
   const sortedObjectives = [...objectives];
-  sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
-  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-  const {
-    atLeastOneObjectiveIsNotCompletedOrSuspended,
-    dispatchStatusChange,
-  } = useObjectiveStatusMonitor(objectives);
+  sortedObjectives.sort((a, b) => (new Date(a.endDate) < new Date(b.endDate) ? 1 : -1));
+  const hasEditButtonPermissions = canEditOrCreateGoals(
+    user,
+    parseInt(regionId, DECIMAL_BASE),
+  );
+  // eslint-disable-next-line max-len
+  const { atLeastOneObjectiveIsNotCompletedOrSuspended, dispatchStatusChange } = useObjectiveStatusMonitor(objectives);
 
   useEffect(() => {
-    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    if (
+      invalidStatusChangeAttempted === true
+      && !atLeastOneObjectiveIsNotCompletedOrSuspended
+    ) {
       setInvalidStatusChangeAttempted(false);
     }
-  }, [atLeastOneObjectiveIsNotCompletedOrSuspended, invalidStatusChangeAttempted]);
+  }, [
+    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    invalidStatusChangeAttempted,
+  ]);
 
   const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
 
-  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
+  const lastTTA = useMemo(
+    () => objectives.reduce(
+      (prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate),
+      '',
+    ),
+    [objectives],
+  );
   const history = useHistory();
 
-  const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
+  const goalNumbers = `${goal.goalNumbers.join(', ')}${
+    isReopenedGoal ? '-R' : ''
+  }`;
 
-  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join('&id[]=')}`;
-  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?${ids.map((d) => `id[]=${d}`).join('&')}`;
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(
+    '&id[]=',
+  )}`;
+  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?${ids
+    .map((d) => `id[]=${d}`)
+    .join('&')}`;
 
   const onUpdateGoalStatus = (newStatus) => {
-    const statusesThatNeedObjectivesFinished = [
-      'Closed',
-      'Suspended',
-    ];
+    const statusesThatNeedObjectivesFinished = ['Closed', 'Suspended'];
 
-    if (statusesThatNeedObjectivesFinished.includes(newStatus)
-        && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    if (
+      statusesThatNeedObjectivesFinished.includes(newStatus)
+      && atLeastOneObjectiveIsNotCompletedOrSuspended
+    ) {
       setInvalidStatusChangeAttempted(true);
       return;
     }
     setInvalidStatusChangeAttempted(false);
-    if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
+    if (
+      newStatus === 'Completed'
+      || newStatus === 'Closed'
+      || newStatus === 'Ceased/Suspended'
+      || newStatus === 'Suspended'
+    ) {
       // Must provide reason for Close or Suspend.
       showCloseSuspendGoalModal(newStatus, ids, goalStatus);
     } else {
@@ -189,10 +215,17 @@ export default function GoalCard({
       return true;
     }
 
-    return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+    return hasApproveActivityReportInRegion(
+      user,
+      parseInt(regionId, DECIMAL_BASE),
+    );
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(goalStatus)) {
+  if (
+    canDeleteQualifiedGoals
+    && !onAR
+    && ['Draft', 'Not Started'].includes(goalStatus)
+  ) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
@@ -200,7 +233,10 @@ export default function GoalCard({
           setDeleteError(false);
           setIsAppLoading(true);
           await deleteGoal(ids, regionId);
-          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+          history.push(
+            `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`,
+            { message: 'Goal deleted successfully' },
+          );
         } catch (e) {
           setDeleteError(true);
         } finally {
@@ -218,24 +254,23 @@ export default function GoalCard({
   };
 
   const renderEnteredBy = () => {
+    let specialists;
     if (isMonitoringGoal) {
-      return (
-        <SpecialistTags
-          specialists={[{
-            name: 'System-generated',
-            roles: ['OHS'],
-          }]}
-        />
-      );
-    }
-    return (
-      <SpecialistTags
-        specialists={collaborators.filter((c) => c.goalCreatorName).map((c) => ({
+      specialists = [
+        {
+          name: 'System-generated',
+          roles: ['OHS'],
+        },
+      ];
+    } else if (collaborators) {
+      specialists = collaborators
+        .filter((c) => c.goalCreatorName)
+        .map((c) => ({
           name: c.goalCreatorName,
           roles: [c.goalCreatorRoles].flat(),
-        }))}
-      />
-    );
+        }));
+    }
+    return <SpecialistTags specialists={specialists} />;
   };
 
   return (
@@ -244,10 +279,9 @@ export default function GoalCard({
       className="ttahub-goal-card"
       errorBorder={erroneouslySelected || deleteError}
     >
-
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
-          { !hideCheckbox && (
+          {!hideCheckbox && (
             <Checkbox
               id={`goal-select-${id}`}
               label=""
@@ -268,7 +302,7 @@ export default function GoalCard({
             regionId={regionId}
           />
         </div>
-        { !hideGoalOptions && (
+        {!hideGoalOptions && (
           <ContextMenu
             label={contextMenuLabel}
             menuItems={menuItems}
@@ -281,40 +315,32 @@ export default function GoalCard({
         editLink={editLink}
         invalidStatusChangeAttempted={invalidStatusChangeAttempted}
       />
-      <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
+      <div
+        className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}
+      >
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
             Goal
             {' '}
             {goalNumbers}
-            {isMerged && (
-              <Tag className="usa-tag--merged-goal border margin-left-1 text-ink text-normal radius-sm" background={colors.baseLightest}>
-                Merged
-              </Tag>
-            )}
+            {' '}
+            {isMerged && <Tag>Merged</Tag>}
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}
             {' '}
-            <FlagStatus
-              reasons={reasonsToMonitor}
-              goalNumbers={goalNumbers}
-            />
+            <FlagStatus reasons={reasonsToMonitor} goalNumbers={goalNumbers} />
           </p>
-          {
-              goal.isFei
-                ? (
-                  <div className="grid-row">
-                    <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
-                      Root cause:
-                    </p>
-                    <p className="usa-prose margin-bottom-0 margin-top-1">
-                      { getResponses() }
-                    </p>
-                  </div>
-                )
-                : null
-          }
+          {goal.isFei ? (
+            <div className="grid-row">
+              <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
+                Root cause:
+              </p>
+              <p className="usa-prose margin-bottom-0 margin-top-1">
+                {getResponses()}
+              </p>
+            </div>
+          ) : null}
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Goal source</p>
@@ -322,7 +348,9 @@ export default function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
-          <p className="usa-prose margin-y-0">{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+          <p className="usa-prose margin-y-0">
+            {moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}
+          </p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Last TTA</p>
@@ -330,9 +358,7 @@ export default function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          {
-            renderEnteredBy()
-          }
+          {renderEnteredBy()}
         </div>
       </div>
 

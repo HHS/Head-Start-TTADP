@@ -201,7 +201,7 @@ GoalStatusChart.propTypes = {
     Closed: PropTypes.number,
     'Ceased/Suspended': PropTypes.number,
   }),
-  loading: PropTypes.bool.isRequired,
+  loading: PropTypes.bool,
 };
 
 GoalStatusChart.defaultProps = {
@@ -212,6 +212,7 @@ GoalStatusChart.defaultProps = {
     Closed: 0,
     Suspended: 0,
   },
+  loading: false,
 };
 
 export default withWidgetData(GoalStatusChart, 'goalStatusByGoalName');
