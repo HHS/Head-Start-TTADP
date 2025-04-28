@@ -72,9 +72,8 @@ export const findWhatsChanged = (object, base) => {
 
           return true;
         })(),
-        // no multigrant/multirecipient reports should have prompts or source
+        // no multigrant/multirecipient reports should have prompts
         prompts: grantIds.length < 2 ? goal.prompts : [],
-        source: grantIds.length < 2 ? goal.source : '',
       }));
     }
 
@@ -110,7 +109,6 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       status: g.status,
       endDate: g.endDate,
       onApprovedAR: g.onApprovedAR,
-      source: g.source,
       name: g.name,
       grantIds,
       id: g.id,
@@ -145,7 +143,6 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       status: goal.status,
       endDate: goal.endDate,
       onApprovedAR: goal.onApprovedAR,
-      source: goal.source,
       name: goal.name,
       createdVia: goal.createdVia,
       isActivelyBeingEditing: goal.isActivelyBeingEditing,
@@ -206,7 +203,6 @@ export const convertGoalsToFormData = (
       ...goal,
       grantIds,
       objectives: goal.objectives,
-      source: grantIds.length < 2 ? goal.source : '',
       prompts: grantIds.length < 2 ? goal.prompts : [],
     };
   } else {
@@ -215,7 +211,6 @@ export const convertGoalsToFormData = (
     accumulatedData.goals.push({
       ...goal,
       grantIds,
-      source: grantIds.length < 2 ? goal.source : '',
       prompts: grantIds.length < 2 ? goal.prompts : [],
     });
   }

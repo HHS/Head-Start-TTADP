@@ -9,7 +9,7 @@ import {
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
-import { getGoalTemplatePrompts, getGoalTemplateSource } from '../../../../fetchers/goalTemplates';
+import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -146,15 +146,12 @@ const GoalPicker = ({
   const onChangeGoal = async (goal) => {
     try {
       if (goal.isCurated) {
-        const [prompts, source] = await Promise.all([
+        const [prompts] = await Promise.all([
           getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds),
-          // eslint-disable-next-line max-len
-          getGoalTemplateSource(goal.goalTemplateId, activityRecipients.map((ar) => ar.activityRecipientId)),
         ]);
 
         onChange({
           ...goal,
-          source: source.source,
         });
 
         if (prompts) {

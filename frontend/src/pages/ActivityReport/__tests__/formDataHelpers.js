@@ -7,7 +7,6 @@ describe('FormDataHelpers', () => {
       objectives: [],
       goalIds: [1, 2, 3],
       onApprovedAR: true,
-      source: 'Recipient request',
       status: 'In progress',
     };
 
@@ -284,12 +283,10 @@ describe('FormDataHelpers', () => {
                 isActivelyEdited: true,
               },
             ],
-            source: 'Source',
           },
           {
             id: 2,
             objectives: [],
-            source: '',
             activityReportGoals: [
               {
                 id: 2,
@@ -306,7 +303,6 @@ describe('FormDataHelpers', () => {
         {
           id: 2,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
           objectives: [],
           activityReportGoals: [
@@ -317,7 +313,6 @@ describe('FormDataHelpers', () => {
 
       expect(goalForEditing).toEqual({
         id: 1,
-        source: '',
         prompts: [],
         grantIds: [1, 2, 3],
         objectives: [],
@@ -364,7 +359,6 @@ describe('FormDataHelpers', () => {
               isActivelyEdited: true,
             },
           ],
-          source: '',
           prompts: [],
         },
       ]);
@@ -372,7 +366,6 @@ describe('FormDataHelpers', () => {
       expect(goalForEditing).toEqual({
         id: 1,
         grantIds: [1, 2, 3],
-        source: '',
         activityReportGoals: [
           {
             id: 1,
@@ -416,7 +409,6 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
           activityReportGoals: [
             {
@@ -427,7 +419,6 @@ describe('FormDataHelpers', () => {
         },
         {
           id: 2,
-          source: '',
           prompts: [],
           grantIds: [1, 2, 3],
           activityReportGoals: [
@@ -461,13 +452,11 @@ describe('FormDataHelpers', () => {
         {
           id: 1,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
         },
         {
           id: 2,
           grantIds: [1, 2, 3],
-          source: '',
           prompts: [],
         },
       ]);
@@ -512,7 +501,6 @@ describe('FormDataHelpers', () => {
               isActivelyEdited: true,
             },
           ],
-          source: '',
           prompts: [],
         },
         {
@@ -524,7 +512,6 @@ describe('FormDataHelpers', () => {
               isActivelyEdited: true,
             },
           ],
-          source: '',
           prompts: [],
         },
       ]);

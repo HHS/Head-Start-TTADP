@@ -302,14 +302,13 @@ describe('ActivityReport', () => {
           name: 'goal 3',
           activityReportGoals: [{ isActivelyEdited: true }],
           prompts: [],
-          source: '',
         },
         goals: [
           {
-            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
+            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], prompts: [],
           },
           {
-            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [], source: '',
+            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [],
           },
         ],
       };
@@ -342,7 +341,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: true,
           name: 'goal 3',
           prompts: [],
-          source: '',
         },
         {
           activityReportGoals: [
@@ -357,7 +355,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: false,
           name: 'goal 1',
           prompts: [],
-          source: '',
         },
         {
           activityReportGoals: [
@@ -372,7 +369,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: false,
           name: 'goal 2',
           prompts: [],
-          source: '',
         },
       ]);
     });
@@ -516,21 +512,40 @@ describe('ActivityReport', () => {
         originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
       });
 
+      fetchMock.get('/api/goal-templates/24727/prompts?goalIds=92852', []);
+
       fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-      fetchMock.get('/api/activity-reports/goals?grantIds=10431', [{
-        endDate: null,
-        grantIds: [10431],
-        goalIds: [37502],
-        oldGrantIds: [7764],
-        created: '2023-07-05T17:56:14.755Z',
-        goalTemplateId: 13500,
-        name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-        status: 'In Progress',
-        onApprovedAR: false,
-        source: null,
-        isCurated: false,
-      }]);
-      fetchMock.get('/api/goal-templates?grantIds=10431&reportStartDate=2012-05-20', []);
+      fetchMock.get('/api/goal-templates?grantIds=10431',
+        [
+          {
+            isSourceEditable: true,
+            id: 24727,
+            source: null,
+            standard: 'Child Safety',
+            label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+            value: 24727,
+            name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+            goalTemplateId: 13500,
+            goalIds: [37502],
+            isRttapa: null,
+            status: 'In Progress',
+            grantIds: [10431],
+            oldGrantIds: [7764],
+            isCurated: false,
+            isNew: false,
+            goals: [
+              {
+                id: 37502,
+                name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+                source: null,
+                status: 'In Progress',
+                grantId: 10431,
+                goalTemplateId: 13500,
+              },
+            ],
+          },
+        ]);
+
       fetchMock.get('/api/activity-reports/1', {
         ...formData(),
         activityRecipientType: 'recipient',
@@ -687,7 +702,7 @@ describe('ActivityReport', () => {
 
       await screen.findByRole('heading', { name: 'Goals and objectives' });
       await act(() => reactSelectEvent.select(
-        screen.getByLabelText(/Recipient's goal/i),
+        screen.getByLabelText(/Select goal/i),
         'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
       ));
 
@@ -776,7 +791,6 @@ describe('ActivityReport', () => {
           status: 'Draft',
           isRttapa: null,
           isCurated: false,
-          source: 'Source',
         }],
       });
 
@@ -867,13 +881,12 @@ describe('ActivityReport', () => {
           lastCompletedAt: null,
           createdVia: 'activityReport',
           rtrOrder: 1,
-          source: null,
           createdAt: '2023-06-21T17:54:16.543Z',
           updatedAt: '2023-06-21T17:54:16.812Z',
           isCurated: null,
           prompts: [],
           activityReportGoals: [{
-            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, source: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
+            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
           }],
           grant: {},
           objectives: [{

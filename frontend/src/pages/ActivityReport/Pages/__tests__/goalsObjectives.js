@@ -421,8 +421,7 @@ describe('goals objectives', () => {
       expect(screen.queryByText(/to add goals and objectives, indicate in the/i)).toBeNull();
       expect(screen.queryByText(/who the activity was for/i)).toBeNull();
       expect(screen.queryByText(/start date of the activity/i)).toBeNull();
-      // Expect to find an h3 with the text "Goal summary".
-      expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
+      expect(await screen.findByText(/using a goal on an activity report will set the goal’s status to in progress/i)).toBeVisible();
     });
 
     it('shows the start date warning if the start date has the value of "Invalid date"', async () => {
@@ -433,21 +432,7 @@ describe('goals objectives', () => {
     });
   });
 
-  describe('when activity recipient type is other entity"', () => {
-    it('the objectives section is displayed', async () => {
-      renderGoals([1], 'other-entity');
-      expect(await screen.findByText(
-        'You\'re creating an activity report for an entity that\'s not a grant recipient, so you only need to create objectives. The goal section is removed.',
-      )).toBeVisible();
-    });
-  });
-
   describe('title override', () => {
-    it('returns objective if activityRecipientType is other-entity', async () => {
-      const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entity' });
-      expect(res).toEqual('Objectives and topics');
-    });
-
     it('returns goals if activityRecipientType is recipient', async () => {
       const res = goalsObjectives.titleOverride({ activityRecipientType: 'recipient' });
       expect(res).toEqual('Goals and objectives');
@@ -458,30 +443,6 @@ describe('goals objectives', () => {
     it('is false if there is no recipient type selected', () => {
       const complete = goalsObjectives.isPageComplete({});
       expect(complete).toBeFalsy();
-    });
-
-    describe('for other-entity reports', () => {
-      it('is false if objectives are not valid', () => {
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: [] });
-        expect(complete).toBeFalsy();
-      });
-
-      it('is true if objectives are valid', () => {
-        const objectives = [
-          {
-            id: 1,
-            title: 'title',
-            ttaProvided: 'tta',
-            status: 'In Progress',
-            topics: ['Hello'],
-            resources: [],
-            roles: ['Chief Inspector'],
-            supportType: SUPPORT_TYPES[3],
-          },
-        ];
-        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
-        expect(complete).toBeTruthy();
-      });
     });
 
     describe('for recipient reports', () => {
@@ -542,36 +503,6 @@ describe('goals objectives', () => {
         });
         expect(complete).toBeFalsy();
       });
-    });
-
-    it('isPageComplete is true', async () => {
-      const objectives = [
-        {
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          topics: ['Hello'],
-          resources: [],
-          roles: ['Chief Inspector'],
-          supportType: SUPPORT_TYPES[1],
-          courses: [],
-        },
-        {
-          id: 2,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          topics: ['Hello'],
-          resources: [],
-          roles: ['Chief Inspector'],
-          supportType: SUPPORT_TYPES[1],
-          courses: [],
-        },
-      ];
-      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
-      const isComplete = goalsObjectives.isPageComplete(formData);
-      expect(isComplete).toBeTruthy();
     });
 
     it('isPageComplete is false', async () => {
