@@ -14,16 +14,13 @@ import db, {
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
-  ActivityReportObjectiveFile,
-  ActivityReportObjectiveResource,
-  ActivityReportObjectiveTopic,
   ActivityReportObjectiveCourse,
   ActivityReportObjectiveCitation,
   ActivityReportGoalFieldResponse,
   GoalTemplateFieldPrompt,
-  CollaboratorRole,
   Topic,
   Course,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import {
   cacheGoalMetadata,
@@ -33,13 +30,13 @@ import {
 } from './reportCache';
 import {
   createReport,
-  destroyReport,
   createGrant,
   createRecipient,
   createGoal,
 } from '../testUtils';
 import { GOAL_STATUS } from '../constants';
 import { auditLogger } from '../logger';
+import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 
 describe('cacheCourses', () => {
   let courseOne;
@@ -50,8 +47,12 @@ describe('cacheCourses', () => {
   let goal;
   let objective;
   let aro;
+  let snapShot;
 
   beforeAll(async () => {
+    // Create a snapshot of the database so we can rollback after the tests.
+    snapShot = await captureSnapshot();
+
     recipient = await createRecipient({});
     grant = await createGrant({ recipientId: recipient.id });
 
@@ -91,19 +92,7 @@ describe('cacheCourses', () => {
   });
 
   afterAll(async () => {
-    await ActivityReportObjectiveCourse.destroy({
-      where: {
-        courseId: [courseOne.id, courseTwo.id],
-      },
-    });
-
-    await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
-    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
-    await Objective.destroy({ where: { id: objective.id }, force: true });
-    await Goal.destroy({ where: { id: goal.id }, force: true });
-    await destroyReport(activityReport);
-    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
-    await Recipient.destroy({ where: { id: recipient.id } });
+    await rollbackToSnapshot(snapShot);
   });
 
   it('should cache courses', async () => {
@@ -122,16 +111,79 @@ describe('cacheCourses', () => {
 
 describe('cacheTopics', () => {
   let mockAuditLoggerError;
-  beforeAll(() => {
+  let mockAuditLoggerInfo;
+  let mockFindAll;
+  let mockCreate;
+  let mockDestroy;
+  let mockFindAllAROTopics;
+
+  beforeEach(() => {
     mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
-  });
-  afterAll(() => {
-    mockAuditLoggerError.mockRestore();
+    mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation();
+
+    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([
+      { id: 101, name: 'Topic 1' },
+    ]);
+
+    mockFindAllAROTopics = jest.spyOn(ActivityReportObjectiveTopic, 'findAll').mockResolvedValue([]);
+
+    mockCreate = jest.spyOn(ActivityReportObjectiveTopic, 'create').mockResolvedValue({});
+    mockDestroy = jest.spyOn(ActivityReportObjectiveTopic, 'destroy').mockResolvedValue(1);
   });
 
-  it('logs and error when topics are missing ids', async () => {
-    await expect(cacheTopics(1, 1, [{ name: 'Topic 1', id: null }])).rejects.toThrow();
-    expect(mockAuditLoggerError).toHaveBeenCalledWith('Error saving ARO topics: [{"name":"Topic 1","id":null}] for objectiveId: 1 and activityReportObjectiveId: 1');
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('resolves missing topic IDs by name', async () => {
+    const topics = [{ name: 'Topic 1' }];
+
+    await cacheTopics(1, 1, topics);
+
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining('Some topics were missing IDs'));
+    expect(mockFindAll).toHaveBeenCalledWith({ where: { name: ['Topic 1'] } });
+    expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
+  });
+
+  it('logs an error if topic name cannot be resolved', async () => {
+    mockFindAll.mockResolvedValue([]); // simulate no matches found
+
+    const topics = [{ name: 'Unknown Topic' }];
+    await cacheTopics(42, 99, topics);
+
+    expect(mockAuditLoggerError).toHaveBeenCalledWith(
+      expect.stringContaining('Could not resolve topic names: Unknown Topic'),
+    );
+  });
+
+  it('does nothing if all topics already exist and are unchanged', async () => {
+    mockFindAllAROTopics.mockResolvedValue([{ topicId: 101 }]);
+
+    const topics = [{ id: 101, name: 'Topic 1' }];
+    await cacheTopics(1, 1, topics);
+
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockDestroy).not.toHaveBeenCalled();
+  });
+
+  it('adds and removes topics correctly', async () => {
+    mockFindAllAROTopics.mockResolvedValue([
+      { topicId: 200 },
+      { topicId: 300 },
+    ]);
+
+    const topics = [{ id: 101, name: 'Topic 1' }];
+    await cacheTopics(1, 1, topics);
+
+    expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
+    expect(mockDestroy).toHaveBeenCalledWith({
+      where: {
+        activityReportObjectiveId: 1,
+        topicId: { [Op.in]: [200, 300] },
+      },
+      individualHooks: true,
+      hookMetadata: { objectiveId: 1 },
+    });
   });
 });
 
@@ -146,8 +198,12 @@ describe('activityReportObjectiveCitation', () => {
   let aro;
   let nonMonitoringAro;
   const citationIds = [];
+  let snapShot;
 
   beforeAll(async () => {
+    // Create a snapshot of the database so we can rollback after the tests.
+    snapShot = await captureSnapshot();
+
     recipient = await createRecipient({});
 
     grant = await createGrant({ recipientId: recipient.id });
@@ -213,25 +269,7 @@ describe('activityReportObjectiveCitation', () => {
   });
 
   afterAll(async () => {
-    await ActivityReportObjectiveCitation.destroy({
-      where: {
-        id: citationIds,
-      },
-    });
-
-    await ActivityReportObjective.destroy({
-      where: { objectiveId: [objective.id, nonMonitoringObjective.id] },
-    });
-    await Objective.destroy({
-      where: {
-        id: [objective.id, nonMonitoringObjective.id],
-      },
-      force: true,
-    });
-    await Goal.destroy({ where: { id: [goal.id, nonMonitoringGoal.id] }, force: true });
-    await destroyReport(activityReport);
-    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
-    await Recipient.destroy({ where: { id: recipient.id } });
+    await rollbackToSnapshot(snapShot);
   });
 
   it('should create, read, update, and delete', async () => {
@@ -466,6 +504,7 @@ describe('cacheGoalMetadata', () => {
 
   let multiRecipientActivityReport;
   let multiRecipientGoal;
+  let snapShot;
 
   const mockUser = {
     id: faker.datatype.number(),
@@ -477,6 +516,9 @@ describe('cacheGoalMetadata', () => {
   };
 
   beforeAll(async () => {
+    // Create a snapshot of the database so we can rollback after the tests.
+    snapShot = await captureSnapshot();
+
     await User.create(mockUser);
     const grantId = faker.datatype.number();
 
@@ -538,38 +580,9 @@ describe('cacheGoalMetadata', () => {
   });
 
   afterAll(async () => {
-    // Get all ActivityReportGoals ids for our goals.
-    const activityReportGoalIds = await ActivityReportGoal.findAll({
-      where: {
-        goalId: [goal.id, multiRecipientGoal.id],
-      },
-    });
-
-    // Destroy all ActivityReportGoalFieldResponses for the activityReportGoalIds.
-    await ActivityReportGoalFieldResponse.destroy({
-      where: {
-        activityReportGoalId: activityReportGoalIds.map((arg) => arg.id),
-      },
-    });
-
-    await ActivityReportGoal.destroy({
-      where: {
-        activityReportId:
-      [
-        activityReport.id,
-        multiRecipientActivityReport.id,
-      ],
-      },
-    });
-    await destroyReport(activityReport);
-    await destroyReport(multiRecipientActivityReport);
-    await GoalFieldResponse.destroy({
-      where: {
-        goalId: [goal.id, multiRecipientGoal.id],
-      },
-    });
-    await Goal.destroy({ where: { id: [goal.id, multiRecipientGoal.id] }, force: true });
-    await User.destroy({ where: { id: mockUser.id } });
+    // Rollback to the snapshot.
+    await rollbackToSnapshot(snapShot);
+    // await db.sequelize.close();
   });
 
   it('should cache goal metadata', async () => {
@@ -799,7 +812,12 @@ describe('cacheObjectiveMetadata', () => {
   let courseOne;
   let courseTwo;
 
+  let snapShot;
+
   beforeAll(async () => {
+    // Create a snapshot of the database so we can rollback after the tests.
+    snapShot = await captureSnapshot();
+
     [user] = await User.findOrCreate({ where: { ...mockUser } });
     roles.push((await Role.findOrCreate({ where: { ...mockRoles[0] } }))[0]);
     roles.push((await Role.findOrCreate({ where: { ...mockRoles[1] } }))[0]);
@@ -842,44 +860,8 @@ describe('cacheObjectiveMetadata', () => {
   });
 
   afterAll(async () => {
-    await ActivityRecipient.destroy({
-      where: {
-        [Op.or]: [
-          { activityReportId: report.id },
-          { grantId: mockGrant.id },
-        ],
-      },
-    });
-    await ActivityReportGoal.destroy({ where: { goalId: goal.id } });
-    const aroFiles = await ActivityReportObjectiveFile
-      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveFile
-      .destroy({ where: { id: { [Op.in]: aroFiles.map((aroFile) => aroFile.id) } } });
-    const aroResources = await ActivityReportObjectiveResource
-      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveResource
-      .destroy({ where: { id: { [Op.in]: aroResources.map((aroResource) => aroResource.id) } } });
-    const aroTopics = await ActivityReportObjectiveTopic
-      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveTopic
-      .destroy({ where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } } });
-    const aroCourses = await ActivityReportObjectiveCourse
-      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveTopic
-      .destroy({ where: { id: { [Op.in]: aroCourses.map((c) => c.id) } } });
-    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
-    await ActivityReport.destroy({ where: { id: report.id } });
-    await Objective.destroy({ where: { id: objective.id }, force: true });
-    await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
-    await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
-    await Recipient.destroy({ where: { id: recipient.id } });
-    await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({
-      where: { roleId: role.id },
-    })));
-    await Promise.all(roles.map(async (role) => role.destroy()));
-    await Promise.all(files.map(async (file) => file.destroy()));
-    await User.destroy({ where: { id: user.id } });
+    // Rollback to the snapshot.
+    await rollbackToSnapshot(snapShot);
     await db.sequelize.close();
   });
 });

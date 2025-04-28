@@ -33,4 +33,28 @@ describe('countBySingleKey', () => {
 
     expect(() => countBySingleKey(data, key, results)).not.toThrow();
   });
+
+  it('doesnt throw an error when one of the data[point] is null', async () => {
+    const data = [
+      { someKey: ['reason1'] },
+      { someKey: null },
+      { someKey: ['reason2'] },
+    ];
+    const key = 'someKey';
+    const results = [];
+
+    expect(() => countBySingleKey(data, key, results)).not.toThrow();
+  });
+
+  it('doesnt throw an error when one of the data[point] is undefined', async () => {
+    const data = [
+      { someKey: ['reason1'] },
+      { someKey: undefined },
+      { someKey: ['reason2'] },
+    ];
+    const key = 'someKey';
+    const results = [];
+
+    expect(() => countBySingleKey(data, key, results)).not.toThrow();
+  });
 });

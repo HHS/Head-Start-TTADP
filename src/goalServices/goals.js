@@ -37,7 +37,6 @@ import {
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,
-  destroyActivityReportObjectiveMetadata,
 } from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
@@ -60,6 +59,11 @@ import getGoalsForReport from './getGoalsForReport';
 import { reduceGoals } from './reduceGoals';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
+import {
+  createObjectivesForGoal,
+  removeUnusedGoalsObjectivesFromReport,
+  removeUnusedGoalsCreatedViaAr,
+} from '../services/standardGoals';
 
 // the page state location of the goals and objective page
 // on the frontend/ActivityReportForm
@@ -193,7 +197,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               {
                 model: Topic,
                 as: 'topics',
-                attributes: ['name'],
+                attributes: ['id', 'name'],
                 through: {
                   attributes: [],
                 },
@@ -828,35 +832,7 @@ export async function goalsForGrants(grantIds) {
   });
 }
 
-async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
-  const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
-  && objectiveIdsToRemove.length > 0
-    ? await ActivityReportObjective.findAll({
-      attributes: ['id'],
-      where: {
-        activityReportId: reportId,
-        objectiveId: objectiveIdsToRemove,
-      },
-    })
-    : [];
-
-  const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
-
-  // Delete ARO Topics, Files, etc.
-  await destroyActivityReportObjectiveMetadata(idsToDestroy, objectiveIdsToRemove);
-
-  // Delete ARO's.
-  return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
-    ? ActivityReportObjective.destroy({
-      where: {
-        id: idsToDestroy,
-      },
-      individualHooks: true,
-    })
-    : Promise.resolve();
-}
-
-async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
+export async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   return ActivityReportGoal.destroy({
     where: {
       activityReportId: reportId,
@@ -915,104 +891,6 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
 
     return [];
   }
-}
-
-async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
-  // If we don't have goals return.
-  if (!goalsToRemove.length) {
-    return Promise.resolve();
-  }
-
-  // Find all goals.
-  const goals = await Goal.findAll({
-    where: {
-      createdVia: 'activityReport',
-      id: goalsToRemove,
-      onApprovedAR: false,
-    },
-    include: [
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        required: false,
-        where: {
-          id: {
-            [Op.not]: reportId,
-          },
-        },
-      },
-      {
-        attributes: ['id', 'goalId', 'title'],
-        model: Objective,
-        as: 'objectives',
-        required: false,
-      },
-    ],
-  });
-
-  // Get goals without Activity Reports.
-  let unusedGoals = goals.filter((g) => !g.activityReports.length);
-
-  // Get Goals without Objectives.
-  unusedGoals = unusedGoals.filter((g) => !g.objectives.length);
-
-  // If we have activity report goals without activity reports delete.
-  if (unusedGoals.length) {
-    // Delete goals.
-    return Goal.destroy({
-      where: {
-        id: unusedGoals.map((g) => g.id),
-      },
-    });
-  }
-
-  // else do nothing.
-  return Promise.resolve();
-}
-
-async function removeObjectives(objectivesToRemove, reportId) {
-  if (!objectivesToRemove.length) {
-    return Promise.resolve();
-  }
-
-  // TODO - when we have an "onAnyReport" flag, we can use that here instead of two SQL statements
-  const objectivesToPossiblyDestroy = await Objective.findAll({
-    where: {
-      createdVia: 'activityReport',
-      id: objectivesToRemove,
-      onApprovedAR: false,
-    },
-    include: [
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        required: false,
-        where: {
-          id: {
-            [Op.not]: reportId,
-          },
-        },
-      },
-    ],
-  });
-
-  // see TODO above, but this can be removed when we have an "onAnyReport" flag
-  const objectivesToDefinitelyDestroy = objectivesToPossiblyDestroy
-    .filter((o) => !o.activityReports.length);
-
-  if (!objectivesToDefinitelyDestroy.length) {
-    return Promise.resolve();
-  }
-
-  // Objectives to destroy.
-  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
-
-  // Delete objective.
-  return Objective.destroy({
-    where: {
-      id: objectivesToDefinitelyDestroy.map((o) => o.id),
-    },
-  });
 }
 
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
@@ -1140,130 +1018,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   });
 }
 
-export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
-  const previousActivityReportObjectives = await ActivityReportObjective.findAll({
-    where: {
-      activityReportId: reportId,
-    },
-  });
-
-  const currentObjectiveIds = currentObjectives.map((o) => o.id);
-
-  const activityReportObjectivesToRemove = previousActivityReportObjectives.filter(
-    (aro) => !currentObjectiveIds.includes(aro.objectiveId),
-  );
-
-  const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
-
-  // Delete ARO and Topics, Resources, etc.
-  await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
-
-  // attempt to remove objectives that are no longer associated with any ARs
-  // and weren't created on the RTR as a planning exercise
-  await removeObjectives(objectiveIdsToRemove, reportId);
-}
-
-export async function createObjectivesForGoal(goal, objectives) {
-  /*
-     Note: Objective Status
-     We only want to set Objective status from here on initial Objective creation.
-     All subsequent Objective status updates should come from the AR Hook using end date.
-  */
-
-  if (!objectives) {
-    return [];
-  }
-
-  return Promise.all(objectives.filter((o) => o.title
-    || o.ttaProvided
-    || o.topics?.length
-    || o.resources?.length
-    || o.courses?.length
-    || o.files?.length).map(async (objective, index) => {
-    const {
-      id,
-      isNew,
-      ttaProvided,
-      ActivityReportObjective: aro,
-      title,
-      status,
-      resources,
-      topics,
-      citations, // Not saved for objective only ARO (pass through).
-      files,
-      supportType,
-      courses,
-      closeSuspendReason,
-      closeSuspendContext,
-      createdHere: objectiveCreatedHere,
-      ...updatedFields
-    } = objective;
-
-    // If the goal set on the objective does not match
-    // the goals passed we need to save the objectives.
-    const createNewObjectives = objective.goalId !== goal.id;
-    const updatedObjective = {
-      ...updatedFields, title, goalId: goal.id,
-    };
-
-    // Check if objective exists.
-    let savedObjective;
-    if (!isNew && id && !createNewObjectives) {
-      savedObjective = await Objective.findByPk(id);
-    }
-
-    if (savedObjective) {
-      // We should only allow the title to change if we are not on a approved AR.
-      if (!savedObjective.onApprovedAR) {
-        await savedObjective.update({
-          title,
-        }, { individualHooks: true });
-        await savedObjective.save({ individualHooks: true });
-      }
-    } else {
-      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
-
-      // Reuse an existing Objective:
-      // - It is on the same goal.
-      // - Has the same title.
-      // - And status is not completed.
-      // Note: Values like 'Topics' will be pulled in from the existing objective.
-      const existingObjective = await Objective.findOne({
-        where: {
-          goalId: updatedObjective.goalId,
-          title: objectiveTitle,
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-        },
-      });
-      if (!existingObjective) {
-        savedObjective = await Objective.create({
-          ...updatedObjective,
-          title: objectiveTitle,
-          status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
-          createdVia: 'activityReport',
-        });
-      } else {
-        savedObjective = existingObjective;
-      }
-    }
-    return {
-      ...savedObjective.toJSON(),
-      status,
-      topics,
-      citations, // Not saved for objective only ARO (pass through).
-      resources,
-      files,
-      courses,
-      ttaProvided,
-      closeSuspendReason,
-      closeSuspendContext,
-      index,
-      supportType,
-      objectiveCreatedHere,
-    };
-  }));
-}
-
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 export async function saveGoalsForReport(goals, report) {
   // this will be all the currently used objectives
   // so we can remove any objectives that are no longer being used
@@ -1575,6 +1330,8 @@ export async function updateGoalStatusById(
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = (await ActivityReport.findByPk(activityReportId)).toJSON();
+
+  // TODO: TTAHUB-3970: This should call the new saveStandardGoalsForReport function.
   await saveGoalsForReport(goals, report);
 
   // updating the goals is updating the report, sorry everyone
