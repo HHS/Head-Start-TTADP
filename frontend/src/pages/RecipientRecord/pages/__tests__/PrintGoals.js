@@ -23,25 +23,25 @@ describe('PrintGoals', () => {
   const goals = [
     {
       id: 4598,
-      goalStatus: 'In Progress',
+      status: 'In Progress',
       createdOn: '2021-06-15',
-      goalText: 'This is goal text 1.',
+      name: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
-      grantNumbers: ['Rattaché au programme'], // copilot came up with this, I hope its not profane
+      grant: { number: 'Rattaché au programme' },
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
     },
     {
       id: 4599,
-      goalStatus: 'Closed',
+      status: 'Closed',
       createdOn: '2021-06-15',
-      goalText: 'This is goal text 2.',
+      name: 'This is goal text 2.',
       goalTopics: ['Human Resources', 'Safety Practices'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
-      grantNumbers: ['Rattaché au programme'],
+      grant: { number: 'Rattaché au programme' },
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [
         {
@@ -51,6 +51,7 @@ describe('PrintGoals', () => {
           endDate: '01/01/02',
           reasons: ['Empathy', 'Generosity', 'Friendship'],
           status: 'Complete',
+          topics: ['Human Resources', 'Safety Practices'],
           activityReports: [
             {
               id: 1,
@@ -131,12 +132,11 @@ describe('PrintGoals', () => {
     renderPrintGoals();
     expect(await screen.findByText('This is goal text 1.')).toBeVisible();
     const hr = await screen.findAllByText('Human Resources');
-    expect(hr.length).toBe(2);
+    expect(hr.length).toBe(1);
     hr.forEach((e) => expect(e).toBeVisible());
     const sp = await screen.findAllByText('Safety Practices');
-    expect(sp.length).toBe(2);
+    expect(sp.length).toBe(1);
     sp.forEach((e) => expect(e).toBeVisible());
-    expect(await screen.findByText('Program Planning and Services')).toBeVisible();
     expect(await screen.findByText('This is goal text 2.')).toBeVisible();
     expect(await screen.findByText('this is an objective')).toBeVisible();
     expect(await screen.findByText('Empathy')).toBeVisible();
