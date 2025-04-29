@@ -545,6 +545,7 @@ jobs:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -1305,12 +1306,15 @@ commands:
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
     - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
         name: Generate Message
         command: |
-          source ci.vars
           env_name="$full_env"
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
