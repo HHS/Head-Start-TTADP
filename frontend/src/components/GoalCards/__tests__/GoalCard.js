@@ -174,7 +174,7 @@ describe('GoalCard', () => {
     expect(status.tagName).toEqual('DIV');
   });
 
-  it('shows entered by', () => {
+  it('shows entered by with a single role', () => {
     renderGoalCard();
     expect(screen.getByText(/entered by/i)).toBeInTheDocument();
     expect(screen.getByText(/ECS/i)).toBeInTheDocument();
@@ -182,6 +182,109 @@ describe('GoalCard', () => {
     const tooltip = screen.getByTestId('tooltip');
     expect(tooltip).toBeInTheDocument();
     expect(tooltip.textContent).toContain('Test User');
+  });
+
+  it('shows entered by with multiple roles as separate tags', () => {
+    const goalWithMultipleRoles = {
+      ...goal,
+      collaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: ['ECS', 'GS'],
+          goalCreatorName: 'Test User',
+        },
+      ],
+    };
+
+    renderGoalCard({}, goalWithMultipleRoles);
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
+    expect(screen.getByText(/GS/i)).toBeInTheDocument();
+
+    const tooltips = screen.getAllByTestId('tooltip');
+    expect(tooltips.length).toBe(2);
+    tooltips.forEach((tooltip) => {
+      expect(tooltip.textContent).toContain('Test User');
+    });
+  });
+
+  it('shows entered by with multiple roles as separate tags when roles are a comma-separated string', () => {
+    const goalWithMultipleRolesAsString = {
+      ...goal,
+      collaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: 'ECS, GS',
+          goalCreatorName: 'Test User',
+        },
+      ],
+    };
+
+    renderGoalCard({}, goalWithMultipleRolesAsString);
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
+    expect(screen.getByText(/GS/i)).toBeInTheDocument();
+
+    const tooltips = screen.getAllByTestId('tooltip');
+    expect(tooltips.length).toBe(2);
+    tooltips.forEach((tooltip) => {
+      expect(tooltip.textContent).toContain('Test User');
+    });
+  });
+
+  it('shows "Unavailable" when goal creator has no roles', () => {
+    const goalWithNoRoles = {
+      ...goal,
+      collaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: [],
+          goalCreatorName: 'Test User',
+        },
+      ],
+    };
+
+    renderGoalCard({}, goalWithNoRoles);
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
+
+    const tooltip = screen.getByTestId('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Test User');
+  });
+
+  it('shows "Unavailable" for legacy goal with no creator data', () => {
+    const legacyGoal = {
+      ...goal,
+      collaborators: [],
+    };
+
+    renderGoalCard({}, legacyGoal);
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
+
+    const tooltip = screen.getByTestId('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Unknown');
+  });
+
+  it('shows "Unavailable" for goal with collaborators but no creator name', () => {
+    const goalWithNoCreatorName = {
+      ...goal,
+      collaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: 'ECS',
+          goalCreatorName: '',
+        },
+      ],
+    };
+
+    renderGoalCard({}, goalWithNoCreatorName);
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
   });
 
   it('shows the goal options by default', () => {
@@ -442,7 +545,7 @@ describe('GoalCard', () => {
     };
 
     renderGoalCard({ ...DEFAULT_PROPS }, mergedGoal);
-    const tags = document.querySelectorAll('.usa-tag.usa-tag--merged-goal');
+    const tags = screen.getAllByText('Merged');
     expect(tags.length).toBe(1);
     expect(tags[0].textContent).toBe('Merged');
     expect(tags[0]).toBeVisible();

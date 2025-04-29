@@ -3,7 +3,9 @@ const config = {
   testDir: '.',
   outputDir: './test-results',
   reporter: [
+    ['list'],
     ['html', { outputFolder: './html-report', open: 'never' }],
+    ['junit', { outputFile: './report.xml' }]
   ],
   workers: 1,
 };

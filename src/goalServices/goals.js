@@ -193,7 +193,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               {
                 model: Topic,
                 as: 'topics',
-                attributes: ['name'],
+                attributes: ['id', 'name'],
                 through: {
                   attributes: [],
                 },

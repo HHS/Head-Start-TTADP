@@ -66,6 +66,6 @@ describe('ObjectivesSection', () => {
     reset({
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: true }],
     });
-    expect(await screen.findByText('Objective 1', { selector: 'p' })).toBeInTheDocument();
+    expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
   });
 });
