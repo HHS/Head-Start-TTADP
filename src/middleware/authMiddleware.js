@@ -3,6 +3,9 @@ import ClientOAuth2 from 'client-oauth2';
 import { auditLogger } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
+import handleErrors from '../lib/apiErrorHandler';
+
+const namespace = 'MIDDLEWARE:AUTH';
 
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
@@ -50,11 +53,22 @@ export default async function authMiddleware(req, res, next) {
   }
 
   if (!userId) {
+    // user not found / not authenticated
     res.sendStatus(401);
-  } else if (await validateUserAuthForAccess(Number(userId))) {
-    next();
-  } else {
-    auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
-    res.sendStatus(403);
+    return;
+  }
+
+  try {
+    const hasAccess = await validateUserAuthForAccess(Number(userId));
+    if (hasAccess) {
+      next();
+    } else {
+      auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    // handleErrors returns a promise, and sends a 500 status to the client
+    // it needs to be awaited before exiting the process here
+    await handleErrors(req, res, error, namespace);
   }
 }
