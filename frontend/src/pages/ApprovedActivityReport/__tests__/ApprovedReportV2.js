@@ -66,6 +66,7 @@ describe('Approved Activity Report V2 component', () => {
     language: [],
     numberOfParticipants: 3,
     numberOfParticipantsVirtually: 2,
+    numberOfParticipantsInPerson: 1,
     reason: ['Needed it'],
     startDate: '1968-08-01',
     endDate: '1969-08-02',
