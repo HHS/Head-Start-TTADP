@@ -219,8 +219,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
-          const requiredForSubmission = [
-            this.numberOfParticipants,
+          let requiredForSubmission = [
             this.deliveryMethod,
             this.duration,
             this.endDate,
@@ -235,6 +234,19 @@ export default (sequelize, DataTypes) => {
             this.activityReason,
             this.language,
           ];
+
+          if (this.deliveryMethod === 'hybrid') {
+            requiredForSubmission = [
+              this.numberOfParticipantsInPerson,
+              this.numberOfParticipantsVirtually,
+              ...requiredForSubmission,
+            ];
+          } else {
+            requiredForSubmission = [
+              this.numberOfParticipants,
+              ...requiredForSubmission,
+            ];
+          }
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
             // Require fields when report is not a draft
