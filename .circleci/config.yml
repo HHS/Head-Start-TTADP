@@ -64,27 +64,30 @@ workflows:
     - test_similarity_api:
         requires:
         - build_done
-    - test_e2e_app:
-        requires:
-        - build_done
-    - test_e2e_api:
-        requires:
-        - build_done
-    - test_e2e_utils:
-        requires:
-        - build_done
-    - test_cucumber:
-        requires:
-        - build_done
-    - dynamic_security_scan:
-        requires:
-        - build_done
     - checkpoint:
-        name: tests_done
+        name: base_tests
         requires:
         - test_frontend
         - test_backend
         - test_similarity_api
+    - test_e2e_app:
+        requires:
+        - base_tests
+    - test_e2e_api:
+        requires:
+        - base_tests
+    - test_e2e_utils:
+        requires:
+        - base_tests
+    - test_cucumber:
+        requires:
+        - base_tests
+    - dynamic_security_scan:
+        requires:
+        - base_tests
+    - checkpoint:
+        name: tests_done
+        requires:
         - test_e2e_app
         - test_e2e_api
         - test_e2e_utils
