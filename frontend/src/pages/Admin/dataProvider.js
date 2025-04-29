@@ -1,11 +1,9 @@
+import { fetchUtils } from 'react-admin';
 import { stringify } from 'query-string';
 import join from 'url-join';
 
 const apiUrl = join('/', 'api', 'admin');
-let httpClient;
-import('react-admin').then(({ fetchUtils }) => {
-  httpClient = fetchUtils.fetchJson;
-});
+const httpClient = fetchUtils.fetchJson;
 
 export default {
   getList: async (resource, params) => {
