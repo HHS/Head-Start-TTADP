@@ -26,7 +26,7 @@ The import system automatically collects ZIP files from an external SFTP source 
 
 4. **Post-Processing Phase** (optional)
 
-   - Executes tasks like creating and reopening Monitoring Goals
+   - Executes tasks for creating and reopening Monitoring Goals
 
 ---
 
@@ -93,8 +93,7 @@ Runs post-processing functions defined in `Import.postProcessingActions`. Exampl
   - creates monitoring goals
   - reopens monitoring goals
 
-**Monitoring Goal Logic**
-======================
+## Monitoring Goal Logic
 
 The `createMonitoringGoals` post-processing function is run after the import completes successfully. It handles three operations based on monitoring review and finding data:
 
@@ -114,7 +113,7 @@ In short:
 
 "If a grant had a recent, complete monitoring review with active findings and doesn’t already have a goal => create one."
 
-#### Goal Creat flow diagram
+#### Goal Create flow diagram
 
 [`monitoring-goal-create-flow.puml`](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/flow-diagrams/monitoring-goal-create-flow.puml)
 
