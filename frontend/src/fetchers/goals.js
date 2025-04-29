@@ -8,7 +8,6 @@ const goalsUrl = join('/', 'api', 'goals');
 export async function goalsByIdsAndActivityReport(goalIds, reportId) {
   const params = goalIds.map((goalId) => `goalIds=${goalId}`);
   const url = join(goalsUrl, `?reportId=${reportId}&${params.join('&')}`);
-  console.log('>>fetch to check: ', url);
   const response = await get(url);
   return response.json();
 }

@@ -91,7 +91,6 @@ export default function GoalForm({
         setIsAppLoading(false);
       }
     }
-
     if (goal.goalIds.length) {
       fetchData();
     } else {

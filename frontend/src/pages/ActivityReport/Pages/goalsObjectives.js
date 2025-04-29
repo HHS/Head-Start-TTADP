@@ -128,9 +128,7 @@ const GoalsObjectives = ({
     const fetchGoalTemplates = async () => {
       if (isRecipientReport && hasGrant) {
         try {
-          console.log('\n\n\n>>>> Before fetching goal templates >>>>');
           const fetchedGoalTemplates = await getGoalTemplates(grantIds);
-          console.log('\n\n\n>>>> After fetching goal templates >>>>', fetchedGoalTemplates);
 
           // format goalTemplates
           const formattedGoalTemplates = fetchedGoalTemplates.map((gt) => ({
@@ -404,7 +402,6 @@ export default {
     const { activityRecipientType, activityRecipients } = formData;
 
     const { hasMultipleGrants } = calculateFormGrantData(activityRecipientType, activityRecipients);
-    console.log('activityRecipientType333', activityRecipientType);
     if (!activityRecipientType) {
       return false;
     }

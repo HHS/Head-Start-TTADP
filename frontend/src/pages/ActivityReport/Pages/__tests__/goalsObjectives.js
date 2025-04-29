@@ -112,7 +112,8 @@ const renderGoals = (
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   const fetchResponse = throwFetchError ? 500 : goals;
 
-  fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
+  const url = join(goalUrl, `?${query}`);
+  fetchMock.get(url, fetchResponse);
   render(
     <UserContext.Provider value={{ user: { flags: [] } }}>
       <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
@@ -163,7 +164,7 @@ describe('goals objectives', () => {
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient', [], false, false, jest.fn(), '2021-01-01');
-      expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
+      expect(await screen.findByText(/Using a goal on an Activity Report will set the goal’s status to In progress./i)).toBeVisible();
       expect(screen.queryByText(/indicates required field/i)).toBeTruthy();
     });
 
@@ -203,8 +204,8 @@ describe('goals objectives', () => {
       const throwFetchError = false;
       const toggleGoalForm = jest.fn();
       fetchMock.restore();
-      // this API call sets the goal as being edited
-      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
+      // this API call sets the goal as being edited, when edit is clicked.
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=1', 200);
 
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       expect(screen.queryByText(/indicates required field/i)).toBeNull();
@@ -216,7 +217,7 @@ describe('goals objectives', () => {
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
-    it('you need to have completely conditional fields before editing', async () => {
+    it('you need to have completed conditional fields before editing', async () => {
       const sampleGoals = [{
         name: 'Test',
         id: 1234567,
@@ -226,8 +227,8 @@ describe('goals objectives', () => {
       const throwFetchError = false;
       const toggleGoalForm = jest.fn();
       fetchMock.restore();
-      // this API call sets the goal as being edited
-      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
+      // this API call sets the goal as being edited, when edit is clicked.
+      fetchMock.put('/api/activity-reports/1/goals/edit?goalIds=1', 200);
 
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       expect(screen.queryByText(/indicates required field/i)).toBeNull();
@@ -235,6 +236,7 @@ describe('goals objectives', () => {
       act(() => userEvent.click(actions));
       const [button] = await screen.findAllByRole('button', { name: 'Edit' });
       act(() => userEvent.click(button));
+
       await waitFor(() => expect(fetchMock.called()).toBe(true));
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });

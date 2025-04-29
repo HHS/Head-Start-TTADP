@@ -513,7 +513,6 @@ const ActivityReportNavigator = ({
   const onSaveAndContinueGoalsAndObjectives = async () => {
     setSavingLoadScreen();
     try {
-      console.log('Saving goals and objectives...');
       // Save goals for recipient report.
       await onSaveAndContinueGoals();
     } finally {

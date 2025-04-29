@@ -55,7 +55,6 @@ const GoalPicker = ({
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
   const [templatePrompts, setTemplatePrompts] = useState(false);
-  const activityRecipientType = watch('activityRecipientType');
 
   const [citationOptions, setCitationOptions] = useState([]);
   const [rawCitations, setRawCitations] = useState([]);
@@ -79,7 +78,7 @@ const GoalPicker = ({
     name: 'goalForEditing',
     rules: {
       validate: {
-        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals(g ? [g] : []) === true,
+        validateGoal: (g) => validateGoals(g ? [g] : []) === true,
       },
     },
     defaultValue: '',
