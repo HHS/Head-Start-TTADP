@@ -448,20 +448,31 @@ Our project includes four deployed Postgres databases, one to interact with each
 1. If you haven't used the the cloud foundry plugin [cf-service-connect][cf-service-connect] before, install it now
 
    ```bash
-   # Example install for macOS
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
+   # Mac OSX ARM
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_darwin_arm64 
+   # Mac OSX non-ARM
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_darwin_amd64
+   # Windows
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_windows_386
    ```
 
 1. Connect to your desired database
 
    ```bash
+   # list services (ie postgres, redis, etc)
+   cf services
    cf connect-to-service <app_name> <service_instance_name>
-   # Example for sandbox
+   # Example for sandbox pg
    cf connect-to-service tta-smarthub-sandbox ttahub-sandbox
+   # Example for sandbox redis
+   cf connect-to-service tta-smarthub-sandbox ttahub-redis-sandbox
+   # ctrl-d to disconnect
    ```
 
    On success, your terminal prompt will change to match the `db_name` from the database instance credentials.
    This indicates you are in an open psql session, the command-line interface to PostgreSQL.
+   You will need to have the pg/redis client installed locally and findable in your $PATH.
+   Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
 
 ##### Option B: Run script as task
 
