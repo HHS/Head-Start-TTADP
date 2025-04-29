@@ -226,4 +226,15 @@ describe('isPageComplete', () => {
     const result = isPageComplete({ ...FORM_DATA, language: null }, { isValid: false });
     expect(result).toBe(false);
   });
+
+  it('validates both participant fields when deliveryMethod is hybrid', async () => {
+    const result = isPageComplete({
+      ...FORM_DATA,
+      deliveryMethod: 'hybrid',
+      numberOfParticipants: 3,
+      numberOfParticipantsInPerson: null,
+      numberOfParticipantsVirtually: null,
+    }, { isValid: false });
+    expect(result).toBe(false);
+  });
 });

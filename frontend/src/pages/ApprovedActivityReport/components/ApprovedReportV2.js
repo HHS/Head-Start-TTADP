@@ -193,7 +193,10 @@ export default function ApprovedReportV2({ data }) {
 
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
-  const participantCount = data.numberOfParticipants.toString();
+  const participantCount = deliveryMethod === 'hybrid'
+    ? data.numberOfParticipantsInPerson.toString()
+    : data.numberOfParticipants.toString();
+
   const participantVirtualCount = data.numberOfParticipantsVirtually
     ? data.numberOfParticipantsVirtually.toString()
     : null;
