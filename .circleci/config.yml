@@ -548,6 +548,7 @@ jobs:
             target_env: << parameters.target_env >>
     - notify_slack_deploy: # remove me, testing only
         target_env: << parameters.target_env >>
+        slack_channel: "tm-test"
 
 
   backup_prod_db:
@@ -1313,7 +1314,6 @@ commands:
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
-        default: "acf-head-start-alerts-lower"
       target_env:
         type: string
     steps:
@@ -1359,3 +1359,8 @@ commands:
         slack_channel: << parameters.slack_channel >>
         message_text_file: "/tmp/message_file"
 
+  no-op:
+    # placeholder command for no-op jobs
+    steps:
+    - run:
+        command: echo "ok"
