@@ -550,7 +550,6 @@ jobs:
         target_env: << parameters.target_env >>
         slack_channel: "tm-test"
 
-
   backup_prod_db:
     executor: docker-executor
     steps:
