@@ -1,27 +1,86 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
 import Tag from '../../../../../components/Tag';
 import Tooltip from '../../../../../components/Tooltip';
 
 export default function SpecialistTags({ specialists }) {
-  return specialists.map((specialist) => {
-    if (!specialist.name) return null;
+  const tags = [];
 
-    return (
-      <Tag key={uniqueId('specialist-tag-')} clickable>
+  if (!specialists || specialists.length === 0) {
+    // legacy goal, no collaborators data
+    tags.push(
+      <Tag key="unknown-unavailable" clickable>
         <Tooltip
-          displayText={specialist.roles.join(', ')}
+          displayText="Unavailable"
           screenReadDisplayText={false}
           buttonLabel="reveal the full name of this user"
-          tooltipText={specialist.name}
+          tooltipText="Unknown"
           hideUnderline
           buttonClassName="display-flex"
           className="ttahub-goal-card__entered-by-tooltip"
         />
-      </Tag>
+      </Tag>,
     );
-  });
+  } else {
+    specialists.forEach((specialist) => {
+      if (!specialist.name) return;
+
+      // monitoring goals: show a single "System-generated" tag with "OHS" role
+      if (specialist.name === 'System-generated') {
+        tags.push(
+          <Tag key="system-generated-tag" clickable>
+            <Tooltip
+              displayText={specialist.roles[0] || 'Unavailable'}
+              screenReadDisplayText={false}
+              buttonLabel="reveal the full name of this user"
+              tooltipText="System-generated"
+              hideUnderline
+              buttonClassName="display-flex"
+              className="ttahub-goal-card__entered-by-tooltip"
+            />
+          </Tag>,
+        );
+        return;
+      }
+
+      // handle specialists with roles
+      if (specialist.roles && specialist.roles.length > 0) {
+        // separate tag for each role
+        specialist.roles.forEach((role) => {
+          tags.push(
+            <Tag key={`${specialist.name}-${role}`} clickable>
+              <Tooltip
+                displayText={role}
+                screenReadDisplayText={false}
+                buttonLabel="reveal the full name of this user"
+                tooltipText={specialist.name}
+                hideUnderline
+                buttonClassName="display-flex"
+                className="ttahub-goal-card__entered-by-tooltip"
+              />
+            </Tag>,
+          );
+        });
+      } else {
+        // user has no roles
+        tags.push(
+          <Tag key={`${specialist.name}-unavailable`} clickable>
+            <Tooltip
+              displayText="Unavailable"
+              screenReadDisplayText={false}
+              buttonLabel="reveal the full name of this user"
+              tooltipText={specialist.name}
+              hideUnderline
+              buttonClassName="display-flex"
+              className="ttahub-goal-card__entered-by-tooltip"
+            />
+          </Tag>,
+        );
+      }
+    });
+  }
+
+  return <>{tags}</>;
 }
 
 SpecialistTags.propTypes = {
@@ -30,5 +89,9 @@ SpecialistTags.propTypes = {
       name: PropTypes.string,
       roles: PropTypes.arrayOf(PropTypes.string),
     }),
-  ).isRequired,
+  ),
+};
+
+SpecialistTags.defaultProps = {
+  specialists: [],
 };
