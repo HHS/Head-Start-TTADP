@@ -254,7 +254,7 @@ describe('Objective', () => {
     await screen.findByText('What');
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Existing objective']));
-    expect(await screen.findByText(/Existing objective/i, { selector: 'p' })).toBeVisible();
+    expect(await screen.findByText(/Existing objective/i, { selector: 'div.usa-prose' })).toBeVisible();
     expect(screen.queryByText(/This is an objective title/i, { selector: 'textarea' })).toBeNull();
     expect(Array.from(document.querySelectorAll('textarea.ttahub--objective-title'))).toHaveLength(0);
     await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
