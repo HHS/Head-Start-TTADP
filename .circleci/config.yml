@@ -546,6 +546,8 @@ jobs:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
             target_env: << parameters.target_env >>
+    - notify_slack_deploy: # remove me, testing only
+      target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -658,6 +660,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
+            slack_channel: acf-ohs-ttahub--contractor-customer-team
 
 # ----------------- Commands -----------------
 
@@ -883,7 +886,7 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then 
             exit 0; 
           fi
           if [ -f ./environments/${current_env} ]; then
@@ -904,6 +907,8 @@ commands:
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
+          else 
+            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
         key: 'environment-owners'
