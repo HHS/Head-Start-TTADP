@@ -254,7 +254,8 @@ export default function GoalCard({
   };
 
   const renderEnteredBy = () => {
-    let specialists;
+    let specialists = [];
+
     if (isMonitoringGoal) {
       specialists = [
         {
@@ -262,14 +263,35 @@ export default function GoalCard({
           roles: ['OHS'],
         },
       ];
-    } else if (collaborators) {
-      specialists = collaborators
-        .filter((c) => c.goalCreatorName)
-        .map((c) => ({
-          name: c.goalCreatorName,
-          roles: [c.goalCreatorRoles].flat(),
-        }));
+    } else if (collaborators && collaborators.length > 0) {
+      const creatorsWithName = collaborators.filter((c) => c.goalCreatorName);
+
+      if (creatorsWithName.length > 0) {
+        specialists = creatorsWithName.map((c) => {
+          let roles = [];
+
+          if (c.goalCreatorRoles) {
+            // convert roles to array, handling different possible formats
+            if (typeof c.goalCreatorRoles === 'string') {
+              // e.g. "GS, ECS"
+              roles = c.goalCreatorRoles.split(',').map((r) => r.trim());
+            } else if (Array.isArray(c.goalCreatorRoles)) {
+              // already an array
+              roles = c.goalCreatorRoles;
+            } else {
+              // something else, try to flatten it
+              roles = [c.goalCreatorRoles].flat().filter(Boolean);
+            }
+          }
+
+          return {
+            name: c.goalCreatorName,
+            roles,
+          };
+        });
+      }
     }
+
     return <SpecialistTags specialists={specialists} />;
   };
 
