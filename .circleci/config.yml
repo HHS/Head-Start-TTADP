@@ -634,7 +634,6 @@ jobs:
     parameters:
       target_env:
         type: string
-    parameters:
       slack_channel:
         type: string
         default: acf-head-start-alerts-lower
