@@ -55,39 +55,31 @@ workflows:
     - test_backend:
         requires:
         - build_and_lint
-    - checkpoint:
-        name: app_done
-        requires:
-        - test_frontend
-        - test_backend
     - build_similarity_api
     - test_similarity_api:
         requires:
         - build_similarity_api
     - checkpoint:
-        name: api_done
+        name: build_test
         requires:
+        - test_frontend
+        - test_backend
         - test_similarity_api
     - test_e2e_app:
         requires:
-        - app_done
-        - api_done
+        - build_test
     - test_e2e_api:
         requires:
-        - app_done
-        - api_done
+        - build_test
     - test_e2e_utils:
         requires:
-        - app_done
-        - api_done
+        - build_test
     - test_cucumber:
         requires:
-        - app_done
-        - api_done
+        - build_test
     - dynamic_security_scan:
         requires:
-        - app_done
-        - api_done
+        - build_test
     - checkpoint:
         name: integration
         requires:
