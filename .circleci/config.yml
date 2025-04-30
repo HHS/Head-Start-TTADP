@@ -137,6 +137,7 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -144,6 +145,7 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "<< pipeline.parameters.target_env >>"
+        slack_channel: tm-test
 
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
@@ -632,6 +634,10 @@ jobs:
     parameters:
       target_env:
         type: string
+    parameters:
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
     steps:
     - checkout
     - cf_cmd:
@@ -662,7 +668,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
-            slack_channel: tm-test
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
