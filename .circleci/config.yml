@@ -649,7 +649,7 @@ jobs:
         logfile: cmd_log.txt
     - run:
         command: |
-          if grep -o "Recent Monitoring Goals: []" cmd_log.txt; then
+          if grep -o "Recent Monitoring Goals: \[\]" cmd_log.txt; then
             echo "No new monitoring goals" > monitoring-goals.txt
           else
             results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
