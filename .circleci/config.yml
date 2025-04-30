@@ -56,40 +56,42 @@ workflows:
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
     - build_and_lint
+    - build_similarity_api
+    - checkpoint:
+        name: build_done
+        requires:
+        - build_and_lint
+        - build_similarity_api
     - test_frontend:
         requires:
         - build_and_lint
     - test_backend:
         requires:
-        - build_and_lint
-    - build_similarity_api
+        - build_done
     - test_similarity_api:
         requires:
-        - build_similarity_api
+        - build_done
+    - test_e2e_app:
+        requires:
+        - build_done
+    - test_e2e_api:
+        requires:
+        - build_done
+    - test_e2e_utils:
+        requires:
+        - build_done
+    - test_cucumber:
+        requires:
+        - build_done
+    - dynamic_security_scan:
+        requires:
+        - build_done
     - checkpoint:
-        name: build_and_test
+        name: tests_done
         requires:
         - test_frontend
         - test_backend
         - test_similarity_api
-    - test_e2e_app:
-        requires:
-        - build_and_test
-    - test_e2e_api:
-        requires:
-        - build_and_test
-    - test_e2e_utils:
-        requires:
-        - build_and_test
-    - test_cucumber:
-        requires:
-        - build_and_test
-    - dynamic_security_scan:
-        requires:
-        - build_and_test
-    - checkpoint:
-        name: integration
-        requires:
         - test_e2e_app
         - test_e2e_api
         - test_e2e_utils
@@ -100,7 +102,7 @@ workflows:
         serial-group: deploy-lock/staging
         target_env: "staging"
         requires:
-        - integration
+        - tests_done
         filters:
           branches:
             only:
@@ -110,7 +112,7 @@ workflows:
         serial-group: deploy-lock/prod
         target_env: "prod"
         requires:
-        - integration
+        - tests_done
         filters:
           branches:
             only:
