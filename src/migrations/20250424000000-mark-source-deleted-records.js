@@ -38,17 +38,18 @@ module.exports = {
         SELECT 1/(LEAST(SUM(beforecount),1) - 1 ) FROM beforecounts;
 
         -- The actual marking of the records as deleted
-        UPDATE "MonitoringClassSummaries" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingGrants" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringReviewGrantees" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingHistories" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringReviews" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingHistoryStatuses" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringReviewStatuses" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindings" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;\
-        UPDATE "MonitoringFindingStandards" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringStandards" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingStatuses" SET "deletedAt" = NOW() WHERE "sourceDeletedAt" IS NOT NULL;
+        -- The millisecond additions are so that multiple duplicates aren't deleted at quite the same time
+        UPDATE "MonitoringClassSummaries" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingGrants" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringReviewGrantees" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingHistories" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringReviews" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingHistoryStatuses" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringReviewStatuses" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindings" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingStandards" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringStandards" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingStatuses" SET "deletedAt" = NOW() + TRUNC(RANDOM()*999 +1) * (interval '1 ms') WHERE "sourceDeletedAt" IS NOT NULL;
 
         -- Count the marked-deleted records
         DROP TABLE IF EXISTS aftercounts;
@@ -96,17 +97,17 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(/* sql */`
-        UPDATE "MonitoringClassSummaries" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingGrants" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringReviewGrantees" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingHistories" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringReviews" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingHistoryStatuses" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringReviewStatuses" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindings" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingStandards" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringStandards" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
-        UPDATE "MonitoringFindingStatuses" SET "deletedAt" = NOW() WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringClassSummaries" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingGrants" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringReviewGrantees" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingHistories" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringReviews" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingHistoryStatuses" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringReviewStatuses" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindings" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingStandards" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringStandards" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
+        UPDATE "MonitoringFindingStatuses" SET "deletedAt" = NULL WHERE "deletedAt" IS NOT NULL;
     `, { transaction });
     });
   },
