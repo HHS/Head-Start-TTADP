@@ -11,7 +11,7 @@ executors:
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
-        REDIS_PASS: ''
+        REDIS_PASS: ""
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
