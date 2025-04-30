@@ -650,7 +650,11 @@ jobs:
     - run:
         command: |
           results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results > monitoring-goals.txt
+          delim=":"
+          json_data=${result#*"$delim"}
+          json_data=$(echo $json_data | rev | cut -c 2- | rev)
+          goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+          echo "Monitoring Goals:\n```$goals```" > monitoring-goals.txt
           cat monitoring-goals.txt
     - when:
         condition:
@@ -658,7 +662,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
-            slack_channel: acf-ohs-ttahub--contractor-customer-team
+            slack_channel: tm-test
 
 # ----------------- Commands -----------------
 
@@ -1287,7 +1291,7 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
+              \"text\": \'$MESSAGE_TEXT\'
             }" \
             https://slack.com/api/chat.postMessage)
 
