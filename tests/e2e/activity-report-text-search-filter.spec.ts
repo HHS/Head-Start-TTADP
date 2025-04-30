@@ -113,8 +113,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
 
     // Select a standard goal.
-    await page.getByTestId('label').click();
-    await page.getByLabel('Select goal *option (Child').press('Enter');
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
+    await page.keyboard.press('Enter');
     await blur(page);
 
     // Objective.

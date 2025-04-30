@@ -300,27 +300,29 @@ const GoalPicker = ({
         >
           <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
         </Drawer>
-        <Select
-          name="goalForEditing"
-          control={control}
-          components={components}
-          onChange={onSelectGoal}
-          rules={{
-            validate: validateGoals,
-          }}
-          className="usa-select"
-          options={goalTemplates}
-          styles={{
-            ...selectOptionsReset,
-            option: (provided) => ({
-              ...provided,
-              marginBottom: '0.5em',
-            }),
-          }}
-          placeholder="- Select -"
-          value={goalForEditing}
-          required
-        />
+        <div data-testid="goal-selector">
+          <Select
+            name="goalForEditing"
+            control={control}
+            components={components}
+            onChange={onSelectGoal}
+            rules={{
+              validate: validateGoals,
+            }}
+            className="usa-select"
+            options={goalTemplates}
+            styles={{
+              ...selectOptionsReset,
+              option: (provided) => ({
+                ...provided,
+                marginBottom: '0.5em',
+              }),
+            }}
+            placeholder="- Select -"
+            value={goalForEditing}
+            required
+          />
+        </div>
         {goalForEditing ? (
           <div>
             <GoalForm

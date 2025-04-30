@@ -179,9 +179,10 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // Select the standard goal
-    await page.getByTestId('label').click();
-    await page.getByLabel('Select goal *option (Child').press('Enter');
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
+    await page.keyboard.press('Enter');
 
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
@@ -499,11 +500,12 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the goal
-    await page.getByLabel(/Select recipient's goal/i).click();
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').click();
-    await page.getByTestId('textarea').fill('g1');
+    
+    // Save goal.
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
@@ -555,7 +557,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1 o1 tta', { exact: true })).toBeVisible();
 
     // edit goals remove first objective
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    await page.getByText('Child Safety').locator('..').locator('..').getByRole('button')
     .click();
     await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByRole('button', { name: 'Remove this objective' }).first().click();
@@ -604,12 +606,11 @@ test.describe('Activity Report', () => {
 
     await p;    
 
-    // create the goal
+    // Select a standard goal.
     await page.waitForTimeout(5000);
-    await page.getByTestId('label').click();
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(5000);
-    await page.getByTestId('textarea').fill('Test goal for preserving objectives');
 
     // create the objective
     await page.getByText('Select TTA objective *- Select -').click();
