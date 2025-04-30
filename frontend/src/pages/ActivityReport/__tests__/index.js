@@ -702,7 +702,7 @@ describe('ActivityReport', () => {
 
       await screen.findByRole('heading', { name: 'Goals and objectives' });
       await act(() => reactSelectEvent.select(
-        screen.getByLabelText(/Select goal/i),
+        screen.getByText(/- select -/i),
         'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
       ));
 
