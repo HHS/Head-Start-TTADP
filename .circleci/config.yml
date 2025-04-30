@@ -60,26 +60,26 @@ workflows:
         requires:
         - build_similarity_api
     - checkpoint:
-        name: build_test
+        name: build_and_test
         requires:
         - test_frontend
         - test_backend
         - test_similarity_api
     - test_e2e_app:
         requires:
-        - build_test
+        - build_and_test
     - test_e2e_api:
         requires:
-        - build_test
+        - build_and_test
     - test_e2e_utils:
         requires:
-        - build_test
+        - build_and_test
     - test_cucumber:
         requires:
-        - build_test
+        - build_and_test
     - dynamic_security_scan:
         requires:
-        - build_test
+        - build_and_test
     - checkpoint:
         name: integration
         requires:
