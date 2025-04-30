@@ -36,7 +36,7 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging, prod ]
+    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
     default: dev
 
 # ----------------- Workflows -----------------
@@ -145,7 +145,6 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "<< pipeline.parameters.target_env >>"
-        slack_channel: tm-test
 
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
