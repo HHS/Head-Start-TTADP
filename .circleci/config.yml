@@ -1295,7 +1295,7 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \'$MESSAGE_TEXT\'
+              \"text\": \"$MESSAGE_TEXT\"
             }" \
             https://slack.com/api/chat.postMessage)
 
