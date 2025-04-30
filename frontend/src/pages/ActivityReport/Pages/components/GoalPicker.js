@@ -19,6 +19,9 @@ import './GoalPicker.css';
 import GoalForm from './GoalForm';
 import Modal from '../../../../components/VanillaModal';
 import { fetchCitationsByGrant } from '../../../../fetchers/citations';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import Drawer from '../../../../components/Drawer';
+import DrawerTriggerButton from '../../../../components/DrawerTriggerButton';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -67,6 +70,7 @@ const GoalPicker = ({
   const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
   const modalRef = useRef();
+  const goalDrawerTriggerRef = useRef();
   const [selectedGoal, setSelectedGoal] = useState(null);
 
   const {
@@ -279,31 +283,44 @@ const GoalPicker = ({
             </Alert>
           )
        }
-        <Label>
-          Select goal
-          <Req />
-          <Select
-            name="goalForEditing"
-            control={control}
-            components={components}
-            onChange={onSelectGoal}
-            rules={{
-              validate: validateGoals,
-            }}
-            className="usa-select"
-            options={goalTemplates}
-            styles={{
-              ...selectOptionsReset,
-              option: (provided) => ({
-                ...provided,
-                marginBottom: '0.5em',
-              }),
-            }}
-            placeholder="- Select -"
-            value={goalForEditing}
-            required
-          />
-        </Label>
+        <div className="display-flex flex-align-center">
+          <Label className="margin-bottom-0">
+            Select goal
+            <Req />
+          </Label>
+          <DrawerTriggerButton customClass="usa-button--custom-goal-guidance-margin" drawerTriggerRef={goalDrawerTriggerRef}>
+            Get help selecting a goal
+          </DrawerTriggerButton>
+        </div>
+        <Drawer
+          triggerRef={goalDrawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Goal guidance"
+        >
+          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
+        </Drawer>
+        <Select
+          name="goalForEditing"
+          control={control}
+          components={components}
+          onChange={onSelectGoal}
+          rules={{
+            validate: validateGoals,
+          }}
+          className="usa-select"
+          options={goalTemplates}
+          styles={{
+            ...selectOptionsReset,
+            option: (provided) => ({
+              ...provided,
+              marginBottom: '0.5em',
+            }),
+          }}
+          placeholder="- Select -"
+          value={goalForEditing}
+          required
+        />
         {goalForEditing ? (
           <div>
             <GoalForm
