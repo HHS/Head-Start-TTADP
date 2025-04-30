@@ -651,7 +651,7 @@ jobs:
         command: |
           results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
           delim=":"
-          json_data=${result#*"$delim"}
+          json_data=${results#*"$delim"}
           json_data=$(echo $json_data | rev | cut -c 2- | rev)
           goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
           echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
