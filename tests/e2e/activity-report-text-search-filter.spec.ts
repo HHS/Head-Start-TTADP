@@ -112,11 +112,10 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.keyboard.press('Enter');
     await blur(page);
 
-    // Goal title.
-    await page.getByTestId('textarea').click();
-    await page.keyboard.type('Learn how to cook.');
+    // Select a standard goal.
+    await page.getByTestId('label').click();
+    await page.getByLabel('Select goal *option (Child').press('Enter');
     await blur(page);
-
 
     // Objective.
     await page.getByText('Select TTA objective *- Select -').click();
@@ -226,7 +225,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Contains goal.
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
-    await page.getByLabel('Enter report text').fill('cook');
+    await page.getByLabel('Enter report text').fill('Child Safe');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
@@ -235,7 +234,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Doesn't contain goal.
     await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-    await page.getByLabel('Enter report text').fill('cook');
+    await page.getByLabel('Enter report text').fill('Child Safe');
     prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
