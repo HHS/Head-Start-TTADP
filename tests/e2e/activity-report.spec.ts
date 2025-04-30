@@ -179,13 +179,10 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the first goal
+    // Select the standard goal
+    await page.getByTestId('label').click();
+    await page.getByLabel('Select goal *option (Child').press('Enter');
 
-    await page.getByLabel(/Select recipient's goal/i).click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').click();
-    await page.getByTestId('textarea').fill('g1');
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
     await page.keyboard.press('ArrowDown');
