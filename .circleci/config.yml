@@ -36,7 +36,7 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
+    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging, prod ]
     default: dev
 
 # ----------------- Workflows -----------------
@@ -649,8 +649,7 @@ jobs:
         logfile: cmd_log.txt
     - run:
         command: |
-          grep "Recent Monitoring Goals: []" cmd_log.txt
-          if [ $? -eq 0 ]; then
+          if grep -o "Recent Monitoring Goals: []" cmd_log.txt; then
             echo "No new monitoring goals" > monitoring-goals.txt
           else
             results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
