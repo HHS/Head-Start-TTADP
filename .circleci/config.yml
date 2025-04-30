@@ -661,13 +661,13 @@ jobs:
           goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
           echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
           cat monitoring-goals.txt
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, "prod" ]
-        steps:
-        - notify_slack:
-            message_text_file: monitoring-goals.txt
-            slack_channel: << parameters.slack_channel >>
+    # - when:
+    #     condition:
+    #       equal: [ << parameters.target_env >>, "prod" ]
+    #     steps:
+    - notify_slack:
+        message_text_file: monitoring-goals.txt
+        slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
