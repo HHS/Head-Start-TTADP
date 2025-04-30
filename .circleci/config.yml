@@ -188,37 +188,37 @@ workflows:
         - process_temp_db
     - restore_db_job:
         name: restore (dev)
-        serial-group: "tta-automation-lock-dev"
+        serial-group: "tta-automation-lock"
         target_env: "dev"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-green)
-        serial-group: "tta-automation-lock-dev-green"
+        serial-group: "tta-automation-lock"
         target_env: "dev-green"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-blue)
-        serial-group: "tta-automation-lock-dev-blue"
+        serial-group: "tta-automation-lock"
         target_env: "dev-blue"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-red)
-        serial-group: "tta-automation-lock-dev-red"
+        serial-group: "tta-automation-lock"
         target_env: "dev-red"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (sandbox)
-        serial-group: "tta-automation-lock-sandbox"
+        serial-group: "tta-automation-lock"
         target_env: "sandbox"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (staging)
-        serial-group: "tta-automation-lock-staging"
+        serial-group: "tta-automation-lock"
         target_env: "staging"
         requires:
         - backup_temp_db
@@ -659,7 +659,7 @@ jobs:
           json_data=${result#*"$delim"}
           json_data=$(echo $json_data | rev | cut -c 2- | rev)
           goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
-          echo "Monitoring Goals:\n```$goals```" > monitoring-goals.txt
+          echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
           cat monitoring-goals.txt
     - when:
         condition:
