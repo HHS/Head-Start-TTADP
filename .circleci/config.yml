@@ -640,16 +640,11 @@ jobs:
     steps:
     - checkout
     - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "yarn createMonitoringGoalsCLI"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
+        the_command: 
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
