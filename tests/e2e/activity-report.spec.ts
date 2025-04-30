@@ -243,10 +243,12 @@ test.describe('Activity Report', () => {
     // Select a standard goal.
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
+    //arrow down to select the second goal
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
-    // Fill out goal 2.
-    await page.getByTestId('textarea').fill('g2');
+
+    // save goal 2.
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
     await page.keyboard.press('ArrowDown');
@@ -284,7 +286,7 @@ test.describe('Activity Report', () => {
     await page.waitForTimeout(5000);
 
     // edit the first goal
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    await page.getByText('Child Safety').locator('..').locator('..').getByRole('button')
       .click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
