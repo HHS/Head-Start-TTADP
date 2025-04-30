@@ -187,37 +187,37 @@ workflows:
         - process_temp_db
     - restore_db_job:
         name: restore (dev)
-        serial-group: "tta-automation-lock"
+        serial-group: "tta-automation-lock-dev"
         target_env: "dev"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-green)
-        serial-group: "tta-automation-lock"
+        serial-group: "tta-automation-lock-dev-green"
         target_env: "dev-green"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-blue)
-        serial-group: "tta-automation-lock"
+        serial-group: "tta-automation-lock-dev-blue"
         target_env: "dev-blue"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-red)
-        serial-group: "tta-automation-lock"
+        serial-group: "tta-automation-lock-dev-red"
         target_env: "dev-red"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (sandbox)
-        serial-group: "tta-automation-lock"
+        serial-group: "tta-automation-lock-sandbox"
         target_env: "sandbox"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (staging)
-        serial-group: "tta-automation-lock"
+        serial-group: "tta-automation-lock-staging"
         target_env: "staging"
         requires:
         - backup_temp_db
