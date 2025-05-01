@@ -60,7 +60,7 @@ workflows:
         - build_similarity_api
     - test_frontend:
         requires:
-        - build_and_lint
+        - build_done
     - test_backend:
         requires:
         - build_done
