@@ -51,16 +51,16 @@ const generateRedisConfig = (enableRateLimiter = false) => {
   const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
   const redisHost = REDIS_HOST || 'localhost';
   const redisPort = REDIS_PORT || 6379;
-  const redisPass = `${REDIS_PASS || ''}@`;
+  const redisPassFull = REDIS_PASS ? `${REDIS_PASS}@` : '';
   const tlsEnabled = false;
 
   return {
     host: redisHost,
-    uri: `redis://:${redisPass}${redisHost}:${redisPort}`,
+    uri: `redis://${redisPassFull}${redisHost}:${redisPort}`,
     port: redisPort,
     tlsEnabled,
     redisOpts: {
-      redis: { password: redisPass },
+      redis: { password: REDIS_PASS },
     },
   };
 };
