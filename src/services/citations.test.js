@@ -30,9 +30,9 @@ const createMonitoringData = async (
   reviewType, // Review Type must be in ('AIAN-DEF', 'RAN', 'Follow-up', 'FA-1', 'FA1-FR', 'FA-2', 'FA2-CR', 'Special')
   monitoringReviewStatusName, // Monitoring Review Status Name must be 'Complete'.
   citationsArray, // Array of citations to create.
+  granteeId = uuidv4(),
 ) => {
   const reviewId = uuidv4();
-  const granteeId = uuidv4();
 
   // MonitoringReviewGrantee.
   await MonitoringReviewGrantee.create({
@@ -75,7 +75,7 @@ const createMonitoringData = async (
   // MonitoringFindingHistory (this is the primary finding table and the relationship to citation is 1<>1).
   // If we wanted one grant to have multiple citations, we would need to create multiple findings here and below.
   await Promise.all(citationsArray.map(async (citation) => {
-    const findingId = uuidv4();
+    const findingId = citation.findingId || uuidv4();
     const findingStatusId = faker.datatype.number({ min: 9999 });
     await MonitoringFindingHistory.create({
       reviewId,
@@ -160,6 +160,8 @@ describe('citations service', () => {
   let recipient2;
   let recipient3;
 
+  let followUpRecipient;
+
   let grant1; // Recipient 1
   let grant1a; // Recipient 1
   let grant2; // Recipient 2
@@ -167,6 +169,8 @@ describe('citations service', () => {
 
   let grant4Original;
   let grant4Replacement;
+
+  let followUpGrant;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -188,6 +192,8 @@ describe('citations service', () => {
     const grantNumber4Original = faker.datatype.string(8);
     const grantNumber4Replacement = faker.datatype.string(8);
 
+    const followUpGrantNumber = faker.datatype.string(8);
+
     // Recipients 1.
     recipient1 = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
@@ -202,6 +208,12 @@ describe('citations service', () => {
 
     // Recipients 3.
     recipient3 = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+
+    // FollowUpRecipient.
+    followUpRecipient = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
@@ -261,8 +273,18 @@ describe('citations service', () => {
       // Grant 4 for Recipient 3 (replacement).
       {
         id: faker.datatype.number({ min: 9999 }),
-        number: grantNumber4Replacement,
+        number: followUpGrantNumber,
         recipientId: recipient3.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+      // Follup Grant for FollowUp Recipient 3.
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: grantNumber4Replacement,
+        recipientId: followUpRecipient.id,
         regionId: 1,
         startDate: new Date(),
         endDate: new Date(),
@@ -279,6 +301,9 @@ describe('citations service', () => {
     // Replacement citations test.
     grant4Original = grants[4];
     grant4Replacement = grants[5];
+
+    // FollowUpGrant
+    followUpGrant = grants[6];
 
     // Create Goals and Link them to Grants.
     await Goal.create({
@@ -350,6 +375,19 @@ describe('citations service', () => {
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
       grantId: grant4Replacement.id,
+      createdAt: '2024-11-26T19:16:15.842Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
+    // Goal for FollowUpGrant (Corrected Finding test)
+    await Goal.create({
+      name: 'CorrectedFinding Goal',
+      status: 'Not started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: followUpGrant.id,
       createdAt: '2024-11-26T19:16:15.842Z',
       onApprovedAR: true,
       createdVia: 'monitoring',
@@ -455,6 +493,79 @@ describe('citations service', () => {
 
     await createMonitoringData(grant4Replacement.number, 7, new Date(), 'AIAN-DEF', 'Complete', grant1Citations4Replacement);
 
+    // Set values we'll need to reuse for the follow up Review
+    const followUpGranteeId = uuidv4();
+    const followUpFindingId = uuidv4();
+
+    // FollowUpGrant.
+    const followUpCitation = [
+      {
+        findingId: followUpFindingId,
+        citationText: 'Corrected Citation',
+        monitoringFindingType: 'Material Weakness',
+        monitoringFindingStatusName: 'Corrected',
+        monitoringFindingGrantFindingType: 'Corrective Action',
+      },
+    ];
+
+    await createMonitoringData(followUpGrant.number, 8, new Date(), 'AIAN-DEF', 'Complete', followUpCitation, followUpGranteeId);
+    // Set up for the follow-up review that links to the same finding
+    const followUpReviewId = uuidv4();
+
+    // Create a new follow-up active Review
+    // It should show as more 'recent' than the Complete Review because it
+    // will have a fractionally later sourceCreatedAt and a higher id
+    await MonitoringReviewGrantee.create({
+      id: faker.datatype.number({ min: 9999 }),
+      grantNumber: followUpGrant.number,
+      reviewId: followUpReviewId,
+      granteeId: followUpGranteeId,
+      createTime: new Date(),
+      updateTime: new Date(),
+      updateBy: 'Support Team',
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    }, { individualHooks: true });
+
+    await MonitoringReview.create({
+      reviewId: followUpReviewId,
+      contentId: faker.datatype.uuid(),
+      statusId: 9,
+      name: faker.random.words(3),
+      startDate: new Date(),
+      endDate: new Date(),
+      reviewType: 'RAN',
+      // There is no reportDeliveryDate for active Reviews
+      // reportDeliveryDate,
+      reportAttachmentId: faker.datatype.uuid(),
+      outcome: faker.random.words(5),
+      hash: faker.datatype.uuid(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    }, { individualHooks: true });
+
+    await MonitoringReviewStatus.create({
+      statusId: 9,
+      name: 'In Progress',
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    }, { individualHooks: true });
+
+    // Link the Corrected Finding to the new review
+    await MonitoringFindingHistory.create({
+      reviewId: followUpReviewId,
+      findingHistoryId: uuidv4(),
+      findingId: followUpFindingId,
+      statusId: faker.datatype.number({ min: 9999 }),
+      narrative: faker.random.words(10),
+      ordinal: faker.datatype.number({ min: 1, max: 10 }),
+      determination: faker.random.words(5),
+      hash: faker.datatype.uuid(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    }, { individualHooks: true });
+
     // Refresh the materialized view.
     await GrantRelationshipToActive.refresh();
   });
@@ -544,6 +655,28 @@ describe('citations service', () => {
     expect(citation2.grants[0].findingType).toBe('Material Weakness');
     expect(citation2.grants[0].findingSource).toBe('Internal Controls');
     expect(citation2.grants[0].monitoringFindingStatusName).toBe('Active');
+  });
+
+  it('gets the citations that are corrected but linked to a follow-up review', async () => {
+    const reportStartDate = new Date().toISOString().split('T')[0];
+    const citationsToAssert = await getCitationsByGrantIds([followUpGrant.id], reportStartDate);
+
+    // Assert correct number of citations.
+    expect(citationsToAssert.length).toBe(1);
+
+    // Assert the citations.
+    // Get the citation with the text 'Corrected Citation'.
+    const citation1 = citationsToAssert.find((c) => c.citation === 'Corrected Citation');
+    expect(citation1).toBeDefined();
+    expect(citation1.grants.length).toBe(1);
+    expect(citation1.grants[0].findingId).toBeDefined();
+    expect(citation1.grants[0].grantId).toBe(followUpGrant.id);
+    expect(citation1.grants[0].grantNumber).toBe(followUpGrant.number);
+    expect(citation1.grants[0].reviewName).toBeDefined();
+    expect(citation1.grants[0].reportDeliveryDate).toBeDefined();
+    expect(citation1.grants[0].findingType).toBe('Material Weakness');
+    expect(citation1.grants[0].findingSource).toBe('Internal Controls');
+    expect(citation1.grants[0].monitoringFindingStatusName).toBe('Corrected');
   });
 
   describe('textByCitation', () => {
