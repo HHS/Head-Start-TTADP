@@ -611,16 +611,21 @@ test.describe('Activity Report', () => {
 
     await p;    
 
+    // wait for 10 seconds to allow the goal to be created
+    await page.waitForTimeout(10000);
     // Select a standard goal.
     await page.waitForTimeout(5000);
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
 
+    // wait for 10 seconds to allow the goal to be created
+    await page.waitForTimeout(10000);
+
     // create the objective
     await page.getByText('Select TTA objective *- Select -').click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');  
+    // Click the option 'Create a new objective'.
+    await page.getByText('Create a new objective', { exact: true }).click();
     
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await blur(page);
