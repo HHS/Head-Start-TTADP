@@ -192,6 +192,28 @@ describe('communicationLog services', () => {
         [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')]],
       );
     });
+
+    it('should default to DESC if sortDir is invalid', () => {
+      const sortBy = COMMUNICATION_LOG_SORT_KEYS.PURPOSE;
+      const sortDir = 'invalid';
+
+      const result = orderLogsBy(sortBy, sortDir);
+
+      expect(result).toEqual([
+        [sequelize.literal("data->>'purpose' DESC")],
+      ]);
+    });
+
+    it('should default to DATE when sortBy is invalid', () => {
+      const invalidSortBy = 'INVALID_KEY';
+      const sortDir = 'asc';
+
+      const result = orderLogsBy(invalidSortBy, sortDir);
+
+      expect(result).toEqual([
+        [sequelize.literal("(NULLIF(data ->> 'communicationDate',''))::DATE ASC")],
+      ]);
+    });
   });
 
   describe('formatCommunicationDateWithJsonData', () => {
