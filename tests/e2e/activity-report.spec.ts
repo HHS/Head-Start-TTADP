@@ -354,9 +354,9 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText('Goal summary').first()).toBeVisible();
     await expect(page.getByText('Goal summary').nth(1)).toBeVisible();
-    await expect(page.getByText('g1', { exact: true } )).toBeVisible();
+    await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
@@ -456,10 +456,10 @@ test.describe('Activity Report', () => {
     expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeTruthy();
 
     // check g1
-    await page.getByText('g1', { exact: true }).first().locator('..').locator('..').locator('..')
+    await page.getByText('Child Safety').first().locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
-      await page.getByText('g1', { exact: true }).nth(1).locator('..').locator('..').locator('..')
+      await page.getByText('Child Safety').nth(1).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
@@ -468,25 +468,25 @@ test.describe('Activity Report', () => {
       .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
-    await expect(page.getByText('g1', { exact: true })).toBeVisible();
+    await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
 
     await page.getByRole('link', { name: 'Back to RTTAPA' }).click();
 
     // Check g2
-    await page.getByText('g2', { exact: true }).first().locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').first().locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
-    await page.getByText('g2', { exact: true }).nth(1).locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').nth(1).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
   });
 
@@ -611,16 +611,11 @@ test.describe('Activity Report', () => {
 
     await p;    
 
-    // wait for 10 seconds to allow the goal to be created
-    await page.waitForTimeout(10000);
     // Select a standard goal.
     await page.waitForTimeout(5000);
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-
-    // wait for 10 seconds to allow the goal to be created
-    await page.waitForTimeout(10000);
 
     // create the objective
     await page.getByText('Select TTA objective *- Select -').click();
