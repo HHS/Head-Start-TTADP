@@ -548,6 +548,7 @@ jobs:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -660,6 +661,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
+            slack_channel: acf-ohs-ttahub--contractor-customer-team
 
 # ----------------- Commands -----------------
 
@@ -885,7 +887,7 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then 
             exit 0; 
           fi
           if [ -f ./environments/${current_env} ]; then
@@ -906,6 +908,8 @@ commands:
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
+          else 
+            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
         key: 'environment-owners'
@@ -1263,7 +1267,12 @@ commands:
 
           # Evaluate message_text_script if provided
           if [ -n "<< parameters.message_text_file >>" ]; then
-            MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            if [ -f << parameters.message_text_file >> ]; then
+              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            else
+              echo "<< parameters.message_text_file >> does not exist"
+              exit 0
+            fi
           else
             MESSAGE_TEXT="<< parameters.message_text >>"
           fi
@@ -1300,16 +1309,20 @@ commands:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN 
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
     - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
         name: Generate Message
         command: |
-          source ci.vars
-          env_name="$full_env"
+          env_name=<< parameters.target_env >>
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
