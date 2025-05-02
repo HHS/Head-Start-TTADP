@@ -58,7 +58,7 @@
     "docker:start": "docker compose --profile minimal_required_node --profile minimal_required_postgres --profile minimal_required_redis --profile minimal_required_python up",
     "docker:start:native": "docker compose --profile full_stack --profile minimal_required_postgres --profile minimal_required_redis --profile minimal_required_python up & sleep 1 && docker compose -f docker-compose.yml stop db",
     "docker:start:full": "docker compose --profile full_stack --profile full_stack_zap  --profile minimal_required_node --profile minimal_required_postgres --profile minimal_required_redis --profile minimal_required_python up",
-    "docker:start:debug": "docker compose -f docker-compose.debug.yml up",
+    "docker:start:debug": "docker compose --compatibility -f docker-compose.yml -f docker-compose.debug.yml up",
     "docker:stop": "docker compose --profile full_stack --profile full_stack_zap --profile minimal_required_node --profile minimal_required_postgres --profile minimal_required_redis --profile minimal_required_python down",
     "docker:dbs:start": "docker compose -f 'docker-compose.yml' --profile full_stack --profile minimal_required_redis --profile minimal_required_python up",
     "docker:dbs:stop": "yarn docker:stop",
