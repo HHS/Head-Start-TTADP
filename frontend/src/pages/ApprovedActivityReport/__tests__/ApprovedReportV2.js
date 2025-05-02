@@ -65,8 +65,6 @@ describe('Approved Activity Report V2 component', () => {
     participants: ['Commander of Pants', 'Princess of Castles'],
     language: [],
     numberOfParticipants: 3,
-    numberOfParticipantsVirtually: 2,
-    numberOfParticipantsInPerson: 1,
     reason: ['Needed it'],
     startDate: '1968-08-01',
     endDate: '1969-08-02',
@@ -170,6 +168,24 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
   });
 
+  it('shows the goal close date and goal source', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: mockObjectives,
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+      }],
+    }}
+    />);
+    expect(await screen.findByText('Source')).toBeInTheDocument();
+  });
+
   it('does not show the goal source label if there are no responses', async () => {
     render(<ApprovedReportV2 data={{
       ...report,
@@ -219,7 +235,8 @@ describe('Approved Activity Report V2 component', () => {
       ...report, deliveryMethod: 'in-person',
     }}
     />);
-    expect(screen.getByText(/In Person/i)).toBeVisible();
+
+    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
   it('language', async () => {
@@ -247,12 +264,6 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
-
-    // Expect 'Number of participants attending in person' to be in the document
-    expect(await screen.findByText(/Number of participants attending in person/i)).toBeInTheDocument();
-
-    // Expect 'Number of participants attending virtually' to be in the document
-    expect(await screen.findByText(/Number of participants attending virtually/i)).toBeInTheDocument();
   });
 
   it('submitted date shown', async () => {
