@@ -725,6 +725,19 @@ describe('grant filtersToScopes', () => {
         expect(foundGrants).not.toContain(grant);
       });
     });
+
+    it('ignores invalid group.in IDs', async () => {
+      const filters = { 'group.in': ['abc', '1; DROP TABLE users', String(group.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toContain(grantGroupOne.grantId);
+      expect(found.map((f) => f.id)).toContain(grantGroupTwo.grantId);
+      expect(found.length).toBe(2);
+    });
   });
 
   describe('goalResponse', () => {
@@ -825,6 +838,20 @@ describe('grant filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([grants[1].id, grants[3].id]));
+    });
+
+    it('prevents SQL injection via goalResponse.in parameter', async () => {
+      const injectedInput = ['Workforce', "' OR 1=1 --"];
+
+      const filters = { 'goalResponse.in': injectedInput };
+      const { grant: scope } = await filtersToScopes(filters, 'goal');
+
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.where, { id: [grants[1].id, grants[2].id, grants[3].id] }] },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([grants[2].id]));
     });
   });
 
