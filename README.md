@@ -543,7 +543,7 @@ cf login --sso
 cf apps
 cf ssh tta-smarthub-<env> -L 9229:127.0.0.1:9229 # local_port:remote_host:remote_port
 ```
-You should now have an open terminal session connected to the remote instance.  Open Google Chrome, enter `chrome://inspect` in the address bar, in Devices click "configure", enter `localhost:9229`, click done, and you should then see a new entry pop up under Remote Targets with clickable options for "trace" or "inspect".
+You should now have an open terminal session connected to the remote instance.  Open Google Chrome, enter `chrome://inspect` in the address bar, in Devices click "configure", enter `localhost:9229`, click done, and you should then see a new entry pop up under Remote Targets with clickable options for "trace" or "inspect".  Your local browser is now connected through the SSH tunnel to the debugger running on the remote instance.
 
 ### Taking a production backup via CircleCI
 
