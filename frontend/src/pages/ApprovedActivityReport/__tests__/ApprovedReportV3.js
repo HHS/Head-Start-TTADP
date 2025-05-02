@@ -5,9 +5,9 @@ import {
   screen,
 } from '@testing-library/react';
 
-import ApprovedReportV2 from '../components/ApprovedReportV2';
+import ApprovedReportV3 from '../components/ApprovedReportV3';
 
-describe('Approved Activity Report V2 component', () => {
+describe('Approved Activity Report V3 component', () => {
   const mockObjectives = [
     {
       title: 'Objective 1',
@@ -94,13 +94,13 @@ describe('Approved Activity Report V2 component', () => {
   };
 
   it('renders a report with multiple goals', async () => {
-    render(<ApprovedReportV2 data={report} />);
+    render(<ApprovedReportV3 data={report} />);
     expect(await screen.findByText(/Goal 1/i)).toBeInTheDocument();
     expect(await screen.findByText(/Goal 2/i)).toBeInTheDocument();
   });
 
   it('renders a report with multiple steps', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       recipientNextSteps: [{
         note: 'First step',
@@ -122,7 +122,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('renders an other entity report', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, goalsAndObjectives: [], objectivesWithoutGoals: mockObjectives, activityRecipientType: 'other-entity',
     }}
     />);
@@ -143,11 +143,12 @@ describe('Approved Activity Report V2 component', () => {
       courses: [],
     }];
 
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('handles empty resources', async () => {
@@ -163,15 +164,16 @@ describe('Approved Activity Report V2 component', () => {
       courses: [],
     }];
 
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('does not show the goal source label if there are no responses', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       goalsAndObjectives: [{
         name: 'Goal without close date',
@@ -193,7 +195,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('shows the goal source label if there are no responses', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       goalsAndObjectives: [{
         name: 'Goal without close date',
@@ -215,7 +217,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('in person', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'in-person',
     }}
     />);
@@ -223,7 +225,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('language', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, language: ['Gobbledegook'],
     }}
     />);
@@ -232,7 +234,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('virtual', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'virtual', virtualDeliveryType: 'Sandwich', approvedAt: '2021-01-01',
     }}
     />);
@@ -241,7 +243,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('hybrid', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'hybrid',
     }}
     />);
@@ -256,7 +258,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('submitted date shown', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, submittedDate: '2023-01-09',
     }}
     />);
@@ -265,7 +267,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('submitted date hidden', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, submittedDate: null,
     }}
     />);
@@ -273,7 +275,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('renders without activity recipients', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipients: [],
       activityRecipientType: 'other-entity',
@@ -283,7 +285,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('correctly displays recipient next steps', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipientType: 'recipient',
       recipientNextSteps: [{
@@ -314,7 +316,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('correctly displays other-entity next steps', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipientType: 'other-entity',
       recipientNextSteps: [{
@@ -345,8 +347,8 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByRole('heading', { name: /recipient's next steps/i }).length).toBe(0);
   });
 
-  it('correctly objective with citationss', async () => {
-    render(<ApprovedReportV2 data={{
+  it('correctly displays objective with citations', async () => {
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipients: [
         {

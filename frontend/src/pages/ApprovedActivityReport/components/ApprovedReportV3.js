@@ -177,7 +177,7 @@ function calculateGoalsAndObjectives(report) {
 
   return sections;
 }
-export default function ApprovedReportV2({ data }) {
+export default function ApprovedReportV3({ data }) {
   const {
     reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
@@ -362,4 +362,4 @@ export default function ApprovedReportV2({ data }) {
   );
 }
 
-ApprovedReportV2.propTypes = reportDataPropTypes;
+ApprovedReportV3.propTypes = reportDataPropTypes;
