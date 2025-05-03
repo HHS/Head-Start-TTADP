@@ -6,7 +6,7 @@
 set -u
 
 
-cmd="yarn audit --level low --json"
+cmd="yarn audit --level low --json --groups dependencies"
 output=$($cmd)
 result=$?
 
@@ -31,15 +31,6 @@ new=$(yarn audit --level low --json --groups dependencies | jq -s 'map(select(.t
 if [ "$curr" = "$new" ]; then
     echo
 	echo Ignoring previously known and accepted vulnerabilitie
-	exit 0
-fi
-
-curr=$(cat yarn-audit-known-issues | jq -s 'map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique | sort_by(.data.advisory.module_name) | tostring')
-new=$(yarn audit --level low --json --groups dependencies | jq -s 'map(select(.type == "auditAdvisory")) | map({name: .data.advisory.module_name, version: .data.advisory.findings[0].version})| unique | sort_by(.data.advisory.module_name) | tostring')
-
-if [ "$curr" = "$new" ]; then
-    echo
-	echo Ignorning known vulnerabilities
 	exit 0
 fi
 
