@@ -280,7 +280,7 @@ describe('citations service', () => {
         endDate: new Date(),
         status: 'Active',
       },
-      // Follup Grant for FollowUp Recipient 3.
+      // Followup Grant for FollowUp Recipient 3.
       {
         id: faker.datatype.number({ min: 9999 }),
         number: grantNumber4Replacement,
