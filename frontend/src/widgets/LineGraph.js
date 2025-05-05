@@ -4,7 +4,6 @@ import React, {
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
-import Plotly from 'plotly.js-basic-dist';
 import { DECIMAL_BASE } from '@ttahub/common';
 import colors from '../colors';
 import LegendControl from './LegendControl';
@@ -199,8 +198,10 @@ export default function LineGraph({
       .filter((trace) => Boolean(trace));
 
     // draw the plot
-    Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData]);
+    import('plotly.js-basic-dist').then((Plotly) => {
+      if (lines.current) Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
+    });
+  }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle, hasData, lines]);
 
   if (!hasData) {
     return <NoResultsFound />;
