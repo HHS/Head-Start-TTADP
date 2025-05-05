@@ -42,7 +42,7 @@ function ContextMenu({
       up={up}
       menuHeightOffset={menuHeightOffset}
       buttonText={<ActionsMenuItem />}
-      buttonTestId="ellipsis-button"
+      buttonTestId="actions-button"
       fixed={fixed}
     />
   );
