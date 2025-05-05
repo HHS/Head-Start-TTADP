@@ -57,7 +57,7 @@ function Menu({
         width,
       } = buttonRef.current.getBoundingClientRect();
 
-      // we could be progratically calculating the height and width offset numbers
+      // we could be programmatically calculating the height and width offset numbers
       // but a little manual work up front will save on performance in the browser
 
       let leftPos = l + width;
