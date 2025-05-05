@@ -147,7 +147,7 @@ describe('ReviewSubmit', () => {
       const calculatedStatus = REPORT_STATUSES.SUBMITTED;
 
       renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus);
-      const header = await screen.findByText('Review and approve report');
+      const header = await screen.findByText('Review and approve');
       expect(header).toBeVisible();
       expect(screen.getByRole('button', { name: 'Submit' })).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Submit for approval' })).toBeNull();
