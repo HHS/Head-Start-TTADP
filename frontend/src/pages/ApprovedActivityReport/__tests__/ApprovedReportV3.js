@@ -216,6 +216,31 @@ describe('Approved Activity Report V3 component', () => {
     expect(screen.queryAllByText(/FEI goal source/i).length).toBe(1);
   });
 
+  it('shows the courses label if there were selected courses', async () => {
+    const thisMockObjective = mockObjectives[0];
+    thisMockObjective.courses = [{ name: 'Course One' }];
+
+    render(<ApprovedReportV3 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: [thisMockObjective],
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+        prompts: [{
+          title: 'FEI goal source',
+          reportResponse: ['response'],
+        }],
+      }],
+    }}
+    />);
+    expect(screen.queryAllByText(/Courses/i).length).toBe(1);
+  });
+
   it('in person', async () => {
     render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'in-person',
