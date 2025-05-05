@@ -178,12 +178,12 @@ function RecipientSearch({ user }) {
         <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-3">
           <form role="search" className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
             { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-            <label htmlFor="recipientRecordSearch" className="sr-only">Search recipient records by name or grant id</label>
+            <label htmlFor="recipientRecordSearch" className="usa-sr-only">Search recipient records by name or grant id</label>
             <input defaultValue={query} id="recipientRecordSearch" type="search" name="search" className="ttahub-recipient-search--search-input" ref={inputRef} />
             <button type="submit" className="ttahub-recipient-search--submit-button usa-button">
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}
-              <span className="sr-only">Search for matching recipients</span>
+              <span className="usa-sr-only">Search for matching recipients</span>
             </button>
           </form>
         </Grid>
