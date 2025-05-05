@@ -145,7 +145,8 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('handles empty resources', async () => {
@@ -165,7 +166,8 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('shows the goal close date and goal source', async () => {
@@ -230,7 +232,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByText(/FEI goal source/i).length).toBe(1);
   });
 
-  it('in person', async () => {
+  it('displays "in person" delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'in-person',
     }}
@@ -239,7 +241,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
-  it('language', async () => {
+  it('displays the chosen language', async () => {
     render(<ApprovedReportV2 data={{
       ...report, language: ['Gobbledegook'],
     }}
@@ -248,7 +250,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
-  it('virtual', async () => {
+  it('displays virtual delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'virtual', virtualDeliveryType: 'Sandwich', approvedAt: '2021-01-01',
     }}
@@ -257,7 +259,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
 
-  it('hybrid', async () => {
+  it('displays hybrid delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'hybrid',
     }}
@@ -266,7 +268,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
   });
 
-  it('submitted date shown', async () => {
+  it('shows submitted date when present', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: '2023-01-09',
     }}
@@ -275,7 +277,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
   });
 
-  it('submitted date hidden', async () => {
+  it('hides null submitted dates', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: null,
     }}
@@ -356,7 +358,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByRole('heading', { name: /recipient's next steps/i }).length).toBe(0);
   });
 
-  it('correctly objective with citationss', async () => {
+  it('correctly displays objectives with citations', async () => {
     render(<ApprovedReportV2 data={{
       ...report,
       activityRecipients: [
