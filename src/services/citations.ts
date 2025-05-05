@@ -57,7 +57,7 @@ export async function getCitationsByGrantIds(
         ON mf."statusId" = mfs."statusId"
       WHERE mfs.name = 'Active'
       ),
-      -- get the order and status of reviews associates with citations
+      -- get the order and status of reviews associated with citations
       ordered_citation_reviews AS (
       SELECT
         mfh."findingId" fid,
@@ -74,7 +74,7 @@ export async function getCitationsByGrantIds(
         ON mr."statusId" = mrs."statusId"
       ),
       -- union together active citations with those whose most recent linked
-      -- review is not complete, yeilding the list of citations on which TTA
+      -- review is not complete, yielding the list of citations on which TTA
       -- might still be in progress
       open_citations AS (
       SELECT fid FROM active_citations
