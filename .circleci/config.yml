@@ -137,6 +137,7 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -632,25 +633,30 @@ jobs:
     parameters:
       target_env:
         type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
     steps:
     - checkout
     - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "yarn createMonitoringGoalsCLI"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
         command: |
-          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results > monitoring-goals.txt
+          if grep -o "Recent Monitoring Goals: \[\]" cmd_log.txt; then
+            echo "No new monitoring goals ($(date -I))" > monitoring-goals.txt
+          else
+            results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
+          fi
           cat monitoring-goals.txt
     - when:
         condition:
@@ -658,7 +664,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
-            slack_channel: acf-ohs-ttahub--contractor-customer-team
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
