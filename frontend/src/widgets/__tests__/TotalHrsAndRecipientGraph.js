@@ -50,8 +50,8 @@ describe('Total Hrs And Recipient Graph Widget', () => {
       });
     }).not.toThrow();
 
-    const svgGraph = document.querySelector('.plot-container.plotly svg');
-    expect(svgGraph).toBeInTheDocument();
+    const xAxisTitle = await screen.findByText('Date range');
+    expect(xAxisTitle).toBeInTheDocument();
   });
 
   it('shows the correct day data', async () => {
@@ -61,23 +61,8 @@ describe('Total Hrs And Recipient Graph Widget', () => {
       });
     }).not.toThrow();
 
-    const svgGraph = document.querySelector('.plot-container.plotly svg');
-    expect(svgGraph).toBeInTheDocument();
-  });
-
-  it('handles undefined data', async () => {
-    const data = undefined;
-    renderTotalHrsAndRecipientGraph({ data });
-
-    expect(await screen.findByText(/Total TTA Hours/i)).toBeInTheDocument();
-  });
-
-  it('handles checkbox clicks', async () => {
-    const setSelected = jest.fn();
-    render(<LegendControl shape="circle" label="test" id="test" selected setSelected={setSelected} />);
-    const checkbox = screen.getByRole('checkbox', { name: /test/i });
-    fireEvent.click(checkbox);
-    expect(setSelected).toHaveBeenCalled();
+    const xAxisTitle = await screen.findByText('Date range');
+    expect(xAxisTitle).toBeInTheDocument();
   });
 
   it('expertly handles large datasets', async () => {
@@ -110,11 +95,46 @@ describe('Total Hrs And Recipient Graph Widget', () => {
       trace: 'triangle',
     }];
 
-    act(() => {
-      renderTotalHrsAndRecipientGraph({ data: largeDataSet });
-    });
+    renderTotalHrsAndRecipientGraph({ data: largeDataSet });
 
-    const svgGraph = document.querySelector('.plot-container.plotly svg');
-    expect(svgGraph).toBeInTheDocument();
+    const xAxisTitle = await screen.findByText('Date range');
+    expect(xAxisTitle).toBeInTheDocument();
+  });
+
+  it('handles undefined data', async () => {
+    const data = undefined;
+    renderTotalHrsAndRecipientGraph({ data });
+
+    expect(await screen.findByText(/Total TTA Hours/i)).toBeInTheDocument();
+  });
+
+  it('handles checkbox clicks', async () => {
+    const setSelected = jest.fn();
+    render(<LegendControl shape="circle" label="test" id="test" selected setSelected={setSelected} />);
+    const checkbox = screen.getByRole('checkbox', { name: /test/i });
+    fireEvent.click(checkbox);
+    expect(setSelected).toHaveBeenCalled();
+  });
+
+  it('toggles between graph data and tabular data', async () => {
+    expect(() => {
+      act(() => {
+        renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
+      });
+    }).not.toThrow();
+
+    // Starts off showing graph data
+    const xAxisTitle = await screen.findByText('Date range');
+    expect(xAxisTitle).toBeInTheDocument();
+
+    // Find the button to show the table
+    const menuButton = screen.getByTestId('ellipsis-button');
+    fireEvent.click(menuButton);
+    const tableButton = screen.getByText('Display table');
+    fireEvent.click(tableButton);
+
+    // Find the table heading and expect it to be there
+    const tableHeading = await screen.findByText('TTA Provided');
+    expect(tableHeading).toBeInTheDocument();
   });
 });

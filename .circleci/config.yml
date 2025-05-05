@@ -137,6 +137,7 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -186,37 +187,37 @@ workflows:
         - process_temp_db
     - restore_db_job:
         name: restore (dev)
-        serial-group: "tta-automation-lock-dev"
+        serial-group: "tta-automation-lock"
         target_env: "dev"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-green)
-        serial-group: "tta-automation-lock-dev-green"
+        serial-group: "tta-automation-lock"
         target_env: "dev-green"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-blue)
-        serial-group: "tta-automation-lock-dev-blue"
+        serial-group: "tta-automation-lock"
         target_env: "dev-blue"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-red)
-        serial-group: "tta-automation-lock-dev-red"
+        serial-group: "tta-automation-lock"
         target_env: "dev-red"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (sandbox)
-        serial-group: "tta-automation-lock-sandbox"
+        serial-group: "tta-automation-lock"
         target_env: "sandbox"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (staging)
-        serial-group: "tta-automation-lock-staging"
+        serial-group: "tta-automation-lock"
         target_env: "staging"
         requires:
         - backup_temp_db
@@ -545,6 +546,7 @@ jobs:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -631,25 +633,30 @@ jobs:
     parameters:
       target_env:
         type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
     steps:
     - checkout
     - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "yarn createMonitoringGoalsCLI"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
         command: |
-          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results > monitoring-goals.txt
+          if grep -o "Recent Monitoring Goals: \[\]" cmd_log.txt; then
+            echo "No new monitoring goals ($(date -I))" > monitoring-goals.txt
+          else
+            results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
+          fi
           cat monitoring-goals.txt
     - when:
         condition:
@@ -657,6 +664,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
@@ -882,7 +890,7 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then 
             exit 0; 
           fi
           if [ -f ./environments/${current_env} ]; then
@@ -903,6 +911,8 @@ commands:
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
+          else 
+            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
         key: 'environment-owners'
@@ -1260,7 +1270,12 @@ commands:
 
           # Evaluate message_text_script if provided
           if [ -n "<< parameters.message_text_file >>" ]; then
-            MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            if [ -f << parameters.message_text_file >> ]; then
+              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            else
+              echo "<< parameters.message_text_file >> does not exist"
+              exit 0
+            fi
           else
             MESSAGE_TEXT="<< parameters.message_text >>"
           fi
@@ -1297,16 +1312,20 @@ commands:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN 
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
     - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
         name: Generate Message
         command: |
-          source ci.vars
-          env_name="$full_env"
+          env_name=<< parameters.target_env >>
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 

@@ -50,6 +50,14 @@ A: Yes, specialists can add objectives to automatically created monitoring goals
 ### Q: What happens if data import fails?
 A: If the automatic import fails, an engineer must manually run an import command in production.
 
+### Q: What needs to happen within monitoring data in order for citations to be selectable on ARs?
+A: The intent is for citations to be available to select within the time period that TTA is being provided and ARs written. So:
+- As a prerequisite, a **Review** needs to reach a `Complete` status while being linked an `Active` **Finding** so a **Monitoring Goal** is created and available for use in ARs
+- The **Finding** must be linked through a **MonitoringFindingStandards** record to a **MonitoringStandards** record, which contains the citation text
+- As long as the **Finding** remains in `Active` status, it will remain selectable on ARs using the monitoring goal.
+- Regardless of **Finding** status, if the _most recent_ **Review** has not reached a `Complete` state, then the citation will remain selectable
+- Once _both_ the most recent **Review** is `Complete` _and_ the **Finding** reaches one of the terminal states (`Corrected`,`Withdrawn`,`Closed`), then the citation will not appear or be selectable.
+
 ## 📎 Additional Documentation
 For developer details, see: [Technical Documentation](monitoring-tech.md)
 For diagram, see [High Level Diagram](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/HHS/Head-Start-TTADP/main/docs/sequence-diagrams/data-ingestion-monitoring-goal.puml)
