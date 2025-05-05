@@ -12,7 +12,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import GoalStatusDropdown from './components/GoalStatusDropdown';
-import ContextMenu from '../ContextMenu';
+import GoalCardContextMenu from '../GoalCardContextMenu';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import ObjectiveCard from './ObjectiveCard';
 import FlagStatus from './FlagStatus';
@@ -325,7 +325,7 @@ export default function GoalCard({
           />
         </div>
         {!hideGoalOptions && (
-          <ContextMenu
+          <GoalCardContextMenu
             label={contextMenuLabel}
             menuItems={menuItems}
             menuWidthOffset={100}
