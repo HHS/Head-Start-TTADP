@@ -513,6 +513,7 @@ jobs:
       target_env:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
