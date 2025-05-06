@@ -112,6 +112,9 @@
   },
   "eslintConfig": {
     "root": true,
+    "parserOptions": {
+      "ecmaVersion": "latest"
+    },
     "plugins": [
       "testing-library"
     ],
