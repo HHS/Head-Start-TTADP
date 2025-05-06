@@ -63,6 +63,7 @@ export async function getCitationsByGrantIds(
         mfh."findingId" fid,
         mfh."reviewId" rid,
         mrs.name review_status,
+        mr."reportDeliveryDate" rdd,
         ROW_NUMBER() OVER (
           PARTITION BY mfh."findingId"
           ORDER BY mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
@@ -81,7 +82,11 @@ export async function getCitationsByGrantIds(
       UNION
       SELECT fid FROM ordered_citation_reviews
       WHERE recency_rank = 1
-        AND review_status != 'Complete'
+        AND (
+          review_status != 'Complete'
+          OR
+          '${reportStartDate}'::date BETWEEN '${cutOffStartDate}' AND rdd
+        )
       ),
       -- Subquery ensures only the most recent history for each finding-grant combination
       "RecentMonitoring" AS ( 
