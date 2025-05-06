@@ -540,6 +540,16 @@ jobs:
         command: |
           set -x
           cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+    - run:
+        name: Alert on migration failure
+        #when: on_fail
+        command: |
+          #if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "prod" ]; then
+            ./bin/notify-slack.sh string \
+              "DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}" \
+              "tm-test"
+          #fi
+
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
@@ -1266,50 +1276,17 @@ commands:
         type: string
         default: ""
     steps:
-    - run:
+      - run:
         name: Notify Slack
+        environment:
+            SLACK_BOT_TOKEN: << parameters.slack_bot_token >>
         command: |
-          set -x
-
-          # Evaluate message_text_script if provided
-          if [ -n "<< parameters.message_text_file >>" ]; then
-            if [ -f << parameters.message_text_file >> ]; then
-              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
-            else
-              echo "<< parameters.message_text_file >> does not exist"
-              exit 0
-            fi
-          else
-            MESSAGE_TEXT="<< parameters.message_text >>"
+          if [ -z "${<< parameters.message_text_file >>}" ]; then
+            ./bin/notify_slack.sh string '<< parameters.message_text >>' '<< parameters.slack_channel >>'
+          else 
+            ./bin/notify_slack.sh path '<< parameters.message_text_file >>' '<< parameters.slack_channel >>'
           fi
-
-          echo $MESSAGE_TEXT
-
-          # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
-            echo "Missing required parameters. Notification will not be sent."
-            exit 0
-          fi
-
-          response=$(curl -s -X POST \
-            -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "{
-              \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
-            }" \
-            https://slack.com/api/chat.postMessage)
-
-          ok=$(echo $response | jq -r '.ok')
-          error=$(echo $response | jq -r '.error')
-
-          if [ "$ok" != "true" ]; then
-            echo "Slack notification failed: $error"
-            exit 1
-          else
-            echo "Slack notification sent successfully"
-          fi
-
+  
   notify_slack_deploy:
     parameters:
       slack_bot_token:
