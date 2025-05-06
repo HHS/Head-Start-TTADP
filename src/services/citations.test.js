@@ -582,7 +582,9 @@ describe('citations service', () => {
     const citationsToAssert = await getCitationsByGrantIds([grant1.id, grant1a.id, grant2.id, grant3.id], reportStartDate);
 
     // Assert correct number of citations.
-    expect(citationsToAssert.length).toBe(3);
+    // This will be all four now because the AR date is also the reportDeliveryDate
+    // which means that all citations will be considered valid for that time
+    expect(citationsToAssert.length).toBe(4);
 
     // Assert the citations.
     // Get the citation with the text 'Grant 1 - Citation 1 - Good'.
