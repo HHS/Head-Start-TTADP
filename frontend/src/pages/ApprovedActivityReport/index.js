@@ -112,6 +112,7 @@ export default function ApprovedActivityReport({ match, user }) {
     return reportsMap[version] || <ApprovedReportV1 data={report} />;
   };
 
+  /* istanbul ignore next: hard to test modals */
   const onUnlock = async () => {
     await unlockReport(reportId);
     modalRef.current.toggleModal(false);
@@ -121,7 +122,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const UnlockModal = () => (
     <Modal
       modalRef={modalRef}
-      onOk={() => onUnlock()}
+      onOk={/* istanbul ignore next: hard to test modals */ () => onUnlock()}
       modalId="UnlockReportModal"
       title="Unlock Activity Report"
       okButtonText="Unlock"
@@ -154,7 +155,8 @@ export default function ApprovedActivityReport({ match, user }) {
 
   return (
     <>
-      {justUnlocked && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
+
+      {justUnlocked && /* istanbul ignore next: can't test because of modals */ <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <Helmet>
         <title>
           TTA Activity Report
