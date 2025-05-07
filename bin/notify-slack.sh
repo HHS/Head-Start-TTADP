@@ -2,24 +2,11 @@
 
 set -e
 
-MESSAGE_TYPE=${1}
-MESSAGE_ARG=${2}
-SLACK_CHANNEL=${3}
+MESSAGE_TEXT=${1}
+SLACK_CHANNEL=${2}
 
 # Example usage: 
-# ./notify-slack.sh string "Hello Slack" "#general"
-# ./notify-slack.sh path "/tmp/message_file" true "#general"
-
-if [ ${MESSAGE_TYPE} == "path" ]; then
-    if [ -f "${MESSAGE_ARG}" ]; then
-        MESSAGE_TEXT=$(cat "${MESSAGE_ARG}")
-    else
-        echo "${MESSAGE_ARG} does not exist."
-        exit 1
-    fi
-else 
-    MESSAGE_TEXT="${MESSAGE_ARG}"
-fi
+# ./notify-slack.sh "Hello Slack" "general"
 
 if [ -z "${SLACK_BOT_TOKEN}" ] || [ -z "${SLACK_CHANNEL}" ] || [ -z "${MESSAGE_TEXT}" ]; then
     echo "Missing required parameters."

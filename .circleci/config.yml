@@ -1280,11 +1280,20 @@ commands:
           environment:
               SLACK_BOT_TOKEN: << parameters.slack_bot_token >>
           command: |
-            if [ -z << parameters.message_text >> ]; then
-              ./bin/notify_slack.sh path "<< parameters.message_text_file >>" "<< parameters.slack_channel >>"
-            else 
-              ./bin/notify_slack.sh string "<< parameters.message_text >>" "<< parameters.slack_channel >>"
+            if [[ -n "<< parameters.message_text_file >>" ]]; then
+              MESSAGE=$(cat "<< parameters.message_text_file >>")
+            else
+              MESSAGE="<< parameters.message_text >>"
             fi
+            #./bin/notify-slack.sh "<< parameters.message_text >>" "<< parameters.slack_channel >>"
+            response=$(curl -s -X POST \
+              -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "{
+                  \"channel\": \"<< parameters.slack_channel >>\",
+                  \"text\": \"${MESSAGE}\"
+              }" \
+              https://slack.com/api/chat.postMessage)
   
   notify_slack_deploy:
     parameters:
