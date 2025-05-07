@@ -12,35 +12,17 @@ import {
 const noneProvided = 'None provided';
 
 export const mapUrlValue = (v) => {
-  let result = v;
-  switch (v) {
-    case 'recipient':
-      result = 'Recipient';
-      break;
-    case 'regionalOffice':
-      result = 'Regional Office';
-      break;
-    case 'other-entity':
-      result = 'Other entity';
-      break;
-    case 'technical-assistance':
-      result = 'Technical assistance';
-      break;
-    case 'training':
-      result = 'Training';
-      break;
-    case 'in-person':
-      result = 'In Person';
-      break;
-    case 'virtual':
-      result = 'Virtual';
-      break;
-    case 'hybrid':
-      result = 'Hybrid';
-      break;
-    default:
-      break;
-  }
+  const labelMap = {
+    recipient: 'Recipient',
+    regionalOffice: 'Regional Office',
+    'other-entity': 'Other entity',
+    'technical-assistance': 'Technical assistance',
+    training: 'Training',
+    'in-person': 'In Person',
+    virtual: 'Virtual',
+    hybrid: 'Hybrid',
+  };
+  const result = labelMap[v] || v;
   return result;
 };
 
@@ -92,6 +74,10 @@ const ReviewItem = ({
 
   if (sortValues) {
     values.sort();
+  }
+
+  if (values.length === 0 || values[0] === undefined) {
+    values[0] = 'None provided';
   }
 
   values = values.map((v, index) => {
