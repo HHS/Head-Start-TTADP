@@ -1280,10 +1280,10 @@ commands:
           environment:
               SLACK_BOT_TOKEN: << parameters.slack_bot_token >>
           command: |
-            if [ -z << parameters.message_text_file >> ]; then
-              ./bin/notify_slack.sh string '<< parameters.message_text >>' '<< parameters.slack_channel >>'
+            if [ -z << parameters.message_text >> ]; then
+              ./bin/notify_slack.sh path "<< parameters.message_text_file >>" "<< parameters.slack_channel >>"
             else 
-              ./bin/notify_slack.sh path '<< parameters.message_text_file >>' '<< parameters.slack_channel >>'
+              ./bin/notify_slack.sh string "<< parameters.message_text >>" "<< parameters.slack_channel >>"
             fi
   
   notify_slack_deploy:
