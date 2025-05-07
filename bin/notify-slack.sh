@@ -18,14 +18,14 @@ fi
 
 echo "Sending: ${MESSAGE_TEXT} to ${SLACK_CHANNEL}"
 
-# response=$(curl -s -X POST \
-#     -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-#     -H 'Content-type: application/json;charset=utf-8' \
-#     --data "{
-#         \"channel\": \"${SLACK_CHANNEL}\",
-#         \"text\": \"${MESSAGE_TEXT}\"
-#     }" \
-#     https://slack.com/api/chat.postMessage)
+response=$(curl -s -X POST \
+    -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+    -H 'Content-type: application/json;charset=utf-8' \
+    --data "{
+        \"channel\": \"${SLACK_CHANNEL}\",
+        \"text\": \"${MESSAGE_TEXT}\"
+     }" \
+     https://slack.com/api/chat.postMessage)
 
 ok=$(echo "${response}" | jq -r '.ok')
 error=$(echo "${response}" | jq -r '.error')
