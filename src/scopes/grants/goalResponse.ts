@@ -1,7 +1,14 @@
 import { Op, WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
 
+// WARNING: Do not interpolate unvalidated input. Escaping is critical here.
 function getSql(responses: string[]) {
+  const validatedResponses = responses
+    .filter((s) => typeof s === 'string' && s.trim().length > 0)
+    .map((s) => `'${s.replace(/'/g, "''")}'`); // escape single quotes
+
+  const placeholders = validatedResponses.length > 0 ? validatedResponses.join(', ') : '\'\'';
+
   return sequelize.literal(`(
     WITH unnested_responses AS (
       SELECT "goalId", unnest("response") AS res
@@ -11,7 +18,7 @@ function getSql(responses: string[]) {
     FROM "Goals" "Goals"
     INNER JOIN unnested_responses arr
       ON arr."goalId" = "Goals"."id"
-    WHERE arr."res" IN (${responses.map((s) => `'${s}'`).join(', ')})
+    WHERE arr."res" IN (${placeholders})
   )`);
 }
 
