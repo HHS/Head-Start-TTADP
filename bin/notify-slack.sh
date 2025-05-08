@@ -16,7 +16,7 @@ if [ -z "${SLACK_BOT_TOKEN}" ] || [ -z "${SLACK_CHANNEL}" ] || [ -z "${MESSAGE_T
     exit 1
 fi
 
-echo "Sending: ${MESSAGE_TEXT} to ${SLACK_CHANNEL}"
+echo "Sending to #${SLACK_CHANNEL}: ${MESSAGE_TEXT}"
 
 response=$(curl -s -X POST \
     -H "Authorization: Bearer << parameters.slack_bot_token >>" \
