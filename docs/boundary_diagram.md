@@ -158,4 +158,4 @@ Instructions
 
 ### Notes
 
-* See the help docs for [C4 variant of PlantUML](https://github.com/RicardoNiepel/C4-PlantUML) for syntax help.
+* See the help docs for [C4 variant of PlantUML](https://github.com/plantuml-stdlib/C4-PlantUML) for syntax help.
