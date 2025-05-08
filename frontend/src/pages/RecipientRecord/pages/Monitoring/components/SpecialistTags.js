@@ -6,12 +6,17 @@ import Tooltip from '../../../../../components/Tooltip';
 export default function SpecialistTags({ specialists }) {
   const tags = [];
 
-  if (!specialists || specialists.length === 0) {
-    // legacy goal, no collaborators data
-    tags.push(
-      <Tag key="unknown-unavailable" clickable>
+    const roleNames = specialist.roles.reduce((acc, role) => {
+      if (role && role.role && role.role.name) {
+        acc.push(role.role.name);
+      }
+      return acc;
+    }, []).filter(Boolean);
+
+    return (
+      <Tag key={uniqueId('specialist-tag-')} clickable>
         <Tooltip
-          displayText="Unavailable"
+          displayText={roleNames.join(', ')}
           screenReadDisplayText={false}
           buttonLabel="reveal the full name of this user"
           tooltipText="Unknown"

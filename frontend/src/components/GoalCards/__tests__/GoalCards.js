@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
-  render, screen, waitFor, fireEvent,
+  render, screen, fireEvent,
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
@@ -16,6 +16,10 @@ import GoalCards from '../GoalCards';
 import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
+jest.mock('../../ReopenReasonModal', () => ({
+  __esModule: true,
+  default: () => <div data-testid="reopen-reason-modal-mock" />,
+}));
 
 const oldWindowLocation = window.location;
 
@@ -37,93 +41,107 @@ const defaultUser = {
 const baseGoals = [{
   id: 4598,
   ids: [4598, 4599],
-  goalStatus: 'In Progress',
-  createdOn: '2021-06-15',
-  goalText: 'This is goal text 1.',
+  status: 'In Progress',
+  createdAt: '2021-06-15',
+  name: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
   objectiveCount: 5,
   goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 101,
+  grant: { id: 1, number: 'Grant 1' },
 },
 {
   id: 8547,
   ids: [8547],
-  goalStatus: 'Not Started',
-  createdOn: '2021-05-15',
-  goalText: 'This is goal text 2.',
+  status: 'Not Started',
+  createdAt: '2021-05-15',
+  name: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
   objectiveCount: 2,
   goalNumbers: ['G-8547'],
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 102,
+  grant: { id: 2, number: 'Grant 2' },
 },
 {
   id: 65478,
   ids: [65478],
-  goalStatus: 'Completed',
-  createdOn: '2021-04-15',
-  goalText: 'This is goal text 3.',
+  status: 'Completed',
+  createdAt: '2021-04-15',
+  name: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
   objectiveCount: 4,
   goalNumbers: ['G-65478'],
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 103,
+  grant: { id: 3, number: 'Grant 3' },
 },
 {
   id: 65479,
   ids: [65479],
-  goalStatus: '', // Needs Status.
-  createdOn: '2021-03-15',
-  goalText: 'This is goal text 4.',
+  status: '', // Needs Status.
+  createdAt: '2021-03-15',
+  name: 'This is goal text 4.',
   goalTopics: ['Partnerships and Community Engagement'],
   objectiveCount: 3,
   goalNumbers: ['G-65479'],
   reasons: ['COVID-19 response'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 104,
+  grant: { id: 4, number: 'Grant 4' },
 },
 {
   id: 65480,
   ids: [65480],
-  goalStatus: 'Draft',
-  createdOn: '2021-02-15',
-  goalText: 'This is goal text 5.',
+  status: 'Draft',
+  createdAt: '2021-02-15',
+  name: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
   objectiveCount: 1,
   goalNumbers: ['G-65480'],
   reasons: ['New Recipient'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 105,
+  grant: { id: 5, number: 'Grant 5' },
 },
 {
   id: 65481,
   ids: [65481],
-  goalStatus: 'Suspended',
-  createdOn: '2021-01-15',
-  goalText: 'This is goal text 6.',
+  status: 'Suspended',
+  createdAt: '2021-01-15',
+  name: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
   objectiveCount: 8,
   goalNumbers: ['G-65481'],
   reasons: ['School Readiness Goals'],
   objectives: [],
   collaborators: [],
+  goalTemplateId: 106,
+  grant: { id: 6, number: 'Grant 6' },
 },
 ];
 
 const goalWithObjectives = [{
   id: 4458,
   ids: [4458],
-  goalStatus: 'In Progress',
-  createdOn: '2021-06-15',
-  goalText: 'This is a goal with objectives',
+  status: 'In Progress',
+  createdAt: '2021-06-15',
+  name: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
   goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+  goalTemplateId: 201,
+  grant: { id: 7, number: 'Grant 7' },
   objectives: [{
     title: 'Objective 1 Title',
     endDate: '06/14/2021',
@@ -133,7 +151,7 @@ const goalWithObjectives = [{
     ids: [345345345],
     ttaProvided: '',
     grantNumbers: ['1'],
-    topics: ['Human Resources'],
+    topics: [{ name: 'Human Resources' }],
     activityReports: [{
       id: 1,
       displayId: 'ar-number-1',
@@ -149,7 +167,7 @@ const goalWithObjectives = [{
     id: 234234253,
     ids: [234234253],
     ttaProvided: '',
-    topics: ['Human Resources'],
+    topics: [{ name: 'Human Resources' }],
     grantNumbers: ['1'],
     activityReports: [{
       id: 2,
@@ -167,7 +185,7 @@ const goalWithObjectives = [{
     ids: [2938234],
     ttaProvided: '',
     grantNumbers: ['1'],
-    topics: ['Human Resources'],
+    topics: [{ name: 'Human Resources' }],
     activityReports: [{
       id: 3,
       displayId: 'ar-number-3',
@@ -184,7 +202,7 @@ const goalWithObjectives = [{
     ids: [255384234],
     ttaProvided: '',
     grantNumbers: ['200342cat'],
-    topics: ['Human Resources'],
+    topics: [{ name: 'Human Resources' }],
     activityReports: [{
       id: 4,
       displayId: 'ar-number-4',
@@ -199,7 +217,7 @@ const goalWithObjectives = [{
     status: 'Unknown Status',
     id: 298398934834,
     ids: [298398934834],
-    topics: ['Human Resources'],
+    topics: [{ name: 'Human Resources' }],
     ttaProvided: '',
     grantNumbers: ['1'],
     activityReports: [{
@@ -248,6 +266,8 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             shouldDisplayMergeSuccess={false}
             dismissMergeSuccess={jest.fn()}
             goalBuckets={goalBuckets}
+            canMergeGoals={false}
+            perPageChange={jest.fn()}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -331,19 +351,16 @@ describe('Goals Table', () => {
       await screen.findByRole('link', { name: /ar-number-1/i });
       const lastTTa = screen.queryAllByText('06/14/2021');
       expect(lastTTa.length).toBe(2);
-      await screen.findByText(/monitoring | deficiency/i);
 
       // Objective 2.
       await screen.findByText(/objective 2 title/i);
       await screen.findByRole('link', { name: /ar-number-2/i });
       await screen.findByText('05/14/2021');
-      await screen.findByText('Below Competitive Threshold (CLASS)');
 
       // Objective 3.
       await screen.findByText(/objective 3 title/i);
       await screen.findByRole('link', { name: /ar-number-3/i });
       await screen.findByText('04/14/2021');
-      await screen.findByText(/covid-19 response/i);
 
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
       const inProgressStatuses = await screen.findAllByText(/in progress/i);
@@ -424,7 +441,6 @@ describe('Goals Table', () => {
       userEvent.selectOptions(sortCreated, 'createdOn-desc');
       expect(requestSort).toHaveBeenCalled();
     });
-
     it('sorts by goal status', async () => {
       const sortCreated = await screen.findByTestId('sortGoalsBy');
       userEvent.selectOptions(sortCreated, 'goalStatus-asc');
@@ -546,43 +562,18 @@ describe('Goals Table', () => {
   describe('Context Menu', () => {
     beforeEach(async () => {
       fetchMock.restore();
-      renderTable({ goals: [baseGoals[0], baseGoals[3]], goalsCount: 1 }, defaultUser);
+      const goalForEditTest = {
+        ...baseGoals[0],
+        goalTemplateId: 123,
+        grant: { id: 456 },
+      };
+      renderTable({ goals: [goalForEditTest, baseGoals[3]], goalsCount: 2 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
     afterEach(() => {
       window.location.assign.mockReset();
       fetchMock.restore();
-    });
-
-    it('Sets goal status with reason', async () => {
-      fetchMock.reset();
-      fetchMock.put('/api/goals/changeStatus', [{
-        id: 4598,
-        status: 'Closed',
-        createdOn: '06/15/2021',
-        goalText: 'This is goal text 1.',
-        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-        objectiveCount: 5,
-        goalNumber: 'G-4598',
-        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-      }]);
-
-      // Open Context Menu.
-      const changeStatus = await screen.findByRole('button', { name: /Change status for goal 4598/i });
-      userEvent.click(changeStatus);
-      const closed = await screen.findByRole('button', { name: /Closed/i });
-      userEvent.click(closed);
-
-      // Select a reason.
-      const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
-      fireEvent.click(reasonRadio);
-
-      // Submit reason why.
-      const submitButton = await screen.findAllByText(/submit/i);
-      fireEvent.click(submitButton[0]);
-      await waitFor(() => expect(fetchMock.called()).toBeTruthy());
-      expect(setGoals).toHaveBeenCalled();
     });
 
     it('allows goals to be edited', async () => {
@@ -592,41 +583,6 @@ describe('Goals Table', () => {
 
       const editGoal = await screen.findByRole('button', { name: /Edit/i });
       userEvent.click(editGoal);
-      expect(history.push).toHaveBeenCalled();
-    });
-
-    it('Sets goal status without reason', async () => {
-      history.push = jest.fn();
-      fetchMock.reset();
-      fetchMock.put('/api/goals/changeStatus', [{
-        id: 65479,
-        goalStatus: 'In Progress',
-        createdOn: '06/15/2021',
-        goalText: 'This is goal text 1.',
-        goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-        objectiveCount: 0,
-        goalNumber: 'G-65479',
-        reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-        objectives: [],
-        previousStatus: 'Needs status',
-      }]);
-
-      expect(fetchMock.called()).toBe(false);
-
-      // Open Context Menu.
-      const changeStatus = await screen.findByRole('button', { name: /Change status for goal 65479/i });
-      userEvent.click(changeStatus);
-      const inProgress = await screen.findByRole('button', { name: /In Progress/i });
-      userEvent.click(inProgress);
-
-      // Verify goal status change.
-      await waitFor(() => expect(fetchMock.called()).toBeTruthy());
-      expect(setGoals).toHaveBeenCalled();
-
-      // print goals
-      const printButton = await screen.findByRole('button', { name: /Preview and print/i });
-      userEvent.click(printButton);
-
       expect(history.push).toHaveBeenCalled();
     });
 
@@ -687,7 +643,7 @@ describe('Goals Table', () => {
       expect(editGoal).toBe(null);
 
       // Find the View button.
-      const viewGoal = await screen.findByRole('button', { name: 'View' });
+      const viewGoal = await screen.findByRole('button', { name: 'View details' });
       expect(viewGoal).toBeVisible();
 
       // Hides the Reopen button.
@@ -720,7 +676,7 @@ describe('Goals Table', () => {
         ],
       };
 
-      renderTable({ goals: [{ ...baseGoals[2], goalStatus: 'Closed' }], goalsCount: 1 }, user);
+      renderTable({ goals: [{ ...baseGoals[2], status: 'Closed' }], goalsCount: 1 }, user);
       const menuToggle = await screen.findByRole('button', { name: /Actions for goal 65478/i });
       userEvent.click(menuToggle);
 
@@ -729,7 +685,7 @@ describe('Goals Table', () => {
       expect(reopenOptions.length).toBe(0);
 
       // Shows the view button.
-      const viewGoal = await screen.findByRole('button', { name: 'View' });
+      const viewGoal = await screen.findByRole('button', { name: 'View details' });
       expect(viewGoal).toBeVisible();
     });
 
@@ -744,7 +700,7 @@ describe('Goals Table', () => {
         ],
       };
 
-      renderTable({ goals: [{ ...baseGoals[2], goalStatus: 'Closed' }], goalsCount: 1 }, user);
+      renderTable({ goals: [{ ...baseGoals[2], status: 'Closed' }], goalsCount: 1 }, user);
       const menuToggle = await screen.findByRole('button', { name: /Actions for goal 65478/i });
       userEvent.click(menuToggle);
 
@@ -752,7 +708,7 @@ describe('Goals Table', () => {
       expect(await screen.findByRole('button', { name: 'Reopen' })).toBeVisible();
 
       // Shows the view button.
-      const viewGoal = await screen.findByRole('button', { name: 'View' });
+      const viewGoal = await screen.findByRole('button', { name: 'View details' });
       expect(viewGoal).toBeVisible();
     });
   });

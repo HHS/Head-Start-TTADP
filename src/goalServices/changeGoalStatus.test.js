@@ -167,7 +167,8 @@ describe('changeGoalStatus service', () => {
       where: { goalId: testGoal.id },
     });
 
-    expect(statusChangeLogs.length).toBe(0);
+    // only 1 because the initial one we created
+    expect(statusChangeLogs.length).toBe(1);
 
     // Clean up
     await db.Goal.destroy({ where: { id: testGoal.id }, force: true });

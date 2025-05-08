@@ -12,17 +12,15 @@ import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
-import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
-import { getIdParamArray, GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
+import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
-import ViewGoals from './pages/ViewGoals';
-import GoalNameForm from '../../components/GoalNameForm';
+import ViewGoalDetails from './pages/ViewStandardGoals';
 import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -276,35 +274,22 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <Helmet>
                 <title>Create a New Goal</title>
               </Helmet>
-              <GoalNameForm
-                regionId={regionId}
+              <StandardGoalForm
                 recipient={recipientData}
               />
             </>
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/view"
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard"
           render={() => (
-            <ViewGoals
-              regionId={regionId}
-              recipient={recipientData}
-            />
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
-          render={({ location }) => {
-            const goalIds = getIdParamArray(location.search);
-
-            return (
-              <GoalForm
+            <FeatureFlag flag="standard_goals_update" renderNotFound>
+              <ViewGoalDetails
                 regionId={regionId}
                 recipient={recipientData}
-                goalIds={goalIds}
               />
-            );
-          }}
+            </FeatureFlag>
+          )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId/restart"
@@ -325,31 +310,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
               />
             </FeatureFlag>
           )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals"
-          render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <StandardGoalForm
-                recipient={recipientData}
-              />
-            </FeatureFlag>
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
-          render={({ location }) => {
-            const goalIds = getIdParamArray(location.search);
-
-            return (
-              <GoalNameForm
-                regionId={regionId}
-                recipient={recipientData}
-                ids={goalIds}
-                isExistingGoal
-              />
-            );
-          }}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
