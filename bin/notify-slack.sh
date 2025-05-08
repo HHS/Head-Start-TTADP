@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -x 
 
 MESSAGE_TEXT=${1}
 SLACK_CHANNEL=${2}
@@ -8,11 +9,12 @@ SLACK_CHANNEL=${2}
 # Example usage: 
 # ./notify-slack.sh "Hello Slack" "general"
 
+echo "channel: ${SLACK_CHANNEL}"
+echo "message: ${MESSAGE_TEXT}"
+echo "token: ${#SLACK_BOT_TOKEN} chars"
+
 if [ -z "${SLACK_BOT_TOKEN}" ] || [ -z "${SLACK_CHANNEL}" ] || [ -z "${MESSAGE_TEXT}" ]; then
-    echo "Missing required parameters."
-    echo "channel: ${SLACK_CHANNEL}"
-    echo "message: ${MESSAGE_TEXT}"
-    echo "token: ${#SLACK_BOT_TOKEN} chars"
+    echo "Missing required parameters"
     exit 1
 fi
 
