@@ -21,7 +21,7 @@ import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/compone
 import DataCard from '../DataCard';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import GoalStatusDropdown from './components/GoalStatusDropdown';
-import ContextMenu from '../ContextMenu';
+import GoalCardContextMenu from '../GoalCardContextMenu';
 import FlagStatus from './FlagStatus';
 import ExpanderButton from '../ExpanderButton';
 import ObjectiveCard from './ObjectiveCard';
@@ -278,7 +278,7 @@ export default function StandardGoalCard({
                   regionId={regionId}
                 />
                 { !readonly && (
-                  <ContextMenu
+                  <GoalCardContextMenu
                     label={contextMenuLabel}
                     menuItems={menuItems}
                     menuWidthOffset={100}
