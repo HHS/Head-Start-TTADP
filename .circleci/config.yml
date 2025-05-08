@@ -547,10 +547,9 @@ jobs:
         environment: 
           SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
         command: |
+            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
             #if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
-              ./bin/notify-slack.sh \
-                "DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}" \
-                "tm-test"
+              ./bin/notify-slack.sh ${msg} tm-test
             #fi
 
     - notify_new_relic:

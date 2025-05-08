@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-set -x 
 
 MESSAGE_TEXT=${1}
 SLACK_CHANNEL=${2}
