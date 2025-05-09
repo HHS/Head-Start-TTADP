@@ -240,17 +240,21 @@ describe('GoalPicker', () => {
 
   describe('curated goals', () => {
     it('with no prompts', async () => {
-      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [
-        {
-          type: 'multiselect',
-          title: 'prompt-1',
-          options: [
-            'Option 1',
-            'Option 2',
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1',
+        [
+          [
+            {
+              type: 'multiselect',
+              title: 'prompt-1',
+              options: [
+                'Option 1',
+                'Option 2',
+              ],
+              prompt: 'WHYYYYYYYY?',
+            },
           ],
-          prompt: 'WHYYYYYYYY?',
-        },
-      ]);
+          [],
+        ]);
       fetchMock.get('/api/goal-templates/1/source?grantIds=1', {
         source: 'source',
       });
@@ -279,7 +283,7 @@ describe('GoalPicker', () => {
       expect(input.value).toBe(availableGoal.value.toString());
     });
     it('with prompts', async () => {
-      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [[
         {
           type: 'multiselect',
           title: 'prompt-1',
@@ -289,7 +293,8 @@ describe('GoalPicker', () => {
           ],
           prompt: 'WHYYYYYYYY?',
         },
-      ]);
+      ],
+      []]);
       const availableGoals = [{
         label: 'Goal 1',
         value: 1,
@@ -316,7 +321,7 @@ describe('GoalPicker', () => {
   });
   describe('monitoring goals', () => {
     it('correctly retrieves citations for monitoring goals', async () => {
-      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', []);
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [[], []]);
 
       fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
         {
@@ -384,7 +389,7 @@ describe('GoalPicker', () => {
     });
 
     it('correctly displays the monitoring warning if non monitoring recipients are selected', async () => {
-      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1&goalIds=2', []);
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1&goalIds=2', [[], []]);
       fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
         {
           citation: 'Not your citation',

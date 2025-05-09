@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
 import ConditionalFields from '../ConditionalFields';
-import { combinePrompts } from '../condtionalFieldConstants';
+import { combineRtrPrompts } from '../condtionalFieldConstants';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
 
@@ -36,7 +36,7 @@ const DisplayFields = ({
   if (!divergence) {
     return (
       <ConditionalFields
-        prompts={combinePrompts(singleValue, goalTemplatePrompts)}
+        prompts={combineRtrPrompts(singleValue, goalTemplatePrompts)}
         setPrompts={updateAll}
         validatePrompts={validate}
         errors={errors}
@@ -55,7 +55,7 @@ const DisplayFields = ({
         {grantNumber}
       </h3>
       <ConditionalFields
-        prompts={combinePrompts(value[grantNumber], goalTemplatePrompts)}
+        prompts={combineRtrPrompts(value[grantNumber], goalTemplatePrompts)}
         setPrompts={(newValue) => {
           updateSingle(grantNumber, newValue);
         }}
@@ -103,21 +103,26 @@ export default function RTRGoalPrompts({
     onChange,
   );
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   if (!selectedGrants.length || !isCurated || !goalTemplateId) {
     return null;
   }
 
   const singleValue = data[0];
-  const fieldData = combinePrompts(singleValue, goalTemplatePrompts);
+  console.log('\n\n\n----- RTR PROMPTS: ', goalTemplatePrompts);
+  const fieldData = combineRtrPrompts(singleValue, goalTemplatePrompts);
+  console.log('\n\n\n----- check mefieldData', fieldData);
+
+  console.log("\n\n\n--- title check:", fieldData[0].title);
 
   if (!fieldData || !fieldData.length) {
     return null;
   }
-
+  console.log('\n\n\n------- DATA CHECK:', data);
   const allResponses = uniq(Object.values(data || {}).flat().map(({ response }) => response).flat()).join(', ');
-
+  console.log('\n\n\n----- allResponses:', allResponses);
+  console.log('\n\n\n--- user can edit:', userCanEdit);
   return (
     <FormFieldThatIsSometimesReadOnly
       permissions={[userCanEdit]}

@@ -52,6 +52,8 @@ describe('GoalForm', () => {
               roles={[]}
               topicOptions={[{ label: 'Coaching', value: 1 }]}
               reportId={1}
+              templateResponses={[]}
+              templatePrompts={[]}
             />
           </FormProvider>
         </UserContext.Provider>

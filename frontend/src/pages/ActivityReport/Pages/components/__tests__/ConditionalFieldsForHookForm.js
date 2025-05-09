@@ -37,7 +37,6 @@ const DEFAULT_PROMPTS = [{
 
 describe('ConditionalFieldsForHookForm', () => {
   const Rt = ({
-    isMultiRecipientReport = false,
     prompts = DEFAULT_PROMPTS,
     defaultValues = {},
   }) => {
@@ -52,7 +51,6 @@ describe('ConditionalFieldsForHookForm', () => {
         <FormProvider {...hookForm}>
           <ConditionalFieldsForHookForm
             prompts={prompts}
-            isMultiRecipientReport={isMultiRecipientReport}
             userCanEdit
           />
         </FormProvider>
@@ -63,12 +61,6 @@ describe('ConditionalFieldsForHookForm', () => {
   it('renders the prompt', () => {
     render(<Rt />);
     expect(screen.getByText('answer my riddle')).toBeInTheDocument();
-  });
-
-  it('renders only the caution if a multirecipient report', () => {
-    render(<Rt isMultiRecipientReport />);
-    expect(screen.queryByText('riddle')).toBeNull();
-    expect(screen.getByText('be careful')).toBeInTheDocument();
   });
 
   it('renders nothing if a multi recipient report and no caution', () => {
@@ -94,7 +86,7 @@ describe('ConditionalFieldsForHookForm', () => {
         required: true,
       },
     }];
-    render(<Rt isMultiRecipientReport prompts={prompts} />);
+    render(<Rt prompts={prompts} />);
     expect(screen.queryByText('riddle')).toBeNull();
     expect(screen.queryByText('be careful')).toBeNull();
   });

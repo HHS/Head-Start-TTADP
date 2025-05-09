@@ -409,64 +409,6 @@ function reducePrompts(
     }, promptsToReduce);
 }
 
-function reducePromptsForReview(
-  recipientId: number,
-  fullGrantName: string,
-  newPrompts:IPrompt[] = [],
-  previousPrompts:IReviewPrompt[] = [],
-) {
-  const updatedPrompts = [...previousPrompts];
-  newPrompts.forEach((currentPrompt) => {
-    // Get the prompt Id.
-    const promptToUse = currentPrompt.promptId ? currentPrompt : currentPrompt.dataValues;
-    const { promptId, response } = promptToUse;
-
-    if (!response || !response.length) {
-      // Add empty response.
-      const missingPromptKey = `${promptId}-missing`;
-
-      // Check if prompt already exists.
-      const existingPrompt = updatedPrompts.find((pp) => pp.key === missingPromptKey);
-      if (!existingPrompt) {
-        updatedPrompts.push({
-          key: missingPromptKey,
-          promptId,
-          recipients: [{ id: recipientId, name: fullGrantName }],
-          responses: [],
-        });
-        return;
-      }
-      // If missing exists add it.
-      existingPrompt.recipients.push({ id: recipientId, name: fullGrantName });
-      // Sort recipients alphabetically.
-      existingPrompt.recipients.sort((a, b) => a.name.localeCompare(b.name));
-      return;
-    }
-
-    // Sort report responses alphabetically.
-    response.sort();
-
-    // Create a key of promptId and responses.
-    const promptKey = `${promptId}-${response.map((r) => r).join('-')}`;
-    const existingPrompt = updatedPrompts.find((pp) => pp.key === promptKey);
-
-    if (!existingPrompt) {
-      updatedPrompts.push({
-        key: promptKey,
-        promptId,
-        recipients: [{ id: recipientId, name: fullGrantName }],
-        responses: response,
-      });
-    } else {
-      // It exists add this recipient.
-      existingPrompt.recipients.push({ id: recipientId, name: fullGrantName });
-      // Sort recipients alphabetically.
-      existingPrompt.recipients.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  });
-  return updatedPrompts;
-}
-
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -519,19 +461,30 @@ export function reduceGoals(
         );
 
         if (forReport) {
-          existingGoal.prompts = existingGoal.prompts || [];
-          existingGoal.prompts = reducePrompts(
-            forReport,
-            currentValue.dataValues.prompts || [],
-            (existingGoal.prompts || []) as IPrompt[],
-          );
-          // This will be for review on the report.
-          existingGoal.promptsForReview = reducePromptsForReview(
-            currentValue.dataValues.grant.recipientId,
-            currentValue.dataValues.grant.recipientNameWithPrograms,
-            currentValue.dataValues.prompts || [],
-            existingGoal.promptsForReview,
-          );
+          // Get the regular prompts for the report.
+          const promptsToAdd = (currentValue.dataValues.prompts || []).map((p) => ({
+            ...p,
+            grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+          }) as IPrompt);
+          (existingGoal.prompts as IPrompt[]).push(...promptsToAdd);
+          // Get prompts for review.
+          const promptsToAddForReview = (currentValue.dataValues.prompts || []).map((p) => ({
+            //key: `${currentValue.grant.id}-${p.response?.map((pr) => pr).join('-')}`,
+            key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
+            promptId: p.promptId,
+            responses: p.response,
+            recipients: [
+              {
+                id: currentValue.grant.recipientId,
+                name: currentValue.grant.recipientNameWithPrograms,
+              },
+            ],
+            grantId: currentValue.grant.id,
+            grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+
+          }) as IReviewPrompt);
+
+          (existingGoal.promptsForReview as IReviewPrompt[]).push(...promptsToAddForReview);
         } else {
           existingGoal.prompts = {
             ...existingGoal.prompts,
@@ -570,18 +523,25 @@ export function reduceGoals(
       }
 
       const { source: sourceForReport } = currentValue.dataValues;
+      // Extract prompt-related data once and reuse it
       const promptsForReport = reducePrompts(
         forReport,
         currentValue.dataValues.prompts || [],
-        [],
+        [], // No existing prompts to merge with
       );
 
-      const promptsForReview = reducePromptsForReview(
-        currentValue.dataValues.grant.recipientId,
-        currentValue.dataValues.grant.recipientNameWithPrograms,
-        currentValue.dataValues.prompts || [],
-        [],
-      );
+      // Create review prompts only if needed for the report
+      const promptsForReview = forReport ? (currentValue.dataValues.prompts || []).map((p) => ({
+        key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
+        promptId: p.promptId,
+        responses: p.response,
+        recipients: [{
+          id: currentValue.grant.recipientId,
+          name: currentValue.grant.recipientNameWithPrograms,
+        }],
+        grantId: currentValue.grant.id,
+        grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+      })) : [];
 
       let sourceForRTR: { [key: string]: string };
       let sourceForPrompts: { [key: string]: IPrompt[] };
@@ -655,6 +615,7 @@ export function reduceGoals(
 
       return [...previousValues, goal];
     } catch (err) {
+      console.log('REDUCE ERROR123', err);
       auditLogger.error('Error reducing goal in services/goals reduceGoals, exiting reducer early', err);
       return previousValues;
     }
