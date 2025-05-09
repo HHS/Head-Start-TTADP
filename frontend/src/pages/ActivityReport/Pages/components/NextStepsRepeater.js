@@ -147,7 +147,7 @@ export default function NextStepsRepeater({
                     onClick={() => onRemoveStep(index)}
                   >
                     <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
-                    <span className="sr-only">
+                    <span className="usa-sr-only">
                       remove step
                       {' '}
                       {index + 1}
