@@ -545,7 +545,7 @@ jobs:
         name: Alert on migration failure
         # when: on_fail
         environment: 
-          SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+          SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
         command: |
             export SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
             msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
