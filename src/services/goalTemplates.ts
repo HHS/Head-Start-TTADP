@@ -48,6 +48,7 @@ interface PromptResponse {
   promptId: number,
   response: string[] | null;
   goalIds: number[];
+  grantId: number;
 }
 
 /**
@@ -214,6 +215,10 @@ export async function getFieldPromptsForCuratedTemplate(
           sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
           'goalIds',
         ],
+        [
+          sequelize.col('"goal"."grantId"'),
+          'grantId',
+        ],
       ],
       where: { goalId: goalIds },
       include: [{
@@ -228,14 +233,23 @@ export async function getFieldPromptsForCuratedTemplate(
           attributes: [],
           where: { id: goalTemplateId },
         }],
+      },
+      {
+        model: GoalModel,
+        as: 'goal',
+        required: true,
+        attributes: [],
       }],
       group: [
         '"GoalFieldResponse"."goalTemplateFieldPromptId"',
         '"GoalFieldResponse"."response"',
+        '"goal"."grantId"',
       ],
       raw: true,
     }),
   ]);
+  console.log('----- Prompts for this template: ', prompts);
+  console.log('\n\n\n----- Responz: ', responses);
 
   // restructure the collected data into one object with all responses for the passed goalIds if
   // any exists
@@ -245,20 +259,20 @@ export async function getFieldPromptsForCuratedTemplate(
       promptsWithResponses: FieldPrompts[],
       response: PromptResponse,
     ) => {
-      const exists = promptsWithResponses
-        .find((pwr) => pwr.promptId === response.promptId);
-
-      if (exists) {
-        exists.response = [...exists.response, ...response.response];
+      // Find the matching prompt for this response.
+      const matchingPrompt = prompts.find((p) => p.promptId === response.promptId);
+      if (matchingPrompt) {
+        promptsWithResponses.push({
+          ...matchingPrompt,
+          grantId: response.grantId,
+          response: [...response.response],
+        });
       }
       return promptsWithResponses;
     },
-    // the inital set of prompts, which can't have a response yet
-    // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
-    // doesn't include a response and doesn't join with GoalFieldResponseModel.
-    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
+    [],
   );
-  return restructuredPrompts;
+  return [restructuredPrompts, prompts];
 }
 
 /**

@@ -72,9 +72,7 @@ export const findWhatsChanged = (object, base) => {
 
           return true;
         })(),
-        // no multigrant/multirecipient reports should have prompts or source
-        prompts: grantIds.length < 2 ? goal.prompts : [],
-        source: grantIds.length < 2 ? goal.source : '',
+        prompts: goal.prompts || [],
       }));
     }
 
@@ -110,14 +108,13 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       status: g.status,
       endDate: g.endDate,
       onApprovedAR: g.onApprovedAR,
-      source: g.source,
       name: g.name,
       grantIds,
       id: g.id,
       createdVia: g.createdVia,
       goalTemplateId: g.goalTemplateId,
       isActivelyBeingEditing: false,
-      prompts: grantIds.length < 2 ? g.prompts : [],
+      prompts: g.prompts || [],
       objectives: g.objectives.map((objective) => ({
         id: objective.id,
         isNew: objective.isNew,
@@ -145,7 +142,6 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       status: goal.status,
       endDate: goal.endDate,
       onApprovedAR: goal.onApprovedAR,
-      source: goal.source,
       name: goal.name,
       createdVia: goal.createdVia,
       isActivelyBeingEditing: goal.isActivelyBeingEditing,
@@ -169,7 +165,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         goalId: goal.id, // DO NOT REMOVE: This is required so we don't duplicate objectives when we update text on AR's.
       })),
       grantIds,
-      prompts: grantIds.length < 2 ? prompts : [],
+      prompts: prompts || [],
     });
   }
 
@@ -206,8 +202,7 @@ export const convertGoalsToFormData = (
       ...goal,
       grantIds,
       objectives: goal.objectives,
-      source: grantIds.length < 2 ? goal.source : '',
-      prompts: grantIds.length < 2 ? goal.prompts : [],
+      prompts: goal.prompts || [],
     };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
@@ -215,8 +210,7 @@ export const convertGoalsToFormData = (
     accumulatedData.goals.push({
       ...goal,
       grantIds,
-      source: grantIds.length < 2 ? goal.source : '',
-      prompts: grantIds.length < 2 ? goal.prompts : [],
+      prompts: goal.prompts || [],
     });
   }
 
@@ -267,4 +261,4 @@ export const convertReportToFormData = (fetchedReport) => {
   };
 };
 
-export const formatTitleForHtmlAttribute = (title) => title.replace(/\s/g, '-').toLowerCase();
+export const formatTitleForHtmlAttribute = (title) => (title ? title.replace(/\s/g, '-').toLowerCase() : '');

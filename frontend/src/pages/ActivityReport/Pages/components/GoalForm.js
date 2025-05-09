@@ -15,24 +15,31 @@ import {
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import GoalSource from '../../../../components/GoalForm/GoalSource';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
 
 export default function GoalForm({
   goal,
   topicOptions,
   reportId,
-  templatePrompts,
-  isMultiRecipientReport,
+  // templateResponses,
+  // templatePrompts,
+  // templateId,
   citationOptions,
   rawCitations,
   isMonitoringGoal,
 }) {
+  //console.log('template id passsed into goal form: ', templateId);
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
 
   // App Loading Context.
   const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+
+  // This ensures we always have the prompts and responses for the template.
+  console.log('goal in goal form:----------: ', goal);
+  console.log('goal template id----------: ', goal.goalTemplateId);
+  const [templateResponses, templatePrompts] = useGoalTemplatePrompts(goal.goalTemplateId);
 
   /**
    * add controllers for all the controlled fields
@@ -43,9 +50,10 @@ export default function GoalForm({
 
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
-  const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
-  const activityRecipientType = watch('activityRecipientType');
+  // activityRecipientId is the grantId for the goal.
+  const activityRecipients = watch('activityRecipients');
+  console.log('activityRecipients', activityRecipients);
 
   const {
     field: {
@@ -56,31 +64,13 @@ export default function GoalForm({
     },
   } = useController({
     name: 'goalName',
-    rules: activityRecipientType === 'recipient' ? {
+    rules: {
       required: {
         value: true,
         message: GOAL_NAME_ERROR,
       },
-    } : {},
-    defaultValue: defaultName,
-  });
-
-  const {
-    field: {
-      onChange: onUpdateGoalSource,
-      onBlur: onBlurGoalSource,
-      value: goalSource,
-      name: goalSourceInputName,
     },
-  } = useController({
-    name: 'goalSource',
-    rules: activityRecipientType === 'recipient' ? {
-      required: {
-        value: true,
-        message: 'Select a goal source',
-      },
-    } : {},
-    defaultValue: '',
+    defaultValue: defaultName,
   });
 
   // when the goal is updated in the selection, we want to update
@@ -92,10 +82,6 @@ export default function GoalForm({
     goal.name,
     onUpdateText,
   ]);
-
-  useEffect(() => {
-    onUpdateGoalSource(goal.source ? goal.source : defaultSource);
-  }, [goal.source, onUpdateGoalSource, defaultSource]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -115,7 +101,6 @@ export default function GoalForm({
         setIsAppLoading(false);
       }
     }
-
     if (goal.goalIds.length) {
       fetchData();
     } else {
@@ -123,9 +108,18 @@ export default function GoalForm({
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
-  const prompts = combinePrompts(templatePrompts, goal.prompts);
+  // We need to combine responses for all grants that already have responses
+  // and add prompts for any grants that don't have responses yet.
+  const prompts = combinePrompts(
+    goal.prompts,
+    templateResponses,
+    templatePrompts,
+    activityRecipients,
+  );
+
+  console.log('Prompts we pass to CONDITION zzzzzzzzzz ', prompts);
+
   const isCurated = goal.isCurated || false;
-  const { isSourceEditable } = goal;
 
   return (
     <>
@@ -151,30 +145,9 @@ export default function GoalForm({
 
       <ConditionalFields
         prompts={prompts}
-        isMultiRecipientReport={isMultiRecipientReport}
         userCanEdit
+        heading="Root cause"
       />
-
-      <FormFieldThatIsSometimesReadOnly
-        permissions={isCurated ? [
-          isSourceEditable,
-          !goal.onApprovedAR || !goal.source,
-          !isMonitoringGoal,
-        ] : [!goal.onApprovedAR || !goal.source]}
-        label="Goal source"
-        value={goalSource}
-      >
-        <GoalSource
-          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-          source={goalSource}
-          validateGoalSource={onBlurGoalSource}
-          onChangeGoalSource={onUpdateGoalSource}
-          inputName={goalSourceInputName}
-          goalStatus={status}
-          isLoading={isAppLoading}
-          isMultiRecipientGoal={isMultiRecipientReport}
-        />
-      </FormFieldThatIsSometimesReadOnly>
 
       <Objectives
         objectiveOptions={objectiveOptions}
@@ -193,11 +166,13 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
+    goalTemplateId: PropTypes.number.isRequired,
     goalIds: PropTypes.arrayOf(PropTypes.number),
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
+    grantIds: PropTypes.arrayOf(PropTypes.number),
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
@@ -237,6 +212,8 @@ GoalForm.propTypes = {
     })),
   })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  //templateId: PropTypes.number.isRequired,
+  /*
   templatePrompts: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.arrayOf(PropTypes.shape({
@@ -246,11 +223,16 @@ GoalForm.propTypes = {
       options: PropTypes.arrayOf(PropTypes.string).isRequired,
     })).isRequired,
   ]).isRequired,
-  isMultiRecipientReport: PropTypes.bool,
+  templateResponses: PropTypes.arrayOf(PropTypes.shape({
+    type: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    prompt: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  })).isRequired,
+  */
 };
 
 GoalForm.defaultProps = {
-  isMultiRecipientReport: false,
   citationOptions: [],
   rawCitations: [],
   isMonitoringGoal: false,

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
-import { Alert } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form';
 import { formatTitleForHtmlAttribute } from '../../formDataHelpers';
 import ConditionalMultiselectForHookForm from './ConditionalMultiselectForHookForm';
@@ -25,7 +24,9 @@ export const FIELD_DICTIONARY = {
 };
 
 export default function ConditionalFieldsForHookForm({
-  prompts, isMultiRecipientReport, userCanEdit,
+  prompts,
+  userCanEdit,
+  heading,
 }) {
   const {
     field: {
@@ -49,26 +50,13 @@ export default function ConditionalFieldsForHookForm({
     // on mount, update the goal conditional fields
     // with the prompt data
 
-    const goalPrompts = prompts.map(({ promptId, title }) => ({
+    const goalPrompts = (prompts || []).map(({ promptId, title }) => ({
       promptId, title, fieldName: formatTitleForHtmlAttribute(title),
     }));
+    onUpdateGoalPrompts(goalPrompts);
+  }, [onUpdateGoalPrompts, prompts]);
 
-    onUpdateGoalPrompts(isMultiRecipientReport ? [] : goalPrompts);
-  }, [onUpdateGoalPrompts, isMultiRecipientReport, prompts]);
-
-  const fields = prompts.map((prompt) => {
-    if (isMultiRecipientReport) {
-      if (prompt.caution) {
-        return (
-          <Alert variant="warning" key={prompt.title}>
-            {prompt.caution}
-          </Alert>
-        );
-      }
-
-      return null;
-    }
-
+  const fields = (prompts || []).map((prompt) => {
     if (FIELD_DICTIONARY[prompt.fieldType]) {
       return FIELD_DICTIONARY[prompt.fieldType].render(
         prompt,
@@ -80,8 +68,19 @@ export default function ConditionalFieldsForHookForm({
 
     return null;
   });
-
-  return fields;
+  console.log('--------------- HEADING: ', heading);
+  console.log('--------------- PROMPTS: ', prompts);
+  return (
+    <>
+      {
+      heading
+      && prompts
+      && prompts.length > 0
+      && (<h3>{heading}</h3>)
+      }
+      {fields}
+    </>
+  );
 }
 
 ConditionalFieldsForHookForm.propTypes = {
@@ -91,10 +90,11 @@ ConditionalFieldsForHookForm.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
   }.isRequired)).isRequired,
-  isMultiRecipientReport: PropTypes.bool.isRequired,
-  canEdit: PropTypes.bool,
+  userCanEdit: PropTypes.bool,
+  heading: PropTypes.string,
 };
 
-ConditionalMultiselectForHookForm.defaultProps = {
+ConditionalFieldsForHookForm.defaultProps = {
   userCanEdit: false,
+  heading: null,
 };

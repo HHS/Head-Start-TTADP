@@ -13,16 +13,10 @@ export async function getGoalTemplates(grantIds) {
   return response.json();
 }
 
-export async function getGoalTemplateSource(templateId, grantIds) {
-  const params = grantIds.map((goalId) => `grantIds=${goalId}`).join('&');
-  const url = join(goalTemplatesUrl, String(templateId), 'source', `?${params}`);
-  const response = await get(url);
-  return response.json();
-}
-
 export async function getGoalTemplatePrompts(templateId, goalIds = []) {
   const params = goalIds.map((goalId) => `goalIds=${goalId}`).join('&');
   const url = join(goalTemplatesUrl, String(templateId), 'prompts', `?${params}`);
+  console.log('\n\n\n=====Called URL: ', url);
   const response = await get(url);
   return response.json();
 }
