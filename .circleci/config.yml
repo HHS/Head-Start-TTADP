@@ -544,13 +544,10 @@ jobs:
     - run:
         name: Alert on migration failure
         # when: on_fail
-        environment: 
-          SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
         command: |
-            export SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
             msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
             #if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
-              ./bin/notify-slack.sh "${msg}" tm-test
+              ./bin/notify-slack.sh "${msg}" tm-test ${SLACK_BOT_TOKEN}
             #fi
 
     - notify_new_relic:
@@ -926,6 +923,7 @@ commands:
               ./bin/notify-slack.sh \
                 "Environment owners changed: \`\`\`${msg}\`\`\`" \
                 "tm-test"
+                ${SLACK_BOT_TOKEN}
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
@@ -1289,7 +1287,7 @@ commands:
             else
               MESSAGE="<< parameters.message_text >>"
             fi
-            ./bin/notify-slack.sh "${MESSAGE}" << parameters.slack_channel >>
+            ./bin/notify-slack.sh "${MESSAGE}" << parameters.slack_channel >> ${SLACK_BOT_TOKEN}
             #./bin/notify-slack.sh "<< parameters.message_text >>" "<< parameters.slack_channel >>"
             # response=$(curl -s -X POST \
             #   -H "Authorization: Bearer << parameters.slack_bot_token >>" \
