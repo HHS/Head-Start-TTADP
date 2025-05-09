@@ -4,6 +4,7 @@ set -e
 
 MESSAGE_TEXT=${1}
 SLACK_CHANNEL=${2}
+SLACK_BOT_TOKEN=${3}
 
 # Example usage: 
 # ./notify-slack.sh "Hello Slack" "general"
