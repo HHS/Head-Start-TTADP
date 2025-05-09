@@ -594,9 +594,9 @@ function ActivityReport({
     setPresenceData(data);
   };
 
-  // eslint-disable-next-line no-shadow
+  // eslint-disable-next-line no-shadow, no-unused-vars
   const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
-    console.log('revision update', revision, userId, timestamp, reportId);
+    //
   };
 
   const renderMultiUserAlert = () => {
