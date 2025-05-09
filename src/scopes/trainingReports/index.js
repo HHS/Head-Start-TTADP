@@ -34,6 +34,6 @@ export const topicToQuery = {
   },
 };
 
-export function trainingReportsFiltersToScopes(filters, options, userId) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId);
+export function trainingReportsFiltersToScopes(filters, options, userId, validTopics) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
 }

@@ -21,10 +21,17 @@ const getTopicsSql = (topicsString) => `
     ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
     WHERE "Topics"."name" IN (${topicsString})`;
 
-export function withTopics(topics) {
-  const topicsString = topics.map((t) => `'${t}'`).join(',');
-  const arTopicsQuery = getArTopicsSql(topicsString);
-  const topicsQuery = getTopicsSql(topicsString);
+export function withTopics(topics, _options, _userId, validTopics) {
+  const validTopicsFromDb = validTopics ?? new Set();
+  const safeTopics = topics.filter((t) => validTopicsFromDb.has(t));
+  if (safeTopics.length === 0) return { id: { [Op.in]: [] } };
+
+  const topicArray = safeTopics.map((t) => sequelize.escape(t)).join(',');
+  // const topicsString = topics.map((t) => `'${t}'`).join(',');
+  // const arTopicsQuery = getArTopicsSql(topicsString);
+  // const topicsQuery = getTopicsSql(topicsString);
+  const arTopicsQuery = getArTopicsSql(topicArray);
+  const topicsQuery = getTopicsSql(topicArray);
   const combinedQuery = {
     [Op.or]: [
       sequelize.literal(`("ActivityReport"."id" IN (${arTopicsQuery}))`),
@@ -34,10 +41,21 @@ export function withTopics(topics) {
   return combinedQuery;
 }
 
-export function withoutTopics(topics) {
-  const topicsString = topics.map((t) => `'${t}'`).join(',');
-  const arTopicsQuery = getArTopicsSql(topicsString);
-  const topicsQuery = getTopicsSql(topicsString);
+export function withoutTopics(topics, _options, _userId, validTopics) {
+  // const topicsString = topics.map((t) => `'${t}'`).join(',');
+  const validTopicsFromDb = validTopics ?? new Set();
+  const safeTopics = topics.filter((t) => validTopicsFromDb.has(t));
+  if (safeTopics.length === 0) {
+    return {
+      [Op.or]: [
+        sequelize.literal('"topics" IS NULL'),
+      ],
+    };
+  }
+
+  const topicArray = safeTopics.map((t) => sequelize.escape(t)).join(',');
+  const arTopicsQuery = getArTopicsSql(topicArray);
+  const topicsQuery = getTopicsSql(topicArray);
   const combinedQuery = {
     [Op.or]: [{
       [Op.and]: [
