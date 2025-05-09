@@ -320,6 +320,7 @@
   "dependencies": {
     "@babel/runtime": "^7.26.10",
     "@faker-js/faker": "^6.0.0",
+    "@mesh-kit/core": "^1.0.133",
     "@opensearch-project/opensearch": "^1.1.0",
     "@ttahub/common": "2.2.8",
     "adm-zip": "^0.5.1",
@@ -365,7 +366,6 @@
     "pg": "^8.3.3",
     "plantuml-encoder": "^1.4.0",
     "pug": "^3.0.3",
-    "redis": "^4.0.6",
     "sax": "^1.3.0",
     "sequelize": "^6.29.0",
     "sequelize-cli": "^6.2.0",
