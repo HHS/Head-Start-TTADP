@@ -19,7 +19,7 @@ fi
 
 echo "Sending to #${SLACK_CHANNEL}: ${MESSAGE_TEXT}"
 
-response=$(curl -s -X POST \
+response=$(curl -sv -X POST \
     -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
     -H 'Content-type: application/json;charset=utf-8' \
     --data "{ \
