@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS } from '@ttahub/common';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import Form from '../Form';
 import { FORM_FIELD_DEFAULT_ERRORS } from '../constants';
 import UserContext from '../../../UserContext';
@@ -153,7 +153,7 @@ describe('Goal Form > Form component', () => {
     expect(await screen.findByText(/There was a fetch error/i)).toBeVisible();
   });
   it('doesn\'t d fei root cause when on approved report with field requirements', async () => {
-    const prompts = [{
+    const prompts = [[{
       fieldType: 'multiselect',
       title: 'FEI root cause',
       prompt: 'Select FEI root cause',
@@ -173,14 +173,16 @@ describe('Goal Form > Form component', () => {
           },
         ],
       },
-    }];
+    }],
+    [],
+    ];
 
     const goal = {
       ...DEFAULT_GOAL,
       isOnApprovedReport: true,
       isOnReport: true,
       goalTemplateId: 1,
-      prompts: { GRANT_NUMBER: prompts },
+      prompts: { GRANT_NUMBER: prompts[0] },
       isCurated: true,
       selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
     };
@@ -193,7 +195,7 @@ describe('Goal Form > Form component', () => {
   });
 
   it('enables fei root cause when not on approved report with field requirements', async () => {
-    const prompts = [{
+    const prompts = [[{
       fieldType: 'multiselect',
       title: 'FEI root cause',
       prompt: 'Select FEI root cause',
@@ -213,13 +215,15 @@ describe('Goal Form > Form component', () => {
           },
         ],
       },
-    }];
+    }],
+    [],
+    ];
     const goal = {
       ...DEFAULT_GOAL,
       isOnApprovedReport: false,
       isOnReport: true,
       goalTemplateId: 1,
-      prompts: { GRANT_NUMBER: prompts },
+      prompts: { GRANT_NUMBER: prompts[0] },
       isCurated: true,
       selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
     };
@@ -229,7 +233,7 @@ describe('Goal Form > Form component', () => {
   });
 
   it('enables fei root cause when on approved report without a root cause', async () => {
-    const prompts = [{
+    const prompts = [[{
       fieldType: 'multiselect',
       title: 'FEI root cause',
       prompt: 'Select FEI root cause',
@@ -249,13 +253,15 @@ describe('Goal Form > Form component', () => {
           },
         ],
       },
-    }];
+    }],
+    [],
+    ];
     const goal = {
       ...DEFAULT_GOAL,
       isOnApprovedReport: true,
       isOnReport: true,
       goalTemplateId: 1,
-      prompts: { GRANT_NUMBER: prompts },
+      prompts: { GRANT_NUMBER: prompts[0] },
       isCurated: true,
       selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
     };
@@ -265,7 +271,7 @@ describe('Goal Form > Form component', () => {
   });
 
   it('enables fei root cause when not on approved report without a root cause', async () => {
-    const prompts = [{
+    const prompts = [[{
       fieldType: 'multiselect',
       title: 'FEI root cause',
       prompt: 'Select FEI root cause',
@@ -285,7 +291,9 @@ describe('Goal Form > Form component', () => {
           },
         ],
       },
-    }];
+    }],
+    [],
+    ];
 
     fetchMock.get('/api/goal-templates/1/prompts?', prompts);
     const goal = {
@@ -293,7 +301,7 @@ describe('Goal Form > Form component', () => {
       isOnApprovedReport: false,
       isOnReport: true,
       goalTemplateId: 1,
-      prompts: { GRANT_NUMBER: prompts },
+      prompts: { GRANT_NUMBER: prompts[0] },
       isCurated: true,
       selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
     };
@@ -302,27 +310,30 @@ describe('Goal Form > Form component', () => {
   });
 
   it('disables fei root cause when goal is closed', async () => {
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'FEI root cause',
-      prompt: 'Select FEI root cause',
-      options: ['cause1', 'cause2', 'cause3'],
-      response: ['cause2'],
-      validations: {
-        rules: [
-          {
-            name: 'maxSelections',
-            value: 2,
-            message: 'You can only select 2 options',
-          },
-          {
-            name: 'minSelections',
-            value: 1,
-            message: 'You must select at least one option',
-          },
-        ],
-      },
-    }];
+    const prompts = [
+      [{
+        fieldType: 'multiselect',
+        title: 'FEI root cause',
+        prompt: 'Select FEI root cause',
+        options: ['cause1', 'cause2', 'cause3'],
+        response: ['cause2'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 2,
+              message: 'You can only select 2 options',
+            },
+            {
+              name: 'minSelections',
+              value: 1,
+              message: 'You must select at least one option',
+            },
+          ],
+        },
+      }],
+      [],
+    ];
 
     const goal = {
       ...DEFAULT_GOAL,
@@ -330,7 +341,7 @@ describe('Goal Form > Form component', () => {
       isOnApprovedReport: false,
       isOnReport: true,
       goalTemplateId: 1,
-      prompts: { GRANT_NUMBER: prompts },
+      prompts: { GRANT_NUMBER: prompts[0] },
       isCurated: true,
       selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
     };

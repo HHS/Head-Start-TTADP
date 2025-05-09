@@ -9,7 +9,7 @@ import {
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
-import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
+// import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -22,6 +22,7 @@ import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 import Drawer from '../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../components/DrawerTriggerButton';
+// import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -57,7 +58,9 @@ const GoalPicker = ({
   const [topicOptions, setTopicOptions] = useState([]);
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
-  const [templatePrompts, setTemplatePrompts] = useState(false);
+
+  // const [templateResponses, setTemplateResponses] = useState(false);
+  // const [templatePrompts, setTemplatePrompts] = useState([]);
 
   const [citationOptions, setCitationOptions] = useState([]);
   const [rawCitations, setRawCitations] = useState([]);
@@ -67,7 +70,6 @@ const GoalPicker = ({
   const activityRecipients = watch('activityRecipients');
   const regionId = watch('regionId');
   const startDate = watch('startDate');
-  const isMultiRecipientReport = activityRecipients && activityRecipients.length > 1;
 
   const modalRef = useRef();
   const goalDrawerTriggerRef = useRef();
@@ -87,6 +89,17 @@ const GoalPicker = ({
     },
     defaultValue: '',
   });
+/*
+  const [templateId, setTemplateId] = useState(
+    goalForEditing
+    && goalForEditing.goalTemplateId
+      ? goalForEditing.goalTemplateId : null,
+  );
+  */
+
+  // const [templateResponses, templatePrompts] = useGoalTemplatePrompts(templateId);
+
+  //console.log("template id in goal picker", templateId);
 
   const isMonitoringGoal = goalForEditing
   && goalForEditing.standard
@@ -146,29 +159,47 @@ const GoalPicker = ({
     fetchCitations();
   }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
 
+  /*
   const onChangeGoal = async (goal) => {
     try {
       if (goal.isCurated) {
-        const [prompts] = await Promise.all([
-          getGoalTemplatePrompts(goal.goalTemplateId, goal.goalIds),
-        ]);
+        const [promptsWithResponses, prompts] = await getGoalTemplatePrompts(
+          goal.goalTemplateId,
+          goal.goalIds,
+        );
+        console.log('\n\n\n1111111111111111111prompts from the sever: ', promptsWithResponses);
+        setTemplatePrompts(prompts);
+
+        // console.log('22222222222222222222Questions: ', prompts);
 
         onChange({
           ...goal,
         });
 
-        if (prompts) {
-          setTemplatePrompts(prompts);
+        if (promptsWithResponses) {
+          setTemplateResponses(promptsWithResponses);
         }
       } else {
         onChange(goal);
-        setTemplatePrompts(false);
+        setTemplateResponses(false);
       }
 
       setSelectedGoal(null);
     } catch (err) {
       onChange(goal);
-      setTemplatePrompts(false);
+      setTemplateResponses(false);
+    }
+  };
+  */
+  
+  const onChangeGoal = async (goal) => {
+    try {
+      console.log('on goal change', goal.id);
+      // setTemplateId(goal.id);
+      onChange(goal);
+      setSelectedGoal(null);
+    } catch (err) {
+      onChange(goal);
     }
   };
 
@@ -233,6 +264,12 @@ const GoalPicker = ({
     activityRecipients,
     isMonitoringGoal,
     goalTemplates]);
+
+  /*
+    -- Might remove lower.
+    templateResponses={templateResponses}
+    templatePrompts={templatePrompts}
+    */
 
   return (
     <>
@@ -329,8 +366,6 @@ const GoalPicker = ({
               topicOptions={topicOptions}
               goal={goalForEditing}
               reportId={reportId}
-              templatePrompts={templatePrompts}
-              isMultiRecipientReport={isMultiRecipientReport}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
