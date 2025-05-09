@@ -30,44 +30,53 @@ const defaultStatuses = {
 describe('Goals and Objectives', () => {
   const goals = [{
     id: 4598,
-    goalStatus: 'In Progress',
-    createdOn: '2021-06-15',
-    goalText: 'This is goal text 1.',
+    status: 'In Progress',
+    createdAt: '2021-06-15',
+    name: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
     objectiveCount: 5,
     goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
-    collaborators: [],
+    goalCollaborators: [],
     ids: [4598],
+    onAR: false,
+    grant: { number: '12345' },
+    previousStatus: null,
   },
   ];
 
   const noFilterGoals = [{
     id: 4599,
-    goalStatus: 'In Progress',
-    createdOn: '2021-06-15',
-    goalText: 'This is goal text 1.',
+    status: 'In Progress',
+    createdAt: '2021-06-15',
+    name: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
     objectiveCount: 5,
     goalNumbers: ['G-4599'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
-    collaborators: [],
+    goalCollaborators: [],
     ids: [4599],
+    onAR: false,
+    grant: { number: '12345' },
+    previousStatus: null,
   },
   {
     id: 4600,
     ids: [4600],
-    goalStatus: 'Not Started',
-    createdOn: '2021-07-15',
-    goalText: 'This is goal text 2.',
+    status: 'Not Started',
+    createdAt: '2021-07-15',
+    name: 'This is goal text 2.',
     goalTopics: ['Program Planning and Services'],
     objectiveCount: 1,
     goalNumbers: ['G-4600'],
     reasons: ['Monitoring | Deficiency'],
     objectives: [],
-    collaborators: [],
+    goalCollaborators: [],
+    onAR: false,
+    grant: { number: '12346' },
+    previousStatus: null,
   },
   ];
 
@@ -75,15 +84,18 @@ describe('Goals and Objectives', () => {
     {
       id: 4601,
       ids: [4601],
-      goalStatus: 'Not Started',
-      createdOn: '2021-07-15',
-      goalText: 'This is goal text 2.',
+      status: 'Not Started',
+      createdAt: '2021-07-15',
+      name: 'This is goal text 2.',
       goalTopics: ['Program Planning and Services'],
       objectiveCount: 1,
       goalNumbers: ['G-4601'],
       reasons: ['Monitoring | Deficiency'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12347' },
+      previousStatus: null,
     },
   ];
 
@@ -246,7 +258,7 @@ describe('Goals and Objectives', () => {
     // Expect 1 Row.
     expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
     const notStartedStatuses = await screen.findAllByText(/not started/i);
-    expect(notStartedStatuses.length).toBe(5);
+    expect(notStartedStatuses.length).toBe(6);
   });
 
   it('resets the page number when filters change', async () => {
@@ -322,9 +334,9 @@ describe('Goals and Objectives', () => {
     userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
 
     const statusSelect = await screen.findByLabelText(/select status to filter by/i);
-    await selectEvent.select(statusSelect, ['Draft']);
+    await selectEvent.select(statusSelect, ['Closed']);
 
-    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started&status.in[]=Draft';
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started&status.in[]=Closed';
     fetchMock.get(goalsUrl,
       {
         count: 1,
@@ -367,15 +379,18 @@ describe('Goals and Objectives', () => {
     const response = [{
       id: 4598,
       ids: [4598],
-      goalStatus: 'Not Started',
-      createdOn: '2021-06-15',
-      goalText: 'This is goal text 1.',
+      status: 'Not Started',
+      createdAt: '2021-06-15',
+      name: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
     },
     ];
 
@@ -473,15 +488,18 @@ describe('Goals and Objectives', () => {
     const goalToUse = {
       id: 1,
       ids: [1, 2],
-      goalStatus: 'Not Started',
-      createdOn: '2021-06-15',
-      goalText: '',
+      status: 'Not Started',
+      createdAt: '2021-06-15',
+      name: '',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
-      collaborators: [],
+      goalCollaborators: [],
+      onAR: false,
+      grant: { number: '12345' },
+      previousStatus: null,
     };
     const goalCount = 60;
     const goalsToDisplay = [];
@@ -662,7 +680,6 @@ describe('Goals and Objectives', () => {
 
     // Assert the select all check box is not checked.
     expect(selectAllNext).not.toBeChecked();
-
     // Shows 11 selected.
     expect(await screen.findByText(/11 selected/i)).toBeVisible();
   });

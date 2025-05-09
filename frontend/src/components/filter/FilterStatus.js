@@ -7,10 +7,6 @@ import FilterSelect from './FilterSelect';
 
 const options = [
   {
-    label: 'Draft',
-    value: 'Draft',
-  },
-  {
     label: 'Not started',
     value: 'Not started',
   },
