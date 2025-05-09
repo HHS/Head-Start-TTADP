@@ -46,6 +46,7 @@ import {
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
+import Mesh from '../../hooks/useMesh';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -170,6 +171,11 @@ function ActivityReport({
   const [loading, updateLoading] = useState(true);
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
+
+  const [presenceData, setPresenceData] = useState({
+    hasMultipleUsers: false,
+    otherUsers: [],
+  });
 
   const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
     LOCAL_STORAGE_DATA_KEY(activityReportId), null,
@@ -583,6 +589,34 @@ function ActivityReport({
     </>
   ) : null;
 
+  // receives presence updates from the Mesh component
+  const handlePresenceUpdate = (data) => {
+    setPresenceData(data);
+  };
+
+  // eslint-disable-next-line no-shadow
+  const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
+    console.log('revision update', revision, userId, timestamp, reportId);
+  };
+
+  const renderMultiUserAlert = () => {
+    if (presenceData.hasMultipleUsers) {
+      const otherUsernames = presenceData.otherUsers
+        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
+        .filter((username, index, self) => self.indexOf(username) === index);
+
+      const usersText = otherUsernames.length > 0
+        ? `Other users currently editing: ${otherUsernames.join(', ')}`
+        : 'There are other users currently editing this form.';
+      return (
+        <Alert type="warning">
+          {usersText}
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="smart-hub-activity-report">
       { error
@@ -591,6 +625,8 @@ function ActivityReport({
         {error}
       </Alert>
       )}
+      {renderMultiUserAlert()}
+      <Mesh room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
