@@ -1,10 +1,16 @@
 import { Op, WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
-import { idClause } from '../utils';
+import { validatedIdArray } from '../utils';
 
+// WARNING - DO NOT interpolate unvalidated input into this SQL literal.
+// Only validated integers allowed.
 const constructLiteral = (query: string[], userId: number): string => {
-  const where = idClause(query);
-  return sequelize.literal(`(
+  const validatedIds = validatedIdArray(query);
+  const placeholders = validatedIds.length > 0 ? validatedIds.join(',') : '-1';
+  const escapedUserId = Number.isInteger(userId) ? userId : -1;
+
+  const sql = `
+    (
       SELECT DISTINCT "activityReportId"
       FROM "ActivityRecipients" ar
       JOIN "GroupGrants" gg
@@ -13,9 +19,12 @@ const constructLiteral = (query: string[], userId: number): string => {
         ON gg."groupId" = g.id
       JOIN "GroupCollaborators" gc
         ON g."id" = gc."groupId"
-      WHERE g."id" IN (${where})
-      AND (gc."userId" = ${userId} OR g."isPublic" = true)
-  )`);
+      WHERE g."id" IN (${placeholders})
+      AND (gc."userId" = ${escapedUserId} OR g."isPublic" = true)
+    )
+  `;
+
+  return sequelize.literal(sql);
 };
 
 /**

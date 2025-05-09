@@ -535,16 +535,6 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 Importing Monitoring data without the automation uses Option C above across several step and is described further on in the [tools README](https://github.com/HHS/Head-Start-TTADP/tree/main/src/tools).
 
-### Attaching node inspector in a deployed environment
-
-You can attach the chrome dev tools inspector or other debugger to a deployed environment by establishing an SSH tunnel to an application instance.  The inspector listens only on localhost (127.0.0.1) in order to prevent any external access.  Follow the steps below to login and establish the SSH tunnel
-```
-cf login --sso
-cf apps
-cf ssh tta-smarthub-<env> -L 9229:127.0.0.1:9229 # local_port:remote_host:remote_port
-```
-You should now have an open terminal session connected to the remote instance.  Open Google Chrome, enter `chrome://inspect` in the address bar, in Devices click "configure", enter `localhost:9229`, click done, and you should then see a new entry pop up under Remote Targets with clickable options for "trace" or "inspect".  Your local browser is now connected through the SSH tunnel to the debugger running on the remote instance.
-
 ### Taking a production backup via CircleCI
 
 We can quickly take a production backup via the CircleCI web interface. To do so, go to the `production` branch there and trigger a pipeline with the variable `manual-trigger` set to true. You can then retrieve this backup with the script `bin/latest_backup.sh`.

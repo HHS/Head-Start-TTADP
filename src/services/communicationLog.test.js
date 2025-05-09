@@ -145,8 +145,8 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
-        [sequelize.literal('author.name asc')],
-        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')],
+        [sequelize.literal('author.name ASC')],
+        [sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE ASC')],
       ]);
     });
 
@@ -157,7 +157,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
-        [sequelize.literal("data->>'purpose' desc")],
+        [sequelize.literal("data->>'purpose' DESC")],
       ]);
     });
 
@@ -168,7 +168,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual([
-        [sequelize.literal("data->>'result' asc")],
+        [sequelize.literal("data->>'result' ASC")],
       ]);
     });
 
@@ -179,7 +179,7 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(sortBy, sortDir);
 
       expect(result).toEqual(
-        [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE desc')]],
+        [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE DESC')]],
       );
     });
 
@@ -189,8 +189,30 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(undefined, sortDir);
 
       expect(result).toEqual(
-        [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE asc')]],
+        [[sequelize.literal('(NULLIF(data ->> \'communicationDate\',\'\'))::DATE ASC')]],
       );
+    });
+
+    it('should default to DESC if sortDir is invalid', () => {
+      const sortBy = COMMUNICATION_LOG_SORT_KEYS.PURPOSE;
+      const sortDir = 'invalid';
+
+      const result = orderLogsBy(sortBy, sortDir);
+
+      expect(result).toEqual([
+        [sequelize.literal("data->>'purpose' DESC")],
+      ]);
+    });
+
+    it('should default to DATE when sortBy is invalid', () => {
+      const invalidSortBy = 'INVALID_KEY';
+      const sortDir = 'asc';
+
+      const result = orderLogsBy(invalidSortBy, sortDir);
+
+      expect(result).toEqual([
+        [sequelize.literal("(NULLIF(data ->> 'communicationDate',''))::DATE ASC")],
+      ]);
     });
   });
 
