@@ -119,6 +119,7 @@ JSON: {
   },
   "filters": [
     {
+      "group": "grant",
       "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
@@ -133,6 +134,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
@@ -147,6 +149,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "programType",
       "type": "string[]",
       "display": "Program Type",
@@ -160,6 +163,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "stateCode",
       "type": "string[]",
       "display": "State Code",
@@ -173,6 +177,7 @@ JSON: {
       }
     },
     {
+      "group": "grant",
       "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
@@ -182,6 +187,7 @@ JSON: {
       }
     },
     {
+      "group": "activity-report",
       "name": "startDate",
       "type": "date[]",
       "display": "Start Date",
@@ -189,6 +195,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
+      "group": "activity-report",
       "name": "endDate",
       "type": "date[]",
       "display": "End Date",
