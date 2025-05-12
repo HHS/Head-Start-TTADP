@@ -12,7 +12,7 @@
     "deps": "yarn global add node-gyp && yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
     "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\" \"yarn start:testingonly\"",
-    "start:web": "node --inspect=127.0.0.1:9229 ./build/server/src/index.js",
+    "start:web": "node ./build/server/src/index.js",
     "start:worker": "node ./build/server/src/worker.js",
     "start:testingonly": "tsx watch ./src/testingOnly.js",
     "server": "tsx watch src/index.ts",
