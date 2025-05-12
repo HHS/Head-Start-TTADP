@@ -1,10 +1,10 @@
 // require style import via:
 // https://create-react-app.dev/docs/proxying-api-requests-in-development/
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const { legacyCreateProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = (app) => {
   app.use('/api',
-    createProxyMiddleware({
+    legacyCreateProxyMiddleware({
       target: process.env.BACKEND_PROXY,
       changeOrigin: true,
     }));
