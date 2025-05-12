@@ -112,7 +112,9 @@ export function filterAssociation(baseQuery, searchTerms, exclude, callback, com
   };
 }
 
-export const idClause = (query: string[]) => query.filter((id: string) => !Number.isNaN(parseInt(id, DECIMAL_BASE))).join(',');
+export const validatedIdArray = (query: string[]): number[] => query
+  .map((id) => Number(id))
+  .filter((id) => Number.isInteger(id));
 
 /**
  * Extracts the WHERE clause from a Sequelize model's findAll query and replaces the model name
