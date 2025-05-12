@@ -27,9 +27,6 @@ export function withTopics(topics, _options, _userId, validTopics) {
   if (safeTopics.length === 0) return { id: { [Op.in]: [] } };
 
   const topicArray = safeTopics.map((t) => sequelize.escape(t)).join(',');
-  // const topicsString = topics.map((t) => `'${t}'`).join(',');
-  // const arTopicsQuery = getArTopicsSql(topicsString);
-  // const topicsQuery = getTopicsSql(topicsString);
   const arTopicsQuery = getArTopicsSql(topicArray);
   const topicsQuery = getTopicsSql(topicArray);
   const combinedQuery = {
@@ -42,7 +39,6 @@ export function withTopics(topics, _options, _userId, validTopics) {
 }
 
 export function withoutTopics(topics, _options, _userId, validTopics) {
-  // const topicsString = topics.map((t) => `'${t}'`).join(',');
   const validTopicsFromDb = validTopics ?? new Set();
   const safeTopics = topics.filter((t) => validTopicsFromDb.has(t));
   if (safeTopics.length === 0) {
