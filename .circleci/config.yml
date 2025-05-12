@@ -543,12 +543,12 @@ jobs:
           cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
     - run:
         name: Alert on migration failure
-        # when: on_fail
+        when: on_fail
         command: |
             msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
-            #if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
-              ./bin/notify-slack.sh "${msg}" tm-test ${SLACK_BOT_TOKEN}
-            #fi
+            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+            fi
 
     - notify_new_relic:
         target_env: << parameters.target_env >>
