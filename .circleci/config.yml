@@ -1287,16 +1287,15 @@ commands:
             else
               MESSAGE="<< parameters.message_text >>"
             fi
-            ./bin/notify-slack.sh "${MESSAGE}" << parameters.slack_channel >> ${SLACK_BOT_TOKEN}
-            #./bin/notify-slack.sh "<< parameters.message_text >>" "<< parameters.slack_channel >>"
-            # response=$(curl -s -X POST \
-            #   -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            #   -H 'Content-type: application/json;charset=utf-8' \
-            #   --data "{
-            #       \"channel\": \"<< parameters.slack_channel >>\",
-            #       \"text\": \"${MESSAGE}\"
-            #   }" \
-            #   https://slack.com/api/chat.postMessage)
+            ./bin/notify-slack.sh "<< parameters.message_text >>" "<< parameters.slack_channel >>"
+            response=$(curl -s -X POST \
+              -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "{
+                  \"channel\": \"<< parameters.slack_channel >>\",
+                  \"text\": \"${MESSAGE}\"
+              }" \
+              https://slack.com/api/chat.postMessage)
   
   notify_slack_deploy:
     parameters:
