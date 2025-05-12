@@ -57,6 +57,7 @@ export default function SpecialistTags({ specialists }) {
 
         // separate tag for each role
         roleArray.forEach((role) => {
+          if (!role) return;
           tags.push(
             <Tag key={`${specialist.name}-${role}`} clickable>
               <Tooltip
