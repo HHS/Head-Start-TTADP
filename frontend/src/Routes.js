@@ -36,6 +36,7 @@ import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import SomethingWentWrong from './components/SomethingWentWrong';
+import NewVersionAvailable from './components/NewVersionAvailable';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
@@ -79,6 +80,14 @@ export default function Routes({
   const renderAuthenticatedRoutes = () => (
     <>
       <Switch>
+        <Route
+          path="/revision-change"
+          render={() => (
+            <AppWrapper hasAlerts={false} authenticated logout={logout}>
+              <NewVersionAvailable />
+            </AppWrapper>
+          )}
+        />
         <Route
           path="/something-went-wrong/:errorResponseCode([0-9]*)"
           render={({ match }) => (

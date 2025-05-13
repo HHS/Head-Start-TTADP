@@ -596,7 +596,9 @@ function ActivityReport({
 
   // eslint-disable-next-line no-shadow, no-unused-vars
   const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
-    //
+    if (user.id !== userId) {
+      history.push('/revision-change');
+    }
   };
 
   const renderMultiUserAlert = () => {
