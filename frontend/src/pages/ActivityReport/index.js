@@ -582,16 +582,16 @@ function ActivityReport({
         .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
         .filter((username, index, self) => self.indexOf(username) === index);
 
-      let usersText = 'There are other users currently editing this form.';
+      let usersText = 'There are other users currently working on this report.';
 
       if (otherUsernames.length > 0) {
         if (otherUsernames.length === 1) {
-          usersText = `${otherUsernames[0]} is also working on this report. Your changes may not be saved. Check with them before working on this request.`;
+          usersText = `${otherUsernames[0]} is also working on this report. Your changes may not be saved. Check with them before working on this report.`;
         } else if (otherUsernames.length === 2) {
-          usersText = `${otherUsernames[0]} and ${otherUsernames[1]} are also working on this report. Your changes may not be saved. Check with them before working on this request.`;
+          usersText = `${otherUsernames[0]} and ${otherUsernames[1]} are also working on this report. Your changes may not be saved. Check with them before working on this report.`;
         } else {
           const lastUser = otherUsernames.pop();
-          usersText = `${otherUsernames.join(', ')}, and ${lastUser} are also working on this report. Your changes may not be saved. Check with them before working on this request.`;
+          usersText = `${otherUsernames.join(', ')}, and ${lastUser} are also working on this report. Your changes may not be saved. Check with them before working on this report.`;
         }
       }
 
