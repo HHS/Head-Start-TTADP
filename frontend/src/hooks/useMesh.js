@@ -50,11 +50,15 @@ function ActivityReportPresence({ client, room, onPresenceUpdate }) {
         user.userId && user.userId !== userContext.user.id
       )) : [];
 
+      // eslint-disable-next-line max-len
+      const currentUserTabs = userContext.user ? usersWithValidIds.filter((user) => user.userId === userContext.user.id).length : 0;
+
       onPresenceUpdate({
         presentUsers: uniqueUsers,
         uniqueUserCount,
         hasMultipleUsers,
         otherUsers,
+        tabCount: currentUserTabs,
       });
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
