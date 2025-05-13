@@ -582,9 +582,19 @@ function ActivityReport({
         .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
         .filter((username, index, self) => self.indexOf(username) === index);
 
-      const usersText = otherUsernames.length > 0
-        ? `Other users currently editing: ${otherUsernames.join(', ')}`
-        : 'There are other users currently editing this form.';
+      let usersText = 'There are other users currently editing this form.';
+
+      if (otherUsernames.length > 0) {
+        if (otherUsernames.length === 1) {
+          usersText = `${otherUsernames[0]} is also working on this report. Your changes may not be saved. Check with them before working on this request.`;
+        } else if (otherUsernames.length === 2) {
+          usersText = `${otherUsernames[0]} and ${otherUsernames[1]} are also working on this report. Your changes may not be saved. Check with them before working on this request.`;
+        } else {
+          const lastUser = otherUsernames.pop();
+          usersText = `${otherUsernames.join(', ')}, and ${lastUser} are also working on this report. Your changes may not be saved. Check with them before working on this request.`;
+        }
+      }
+
       return (
         <Alert type="warning">
           {usersText}
@@ -615,8 +625,7 @@ function ActivityReport({
         {error}
       </Alert>
       )}
-      {renderMultiUserAlert()}
-      {renderMultipleTabAlert()}
+      {renderMultiUserAlert() || renderMultipleTabAlert()}
       <Mesh room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
