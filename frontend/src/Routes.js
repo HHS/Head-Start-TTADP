@@ -81,7 +81,7 @@ export default function Routes({
     <>
       <Switch>
         <Route
-          path="/revision-change"
+          path="/activity-reports/revision-change"
           render={() => (
             <AppWrapper hasAlerts={false} authenticated logout={logout}>
               <NewVersionAvailable />
