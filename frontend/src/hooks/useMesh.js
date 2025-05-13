@@ -1,104 +1,25 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { uniqBy } from 'lodash';
-// eslint-disable-next-line import/no-unresolved
-import { createPresence } from '@mesh-kit/core/client-utils';
+import { groupBy } from 'lodash';
 // eslint-disable-next-line import/no-unresolved
 import { MeshClient } from '@mesh-kit/core/client';
 import UserContext from '../UserContext';
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL || '';
 
-function ActivityReportPresence({ client, room, onPresenceUpdate }) {
-  const userContext = useContext(UserContext);
-  // eslint-disable-next-line no-unused-vars
-  const [presentUsers, setPresentUsers] = useState([]);
-
-  const presence = React.useMemo(() => createPresence({
-    client,
-    room,
-    storageKey: `ar:presence-state:${room}`,
-    stateIdentifier: async (state, connectionId) => {
-      if (state && state.userId) {
-        return state.userId;
-      }
-
-      if (userContext.user && userContext.user.id) {
-        return userContext.user.id;
-      }
-
-      return connectionId;
-    },
-    onUpdate: (users) => {
-      const usersWithValidIds = users
-        // filter users that haven't published their own state yet
-        .filter((user) => !!user.state)
-        // then, map them to their state
-        .map((user) => ({ ...user.state, tabCount: user.tabCount }));
-
-      const uniqueUsers = uniqBy(usersWithValidIds, 'userId');
-
-      setPresentUsers(usersWithValidIds);
-
-      if (!onPresenceUpdate) {
-        return;
-      }
-
-      const uniqueUserCount = uniqueUsers.length;
-      const hasMultipleUsers = uniqueUserCount > 1;
-      const otherUsers = userContext.user ? uniqueUsers.filter((user) => (
-        user.userId && user.userId !== userContext.user.id
-      )) : [];
-
-      // eslint-disable-next-line max-len
-      const currentUserTabs = userContext.user ? usersWithValidIds.filter((user) => user.userId === userContext.user.id).length : 0;
-
-      onPresenceUpdate({
-        presentUsers: uniqueUsers,
-        uniqueUserCount,
-        hasMultipleUsers,
-        otherUsers,
-        tabCount: currentUserTabs,
-      });
-    },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [room]);
-
-  const getPresenceData = () => ({
-    userId: userContext.user.id,
-    username: userContext.user.name,
-  });
-
-  useEffect(() => {
-    if (!userContext.user.id) return;
-
-    const data = getPresenceData();
-    presence.publish(data);
-
-    setTimeout(() => {
-      presence.publish(data);
-    }, 1000);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presence, userContext.user.id]);
-
-  return null;
-}
-
-ActivityReportPresence.propTypes = {
-  client: PropTypes.shape({
-    on: PropTypes.func,
-  }).isRequired,
-  room: PropTypes.string.isRequired,
-  onPresenceUpdate: PropTypes.func,
-};
-
-ActivityReportPresence.defaultProps = {
-  onPresenceUpdate: null,
-};
-
 function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
   const [client, setClient] = useState(null);
+  const userContext = useContext(UserContext);
+
+  const transformPresence = (data) => {
+    const grouped = groupBy(Object.values(data.states), 'userId');
+
+    return Object.entries(grouped).map(([userId, entries]) => ({
+      userId: Number(userId),
+      username: entries[0].username,
+      tabs: entries.length,
+    }));
+  };
 
   // initialize client and connect on mount
   useEffect(() => {
@@ -108,7 +29,7 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
 
       if (onRevisionUpdate && room.startsWith('ar-')) {
         meshClient.on('revision-updated', (data) => {
-          // only process updates for the current report
+          // only care about revision changes for this report
           const reportId = room.replace('ar-', '');
           if (data && data.reportId && data.reportId.toString() === reportId) {
             onRevisionUpdate(data.revision, {
@@ -120,25 +41,72 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
         });
       }
 
+      // join this ar's room
+      await meshClient.joinRoom(room);
+
+      // let other clients know who I am...
+      // this is how we track which ws connection is which system user
+      await meshClient.publishPresenceState(
+        room,
+        {
+          state: {
+            userId: userContext.user.id,
+            username: userContext.user.name,
+          },
+        },
+      );
+
+      // this function takes the result of a presense state request
+      // and formats it into a structure that makes sense for this feature
+      const handlePresenceStateChange = (data) => {
+        const users = transformPresence(data);
+
+        onPresenceUpdate({
+          presentUsers: users,
+          uniqueUserCount: users.length,
+          hasMultipleUsers: users.length > 1,
+          otherUsers: users.filter((u) => u.userId !== userContext.user.id),
+          tabCount: users.filter((u) => u.userId === userContext.user.id)[0].tabs,
+        });
+      };
+
+      const result = await meshClient.subscribePresence(room, async () => {
+        // when there's an update (a join, leave, or state change event), ask the server
+        // for all current states instead of trying to juggle this stuff client-side
+        const res = await meshClient.command('mesh/get-presence-state', { roomName: room });
+        handlePresenceStateChange(res);
+      });
+
+      // the initial subscribe result includes states for all present users
+      handlePresenceStateChange(result);
+
+      // we only need to do this so that we can access the client
+      // if/when this component cleanly unloads, in which case we
+      // disconnect, which removes subscriptions, handlers, etc
       setClient(meshClient);
+
+      // not strictly necessary because the mesh server will detect this
+      // websocket disconnection and handle cleanup, but its good to be thorough
+      window.addEventListener('beforeunload', async () => {
+        await meshClient.close();
+      });
     }
 
     connect();
-
-    // Clean up event listeners when component unmounts
-    return () => {
-      if (client && onRevisionUpdate) {
-        client.off('revision-updated');
-      }
-    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
+
+  useEffect(() => () => {
+    if (client) {
+      client.close();
+    }
+  }, [client]);
 
   if (!client) {
     return null;
   }
 
-  return <ActivityReportPresence client={client} room={room} onPresenceUpdate={onPresenceUpdate} />;
+  return null;
 }
 
 Mesh.propTypes = {
