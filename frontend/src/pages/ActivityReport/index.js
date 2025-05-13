@@ -13,7 +13,6 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
@@ -28,7 +27,6 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
-import useSocket, { publishLocation } from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   submitReport,
@@ -159,8 +157,6 @@ export function cleanupLocalStorage(id, replacementKey) {
   }
 }
 
-const INTERVAL_DELAY = 10000; // TEN SECONDS
-
 function ActivityReport({
   match, location, region,
 }) {
@@ -210,13 +206,6 @@ function ActivityReport({
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
-  const {
-    socket,
-    setSocketPath,
-    socketPath,
-    messageStore,
-  } = useSocket(user);
-
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
   ) || false;
@@ -237,22 +226,7 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
-  useEffect(() => {
-    if (activityReportId === 'new' || !currentPage) {
-      return;
-    }
-    const newPath = `/activity-reports/${activityReportId}/${currentPage}`;
-    setSocketPath(newPath);
-  }, [activityReportId, currentPage, setSocketPath]);
-
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
-
-  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
-
-  // we also have to publish our location when we enter a channel
-  useEffect(() => {
-    publishLocation(socket, socketPath, user, lastSaveTime);
-  }, [socket, socketPath, user, lastSaveTime]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -655,7 +629,6 @@ function ActivityReport({
       }
       >
         <ActivityReportNavigator
-          socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
