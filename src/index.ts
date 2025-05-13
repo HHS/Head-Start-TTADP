@@ -23,6 +23,7 @@ if (!bypassSockets) {
   const {
     uri: redisUrl,
     tlsEnabled,
+    redisOpts,
   } = generateRedisConfig();
 
   const mesh = new MeshServer({
@@ -30,7 +31,7 @@ if (!bypassSockets) {
     redisOptions: {
       host: redisUrl ? new URL(redisUrl).hostname : 'localhost',
       port: redisUrl ? parseInt(new URL(redisUrl).port, 10) || 6379 : 6379,
-      password: redisUrl ? new URL(redisUrl).password : undefined,
+      password: redisUrl ? redisOpts?.redis?.password || undefined : undefined,
       tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
     },
   });

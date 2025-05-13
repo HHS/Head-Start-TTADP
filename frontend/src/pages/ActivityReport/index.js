@@ -171,6 +171,7 @@ function ActivityReport({
   const [presenceData, setPresenceData] = useState({
     hasMultipleUsers: false,
     otherUsers: [],
+    tabCount: 0,
   });
 
   const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
@@ -593,6 +594,19 @@ function ActivityReport({
     return null;
   };
 
+  const renderMultipleTabAlert = () => {
+    if (presenceData.tabCount > 1) {
+      return (
+        <Alert type="warning">
+          You have this report open in multiple browser tabs.
+          {' '}
+          To prevent losing your work, please close the other tabs before continuing.
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="smart-hub-activity-report">
       { error
@@ -602,6 +616,7 @@ function ActivityReport({
       </Alert>
       )}
       {renderMultiUserAlert()}
+      {renderMultipleTabAlert()}
       <Mesh room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
