@@ -19,7 +19,7 @@ describe('NewVersionAvailable component', () => {
 
   it('includes a link to activity reports', async () => {
     renderNewVersionAvailable();
-    
+
     const link = screen.getByText('Activity Reports');
     expect(link).toBeInTheDocument();
     expect(link.closest('a')).toHaveAttribute('href', '/activity-reports');
