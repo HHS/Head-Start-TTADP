@@ -101,10 +101,12 @@ export const
     templatePrompts,
     activityRecipients,
   ) => {
+    /*
     console.log('1. For Combine: goalPrompts', goalResponses);
     console.log('2. For Combine: templateResponses', templateResponses);
     console.log('3. For Combine: templatePrompts', templatePrompts);
     console.log('4. For Combine: grantIds', activityRecipients);
+    */
 
     // Get a distinct list of prompts per grant.
     const promptsPerGrant = uniqBy([
@@ -124,7 +126,7 @@ export const
       })),
     ], (item) => `${item.grantId || ''}__${item.title}`);
 
-    console.log('5. For Combine: promptsPerGrant', promptsPerGrant);
+    // console.log('5. For Combine: promptsPerGrant', promptsPerGrant);
 
     // Loop all templatePrompts and add prompts for any grants that don't have prompts yet.
     const result = [];
