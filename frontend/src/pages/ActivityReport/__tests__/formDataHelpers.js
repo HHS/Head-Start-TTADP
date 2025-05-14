@@ -32,7 +32,7 @@ describe('FormDataHelpers', () => {
         grantIds,
         [{ fieldName: 'prompt2' }],
       );
-/*
+      /*
       console.log('packagedGoals123 all', packagedGoals);
       console.log('packagedGoals123', packagedGoals[0]);
       console.log('packagedGoals123', packagedGoals[0].prompts[0]);

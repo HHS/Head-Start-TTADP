@@ -68,8 +68,7 @@ export default function ConditionalFieldsForHookForm({
 
     return null;
   });
-  console.log('--------------- HEADING: ', heading);
-  console.log('--------------- PROMPTS: ', prompts);
+
   return (
     <>
       {

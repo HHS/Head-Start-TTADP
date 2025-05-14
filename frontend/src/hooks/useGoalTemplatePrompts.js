@@ -13,15 +13,13 @@ export default function useGoalTemplatePrompts(goalTemplateId) {
     async function fetchGoalTemplatePrompts() {
       try {
         const [promptsWithResponses, prompts] = await getGoalTemplatePrompts(goalTemplateId);
-        console.log('PROMPTS FROM HOOK FETCH:', promptsWithResponses);
         setTemplatePrompts(prompts);
         setGoalTemplatePrompts(promptsWithResponses);
       } catch (error) {
         setGoalTemplatePrompts([]);
       }
     }
-    console.log('goal template id in the new HOOK:', goalTemplateId);
-    console.log('goalTemplatePrompts in the new HOOK:', goalTemplatePrompts);
+
     if (goalTemplateId && ((!goalTemplatePrompts)
       || (goalTemplateId !== currentGoalTemplateId))) {
       setCurrentGoalTemplateId(goalTemplateId);

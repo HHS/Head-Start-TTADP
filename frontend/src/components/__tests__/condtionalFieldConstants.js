@@ -101,7 +101,20 @@ describe('condtionalFieldConstants', () => {
           },
         ],
         // Template prompts.
-        false,
+        [
+          {
+            promptId: 1, response: null, title: 'prompt 1',
+          },
+          {
+            promptId: 2, response: null, title: 'prompt 2',
+          },
+          {
+            promptId: 3, response: null, title: 'prompt 3',
+          },
+          {
+            promptId: 4, response: null, title: 'prompt 4',
+          },
+        ],
         // Activity recipients.
         [
           {
@@ -109,8 +122,8 @@ describe('condtionalFieldConstants', () => {
           },
         ],
       );
-      console.log('combinedPrompt33333s', combinedPrompts);
-      expect(combinedPrompts.length).toEqual(3);
+
+      expect(combinedPrompts.length).toEqual(4);
       const prompt1 = combinedPrompts.find((p) => p.title === 'prompt 1');
       // Expect combinedPrompts to contain the correct values.
       expect(prompt1).toEqual({
@@ -137,7 +150,11 @@ describe('condtionalFieldConstants', () => {
         displayName: 'Sample Grant 1',
       });
       const prompt3 = combinedPrompts.find((p) => p.title === 'prompt 3');
-      expect(prompt3).toEqual(undefined);
+      expect(prompt3.promptId).toEqual(3);
+      expect(prompt3.response).toEqual(null);
+      expect(prompt3.title).toEqual('prompt 3');
+      expect(prompt3.grantId).toEqual(1);
+      expect(prompt3.displayName).toEqual('Sample Grant 1');
     });
   });
   describe('multiselect', () => {

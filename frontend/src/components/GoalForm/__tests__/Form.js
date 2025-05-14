@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS } from '@ttahub/common';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Form from '../Form';
 import { FORM_FIELD_DEFAULT_ERRORS } from '../constants';
 import UserContext from '../../../UserContext';

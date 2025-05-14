@@ -37,10 +37,6 @@ export default function FormFieldThatIsSometimesReadOnly({
 }) {
   const readOnly = !permissions.every((p) => Boolean(p));
 
-  console.log('\n\n------ readOnly:', readOnly);
-  console.log('\n\n------ permissions:', permissions);
-  console.log('\n\n------ value:', value);
-
   if (readOnly) {
     return (
       <FormFieldThatIsSometimesReadOnlyProvider readOnly={readOnly}>

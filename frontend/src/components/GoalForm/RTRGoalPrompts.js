@@ -110,19 +110,12 @@ export default function RTRGoalPrompts({
   }
 
   const singleValue = data[0];
-  console.log('\n\n\n----- RTR PROMPTS: ', goalTemplatePrompts);
   const fieldData = combineRtrPrompts(singleValue, goalTemplatePrompts);
-  console.log('\n\n\n----- check mefieldData', fieldData);
-
-  console.log("\n\n\n--- title check:", fieldData[0].title);
-
   if (!fieldData || !fieldData.length) {
     return null;
   }
-  console.log('\n\n\n------- DATA CHECK:', data);
   const allResponses = uniq(Object.values(data || {}).flat().map(({ response }) => response).flat()).join(', ');
-  console.log('\n\n\n----- allResponses:', allResponses);
-  console.log('\n\n\n--- user can edit:', userCanEdit);
+
   return (
     <FormFieldThatIsSometimesReadOnly
       permissions={[userCanEdit]}

@@ -94,6 +94,10 @@ export const
   combinePrompts = (
     goalResponses,
     templateResponses,
+    /*
+     Because we use the use the 'useGoalTemplatePrompts',
+     we should always get back all the prompts.
+    */
     templatePrompts,
     activityRecipients,
   ) => {

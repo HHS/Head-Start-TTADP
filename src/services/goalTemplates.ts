@@ -248,8 +248,6 @@ export async function getFieldPromptsForCuratedTemplate(
       raw: true,
     }),
   ]);
-  console.log('----- Prompts for this template: ', prompts);
-  console.log('\n\n\n----- Responz: ', responses);
 
   // restructure the collected data into one object with all responses for the passed goalIds if
   // any exists
