@@ -22,7 +22,7 @@ const MULTISELECT_VALIDATION_DICTIONARY_KEYS = Object.keys(MULTISELECT_VALIDATIO
 // eslint-disable-next-line max-len
 const MULTISELECT_RESPONSE_COMPLETION_DICTIONARY_KEYS = Object.keys(MULTISELECT_RESPONSE_COMPLETION_DICTIONARY);
 
-const confirmMultiselectResponseComplete = (validations) => validations.rules.reduce((
+export const confirmMultiselectResponseComplete = (validations) => validations.rules.reduce((
   acc, validation,
 ) => {
   const isValidKey = MULTISELECT_RESPONSE_COMPLETION_DICTIONARY_KEYS.includes(validation.name);
