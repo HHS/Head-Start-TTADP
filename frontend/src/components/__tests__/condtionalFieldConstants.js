@@ -1,4 +1,4 @@
-import condtionalFieldConstants, { combinePrompts, MULTISELECT_RESPONSE_COMPLETION_DICTIONARY } from '../condtionalFieldConstants';
+import condtionalFieldConstants, { combinePrompts, MULTISELECT_RESPONSE_COMPLETION_DICTIONARY, confirmMultiselectResponseComplete } from '../condtionalFieldConstants';
 
 describe('condtionalFieldConstants', () => {
   describe('combinePrompts', () => {
@@ -201,6 +201,31 @@ describe('condtionalFieldConstants', () => {
 
       const maxCheck2 = MULTISELECT_RESPONSE_COMPLETION_DICTIONARY.maxSelections({ value: 2 }, ['a', 'b']);
       expect(maxCheck2).toEqual(true);
+    });
+
+    it('correctly reduces using confirmMultiselectResponseComplete', async () => {
+      const validations = {
+        rules: [
+          {
+            name: 'maxSelections',
+            validation: { value: 1 },
+            selectedOptions: ['a', 'b'],
+          },
+          {
+            name: 'unknown validation',
+            validation: { value: 2 },
+            selectedOptions: ['a', 'b'],
+          },
+        ],
+      };
+
+      const result = await confirmMultiselectResponseComplete(validations);
+      expect(result.length).toEqual(1);
+
+      const maxSelections = result[0];
+      // max result is a function evaluate the result of the function.
+      const maxResult = maxSelections(['a', 'b']);
+      expect(maxResult).toEqual(false);
     });
   });
 });
