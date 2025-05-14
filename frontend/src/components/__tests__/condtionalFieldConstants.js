@@ -1,4 +1,9 @@
-import condtionalFieldConstants, { combinePrompts, MULTISELECT_RESPONSE_COMPLETION_DICTIONARY, confirmMultiselectResponseComplete } from '../condtionalFieldConstants';
+import condtionalFieldConstants, {
+  combinePrompts,
+  MULTISELECT_RESPONSE_COMPLETION_DICTIONARY,
+  MULTISELECT_VALIDATION_DICTIONARY,
+  confirmMultiselectResponseComplete,
+} from '../condtionalFieldConstants';
 
 describe('condtionalFieldConstants', () => {
   describe('combinePrompts', () => {
@@ -200,6 +205,20 @@ describe('condtionalFieldConstants', () => {
       expect(maxCheck).toEqual(false);
 
       const maxCheck2 = MULTISELECT_RESPONSE_COMPLETION_DICTIONARY.maxSelections({ value: 2 }, ['a', 'b']);
+      expect(maxCheck2).toEqual(true);
+    });
+
+    it('min and max selections in MULTISELECT_VALIDATION_DICTIONARY return the correct values', () => {
+      const minCheck = MULTISELECT_VALIDATION_DICTIONARY.minSelections({ value: 2 })(['a', 'b']);
+      expect(minCheck).toEqual(true);
+
+      const minCheck2 = MULTISELECT_VALIDATION_DICTIONARY.minSelections({ value: 1 })(['a']);
+      expect(minCheck2).toEqual(true);
+
+      const maxCheck = MULTISELECT_VALIDATION_DICTIONARY.maxSelections({ value: 1 })(['a', 'b']);
+      expect(maxCheck).toBeFalsy();
+
+      const maxCheck2 = MULTISELECT_VALIDATION_DICTIONARY.maxSelections({ value: 2 })(['a', 'b']);
       expect(maxCheck2).toEqual(true);
     });
 
