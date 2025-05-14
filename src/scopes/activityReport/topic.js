@@ -27,9 +27,9 @@ export function withTopics(topics, _options, _userId, validTopics) {
   const safeTopics = topics.filter((t) => validTopics.has(t));
   if (safeTopics.length === 0) return { id: { [Op.in]: [] } };
 
-  const topicArray = safeTopics.map((t) => sequelize.escape(t)).join(',');
-  const arTopicsQuery = getArTopicsSql(topicArray);
-  const topicsQuery = getTopicsSql(topicArray);
+  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',');
+  const arTopicsQuery = getArTopicsSql(topicString);
+  const topicsQuery = getTopicsSql(topicString);
   return {
     [Op.or]: [
       sequelize.literal(`("ActivityReport"."id" IN (${arTopicsQuery}))`),
