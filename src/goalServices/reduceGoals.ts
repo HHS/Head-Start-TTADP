@@ -469,7 +469,7 @@ export function reduceGoals(
           (existingGoal.prompts as IPrompt[]).push(...promptsToAdd);
           // Get prompts for review.
           const promptsToAddForReview = (currentValue.dataValues.prompts || []).map((p) => ({
-            //key: `${currentValue.grant.id}-${p.response?.map((pr) => pr).join('-')}`,
+            // key: `${currentValue.grant.id}-${p.response?.map((pr) => pr).join('-')}`,
             key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
             promptId: p.promptId,
             responses: p.response,
@@ -615,7 +615,6 @@ export function reduceGoals(
 
       return [...previousValues, goal];
     } catch (err) {
-      console.log('REDUCE ERROR123', err);
       auditLogger.error('Error reducing goal in services/goals reduceGoals, exiting reducer early', err);
       return previousValues;
     }

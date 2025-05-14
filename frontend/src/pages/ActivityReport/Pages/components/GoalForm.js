@@ -29,7 +29,7 @@ export default function GoalForm({
   rawCitations,
   isMonitoringGoal,
 }) {
-  //console.log('template id passsed into goal form: ', templateId);
+  // console.log('template id passsed into goal form: ', templateId);
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
 
@@ -37,8 +37,6 @@ export default function GoalForm({
   const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   // This ensures we always have the prompts and responses for the template.
-  console.log('goal in goal form:----------: ', goal);
-  console.log('goal template id----------: ', goal.goalTemplateId);
   const [templateResponses, templatePrompts] = useGoalTemplatePrompts(goal.goalTemplateId);
 
   /**
@@ -53,7 +51,6 @@ export default function GoalForm({
 
   // activityRecipientId is the grantId for the goal.
   const activityRecipients = watch('activityRecipients');
-  console.log('activityRecipients', activityRecipients);
 
   const {
     field: {
@@ -116,8 +113,6 @@ export default function GoalForm({
     templatePrompts,
     activityRecipients,
   );
-
-  console.log('Prompts we pass to CONDITION zzzzzzzzzz ', prompts);
 
   const isCurated = goal.isCurated || false;
 
@@ -212,7 +207,7 @@ GoalForm.propTypes = {
     })),
   })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  //templateId: PropTypes.number.isRequired,
+  // templateId: PropTypes.number.isRequired,
   /*
   templatePrompts: PropTypes.oneOfType([
     PropTypes.bool,

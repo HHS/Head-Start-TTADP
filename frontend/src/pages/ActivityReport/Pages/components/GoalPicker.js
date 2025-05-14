@@ -89,7 +89,7 @@ const GoalPicker = ({
     },
     defaultValue: '',
   });
-/*
+  /*
   const [templateId, setTemplateId] = useState(
     goalForEditing
     && goalForEditing.goalTemplateId
@@ -99,7 +99,7 @@ const GoalPicker = ({
 
   // const [templateResponses, templatePrompts] = useGoalTemplatePrompts(templateId);
 
-  //console.log("template id in goal picker", templateId);
+  // console.log("template id in goal picker", templateId);
 
   const isMonitoringGoal = goalForEditing
   && goalForEditing.standard
@@ -159,43 +159,8 @@ const GoalPicker = ({
     fetchCitations();
   }, [goalForEditing, regionId, startDate, grantIds, isMonitoringGoal]);
 
-  /*
   const onChangeGoal = async (goal) => {
     try {
-      if (goal.isCurated) {
-        const [promptsWithResponses, prompts] = await getGoalTemplatePrompts(
-          goal.goalTemplateId,
-          goal.goalIds,
-        );
-        console.log('\n\n\n1111111111111111111prompts from the sever: ', promptsWithResponses);
-        setTemplatePrompts(prompts);
-
-        // console.log('22222222222222222222Questions: ', prompts);
-
-        onChange({
-          ...goal,
-        });
-
-        if (promptsWithResponses) {
-          setTemplateResponses(promptsWithResponses);
-        }
-      } else {
-        onChange(goal);
-        setTemplateResponses(false);
-      }
-
-      setSelectedGoal(null);
-    } catch (err) {
-      onChange(goal);
-      setTemplateResponses(false);
-    }
-  };
-  */
-  
-  const onChangeGoal = async (goal) => {
-    try {
-      console.log('on goal change', goal.id);
-      // setTemplateId(goal.id);
       onChange(goal);
       setSelectedGoal(null);
     } catch (err) {
