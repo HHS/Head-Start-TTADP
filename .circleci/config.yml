@@ -549,6 +549,9 @@ jobs:
             if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
               ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
             fi
+    - notify_slack:
+        message_text: "testing"
+        slack_channel: "tm-test"
 
     - notify_new_relic:
         target_env: << parameters.target_env >>
@@ -921,7 +924,7 @@ commands:
               done
               cd ..
               ./bin/notify-slack.sh \
-                "Environment owners changed: \`\`\`${msg}\`\`\`" \
+                "Environment owner changed: \`\`\`${msg}\`\`\`" \
                 "tm-test"
                 ${SLACK_BOT_TOKEN}
             else
@@ -1050,9 +1053,10 @@ commands:
         timeout: "1800"
     - run:
         when: on_fail
-        command: echo "Failed db restore to << parameters.target_env >>" > message.txt
-    - notify_slack:
-        message_text_file: message.txt
+        command: |
+          msg="DB Restore failed to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -1287,15 +1291,31 @@ commands:
             else
               MESSAGE="<< parameters.message_text >>"
             fi
-            ./bin/notify-slack.sh "<< parameters.message_text >>" "<< parameters.slack_channel >>"
+            
+            echo $MESSAGE_TEXT
+            # Ensure all parameters are provided
+            if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
+              echo "Missing required parameters. Notification will not be sent."
+              exit 0
+            fi
+
             response=$(curl -s -X POST \
               -H "Authorization: Bearer << parameters.slack_bot_token >>" \
               -H 'Content-type: application/json;charset=utf-8' \
               --data "{
-                  \"channel\": \"<< parameters.slack_channel >>\",
-                  \"text\": \"${MESSAGE}\"
+                \"channel\": \"<< parameters.slack_channel >>\",
+                \"text\": \"$MESSAGE_TEXT\"
               }" \
               https://slack.com/api/chat.postMessage)
+            ok=$(echo $response | jq -r '.ok')
+            error=$(echo $response | jq -r '.error')
+            if [ "$ok" != "true" ]; then
+              echo "Slack notification failed: $error"
+              exit 1
+            else
+              echo "Slack notification sent successfully"
+            fi
+
   
   notify_slack_deploy:
     parameters:
