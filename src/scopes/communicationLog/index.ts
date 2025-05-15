@@ -41,6 +41,6 @@ export const topicToQuery = {
   },
 };
 
-export function communicationLogFiltersToScopes(filters, options, userId) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId);
+export function communicationLogFiltersToScopes(filters, options, userId, validTopics) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
 }
