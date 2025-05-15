@@ -1283,7 +1283,7 @@ commands:
     - run:
         name: Notify Slack
         command: |
-          if [[ -z "<< parameters.message_text >>" ]]; then
+          if [[ -n "<< parameters.message_text >>" ]]; then
             MESSAGE="<< parameters.message_text >>"
           else
             MESSAGE=$(cat "<< parameters.message_text_file >>")            
