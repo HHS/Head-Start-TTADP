@@ -513,6 +513,7 @@ jobs:
       target_env:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -540,6 +541,14 @@ jobs:
         command: |
           set -x
           cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+    - run:
+        name: Alert on migration failure
+        when: on_fail
+        command: |
+            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+            fi
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
@@ -910,7 +919,10 @@ commands:
                 fi; 
               done
               cd ..
-              printf ${msg} > msg.txt
+              ./bin/notify-slack.sh \
+                "Environment owner changed: \`\`\`${msg}\`\`\`" \
+                "tm-test"
+                ${SLACK_BOT_TOKEN}
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
@@ -921,8 +933,6 @@ commands:
         key: 'environment-owners'
         paths:
         - environments
-    - notify_slack:
-        message_text_file: msg.txt
 
   cf_cmd:
     description: "Login, run task, send notification"
@@ -1039,9 +1049,10 @@ commands:
         timeout: "1800"
     - run:
         when: on_fail
-        command: echo "Failed db restore to << parameters.target_env >>" > message.txt
-    - notify_slack:
-        message_text_file: message.txt
+        command: |
+          msg="DB Restore failed to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -1269,25 +1280,16 @@ commands:
     - run:
         name: Notify Slack
         command: |
-          set -x
-
-          # Evaluate message_text_script if provided
-          if [ -n "<< parameters.message_text_file >>" ]; then
-            if [ -f << parameters.message_text_file >> ]; then
-              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
-            else
-              echo "<< parameters.message_text_file >> does not exist"
-              exit 0
-            fi
+          if [[ -n "<< parameters.message_text >>" ]]; then
+            MESSAGE="<< parameters.message_text >>"
           else
-            MESSAGE_TEXT="<< parameters.message_text >>"
+            MESSAGE=$(cat "<< parameters.message_text_file >>")            
           fi
-
-          echo $MESSAGE_TEXT
-
+          
+          echo "Sending: ${MESSAGE}"
           # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
-            echo "Missing required parameters. Notification will not be sent."
+          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
+            echo "Missing required parameter. Notification will not be sent."
             exit 0
           fi
 
@@ -1296,13 +1298,11 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
+              \"text\": \"$MESSAGE\"
             }" \
             https://slack.com/api/chat.postMessage)
-
           ok=$(echo $response | jq -r '.ok')
           error=$(echo $response | jq -r '.error')
-
           if [ "$ok" != "true" ]; then
             echo "Slack notification failed: $error"
             exit 1
@@ -1310,6 +1310,7 @@ commands:
             echo "Slack notification sent successfully"
           fi
 
+  
   notify_slack_deploy:
     parameters:
       slack_bot_token:
