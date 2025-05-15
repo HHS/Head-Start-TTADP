@@ -532,9 +532,6 @@ jobs:
     - run:
         name: Build frontend assets
         command: yarn --cwd frontend run build
-    - notify_slack:
-        message_text: "testing"
-        slack_channel: "tm-test"
     - cf_deploy:
         target_env: << parameters.target_env >>
     - write_envs:
