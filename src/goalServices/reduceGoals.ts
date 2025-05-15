@@ -472,7 +472,7 @@ export function reduceGoals(
             // key: `${currentValue.grant.id}-${p.response?.map((pr) => pr).join('-')}`,
             key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
             promptId: p.promptId,
-            responses: p.response,
+            responses: p.response || [],
             recipients: [
               {
                 id: currentValue.grant.recipientId,
@@ -534,7 +534,7 @@ export function reduceGoals(
       const promptsForReview = forReport ? (currentValue.dataValues.prompts || []).map((p) => ({
         key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
         promptId: p.promptId,
-        responses: p.response,
+        responses: p.response || [],
         recipients: [{
           id: currentValue.grant.recipientId,
           name: currentValue.grant.recipientNameWithPrograms,

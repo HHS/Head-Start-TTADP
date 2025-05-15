@@ -646,7 +646,18 @@ describe('goalTemplates services', () => {
     });
 
     it('retrieves field prompts for a curated template', async () => {
-      const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
+      // We bring back both the prompts with responses and all the template prompts.
+      const [restructuredPrompts, prompts] = await getFieldPromptsForCuratedTemplate(
+        template.id,
+        [goal.id],
+      );
+      const restructuredPrompt = restructuredPrompts.find((p) => p.promptId === prompt.id);
+      const restructuredPromptTwo = restructuredPrompts.find((p) => p.promptId === promptTwo.id);
+      expect(restructuredPrompt).toBeDefined();
+      expect(restructuredPromptTwo).toBeDefined();
+      expect(restructuredPrompt.prompt).toBe(prompt.prompt);
+      expect(restructuredPromptTwo.prompt).toBe(promptTwo.prompt);
+
       expect(prompts).toBeDefined();
       expect(Array.isArray(prompts)).toBe(true);
       expect(prompts.length).toBeGreaterThan(0);
@@ -654,19 +665,29 @@ describe('goalTemplates services', () => {
     });
 
     it('restructures prompts with responses', async () => {
-      const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
+      const [restructuredPrompts, prompts] = await getFieldPromptsForCuratedTemplate(
+        template.id,
+        [goal.id],
+      );
+
+      // Assert restructured prompts.
+      expect(restructuredPrompts).toBeDefined();
+      expect(Array.isArray(restructuredPrompts)).toBe(true);
+      expect(restructuredPrompts.length).toBe(2);
+      expect(restructuredPrompts[0].promptId).toBe(prompt.id);
+      expect(restructuredPrompts[1].promptId).toBe(promptTwo.id);
+      expect(restructuredPrompts[0].response).toEqual(['option 1']);
+      expect(restructuredPrompts[1].response).toEqual(['option 4']);
+      expect(restructuredPrompts[0].prompt).toBe(prompt.prompt);
+      expect(restructuredPrompts[1].prompt).toBe(promptTwo.prompt);
+
+      // Assert prompts.
       expect(prompts).toBeDefined();
       expect(Array.isArray(prompts)).toBe(true);
       expect(prompts.length).toBeGreaterThan(0);
 
       const promptWithResponse = prompts.find((p) => p.promptId === prompt.id);
       const promptWithoutResponse = prompts.find((p) => p.promptId === promptTwo.id);
-
-      expect(promptWithResponse).toBeDefined();
-      expect(promptWithResponse.response).toEqual(['option 1']);
-
-      expect(promptWithoutResponse).toBeDefined();
-      expect(promptWithoutResponse.response).toEqual(['option 4']);
     });
 
     it('returns prompts with existing responses', async () => {
@@ -688,12 +709,27 @@ describe('goalTemplates services', () => {
         response: existingResponse,
       });
 
-      const prompts = await getFieldPromptsForCuratedTemplate(template.id, [goal.id]);
+      const [restructuredPrompts, prompts] = await getFieldPromptsForCuratedTemplate(
+        template.id,
+        [goal.id],
+      );
+
+      // Assert restructured prompts.
+      expect(restructuredPrompts).toBeDefined();
+      expect(Array.isArray(restructuredPrompts)).toBe(true);
+      expect(restructuredPrompts.length).toBe(3);
+
+      // Get the existing response prompt.
+      // eslint-disable-next-line max-len
+      const promptWithResponse = restructuredPrompts.find((p) => p.promptId === promptWithExistingResponse.id);
+      expect(promptWithResponse).toBeDefined();
+      expect(promptWithResponse.response).toEqual(existingResponse);
+
       // eslint-disable-next-line @typescript-eslint/no-shadow
       const prompt = prompts.find((p) => p.promptId === promptWithExistingResponse.id);
 
       expect(prompt).toBeDefined();
-      expect(prompt.response).toEqual(existingResponse);
+      expect(prompt.promptId).toBe(promptWithExistingResponse.id);
     });
   });
 
