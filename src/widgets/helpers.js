@@ -68,7 +68,7 @@ export async function getAllRecipientsFiltered(scopes) {
     attributes: [
       [sequelize.fn('COUNT', sequelize.fn(
         'DISTINCT',
-        sequelize.col('"activityRecipients->grant->recipient"."id"'),
+        sequelize.col('"Recipient"."id"'),
       )), 'numRecipients'],
     ],
     raw: true,
