@@ -66,8 +66,10 @@ export function baseTRScopes(scopes) {
 export async function getAllRecipientsFiltered(scopes) {
   return Recipient.findAll({
     attributes: [
-      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'], // This is required for scopes.
-      [sequelize.col('grants.regionId'), 'regionId'],
+      [sequelize.fn('COUNT', sequelize.fn(
+        'DISTINCT',
+        sequelize.col('"activityRecipients->grant->recipient"."id"'),
+      )), 'numRecipients'],
     ],
     raw: true,
     where: {
