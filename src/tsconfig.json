@@ -13,8 +13,7 @@
   "include": [
     "./**/*.js",
     "./**/*.ts",
-    "../tools/**/*.js",
-    "../cucumber/**/*.js"
+    "../tools/**/*.js"
   ]
 }
 
