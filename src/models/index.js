@@ -64,6 +64,22 @@ fs
     }
   });
 
+const descriptiveDetails = () => {
+  const loggedUser = httpContext.get('loggedUser') || null;
+  const transactionId = httpContext.get('transactionId') || null;
+  const sessionSig = httpContext.get('sessionSig') || null;
+  const impersonationId = httpContext.get('impersonationUserId') || null;
+  const descriptor = httpContext.get('auditDescriptor') || null;
+
+  return {
+    ...(descriptor && { descriptor }),
+    ...(loggedUser && { loggedUser }),
+    ...(impersonationId && { impersonationId }),
+    ...(sessionSig && { sessionSig }),
+    ...(transactionId && { transactionId }),
+  };
+};
+
 // make models for remaining audit system tables
 {
   const model = audit.generateZALDDL(sequelize);
@@ -92,6 +108,7 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+db.descriptiveDetails = descriptiveDetails;
 db.isConnectionOpen = isConnectionOpen;
 
 module.exports = db;

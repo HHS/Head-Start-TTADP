@@ -100,10 +100,6 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'activity-summary', true);
 
-    // change some data
-    const other = await screen.findByRole('radio', { name: /other entity/i });
-    act(() => userEvent.click(other));
-
     let virt = await screen.findByRole('radio', { name: /virtual/i });
     expect(virt.checked).toBe(false);
 
@@ -134,7 +130,7 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'review', true);
 
-    await screen.findByRole('heading', { name: /submit report/i, timeout: 4000 });
+    await screen.findByRole('heading', { name: /Review and submit/i, timeout: 4000 });
 
     let submit = await screen.findByRole('button', { name: /submit for approval/i });
     expect(submit).toBeDisabled();

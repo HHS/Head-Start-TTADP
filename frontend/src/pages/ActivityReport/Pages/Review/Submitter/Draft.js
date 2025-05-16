@@ -6,6 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
+import { Accordion } from '../../../../../components/Accordion';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../../../../../components/IncompletePages';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
@@ -31,6 +32,7 @@ const Draft = ({
   creatorRole,
   grantsMissingMonitoring,
   grantsMissingCitations,
+  reviewItems,
 }) => {
   const {
     watch,
@@ -110,8 +112,16 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Submit Report</h2>
+      <h2>Review and submit</h2>
       <IndicatesRequiredField />
+      <p className="usa-prose margin-top-2 margin-bottom-3">
+        Review the information in each section before submitting for approval.
+        <br />
+        Once submitted, you will no longer be able to edit the report.
+      </p>
+      {reviewItems && reviewItems.length > 0 && (
+      <Accordion bordered items={reviewItems} multiselectable />
+      )}
       <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
           showRolesDropdown
@@ -137,7 +147,7 @@ const Draft = ({
             )
             : null
         }
-        <Fieldset className={`smart-hub--report-legend margin-top-4 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`} legend="Additional Notes">
+        <Fieldset className={`smart-hub--report-legend margin-top-4 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`}>
           <FormItem
             label="Creator notes"
             name="additionalNotes"
@@ -246,6 +256,11 @@ Draft.propTypes = {
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    content: PropTypes.node,
+  })).isRequired,
 };
 
 Draft.defaultProps = {

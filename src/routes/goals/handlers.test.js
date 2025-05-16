@@ -522,12 +522,17 @@ describe('goal handlers', () => {
       await changeGoalStatus(req, mockResponse);
 
       expect(db.Objective.update).toHaveBeenCalledWith(
-        { status: 'Suspended' },
+        {
+          status: 'Suspended',
+          closeSuspendReason: 'Temporarily paused',
+          closeSuspendContext: 'Will resume later',
+        },
         {
           where: {
             goalId: 100000,
             status: 'In Progress',
           },
+          individualHooks: true,
         },
       );
       expect(mockResponse.json).toHaveBeenCalledWith({ id: 100000, status: 'Suspended' });

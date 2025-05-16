@@ -9,7 +9,15 @@ import {
   updateStandardGoal,
 } from '../standardGoals';
 
-jest.mock('../index');
+jest.mock('../index', () => {
+  const originalModule = jest.requireActual('../index');
+  return {
+    ...originalModule,
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+  };
+});
 
 const standardGoalUrl = join('/', 'api', 'goal-templates', 'standard');
 
@@ -74,15 +82,8 @@ describe('StandardGoals fetcher', () => {
       goalTemplateId: 1,
       data: 'Expected',
     };
-    try {
-      await addStandardGoal(goalData);
-      throw new Error('Expected addStandardGoal to throw HTTPError, but it did not.');
-    } catch (error) {
-      // eslint-disable-next-line jest/no-conditional-expect, jest/no-try-expect
-      expect(error).toBeDefined();
-    }
-
     const expectedUrl = join(standardGoalUrl, '1', 'grant', '1');
+    await expect(addStandardGoal(goalData)).rejects.toThrow();
     expect(post).toHaveBeenCalledWith(expectedUrl, { data: 'Expected' });
   });
 

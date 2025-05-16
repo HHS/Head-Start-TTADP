@@ -227,7 +227,7 @@ GoalCardsHeader.propTypes = {
 GoalCardsHeader.defaultProps = {
   allGoalsChecked: false,
   count: 0,
-  selectAllGoalCheckboxSelect: () => { },
-  selectAllGoals: () => { },
+  selectAllGoalCheckboxSelect: () => {},
+  selectAllGoals: () => {},
   numberOfSelectedGoals: 0,
 };
