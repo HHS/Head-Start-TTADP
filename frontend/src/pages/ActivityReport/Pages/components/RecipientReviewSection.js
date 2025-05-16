@@ -45,6 +45,9 @@ const RecipientReviewSection = () => {
           label: 'Topics', name: 'topics', path: 'name', sort: true,
         },
         {
+          label: 'iPD Courses', name: 'courses', path: 'name', sort: true,
+        },
+        {
           label: 'Resource links', name: 'resources', path: 'value', sort: true,
         },
         {

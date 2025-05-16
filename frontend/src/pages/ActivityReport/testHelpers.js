@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
+/* istanbul ignore file: tested elsewhere  */
 import React from 'react';
 import { Router } from 'react-router';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
