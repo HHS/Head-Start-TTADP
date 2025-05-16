@@ -93,8 +93,8 @@ function addObjectiveSectionsToArray(
         ...(objective.citations && objective.citations.length > 0
           ? { 'Citations addressed': <RenderReviewCitations citations={objective.citations} activityRecipients={activityRecipients} className="" /> } : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
-        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)) || 'None provided',
-        'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
+        'iPD courses': objective.courses.length ? formatSimpleArray(objective.courses.map(({ name }) => name)) : 'None provided',
+        'Resource links': objective.resources.length ? formatObjectiveLinks(objective.resources, isOtherEntity) : 'None provided',
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
