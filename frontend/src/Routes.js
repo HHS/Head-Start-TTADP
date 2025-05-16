@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Redirect,
@@ -11,10 +11,13 @@ import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 import Admin from './pages/Admin';
+import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
+import ResourcesDashboard from './pages/ResourcesDashboard';
 import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
 import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
@@ -22,6 +25,7 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
+import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
@@ -35,6 +39,7 @@ import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import QADashboard from './pages/QADashboard';
 import SomethingWentWrong from './components/SomethingWentWrong';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
@@ -42,12 +47,6 @@ import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWith
 import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
-
-const Landing = React.lazy(() => import('./pages/Landing'));
-const RecipientRecord = React.lazy(() => import('./pages/RecipientRecord'));
-const RegionalDashboard = React.lazy(() => import('./pages/RegionalDashboard'));
-const QADashboard = React.lazy(() => import('./pages/QADashboard'));
-const ResourcesDashboard = React.lazy(() => import('./pages/ResourcesDashboard'));
 
 export default function Routes({
   alert,
@@ -103,9 +102,7 @@ export default function Routes({
           render={({ match }) => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <LandingLayout>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <Landing match={match} />
-                </Suspense>
+                <Landing match={match} />
               </LandingLayout>
             </AppWrapper>
           )}
@@ -139,14 +136,12 @@ export default function Routes({
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
-              <Suspense fallback={<div>Loading...</div>}>
-                <RecipientRecord
-                  location={location}
-                  match={match}
-                  user={user}
-                  hasAlerts={!!(alert)}
-                />
-              </Suspense>
+              <RecipientRecord
+                location={location}
+                match={match}
+                user={user}
+                hasAlerts={!!(alert)}
+              />
             </AppWrapper>
           )}
         />
@@ -155,9 +150,7 @@ export default function Routes({
           path="/dashboards/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <Suspense fallback={<div>Loading...</div>}>
-                <ResourcesDashboard user={user} />
-              </Suspense>
+              <ResourcesDashboard user={user} />
             </AppWrapper>
           )}
         />
@@ -246,9 +239,7 @@ export default function Routes({
                 logout={logout}
                 hasAlerts={!!(alert)}
               >
-                <Suspense fallback={<div>Loading...</div>}>
-                  <QADashboard />
-                </Suspense>
+                <QADashboard />
               </AppWrapper>
             </FeatureFlag>
           )}
@@ -263,9 +254,7 @@ export default function Routes({
               logout={logout}
               hasAlerts={!!(alert)}
             >
-              <Suspense fallback={<div>Loading...</div>}>
-                <RegionalDashboard match={match} />
-              </Suspense>
+              <RegionalDashboard match={match} />
             </AppWrapper>
           )}
         />
@@ -275,9 +264,7 @@ export default function Routes({
           render={({ match }) => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
               <FeatureFlag flag="training_reports_dashboard" renderNotFound>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <RegionalDashboard match={match} />
-                </Suspense>
+                <RegionalDashboard match={match} />
               </FeatureFlag>
             </AppWrapper>
           )}
