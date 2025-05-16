@@ -32,7 +32,6 @@ export default async function overview(scopes) {
       [sequelize.fn('COUNT', sequelize.fn(
         'DISTINCT',
         sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"')),
-        sequelize.col('"activityRecipients->grant"."regionId"'),
       )), 'numRecipients'],
     ],
     raw: true,
