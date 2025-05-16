@@ -7,7 +7,6 @@ import Submitter from './Submitter';
 import Approver from './Approver';
 import PrintSummary from '../PrintSummary';
 import './index.scss';
-import { Accordion } from '../../../../components/Accordion';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 
@@ -100,11 +99,8 @@ const ReviewSubmit = ({
             error={error}
             onSaveForm={onSaveForm}
             lastSaveTime={lastSaveTime}
-          >
-            <>
-              <Accordion bordered={false} items={items} multiselectable />
-            </>
-          </Submitter>
+            reviewItems={items || []}
+          />
         )}
       {(isApprover && !isDraft)
         && (
@@ -119,11 +115,8 @@ const ReviewSubmit = ({
             isPendingApprover={isPendingApprover}
             onResetToDraft={onReset}
             onFormSubmit={onFormSubmit}
-          >
-            <>
-              <Accordion bordered={false} items={items} />
-            </>
-          </Approver>
+            reviewItems={items || []}
+          />
         )}
     </>
   );
