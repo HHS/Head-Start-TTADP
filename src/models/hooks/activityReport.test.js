@@ -95,6 +95,8 @@ describe('activity report model hooks', () => {
         ttaType: ['type'],
         creatorRole: 'TTAC',
         additionalNotes: 'notes',
+        language: ['English'],
+        activityReason: 'recipient reason',
         version: 2,
       });
 
@@ -117,6 +119,8 @@ describe('activity report model hooks', () => {
         ttaType: ['type'],
         creatorRole: 'TTAC',
         version: 2,
+        language: ['English'],
+        activityReason: 'recipient reason',
       });
 
       await ActivityReportGoal.create({

@@ -18,6 +18,7 @@ const {
   GoalTemplateFieldPrompt,
   Objective,
   sequelize,
+  Topic,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
@@ -63,7 +64,7 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
 
   const resourceIds = resources
     .map((r) => {
-      if (r.resource && r.resource.id) return r.resource.id;
+      if (r.resource?.id) return r.resource.id;
       if (r.resourceId) return r.resourceId;
       return null;
     })
@@ -108,27 +109,50 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => {
-    if (!topic.id) {
-      auditLogger.error(`Error saving ARO topics: ${JSON.stringify(topics)} for objectiveId: ${objectiveId} and activityReportObjectiveId: ${activityReportObjectiveId}`);
+  // Find all topics with missing ids
+  const topicsNeedingLookup = topics.filter((t) => !t.id && t.name);
+  let resolvedTopics = [];
+  if (topicsNeedingLookup.length > 0) {
+    auditLogger.info(
+      'Some topics were missing IDs and required a lookup. '
+      + `ObjectiveId: ${objectiveId}, AROId: ${activityReportObjectiveId}, `
+      + `Raw topics: ${JSON.stringify(topicsNeedingLookup)}`,
+    );
+    const topicNames = topicsNeedingLookup.map((t) => t.name);
+    const foundTopics = await Topic.findAll({
+      where: { name: topicNames },
+    });
+
+    // Log any that weren't found
+    const foundNames = new Set(foundTopics.map((t) => t.name));
+    const missing = topicNames.filter((n) => !foundNames.has(n));
+    if (missing.length) {
+      auditLogger.error(`Could not resolve topic names: ${missing.join(', ')} for objectiveId: ${objectiveId}`);
     }
-    return topic.id;
-  });
+
+    resolvedTopics = foundTopics.map((t) => ({ id: t.id, name: t.name }));
+  }
+
+  const enrichedTopics = topics.map((t) => {
+    if (t.id) return t;
+    const resolved = resolvedTopics.find((rt) => rt.name === t.name);
+    return resolved ? { ...t, id: resolved.id } : null;
+  }).filter(Boolean);
+
+  const topicIds = enrichedTopics.map((t) => t.id);
 
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
   });
-  const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
-    || [];
-  // Get topics for ARO we need to delete.
-  const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
-  // Get topics to keep.
-  const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
-  const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
+  const originalTopicIds = originalAROTopics.map((t) => t.topicId);
+
+  const removedTopicIds = originalTopicIds.filter((id) => !topicsSet.has(id));
+  const currentTopicIds = new Set(originalTopicIds.filter((id) => topicsSet.has(id)));
+  const newTopicIds = topicIds.filter((id) => !currentTopicIds.has(id));
 
   return Promise.all([
-    ...newTopicsIds.map(async (topicId) => ActivityReportObjectiveTopic.create({
+    ...newTopicIds.map((topicId) => ActivityReportObjectiveTopic.create({
       activityReportObjectiveId,
       topicId,
     })),
@@ -415,6 +439,7 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
+  // TODO: We shouldn't need this once standard goals is implemented.
   if (isMultiRecipientReport) {
     // Check for fei goal prompts we need to update on the activity report goal.
     const goalPrompts = await GoalFieldResponse.findAll({

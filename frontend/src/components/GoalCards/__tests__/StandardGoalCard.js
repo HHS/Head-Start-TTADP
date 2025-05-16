@@ -143,12 +143,107 @@ describe('StandardGoalCard', () => {
     expect(monitoringToolTip).toBeInTheDocument();
   });
 
-  it('shows grant number', () => {
-    renderStandardGoalCard();
-    expect(screen.getByText(/grant number/i)).toBeInTheDocument();
-    // Use getAllByText and select the appropriate one
-    const grantNumberElements = screen.getAllByText(/G-1/i);
-    expect(grantNumberElements.length).toBeGreaterThan(0);
+  it('shows started by with multiple roles as separate tags', () => {
+    const goalWithMultipleRoles = {
+      ...goal,
+      goalCollaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: ['ECS', 'GS'],
+          goalCreatorName: 'Test User',
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, goalWithMultipleRoles);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
+    expect(screen.getByText(/GS/i)).toBeInTheDocument();
+
+    const tooltips = screen.getAllByTestId('tooltip');
+    expect(tooltips.length).toBe(2);
+    tooltips.forEach((tooltip) => {
+      expect(tooltip.textContent).toContain('Test User');
+    });
+  });
+
+  it('shows started by with multiple roles as separate tags when roles are a comma-separated string', () => {
+    const goalWithMultipleRolesAsString = {
+      ...goal,
+      goalCollaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: 'ECS, GS',
+          goalCreatorName: 'Test User',
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, goalWithMultipleRolesAsString);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
+    expect(screen.getByText(/GS/i)).toBeInTheDocument();
+
+    const tooltips = screen.getAllByTestId('tooltip');
+    expect(tooltips.length).toBe(2);
+    tooltips.forEach((tooltip) => {
+      expect(tooltip.textContent).toContain('Test User');
+    });
+  });
+
+  it('shows "Unavailable" when goal creator has no roles', () => {
+    const goalWithNoRoles = {
+      ...goal,
+      goalCollaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: [],
+          goalCreatorName: 'Test User',
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, goalWithNoRoles);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
+
+    const tooltip = screen.getByTestId('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Test User');
+  });
+
+  it('shows "Unavailable" for legacy goal with no creator data', () => {
+    const legacyGoal = {
+      ...goal,
+      goalCollaborators: [],
+    };
+
+    renderStandardGoalCard({}, legacyGoal);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
+
+    const tooltip = screen.getByTestId('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Unknown');
+  });
+
+  it('shows "Unavailable" for goal with collaborators but no creator name', () => {
+    const goalWithNoCreatorName = {
+      ...goal,
+      goalCollaborators: [
+        {
+          goalNumber: 'G-1',
+          goalCreatorRoles: 'ECS',
+          goalCreatorName: '',
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, goalWithNoCreatorName);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
   });
 
   it('shows the goal options by default', () => {

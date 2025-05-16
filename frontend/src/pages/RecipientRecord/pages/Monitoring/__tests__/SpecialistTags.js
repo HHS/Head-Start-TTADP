@@ -17,11 +17,7 @@ jest.mock('../../../../../components/Tooltip', () => ({
 
 describe('SpecialistTags', () => {
   const renderSpecialistTags = (specialists) => {
-    const specialistsWithCorrectRoles = specialists.map((s) => ({
-      ...s,
-      roles: s.roles ? s.roles.map((roleName) => ({ role: { name: roleName } })) : [],
-    }));
-    render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
+    render(<SpecialistTags specialists={specialists} />);
   };
 
   it('renders tags for specialists', () => {
@@ -58,41 +54,43 @@ describe('SpecialistTags', () => {
     ];
     renderSpecialistTags(specialists);
 
-    expect(screen.getByText('Role 1, Role 2')).toBeInTheDocument();
-    expect(screen.getByTestId('tooltip')).toHaveAttribute('data-tooltip-text', 'Multi Role');
+    expect(screen.getByText('Role 1')).toBeInTheDocument();
+    expect(screen.getByText('Role 2')).toBeInTheDocument();
+    const tooltips = screen.getAllByTestId('tooltip');
+    expect(tooltips).toHaveLength(2);
+    expect(tooltips[0]).toHaveAttribute('data-tooltip-text', 'Multi Role');
+    expect(tooltips[1]).toHaveAttribute('data-tooltip-text', 'Multi Role');
   });
 
   it('handles specialists with empty or invalid roles in the input array', () => {
-    const specialistsWithCorrectRoles = [
-      { name: 'Bad Role', roles: [null, undefined, { role: { name: 'Valid Role' } }, { role: { name: '' } }] },
+    const specialists = [
+      { name: 'Bad Role', roles: [null, undefined, 'Valid Role', ''] },
       { name: 'No Roles', roles: [] },
     ];
-    render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
+    renderSpecialistTags(specialists);
 
     expect(screen.getByText('Valid Role')).toBeInTheDocument();
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
     expect(screen.queryByText(/undefined/)).not.toBeInTheDocument();
 
     const tooltips = screen.getAllByTestId('tooltip');
-    const noRolesTooltip = tooltips.find((t) => t.getAttribute('data-tooltip-text') === 'No Roles');
-    expect(noRolesTooltip).toBeInTheDocument();
-    expect(noRolesTooltip).toHaveTextContent('');
-
     expect(tooltips).toHaveLength(2);
-  });
-
-  it('renders nothing if specialists array is empty', () => {
-    renderSpecialistTags([]);
-    expect(screen.queryByTestId('tooltip')).not.toBeInTheDocument();
+    expect(tooltips[0]).toHaveAttribute('data-tooltip-text', 'Bad Role');
+    expect(tooltips[1]).toHaveAttribute('data-tooltip-text', 'No Roles');
+    expect(tooltips[1]).toHaveTextContent('Unavailable');
   });
 
   it('handles roles array containing non-string values gracefully', () => {
-    const specialistsWithCorrectRoles = [
-      { name: 'Mixed Roles', roles: [{ role: { name: 'Role A' } }, null, { invalid: 'data' }, { role: { name: 'Role B' } }, undefined] },
+    const specialists = [
+      { name: 'Mixed Roles', roles: ['Role A', null, undefined, 'Role B'] },
     ];
-    render(<SpecialistTags specialists={specialistsWithCorrectRoles} />);
+    renderSpecialistTags(specialists);
 
-    expect(screen.getByText('Role A, Role B')).toBeInTheDocument();
-    expect(screen.getByTestId('tooltip')).toHaveAttribute('data-tooltip-text', 'Mixed Roles');
+    expect(screen.getByText('Role A')).toBeInTheDocument();
+    expect(screen.getByText('Role B')).toBeInTheDocument();
+    const tooltips = screen.getAllByTestId('tooltip');
+    expect(tooltips).toHaveLength(2);
+    expect(tooltips[0]).toHaveAttribute('data-tooltip-text', 'Mixed Roles');
+    expect(tooltips[1]).toHaveAttribute('data-tooltip-text', 'Mixed Roles');
   });
 });

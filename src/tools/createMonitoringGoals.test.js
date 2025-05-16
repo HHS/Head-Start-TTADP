@@ -2433,7 +2433,7 @@ describe('createMonitoringGoals', () => {
     await sequelize.close();
   });
 
-  it('logs an error is the monitoring goal template doesn\'t exist', async () => {
+  it('logs an error if the monitoring goal template does not exist', async () => {
     // Get the current function for the GoalTemplate.findOne method and but it back later.
     const originalFindOne = GoalTemplate.findOne;
     // Mock the GoalTemplate.findOne method to return null.
@@ -2543,12 +2543,13 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus12.userName).toBe('system');
     expect(goalChangeStatus12.reason).toBe('Active monitoring citations');
 
-    // CASE 13: Closes monitoring goal that no longer has any active citations.
+    // CASE 13: Does not auto-close monitoring goal that no longer has any active citations.
     const grant13Goals = await Goal.findAll({ where: { grantId: grantClosedMonitoringGoal13.id } });
     expect(grant13Goals.length).toBe(1);
     expect(grant13Goals[0].goalTemplateId).toBe(goalTemplate.id);
-    expect(grant13Goals[0].status).toBe('Closed');
+    expect(grant13Goals[0].status).toBe('Not started');
 
+    /* Commenting out temporarily since we're not auto-closing goals
     // Ensure the correct GoalChangeStatus has been created.
     // with goal hooks (createInitialStatusChange), there will be two status changes:
     // 1. the initial status change (oldStatus=null, newStatus='Closed')
@@ -2567,6 +2568,7 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus13.newStatus).toBe('Closed');
     expect(goalChangeStatus13.userName).toBe('system');
     expect(goalChangeStatus13.reason).toBe('No active monitoring citations');
+    */
 
     // CASE 14: Monitoring goal with no active citations but has a unapproved report (don't close).
     const grant14Goals = await Goal.findAll({ where: { grantId: grantToNotCloseMonitoringGoal14.id } });
@@ -2609,7 +2611,7 @@ describe('createMonitoringGoals', () => {
     // Mock GoalTemplate.findOne to throw an error:
     GoalTemplate.findOne = jest.fn().mockRejectedValueOnce(new Error('Test error'));
     jest.spyOn(auditLogger, 'error');
-    await createMonitoringGoals();
+    await expect(createMonitoringGoals()).rejects.toThrow();
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error creating monitoring:'));
   });
 });

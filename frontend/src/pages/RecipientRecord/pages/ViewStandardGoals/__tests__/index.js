@@ -362,20 +362,33 @@ describe('ViewGoalDetails', () => {
     expect(within(objective1).getByText('In Progress')).toBeInTheDocument();
 
     // reports
-    const reportsField = within(objective1).getByText('Reports').closest('div');
-    const reportLink1 = within(reportsField).getByRole('link', { name: 'R-101' });
-    const reportLink2 = within(reportsField).getByRole('link', { name: 'R-102' });
+    const reportsLabel = within(objective1).getByText('Reports');
+    const reportsContainer = reportsLabel.closest('div').parentElement;
+    const reportsValue = within(reportsContainer).getAllByTestId('read-only-value')
+      .find((el) => el.textContent.includes('R-101'));
+
+    const reportLink1 = within(reportsValue).getByRole('link', { name: 'R-101' });
+    const reportLink2 = within(reportsValue).getByRole('link', { name: 'R-102' });
     expect(reportLink1).toHaveAttribute('href', '/activity-reports/101');
     expect(reportLink2).toHaveAttribute('href', '/activity-reports/102');
-    expect(reportsField).toHaveTextContent('R-101, R-102'); // check comma separation
+    expect(reportsValue).toHaveTextContent('R-101, R-102'); // check comma separation
 
     // topics (unique and sorted)
-    const topicsField = within(objective1).getByText('Topics').closest('div');
-    expect(topicsField).toHaveTextContent('Topic A, Topic B, Topic C'); // check unique, comma-separated
+    const topicsLabel = within(objective1).getByText('Topics');
+    const topicsContainer = topicsLabel.closest('div').parentElement;
+    const topicsValue = within(topicsContainer).getAllByTestId('read-only-value')
+      .find((el) => el.textContent.includes('Topic'));
+
+    expect(topicsValue).toHaveTextContent('Topic A, Topic B, Topic C'); // check unique, comma-separated
 
     // Resources
-    const resourcesField = within(objective1).getByText('Resources').closest('div');
-    const resourceList = within(resourcesField).getByRole('list');
+    // Resources are handled differently in the component - they use a separate p and ul structure
+    const resourcesLabel = within(objective1).getByText('Resources');
+    // Since resources use a different structure (not ReadOnlyField), we can use nextElementSibling
+    const resourceList = resourcesLabel.nextElementSibling;
+    // Verify we found the right element
+    expect(resourceList.tagName).toBe('UL');
+
     const resourceLink1 = within(resourceList).getByRole('link', { name: 'Resource 1' });
     const resourceLink2 = within(resourceList).getByRole('link', { name: 'http://example.com/resource2' });
     expect(resourceLink1).toHaveAttribute('href', 'http://example.com/resource1');
