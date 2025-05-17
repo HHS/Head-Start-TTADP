@@ -58,8 +58,7 @@ const transformMultiselectValidationsIntoRules = (validations) => validations.ru
   };
 }, {
   validate: validations.required ? {
-    // mustSelectOne: (value) => (value && value.length > 0) || 'Please select at least one option',
-    mustSelectOne: (value) => value.length > 0 || 'Please select at least one option',
+    mustSelectOne: (value) => (value && value.length > 0) || 'Please select at least one option',
   } : {},
 });
 
@@ -107,7 +106,6 @@ export const
     console.log('3. For Combine: templatePrompts', templatePrompts);
     console.log('4. For Combine: grantIds', activityRecipients);
     */
-
     // Get a distinct list of prompts per grant.
     const promptsPerGrant = uniqBy([
       ...(templateResponses || []),

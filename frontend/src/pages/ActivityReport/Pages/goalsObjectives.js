@@ -22,7 +22,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import { NOOP } from '../../../Constants';
-import useFormGrantData, { calculateFormGrantData } from '../../../hooks/useFormGrantData';
+import useFormGrantData from '../../../hooks/useFormGrantData';
 import Modal from '../../../components/Modal';
 import ConnectionError from '../../../components/ConnectionError';
 
@@ -92,18 +92,16 @@ const GoalsObjectives = ({
     toggleGoalForm,
   } = useContext(GoalFormContext);
 
-  const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const startDate = watch('startDate');
   const pageState = getValues('pageState');
   const goalForEditing = watch('goalForEditing');
 
   const {
-    isRecipientReport,
     grantIds,
     hasMultipleGrants,
     hasGrant,
-  } = useFormGrantData(activityRecipientType, activityRecipients);
+  } = useFormGrantData(activityRecipients);
 
   const [fetchError, setFetchError] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState([]);
@@ -126,7 +124,7 @@ const GoalsObjectives = ({
 
   useDeepCompareEffect(() => {
     const fetchGoalTemplates = async () => {
-      if (isRecipientReport && hasGrant) {
+      if (hasGrant) {
         try {
           const fetchedGoalTemplates = await getGoalTemplates(grantIds);
 
@@ -151,9 +149,7 @@ const GoalsObjectives = ({
     };
 
     fetchGoalTemplates();
-  }, [grantIds, hasGrant, isRecipientReport]);
-
-  const showGoals = isRecipientReport && hasGrant;
+  }, [grantIds, hasGrant]);
 
   const addNewGoal = () => {
     toggleGoalForm(false);
@@ -259,23 +255,14 @@ const GoalsObjectives = ({
     grants: [],
   }));
 
-  const isFormOpen = (
-    isRecipientReport && !isGoalFormClosed
-  ) || !isObjectivesFormClosed;
+  const isFormOpen = !isGoalFormClosed || !isObjectivesFormClosed;
 
   const startDateHasValue = startDate && startDate !== 'Invalid date';
 
-  const alertIsDisplayed = !isRecipientReport
-    || !startDateHasValue
-    || (isRecipientReport && !showGoals);
+  const alertIsDisplayed = !startDateHasValue || !hasGrant;
   const determineReportTypeAlert = () => {
     const messages = [];
 
-    // Check that the report type is set.
-    if (!isRecipientReport
-    || (isRecipientReport && !showGoals)) {
-      messages.push('Who the activity was for');
-    }
     // Check the startDate is set.
     if (!startDateHasValue) {
       messages.push('Start date of the activity');
@@ -352,7 +339,7 @@ const GoalsObjectives = ({
         * conditionally show the goal picker
       */}
 
-      {showGoals && !isGoalFormClosed && startDateHasValue
+      {hasGrant && !isGoalFormClosed && startDateHasValue
         ? (
           <>
             { fetchError && (<ConnectionError />)}
@@ -372,7 +359,7 @@ const GoalsObjectives = ({
         * we show the add new goal button if we are reviewing existing goals
         * and if the report HAS goals
         */}
-      {showGoals && isGoalFormClosed && isRecipientReport
+      {hasGrant && isGoalFormClosed
         ? (
           <PlusButton onClick={addNewGoal} text="Add new goal" />
         ) : (
@@ -399,20 +386,13 @@ export default {
   path: 'goals-objectives',
   review: false,
   isPageComplete: (formData) => {
-    const { activityRecipientType, activityRecipients } = formData;
-
-    const { hasMultipleGrants } = calculateFormGrantData(activityRecipientType, activityRecipients);
-    if (!activityRecipientType) {
-      return false;
-    }
-
     // if the goal form is open (i.e. the goal for editing is set), the page cannot be complete
     // at least as far as my thinking goes
     if (formData.goalForEditing) {
       return false;
     }
 
-    return validateGoals(formData.goals, NOOP, hasMultipleGrants) === true;
+    return validateGoals(formData.goals, NOOP) === true;
   },
   reviewSection: () => <ReviewSection />,
   render: (

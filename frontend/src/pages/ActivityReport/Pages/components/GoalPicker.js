@@ -9,7 +9,6 @@ import {
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
-// import { getGoalTemplatePrompts } from '../../../../fetchers/goalTemplates';
 import Req from '../../../../components/Req';
 import Option from './GoalOption';
 import SingleValue from './GoalValue';
@@ -22,7 +21,6 @@ import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 import Drawer from '../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../components/DrawerTriggerButton';
-// import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -56,12 +54,6 @@ const GoalPicker = ({
     control, setValue, watch,
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
-  // the date picker component, as always, presents special challenges, it needs a key updated
-  // to re-render appropriately
-
-  // const [templateResponses, setTemplateResponses] = useState(false);
-  // const [templatePrompts, setTemplatePrompts] = useState([]);
-
   const [citationOptions, setCitationOptions] = useState([]);
   const [rawCitations, setRawCitations] = useState([]);
   const [grantsWithoutMonitoring, setGrantsWithoutMonitoring] = useState([]);
@@ -89,17 +81,6 @@ const GoalPicker = ({
     },
     defaultValue: '',
   });
-  /*
-  const [templateId, setTemplateId] = useState(
-    goalForEditing
-    && goalForEditing.goalTemplateId
-      ? goalForEditing.goalTemplateId : null,
-  );
-  */
-
-  // const [templateResponses, templatePrompts] = useGoalTemplatePrompts(templateId);
-
-  // console.log("template id in goal picker", templateId);
 
   const isMonitoringGoal = goalForEditing
   && goalForEditing.standard
@@ -229,12 +210,6 @@ const GoalPicker = ({
     activityRecipients,
     isMonitoringGoal,
     goalTemplates]);
-
-  /*
-    -- Might remove lower.
-    templateResponses={templateResponses}
-    templatePrompts={templatePrompts}
-    */
 
   return (
     <>

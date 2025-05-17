@@ -8,15 +8,17 @@ import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldC
 
 const { updateRefToInitialValues } = CONDITIONAL_FIELD_CONSTANTS;
 
+const formatPromptTitle = (field) => `${field.grantId}-${formatTitleForHtmlAttribute(field.title)}`;
+
 export const FIELD_DICTIONARY = {
   multiselect: {
     render: (field, validations, value, userCanEdit) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}
-        fieldName={formatTitleForHtmlAttribute(field.title)}
+        fieldName={formatPromptTitle(field)}
         defaultValue={value}
-        key={`conditional-multiselect-${formatTitleForHtmlAttribute(field.title)}`}
+        key={`conditional-multiselect-${formatPromptTitle(field)}`}
         userCanEdit={userCanEdit}
       />
     ),
@@ -50,8 +52,8 @@ export default function ConditionalFieldsForHookForm({
     // on mount, update the goal conditional fields
     // with the prompt data
 
-    const goalPrompts = (prompts || []).map(({ promptId, title }) => ({
-      promptId, title, fieldName: formatTitleForHtmlAttribute(title),
+    const goalPrompts = (prompts || []).map(({ promptId, title, grantId }) => ({
+      promptId, title, fieldName: formatPromptTitle({ title, grantId }), grantId,
     }));
     onUpdateGoalPrompts(goalPrompts);
   }, [onUpdateGoalPrompts, prompts]);

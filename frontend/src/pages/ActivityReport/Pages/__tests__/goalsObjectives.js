@@ -171,8 +171,6 @@ describe('goals objectives', () => {
     it('the display goals shows a warning if no grants are selected', async () => {
       renderGoals([], 'recipient', [], false, false, jest.fn(), '2021-01-01');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
-      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
-      expect(await screen.findByText(/who the activity was for/i)).toBeVisible();
       expect(screen.queryByText(/start date of the activity/i)).toBeNull();
     });
 
@@ -397,24 +395,9 @@ describe('goals objectives', () => {
   });
 
   describe('when activity recipient type is not "recipient" or "other-entity"', () => {
-    it('both warnings are displayed when the report type and start date are missing', async () => {
-      renderGoals([1], null);
-      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
-      expect(await screen.findByText(/who the activity was for/i)).toBeVisible();
-      expect(await screen.findByText(/start date of the activity/i)).toBeVisible();
-    });
-
-    it('shows the report type warning when the report type is missing', async () => {
-      renderGoals([1], null, [], false, false, jest.fn(), '2021-01-01');
-      expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
-      expect(await screen.findByText(/who the activity was for/i)).toBeVisible();
-      expect(screen.queryByText(/start date of the activity/i)).toBeNull();
-    });
-
     it('shows the start date warning when the start date is missing', async () => {
       renderGoals([1], 'recipient', [], false, false, jest.fn(), null);
       expect(await screen.findByText(/to add goals and objectives, indicate in the/i)).toBeVisible();
-      expect(screen.queryByText(/who the activity was for/i)).toBeNull();
       expect(await screen.findByText(/start date of the activity/i)).toBeVisible();
     });
 
@@ -442,11 +425,6 @@ describe('goals objectives', () => {
   });
 
   describe('isPageComplete', () => {
-    it('is false if there is no recipient type selected', () => {
-      const complete = goalsObjectives.isPageComplete({});
-      expect(complete).toBeFalsy();
-    });
-
     describe('for recipient reports', () => {
       it('is false if goals are not valid', () => {
         const complete = goalsObjectives.isPageComplete({

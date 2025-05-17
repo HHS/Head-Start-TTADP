@@ -382,6 +382,8 @@ function reducePrompts(
         options: currentPrompt.options,
         validations: currentPrompt.validations,
         allGoalsHavePromptResponse: false,
+        grantId: currentPrompt.grantId,
+        grantDisplayName: currentPrompt.grantDisplayName,
       } as IPrompt;
 
       if (forReport) {
@@ -469,7 +471,6 @@ export function reduceGoals(
           (existingGoal.prompts as IPrompt[]).push(...promptsToAdd);
           // Get prompts for review.
           const promptsToAddForReview = (currentValue.dataValues.prompts || []).map((p) => ({
-            // key: `${currentValue.grant.id}-${p.response?.map((pr) => pr).join('-')}`,
             key: `${currentValue.grant.id}-${(p.response || []).join('-')}`,
             promptId: p.promptId,
             responses: p.response || [],
@@ -481,7 +482,6 @@ export function reduceGoals(
             ],
             grantId: currentValue.grant.id,
             grantDisplayName: currentValue.grant.recipientNameWithPrograms,
-
           }) as IReviewPrompt);
 
           (existingGoal.promptsForReview as IReviewPrompt[]).push(...promptsToAddForReview);
@@ -523,7 +523,7 @@ export function reduceGoals(
       }
 
       const { source: sourceForReport } = currentValue.dataValues;
-      // Extract prompt-related data once and reuse it
+
       const promptsForReport = reducePrompts(
         forReport,
         currentValue.dataValues.prompts || [],
