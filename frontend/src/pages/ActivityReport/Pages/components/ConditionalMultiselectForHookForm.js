@@ -15,7 +15,6 @@ export default function ConditionalMultiselectForHookForm({
   userCanEdit,
 }) {
   const rules = transformValidationsIntoRules(validations);
-
   const {
     field: {
       onChange,

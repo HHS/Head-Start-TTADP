@@ -217,20 +217,10 @@ export const convertGoalsToFormData = (
   return accumulatedData;
 }, { goals: [], goalForEditing: null });
 
-const convertObjectivesWithoutGoalsToFormData = (
-  objectives, recipientIds,
-) => objectives.map((objective) => ({
-  ...objective,
-  recipientIds,
-}));
-
 export const convertReportToFormData = (fetchedReport) => {
   let grantIds = [];
-  let otherEntities = [];
   if (fetchedReport.activityRecipients) {
     grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
-  } else {
-    otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
   }
   const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
     activityRecipientId: ar.id,
@@ -241,9 +231,7 @@ export const convertReportToFormData = (fetchedReport) => {
   const { goals, goalForEditing } = convertGoalsToFormData(
     fetchedReport.goalsAndObjectives, grantIds, fetchedReport.calculatedStatus,
   );
-  const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
-    fetchedReport.objectivesWithoutGoals, otherEntities,
-  );
+
   const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
   const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
   const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
@@ -257,7 +245,6 @@ export const convertReportToFormData = (fetchedReport) => {
     goalForEditing,
     endDate,
     startDate,
-    objectivesWithoutGoals,
   };
 };
 

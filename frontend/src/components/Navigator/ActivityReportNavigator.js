@@ -37,11 +37,17 @@ const GOALS_AND_OBJECTIVES_POSITION = 2;
 export function getPrompts(promptTitles, getValues) {
   let prompts = [];
   if (promptTitles) {
-    prompts = promptTitles.map(({ promptId, title, fieldName }) => ({
-      promptId,
-      title,
-      response: getValues(fieldName),
-    }));
+    prompts = promptTitles.map(({
+      promptId, title, fieldName, grantId,
+    }) => {
+      const response = getValues(fieldName);
+      return {
+        promptId,
+        title,
+        response,
+        grantId,
+      };
+    });
   }
 
   return prompts;
@@ -171,7 +177,7 @@ const ActivityReportNavigator = ({
 
   const {
     grantIds,
-  } = useFormGrantData('recipient', recipients);
+  } = useFormGrantData(recipients);
 
   const { isDirty, isValid } = formState;
 

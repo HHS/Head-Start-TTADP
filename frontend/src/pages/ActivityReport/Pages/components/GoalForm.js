@@ -22,9 +22,6 @@ export default function GoalForm({
   goal,
   topicOptions,
   reportId,
-  // templateResponses,
-  // templatePrompts,
-  // templateId,
   citationOptions,
   rawCitations,
   isMonitoringGoal,
@@ -115,7 +112,6 @@ export default function GoalForm({
   );
 
   const isCurated = goal.isCurated || false;
-
   return (
     <>
       <FormFieldThatIsSometimesReadOnly
@@ -207,24 +203,6 @@ GoalForm.propTypes = {
     })),
   })),
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  // templateId: PropTypes.number.isRequired,
-  /*
-  templatePrompts: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.arrayOf(PropTypes.shape({
-      type: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      prompt: PropTypes.string.isRequired,
-      options: PropTypes.arrayOf(PropTypes.string).isRequired,
-    })).isRequired,
-  ]).isRequired,
-  templateResponses: PropTypes.arrayOf(PropTypes.shape({
-    type: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    prompt: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(PropTypes.string).isRequired,
-  })).isRequired,
-  */
 };
 
 GoalForm.defaultProps = {
