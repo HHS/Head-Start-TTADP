@@ -322,3 +322,20 @@ export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
   }
   return `${from.toLocaleString()}-${to.toLocaleString()} of ${totalCount.toLocaleString()}`;
 };
+
+export const SUPPORTED_DATE_FORMATS = [
+  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
+  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
+  'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
+  'M.D.YY', 'MM.DD.YY',
+];
+
+export function isValidDate(value) {
+  if (!value) return null;
+  for (const format of SUPPORTED_DATE_FORMATS) {
+    const parsed = moment(value, format, true);
+    if (parsed.isValid()) return parsed;
+  }
+  return null;
+}
