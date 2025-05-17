@@ -43,6 +43,7 @@ import {
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
+import parseDate from '../lib/date';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -211,7 +212,7 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where });
 }
 
-async function saveNotes(activityReportId, notes, isRecipientNotes) {
+export async function saveNotes(activityReportId, notes, isRecipientNotes) {
   const noteType = isRecipientNotes ? 'RECIPIENT' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
   const where = {
@@ -233,7 +234,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
-      completeDate: !note.completeDate ? null : moment(note.completeDate, 'MM/DD/YYYY').toDate(),
+      completeDate: parseDate(note.completeDate),
       activityReportId,
       noteType,
     }))
@@ -520,7 +521,7 @@ export async function activityReports(
     where.legacyId = { [Op.eq]: null };
   }
 
-  if (ids && ids.length) {
+  if (ids?.length) {
     where.id = { [Op.in]: ids };
   }
 
@@ -977,7 +978,7 @@ export async function createOrUpdate(newActivityReport, report) {
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
-  const previousActivityRecipientType = report && report.activityRecipientType;
+  const previousActivityRecipientType = report?.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
@@ -1026,10 +1027,10 @@ export async function createOrUpdate(newActivityReport, report) {
      */
 
   const recipientType = () => {
-    if (allFields && allFields.activityRecipientType) {
+    if (allFields?.activityRecipientType) {
       return allFields.activityRecipientType;
     }
-    if (report && report.activityRecipientType) {
+    if (report?.activityRecipientType) {
       return report.activityRecipientType;
     }
 
@@ -1039,8 +1040,7 @@ export async function createOrUpdate(newActivityReport, report) {
   const activityRecipientType = recipientType();
 
   if (
-    recipientsWhoHaveGoalsThatShouldBeRemoved
-    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+    recipientsWhoHaveGoalsThatShouldBeRemoved?.length
   ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }

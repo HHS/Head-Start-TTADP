@@ -327,4 +327,29 @@ describe('isPageComplete for Next steps', () => {
     }, { isValid: false });
     expect(result).toBe(false);
   });
+
+  it('returns true if completeDate is a valid ISO format', () => {
+    const result = isPageComplete({
+      specialistNextSteps: [
+        { note: 'ISO test', completeDate: '2025-05-17' },
+      ],
+      recipientNextSteps: [
+        { note: 'ISO test 2', completeDate: '2025-05-18' },
+      ],
+    }, { isValid: false });
+    expect(result).toBe(true);
+  });
+
+  it('returns true if completeDate is a valid dot format', () => {
+    const result = isPageComplete({
+      specialistNextSteps: [
+        { note: 'Dot format test', completeDate: '5.17.25' },
+      ],
+      recipientNextSteps: [
+        { note: 'Another one', completeDate: '5.18.25' },
+      ],
+    }, { isValid: false });
+    expect(result).toBe(true);
+  });
+
 });
