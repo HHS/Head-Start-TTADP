@@ -132,8 +132,9 @@ export async function getPrompts(req: Request, res: Response) {
       .map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const prompts = await getFieldPromptsForCuratedTemplate(numericalGoalTemplateId, parsedGoalIds);
-    res.json(prompts);
+    // eslint-disable-next-line max-len
+    const responsesWithPrompts = await getFieldPromptsForCuratedTemplate(numericalGoalTemplateId, parsedGoalIds);
+    res.json(responsesWithPrompts);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getPrompts');
   }

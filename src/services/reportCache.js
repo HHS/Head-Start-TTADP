@@ -440,6 +440,7 @@ const cacheGoalMetadata = async (
   ];
 
   // TODO: We shouldn't need this once standard goals is implemented.
+  /*
   if (isMultiRecipientReport) {
     // Check for fei goal prompts we need to update on the activity report goal.
     const goalPrompts = await GoalFieldResponse.findAll({
@@ -469,9 +470,12 @@ const cacheGoalMetadata = async (
         cachePrompts(goal.id, arg.id, goalPrompts),
       );
     }
-  } else if (prompts && prompts.length) {
+  } else */
+  // Get all the prompts for this grant/goal combo.
+  const grantPrompts = prompts.filter((p) => p.grantId === goal.grantId);
+  if (grantPrompts && grantPrompts.length) {
     finalPromises.push(
-      cachePrompts(goal.id, arg.id, prompts),
+      cachePrompts(goal.id, arg.id, grantPrompts),
     );
   }
   return Promise.all(finalPromises);
