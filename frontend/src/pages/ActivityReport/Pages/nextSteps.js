@@ -24,7 +24,7 @@ export const isPageComplete = (formData, formState) => {
   }
 
   return [...specialistNextSteps, ...recipientNextSteps].every(
-    (step) => step.note && Boolean(isValidDate(step.completeDate))
+    (step) => step.note && Boolean(isValidDate(step.completeDate)),
   );
 };
 
