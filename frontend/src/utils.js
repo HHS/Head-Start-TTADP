@@ -36,7 +36,7 @@ export const isValidURL = (url) => {
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
   return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
-  || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
+    || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
 };
 
 /**
@@ -333,9 +333,6 @@ export const SUPPORTED_DATE_FORMATS = [
 
 export function isValidDate(value) {
   if (!value) return null;
-  for (const format of SUPPORTED_DATE_FORMATS) {
-    const parsed = moment(value, format, true);
-    if (parsed.isValid()) return parsed;
-  }
-  return null;
+  const parsed = formats.find((format) => moment(value, format, true).isValid());
+  return parsed ? moment(value, parsed, true).toDate() : null;
 }

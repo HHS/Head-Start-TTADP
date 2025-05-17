@@ -351,5 +351,4 @@ describe('isPageComplete for Next steps', () => {
     }, { isValid: false });
     expect(result).toBe(true);
   });
-
 });

@@ -72,8 +72,8 @@ export default function NextStepsRepeater({
       }
 
       const isValid = !(
-        errors[name]?.[index]?.note ||
-        errors[name]?.[index]?.completeDate
+        errors[name]?.[index]?.note
+        || errors[name]?.[index]?.completeDate
       );
 
       return isValid;
