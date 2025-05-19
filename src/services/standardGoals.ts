@@ -383,16 +383,23 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
         }, { individualHooks: true });
       }
 
+      // Filter prompts for the grant associated with the goal.
+      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
+
       // Handle goal prompts for curated goals like FEI.
-      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED && goal.prompts) {
-        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], goal.prompts);
+      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED && filteredPrompts) {
+        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
       }
+
+      const isActivelyBeingEditing = goal.isActivelyBeingEditing
+        ? goal.isActivelyBeingEditing : false;
+      const reportId = report.id ? report.id : report.dataValues.id;
       // Save goal meta data.
       await cacheGoalMetadata(
         newOrUpdatedGoal,
-        report.id,
-        false, // The only path that actively being edited is set is from AR.
-        goal.prompts,
+        reportId,
+        isActivelyBeingEditing, // We need to correctly populate if editing on FE.
+        filteredPrompts,
       );
 
       // and pass the goal to the objective creation function

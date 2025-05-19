@@ -389,7 +389,6 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
-  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -439,43 +438,10 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  // TODO: We shouldn't need this once standard goals is implemented.
-  /*
-  if (isMultiRecipientReport) {
-    // Check for fei goal prompts we need to update on the activity report goal.
-    const goalPrompts = await GoalFieldResponse.findAll({
-      attributes: [
-        ['goalTemplateFieldPromptId', 'promptId'],
-        [sequelize.col('prompt."title"'), 'title'],
-        'response',
-      ],
-      where: { goalId: goal.id },
-      raw: true,
-      include: [
-        {
-          model: GoalTemplateFieldPrompt,
-          as: 'prompt',
-          required: true,
-          attributes: [],
-          where: {
-            title: 'FEI root cause',
-          },
-        },
-      ],
-    });
-
-    // if we have goal prompts call cache prompts with the goals prompts
-    if (goalPrompts && goalPrompts.length) {
-      finalPromises.push(
-        cachePrompts(goal.id, arg.id, goalPrompts),
-      );
-    }
-  } else */
   // Get all the prompts for this grant/goal combo.
-  const grantPrompts = prompts.filter((p) => p.grantId === goal.grantId);
-  if (grantPrompts && grantPrompts.length) {
+  if (prompts && prompts.length) {
     finalPromises.push(
-      cachePrompts(goal.id, arg.id, grantPrompts),
+      cachePrompts(goal.id, arg.id, prompts),
     );
   }
   return Promise.all(finalPromises);

@@ -486,11 +486,16 @@ export function reduceGoals(
 
           (existingGoal.promptsForReview as IReviewPrompt[]).push(...promptsToAddForReview);
         } else {
+          // Ensure each prompt has grantDisplayName populated
+          const promptsWithGrantName = (currentValue.dataValues.prompts || []).map((p) => ({
+            ...p,
+            grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+          }));
           existingGoal.prompts = {
             ...existingGoal.prompts,
             [currentValue.grant.numberWithProgramTypes]: reducePrompts(
               forReport,
-              currentValue.dataValues.prompts || [],
+              promptsWithGrantName,
               [], // we don't want to combine existing prompts if reducing for the RTR
             ),
           };
@@ -524,9 +529,15 @@ export function reduceGoals(
 
       const { source: sourceForReport } = currentValue.dataValues;
 
+      // Ensure each prompt has grantDisplayName populated before reducing
+      const promptsWithGrantName = (currentValue.dataValues.prompts || []).map((p) => ({
+        ...p,
+        grantDisplayName: currentValue.grant.recipientNameWithPrograms,
+      }));
+
       const promptsForReport = reducePrompts(
         forReport,
-        currentValue.dataValues.prompts || [],
+        promptsWithGrantName,
         [], // No existing prompts to merge with
       );
 

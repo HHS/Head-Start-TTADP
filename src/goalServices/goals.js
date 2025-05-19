@@ -63,6 +63,7 @@ import {
   createObjectivesForGoal,
   removeUnusedGoalsObjectivesFromReport,
   removeUnusedGoalsCreatedViaAr,
+  saveStandardGoalsForReport,
 } from '../services/standardGoals';
 
 // the page state location of the goals and objective page
@@ -1019,6 +1020,8 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 }
 
 // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// We need to determine if we want to switch the existing tests to use the new function
+// or just remove them.
 export async function saveGoalsForReport(goals, report) {
   // this will be all the currently used objectives
   // so we can remove any objectives that are no longer being used
@@ -1042,7 +1045,7 @@ export async function saveGoalsForReport(goals, report) {
       const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
 
       if (goalTemplate.standard === 'Monitoring') {
-      // Find the corresponding monitoring goals.
+        // Find the corresponding monitoring goals.
         const monitoringGoals = await Goal.findAll({
           attributes: ['grantId'],
           raw: true,
@@ -1058,14 +1061,15 @@ export async function saveGoalsForReport(goals, report) {
         )];
 
         if (distinctMonitoringGoalGrantIds.length > 0) {
-        // Replace the goal granIds only with the grants that should have monitoring goals created.
-        // eslint-disable-next-line no-param-reassign
+          // Replace the goal granIds only with the grants that
+          // should have monitoring goals created.
+          // eslint-disable-next-line no-param-reassign
           goals[index].grantIds = distinctMonitoringGoalGrantIds;
         } else {
-        // Do not create monitoring goals for any of these recipients.
-        // eslint-disable-next-line no-param-reassign
-        // delete goals[index];
-        // eslint-disable-next-line no-param-reassign
+          // Do not create monitoring goals for any of these recipients.
+          // eslint-disable-next-line no-param-reassign
+          // delete goals[index];
+          // eslint-disable-next-line no-param-reassign
           goals[index].grantIds = [];
           return [];
         }
@@ -1163,8 +1167,10 @@ export async function saveGoalsForReport(goals, report) {
         }
       }
 
-      if (prompts && !isMultiRecipientReport) {
-        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
+      // Filter prompts for the grant associated with the goal.
+      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
+      if (filteredPrompts) {
+        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
       }
 
       // here we save the goal where the status (and collorary fields) have been set
@@ -1176,7 +1182,7 @@ export async function saveGoalsForReport(goals, report) {
         newOrUpdatedGoal,
         report.id,
         isActivelyBeingEditing,
-        prompts || null,
+        filteredPrompts || null,
         isMultiRecipientReport,
       );
 
@@ -1327,12 +1333,13 @@ export async function updateGoalStatusById(
     context: closeSuspendContext,
   })));
 }
-export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
+export async function createOrUpdateGoalsForActivityReport(goals, reportId, userId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = (await ActivityReport.findByPk(activityReportId)).toJSON();
 
   // TODO: TTAHUB-3970: This should call the new saveStandardGoalsForReport function.
-  await saveGoalsForReport(goals, report);
+  // await saveGoalsForReport(goals, report);
+  await saveStandardGoalsForReport(goals, userId, report);
 
   // updating the goals is updating the report, sorry everyone
   // let us consult the page state by taking a shallow copy
@@ -1622,8 +1629,8 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
   const filteredGoalGroups = goalGroups
     .filter((group) => {
-    // filter out goals with weird FEI responses
-    // eslint-disable-next-line max-len
+      // filter out goals with weird FEI responses
+      // eslint-disable-next-line max-len
       const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
 
       if (uniqueFieldResponses.length > 2) {
