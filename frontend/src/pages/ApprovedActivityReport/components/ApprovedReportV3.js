@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment-timezone';
+import { v4 as uuidv4 } from 'uuid';
 import Container from '../../../components/Container';
 import {
   DATE_DISPLAY_FORMAT,
@@ -11,14 +12,14 @@ import {
 import ReadOnlyContent from '../../../components/ReadOnlyContent';
 import RenderReviewCitations from '../../ActivityReport/Pages/components/RenderReviewCitations';
 
-function formatNextSteps(nextSteps, heading, striped) {
+function formatNextSteps(nextSteps, heading) {
   return nextSteps.map((step, index) => ({
     heading: index === 0 ? heading : '',
     data: {
       [`Step ${index + 1}`]: step.note,
       'Anticipated completion': step.completeDate,
     },
-    striped,
+    striped: false,
   }));
 }
 
@@ -29,7 +30,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
         {resources.map((resource) => {
           const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
-            <li key={resourceValue}>
+            <li key={uuidv4()}>
               <a
                 href={resourceValue}
                 rel="noreferrer"
@@ -79,13 +80,11 @@ function formatTtaType(ttaType) {
 function addObjectiveSectionsToArray(
   objectives,
   sections,
-  striped,
   activityRecipients,
   isOtherEntity = false,
 ) {
-  let isStriped = striped;
+  const isStriped = false;
   objectives.forEach((objective) => {
-    isStriped = !isStriped;
     const objectiveSection = {
       heading: 'Objective summary',
       data: {
@@ -113,41 +112,39 @@ function addObjectiveSectionsToArray(
 }
 
 /**
+ * @param {object[]} responses an array of FEI Goal response objects
+ */
+function getResponses(responses) {
+  return responses[0].response.map((r) => r).join(', ');
+}
+
+/**
    *
    * @param {object} report an activity report object
    * @returns an array of two arrays, each of which contains strings
    */
 function calculateGoalsAndObjectives(report) {
   const sections = [];
-  let striped = false;
+  const striped = false;
 
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
-      striped = !striped;
-
-      let goalSection = {
+      const goalSection = {
         heading: 'Goal summary',
         data: {
-          'Recipient\'s goal': (
-            <>
-              <span className="text-bold">{goal.goalNumbers.join(',')}</span>
-              :
-              {' '}
-              {goal.name}
-            </>
-          ),
+          'Recipient\'s goal': goal.name,
+          'Goal numbers': goal.goalNumbers.join(','),
         },
         striped,
       };
 
-      if (goal.activityReportGoals && goal.activityReportGoals.length) {
-        goalSection = {
-          ...goalSection.heading,
-          data: {
-            ...goalSection.data,
-          },
-          striped: true,
+      // Adds "root cause" to the goal section if there are FEI responses
+      const { responses } = goal;
+      if (responses && responses.length) {
+        const rootCauseData = {
+          'Root cause': getResponses(responses),
         };
+        goalSection.data = { ...goalSection.data, ...rootCauseData };
       }
 
       const { prompts } = goal;
@@ -163,13 +160,12 @@ function calculateGoalsAndObjectives(report) {
 
       sections.push(goalSection);
 
-      addObjectiveSectionsToArray(goal.objectives, sections, striped, report.activityRecipients);
+      addObjectiveSectionsToArray(goal.objectives, sections, report.activityRecipients);
     });
   } else if (report.activityRecipientType === 'other-entity') {
     addObjectiveSectionsToArray(
       report.objectivesWithoutGoals,
       sections,
-      striped,
       report.activityRecipients,
       true,
     );
@@ -299,7 +295,7 @@ export default function ApprovedReportV3({ data }) {
               'Why activity requested': data.activityReason,
               'Target populations': targetPopulations,
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Activity date',
@@ -308,7 +304,7 @@ export default function ApprovedReportV3({ data }) {
               'End date': endDate,
               Duration: duration,
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Context',
@@ -325,7 +321,7 @@ export default function ApprovedReportV3({ data }) {
               'Delivery method': formatDelivery(deliveryMethod, virtualDeliveryType),
               ...getNumberOfParticipants(deliveryMethod),
             },
-            striped: true,
+            striped: false,
           },
         ]}
       />
@@ -345,7 +341,7 @@ export default function ApprovedReportV3({ data }) {
               data: {
                 Attachments: attachments,
               },
-              striped: true,
+              striped: false,
             }]
           }
       />
