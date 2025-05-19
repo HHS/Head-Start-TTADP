@@ -370,7 +370,6 @@ export async function setFieldPromptForCuratedTemplate(
       raw: true,
     }),
   ]);
-
   if (!promptRequirements) {
     throw new Error(`No prompt found with ID ${promptId}`);
   }
@@ -385,7 +384,6 @@ export async function setFieldPromptForCuratedTemplate(
       goalTemplateFieldPromptId: promptId,
       response,
     }));
-
   if (goalIdsToUpdate.length || recordsToCreate.length) {
     validatePromptResponse(response, promptRequirements);
 

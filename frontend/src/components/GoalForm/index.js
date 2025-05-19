@@ -631,7 +631,6 @@ export default function GoalForm({
       </Alert>
     );
   }
-
   const createdGoalsForReadOnly = createdGoals.map((goal) => {
     const { objectives: goalObjectives } = goal;
     const newObjectives = goalObjectives.map((obj) => {

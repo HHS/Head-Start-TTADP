@@ -41,8 +41,8 @@ import {
   removeRemovedRecipientsGoals,
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
-import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
-import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
+import { getObjectivesByReportId } from './objectives';
+import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } from './standardGoals';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -960,7 +960,7 @@ export function formatResources(resources) {
   }, []);
 }
 
-export async function createOrUpdate(newActivityReport, report) {
+export async function createOrUpdate(newActivityReport, report, userId) {
   let savedReport;
   const {
     approvers,
@@ -992,7 +992,6 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   const updatedFields = { ...allFields, ...resources };
-
   if (report) {
     savedReport = await update(updatedFields, report);
   } else {
@@ -1025,24 +1024,6 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveNotes(id, specialistNextSteps, false);
   }
 
-  /**
-     * since on partial updates, a new value for activity recipient type may not be passed,
-     * we use the old one in that case
-     */
-
-  const recipientType = () => {
-    if (allFields && allFields.activityRecipientType) {
-      return allFields.activityRecipientType;
-    }
-    if (report && report.activityRecipientType) {
-      return report.activityRecipientType;
-    }
-
-    return '';
-  };
-
-  const activityRecipientType = recipientType();
-
   if (
     recipientsWhoHaveGoalsThatShouldBeRemoved
     && recipientsWhoHaveGoalsThatShouldBeRemoved.length
@@ -1054,11 +1035,10 @@ export async function createOrUpdate(newActivityReport, report) {
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
-
-  if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
-    await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
-  } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
+  if (goals) {
+    // change me also
+    // await saveGoalsForReport(goals, savedReport);
+    await saveStandardGoalsForReport(goals, userId, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array

@@ -40,13 +40,13 @@ describe('ReadOnlyGoal', () => {
     }],
   };
 
-  const renderReadOnlyGoal = (hideEdit = false, onRemove = jest.fn()) => {
+  const renderReadOnlyGoal = (hideEdit = false, onRemove = jest.fn(), goal = createdGoal) => {
     render((
       <ReadOnlyGoal
         onEdit={jest.fn()}
         onRemove={onRemove}
         hideEdit={hideEdit}
-        goal={createdGoal}
+        goal={goal}
         index={0}
       />
     ));
@@ -93,5 +93,30 @@ describe('ReadOnlyGoal', () => {
         response: ['vivid', 'ambitious', 'specific'],
       }],
     });
+  });
+
+  it('correctly shows the root cause for each grant on the goal', async () => {
+    renderReadOnlyGoal(false, jest.fn(), {
+      ...createdGoal,
+      prompts: [
+        {
+          title: 'Root cause',
+          grantDisplayName: 'Grant 1',
+          ordinal: 1,
+          response: ['response1'],
+        },
+        {
+          title: 'Root cause',
+          grantDisplayName: 'Grant 2',
+          ordinal: 2,
+          response: ['response2', 'response3'],
+        },
+      ],
+    });
+    expect(await screen.findByText('Root cause')).toBeVisible();
+    expect(await screen.findByText('Grant 1')).toBeVisible();
+    expect(await screen.findByText('response1')).toBeVisible();
+    expect(await screen.findByText('Grant 2')).toBeVisible();
+    expect(await screen.findByText(/response2, response3/i)).toBeVisible();
   });
 });
