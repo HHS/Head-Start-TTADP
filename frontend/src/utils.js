@@ -333,6 +333,8 @@ export const SUPPORTED_DATE_FORMATS = [
 
 export function isValidDate(value) {
   if (!value) return null;
-  const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
-  return parsed ? moment(value, parsed, true).toDate() : null;
+  const parsed = SUPPORTED_DATE_FORMATS.find((format) =>
+    moment(value, format, true).isValid()
+  );
+  return parsed ? moment(value, parsed, true) : null;
 }
