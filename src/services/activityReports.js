@@ -37,7 +37,6 @@ import {
   Course,
 } from '../models';
 import {
-  saveGoalsForReport,
   removeRemovedRecipientsGoals,
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';

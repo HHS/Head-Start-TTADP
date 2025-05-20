@@ -32,6 +32,7 @@ const {
   Role,
   CollaboratorType,
   GoalCollaborator,
+  ActivityReportGoalFieldResponse,
 } = db;
 
 interface IObjective {
@@ -372,6 +373,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
           newOrUpdatedGoal = null;
         }
       }
+
       // If there is no existing goal, or its closed, create a new one in 'Not started'.
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
@@ -384,22 +386,43 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       }
 
       // Filter prompts for the grant associated with the goal.
-      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
-
+      let filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
       // Handle goal prompts for curated goals like FEI.
-      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED && filteredPrompts) {
-        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
+      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+        if (filteredPrompts && filteredPrompts.length) {
+          await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
+        } else {
+          // Even though we update the ARG responses in the GoalFieldResponse hook.
+          // There might be a case when the Goal Field Responses exists on  the goal but this
+          // is the first time we are using the goal. So we need to make sure
+          // the ARG responses get populated if the user hasn't set them on the report.
+          const existingGoalFieldResponses = await GoalFieldResponse.findAll({
+            where: {
+              goalId: newOrUpdatedGoal.id,
+            },
+          });
+          // Populate the goal field responses so we can save them on the ARG.
+          if (existingGoalFieldResponses.length) {
+            filteredPrompts = existingGoalFieldResponses.map((response) => ({
+              goalId: response.goalId,
+              promptId: response.goalTemplateFieldPromptId,
+              response: response.response,
+            }));
+          }
+        }
       }
 
+      // Did the save happen in the edit mode.
       const isActivelyBeingEditing = goal.isActivelyBeingEditing
         ? goal.isActivelyBeingEditing : false;
       const reportId = report.id ? report.id : report.dataValues.id;
+
       // Save goal meta data.
       await cacheGoalMetadata(
         newOrUpdatedGoal,
         reportId,
         isActivelyBeingEditing, // We need to correctly populate if editing on FE.
-        filteredPrompts,
+        filteredPrompts || [],
       );
 
       // and pass the goal to the objective creation function
