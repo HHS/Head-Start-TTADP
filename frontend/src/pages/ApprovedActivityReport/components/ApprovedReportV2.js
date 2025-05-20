@@ -142,7 +142,7 @@ function calculateGoalsAndObjectives(report) {
 
       if (goal.activityReportGoals && goal.activityReportGoals.length) {
         goalSection = {
-          ...goalSection.heading,
+          heading: goalSection.heading,
           data: {
             ...goalSection.data,
           },

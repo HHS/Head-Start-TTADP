@@ -10,11 +10,14 @@ executors:
     - image: cimg/node:20.18.2-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+        REDIS_HOST: localhost
+        REDIS_PASS: ""
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: secretpass
         POSTGRES_DB: ttasmarthub
+    - image: cimg/redis:6.2.17
   docker-python-executor:
     docker:
     - image: cimg/python:3.9.21
@@ -129,6 +132,7 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -178,37 +182,37 @@ workflows:
         - process_temp_db
     - restore_db_job:
         name: restore (dev)
-        serial-group: "tta-automation-lock-dev"
+        serial-group: "tta-automation-lock"
         target_env: "dev"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-green)
-        serial-group: "tta-automation-lock-dev-green"
+        serial-group: "tta-automation-lock"
         target_env: "dev-green"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-blue)
-        serial-group: "tta-automation-lock-dev-blue"
+        serial-group: "tta-automation-lock"
         target_env: "dev-blue"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-red)
-        serial-group: "tta-automation-lock-dev-red"
+        serial-group: "tta-automation-lock"
         target_env: "dev-red"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (sandbox)
-        serial-group: "tta-automation-lock-sandbox"
+        serial-group: "tta-automation-lock"
         target_env: "sandbox"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (staging)
-        serial-group: "tta-automation-lock-staging"
+        serial-group: "tta-automation-lock"
         target_env: "staging"
         requires:
         - backup_temp_db
@@ -426,6 +430,7 @@ jobs:
       target_env:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -453,6 +458,14 @@ jobs:
         command: |
           set -x
           cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+    - run:
+        name: Alert on migration failure
+        when: on_fail
+        command: |
+            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+            fi
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
@@ -462,6 +475,7 @@ jobs:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -548,25 +562,30 @@ jobs:
     parameters:
       target_env:
         type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
     steps:
     - checkout
     - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "yarn createMonitoringGoalsCLI"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
         command: |
-          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results > monitoring-goals.txt
+          if grep -o "Recent Monitoring Goals: \[\]" cmd_log.txt; then
+            echo "No new monitoring goals ($(date -I))" > monitoring-goals.txt
+          else
+            results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
+          fi
           cat monitoring-goals.txt
     - when:
         condition:
@@ -574,6 +593,7 @@ jobs:
         steps:
         - notify_slack:
             message_text_file: monitoring-goals.txt
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
@@ -788,7 +808,7 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then 
             exit 0; 
           fi
           if [ -f ./environments/${current_env} ]; then
@@ -805,17 +825,20 @@ commands:
                 fi; 
               done
               cd ..
-              printf ${msg} > msg.txt
+              ./bin/notify-slack.sh \
+                "Environment owner changed: \`\`\`${msg}\`\`\`" \
+                "tm-test"
+                ${SLACK_BOT_TOKEN}
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
+          else 
+            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
         key: 'environment-owners'
         paths:
         - environments
-    - notify_slack:
-        message_text_file: msg.txt
 
   cf_cmd:
     description: "Login, run task, send notification"
@@ -932,9 +955,10 @@ commands:
         timeout: "1800"
     - run:
         when: on_fail
-        command: echo "Failed db restore to << parameters.target_env >>" > message.txt
-    - notify_slack:
-        message_text_file: message.txt
+        command: |
+          msg="DB Restore failed to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -1162,20 +1186,16 @@ commands:
     - run:
         name: Notify Slack
         command: |
-          set -x
-
-          # Evaluate message_text_script if provided
-          if [ -n "<< parameters.message_text_file >>" ]; then
-            MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+          if [[ -n "<< parameters.message_text >>" ]]; then
+            MESSAGE="<< parameters.message_text >>"
           else
-            MESSAGE_TEXT="<< parameters.message_text >>"
+            MESSAGE=$(cat "<< parameters.message_text_file >>")            
           fi
-
-          echo $MESSAGE_TEXT
-
+          
+          echo "Sending: ${MESSAGE}"
           # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
-            echo "Missing required parameters. Notification will not be sent."
+          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
+            echo "Missing required parameter. Notification will not be sent."
             exit 0
           fi
 
@@ -1184,13 +1204,11 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
+              \"text\": \"$MESSAGE\"
             }" \
             https://slack.com/api/chat.postMessage)
-
           ok=$(echo $response | jq -r '.ok')
           error=$(echo $response | jq -r '.error')
-
           if [ "$ok" != "true" ]; then
             echo "Slack notification failed: $error"
             exit 1
@@ -1198,21 +1216,26 @@ commands:
             echo "Slack notification sent successfully"
           fi
 
+  
   notify_slack_deploy:
     parameters:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN 
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
     - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
         name: Generate Message
         command: |
-          source ci.vars
-          env_name="$full_env"
+          env_name=<< parameters.target_env >>
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
