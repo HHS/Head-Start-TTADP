@@ -1022,6 +1022,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 // We need to determine if we want to switch the existing tests to use the new function
 // or just remove them.
+/*
 export async function saveGoalsForReport(goals, report) {
   // this will be all the currently used objectives
   // so we can remove any objectives that are no longer being used
@@ -1045,7 +1046,7 @@ export async function saveGoalsForReport(goals, report) {
       const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
 
       if (goalTemplate.standard === 'Monitoring') {
-        // Find the corresponding monitoring goals.
+      // Find the corresponding monitoring goals.
         const monitoringGoals = await Goal.findAll({
           attributes: ['grantId'],
           raw: true,
@@ -1061,15 +1062,14 @@ export async function saveGoalsForReport(goals, report) {
         )];
 
         if (distinctMonitoringGoalGrantIds.length > 0) {
-          // Replace the goal granIds only with the grants that
-          // should have monitoring goals created.
-          // eslint-disable-next-line no-param-reassign
+        // Replace the goal granIds only with the grants that should have monitoring goals created.
+        // eslint-disable-next-line no-param-reassign
           goals[index].grantIds = distinctMonitoringGoalGrantIds;
         } else {
-          // Do not create monitoring goals for any of these recipients.
-          // eslint-disable-next-line no-param-reassign
-          // delete goals[index];
-          // eslint-disable-next-line no-param-reassign
+        // Do not create monitoring goals for any of these recipients.
+        // eslint-disable-next-line no-param-reassign
+        // delete goals[index];
+        // eslint-disable-next-line no-param-reassign
           goals[index].grantIds = [];
           return [];
         }
@@ -1167,10 +1167,8 @@ export async function saveGoalsForReport(goals, report) {
         }
       }
 
-      // Filter prompts for the grant associated with the goal.
-      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
-      if (filteredPrompts) {
-        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
+      if (prompts && !isMultiRecipientReport) {
+        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
       }
 
       // here we save the goal where the status (and collorary fields) have been set
@@ -1182,7 +1180,7 @@ export async function saveGoalsForReport(goals, report) {
         newOrUpdatedGoal,
         report.id,
         isActivelyBeingEditing,
-        filteredPrompts || null,
+        prompts || null,
         isMultiRecipientReport,
       );
 
@@ -1259,6 +1257,7 @@ export async function saveGoalsForReport(goals, report) {
   // Delete Goals if not being used and created from AR.
   await removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
 }
+*/
 
 /**
  * Verifies if the goal status transition is allowed
