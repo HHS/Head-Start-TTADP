@@ -4,7 +4,7 @@
 import { sequelize } from '../models';
 
 const queryMonitoringData = async () => {
-  console.info('Getting recent monitoring goals');
+  console.info('Getting recent monitoring updates');
   const result = await sequelize.query(
     `-- The prepends either 'New Goals: ' or 'New CLASS: ' to
     -- the recipients column so that minimal changes are needed in
@@ -75,7 +75,7 @@ const queryMonitoringData = async () => {
     ORDER BY 2,1;`,
     { raw: true },
   );
-  console.info(`Recent Monitoring Goals: ${JSON.stringify(result[0])}`);
+  console.info(`Recent Monitoring Updates: ${JSON.stringify(result[0])}`);
 };
 
 export default queryMonitoringData;
