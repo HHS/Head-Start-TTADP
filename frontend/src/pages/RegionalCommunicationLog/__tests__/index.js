@@ -116,12 +116,14 @@ describe('RegionalCommunicationLog', () => {
 
     fetchMock.get(`/api/communication-logs/region/${regionId}/log/${logId}`, completeLog);
     fetchMock.put(`/api/communication-logs/log/${logId}`, completeLog);
+    fetchMock.get('/api/feeds/item?tag=ttahub-commlog-purpose', {});
+    fetchMock.get('/api/feeds/item?tag=ttahub-commlog-results', {});
 
     act(() => {
       renderComponent(`/region/${regionId}/log/${logId}/log`);
     });
 
-    expect(fetchMock.calls()).toHaveLength(2);
+    expect(fetchMock.calls()).toHaveLength(4);
 
     const view = screen.getByTestId('otherStaff-click-container');
     const select = within(view).getByText(/- select -/i);
@@ -154,7 +156,8 @@ describe('RegionalCommunicationLog', () => {
     const saveButton = screen.getByRole('button', { name: 'Save and continue' });
     userEvent.click(saveButton);
 
-    await waitFor(() => expect(fetchMock.calls()).toHaveLength(3));
+    const logCalls = fetchMock.calls().filter(([url]) => url.includes('/api/communication-logs/'));
+    expect(logCalls).toHaveLength(2);
   });
 
   it('will save a log that is "new" and progress to supporting attachments', async () => {
