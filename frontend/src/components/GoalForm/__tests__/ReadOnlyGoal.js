@@ -119,4 +119,28 @@ describe('ReadOnlyGoal', () => {
     expect(await screen.findByText('Grant 2')).toBeVisible();
     expect(await screen.findByText(/response2, response3/i)).toBeVisible();
   });
+
+  it('correctly tests the on remove function', async () => {
+    const onRemove = jest.fn();
+    renderReadOnlyGoal(false, onRemove);
+
+    const contextButton = await screen.findByRole('button');
+    userEvent.click(contextButton);
+    const menu = await screen.findByTestId('menu');
+    const removeButton = within(menu).getByText('Remove');
+    userEvent.click(removeButton);
+
+    expect(onRemove).toHaveBeenCalledWith({
+      endDate: null,
+      grant: {},
+      id: 1,
+      name: 'Sample goal',
+      objectives: [],
+      prompts: [{
+        title: 'All about this goal',
+        ordinal: 1,
+        response: ['vivid', 'ambitious', 'specific'],
+      }],
+    });
+  });
 });
