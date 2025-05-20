@@ -192,7 +192,5 @@ export default async function getGoalsForReport(reportId: number) {
 
   // dedupe the goals & objectives
   const forReport = true;
-  const checkMe = await reduceGoals(goals, forReport);
-  console.log('\n\n\n-------checkMe', checkMe[0].prompts);
-  return checkMe;
+  return reduceGoals(goals, forReport);
 }
