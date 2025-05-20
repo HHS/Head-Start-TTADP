@@ -56,17 +56,18 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
         },
       );
 
-      // this function takes the result of a presense state request
+      // this function takes the result of a presence state request
       // and formats it into a structure that makes sense for this feature
       const handlePresenceStateChange = (data) => {
         const users = transformPresence(data);
+        console.log('users:', users);
 
         onPresenceUpdate({
           presentUsers: users,
           uniqueUserCount: users.length,
           hasMultipleUsers: users.length > 1,
           otherUsers: users.filter((u) => u.userId !== userContext.user.id),
-          tabCount: users.filter((u) => u.userId === userContext.user.id)[0].tabs,
+          tabCount: users.filter((u) => u.userId === userContext.user.id)[0]?.tabs,
         });
       };
 
