@@ -60,7 +60,6 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
       // and formats it into a structure that makes sense for this feature
       const handlePresenceStateChange = (data) => {
         const users = transformPresence(data);
-        console.log('users:', users);
 
         onPresenceUpdate({
           presentUsers: users,
