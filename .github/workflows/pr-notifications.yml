@@ -1,16 +1,16 @@
-name: Pull Request Notifications
+name: Pull Request Notifications (Test)
 
 on:
   pull_request:
     branches:
-      - production
+      - main
     types: [ready_for_review]
 
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify slack when a PR to production is opened
+      - name: Notify Slack when a PR to main is opened (test)
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -18,14 +18,14 @@ jobs:
         run: |
           if [ "$PR_NUMBER" != "" ]; then
             PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
-            TEXT_MESSAGE=":rocket: A production PR <$PR_LINK|$PR_NUMBER> is now open!"
+            TEXT_MESSAGE=":rocket: A test PR to *main* is now open!\n$PR_LINK"
           else
-            TEXT_MESSAGE=":rocket: A new change was pushed to the production branch. Check the latest commits for more details."
+            TEXT_MESSAGE=":rocket: A new change was pushed to main. Check the latest commits for more details."
           fi
 
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
           -H 'Content-type: application/json;charset=utf-8' \
           --data "{
-            \"channel\": \"acf-ohs-ttahub--contractor-customer-team\",
+            \"channel\": \"github-test\",
             \"text\": \"$TEXT_MESSAGE\"
           }" https://slack.com/api/chat.postMessage
