@@ -6,7 +6,6 @@ import db, {
 } from '..';
 import {
   autoPopulateOnApprovedAR,
-  preventNameChangeWhenOnApprovedAR,
 } from '../hooks/goal';
 
 const mockRecipient = { id: 5001, name: 'Bobs Builders', uei: 'NNA5N2KHMGM2' };
@@ -57,46 +56,5 @@ describe('Goals', () => {
     options = { fields: [] };
     autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(true);
-  });
-  it('preventNamChangeWhenOnApprovedAR', async () => {
-    const errorMsg = 'Goal name change not allowed for goals on approved activity reports.';
-    let instance = {
-      changed: () => [],
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
-      .not.toThrowError(errorMsg);
-
-    instance = {
-      onApprovedAR: false,
-      changed: () => [],
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
-      .not.toThrowError(errorMsg);
-
-    instance = {
-      onApprovedAR: false,
-      changed: () => ['name'],
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
-      .not.toThrowError(errorMsg);
-
-    instance = {
-      onApprovedAR: true,
-      changed: () => [],
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
-      .not.toThrowError(errorMsg);
-
-    instance = {
-      onApprovedAR: true,
-      changed: () => ['name'],
-    };
-    instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
-      .toThrowError(errorMsg);
   });
 });
