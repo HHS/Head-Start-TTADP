@@ -386,29 +386,13 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       }
 
       // Filter prompts for the grant associated with the goal.
-      let filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
+      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
       // Handle goal prompts for curated goals like FEI.
       if (goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+        // If there are not prompts from the report (ARG), we then save
+        // them from the goal field responses in the cacheGoalMetadata() below.
         if (filteredPrompts && filteredPrompts.length) {
           await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
-        } else {
-          // Even though we update the ARG responses in the GoalFieldResponse hook.
-          // There might be a case when the Goal Field Responses exists on  the goal but this
-          // is the first time we are using the goal. So we need to make sure
-          // the ARG responses get populated if the user hasn't set them on the report.
-          const existingGoalFieldResponses = await GoalFieldResponse.findAll({
-            where: {
-              goalId: newOrUpdatedGoal.id,
-            },
-          });
-          // Populate the goal field responses so we can save them on the ARG.
-          if (existingGoalFieldResponses.length) {
-            filteredPrompts = existingGoalFieldResponses.map((response) => ({
-              goalId: response.goalId,
-              promptId: response.goalTemplateFieldPromptId,
-              response: response.response,
-            }));
-          }
         }
       }
 

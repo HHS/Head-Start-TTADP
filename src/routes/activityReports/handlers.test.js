@@ -78,6 +78,10 @@ jest.mock('../../services/objectives', () => ({
   getObjectivesByReportId: jest.fn(),
 }));
 
+jest.mock('../../services/currentUser', () => ({
+  currentUserId: jest.fn().mockResolvedValue(1),
+}));
+
 jest.mock('../../services/userSettings', () => ({
   userSettingOverridesById: jest.fn(),
 }));
@@ -243,7 +247,7 @@ describe('Activity Report handlers', () => {
       activityReportByLegacyId.mockResolvedValue(report);
       createOrUpdate.mockResolvedValue(report);
       await updateLegacyFields(request, mockResponse);
-      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { comments } }, report);
+      expect(createOrUpdate).toHaveBeenCalledWith({ imported: { comments } }, report, 1);
       expect(mockResponse.json).toHaveBeenCalledWith(report);
     });
 
@@ -426,6 +430,7 @@ describe('Activity Report handlers', () => {
           displayId,
           objectivesWithoutGoals: [],
         },
+        1,
       );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();

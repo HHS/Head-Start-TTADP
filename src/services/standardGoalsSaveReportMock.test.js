@@ -449,10 +449,11 @@ describe('Goals DB service', () => {
     it('should call setFieldPromptsForCuratedTemplate if prompts exist', async () => {
       const goals = [
         {
+          goalTemplateId: 2,
           goalIds: [1],
           grantIds: [1],
           name: 'This is a test goal',
-          prompts: [{ promptId: 1, response: 'Test Response' }],
+          prompts: [{ grantId: 1, promptId: 1, response: 'Test Response' }],
           status: 'In Progress',
           isActivelyBeingEditing: true,
         },
@@ -485,7 +486,11 @@ describe('Goals DB service', () => {
 
       await saveStandardGoalsForReport(goals, 1, report);
 
-      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Test Response' }]);
+      expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([mockGoalId], [{
+        grantId: 1,
+        promptId: 1,
+        response: 'Test Response',
+      }]);
     });
 
     it('creates a new goal when none exists by goalIds', async () => {
