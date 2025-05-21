@@ -438,8 +438,37 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  // Get all the prompts for this grant/goal combo.
-  if (prompts && prompts.length) {
+  // Save the prompts for the ARG.
+  if (!prompts || !prompts.length) {
+    // If no prompts are passed in get them from the goal.
+    const goalPrompts = await GoalFieldResponse.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        [sequelize.col('prompt."title"'), 'title'],
+        'response',
+      ],
+      where: { goalId: goal.id },
+      raw: true,
+      include: [
+        {
+          model: GoalTemplateFieldPrompt,
+          as: 'prompt',
+          required: true,
+          attributes: [],
+          where: {
+            title: 'FEI root cause',
+          },
+        },
+      ],
+    });
+
+    // if we have goal prompts call cache prompts with the goals prompts
+    if (goalPrompts && goalPrompts.length) {
+      finalPromises.push(
+        cachePrompts(goal.id, arg.id, goalPrompts),
+      );
+    }
+  } else if (prompts.length) {
     finalPromises.push(
       cachePrompts(goal.id, arg.id, prompts),
     );
