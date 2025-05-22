@@ -22,7 +22,7 @@ describe('FlagStatus', () => {
     const expectedText = `Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`;
     const screenReaderText = screen.getByText(expectedText);
     expect(screenReaderText).toBeInTheDocument();
-    expect(screenReaderText).toHaveClass('sr-only');
+    expect(screenReaderText).toHaveClass('usa-sr-only');
   });
 
   it('renders null when no reason matches reasonsToMonitor', () => {
@@ -62,6 +62,6 @@ describe('FlagStatus', () => {
     const expectedText = `Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`;
     const screenReaderText = screen.getByText(expectedText);
     expect(screenReaderText).toBeInTheDocument();
-    expect(screenReaderText).toHaveClass('sr-only');
+    expect(screenReaderText).toHaveClass('usa-sr-only');
   });
 });
