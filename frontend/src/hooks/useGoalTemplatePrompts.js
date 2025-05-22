@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 import { getGoalTemplatePrompts } from '../fetchers/goalTemplates';
 
-export default function useGoalTemplatePrompts(goalTemplateId) {
+export default function useGoalTemplatePrompts(goalTemplateId, goalIds = []) {
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState(null);
   const [templatePrompts, setTemplatePrompts] = useState(null);
   // Because we are using this on the AR goal form
@@ -12,7 +12,10 @@ export default function useGoalTemplatePrompts(goalTemplateId) {
   useDeepCompareEffectNoCheck(() => {
     async function fetchGoalTemplatePrompts() {
       try {
-        const [promptsWithResponses, prompts] = await getGoalTemplatePrompts(goalTemplateId);
+        const [promptsWithResponses, prompts] = await getGoalTemplatePrompts(
+          goalTemplateId,
+          goalIds,
+        );
         setTemplatePrompts(prompts);
         setGoalTemplatePrompts(promptsWithResponses);
       } catch (error) {

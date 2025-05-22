@@ -34,7 +34,10 @@ export default function GoalForm({
   const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   // This ensures we always have the prompts and responses for the template.
-  const [templateResponses, templatePrompts] = useGoalTemplatePrompts(goal.goalTemplateId);
+  const [templateResponses, templatePrompts] = useGoalTemplatePrompts(
+    goal.goalTemplateId,
+    goal.goalIds,
+  );
 
   /**
    * add controllers for all the controlled fields

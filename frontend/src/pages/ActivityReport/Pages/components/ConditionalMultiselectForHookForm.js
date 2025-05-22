@@ -36,11 +36,11 @@ export default function ConditionalMultiselectForHookForm({
       fieldData={fieldData}
       validations={validations}
       fieldName={fieldName}
-      fieldValue={fieldValue}
+      fieldValue={fieldValue || defaultValue} // If we have no response from the ARG, use the GFR.
       onBlur={onBlur}
-      onChange={onChange}
       error={error}
       userCanEdit={userCanEdit}
+      onChange={onChange}
     />
   );
 }

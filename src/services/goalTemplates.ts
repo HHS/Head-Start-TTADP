@@ -188,7 +188,7 @@ export async function getFieldPromptsForCuratedTemplate(
   goalIds: number[] | null,
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
-
+  // and return the prompts with the responses for the passed goalIds
   const [prompts, responses] = await Promise.all([
     GoalTemplateFieldPromptModel.findAll({
       attributes: [
@@ -263,7 +263,7 @@ export async function getFieldPromptsForCuratedTemplate(
         promptsWithResponses.push({
           ...matchingPrompt,
           grantId: response.grantId,
-          response: [...response.response],
+          response: response.response ? [...response.response] : [],
         });
       }
       return promptsWithResponses;
