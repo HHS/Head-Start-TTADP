@@ -92,7 +92,7 @@ export default function ReadOnlyGoal({
             <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
           </div>
         ) : null}
-        {(goal.prompts) && (
+        {goal.prompts && goal.prompts.length > 0 && (
           <>
             <h3 className="margin-top-3 margin-bottom-2">Root cause</h3>
             {formatPrompts(goal.prompts).map((prompt) => (
