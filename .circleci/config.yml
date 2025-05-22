@@ -388,13 +388,15 @@ jobs:
     - run:
         name: Grype Docker image
         environment:
-          GRYPE_VERSION: v0.78.0
+          GRYPE_VERSION: v0.92.2
           OUTPUT_FORMAT: sarif
           OUTPUT_FILE: reports/grype.json
         command: |
+          mkdir -p reports
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
+          ./grype db update
           ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
+          echo "Grype scan results saved in $OUTPUT_FILE"
     - run:
         name: Test similarity
         command: |
@@ -660,22 +662,22 @@ jobs:
         logfile: cmd_log.txt
     - run:
         command: |
-          if grep -o "Recent Monitoring Goals: \[\]" cmd_log.txt; then
-            echo "No new monitoring goals ($(date -I))" > monitoring-goals.txt
+          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
+            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
           else
-            results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
+            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
             delim=":"
             json_data=${results#*"$delim"}
             goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
-            echo "Monitoring Goals:\n\`\`\`${goals}\`\`\`" > monitoring-goals.txt
+            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
           fi
-          cat monitoring-goals.txt
+          cat monitoring-updates.txt
     - when:
         condition:
           equal: [ << parameters.target_env >>, "prod" ]
         steps:
         - notify_slack:
-            message_text_file: monitoring-goals.txt
+            message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
