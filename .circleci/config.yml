@@ -384,13 +384,15 @@ jobs:
     - run:
         name: Grype Docker image
         environment:
-          GRYPE_VERSION: v0.78.0
+          GRYPE_VERSION: v0.92.2
           OUTPUT_FORMAT: sarif
           OUTPUT_FILE: reports/grype.json
         command: |
+          mkdir -p reports
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
+          ./grype db update
           ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
+          echo "Grype scan results saved in $OUTPUT_FILE"
     - run:
         name: Test similarity
         command: |
