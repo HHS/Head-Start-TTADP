@@ -161,7 +161,7 @@ export const
         }
       });
     });
-
+    // console.log('6. For Combine: result', result);
     return result;
   };
 
