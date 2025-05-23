@@ -1937,10 +1937,10 @@
     titleize "2"
     tlds "^1.230.0"
 
-"@mesh-kit/core@^1.0.133":
-  version "1.0.133"
-  resolved "https://registry.yarnpkg.com/@mesh-kit/core/-/core-1.0.133.tgz#4257dbba2a618776020673766fba77b8c2c98b2b"
-  integrity sha512-THwUjMKPOvWDzwzGQkqZW38KcjiZrh9JpRe/xBe9jnfVGxDQbZy2XXYVFBRjwYJkKVMlJGWw8lW4m/etpE8u9Q==
+"@mesh-kit/core@^1.0.0":
+  version "1.0.142"
+  resolved "https://registry.npmjs.org/@mesh-kit/core/-/core-1.0.142.tgz#3d246f343adceb5a49883e5e89e9f6ad007f395c"
+  integrity sha512-AGr3TD3HHSWk3nFt2M+meiO6hgfbQZFArETi8k8kz0mgphscb1/o9RjKGGzhq2zqir/Kqo1feAdLaDPLthIpIQ==
   dependencies:
     eventemitter3 "^5.0.1"
     fast-json-patch "^3.1.1"
