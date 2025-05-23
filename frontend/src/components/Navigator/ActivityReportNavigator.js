@@ -47,11 +47,6 @@ export function getPrompts(promptTitles, getValues) {
   return prompts;
 }
 
-/**
-   *
-   * @param {} isAutoSave
-   * @returns
-   */
 export function getPromptErrors(promptTitles, errors) {
   let promptErrors = false;
 
