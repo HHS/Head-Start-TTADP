@@ -2041,10 +2041,10 @@
     prop-types "^15.7.2"
     react-is "^16.8.0 || ^17.0.0"
 
-"@mesh-kit/core@^1.0.141":
-  version "1.0.141"
-  resolved "https://registry.yarnpkg.com/@mesh-kit/core/-/core-1.0.141.tgz#9edae77c33d5f149c29ad6723e36175440a8dbda"
-  integrity sha512-E3vjANhPeHqn5DymVrV3caTk/HjfeALwNxX6Ll/0uc3eHw18ZxqxRfww5lU1jTJnWE0hPCwtKq+lZrKXvNaUyA==
+"@mesh-kit/core@^1.0.0":
+  version "1.0.142"
+  resolved "https://registry.npmjs.org/@mesh-kit/core/-/core-1.0.142.tgz#3d246f343adceb5a49883e5e89e9f6ad007f395c"
+  integrity sha512-AGr3TD3HHSWk3nFt2M+meiO6hgfbQZFArETi8k8kz0mgphscb1/o9RjKGGzhq2zqir/Kqo1feAdLaDPLthIpIQ==
   dependencies:
     eventemitter3 "^5.0.1"
     fast-json-patch "^3.1.1"
