@@ -361,12 +361,6 @@ function reducePrompts(
               ...(currentPrompt.reportResponse || []),
             ],
           );
-
-          if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
-            existingPrompt.allGoalsHavePromptResponse = true;
-          } else {
-            existingPrompt.allGoalsHavePromptResponse = false;
-          }
         }
 
         return previousPrompts;
@@ -381,7 +375,6 @@ function reducePrompts(
         fieldType: currentPrompt.fieldType,
         options: currentPrompt.options,
         validations: currentPrompt.validations,
-        allGoalsHavePromptResponse: false,
         grantId: currentPrompt.grantId,
         grantDisplayName: currentPrompt.grantDisplayName,
       } as IPrompt;
@@ -394,10 +387,6 @@ function reducePrompts(
           ],
         );
         newPrompt.reportResponse = (currentPrompt.reportResponse || []);
-
-        if (newPrompt.response.length) {
-          newPrompt.allGoalsHavePromptResponse = true;
-        }
       }
 
       if (!forReport) {

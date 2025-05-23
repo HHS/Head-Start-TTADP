@@ -17,7 +17,6 @@ interface IPrompt {
   }[];
   dataValues?: IPrompt;
   toJSON?: () => IPrompt;
-  allGoalsHavePromptResponse?: boolean;
   grantId?: number;
   grantDisplayName?: string;
 }
