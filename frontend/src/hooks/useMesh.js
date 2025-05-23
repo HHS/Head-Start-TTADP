@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { groupBy } from 'lodash';
-// eslint-disable-next-line import/no-unresolved
 import { MeshClient } from '@mesh-kit/core/client';
 import UserContext from '../UserContext';
 
