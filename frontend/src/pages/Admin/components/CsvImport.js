@@ -85,6 +85,7 @@ export default function CsvImport(
     }
   };
 
+  /* istanbul ignore next: internal mechanism tested elsewhere */
   const onChange = async (e) => {
     const { files } = e.target;
 
