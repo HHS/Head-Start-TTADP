@@ -40,7 +40,7 @@ export async function createGoalsForReport(req, res) {
       return;
     }
 
-    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
+    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId, userId);
     res.json(newGoals);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);

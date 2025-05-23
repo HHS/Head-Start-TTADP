@@ -89,7 +89,6 @@ const renderReview = (
     formData.goalsAndObjectives = [{
       isCurated: true,
       prompts: [{
-        allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
       goalIds: [1, 2],
@@ -119,7 +118,6 @@ const renderReview = (
       {
         isCurated: true,
         prompts: [{
-          allGoalsHavePromptResponse: false,
           title: 'FEI Goal',
         }],
         standard: 'Monitoring',
@@ -375,7 +373,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [
@@ -414,7 +411,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [

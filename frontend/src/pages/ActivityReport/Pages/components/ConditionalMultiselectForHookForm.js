@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useController, useFormContext } from 'react-hook-form';
 import { ERROR_FORMAT } from './constants';
@@ -15,7 +15,6 @@ export default function ConditionalMultiselectForHookForm({
   userCanEdit,
 }) {
   const rules = transformValidationsIntoRules(validations);
-
   const {
     field: {
       onChange,
@@ -28,8 +27,14 @@ export default function ConditionalMultiselectForHookForm({
     rules,
     defaultValue,
   });
+  const { errors, setValue } = useFormContext();
 
-  const { errors } = useFormContext();
+  // If the field value is null or an empty array, reset it to the default value
+  useEffect(() => {
+    if (!fieldValue || (Array.isArray(fieldValue) && fieldValue.length === 0)) {
+      setValue(name, defaultValue);
+    }
+  }, [fieldValue, defaultValue, fieldName, name, setValue]);
   const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
 
   return (
@@ -37,11 +42,11 @@ export default function ConditionalMultiselectForHookForm({
       fieldData={fieldData}
       validations={validations}
       fieldName={fieldName}
-      fieldValue={fieldValue}
+      fieldValue={fieldValue || defaultValue} // If we have no response from the ARG, use the GFR.
       onBlur={onBlur}
-      onChange={onChange}
       error={error}
       userCanEdit={userCanEdit}
+      onChange={onChange}
     />
   );
 }

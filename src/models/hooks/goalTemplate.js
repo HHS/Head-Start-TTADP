@@ -52,30 +52,6 @@ const autoPopulateCreationMethod = (sequelize, instance, options) => {
     }
   }
 };
-// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-// We will never have createdVia = 'Automatic' for standard goals.
-// Automatic implies that we created a template from a goal that didn't have one.
-const propagateTemplateName = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-        && changed.includes('templateName')
-        && instance.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
-    await sequelize.models.Goal.update(
-      { name: instance.templateName },
-      {
-        where: {
-          [Op.and]: [
-            { goalTemplateId: instance.id },
-            { onApprovedAR: false },
-            { name: { [Op.not]: instance.templateName } },
-          ],
-        },
-        transaction: options.transaction,
-        individualHooks: true,
-      },
-    );
-  }
-};
 
 const beforeValidate = (sequelize, instance, options) => {
   autoPopulateHash(sequelize, instance, options);
@@ -93,7 +69,6 @@ const afterCreate = async (sequelize, instance, options) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
-  await propagateTemplateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
 };
 
@@ -102,7 +77,6 @@ export {
   autoPopulateHash,
   autoPopulateTemplateNameModifiedAt,
   autoPopulateCreationMethod,
-  propagateTemplateName,
   beforeValidate,
   beforeUpdate,
   afterCreate,
