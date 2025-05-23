@@ -68,7 +68,7 @@
     "node": "20.18.2"
   },
   "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start",
+    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
     "build:local": "INLINE_RUNTIME_CHUNK=false craco build",
     "build": "INLINE_RUNTIME_CHUNK=false craco build && mv build/ ../build/server/client",
     "eject": "craco eject",
@@ -178,7 +178,6 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^7.1.0",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",
@@ -201,6 +200,7 @@
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
     "postcss": "^8.4.39",
+    "@craco/craco": "^7.1.0",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
   },
