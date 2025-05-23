@@ -178,6 +178,7 @@ class ActivityReports{
  userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
+ * revision : integer : 0
  * updatedAt : timestamp with time zone : now()
  * version : integer : 2
  activityRecipientType : varchar(255)

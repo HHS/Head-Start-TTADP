@@ -5,7 +5,6 @@ import { auditLogger } from '../logger';
 const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
     const services = JSON.parse(process.env.VCAP_SERVICES);
-
     // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
     if (services['aws-elasticache-redis'] && services['aws-elasticache-redis'].length > 0) {
       const {
