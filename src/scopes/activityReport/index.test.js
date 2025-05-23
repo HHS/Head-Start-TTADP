@@ -45,6 +45,7 @@ import { findOrCreateResources, processActivityReportForResourcesById } from '..
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 import { formatDeliveryMethod } from './deliveryMethod';
 import { myReportsScopes } from './myReports';
+import * as utils from '../utils';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -121,6 +122,8 @@ const approverRejected = {
   note: 'change x, y, z',
 };
 
+const validTopics = new Set(['Topic 1', 'Topic 2', 'Topic 3', 'Topic 4', 'another topic']);
+
 describe('filtersToScopes', () => {
   let globallyExcludedReport;
   let includedUser1;
@@ -177,6 +180,9 @@ describe('filtersToScopes', () => {
     if (!grantsSpecialist) {
       await Role.create({ name: 'GS', fullName: 'Grants Specialist', isSpecialist: true });
     }
+
+    jest.spyOn(utils, 'getValidTopicsSet')
+      .mockResolvedValue(validTopics);
   });
 
   afterAll(async () => {
@@ -1375,6 +1381,29 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+
+    it('excludes invalid topics from filter', async () => {
+      const filters = { 'topic.in': ['BAD_TOPIC', 'Topic 3'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport2.id]));
+    });
+
+    it('returns no reports if all topics are invalid', async () => {
+      const filters = { 'topic.in': ['BAD_TOPIC_1', 'BAD_TOPIC_2'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(0);
     });
   });
 

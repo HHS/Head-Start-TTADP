@@ -38,6 +38,7 @@ const recipientsWithClassScoresAndGoalsData = [
         recipientId: 1,
         recipientName: 'Abernathy, Mraz and Bogan',
         reportDeliveryDate: '2022-03-01T04:00:00+00:00',
+        'region id': 1,
         collaborators: 'Jane Doe',
         creator: 'John Doe',
         goalCreatedAt: '2021-01-02T18:41:32.028+00:00',
@@ -53,6 +54,7 @@ const recipientsWithClassScoresAndGoalsData = [
         recipientId: 1,
         recipientName: 'Abernathy, Mraz and Bogan',
         reportDeliveryDate: '2022-03-01T04:00:00+00:00',
+        'region id': 1,
         collaborators: 'Bob Jones',
         creator: 'Bill Smith',
         goalCreatedAt: '2021-01-02T18:41:32.028+00:00',
@@ -68,6 +70,7 @@ const recipientsWithClassScoresAndGoalsData = [
         recipientId: 2,
         recipientName: 'Recipient 2',
         reportDeliveryDate: '2022-05-01T04:00:00+00:00',
+        'region id': 2,
         collaborators: 'Jack Jones',
         creator: 'Bill Parks',
         goalCreatedAt: '2021-04-02T18:41:32.028+00:00',
@@ -83,32 +86,28 @@ const recipientsWithClassScoresAndGoalsData = [
         recipientId: 2,
         recipientName: 'Recipient 2',
         reportDeliveryDate: '2022-05-01T04:00:00+00:00',
+        'region id': 2,
         collaborators: 'Jill Jones',
         creator: 'Nadia Parks',
         goalCreatedAt: '2021-04-02T18:41:32.028+00:00',
         goalId: 68746,
         goalStatus: 'Not Started',
       },
-    ],
-  },
-  {
-    data_set: 'with_class_page',
-    records: 1,
-    data: [
       {
-        classroomOrganization: 7.123,
-        emotionalSupport: 6.789,
-        grantNumber: '90CI010074',
-        instructionalSupport: 5.678,
-        lastARStartDate: '2021-05-03',
-        recipientId: 3,
-        recipientName: 'Smith, Johnson and Lee',
-        reportDeliveryDate: '2022-06-01T04:00:00+00:00',
-        collaborators: 'Alice Brown',
-        creator: 'Charlie Davis',
-        goalCreatedAt: '2021-05-03T18:41:32.028+00:00',
-        goalId: 78901,
-        goalStatus: 'In progress',
+        classroomOrganization: 1.1,
+        emotionalSupport: 2.2,
+        grantNumber: '90CI010075',
+        instructionalSupport: 3.3,
+        lastARStartDate: null,
+        recipientId: 4,
+        recipientName: 'Recipient With Null Dates',
+        reportDeliveryDate: null,
+        'region id': 4,
+        collaborators: 'Null Collaborator',
+        creator: 'Null Creator',
+        goalCreatedAt: '2023-01-01T18:41:32.028+00:00',
+        goalId: 99999,
+        goalStatus: 'Draft',
       },
     ],
   },
@@ -144,7 +143,7 @@ describe('Recipients With Class and Scores and Goals', () => {
 
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument();
       });
     });
 
@@ -191,15 +190,15 @@ describe('Recipients With Class and Scores and Goals', () => {
 
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument();
       });
     });
 
     const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i });
     selectAllButton.click();
-    expect(screen.getByText(/2 selected/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 selected/i)).toBeInTheDocument();
     selectAllButton.click();
-    expect(screen.queryAllByText(/2 selected/i).length).toBe(0);
+    expect(screen.queryAllByText(/3 selected/i).length).toBe(0);
   });
 
   it('Shows the selected pill and unselects when pill is removed', async () => {
@@ -207,15 +206,15 @@ describe('Recipients With Class and Scores and Goals', () => {
     renderRecipientsWithClassScoresAndGoals();
     await act(async () => {
       await waitFor(() => {
-        expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+        expect(screen.getByText(/1-3 of 3/i)).toBeInTheDocument();
       });
     });
     const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i });
     selectAllButton.click();
-    expect(screen.getByText(/2 selected/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 selected/i)).toBeInTheDocument();
     const pillRemoveButton = screen.getByRole('button', { name: /deselect all goals/i });
     pillRemoveButton.click();
-    expect(screen.queryAllByText(/2 selected/i).length).toBe(0);
+    expect(screen.queryAllByText(/3 selected/i).length).toBe(0);
   });
 
   it('handles error on fetch', async () => {

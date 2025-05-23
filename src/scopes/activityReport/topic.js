@@ -21,32 +21,54 @@ const getTopicsSql = (topicsString) => `
     ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
     WHERE "Topics"."name" IN (${topicsString})`;
 
-export function withTopics(topics) {
-  const topicsString = topics.map((t) => `'${t}'`).join(',');
-  const arTopicsQuery = getArTopicsSql(topicsString);
-  const topicsQuery = getTopicsSql(topicsString);
-  const combinedQuery = {
+export function withTopics(topics, _options, _userId, validTopics) {
+  if (!validTopics) return { id: { [Op.in]: [] } };
+
+  const safeTopics = topics.filter((t) => validTopics.has(t));
+  if (safeTopics.length === 0) return { id: { [Op.in]: [] } };
+
+  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',');
+  const arTopicsQuery = getArTopicsSql(topicString);
+  const topicsQuery = getTopicsSql(topicString);
+  return {
     [Op.or]: [
       sequelize.literal(`("ActivityReport"."id" IN (${arTopicsQuery}))`),
       sequelize.literal(`("ActivityReport"."id" IN (${topicsQuery}))`),
     ],
   };
-  return combinedQuery;
 }
 
-export function withoutTopics(topics) {
-  const topicsString = topics.map((t) => `'${t}'`).join(',');
-  const arTopicsQuery = getArTopicsSql(topicsString);
-  const topicsQuery = getTopicsSql(topicsString);
-  const combinedQuery = {
-    [Op.or]: [{
-      [Op.and]: [
-        sequelize.literal(`("ActivityReport"."id" NOT IN (${arTopicsQuery}))`),
-        sequelize.literal(`("ActivityReport"."id" NOT IN (${topicsQuery}))`),
+export function withoutTopics(topics, _options, _userId, validTopics) {
+  if (!validTopics) {
+    return {
+      [Op.or]: [
+        sequelize.literal('"topics" IS NULL'),
       ],
-    },
-    sequelize.literal('"topics" IS NULL'),
+    };
+  }
+
+  const safeTopics = topics.filter((t) => validTopics.has(t));
+  if (safeTopics.length === 0) {
+    return {
+      [Op.or]: [
+        sequelize.literal('"topics" IS NULL'),
+      ],
+    };
+  }
+
+  const topicString = safeTopics.map((t) => sequelize.escape(t)).join(',');
+  const arTopicsQuery = getArTopicsSql(topicString);
+  const topicsQuery = getTopicsSql(topicString);
+
+  return {
+    [Op.or]: [
+      {
+        [Op.and]: [
+          sequelize.literal(`("ActivityReport"."id" NOT IN (${arTopicsQuery}))`),
+          sequelize.literal(`("ActivityReport"."id" NOT IN (${topicsQuery}))`),
+        ],
+      },
+      sequelize.literal('"topics" IS NULL'),
     ],
   };
-  return combinedQuery;
 }
