@@ -78,7 +78,7 @@ export function mapAttachments(attachments) {
     );
   }
 
-  return [];
+  return 'None provided';
 }
 
 export function formatRequester(requester) {

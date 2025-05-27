@@ -5,9 +5,9 @@ import {
   screen,
 } from '@testing-library/react';
 
-import ApprovedReportV2 from '../components/ApprovedReportV2';
+import ApprovedReportV3 from '../components/ApprovedReportV3';
 
-describe('Approved Activity Report V2 component', () => {
+describe('Approved Activity Report V3 component', () => {
   const mockObjectives = [
     {
       title: 'Objective 1',
@@ -65,6 +65,8 @@ describe('Approved Activity Report V2 component', () => {
     participants: ['Commander of Pants', 'Princess of Castles'],
     language: [],
     numberOfParticipants: 3,
+    numberOfParticipantsVirtually: 2,
+    numberOfParticipantsInPerson: 1,
     reason: ['Needed it'],
     startDate: '1968-08-01',
     endDate: '1969-08-02',
@@ -92,13 +94,13 @@ describe('Approved Activity Report V2 component', () => {
   };
 
   it('renders a report with multiple goals', async () => {
-    render(<ApprovedReportV2 data={report} />);
+    render(<ApprovedReportV3 data={report} />);
     expect(await screen.findByText(/Goal 1/i)).toBeInTheDocument();
     expect(await screen.findByText(/Goal 2/i)).toBeInTheDocument();
   });
 
   it('renders a report with multiple steps', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       recipientNextSteps: [{
         note: 'First step',
@@ -120,7 +122,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('renders an other entity report', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, goalsAndObjectives: [], objectivesWithoutGoals: mockObjectives, activityRecipientType: 'other-entity',
     }}
     />);
@@ -141,7 +143,7 @@ describe('Approved Activity Report V2 component', () => {
       courses: [],
     }];
 
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
@@ -162,7 +164,7 @@ describe('Approved Activity Report V2 component', () => {
       courses: [],
     }];
 
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
@@ -170,26 +172,8 @@ describe('Approved Activity Report V2 component', () => {
     expect(noneProvided[0]).toBeInTheDocument();
   });
 
-  it('shows the goal close date and goal source', async () => {
-    render(<ApprovedReportV2 data={{
-      ...report,
-      goalsAndObjectives: [{
-        name: 'Goal without close date',
-        goalNumbers: ['1'],
-        objectives: mockObjectives,
-        endDate: '05/02/2023',
-        activityReportGoals: [{
-          endDate: '05/03/2023',
-          source: null,
-        }],
-      }],
-    }}
-    />);
-    expect(await screen.findByText('Source')).toBeInTheDocument();
-  });
-
   it('does not show the goal source label if there are no responses', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       goalsAndObjectives: [{
         name: 'Goal without close date',
@@ -211,7 +195,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('shows the goal source label if there are no responses', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       goalsAndObjectives: [{
         name: 'Goal without close date',
@@ -236,7 +220,7 @@ describe('Approved Activity Report V2 component', () => {
     const thisMockObjective = mockObjectives[0];
     thisMockObjective.courses = [{ name: 'Course One' }];
 
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       goalsAndObjectives: [{
         name: 'Goal without close date',
@@ -254,20 +238,19 @@ describe('Approved Activity Report V2 component', () => {
       }],
     }}
     />);
-    expect(screen.queryAllByText(/Courses/i).length).toBe(1);
+    expect(screen.queryAllByText(/iPD courses/i).length).toBe(1);
   });
 
-  it('displays "in person" delivery methods', async () => {
-    render(<ApprovedReportV2 data={{
+  it('in person', async () => {
+    render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'in-person',
     }}
     />);
-
-    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
+    expect(screen.getByText(/In Person/i)).toBeVisible();
   });
 
-  it('displays the chosen language', async () => {
-    render(<ApprovedReportV2 data={{
+  it('language', async () => {
+    render(<ApprovedReportV3 data={{
       ...report, language: ['Gobbledegook'],
     }}
     />);
@@ -275,8 +258,8 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
-  it('displays virtual delivery methods', async () => {
-    render(<ApprovedReportV2 data={{
+  it('renders a report with virtual delivery type specified', async () => {
+    render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'virtual', virtualDeliveryType: 'Sandwich', approvedAt: '2021-01-01',
     }}
     />);
@@ -284,17 +267,32 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
 
-  it('displays hybrid delivery methods', async () => {
-    render(<ApprovedReportV2 data={{
+  it('renders a virtual report without delivery type specified', async () => {
+    render(<ApprovedReportV3 data={{
+      ...report, deliveryMethod: 'virtual', virtualDeliveryType: null, approvedAt: '2021-01-01',
+    }}
+    />);
+
+    expect(await screen.findByText(/Virtual/i)).toBeInTheDocument();
+  });
+
+  it('hybrid', async () => {
+    render(<ApprovedReportV3 data={{
       ...report, deliveryMethod: 'hybrid',
     }}
     />);
 
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
+
+    // Expect 'Number of participants attending in person' to be in the document
+    expect(await screen.findByText(/Number of participants attending in person/i)).toBeInTheDocument();
+
+    // Expect 'Number of participants attending virtually' to be in the document
+    expect(await screen.findByText(/Number of participants attending virtually/i)).toBeInTheDocument();
   });
 
-  it('shows submitted date when present', async () => {
-    render(<ApprovedReportV2 data={{
+  it('submitted date shown', async () => {
+    render(<ApprovedReportV3 data={{
       ...report, submittedDate: '2023-01-09',
     }}
     />);
@@ -302,8 +300,8 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
   });
 
-  it('hides null submitted dates', async () => {
-    render(<ApprovedReportV2 data={{
+  it('submitted date hidden', async () => {
+    render(<ApprovedReportV3 data={{
       ...report, submittedDate: null,
     }}
     />);
@@ -311,7 +309,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('renders without activity recipients', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipients: [],
       activityRecipientType: 'other-entity',
@@ -321,7 +319,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('correctly displays recipient next steps', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipientType: 'recipient',
       recipientNextSteps: [{
@@ -352,7 +350,7 @@ describe('Approved Activity Report V2 component', () => {
   });
 
   it('correctly displays other-entity next steps', async () => {
-    render(<ApprovedReportV2 data={{
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipientType: 'other-entity',
       recipientNextSteps: [{
@@ -383,8 +381,8 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByRole('heading', { name: /recipient's next steps/i }).length).toBe(0);
   });
 
-  it('correctly displays objectives with citations', async () => {
-    render(<ApprovedReportV2 data={{
+  it('correctly displays objective with citations', async () => {
+    render(<ApprovedReportV3 data={{
       ...report,
       activityRecipients: [
         {
@@ -523,5 +521,149 @@ describe('Approved Activity Report V2 component', () => {
 
     expect(await screen.findByTestId('review-citation-label')).toHaveTextContent('R1 - GRANT2 - EHS');
     expect(await screen.findByTestId('review-citation-listitem')).toHaveTextContent('AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance');
+  });
+
+  it('correctly displays suspended objective with reason', async () => {
+    render(<ApprovedReportV3 data={{
+      ...report,
+      activityRecipients: [
+        {
+          id: 11074,
+          activityRecipientId: 11074,
+          name: 'R1 - GRANT1 - HS',
+        },
+        {
+          id: 11966,
+          activityRecipientId: 11966,
+          name: 'R1 - GRANT2 - EHS',
+        },
+      ],
+      goalsAndObjectives: [
+        {
+          id: 90740,
+          name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
+          status: 'In Progress',
+          endDate: '',
+          isCurated: true,
+          grantId: 11597,
+          goalTemplateId: 24696,
+          onAR: true,
+          onApprovedAR: true,
+          rtrOrder: 1,
+          source: 'Federal monitoring issues, including CLASS and RANs',
+          regionId: 1,
+          recipientId: 1442,
+          standard: 'Monitoring',
+          prompts: [],
+          statusChanges: [
+            {
+              oldStatus: 'Not Started',
+            },
+          ],
+          activityReportGoals: [
+            {
+              endDate: null,
+              id: 155612,
+              activityReportId: 48418,
+              goalId: 90740,
+              isRttapa: null,
+              name: '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.',
+              status: 'Suspended',
+              timeframe: null,
+              closeSuspendReason: 'Suspended for testing',
+              closeSuspendContext: null,
+              source: 'Federal monitoring issues, including CLASS and RANs',
+              isActivelyEdited: false,
+              originalGoalId: null,
+            },
+          ],
+          objectives: [
+            {
+              id: 231994,
+              otherEntityId: null,
+              goalId: 90740,
+              title: 'test',
+              status: 'Suspended',
+              closeSuspendReason: 'Suspended for testing',
+              closeSuspendContext: 'Testing 1, 2, 3',
+              objectiveTemplateId: 565,
+              onAR: true,
+              onApprovedAR: true,
+              createdVia: 'activityReport',
+              rtrOrder: 1,
+              value: 231994,
+              ids: [
+                231994,
+                231995,
+                231996,
+              ],
+              ttaProvided: '<p>tta</p>\n',
+              supportType: 'Planning',
+              isNew: false,
+              arOrder: 1,
+              objectiveCreatedHere: true,
+              topics: [],
+              resources: [],
+              files: [],
+              courses: [],
+              citations: [
+                {
+                  id: 200205,
+                  activityReportObjectiveId: 241644,
+                  citation: '1302.12(k)',
+                  monitoringReferences: [
+                    {
+                      acro: 'AOC',
+                      name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                      grantId: 11966,
+                      citation: '1302.12(k)',
+                      severity: 3,
+                      findingId: '8D18F077-CD6F-4869-AB21-E76EB682433B',
+                      reviewName: '230706F2',
+                      standardId: 200205,
+                      findingType: 'Area of Concern',
+                      grantNumber: '01CH011566',
+                      findingSource: 'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                      reportDeliveryDate: '2023-06-26T04:00:00+00:00',
+                      monitoringFindingStatusName: 'Active',
+                    },
+                  ],
+                  name: 'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+                },
+              ],
+            },
+          ],
+          isSourceEditable: true,
+          goalNumber: 'G-90740',
+          promptsForReview: [],
+          isNew: false,
+          goalNumbers: [
+            'G-90740',
+            'G-90683',
+            'G-90846',
+          ],
+          goalIds: [
+            90740,
+            90683,
+            90846,
+          ],
+          grantIds: [
+            11597,
+            11074,
+            11966,
+          ],
+          collaborators: [
+            {
+              goalNumber: 'G-90683',
+            },
+          ],
+          isReopenedGoal: false,
+        },
+      ],
+    }}
+    />);
+
+    expect(await screen.findByText('Reason suspended')).toBeInTheDocument();
+    expect(await screen.findByText('Suspended for testing - Testing 1, 2, 3')).toBeInTheDocument();
   });
 });
