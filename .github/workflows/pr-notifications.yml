@@ -16,7 +16,7 @@ jobs:
         with:
           result-encoding: string
           script: return context.payload.pull_request.body;
-          
+
       - name: Notify Slack when a PR to main is opened (test)
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_TEST }}
@@ -32,7 +32,7 @@ jobs:
               $0 ~ section {found=1; next}
               /^## / && found {exit}
               found {print}
-            ' pr_body.md | head -c 400
+            ' pr_body.md | head -c 600
           }
 
           DESC=$(extract_section "^## Description of change")
@@ -41,11 +41,24 @@ jobs:
 
           PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 
-          TEXT_MESSAGE=":rocket: PR to *main* is now open!\n*Title:* $PR_TITLE\n*Description:*\n$DESC\n*How to test:*\n$TEST\n*Issues:*\n$ISSUES\n$PR_LINK"
-
-          JSON_PAYLOAD=$(jq -n --arg channel "github-test" --arg text "$TEXT_MESSAGE" \
-            '{channel: $channel, text: $text}')
+          JSON=$(jq -n \
+            --arg link "$PR_LINK" \
+            --arg title "$PR_TITLE" \
+            --arg desc "$DESC" \
+            --arg test "$TEST" \
+            --arg issues "$ISSUES" \
+            '{
+              channel: "github-test",
+              blocks: [
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: *PR to `main` is now open!*" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*How to test:*\n\($test)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                { type: "section", text: { type: "mrkdwn", text: ":link: <\($link)|View PR on GitHub>" } }
+              ]
+            }')
 
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H 'Content-type: application/json;charset=utf-8' \
-            --data "$JSON_PAYLOAD" https://slack.com/api/chat.postMessage
+            --data "$JSON" https://slack.com/api/chat.postMessage
