@@ -17,7 +17,7 @@ jobs:
           result-encoding: string
           script: return context.payload.pull_request.body;
 
-      - name: Notify Slack when a PR to main is opened (test)
+      - name: Notify Slack when a PR to production in is opened
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_TEST }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -47,10 +47,11 @@ jobs:
             --arg desc "$DESC" \
             --arg test "$TEST" \
             --arg issues "$ISSUES" \
+            --arg pr_number "#$PR_NUMBER" \
             '{
               channel: "github-test",
               blocks: [
-                { type: "section", text: { type: "mrkdwn", text: ":rocket: *PR to `main` is now open!*" } },
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($link)|\($pr_number)> is now open!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*How to test:*\n\($test)" } },
