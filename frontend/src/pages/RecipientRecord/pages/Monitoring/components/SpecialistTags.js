@@ -56,12 +56,13 @@ export default function SpecialistTags({ specialists }) {
           : specialist.roles.split(',').map((role) => role.trim());
 
         // separate tag for each role
-        roleArray.forEach((role) => {
-          if (!role) return;
+        roleArray.forEach((r) => {
+          if (!r) return;
+          const roleName = typeof r === 'string' ? r : r.role.name;
           tags.push(
-            <Tag key={`${specialist.name}-${role}`} clickable>
+            <Tag key={`${specialist.name}-${roleName}`} clickable>
               <Tooltip
-                displayText={role}
+                displayText={roleName}
                 screenReadDisplayText={false}
                 buttonLabel="reveal the full name of this user"
                 tooltipText={specialist.name}
