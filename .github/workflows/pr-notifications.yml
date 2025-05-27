@@ -10,7 +10,7 @@ jobs:
   notify_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR body
+      - name: Get PR body
         uses: actions/github-script@v7
         id: get-body
         with:
@@ -25,22 +25,26 @@ jobs:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_BODY: ${{ steps.get-body.outputs.result }}
         run: |
-          # Extract key sections using grep and awk
           extract_section() {
-            echo "$PR_BODY" | awk "/^## $1/{flag=1; next} /^## /{flag=0} flag"
+            echo "$PR_BODY" | awk -v section="## $1" '
+              BEGIN {found=0}
+              tolower($0) ~ tolower("^" section) {found=1; next}
+              /^## / && found {exit}
+              found {print}
+            '
           }
 
           DESC=$(extract_section "Description of change" | head -c 400)
           TEST=$(extract_section "How to test" | head -c 400)
-          ISSUES=$(extract_section "Issues" | head -c 400)
+          ISSUES=$(extract_section "Issue" | head -c 400)
 
           PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 
           TEXT_MESSAGE=":rocket: *PR to main is now open!*\n>*Title:* $PR_TITLE\n>*Author:* @$PR_AUTHOR\n>*Description:* $DESC\n>*How to test:* $TEST\n>*Issues:* $ISSUES\n$PR_LINK"
 
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-          -H 'Content-type: application/json;charset=utf-8' \
-          --data "{
-            \"channel\": \"github-test\",
-            \"text\": \"$TEXT_MESSAGE\"
-          }" https://slack.com/api/chat.postMessage
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "{
+              \"channel\": \"github-test\",
+              \"text\": \"$TEXT_MESSAGE\"
+            }" https://slack.com/api/chat.postMessage
