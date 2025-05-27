@@ -30,6 +30,11 @@ export default function ConditionalMultiselectForHookForm({
   const { errors } = useFormContext();
   const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
 
+  // If we don't have a field value but we have a default value set it using onChange.
+  if (!fieldValue && defaultValue) {
+    onChange(defaultValue);
+  }
+
   return (
     <ConditionalMultiselect
       fieldData={fieldData}
