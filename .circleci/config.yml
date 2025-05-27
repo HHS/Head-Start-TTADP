@@ -136,7 +136,7 @@ workflows:
         filters:
           branches:
             only:
-            - prod
+            - production
     jobs:
     - run_import_job:
         target_env: "prod"
