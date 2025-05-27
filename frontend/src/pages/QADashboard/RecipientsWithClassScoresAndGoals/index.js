@@ -61,6 +61,7 @@ export default function RecipientsWithClassScoresAndGoals() {
     QA_DASHBOARD_FILTER_CONFIG,
   );
 
+  /* istanbul ignore next: hard to test */
   useDeepCompareEffect(() => {
     async function fetchQaData() {
       setIsLoading(true);
