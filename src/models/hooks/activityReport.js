@@ -890,10 +890,6 @@ const revisionBumpBroadcast = async (sequelize, instance) => {
     const previousRevision = changed ? instance.previous('revision') : null;
     const currentRevision = instance.revision;
 
-    console.log('asdf');
-    console.log('changed', changed);
-    console.log('previousRevision', previousRevision, 'currentRevision', currentRevision);
-
     // Check if revision was actually changed
     if (previousRevision !== null && previousRevision !== currentRevision) {
       // Only attempt to broadcast if we're not in a test environment
