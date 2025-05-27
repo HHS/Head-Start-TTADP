@@ -14,6 +14,7 @@ export default function ConditionalMultiselect({
   onChange,
   error,
   userCanEdit,
+  defaultValue,
 }) {
   const handleOnChange = (selections) => {
     onChange(selections.map((option) => option.label));
@@ -43,6 +44,12 @@ export default function ConditionalMultiselect({
         </ul>
       </>
     );
+  }
+
+  // If we don't have a field value, we should use the default value.
+  if (!fieldValue || fieldValue.length === 0) {
+    selectedOptions.push(...(defaultValue || []).map((label) => options
+      .find((option) => option.label === label)));
   }
 
   return (
@@ -100,8 +107,10 @@ ConditionalMultiselect.propTypes = {
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
+  defaultValue: PropTypes.arrayOf(PropTypes.string),
 };
 
 ConditionalMultiselect.defaultProps = {
   userCanEdit: false,
+  defaultValue: [],
 };
