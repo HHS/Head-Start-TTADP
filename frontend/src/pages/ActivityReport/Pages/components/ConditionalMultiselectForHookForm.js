@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useController, useFormContext } from 'react-hook-form';
 import { ERROR_FORMAT } from './constants';
@@ -27,14 +27,7 @@ export default function ConditionalMultiselectForHookForm({
     rules,
     defaultValue,
   });
-  const { errors, setValue } = useFormContext();
-
-  // If the field value is null or an empty array, reset it to the default value
-  useEffect(() => {
-    if (!fieldValue || (Array.isArray(fieldValue) && fieldValue.length === 0)) {
-      setValue(name, defaultValue);
-    }
-  }, [fieldValue, defaultValue, fieldName, name, setValue]);
+  const { errors } = useFormContext();
   const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
 
   return (

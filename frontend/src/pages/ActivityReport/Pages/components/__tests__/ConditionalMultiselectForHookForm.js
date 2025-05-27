@@ -67,6 +67,9 @@ describe('ConditionalMultiselectForHookForm', () => {
   it('renders the prompt if editable', () => {
     render(<Rt />);
     expect(screen.getByText('answer my riddle')).toBeInTheDocument();
+    // Ensure we render the selected options.
+    expect(screen.getByText('run')).toBeInTheDocument();
+    expect(screen.getByText('test')).toBeInTheDocument();
   });
 
   it('renders a prompt with errors', async () => {
