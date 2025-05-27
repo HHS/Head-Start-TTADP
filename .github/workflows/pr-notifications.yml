@@ -15,10 +15,12 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_TEST }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           if [ "$PR_NUMBER" != "" ]; then
             PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
-            TEXT_MESSAGE=":rocket: A test PR to *main* is now open!\n$PR_LINK"
+            TEXT_MESSAGE=":rocket: *PR to main is now open!*\n>*Title:* $PR_TITLE\n>*Author:* @$PR_AUTHOR\n$PR_LINK"
           else
             TEXT_MESSAGE=":rocket: A new change was pushed to main. Check the latest commits for more details."
           fi
