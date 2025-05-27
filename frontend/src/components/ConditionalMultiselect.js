@@ -46,12 +46,6 @@ export default function ConditionalMultiselect({
     );
   }
 
-  // If we don't have a field value, we should use the default value.
-  if (!fieldValue || fieldValue.length === 0) {
-    selectedOptions.push(...(defaultValue || []).map((label) => options
-      .find((option) => option.label === label)));
-  }
-
   return (
     <FormGroup className="margin-top-0" error={error.props.children} key={fieldName}>
       <Label htmlFor={fieldName}>
