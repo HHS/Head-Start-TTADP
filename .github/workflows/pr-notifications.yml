@@ -16,7 +16,7 @@ jobs:
         with:
           result-encoding: string
           script: return context.payload.pull_request.body;
-
+          
       - name: Notify Slack when a PR to main is opened (test)
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_TEST }}
@@ -41,11 +41,11 @@ jobs:
 
           PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 
-          TEXT_MESSAGE=":rocket: *PR to main is now open!*\n>*Title:* $PR_TITLE\n>*Description:* $DESC\n>*How to test:* $TEST\n>*Issues:* $ISSUES\n$PR_LINK"
+          TEXT_MESSAGE=":rocket: PR to *main* is now open!\n*Title:* $PR_TITLE\n*Description:*\n$DESC\n*How to test:*\n$TEST\n*Issues:*\n$ISSUES\n$PR_LINK"
+
+          JSON_PAYLOAD=$(jq -n --arg channel "github-test" --arg text "$TEXT_MESSAGE" \
+            '{channel: $channel, text: $text}')
 
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H 'Content-type: application/json;charset=utf-8' \
-            --data "{
-              \"channel\": \"github-test\",
-              \"text\": \"$TEXT_MESSAGE\"
-            }" https://slack.com/api/chat.postMessage
+            --data "$JSON_PAYLOAD" https://slack.com/api/chat.postMessage
