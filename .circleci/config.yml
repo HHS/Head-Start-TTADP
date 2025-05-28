@@ -51,11 +51,7 @@ workflows:
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
-    - test-slack-message:
-        filters:
-          branches:
-            only:
-            - main
+    - test-slack-message
     - build_and_lint
     - build_similarity_api
     - checkpoint:
