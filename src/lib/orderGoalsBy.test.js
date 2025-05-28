@@ -1,4 +1,4 @@
-import orderGoalsBy, { STATUS_SORT, MERGED_ID } from './orderGoalsBy';
+import orderGoalsBy, { STATUS_SORT } from './orderGoalsBy';
 import { sequelize } from '../models';
 
 describe('orderGoalsBy', () => {
@@ -44,19 +44,6 @@ describe('orderGoalsBy', () => {
       ],
       [
         sequelize.col(STATUS_SORT), 'ASC',
-      ],
-    ]);
-
-    const five = orderGoalsBy('mergedGoals', 'ASC');
-    expect(five).toStrictEqual([
-      [
-        sequelize.col(MERGED_ID), 'ASC',
-      ],
-      [
-        sequelize.col(STATUS_SORT), 'ASC',
-      ],
-      [
-        sequelize.col('createdAt'), 'DESC',
       ],
     ]);
   });

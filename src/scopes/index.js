@@ -4,6 +4,7 @@ import { trainingReportsFiltersToScopes as trainingReport } from './trainingRepo
 import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
+import { getValidTopicsSet } from './utils';
 
 const models = {
   activityReport,
@@ -45,11 +46,20 @@ const models = {
  * @param {} options
  * @returns {obj} scopes
  */
-export default async function filtersToScopes(filters, options) {
+export default async function filtersToScopes(filters, options = {}) {
+  let validTopics;
+
+  const filterKeys = Object.keys(filters || {});
+  const usesTopics = filterKeys.some((k) => k.startsWith('topic.'));
+
+  if (usesTopics) {
+    validTopics = await getValidTopicsSet();
+  }
+
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](filters, options && options[model], options && options.userId),
+      [model]: models[model](filters, options[model], options.userId, validTopics),
     });
     return scopes;
   }, {});

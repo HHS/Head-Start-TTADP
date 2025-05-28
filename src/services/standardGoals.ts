@@ -5,6 +5,7 @@ import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import filtersToScopes from '../scopes';
+import { reduceObjectivesForRecipientRecord } from './recipient';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
@@ -797,6 +798,15 @@ export async function standardGoalsForRecipient(
       'name',
       'status',
       'createdAt',
+      'goalTemplateId',
+      [
+        sequelize.literal(`(
+          SELECT MAX("createdAt")
+          FROM "GoalStatusChanges"
+          WHERE "goalId" = "Goal"."id"
+        )`),
+        'latestStatusChangeDate',
+      ],
       [sequelize.literal(`
         CASE
           WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
@@ -821,14 +831,12 @@ export async function standardGoalsForRecipient(
       {
         model: GoalCollaborator,
         as: 'goalCollaborators',
-        attributes: [],
-        separate: true,
-        required: false,
+        attributes: ['id'],
+        required: true,
         include: [
           {
             model: CollaboratorType,
             as: 'collaboratorType',
-            required: true,
             where: {
               name: 'Creator',
             },
@@ -843,16 +851,14 @@ export async function standardGoalsForRecipient(
               {
                 model: UserRole,
                 as: 'userRoles',
-                required: true,
                 include: [
                   {
                     model: Role,
                     as: 'role',
                     attributes: ['name'],
-                    required: true,
                   },
                 ],
-                attributes: [],
+                attributes: ['id'],
               },
             ],
           },
@@ -865,7 +871,6 @@ export async function standardGoalsForRecipient(
         attributes: ['response', 'goalId'],
       },
       {
-        required: true,
         model: Grant,
         as: 'grant',
         attributes: [
@@ -890,7 +895,6 @@ export async function standardGoalsForRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
-        separate: true,
         order: [
           [sequelize.col('activityReportObjectives.activityReport.endDate'), 'DESC'],
           ['createdAt', 'DESC'],
@@ -922,7 +926,6 @@ export async function standardGoalsForRecipient(
                 model: Topic,
                 as: 'topics',
                 attributes: ['name'],
-                required: false,
               },
               {
                 model: ActivityReportObjectiveCitation,
@@ -934,6 +937,24 @@ export async function standardGoalsForRecipient(
                 required: false,
               },
             ],
+          },
+          {
+            attributes: [
+              'id',
+              'reason',
+              'topics',
+              'endDate',
+              'calculatedStatus',
+              'legacyId',
+              'regionId',
+              'displayId',
+            ],
+            model: ActivityReport,
+            as: 'activityReports',
+            required: false,
+            where: {
+              calculatedStatus: REPORT_STATUSES.APPROVED,
+            },
           },
         ],
       },
@@ -947,9 +968,39 @@ export async function standardGoalsForRecipient(
     },
   });
 
+  // Process each goal to format objectives properly with endDate (Last TTA in the UI)
+  const processedRows = rows.map((current) => {
+    // Create a goal object similar to what getGoalsByActivityRecipient does
+    const goalToAdd = {
+      id: current.id,
+      ids: [current.id],
+      goalStatus: current.status,
+      createdOn: current.createdAt,
+      goalText: current.name,
+      goalNumbers: [current.grant.number],
+      objectiveCount: 0,
+      goalTopics: [],
+      reasons: [],
+      grantNumbers: [current.grant.number],
+    };
+
+    // Process objectives through reduceObjectivesForRecipientRecord
+    const processedObjectives = reduceObjectivesForRecipientRecord(
+      current,
+      goalToAdd,
+      [current.grant.number],
+    );
+
+    // Create a new object with processed objectives to avoid modifying the parameter
+    return {
+      ...current.toJSON(),
+      objectives: processedObjectives,
+    };
+  });
+
   return {
     count: rows.length,
-    goalRows: rows,
+    goalRows: processedRows,
     statuses,
     allGoalIds: ids,
   };

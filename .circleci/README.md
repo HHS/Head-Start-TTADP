@@ -27,11 +27,10 @@ This CircleCI configuration is designed to automate various tasks such as buildi
 
 ## Executors
 
-CircleCI executors define the environment in which each job runs. 
+CircleCI executors define the environment in which each job runs.
 
 - **Docker Executor**: Used for most tasks, leveraging a Node.js image with browser support for building and testing.
 - **Docker Postgres Executor**: Combines Node.js with a PostgreSQL instance for database-related testing.
-- **Docker Python Executor**: Configured for testing the Similarity API with Python dependencies.
 - **Machine Executor**: Provides a full virtual machine for tasks requiring more control, like dynamic security scans.
 - **AWS Executor**: Configured for workflows requiring AWS tools or resources.
 

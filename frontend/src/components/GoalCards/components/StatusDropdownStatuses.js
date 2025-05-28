@@ -7,7 +7,7 @@ import {
   NoStatus,
   NotStarted,
   Draft,
-  Ceased,
+  Paused,
 } from '../../icons';
 
 const STATUSES = {
@@ -57,8 +57,8 @@ const STATUSES = {
   Suspended: {
     display: 'Suspended',
     color: colors.errorDark,
-    icon: <Ceased />,
-    IconWithProps: (props) => <Ceased {...props} />,
+    icon: <Paused />,
+    IconWithProps: (props) => <Paused {...props} />,
   },
   'Needs Status': {
     display: 'Needs status',
