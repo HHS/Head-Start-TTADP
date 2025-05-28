@@ -1,10 +1,8 @@
 env: sandbox
 web_instances: 1
 web_memory: 3GB
-web_disk_quota: 2GB
 worker_instances: 1
 worker_memory: 1GB
-worker_disk_quota: 2GB
 similarity_api_instances: 1
 similarity_api_memory: 1GB
 similarity_api_disk_quota: 6GB
@@ -16,9 +14,9 @@ cg_api: https://api.fr.cloud.gov
 cg_username: ${CLOUDGOV_SANDBOX_USERNAME}
 cg_password: ${CLOUDGOV_SANDBOX_PASSWORD}
 cg_space: ${CLOUDGOV_SANDBOX_SPACE}
-new_relic_app_id: "867346799"
+new_relic_app_id: 867346799
 
-LOG_LEVEL: info
+LOG_LEVEL: debug
 SUPPRESS_ERROR_LOGGING: "false"
 SEND_NOTIFICATIONS: "true"
 FORCE_CRON: "false"
