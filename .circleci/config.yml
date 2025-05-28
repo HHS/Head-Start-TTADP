@@ -45,9 +45,6 @@ parameters:
 # ----------------- Workflows -----------------
 
 workflows:
-  test-notification:
-    jobs:
-      - test-slack-message
   build_test_deploy:
     # This is the primary workflow that runs on each push to the GitHub repo
     # It will build the app, run all tests, then deploy if the branch matches
@@ -228,55 +225,10 @@ workflows:
         requires:
         - backup_temp_db
 
-
-
 # ----------------- Jobs -----------------
 
 jobs:
-  test-slack-message:
-    docker:
-      - image: cimg/base:stable
-    environment:
-      CIRCLE_PULL_REQUEST: https://github.com/HHS/Head-Start-TTADP/pull/2824
-      ENV_URL: https://tta-smarthub-dev-blue.app.cloud.gov/
-    steps:
-      - run:
-          name: Generate Slack Message (Test)
-          command: |
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            GITHUB_REPO=HHS/Head-Start-TTADP
 
-            PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}")
-
-            PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
-            PR_BODY=$(echo "$PR_DATA" | jq -r .body)
-
-            DESCRIPTION=$(echo "$PR_BODY" | awk '/## Description of change/{flag=1;next}/##/{flag=0}flag')
-            ISSUES=$(echo "$PR_BODY" | awk '/## Issue/{flag=1;next}/##/{flag=0}flag')
-
-            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!"
-
-            if [ -n "$DESCRIPTION" ]; then
-              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Description of change:*\n$DESCRIPTION"
-            fi
-
-            if [ -n "$ISSUES" ]; then
-              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n$ISSUES"
-            fi
-
-            echo -e "$MESSAGE_TEXT" > /tmp/message_file
-
-      - run:
-          name: Print Message to Console
-          command: cat /tmp/message_file
-
-      - notify_slack:
-          slack_bot_token: $SLACK_BOT_TOKEN_TEST
-          slack_channel: github-test
-          message_text_file: /tmp/message_file
-          
   build_and_lint:
     executor: docker-executor
     resource_class: large
@@ -671,62 +623,62 @@ jobs:
         app_name: "tta-smarthub-<< parameters.target_env >>"
         target_env: << parameters.target_env >>
 
-    run_cmd:
-      # run given command in the target environment
-      executor: docker-executor
-      parameters:
-        command:
-          type: string
-        target_env:
-          type: string
-      steps:
-      - cf_cmd:
-          the_command: << parameters.command >>
-          target_env: "<< parameters.target_env >>"
+  run_cmd:
+    # run given command in the target environment
+    executor: docker-executor
+    parameters:
+      command:
+        type: string
+      target_env:
+        type: string
+    steps:
+    - cf_cmd:
+        the_command: << parameters.command >>
+        target_env: "<< parameters.target_env >>"
 
-    # no-op job used for checkpointing others
-    checkpoint:
-      executor: docker-base
-      steps: [ no-op ]
+  # no-op job used for checkpointing others
+  checkpoint:
+    executor: docker-base
+    steps: [ no-op ]
 
-    run_import_job:
-      # run the data import / monitoring job in target environment
-      executor: docker-executor
-      parameters:
-        target_env:
-          type: string
-        slack_channel:
-          type: string
-          default: acf-head-start-alerts-lower
-      steps:
-      - checkout
-      - cf_cmd:
-          the_command: |
-            node ./build/server/src/tools/importSystemCLI.js download 1
-            node ./build/server/src/tools/importSystemCLI.js process 1
-            yarn createMonitoringGoalsCLI
-            node ./build/server/src/tools/queryMonitoringDataCLI.js
-          target_env: << parameters.target_env >>
-          logfile: cmd_log.txt
-      - run:
-          command: |
-            if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
-              echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
-            else
-              results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
-              delim=":"
-              json_data=${results#*"$delim"}
-              goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
-              echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
-            fi
-            cat monitoring-updates.txt
-      - when:
-          condition:
-            equal: [ << parameters.target_env >>, "prod" ]
-          steps:
-          - notify_slack:
-              message_text_file: monitoring-updates.txt
-              slack_channel: << parameters.slack_channel >>
+  run_import_job:
+    # run the data import / monitoring job in target environment
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
+    steps:
+    - checkout
+    - cf_cmd:
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
+        target_env: << parameters.target_env >>
+        logfile: cmd_log.txt
+    - run:
+        command: |
+          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
+            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
+          else
+            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+          fi
+          cat monitoring-updates.txt
+    - when:
+        condition:
+          equal: [ << parameters.target_env >>, "prod" ]
+        steps:
+        - notify_slack:
+            message_text_file: monitoring-updates.txt
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
