@@ -639,10 +639,11 @@ jobs:
           name: Generate Slack Message (Test)
           command: |
             PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            GITHUB_REPO=HHS/Head-Start-TTADP
 
             PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}")
+              "https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}")
 
             PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
             PR_BODY=$(echo "$PR_DATA" | jq -r .body)
@@ -650,7 +651,11 @@ jobs:
             DESCRIPTION=$(echo "$PR_BODY" | awk '/## Description of change/{flag=1;next}/##/{flag=0}flag')
             ISSUES=$(echo "$PR_BODY" | awk '/## Issue/{flag=1;next}/##/{flag=0}flag')
 
-            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!\n\n*Description of change:*\n$DESCRIPTION"
+            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!"
+
+            if [ -n "$DESCRIPTION" ]; then
+              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Description of change:*\n$DESCRIPTION"
+            fi
 
             if [ -n "$ISSUES" ]; then
               MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n$ISSUES"
