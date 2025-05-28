@@ -275,7 +275,7 @@ const GoalPicker = ({
           stickyFooter
           title="Goal guidance"
         >
-          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
+          <ContentFromFeedByTag tagName="ttahub-ohs-standard-goals" contentSelector="table" />
         </Drawer>
         <div data-testid="goal-selector">
           <Select
