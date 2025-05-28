@@ -234,8 +234,16 @@ jobs:
       - image: cimg/base:stable
     environment:
       CIRCLE_PULL_REQUEST: https://github.com/HHS/Head-Start-TTADP/pull/2824
-      ENV_URL: https://test.example.com
+      ENV_URL: https://tta-smarthub-dev-blue.app.cloud.gov/
     steps:
+      - run:
+          name: Check Slack Token Length
+          command: |
+            echo "Token length: ${#SLACK_BOT_TOKEN_TEST}"
+      - run:
+          name: Check Github Token Length
+          command: |
+            echo "Token length: ${#GITHUB_TOKEN}"
       - run:
           name: Generate Slack Message (Test)
           command: |
@@ -263,10 +271,6 @@ jobs:
       - run:
           name: Print Message to Console
           command: cat /tmp/message_file
-      - run:
-          name: Check Slack Token Length
-          command: |
-            echo "Token length: ${#SLACK_BOT_TOKEN_TEST}"
       - notify_slack:
           slack_bot_token: SLACK_BOT_TOKEN_TEST
           slack_channel: github-test
