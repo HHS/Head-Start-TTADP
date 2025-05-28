@@ -8,6 +8,7 @@ on:
 
 jobs:
   notify_slack:
+    if: github.actor == 'kryswisnaskas'
     runs-on: ubuntu-latest
     steps:
       - name: Get PR body
@@ -42,21 +43,19 @@ jobs:
           PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 
           JSON=$(jq -n \
-            --arg link "$PR_LINK" \
-            --arg title "$PR_TITLE" \
-            --arg desc "$DESC" \
-            --arg test "$TEST" \
-            --arg issues "$ISSUES" \
             --arg pr_number "#$PR_NUMBER" \
+            --arg pr_link "$PR_LINK" \
+            --arg title "$PR_TITLE" \
+            --arg desc "> $(echo "$DESC" | sed 's/^/> /')" \
+            --arg issues "$(echo "$ISSUES" | sed 's/^/> /')" \
             '{
               channel: "github-test",
               blocks: [
-                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($link)|\($pr_number)> is now open!" } },
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
-                { type: "section", text: { type: "mrkdwn", text: "*How to test:*\n\($test)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
-                { type: "section", text: { type: "mrkdwn", text: ":link: <\($link)|View PR on GitHub>" } }
+                { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
               ]
             }')
 
