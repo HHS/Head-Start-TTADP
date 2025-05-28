@@ -3,14 +3,10 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Alert } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { uniqueId } from 'lodash';
-import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
 import { updateObjectiveStatus } from '../../fetchers/objective';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
-import colors from '../../colors';
 import './ObjectiveCard.css';
 
 function ObjectiveCard({
@@ -25,10 +21,8 @@ function ObjectiveCard({
   const {
     title,
     endDate,
-    reasons,
-    topics,
+    topics = [],
     status,
-    grantNumbers,
     activityReports,
     supportType,
     ids,
@@ -38,37 +32,13 @@ function ObjectiveCard({
   const [localStatus, setLocalStatus] = useState(status || 'Not Started');
   const [localCloseSuspendReason, setLocalCloseSuspendReason] = useState('');
   const [localCloseSuspendContext, setLocalCloseSuspendContext] = useState('');
-  const [suspendReasonError, setSuspendReasonError] = useState();
+  const [suspendReasonError, setSuspendReasonError] = useState(null);
   const [statusChangeError, setStatusChangeError] = useState();
 
   // using deep compare as we have an array in the dependency list
   useDeepCompareEffect(() => {
     dispatchStatusChange(objective.ids, localStatus);
   }, [dispatchStatusChange, localStatus, objective.ids]);
-
-  const determineReasonMonitorStatus = (reason) => {
-    if (reasonsToMonitor.includes(reason)) {
-      return (
-        <>
-          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />
-        </>
-      );
-    }
-    return null;
-  };
-
-  const displayReasonsList = (sortedReasons) => (
-    <ul className="usa-list usa-list--unstyled">
-      {
-        sortedReasons.map((r) => (
-          <li key={`reason_${r}`}>
-            {r}
-            {determineReasonMonitorStatus(r)}
-          </li>
-        ))
-      }
-    </ul>
-  );
 
   const onChangeStatus = async (
     newStatus,
@@ -140,10 +110,6 @@ function ObjectiveCard({
           {supportType}
         </li>
       )}
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Grant numbers </span>
-        {grantNumbers.join(', ')}
-      </li>
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">End date </span>
         {endDate}
@@ -152,11 +118,6 @@ function ObjectiveCard({
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Topics</span>
         {topics.join(', ')}
-      </li>
-
-      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 desktop:text-normal text-bold">Reasons</span>
-        {reasons && displayReasonsList(reasons)}
       </li>
 
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
@@ -202,9 +163,7 @@ function ObjectiveCard({
 export const objectivePropTypes = PropTypes.shape({
   title: PropTypes.string.isRequired,
   endDate: PropTypes.string,
-  reasons: PropTypes.arrayOf(PropTypes.string),
-  status: PropTypes.string.isRequired,
-  grantNumbers: PropTypes.arrayOf(PropTypes.string),
+  status: PropTypes.string,
   activityReports: PropTypes.arrayOf(PropTypes.shape({
     legacyId: PropTypes.string,
     number: PropTypes.string,
@@ -222,12 +181,10 @@ export const objectivePropTypes = PropTypes.shape({
 
 objectivePropTypes.defaultProps = {
   goalStatus: null,
-  arLegacyId: null,
   endDate: null,
-  reasons: [],
-  grantNumbers: [],
   activityReports: [],
   supportType: '',
+  status: '',
 };
 ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,

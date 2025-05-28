@@ -36,7 +36,7 @@ export const isValidURL = (url) => {
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
   return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
-  || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
+    || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
 };
 
 /**
@@ -322,3 +322,17 @@ export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
   }
   return `${from.toLocaleString()}-${to.toLocaleString()} of ${totalCount.toLocaleString()}`;
 };
+
+export const SUPPORTED_DATE_FORMATS = [
+  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
+  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
+  'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
+  'M.D.YY', 'MM.DD.YY',
+];
+
+export function isValidDate(value) {
+  if (!value) return null;
+  const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
+  return parsed ? moment(value, parsed, true) : null;
+}

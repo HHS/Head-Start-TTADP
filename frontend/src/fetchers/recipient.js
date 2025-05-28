@@ -1,6 +1,6 @@
 import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { get, put } from './index';
+import { get } from './index';
 import { GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../utils';
 
@@ -63,12 +63,6 @@ export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updated
   return goals.json();
 };
 
-export const getMergeGoalPermissions = async (recipientId, regionId) => {
-  const url = join(recipientUrl, recipientId, 'region', regionId, 'merge-permissions');
-  const res = await get(url);
-  return res.json();
-};
-
 export const getRecipientAndGrantsByUser = async () => {
   const recipients = await get(join(recipientUrl, 'user'));
   return recipients.json();
@@ -79,45 +73,3 @@ export const getRecipientLeadership = async (recipientId, regionId) => {
   const leadership = await get(url);
   return leadership.json();
 };
-
-export const markRecipientGoalGroupInvalid = async (
-  recipientId,
-  regionId,
-  goalGroupId,
-) => {
-  const url = join(
-    recipientUrl,
-    String(recipientId),
-    'region',
-    String(regionId),
-    'group',
-    String(goalGroupId),
-    'invalid',
-  );
-  const goals = await put(url);
-  return goals.json();
-};
-
-export const getRecipientGoalGroup = async (
-  recipientId,
-  regionId,
-  goalGroupId,
-) => {
-  const url = join(
-    recipientUrl,
-    String(recipientId),
-    'region',
-    String(regionId),
-    'group',
-    String(goalGroupId),
-  );
-
-  const goals = await get(url);
-  return goals.json();
-};
-
-export async function markSimilarGoals(recipientId, goalIds) {
-  const url = join(recipientUrl, String(recipientId), 'mark-similar-goals');
-  const response = await put(url, { goalIds });
-  return response.json();
-}

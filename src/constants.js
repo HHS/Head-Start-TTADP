@@ -58,8 +58,6 @@ const GOAL_COLLABORATORS = {
   EDITOR: 'Editor', // The user(s) who edits the text of a goal
   LINKER: 'Linker', // The user who links the goal to a report
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
-  MERGE_CREATOR: 'Merge-Creator', // The user who merged the goal on the goal created by the merge
-  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the goal on the goals merged
 };
 
 const GRANT_PERSONNEL_ROLES = [
@@ -83,8 +81,6 @@ const OBJECTIVE_COLLABORATORS = {
   EDITOR: 'Editor', // The user(s) who edits the text of a objective
   LINKER: 'Linker', // The user who links the objective to a report
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where objective is used
-  MERGE_CREATOR: 'Merge-Creator', // The user who merged the objective on the objective created by the merge
-  MERGE_DEPRECATOR: 'Merge-Deprecator', // The user who merged the objective on the objectives merged
 };
 
 const NEXTSTEP_NOTETYPE = {
@@ -250,9 +246,7 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'monitoring'];
-
-const CURRENT_GOAL_SIMILARITY_VERSION = 5;
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin', 'monitoring', 'merge'];
 
 const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
 const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
@@ -265,7 +259,6 @@ const SORT_DIR = {
 };
 
 module.exports = {
-  CURRENT_GOAL_SIMILARITY_VERSION,
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
   FILE_STATUSES,
