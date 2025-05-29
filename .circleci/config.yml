@@ -237,14 +237,6 @@ jobs:
       ENV_URL: https://tta-smarthub-dev-blue.app.cloud.gov/
     steps:
       - run:
-          name: Check Slack Token Length
-          command: |
-            echo "Token length: ${#SLACK_BOT_TOKEN_TEST}"
-      - run:
-          name: Check Github Token Length
-          command: |
-            echo "Token length: ${#GITHUB_TOKEN}"
-      - run:
           name: Post PR Info to Slack (Test)
           command: |
             PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
@@ -297,45 +289,10 @@ jobs:
             curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN_TEST" \
               -H 'Content-type: application/json;charset=utf-8' \
               --data @/tmp/slack_blocks.json https://slack.com/api/chat.postMessage
-      - run:
-          name: Generate Slack Message (Test)
-          command: |
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-
-            PR_BODY=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .body)
-
-            PR_TITLE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .title)
-
-            DESCRIPTION=$(echo "$PR_BODY" | awk '/## Description of change/{flag=1;next}/##/{flag=0}flag')
-            ISSUES=$(echo "$PR_BODY" | awk '/## Issue/{flag=1;next}/##/{flag=0}flag')
-
-            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!\n\n*Description of change:*\n$DESCRIPTION"
-
-            if [ -n "$ISSUES" ]; then
-              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n$ISSUES"
-            fi
-
-            echo -e "$MESSAGE_TEXT" > /tmp/message_file
-
-      - run:
-          name: Print Message to Console
-          command: cat /tmp/message_file
-      - run:
-        name: Debug Slack Token
-        command: |
-          if [ -z "$SLACK_BOT_TOKEN_TEST" ]; then
-            echo "SLACK_BOT_TOKEN_TEST is not set"
-          else
-            echo "SLACK_BOT_TOKEN_TEST is set"
-          fi
-      - notify_slack:
-          slack_bot_token: SLACK_BOT_TOKEN
-          slack_channel: github-test
-          message_text_file: /tmp/message_file
+      # - notify_slack:
+      #     slack_bot_token: SLACK_BOT_TOKEN
+      #     slack_channel: github-test
+      #     message_text_file: /tmp/message_file
 
 
   build_and_lint:
