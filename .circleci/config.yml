@@ -271,8 +271,16 @@ jobs:
       - run:
           name: Print Message to Console
           command: cat /tmp/message_file
+      - run:
+          name: Debug Slack Token
+          command: |
+            if [ -z "$SLACK_BOT_TOKEN_TEST" ]; then
+              echo "SLACK_BOT_TOKEN_TEST is not set"
+            else
+              echo "SLACK_BOT_TOKEN_TEST is set"
+            fi
       - notify_slack:
-          slack_bot_token: SLACK_BOT_TOKEN
+          slack_bot_token: SLACK_BOT_TOKEN_TEST
           slack_channel: github-test
           message_text_file: /tmp/message_file
 
