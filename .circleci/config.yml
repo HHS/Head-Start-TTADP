@@ -1388,47 +1388,65 @@ commands:
       target_env:
         type: string
     steps:
-    - checkout
-    - set_env_vars:
-        target_env: << parameters.target_env >>
-    - run:
-        name: Generate Message
-        command: |
-          env_name=<< parameters.target_env >>
-          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+      - checkout
+      - set_env_vars:
+          target_env: << parameters.target_env >>
+      - run:
+          name: Generate Slack Message JSON
+          command: |
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
-              PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g" | sed -e 's/"/\\"/g')
+            PR_BODY=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .body)
 
-              if [ ! -z "${PR_TITLE}" ]; then
-                  JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
+            PR_TITLE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .title)
 
-                  MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
-                  if [ -n "${JIRA_URLS}" ]; then
-                      MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                  fi
-              else
-                  MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
-              fi
-          else
-              COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-              if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
-                PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
-                MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
-                if [ ! -z "${JIRA_URLS}" ]; then
-                    MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                fi
-              else
-                  MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
-              fi
-          fi
-          echo -e "${MESSAGE_TEXT}" > /tmp/message_file
+            extract_section() {
+              echo "$PR_BODY" | awk -v section="## $1" '
+                BEGIN {found=0}
+                $0 ~ section {found=1; next}
+                /^## / && found {exit}
+                found {print}
+              ' | head -c 600 | sed 's/^/> /'
+            }
 
-    - notify_slack:
-        slack_bot_token: << parameters.slack_bot_token >>
-        slack_channel: << parameters.slack_channel >>
-        message_text_file: "/tmp/message_file"
+            DESC=$(extract_section "Description of change")
+            ISSUES=$(extract_section "Issue")
+
+            ENV_URL="https://************-${CIRCLE_WORKFLOW_ID:0:8}.${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}.app.cloud.gov"
+
+            jq -n \
+              --arg channel "<< parameters.slack_channel >>" \
+              --arg pr_number "#$PR_NUMBER" \
+              --arg pr_link "$PR_LINK" \
+              --arg title "$PR_TITLE" \
+              --arg desc "$DESC" \
+              --arg issues "$ISSUES" \
+              --arg env "<< parameters.target_env >>" \
+              '{
+                channel: $channel,
+                blocks: [
+                  { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                  { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                  { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                  { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                  { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
+                ]
+              }' > /tmp/message_file.json
+      - run:
+          name: Post Slack Message
+          command: |
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
+      # - notify_slack:
+      #     slack_bot_token: << parameters.slack_bot_token >>
+      #     slack_channel: << parameters.slack_channel >>
+      #     message_text_file: "/tmp/message_file"
 
   no-op:
     # placeholder command for no-op jobs
