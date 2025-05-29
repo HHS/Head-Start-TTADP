@@ -264,11 +264,12 @@ jobs:
             DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g')
             ISSUES_ESCAPED=$(echo "$ISSUES" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g')
 
-            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!\n\n*Description of change:*\n${DESCRIPTION_ESCAPED}"
+            # MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!\n\n*Description of change:*\n${DESCRIPTION_ESCAPED}"
+            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!"
 
-            if [ -n "$ISSUES_ESCAPED" ]; then
-              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n${ISSUES_ESCAPED}"
-            fi
+            # if [ -n "$ISSUES_ESCAPED" ]; then
+            #   MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n${ISSUES_ESCAPED}"
+            # fi
 
             printf "%b" "$MESSAGE_TEXT" > /tmp/message_file
 
