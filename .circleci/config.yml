@@ -263,7 +263,6 @@ jobs:
             }
 
             DESC=$(extract_section "^## Description of change" | sed 's/^/> /')
-            TEST=$(extract_section "^## How to test" | sed 's/^/> /')
             ISSUES=$(extract_section "^## Issue" | sed 's/^/> /')
 
             jq -n \
@@ -272,21 +271,19 @@ jobs:
               --arg pr_link "$PR_LINK" \
               --arg title "$PR_TITLE" \
               --arg desc "$DESC" \
-              --arg test "$TEST" \
               --arg issues "$ISSUES" \
               '{
                 channel: $channel,
                 blocks: [
-                  { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                  { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of PR <\($pr_link)|\($pr_number)> to production was successful!" } },
                   { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
                   { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*How to test:*\n\($test)" } },
                   { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
                   { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
                 ]
               }' > /tmp/slack_blocks.json
 
-            curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN_TEST" \
+            curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
               -H 'Content-type: application/json;charset=utf-8' \
               --data @/tmp/slack_blocks.json https://slack.com/api/chat.postMessage
       # - notify_slack:
