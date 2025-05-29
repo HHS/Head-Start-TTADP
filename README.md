@@ -37,14 +37,13 @@ If you run into issues, check the [troubleshooting](#troubleshooting) section.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
 3. Copy `.env.example` to `.env`.
 4. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
-5. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
-6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
-7. Run `yarn docker:start` to start the application.
+5. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
+6. Run `yarn docker:start` to start the application.
    - The [frontend][frontend] will run on `localhost:3000`
    - The [backend][backend] will run on `localhost:8080`
    - [API documentation][API documentation] will run on `localhost:5003`
    - [minio][minio] (S3-compatible file storage) will run on `localhost:9000`
-8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+7. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 **Notes:**
 
