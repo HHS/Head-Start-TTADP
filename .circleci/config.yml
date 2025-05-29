@@ -317,6 +317,11 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - run: watch backend logs
+    - run:
+        command: |
+          docker ps 
+          docker logs 
     - run:
         name: Add GitHub to known_hosts
         command: |
