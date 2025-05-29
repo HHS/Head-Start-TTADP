@@ -439,7 +439,7 @@ describe('activity report model hooks', () => {
     });
   });
 
-  describe('revisionBump', () => {
+  describe.only('revisionBump', () => {
     it('increments revision when report is updated', async () => {
       auditLogger.debug('revisionBump test started');
       const testReport = await ActivityReport.create({
