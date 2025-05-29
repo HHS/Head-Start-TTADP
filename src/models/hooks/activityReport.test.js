@@ -439,6 +439,7 @@ describe('activity report model hooks', () => {
     });
   });
 
+  // eslint-disable-next-line jest/no-focused-tests
   describe.only('revisionBump', () => {
     it('increments revision when report is updated', async () => {
       auditLogger.debug('revisionBump test started');
