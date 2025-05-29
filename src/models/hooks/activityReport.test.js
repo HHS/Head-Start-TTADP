@@ -367,6 +367,7 @@ describe('activity report model hooks', () => {
       expect(testObjective.status).toEqual('Not Started');
     });
   });
+
   describe('moveDraftGoalsToNotStartedOnSubmission', () => {
     it('logs an error if one is thrown', async () => {
       const mockSequelize = {
@@ -436,80 +437,80 @@ describe('activity report model hooks', () => {
       await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
       expect(auditLogger.error).toHaveBeenCalled();
     });
+  });
 
-    describe('revisionBump', () => {
-      it('increments revision when report is updated', async () => {
-        auditLogger.debug('revisionBump test started');
-        const testReport = await ActivityReport.create({
-          userId: 1,
-          regionId: 1,
-          submissionStatus: REPORT_STATUSES.DRAFT,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-          numberOfParticipants: 1,
-          deliveryMethod: 'virtual',
-          duration: 10,
-          endDate: '2000-01-01T12:00:00Z',
-          startDate: '2000-01-01T12:00:00Z',
-          activityRecipientType: 'something',
-          requester: 'requester',
-          targetPopulations: ['pop'],
-          reason: ['reason'],
-          participants: ['participants'],
-          topics: ['topics'],
-          ttaType: ['type'],
-          creatorRole: 'TTAC',
-          version: 2,
-          revision: 0,
-        });
-        auditLogger.info('revisionBump test created report:', testReport.id);
-
-        expect(testReport.revision).toBe(0);
-
-        await testReport.update({
-          additionalNotes: 'Updated notes',
-        });
-        auditLogger.info('revisionBump test updated report once:', testReport.id);
-
-        await testReport.reload();
-        auditLogger.info('revisionBump test reloaded report once:', testReport.id);
-
-        expect(testReport.revision).toBe(1);
-
-        await testReport.update({
-          additionalNotes: 'Updated notes again',
-        });
-        auditLogger.debug('revisionBump test updated report twice:', testReport.id);
-
-        await testReport.reload();
-        auditLogger.debug('revisionBump test reloaded report twice:', testReport.id);
-
-        expect(testReport.revision).toBe(2);
-
-        await ActivityReport.destroy({
-          where: {
-            id: testReport.id,
-          },
-          force: true,
-        });
-        auditLogger.info('revisionBump test cleaned up report:', testReport.id);
+  describe('revisionBump', () => {
+    it('increments revision when report is updated', async () => {
+      auditLogger.debug('revisionBump test started');
+      const testReport = await ActivityReport.create({
+        userId: 1,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        version: 2,
+        revision: 0,
       });
+      auditLogger.info('revisionBump test created report:', testReport.id);
 
-      it('does not increment revision when no changes are made', async () => {
-        const mockInstance = {
-          changed: jest.fn(() => []),
-          revision: 5,
-          set: jest.fn(),
-        };
+      expect(testReport.revision).toBe(0);
 
-        const mockOptions = {
-          fields: [],
-        };
-
-        await revisionBump(null, mockInstance, mockOptions);
-
-        expect(mockInstance.set).not.toHaveBeenCalled();
-        expect(mockOptions.fields).toEqual([]);
+      await testReport.update({
+        additionalNotes: 'Updated notes',
       });
+      auditLogger.info('revisionBump test updated report once:', testReport.id);
+
+      await testReport.reload();
+      auditLogger.info('revisionBump test reloaded report once:', testReport.id);
+
+      expect(testReport.revision).toBe(1);
+
+      await testReport.update({
+        additionalNotes: 'Updated notes again',
+      });
+      auditLogger.debug('revisionBump test updated report twice:', testReport.id);
+
+      await testReport.reload();
+      auditLogger.debug('revisionBump test reloaded report twice:', testReport.id);
+
+      expect(testReport.revision).toBe(2);
+
+      await ActivityReport.destroy({
+        where: {
+          id: testReport.id,
+        },
+        force: true,
+      });
+      auditLogger.info('revisionBump test cleaned up report:', testReport.id);
+    });
+
+    it('does not increment revision when no changes are made', async () => {
+      const mockInstance = {
+        changed: jest.fn(() => []),
+        revision: 5,
+        set: jest.fn(),
+      };
+
+      const mockOptions = {
+        fields: [],
+      };
+
+      await revisionBump(null, mockInstance, mockOptions);
+
+      expect(mockInstance.set).not.toHaveBeenCalled();
+      expect(mockOptions.fields).toEqual([]);
     });
   });
 });
