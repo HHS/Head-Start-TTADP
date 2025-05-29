@@ -257,16 +257,20 @@ jobs:
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .title)
 
-            DESCRIPTION=$(echo "$PR_BODY" | awk '/## Description of change/{flag=1;next}/##/{flag=0}flag')
-            ISSUES=$(echo "$PR_BODY" | awk '/## Issue/{flag=1;next}/##/{flag=0}flag')
+            DESCRIPTION=$(echo "$PR_BODY" | awk '/## Description of change/{flag=1;next}/##/{flag=0}flag' | sed '/^\s*$/d')
+            ISSUES=$(echo "$PR_BODY" | awk '/## Issue/{flag=1;next}/##/{flag=0}flag' | sed '/^\s*$/d')
 
-            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!\n\n*Description of change:*\n$DESCRIPTION"
+            # Escape backslashes, double quotes, and dollar signs for JSON safety
+            DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g')
+            ISSUES_ESCAPED=$(echo "$ISSUES" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g')
 
-            if [ -n "$ISSUES" ]; then
-              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n$ISSUES"
+            MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|test> was successful!\n\n*Description of change:*\n${DESCRIPTION_ESCAPED}"
+
+            if [ -n "$ISSUES_ESCAPED" ]; then
+              MESSAGE_TEXT="${MESSAGE_TEXT}\n\n*Issues:*\n${ISSUES_ESCAPED}"
             fi
 
-            echo -e "$MESSAGE_TEXT" > /tmp/message_file
+            printf "%b" "$MESSAGE_TEXT" > /tmp/message_file
 
       - run:
           name: Print Message to Console
