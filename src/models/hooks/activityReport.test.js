@@ -25,6 +25,8 @@ import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 
+auditLogger.info('Starting up, logger initialized');
+
 describe('activity report model hooks', () => {
   describe('automatic goal status changes', () => {
     let recipient;
@@ -38,6 +40,7 @@ describe('activity report model hooks', () => {
     let objective2;
 
     beforeAll(async () => {
+      auditLogger.info('Creating recipient, user, and grant');
       recipient = await Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),

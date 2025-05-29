@@ -745,7 +745,7 @@ commands:
     - attach_workspace:
         at: .
     - run:
-        name: Start server
+        name: Start server & watch logs
         command: |
           yarn playwright install
           export BYPASS_AUTH=true
