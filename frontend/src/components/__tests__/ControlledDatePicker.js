@@ -114,8 +114,8 @@ describe('Controlled Date Picker', () => {
     const sd = await screen.findByRole('textbox', { name: /start date/i });
 
     act(() => {
-      userEvent.type(ed, '12/31/2020');
-      userEvent.type(sd, '01/03/2021');
+      userEvent.type(sd, '13/99/9999');
+      fireEvent.blur(sd);
     });
     expect(await screen.findByText('Invalid message')).toBeVisible();
     act(() => {
