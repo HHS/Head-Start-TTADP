@@ -436,7 +436,7 @@ describe('activity report model hooks', () => {
 
     describe('revisionBump', () => {
       it('increments revision when report is updated', async () => {
-        console.log('revisionBump test started');
+        auditLogger.debug('revisionBump test started');
         const testReport = await ActivityReport.create({
           userId: 1,
           regionId: 1,
@@ -458,27 +458,27 @@ describe('activity report model hooks', () => {
           version: 2,
           revision: 0,
         });
-        console.log('revisionBump test created report:', testReport.id);
+        auditLogger.info('revisionBump test created report:', testReport.id);
 
         expect(testReport.revision).toBe(0);
 
         await testReport.update({
           additionalNotes: 'Updated notes',
         });
-        console.log('revisionBump test updated report once:', testReport.id);
+        auditLogger.info('revisionBump test updated report once:', testReport.id);
 
         await testReport.reload();
-        console.log('revisionBump test reloaded report once:', testReport.id);
+        auditLogger.info('revisionBump test reloaded report once:', testReport.id);
 
         expect(testReport.revision).toBe(1);
 
         await testReport.update({
           additionalNotes: 'Updated notes again',
         });
-        console.log('revisionBump test updated report twice:', testReport.id);
+        auditLogger.debug('revisionBump test updated report twice:', testReport.id);
 
         await testReport.reload();
-        console.log('revisionBump test reloaded report twice:', testReport.id);
+        auditLogger.debug('revisionBump test reloaded report twice:', testReport.id);
 
         expect(testReport.revision).toBe(2);
 
@@ -488,7 +488,7 @@ describe('activity report model hooks', () => {
           },
           force: true,
         });
-        console.log('revisionBump test cleaned up report:', testReport.id);
+        auditLogger.info('revisionBump test cleaned up report:', testReport.id);
       });
 
       it('does not increment revision when no changes are made', async () => {
