@@ -236,7 +236,7 @@ jobs:
       - notify_slack_deploy:
           slack_bot_token: $SLACK_BOT_TOKEN_TEST
           slack_channel: "github-test"
-          target_env: test
+          target_env: dev
 
   build_and_lint:
     executor: docker-executor
