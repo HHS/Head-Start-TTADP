@@ -2,7 +2,6 @@ import {
   INTERNAL_SERVER_ERROR,
   NOT_FOUND,
   UNAUTHORIZED,
-  BAD_REQUEST,
 } from 'http-codes';
 import db from '../../models';
 import { getUserReadRegions } from '../../services/accessValidation';
@@ -15,18 +14,16 @@ import {
   getRecipientLeadership,
 } from './handlers';
 import {
-  getGoalsByActivityRecipient,
   recipientById,
   recipientLeadership,
   recipientsByName,
   recipientsByUserId,
-  allArUserIdsByRecipientAndRegion,
+  missingStandardGoals,
 } from '../../services/recipient';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
 import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import SCOPES from '../../middleware/scopeConstants';
 import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
 import Users from '../../policies/user';
 
 jest.mock('../../services/currentUser', () => ({
@@ -46,6 +43,7 @@ jest.mock('../../services/recipient', () => ({
   recipientsByUserId: jest.fn(),
   recipientLeadership: jest.fn(),
   allArUserIdsByRecipientAndRegion: jest.fn(),
+  missingStandardGoals: jest.fn(),
 }));
 
 jest.mock('../../goalServices/goalsByIdAndRecipient');
@@ -88,6 +86,7 @@ describe('getRecipient', () => {
       },
     };
     recipientById.mockResolvedValue(recipientWhere);
+    missingStandardGoals.mockResolvedValue([]);
     await getRecipient(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
@@ -106,6 +105,7 @@ describe('getRecipient', () => {
       },
     };
     recipientById.mockResolvedValue(null);
+    missingStandardGoals.mockResolvedValue([]);
     await getRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });

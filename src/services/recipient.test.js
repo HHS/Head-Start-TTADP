@@ -39,6 +39,7 @@ import {
   reduceObjectivesForRecipientRecord,
   reduceTopicsOfDifferingType,
   combineObjectiveIds,
+  missingStandardGoals,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
@@ -46,6 +47,7 @@ import {
   GOAL_STATUS,
   OBJECTIVE_STATUS,
   AUTOMATIC_CREATION,
+  CREATION_METHOD,
 } from '../constants';
 import {
   createRecipient,
@@ -354,6 +356,228 @@ describe('Recipient DB service', () => {
       // Inactive After Cut Off Date.
       expect(recipient.grants[4].id).toBe(78);
       expect(recipient.grants[4].status).toBe('Inactive');
+    });
+  });
+
+  describe('missingStandardGoals', () => {
+    let recipient1;
+    let recipient2;
+    let recipient3;
+    let multiGrantRecipient;
+
+    let grant1;
+    let grant2;
+    let grant3;
+
+    let grant4;
+    let grant5;
+
+    afterAll(async () => {
+      await Goal.destroy({
+        where: {
+          grantId: [grant1?.id, grant2?.id, grant3?.id, grant4?.id, grant5?.id].filter(Boolean),
+        },
+        individualHooks: true,
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: [grant1?.id, grant2?.id, grant3?.id, grant4?.id, grant5?.id].filter(Boolean),
+        },
+        individualHooks: true,
+      });
+
+      const recipientIds = [
+        recipient1?.id,
+        recipient2?.id,
+        recipient3?.id,
+        multiGrantRecipient?.id,
+      ].filter(Boolean);
+
+      await Recipient.destroy({
+        where: {
+          id: recipientIds,
+        },
+      });
+    });
+
+    it('returns missing standard goals if only one of the grants for the recipient has goals', async () => {
+      multiGrantRecipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      grant4 = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: multiGrantRecipient.id,
+        regionId: 1,
+        number: '3423423',
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      grant5 = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: multiGrantRecipient.id,
+        regionId: 1,
+        number: '4234666',
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      // Get every Goal Template without a where.
+      const goalTemplates = await GoalTemplate.findAll({
+        where: {
+          creationMethod: CREATION_METHOD.CURATED,
+        },
+      });
+
+      // Create a goal for the recipient using each goal template.
+      await Promise.all(goalTemplates.map((goalTemplate) => Goal.create({
+        recipientId: multiGrantRecipient.id,
+        goalTemplateId: goalTemplate.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: goalTemplate.name,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: grant4.id,
+      })));
+
+      // Add goals for all but one of the goal templates to the second grant.
+      const allTemplatesExceptOne = goalTemplates.filter((t) => t.id !== 1);
+      await Promise.all(allTemplatesExceptOne.map((goalTemplate) => Goal.create({
+        recipientId: multiGrantRecipient.id,
+        goalTemplateId: goalTemplate.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: goalTemplate.name,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: grant5.id, // We expect this grant to be missing one goal.
+      })));
+      const recipient = await recipientById(multiGrantRecipient.id, {});
+
+      // Call the function to find missing standard goals
+      const foundGoals = await missingStandardGoals(recipient, {});
+
+      expect(foundGoals.length).toBe(1);
+
+      // expect the missing goal grantId to be the second grant.
+      expect(foundGoals[0].grantId).toBe(grant5.id);
+    });
+
+    it('returns an empty array when no standard goals are missing', async () => {
+      recipient1 = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      grant1 = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipient1.id,
+        regionId: 1,
+        number: '234234',
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      // Get every Goal Template without a where.
+      const goalTemplates = await GoalTemplate.findAll({
+        where: {
+          creationMethod: CREATION_METHOD.CURATED,
+        },
+      });
+
+      // Create a goal for the recipient using each goal template.
+      await Promise.all(goalTemplates.map((goalTemplate) => Goal.create({
+        recipientId: recipient1.id,
+        goalTemplateId: goalTemplate.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: goalTemplate.name,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: grant1.id,
+      })));
+
+      const recipient = await recipientById(recipient1.id, {});
+      const foundGoals = await missingStandardGoals(recipient, {});
+      expect(foundGoals).toEqual([]);
+    });
+
+    it('returns an array of missing standard goals', async () => {
+      recipient2 = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      grant2 = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipient2.id,
+        regionId: 1,
+        number: '323456',
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      // Call the function to find missing standard goals
+      const recipient = await recipientById(recipient2.id, {});
+      const foundGoals = await missingStandardGoals(recipient, {});
+      expect(foundGoals.length).toBe(19);
+    });
+
+    it('returns some of the goal templates when some are missing', async () => {
+      recipient3 = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      grant3 = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipient3.id,
+        regionId: 1,
+        number: '323457',
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      // Create a goal for the recipient using a subset of goal templates.
+      const goalTemplate = await GoalTemplate.findOne({
+        where: {
+          id: 1,
+        },
+      });
+
+      await Goal.create({
+        recipientId: recipient3.id,
+        goalTemplateId: goalTemplate.id,
+        status: GOAL_STATUS.ACTIVE,
+        name: goalTemplate.name,
+        source: null,
+        onApprovedAR: false,
+        createdVia: 'rtr',
+        grantId: grant3.id,
+      });
+      const recipient = await recipientById(recipient3.id, {});
+      const foundGoals = await missingStandardGoals(recipient, {});
+      expect(foundGoals.length).toBe(18);
     });
   });
 

@@ -5,6 +5,7 @@ import {
   recipientsByName,
   recipientsByUserId,
   recipientLeadership,
+  missingStandardGoals,
 } from '../../services/recipient';
 import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -78,6 +79,12 @@ export async function getRecipient(req, res) {
       res.sendStatus(401);
       return;
     }
+
+    // Get any goals missing for this recipient.
+    // We need this on the frontend to determine if they can create new goals.
+    const missingGoals = await missingStandardGoals(recipient);
+    // Add a NEW property for the missing goals to the recipient object.
+    recipient.dataValues.missingStandardGoals = missingGoals;
 
     res.json(recipient);
   } catch (error) {

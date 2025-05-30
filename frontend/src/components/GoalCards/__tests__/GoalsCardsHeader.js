@@ -42,6 +42,7 @@ describe('GoalCardsHeader', () => {
     perPageChange: jest.fn(),
     allSelectedGoalIds: {},
     goalBuckets: [],
+    hasMissingStandardGoals: true,
   };
 
   const renderTest = (props = {}, userPermissions = [
@@ -75,6 +76,12 @@ describe('GoalCardsHeader', () => {
 
   it('hides the "Add new goals" button when user lacks permission', () => {
     renderTest({}, [{ scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS, regionId: 1 }]);
+    expect(screen.queryByText('Add new goals')).not.toBeInTheDocument();
+  });
+
+  it('hides the "Add new goals" button when there are no missing standard goals', () => {
+    renderTest({ hasMissingStandardGoals: false });
+
     expect(screen.queryByText('Add new goals')).not.toBeInTheDocument();
   });
 
