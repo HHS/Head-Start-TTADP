@@ -28,6 +28,11 @@ jest.mock('../../policies/activityReport');
 auditLogger.info('Starting up, logger initialized');
 
 describe('activity report model hooks', () => {
+  afterAll(async () => {
+    auditLogger.info('Cleaning up database after tests');
+    await db.sequelize.close();
+  });
+
   describe('automatic goal status changes', () => {
     let recipient;
     let grant;
@@ -213,7 +218,6 @@ describe('activity report model hooks', () => {
           id: [mockUser.id, mockApprover.id],
         },
       });
-      await db.sequelize.close();
     });
 
     it('saving objectives should not change goal status if the goal is in draft', async () => {
@@ -441,7 +445,6 @@ describe('activity report model hooks', () => {
 
   describe('revisionBump', () => {
     it('increments revision when report is updated', async () => {
-      auditLogger.info('revisionBump test started');
       const testReport = await ActivityReport.create({
         userId: 1,
         regionId: 1,
@@ -463,27 +466,22 @@ describe('activity report model hooks', () => {
         version: 2,
         revision: 0,
       });
-      auditLogger.info('revisionBump test created report:', testReport.id);
 
       expect(testReport.revision).toBe(0);
 
       await testReport.update({
         additionalNotes: 'Updated notes',
       });
-      auditLogger.info('revisionBump test updated report once:', testReport.id);
 
       await testReport.reload();
-      auditLogger.info('revisionBump test reloaded report once:', testReport.id);
 
       expect(testReport.revision).toBe(1);
 
       await testReport.update({
         additionalNotes: 'Updated notes again',
       });
-      auditLogger.info('revisionBump test updated report twice:', testReport.id);
 
       await testReport.reload();
-      auditLogger.info('revisionBump test reloaded report twice:', testReport.id);
 
       expect(testReport.revision).toBe(2);
 
@@ -493,7 +491,6 @@ describe('activity report model hooks', () => {
         },
         force: true,
       });
-      auditLogger.info('revisionBump test cleaned up report:', testReport.id);
     });
 
     it('does not increment revision when no changes are made', async () => {
