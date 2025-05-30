@@ -1343,13 +1343,12 @@ commands:
           PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
           PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
-          PR_BODY=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .body)
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}")
 
-          PR_TITLE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .title)
+          PR_BODY=$(echo "$PR_DATA" | jq -r .body)
+          PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
 
           extract_section() {
             echo "$PR_BODY" | awk -v section="## $1" '
@@ -1363,8 +1362,6 @@ commands:
           DESC=$(extract_section "Description of change")
           ISSUES=$(extract_section "Issue")
 
-          ENV_URL="https://************-${CIRCLE_WORKFLOW_ID:0:8}.${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}.app.cloud.gov"
-
           jq -n \
             --arg channel "<< parameters.slack_channel >>" \
             --arg pr_number "#$PR_NUMBER" \
@@ -1376,7 +1373,7 @@ commands:
             '{
               channel: $channel,
               blocks: [
-                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of production PR <\($pr_link)|\($pr_number)> was successful!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
