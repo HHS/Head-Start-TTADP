@@ -19,6 +19,7 @@ export default function GoalCardsHeader({
   recipientId,
   regionId,
   hasActiveGrants,
+  hasMissingStandardGoals,
   sortConfig,
   requestSort,
   numberOfSelectedGoals,
@@ -39,7 +40,7 @@ export default function GoalCardsHeader({
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-  const showAddNewButton = hasActiveGrants && hasButtonPermissions;
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions && hasMissingStandardGoals;
   const onPrint = () => {
     // See if we have goals selected.
     let goalsToPrint = Object.keys(allSelectedGoalIds).filter(
@@ -201,6 +202,7 @@ GoalCardsHeader.propTypes = {
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  hasMissingStandardGoals: PropTypes.bool.isRequired,
   requestSort: PropTypes.func.isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,

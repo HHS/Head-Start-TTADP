@@ -101,12 +101,14 @@ export default function RecipientRecord({ match, hasAlerts }) {
     recipientId,
     regionId,
     recipientName: '',
+    missingStandardGoals: [],
   });
 
   useDeepCompareEffect(() => {
     async function fetchRecipient() {
       try {
         setIsAppLoading(true);
+        //
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({

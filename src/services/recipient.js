@@ -228,6 +228,53 @@ export async function recipientById(recipientId, grantScopes) {
   });
 }
 
+export async function missingStandardGoals(recipient, grantScopes) {
+  // Get all the goal templates and join them to any existing goals for the recipient.
+  const grantsWhereCondition = grantScopes?.where ? grantScopes.where : {};
+  const goalTemplatesWithGoals = await GoalTemplate.findAll({
+    attributes: ['id', 'templateName'],
+    where: {
+      creationMethod: CREATION_METHOD.CURATED,
+    },
+    include: [
+      {
+        model: Goal,
+        as: 'goals',
+        attributes: ['id', 'grantId'],
+        required: false,
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+            attributes: ['id'],
+            required: false,
+            where: {
+              ...grantsWhereCondition,
+              recipientId: recipient.id,
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  // Get all the grantIds from the recipient object.
+  const grantIds = recipient.grants.map((g) => g.id);
+  const distinctTemplateNames = new Set(goalTemplatesWithGoals.map((g) => g.templateName));
+
+  // Make sure every distinct template name and grantId has a goal, return the missing ones.
+  return Array.from(distinctTemplateNames).flatMap(
+    (templateName) => grantIds.filter((grantId) => !goalTemplatesWithGoals.find(
+      (g) => g.templateName === templateName && g.goals.some((gl) => gl.grantId === grantId),
+    )).map((grantId) => ({
+      // Add the template id.
+      goalTemplateId: goalTemplatesWithGoals.find((g) => g.templateName === templateName)?.id,
+      templateName,
+      grantId,
+    })),
+  );
+}
+
 /**
  *
  * @param {string} query

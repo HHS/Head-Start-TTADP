@@ -12,7 +12,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
-import QuestionTooltip from './QuestionTooltip';
+import QuestionTooltip from '../QuestionTooltip';
 import URLInput from '../URLInput';
 import colors from '../../colors';
 import './ResourceRepeater.scss';

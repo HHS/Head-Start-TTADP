@@ -88,7 +88,7 @@ describe('StandardGoalForm', () => {
       renderStandardGoalForm();
     });
 
-    expect(await screen.findByText('Select recipient\'s goal')).toBeInTheDocument();
+    expect(await screen.findByText('Recipient\'s goal')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add goal/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Cancel/i })).toBeInTheDocument();
   });
