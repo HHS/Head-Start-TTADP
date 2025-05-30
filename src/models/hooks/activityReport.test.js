@@ -439,10 +439,9 @@ describe('activity report model hooks', () => {
     });
   });
 
-  // eslint-disable-next-line jest/no-focused-tests
-  describe.only('revisionBump', () => {
+  describe('revisionBump', () => {
     it('increments revision when report is updated', async () => {
-      auditLogger.debug('revisionBump test started');
+      auditLogger.info('revisionBump test started');
       const testReport = await ActivityReport.create({
         userId: 1,
         regionId: 1,
@@ -481,10 +480,10 @@ describe('activity report model hooks', () => {
       await testReport.update({
         additionalNotes: 'Updated notes again',
       });
-      auditLogger.debug('revisionBump test updated report twice:', testReport.id);
+      auditLogger.info('revisionBump test updated report twice:', testReport.id);
 
       await testReport.reload();
-      auditLogger.debug('revisionBump test reloaded report twice:', testReport.id);
+      auditLogger.info('revisionBump test reloaded report twice:', testReport.id);
 
       expect(testReport.revision).toBe(2);
 
