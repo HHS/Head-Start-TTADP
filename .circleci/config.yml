@@ -236,62 +236,11 @@ jobs:
       CIRCLE_PULL_REQUEST: https://github.com/HHS/Head-Start-TTADP/pull/2824
       ENV_URL: https://tta-smarthub-dev-blue.app.cloud.gov/
     steps:
-      - run:
-          name: Post PR Info to Slack (Test)
-          command: |
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            REPO_SLUG=${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
-            PR_API="https://api.github.com/repos/${REPO_SLUG}/pulls/${PR_NUMBER}"
-
-            PR_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "$PR_API")
-
-            PR_TITLE=$(echo "$PR_JSON" | jq -r .title)
-            PR_BODY=$(echo "$PR_JSON" | jq -r .body)
-            PR_LINK="https://github.com/${REPO_SLUG}/pull/${PR_NUMBER}"
-
-            echo "$PR_BODY" > pr_body.md
-
-            extract_section() {
-              awk -v section="$1" '
-                BEGIN {found=0}
-                $0 ~ section {found=1; next}
-                /^## / && found {exit}
-                found {print}
-              ' pr_body.md | head -c 600
-            }
-
-            DESC=$(extract_section "^## Description of change" | sed 's/^/> /')
-            ISSUES=$(extract_section "^## Issue" | sed 's/^/> /')
-
-            jq -n \
-              --arg channel "github-test" \
-              --arg pr_number "#$PR_NUMBER" \
-              --arg pr_link "$PR_LINK" \
-              --arg title "$PR_TITLE" \
-              --arg desc "$DESC" \
-              --arg issues "$ISSUES" \
-              '{
-                channel: $channel,
-                blocks: [
-                  { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of PR <\($pr_link)|\($pr_number)> to production was successful!" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
-                  { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
-                ]
-              }' > /tmp/slack_blocks.json
-
-            curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-              -H 'Content-type: application/json;charset=utf-8' \
-              --data @/tmp/slack_blocks.json https://slack.com/api/chat.postMessage
-      # - notify_slack:
-      #     slack_bot_token: SLACK_BOT_TOKEN
-      #     slack_channel: github-test
-      #     message_text_file: /tmp/message_file
-
-
+      - notify_slack_deploy:
+          slack_bot_token: $SLACK_BOT_TOKEN_TEST
+          slack_channel: "github-test"
+          target_env: test
+          
   build_and_lint:
     executor: docker-executor
     resource_class: large
@@ -1388,65 +1337,61 @@ commands:
       target_env:
         type: string
     steps:
-      - checkout
-      - set_env_vars:
-          target_env: << parameters.target_env >>
-      - run:
-          name: Generate Slack Message JSON
-          command: |
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+    - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Generate Slack Message JSON
+        command: |
+          PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+          PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
-            PR_BODY=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .body)
+          PR_BODY=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .body)
 
-            PR_TITLE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .title)
+          PR_TITLE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}" | jq -r .title)
 
-            extract_section() {
-              echo "$PR_BODY" | awk -v section="## $1" '
-                BEGIN {found=0}
-                $0 ~ section {found=1; next}
-                /^## / && found {exit}
-                found {print}
-              ' | head -c 600 | sed 's/^/> /'
-            }
+          extract_section() {
+            echo "$PR_BODY" | awk -v section="## $1" '
+              BEGIN {found=0}
+              $0 ~ section {found=1; next}
+              /^## / && found {exit}
+              found {print}
+            ' | head -c 600 | sed 's/^/> /'
+          }
 
-            DESC=$(extract_section "Description of change")
-            ISSUES=$(extract_section "Issue")
+          DESC=$(extract_section "Description of change")
+          ISSUES=$(extract_section "Issue")
 
-            ENV_URL="https://************-${CIRCLE_WORKFLOW_ID:0:8}.${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}.app.cloud.gov"
+          ENV_URL="https://************-${CIRCLE_WORKFLOW_ID:0:8}.${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}.app.cloud.gov"
 
-            jq -n \
-              --arg channel "<< parameters.slack_channel >>" \
-              --arg pr_number "#$PR_NUMBER" \
-              --arg pr_link "$PR_LINK" \
-              --arg title "$PR_TITLE" \
-              --arg desc "$DESC" \
-              --arg issues "$ISSUES" \
-              --arg env "<< parameters.target_env >>" \
-              '{
-                channel: $channel,
-                blocks: [
-                  { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
-                  { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
-                  { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
-                ]
-              }' > /tmp/message_file.json
-      - run:
-          name: Post Slack Message
-          command: |
-            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-              -H 'Content-type: application/json;charset=utf-8' \
-              --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
-      # - notify_slack:
-      #     slack_bot_token: << parameters.slack_bot_token >>
-      #     slack_channel: << parameters.slack_channel >>
-      #     message_text_file: "/tmp/message_file"
+          jq -n \
+            --arg channel "<< parameters.slack_channel >>" \
+            --arg pr_number "#$PR_NUMBER" \
+            --arg pr_link "$PR_LINK" \
+            --arg title "$PR_TITLE" \
+            --arg desc "$DESC" \
+            --arg issues "$ISSUES" \
+            --arg env "<< parameters.target_env >>" \
+            '{
+              channel: $channel,
+              blocks: [
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
+              ]
+            }' > /tmp/message_file.json
+    - run:
+        name: Post Slack Message
+        command: |
+          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
 
   no-op:
     # placeholder command for no-op jobs
