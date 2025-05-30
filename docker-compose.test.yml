@@ -46,3 +46,7 @@ services:
 # Use non-default network so we don't conflict with the developer environment
 networks:
   ttadp-test:
+volumes:
+  node_modules-backend:
+  node_modules-frontend:
+  yarn-cache:
