@@ -1,4 +1,4 @@
-name: Pull Request Notifications (Test)
+name: Pull Request Notifications
 
 on:
   pull_request:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   notify_slack:
-    if: github.actor == 'kryswisnaskas'
     runs-on: ubuntu-latest
     steps:
       - name: Get PR body
@@ -20,7 +19,7 @@ jobs:
 
       - name: Notify Slack when a PR to production in is opened
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN_TEST }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
