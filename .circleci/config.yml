@@ -51,7 +51,6 @@ workflows:
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
-    - test-slack-message
     - build_and_lint
     - build_similarity_api
     - checkpoint:
@@ -229,15 +228,6 @@ workflows:
 # ----------------- Jobs -----------------
 
 jobs:
-  test-slack-message:
-    docker:
-      - image: cimg/node:20.19.2
-    steps:
-      - notify_slack_deploy:
-          slack_bot_token: $SLACK_BOT_TOKEN_TEST
-          slack_channel: "github-test"
-          target_env: dev
-
   build_and_lint:
     executor: docker-executor
     resource_class: large
