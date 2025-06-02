@@ -49,10 +49,18 @@ const mockGoalTemplates = [
   },
 ];
 
+// Make sure this path matches the exact import path in the StandardGoalForm component
 jest.mock('../../../hooks/useGoalTemplatePrompts', () => ({
   __esModule: true,
-  default: jest.fn(() => []),
+  default: jest.fn(() => [[], []]),
 }));
+
+// Add this to verify the mock is being used
+beforeEach(() => {
+  jest.clearAllMocks();
+  const useGoalTemplatePrompts = jest.requireMock('../../../hooks/useGoalTemplatePrompts').default;
+  useGoalTemplatePrompts.mockReturnValue([[], []]);
+});
 
 const renderStandardGoalForm = (user = mockUser) => {
   const history = createMemoryHistory();
