@@ -58,7 +58,7 @@ export default function Tooltip({
             }
           </span>
         </span>
-        <span className="sr-only">
+        <span className="usa-sr-only">
           {buttonLabel}
         </span>
       </button>

@@ -3,7 +3,6 @@ const {
   GOAL_STATUS,
   GOAL_COLLABORATORS,
   OBJECTIVE_STATUS,
-  CREATION_METHOD,
 } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
@@ -39,22 +38,6 @@ const autoPopulateOnApprovedAR = (_sequelize, instance, options) => {
   }
 };
 
-const invalidateSimilarityScores = async (sequelize, instance, options) => {
-  const changed = Array.from(instance.changed());
-
-  if (changed.includes('name')) {
-    await sequelize.models.SimScoreGoalCache.destroy({
-      where: {
-        [Op.or]: [
-          { goal1: instance.id },
-          { goal2: instance.id },
-        ],
-      },
-      transaction: options.transaction,
-    });
-  }
-};
-
 const autoPopulateCreator = async (sequelize, instance, options) => {
   if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
   const { id: goalId } = instance;
@@ -82,103 +65,6 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
     );
   }
   return Promise.resolve();
-};
-
-const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, options) => {
-  const changed = Array.from(instance.changed());
-
-  if (changed.includes('name')) {
-    const { id: goalId } = instance;
-
-    if (!goalId) return;
-
-    const similarityGroups = await sequelize.models.GoalSimilarityGroup.findAll({
-      attributes: ['recipientId', 'id'],
-      include: [
-        {
-          model: sequelize.models.Goal,
-          as: 'goals',
-          attributes: ['id'],
-          required: true,
-          where: {
-            id: goalId,
-          },
-        },
-      ],
-      transaction: options.transaction,
-    });
-
-    if (similarityGroups.length === 0) return;
-
-    const groupIds = similarityGroups.map((group) => group.id);
-
-    await sequelize.models.GoalSimilarityGroupGoal.destroy({
-      where: {
-        goalSimilarityGroupId: groupIds,
-      },
-      transaction: options.transaction,
-    });
-
-    await sequelize.models.GoalSimilarityGroup.destroy({
-      where: {
-        id: groupIds,
-        userHasInvalidated: false,
-        finalGoalId: null,
-      },
-      transaction: options.transaction,
-    });
-  }
-};
-
-const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, instance, options) => {
-  const { grantId } = instance;
-
-  if (!grantId) return;
-
-  const recipient = await sequelize.models.Recipient.findOne({
-    attributes: ['id'],
-    include: [
-      {
-        model: sequelize.models.Grant,
-        as: 'grants',
-        attributes: ['id'],
-        required: true,
-        where: {
-          id: grantId,
-        },
-      },
-    ],
-    transaction: options.transaction,
-  });
-
-  if (!recipient) return;
-
-  const groups = await sequelize.models.GoalSimilarityGroup.findAll({
-    where: {
-      recipientId: recipient.id,
-      userHasInvalidated: false,
-      finalGoalId: null,
-    },
-    transaction: options.transaction,
-  });
-
-  if (groups.length === 0) return;
-
-  await sequelize.models.GoalSimilarityGroupGoal.destroy({
-    where: {
-      goalSimilarityGroupId: groups.map((group) => group.id),
-    },
-    transaction: options.transaction,
-  });
-
-  await sequelize.models.GoalSimilarityGroup.destroy({
-    where: {
-      recipientId: recipient.id,
-      userHasInvalidated: false,
-      finalGoalId: null,
-    },
-    transaction: options.transaction,
-  });
 };
 
 /**
@@ -231,7 +117,7 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
 
 const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
   const changed = instance.changed();
-  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED];
+  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED];
   if (Array.isArray(changed)
     && changed.includes('status')
     && NO_GOOD_STATUSES.includes(instance.status)) {
@@ -265,21 +151,59 @@ const beforeUpdate = async (sequelize, instance, options) => {
   await preventCloseIfObjectivesOpen(sequelize, instance, options);
 };
 
+/**
+ * Creates a GoalStatusChange record for the initial status of a goal
+ * This ensures the creation event is always included in status history
+ */
+const createInitialStatusChange = async (sequelize, instance, options) => {
+  // get the creator collaborator type
+  const creatorType = await sequelize.models.CollaboratorType.findOne({
+    where: { name: GOAL_COLLABORATORS.CREATOR },
+    transaction: options.transaction,
+  });
+
+  // get the creator collaborator for this goal
+  const goalCollaborator = creatorType ? await sequelize.models.GoalCollaborator.findOne({
+    where: {
+      goalId: instance.id,
+      collaboratorTypeId: creatorType.id,
+    },
+    include: [
+      {
+        model: sequelize.models.User,
+        as: 'user',
+        attributes: ['id', 'name'],
+      },
+    ],
+    transaction: options.transaction,
+  }) : null;
+
+  // create a GoalStatusChange record for the initial status
+  await sequelize.models.GoalStatusChange.create({
+    goalId: instance.id,
+    userId: goalCollaborator?.userId || options.userId || null,
+    userName: goalCollaborator?.user?.name || null,
+    oldStatus: null,
+    newStatus: instance.status || 'Not Started',
+    reason: 'Goal created',
+    context: 'Creation',
+  }, {
+    transaction: options.transaction,
+  });
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateCreator(sequelize, instance, options);
-  await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
+  await createInitialStatusChange(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
-  await invalidateSimilarityScores(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
-  await invalidateGoalSimilarityGroupsOnUpdate(sequelize, instance, options);
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
-  await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
   await updateTrainingReportGoalText(sequelize, instance, options);
 };
 
@@ -287,6 +211,7 @@ export {
   processForEmbeddedResources,
   autoPopulateOnApprovedAR,
   preventCloseIfObjectivesOpen,
+  createInitialStatusChange,
   beforeValidate,
   beforeUpdate,
   afterCreate,

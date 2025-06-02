@@ -17,7 +17,6 @@ import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import ObjectiveCard from './ObjectiveCard';
 import FlagStatus from './FlagStatus';
 import ExpanderButton from '../ExpanderButton';
-import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import isAdmin, {
   hasApproveActivityReportInRegion,

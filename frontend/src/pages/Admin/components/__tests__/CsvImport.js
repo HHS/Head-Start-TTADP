@@ -21,7 +21,7 @@ const goodTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer
 // eslint-disable-next-line quotes
 const duplicateTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
 // eslint-disable-next-line quotes
-const missingCoumnsTestCSVFile = "Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
+const missingColumnsTestCSVFile = "Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
 // eslint-disable-next-line quotes
 const invalidColumnTestCsvFile = "Invalid Column,Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\ninvalid value,event test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\ninvalid value 2,event test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
 
@@ -135,7 +135,7 @@ describe('CsvImport', () => {
 
     act(async () => {
     // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([missingCoumnsTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      const file = new File([missingColumnsTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
       userEvent.upload(fileInput, file);
 
       await waitFor(async () => {
@@ -151,7 +151,7 @@ describe('CsvImport', () => {
     });
   });
 
-  it('displays invalid columns', async () => {
+  it('displays invalid columns error', async () => {
     const validColumns = [
       'Primary ID',
       'Edit Title',

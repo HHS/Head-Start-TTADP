@@ -2326,21 +2326,6 @@ describe('Recipient DB service', () => {
       expect(result).toBeDefined();
     });
 
-    it('applies goalWhere when sortBy is not "mergedGoals" and goalIds are provided', async () => {
-      const goalIds = [goals[0].id];
-      const result = await getGoalsByActivityRecipient(
-        recipient.id,
-        grant.regionId,
-        {
-          sortBy: 'goalStatus',
-          goalIds,
-        },
-      );
-
-      expect(result.goalRows.length).toBe(1);
-      expect(result.goalRows[0].id).toBe(goalIds[0]);
-    });
-
     it('correctly sanitizes goalIds as part of sanitizedIds', async () => {
       const goalIds = goals.map((goal) => String(goal.id));
       const result = await getGoalsByActivityRecipient(
@@ -2505,16 +2490,6 @@ describe('Recipient DB service', () => {
         'Unknown',
       ]);
       await Goal.destroy({ where: { id: goal3.id }, individualHooks: true, force: true });
-    });
-
-    it('filters correctly when sortBy is not mergedGoals', async () => {
-      const result = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {
-        sortBy: 'notMergedGoals',
-        goalIds: [goals[0].id],
-      });
-
-      expect(result.goalRows.length).toBe(1);
-      expect(result.goalRows[0].id).toBe(goals[0].id);
     });
 
     it('returns an empty array when offset exceeds total count', async () => {

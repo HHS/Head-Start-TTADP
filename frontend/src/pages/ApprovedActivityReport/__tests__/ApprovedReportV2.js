@@ -65,8 +65,6 @@ describe('Approved Activity Report V2 component', () => {
     participants: ['Commander of Pants', 'Princess of Castles'],
     language: [],
     numberOfParticipants: 3,
-    numberOfParticipantsVirtually: 2,
-    numberOfParticipantsInPerson: 1,
     reason: ['Needed it'],
     startDate: '1968-08-01',
     endDate: '1969-08-02',
@@ -147,7 +145,8 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
   });
 
   it('handles empty resources', async () => {
@@ -167,7 +166,26 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+    const noneProvided = await screen.findAllByText(/None provided/i);
+    expect(noneProvided[0]).toBeInTheDocument();
+  });
+
+  it('shows the goal close date and goal source', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: mockObjectives,
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+      }],
+    }}
+    />);
+    expect(await screen.findByText('Source')).toBeInTheDocument();
   });
 
   it('does not show the goal source label if there are no responses', async () => {
@@ -214,15 +232,41 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByText(/FEI goal source/i).length).toBe(1);
   });
 
-  it('in person', async () => {
+  it('shows the courses label if there were selected courses', async () => {
+    const thisMockObjective = mockObjectives[0];
+    thisMockObjective.courses = [{ name: 'Course One' }];
+
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: [thisMockObjective],
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+        prompts: [{
+          title: 'FEI goal source',
+          reportResponse: ['response'],
+        }],
+      }],
+    }}
+    />);
+    expect(screen.queryAllByText(/Courses/i).length).toBe(1);
+  });
+
+  it('displays "in person" delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'in-person',
     }}
     />);
-    expect(screen.getByText(/In Person/i)).toBeVisible();
+
+    expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
   });
 
-  it('language', async () => {
+  it('displays the chosen language', async () => {
     render(<ApprovedReportV2 data={{
       ...report, language: ['Gobbledegook'],
     }}
@@ -231,7 +275,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
-  it('virtual', async () => {
+  it('displays virtual delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'virtual', virtualDeliveryType: 'Sandwich', approvedAt: '2021-01-01',
     }}
@@ -240,22 +284,16 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
 
-  it('hybrid', async () => {
+  it('displays hybrid delivery methods', async () => {
     render(<ApprovedReportV2 data={{
       ...report, deliveryMethod: 'hybrid',
     }}
     />);
 
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
-
-    // Expect 'Number of participants attending in person' to be in the document
-    expect(await screen.findByText(/Number of participants attending in person/i)).toBeInTheDocument();
-
-    // Expect 'Number of participants attending virtually' to be in the document
-    expect(await screen.findByText(/Number of participants attending virtually/i)).toBeInTheDocument();
   });
 
-  it('submitted date shown', async () => {
+  it('shows submitted date when present', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: '2023-01-09',
     }}
@@ -264,7 +302,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
   });
 
-  it('submitted date hidden', async () => {
+  it('hides null submitted dates', async () => {
     render(<ApprovedReportV2 data={{
       ...report, submittedDate: null,
     }}
@@ -345,7 +383,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByRole('heading', { name: /recipient's next steps/i }).length).toBe(0);
   });
 
-  it('correctly objective with citationss', async () => {
+  it('correctly displays objectives with citations', async () => {
     render(<ApprovedReportV2 data={{
       ...report,
       activityRecipients: [
