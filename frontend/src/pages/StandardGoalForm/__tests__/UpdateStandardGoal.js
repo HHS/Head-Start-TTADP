@@ -72,7 +72,7 @@ describe('UpdateStandardGoal', () => {
   };
   const goalTemplatesUrl = join('/', 'api', 'goal-templates');
   beforeEach(() => {
-    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), []);
+    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), [[], []]);
     fetchMock.get('/api/goal-templates/standard/1/grant/1', mockGoal);
   });
 
@@ -95,7 +95,7 @@ describe('UpdateStandardGoal', () => {
 
   it('redirects to error page when goal is not found', async () => {
     fetchMock.reset();
-    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), []);
+    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), [[], []]);
     fetchMock.get('/api/goal-templates/standard/1/grant/1', 404);
     const { history } = RenderTest();
 
