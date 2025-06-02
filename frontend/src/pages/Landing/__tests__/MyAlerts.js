@@ -275,7 +275,7 @@ describe('My Alerts', () => {
 
   test('shows both context menu items when I am creator or collaborator', async () => {
     renderMyAlerts(false);
-    const menuButtons = await screen.findAllByTestId('ellipsis-button');
+    const menuButtons = await screen.findAllByTestId('actions-button');
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findAllByRole('button', {
@@ -346,7 +346,7 @@ describe('My Alerts', () => {
 
     renderMyAlerts(report);
 
-    const menuButtons = await screen.findAllByTestId('ellipsis-button');
+    const menuButtons = await screen.findAllByTestId('actions-button');
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findAllByRole('button', {
@@ -360,7 +360,7 @@ describe('My Alerts', () => {
 
   test('redirects to view activity report when clicked from context menu', async () => {
     const history = renderMyAlerts();
-    const menuButtons = await screen.findAllByTestId('ellipsis-button');
+    const menuButtons = await screen.findAllByTestId('actions-button');
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
@@ -433,7 +433,7 @@ describe('My Alerts', () => {
     };
 
     renderMyAlerts(report);
-    const menuButtons = await screen.findAllByTestId('ellipsis-button');
+    const menuButtons = await screen.findAllByTestId('actions-button');
     userEvent.click(menuButtons[0]);
 
     const viewButton = await screen.findByRole('button', {
@@ -441,7 +441,7 @@ describe('My Alerts', () => {
     });
     userEvent.click(viewButton);
 
-    const contextMenu = await screen.findAllByTestId('ellipsis-button');
+    const contextMenu = await screen.findAllByTestId('actions-button');
     expect(contextMenu).toBeTruthy();
     const button = await screen.findByRole('button', { name: /this button will permanently delete the report\./i, hidden: true });
     userEvent.click(button);
