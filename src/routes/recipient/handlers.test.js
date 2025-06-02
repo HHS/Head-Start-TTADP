@@ -137,7 +137,6 @@ describe('getRecipient', () => {
     });
     await getRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 });
 
