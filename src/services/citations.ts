@@ -76,7 +76,7 @@ export async function getCitationsByGrantIds(
         ON mr."statusId" = mrs."statusId"
       -- This works without bringing in MonitoringFindings because when MonitoringFindings
       -- are deleted in IT-AMS data, so are all linking MonitoringFindingHistories records
-      WHERE mfh."sourceDeletedAt" IS NOT NULL
+      WHERE mfh."sourceDeletedAt" IS NULL
       ),
       -- union together active citations with those whose most recent linked
       -- review is not complete, yielding the list of citations on which TTA
