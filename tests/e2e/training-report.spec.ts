@@ -35,7 +35,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByRole('button', { name: 'Yes, continue' }).click();
 
   // Back on the TR page click create session.
-  await page.getByTestId('ellipsis-button').click();
+  await page.getByTestId('actions-button').click();
   await page.getByRole('button', { name: 'Create session' }).click();
 
   // IST/Creator session summary
