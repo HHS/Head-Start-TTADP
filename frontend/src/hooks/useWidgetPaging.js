@@ -62,11 +62,11 @@ export default function useWidgetPaging(
   // a side effect that resets the pagination when the filters change
   useEffect(() => {
     if (resetPagination) {
-      setSortConfig({ ...sortConfig, activePage: 1 });
+      setSortConfig((prevSortConfig) => ({ ...prevSortConfig, activePage: 1 }));
       setOffset(0); // 0 times perpage = 0
       setResetPagination(false);
     }
-  }, [activePage, resetPagination, setResetPagination, setSortConfig, sortConfig]);
+  }, [resetPagination, setResetPagination, setSortConfig]);
 
   useEffect(() => {
     setDataPerPage(dataToUse.slice(offset, offset + perPageNumber));

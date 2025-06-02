@@ -41,6 +41,7 @@ import {
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { getObjectivesByReportId } from './objectives';
+import parseDate from '../lib/date';
 import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } from './standardGoals';
 
 export async function batchQuery(query, limit) {
@@ -210,9 +211,10 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where });
 }
 
-async function saveNotes(activityReportId, notes, isRecipientNotes) {
+export async function saveNotes(activityReportId, notes, isRecipientNotes) {
   const noteType = isRecipientNotes ? 'RECIPIENT' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
+
   const where = {
     activityReportId,
     noteType,
@@ -220,24 +222,29 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       [Op.notIn]: ids,
     },
   };
+
   // Remove any notes that are no longer relevant
   await NextStep.destroy({
     where,
     individualHooks: true,
   });
 
-  if (notes.length > 0) {
-    // If a note has an id, and its content has changed, update to the newer content
-    // If no id, then assume its a new entry
-    const newNotes = notes.map((note) => ({
-      id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
-      note: note.note,
-      completeDate: !note.completeDate ? null : moment(note.completeDate, 'MM/DD/YYYY').toDate(),
-      activityReportId,
-      noteType,
-    }))
-      .filter(({ id, note, completeDate }) => id || (note && note.length > 0) || completeDate);
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
+  // If a note has an id, preserve it for update
+  // If no id, and note or completeDate is provided, treat as a new entry
+  const newNotes = notes.map((note) => ({
+    id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
+    note: note.note,
+    completeDate: parseDate(note.completeDate),
+    activityReportId,
+    noteType,
+  })).filter(({ id, note, completeDate }) => (
+    id || (note && note.length > 0) || completeDate
+  ));
+
+  if (newNotes.length > 0) {
+    await NextStep.bulkCreate(newNotes, {
+      updateOnDuplicate: ['note', 'completeDate', 'updatedAt'],
+    });
   }
 }
 
@@ -522,7 +529,7 @@ export async function activityReports(
     where.legacyId = { [Op.eq]: null };
   }
 
-  if (ids && ids.length) {
+  if (ids?.length) {
     where.id = { [Op.in]: ids };
   }
 
@@ -979,7 +986,7 @@ export async function createOrUpdate(newActivityReport, report, userId) {
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
-  const previousActivityRecipientType = report && report.activityRecipientType;
+  const previousActivityRecipientType = report?.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
@@ -1024,8 +1031,7 @@ export async function createOrUpdate(newActivityReport, report, userId) {
   }
 
   if (
-    recipientsWhoHaveGoalsThatShouldBeRemoved
-    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+    recipientsWhoHaveGoalsThatShouldBeRemoved?.length
   ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }

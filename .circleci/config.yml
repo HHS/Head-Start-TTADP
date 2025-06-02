@@ -10,11 +10,14 @@ executors:
     - image: cimg/node:20.18.2-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+        REDIS_HOST: localhost
+        REDIS_PASS: ""
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: secretpass
         POSTGRES_DB: ttasmarthub
+    - image: cimg/redis:6.2.17
   docker-python-executor:
     docker:
     - image: cimg/python:3.9.21
@@ -49,19 +52,14 @@ workflows:
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
     - build_and_lint
-    - build_similarity_api
     - checkpoint:
         name: build_done
         requires:
         - build_and_lint
-        - build_similarity_api
     - test_frontend:
         requires:
         - build_done
     - test_backend:
-        requires:
-        - build_done
-    - test_similarity_api:
         requires:
         - build_done
     - test_e2e_app:
@@ -84,7 +82,6 @@ workflows:
         requires:
         - test_frontend
         - test_backend
-        - test_similarity_api
         - test_e2e_app
         - test_e2e_api
         - test_e2e_utils
@@ -116,14 +113,12 @@ workflows:
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
-    - build_similarity_api
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
         target_env: "<< pipeline.parameters.target_env >>"
         requires:
         - build_and_lint
-        - build_similarity_api
 
   import_data_cron:
     # scheduled job to download and process monitoring data
@@ -137,6 +132,7 @@ workflows:
     jobs:
     - run_import_job:
         target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -186,37 +182,37 @@ workflows:
         - process_temp_db
     - restore_db_job:
         name: restore (dev)
-        serial-group: "tta-automation-lock-dev"
+        serial-group: "tta-automation-lock"
         target_env: "dev"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-green)
-        serial-group: "tta-automation-lock-dev-green"
+        serial-group: "tta-automation-lock"
         target_env: "dev-green"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-blue)
-        serial-group: "tta-automation-lock-dev-blue"
+        serial-group: "tta-automation-lock"
         target_env: "dev-blue"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-red)
-        serial-group: "tta-automation-lock-dev-red"
+        serial-group: "tta-automation-lock"
         target_env: "dev-red"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (sandbox)
-        serial-group: "tta-automation-lock-sandbox"
+        serial-group: "tta-automation-lock"
         target_env: "sandbox"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (staging)
-        serial-group: "tta-automation-lock-staging"
+        serial-group: "tta-automation-lock"
         target_env: "staging"
         requires:
         - backup_temp_db
@@ -276,35 +272,6 @@ jobs:
         paths:
         - .
 
-  build_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - checkout
-    - create_combined_pipfreeze
-    - restore_cache:
-        keys:
-        # To manually bust the cache, increment the version e.g. v7-pip...
-        - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
-        # If checksum is new, restore partial cache
-        - v2-pip-deps-
-    - run:
-        name: Install python dependencies
-        command: |
-          cd similarity_api/src
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install -U pip setuptools wheel
-          pip install -U --use-pep517 -r requirements.txt
-    - save_cache:
-        paths:
-        - similarity_api/src/venv
-        key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-
-    - persist_to_workspace:
-        root: .
-        paths:
-        - similarity_api
-
   test_backend:
     executor: docker-postgres-executor
     resource_class: large
@@ -363,48 +330,6 @@ jobs:
     - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
-
-  test_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: Syft SBOM
-        environment:
-          SYFT_VERSION: v1.5.0
-          IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
-          OUTPUT_FORMAT: json
-          OUTPUT_FILE: reports/syft_sbom.json
-        command: |
-          mkdir -p reports/
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
-          ./syft similarity_api/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Grype Docker image
-        environment:
-          GRYPE_VERSION: v0.92.2
-          OUTPUT_FORMAT: sarif
-          OUTPUT_FILE: reports/grype.json
-        command: |
-          mkdir -p reports
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-          ./grype db update
-          ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "Grype scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Test similarity
-        command: |
-          mkdir -p coverage/similarity
-          cd similarity_api/src
-          source venv/bin/activate
-          pip install pytest pytest-cov
-          pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
-          coverage report --show-missing --skip-covered
-          coverage html -d ~/project/coverage/similarity --skip-covered
-    - store_artifacts:
-        path: reports/
 
   test_frontend:
     executor: docker-executor
@@ -490,17 +415,11 @@ jobs:
         name: Wait for Node.js server to start
         command: ./bin/ping-server 8080
     - run:
-        name: Wait for similarity_api to start
-        command: ./bin/ping-server 9100 localhost /openapi.json
-    - run:
         name: Pull OWASP ZAP docker image
         command: docker pull softwaresecurityproject/zap-stable:latest
     - run:
         name: Run OWASP ZAP scan for Node.js server
         command: ./bin/run-owasp-scan --target http://server:8080 --full
-    - run:
-        name: Run OWASP ZAP scan for similarity_api
-        command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
     - store_artifacts:
         path: reports
 
@@ -511,6 +430,7 @@ jobs:
       target_env:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -538,6 +458,14 @@ jobs:
         command: |
           set -x
           cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+    - run:
+        name: Alert on migration failure
+        when: on_fail
+        command: |
+            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+            fi
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
@@ -547,6 +475,7 @@ jobs:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -633,32 +562,38 @@ jobs:
     parameters:
       target_env:
         type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
     steps:
     - checkout
     - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "yarn createMonitoringGoalsCLI"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
         command: |
-          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results > monitoring-goals.txt
-          cat monitoring-goals.txt
+          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
+            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
+          else
+            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+          fi
+          cat monitoring-updates.txt
     - when:
         condition:
           equal: [ << parameters.target_env >>, "prod" ]
         steps:
         - notify_slack:
-            message_text_file: monitoring-goals.txt
+            message_text_file: monitoring-updates.txt
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
@@ -762,17 +697,6 @@ commands:
     - run:
         name: Combine package-lock.json files to single file
         command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
-
-  create_combined_pipfreeze:
-    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
-    parameters:
-      filename:
-        type: string
-        default: "combined-requirements.txt"
-    steps:
-    - run:
-        name: Combine requirements.txt files to single file
-        command: cat similarity_api/src/requirements.txt > << parameters.filename >>
 
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
@@ -884,7 +808,7 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then 
             exit 0; 
           fi
           if [ -f ./environments/${current_env} ]; then
@@ -901,17 +825,20 @@ commands:
                 fi; 
               done
               cd ..
-              printf ${msg} > msg.txt
+              ./bin/notify-slack.sh \
+                "Environment owner changed: \`\`\`${msg}\`\`\`" \
+                "tm-test"
+                ${SLACK_BOT_TOKEN}
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
+          else 
+            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
         key: 'environment-owners'
         paths:
         - environments
-    - notify_slack:
-        message_text_file: msg.txt
 
   cf_cmd:
     description: "Login, run task, send notification"
@@ -1028,9 +955,10 @@ commands:
         timeout: "1800"
     - run:
         when: on_fail
-        command: echo "Failed db restore to << parameters.target_env >>" > message.txt
-    - notify_slack:
-        message_text_file: message.txt
+        command: |
+          msg="DB Restore failed to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -1258,20 +1186,16 @@ commands:
     - run:
         name: Notify Slack
         command: |
-          set -x
-
-          # Evaluate message_text_script if provided
-          if [ -n "<< parameters.message_text_file >>" ]; then
-            MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+          if [[ -n "<< parameters.message_text >>" ]]; then
+            MESSAGE="<< parameters.message_text >>"
           else
-            MESSAGE_TEXT="<< parameters.message_text >>"
+            MESSAGE=$(cat "<< parameters.message_text_file >>")            
           fi
-
-          echo $MESSAGE_TEXT
-
+          
+          echo "Sending: ${MESSAGE}"
           # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
-            echo "Missing required parameters. Notification will not be sent."
+          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
+            echo "Missing required parameter. Notification will not be sent."
             exit 0
           fi
 
@@ -1280,13 +1204,11 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
+              \"text\": \"$MESSAGE\"
             }" \
             https://slack.com/api/chat.postMessage)
-
           ok=$(echo $response | jq -r '.ok')
           error=$(echo $response | jq -r '.error')
-
           if [ "$ok" != "true" ]; then
             echo "Slack notification failed: $error"
             exit 1
@@ -1294,21 +1216,26 @@ commands:
             echo "Slack notification sent successfully"
           fi
 
+  
   notify_slack_deploy:
     parameters:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN 
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
     - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
         name: Generate Message
         command: |
-          source ci.vars
-          env_name="$full_env"
+          env_name=<< parameters.target_env >>
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 

@@ -6,7 +6,7 @@ import {
   DATEPICKER_VALUE_FORMAT,
 } from '../../../Constants';
 import {
-  reportDataPropTypes, formatSimpleArray, mapAttachments,
+  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
 } from '../helpers';
 import ReadOnlyContent from '../../../components/ReadOnlyContent';
 import RenderReviewCitations from '../../ActivityReport/Pages/components/RenderReviewCitations';
@@ -142,9 +142,14 @@ function calculateGoalsAndObjectives(report) {
 
       if (goal.activityReportGoals && goal.activityReportGoals.length) {
         goalSection = {
-          ...goalSection.heading,
+          heading: goalSection.heading,
           data: {
             ...goalSection.data,
+            Source: (
+              <>
+                { goal.activityReportGoals[0].source}
+              </>
+            ),
           },
           striped: true,
         };
@@ -177,6 +182,7 @@ function calculateGoalsAndObjectives(report) {
 
   return sections;
 }
+
 export default function ApprovedReportV2({ data }) {
   const {
     reportId, ttaType, deliveryMethod, virtualDeliveryType,
@@ -184,6 +190,11 @@ export default function ApprovedReportV2({ data }) {
 
   // first table
   const isRecipient = data.activityRecipientType === 'recipient';
+  let recipientType = isRecipient ? 'Recipient' : 'Other entity';
+  if (data.activityRecipients.length > 1) {
+    recipientType = isRecipient ? 'Recipients' : 'Other entities';
+  }
+
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
@@ -193,17 +204,12 @@ export default function ApprovedReportV2({ data }) {
 
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
-  const participantCount = deliveryMethod === 'hybrid'
-    ? data.numberOfParticipantsInPerson.toString()
-    : data.numberOfParticipants.toString();
-
-  const participantVirtualCount = data.numberOfParticipantsVirtually
-    ? data.numberOfParticipantsVirtually.toString()
-    : null;
+  const participantCount = data.numberOfParticipants.toString();
+  const reasons = formatSimpleArray(data.reason);
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const duration = `${data.duration} hours`;
-  // const requester = formatRequester(data.requester);
+  const requester = formatRequester(data.requester);
 
   const goalSections = calculateGoalsAndObjectives(data);
 
@@ -224,19 +230,6 @@ export default function ApprovedReportV2({ data }) {
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
-
-  const getNumberOfParticipants = () => {
-    const isHybrid = deliveryMethod === 'hybrid';
-    let numberOfParticipants = { [isHybrid ? 'Number of participants attending in person' : 'Number of participants attending']: participantCount };
-    if (deliveryMethod === 'hybrid') {
-      numberOfParticipants = {
-        ...numberOfParticipants,
-        'Number of participants attending virtually': participantVirtualCount,
-      };
-    }
-    return numberOfParticipants;
-  };
-
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
@@ -292,12 +285,19 @@ export default function ApprovedReportV2({ data }) {
           {
             heading: 'Who was the activity for?',
             data: {
-              Recipient: arRecipients,
-              'Recipient participants': attendees,
-              'Why activity requested': data.activityReason,
+              'Recipient or other entity': recipientType,
+              'Recipient names': arRecipients,
               'Target populations': targetPopulations,
             },
             striped: true,
+          },
+          {
+            heading: 'Reason for activity',
+            data: {
+              'Who requested the activity': requester,
+              Reasons: reasons,
+            },
+            striped: false,
           },
           {
             heading: 'Activity date',
@@ -318,12 +318,19 @@ export default function ApprovedReportV2({ data }) {
           {
             heading: 'Training or technical assistance',
             data: {
-              'TTA type': formatTtaType(ttaType),
-              'Languages used': languages,
-              'Delivery method': formatDelivery(deliveryMethod, virtualDeliveryType),
-              ...getNumberOfParticipants(deliveryMethod),
+              'TTA provided': formatTtaType(ttaType),
+              'Language used': languages,
+              'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
             },
             striped: true,
+          },
+          {
+            heading: 'Participants',
+            data: {
+              Participants: attendees,
+              'Number of participants': participantCount,
+            },
+            striped: false,
           },
         ]}
       />

@@ -49,6 +49,7 @@ export default function ObjectiveStatusDropdown({
       className={className}
       icon={icon}
       display={display}
+      buttonTestId="objective-status-dropdown"
     />
   );
 }

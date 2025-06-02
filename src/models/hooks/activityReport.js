@@ -13,7 +13,6 @@ const {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
-const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
@@ -744,34 +743,6 @@ const beforeUpdate = async (sequelize, instance, options) => {
   clearAdditionalNotes(sequelize, instance, options);
 };
 
-const afterDestroy = async (sequelize, instance, options) => {
-  try {
-    if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
-      return;
-    }
-    auditLogger.info(`Destroying linked similarity groups for AR-${instance.id}`);
-    const { id: activityReportId, calculatedStatus } = instance;
-
-    const arGoals = await sequelize.models.ActivityReportGoal.findAll({
-      attributes: ['goalId'],
-      where: { activityReportId },
-      transaction: options.transaction,
-    });
-
-    await Promise.all((arGoals.map(async (arGoal) => {
-      const i = {
-        calculatedStatus,
-        goalId: arGoal.goalId,
-      };
-      // regen similarity groups
-      return destroyLinkedSimilarityGroups(sequelize, i, options);
-    })));
-  } catch (e) {
-    // we do not want to surface these errors to the UI
-    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
-  }
-};
-
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
 };
@@ -784,7 +755,6 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoPopulateUtilizer(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await afterDestroy(sequelize, instance, options);
 };
 
 export {
@@ -799,5 +769,4 @@ export {
   afterCreate,
   afterUpdate,
   setSubmittedDate,
-  afterDestroy,
 };

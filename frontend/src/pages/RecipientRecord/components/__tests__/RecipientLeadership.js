@@ -67,6 +67,41 @@ describe('RecipientLeadership', () => {
     expect(await screen.findByText(/frog commander/i)).toBeInTheDocument();
   });
 
+  it('handles null effective dates', async () => {
+    fetchMock.get(recipientUrl, [
+      {
+        id: 1,
+        fullName: 'Frog Person',
+        fullRole: 'Frog Stuff',
+        email: 'frog@pond.net',
+        effectiveDate: null,
+        nameAndRole: 'Frog Person - Frog Stuff',
+      },
+    ]);
+    renderRecipientLeadership();
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
+
+    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
+    expect(await screen.findByText('unavailable')).toBeInTheDocument();
+  });
+
+  it('handles undefined effective dates', async () => {
+    fetchMock.get(recipientUrl, [
+      {
+        id: 1,
+        fullName: 'Frog Person',
+        fullRole: 'Frog Stuff',
+        email: 'frog@pond.net',
+        nameAndRole: 'Frog Person - Frog Stuff',
+      },
+    ]);
+    renderRecipientLeadership();
+    expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
+
+    expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
+    expect(await screen.findByText('unavailable')).toBeInTheDocument();
+  });
+
   it('handles errors', async () => {
     fetchMock.get(recipientUrl, 500);
     renderRecipientLeadership();

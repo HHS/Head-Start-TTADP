@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
-import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import useSize from '../hooks/useSize';
 import NoResultsFound from '../components/NoResultsFound';
 import './VBarGraph.css';
 
-const Plot = createPlotlyComponent(Plotly);
+let Plot = null;
+import('plotly.js-basic-dist').then((Plotly) => {
+  Plot = createPlotlyComponent(Plotly);
+});
 
 function VBarGraph({
   data,

@@ -28,7 +28,7 @@ fi
 
 # Define prefixes for environments
 primary_prefix="tta-smarthub"
-secondary_prefixes=("tta-similarity-api")
+secondary_prefixes=()
 
 # Convert the comma-separated list into an array using substitution
 apps=(${env_list//,/ })
@@ -77,7 +77,7 @@ for env in "${apps[@]}"; do
   # Perform activity check only for the primary prefix (tta-smarthub)
   if [[ "$check_activity" == "true" && "$env_state" == "stop" ]]; then
     app_name="${primary_prefix}-${env_suffix}"
-    
+
     current_state=$(cf apps | grep "${app_name}" | awk '{print $2}' || echo "unknown")
     if [ "$current_state" == "stopped" ]; then
           echo "$app_name is already stopped."

@@ -13,8 +13,11 @@ import {
   deleteLog,
   updateLog,
   createLog,
+  logsByScopes,
+  csvLogsByScopes,
 } from '../../services/communicationLog';
 import { userById } from '../../services/users';
+import { currentUserId } from '../../services/currentUser';
 import {
   communicationLogById,
   communicationLogsByRecipientId,
@@ -23,6 +26,8 @@ import {
   createLogByRecipientId,
   communicationLogAdditionalData,
   getAvailableUsersRecipientsAndGoals,
+  communicationLogs,
+  createLogByRegionId,
 } from './handlers';
 import SCOPES from '../../middleware/scopeConstants';
 import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
@@ -102,6 +107,11 @@ describe('communicationLog handlers', () => {
     })),
     type: jest.fn(),
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    currentUserId.mockImplementation(async (req) => req.session.userId);
+  });
 
   afterAll(() => sequelize.close());
   describe('communicationLogById', () => {
@@ -306,6 +316,118 @@ describe('communicationLog handlers', () => {
       logsByRecipientAndScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
       setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
       await communicationLogsByRecipientId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+  });
+
+  describe('communicationLogs', () => {
+    afterEach(async () => {
+      jest.restoreAllMocks();
+    });
+    it('success', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
+    it('with limit', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          limit: '20',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
+    });
+
+    it('csv', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+          format: 'csv',
+        },
+      };
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      csvLogsByScopes.mockImplementation(() => Promise.resolve('id\n1'));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(send).toHaveBeenCalledWith('id\n1');
+    });
+
+    it('error', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      logsByScopes.mockRejectedValue(new Error('error'));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      await communicationLogs(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('admin', async () => {
+      const mockRequest = {
+        session: {
+          userId: admin.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        query: {
+          offset: 0,
+          sortyBy: 'communicationDate',
+          direction: 'asc',
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(admin));
+      logsByScopes.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+      setTrainingAndActivityReportReadRegions.mockImplementation(() => Promise.resolve({}));
+      await communicationLogs(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith([{ id: 1 }]);
     });
   });
@@ -519,7 +641,7 @@ describe('communicationLog handlers', () => {
       };
       userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
       logById.mockImplementation(() => Promise.resolve({ id: 1, userId: authorizedToCreate.id }));
-      deleteLog.mockRejectedValue(new Error('error'));
+      deleteLog.mockResolvedValue(0);
       await deleteLogById(mockRequest, { ...mockResponse });
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
@@ -631,7 +753,6 @@ describe('communicationLog handlers', () => {
       Recipient.findAll.mockResolvedValue([]);
       Group.findAll.mockResolvedValue([]);
       await communicationLogAdditionalData(mockRequest, { ...mockResponse });
-      // eslint-disable-next-line max-len
       expect(statusJson).toHaveBeenCalledWith({
         regionalUsers: mockUsers,
         standardGoals:
@@ -639,6 +760,96 @@ describe('communicationLog handlers', () => {
         groups: [],
         recipients: [],
       });
+    });
+  });
+
+  describe('createLogByRegionId', () => {
+    afterEach(async () => {
+      jest.restoreAllMocks();
+    });
+
+    it('success', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }, { value: 2 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+      expect(createLog).toHaveBeenCalledWith([1, 2], authorizedToCreate.id, { message: 'test' });
+    });
+
+    it('unauthorized', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('error', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToCreate.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(authorizedToCreate));
+      createLog.mockRejectedValue(new Error('error'));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+
+    it('admin', async () => {
+      const mockRequest = {
+        session: {
+          userId: admin.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+        body: {
+          data: {
+            recipients: [{ value: 1 }],
+            message: 'test',
+          },
+        },
+      };
+      userById.mockImplementation(() => Promise.resolve(admin));
+      createLog.mockImplementation(() => Promise.resolve({ id: 1 }));
+      await createLogByRegionId(mockRequest, { ...mockResponse });
+      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
     });
   });
 });

@@ -3,9 +3,6 @@ web_instances: 3
 web_memory: 4GB
 worker_instances: 2
 worker_memory: 1GB
-similarity_api_instances: 1
-similarity_api_memory: 1GB
-similarity_api_disk_quota: 6GB
 
 app_name: tta-smarthub-prod
 app_url: https://tta-smarthub-prod.app.cloud.gov/
@@ -18,7 +15,7 @@ AUTH_BASE: https://hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
-SIMILARITY_ENDPOINT: https://tta-similarity-api-prod.app.cloud.gov/compute
+
 SMARTSHEET_ENDPOINT: ""
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"

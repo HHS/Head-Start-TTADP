@@ -311,6 +311,7 @@ const reportPostUrl = '/api/activity-reports/reportsByManyIds';
 
 describe('Resource Dashboard page', () => {
   afterEach(() => fetchMock.restore());
+
   const renderResourcesDashboard = (user) => {
     render(
       <UserContext.Provider value={{ user }}>
