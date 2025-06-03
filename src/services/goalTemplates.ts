@@ -188,6 +188,93 @@ export async function getFieldPromptsForCuratedTemplate(
   goalIds: number[] | null,
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
+
+  const [prompts, responses] = await Promise.all([
+    GoalTemplateFieldPromptModel.findAll({
+      attributes: [
+        ['id', 'promptId'],
+        'ordinal',
+        'title',
+        'prompt',
+        'hint',
+        'caution',
+        'fieldType',
+        'options',
+        'validations',
+        'goalTemplateId',
+      ],
+      where: { goalTemplateId },
+      order: [['ordinal', 'asc']],
+      raw: true,
+    }),
+    GoalFieldResponseModel.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        'response',
+        [
+          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          'goalIds',
+        ],
+      ],
+      where: { goalId: goalIds },
+      include: [{
+        model: GoalTemplateFieldPromptModel,
+        as: 'prompt',
+        required: true,
+        attributes: [],
+        include: [{
+          model: GoalTemplateModel,
+          as: 'goalTemplate',
+          required: true,
+          attributes: [],
+          where: { id: goalTemplateId },
+        }],
+      }],
+      group: [
+        '"GoalFieldResponse"."goalTemplateFieldPromptId"',
+        '"GoalFieldResponse"."response"',
+      ],
+      raw: true,
+    }),
+  ]);
+
+  // restructure the collected data into one object with all responses for the passed goalIds if
+  // any exists
+
+  const restructuredPrompts = responses.reduce(
+    (
+      promptsWithResponses: FieldPrompts[],
+      response: PromptResponse,
+    ) => {
+      const exists = promptsWithResponses
+        .find((pwr) => pwr.promptId === response.promptId);
+
+      if (exists) {
+        exists.response = [...exists.response, ...response.response];
+      }
+      return promptsWithResponses;
+    },
+    // the inital set of prompts, which can't have a response yet
+    // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
+    // doesn't include a response and doesn't join with GoalFieldResponseModel.
+    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
+  );
+  return restructuredPrompts;
+}
+
+/**
+Retrieves field prompts for a curated goal template and associated goals for Activity Reports.
+We need things a little bit differently for Activity Reports as we need it per grant.
+@param goalTemplateId - The ID of the goal template to retrieve prompts for.
+@param goalIds - An array of goal IDs to retrieve responses for. Can be null if no
+  responses are needed.
+@returns Any array of field prompt responses and prompts.
+*/
+export async function getFieldPromptsForActivityReports(
+  goalTemplateId: number,
+  goalIds: number[] | null,
+): Promise<FieldPrompts[]> {
+  // Collect the data from the DB for the passed goalTemplate and goalIds
   // and return the prompts with the responses for the passed goalIds
   const [prompts, responses] = await Promise.all([
     GoalTemplateFieldPromptModel.findAll({
