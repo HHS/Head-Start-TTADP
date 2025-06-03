@@ -109,7 +109,6 @@ function GoalDataController({
         setIsAppLoading(true);
 
         const { sortBy } = sortConfig;
-        //
         const response = await getRecipientGoals(
           recipientId,
           regionId,

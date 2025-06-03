@@ -108,7 +108,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
     async function fetchRecipient() {
       try {
         setIsAppLoading(true);
-        //
         const recipient = await getRecipient(recipientId, regionId);
         if (recipient) {
           setRecipientData({
