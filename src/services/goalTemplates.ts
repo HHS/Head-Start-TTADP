@@ -461,8 +461,8 @@ export async function setFieldPromptForCuratedTemplate(
     throw new Error(`No prompt found with ID ${promptId}`);
   }
 
+  // We always want to update the goal field response when saving the report.
   const goalIdsToUpdate = currentResponses
-    .filter((r) => r.response)
     .map((r) => r.goalId);
 
   const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
