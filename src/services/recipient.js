@@ -235,6 +235,10 @@ export async function missingStandardGoals(recipient, grantScopes) {
     attributes: ['id', 'templateName'],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
+      // And standard is not equal to 'Monitoring'.
+      [Op.and]: [
+        { standard: { [Op.ne]: 'Monitoring' } },
+      ],
     },
     include: [
       {
@@ -251,6 +255,7 @@ export async function missingStandardGoals(recipient, grantScopes) {
             where: {
               ...grantsWhereCondition,
               recipientId: recipient.id,
+              status: 'Active',
             },
           },
         ],
@@ -259,20 +264,35 @@ export async function missingStandardGoals(recipient, grantScopes) {
   });
 
   // Get all the grantIds from the recipient object.
-  const grantIds = recipient.grants.map((g) => g.id);
+  const grantIds = recipient.grants.filter((g) => g.status === 'Active').map((g) => g.id);
   const distinctTemplateNames = new Set(goalTemplatesWithGoals.map((g) => g.templateName));
 
   // Make sure every distinct template name and grantId has a goal, return the missing ones.
-  return Array.from(distinctTemplateNames).flatMap(
-    (templateName) => grantIds.filter((grantId) => !goalTemplatesWithGoals.find(
-      (g) => g.templateName === templateName && g.goals.some((gl) => gl.grantId === grantId),
-    )).map((grantId) => ({
-      // Add the template id.
-      goalTemplateId: goalTemplatesWithGoals.find((g) => g.templateName === templateName)?.id,
-      templateName,
-      grantId,
-    })),
-  );
+  // Step 1: Initialize the result array
+  const missingGoals = [];
+
+  // Step 2: For each distinct template name
+  distinctTemplateNames.forEach((templateName) => {
+    // Step 3: Find the template object that matches this name
+    const template = goalTemplatesWithGoals.find((g) => g.templateName === templateName);
+
+    // Step 4: For each grant ID
+    grantIds.forEach((grantId) => {
+      // Step 5: Check if this combination of template and grant already has a goal
+      const hasGoal = template.goals.some((gl) => gl.grantId === grantId);
+
+      // Step 6: If no goal exists for this template and grant, add it to missing goals
+      if (!hasGoal) {
+        missingGoals.push({
+          goalTemplateId: template?.id,
+          templateName,
+          grantId,
+        });
+      }
+    });
+  });
+  // Step 7: Return the list of missing goals
+  return missingGoals;
 }
 
 /**

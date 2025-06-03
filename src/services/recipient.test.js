@@ -364,18 +364,29 @@ describe('Recipient DB service', () => {
     let recipient2;
     let recipient3;
     let multiGrantRecipient;
+    let recipientWithInactiveGrant;
+    let recipientWithMonitoringGoal;
 
     let grant1;
     let grant2;
     let grant3;
-
     let grant4;
     let grant5;
+    let inactiveGrant;
+    let monitoringGrant;
 
     afterAll(async () => {
       await Goal.destroy({
         where: {
-          grantId: [grant1?.id, grant2?.id, grant3?.id, grant4?.id, grant5?.id].filter(Boolean),
+          grantId: [
+            grant1?.id,
+            grant2?.id,
+            grant3?.id,
+            grant4?.id,
+            grant5?.id,
+            inactiveGrant?.id,
+            monitoringGrant?.id,
+          ].filter(Boolean),
         },
         individualHooks: true,
         force: true,
@@ -383,7 +394,15 @@ describe('Recipient DB service', () => {
 
       await Grant.destroy({
         where: {
-          id: [grant1?.id, grant2?.id, grant3?.id, grant4?.id, grant5?.id].filter(Boolean),
+          id: [
+            grant1?.id,
+            grant2?.id,
+            grant3?.id,
+            grant4?.id,
+            grant5?.id,
+            inactiveGrant?.id,
+            monitoringGrant?.id,
+          ].filter(Boolean),
         },
         individualHooks: true,
       });
@@ -393,6 +412,8 @@ describe('Recipient DB service', () => {
         recipient2?.id,
         recipient3?.id,
         multiGrantRecipient?.id,
+        recipientWithInactiveGrant?.id,
+        recipientWithMonitoringGoal?.id,
       ].filter(Boolean);
 
       await Recipient.destroy({
@@ -537,7 +558,7 @@ describe('Recipient DB service', () => {
       // Call the function to find missing standard goals
       const recipient = await recipientById(recipient2.id, {});
       const foundGoals = await missingStandardGoals(recipient, {});
-      expect(foundGoals.length).toBe(19);
+      expect(foundGoals.length).toBe(18);
     });
 
     it('returns some of the goal templates when some are missing', async () => {
@@ -577,7 +598,77 @@ describe('Recipient DB service', () => {
       });
       const recipient = await recipientById(recipient3.id, {});
       const foundGoals = await missingStandardGoals(recipient, {});
-      expect(foundGoals.length).toBe(18);
+      expect(foundGoals.length).toBe(17);
+    });
+
+    it('does not count inactive grants or Monitoring standard templates as missing goals', async () => {
+      // Create recipient with inactive grant
+      recipientWithInactiveGrant = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      // Create an inactive grant
+      inactiveGrant = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipientWithInactiveGrant.id,
+        regionId: 1,
+        number: '323458',
+        programSpecialistName: 'Gus',
+        status: 'Inactive',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      // Create recipient with active grant for monitoring goal
+      recipientWithMonitoringGoal = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+      });
+
+      // Create an active grant
+      monitoringGrant = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipientWithMonitoringGoal.id,
+        regionId: 1,
+        number: '323459',
+        programSpecialistName: 'Gus',
+        status: 'Active',
+        endDate: new Date(2024, 10, 2),
+        grantSpecialistName: 'Glen',
+        annualFundingMonth: 'October',
+      });
+
+      // Find the monitoring goal template
+      const monitoringGoalTemplate = await GoalTemplate.findOne({
+        where: {
+          standard: 'Monitoring',
+          creationMethod: CREATION_METHOD.CURATED,
+        },
+      });
+
+      // Get the inactive recipient
+      const inactiveRecipient = await recipientById(recipientWithInactiveGrant.id, {});
+
+      // Get the monitoring recipient
+      const monitoringRecipient = await recipientById(recipientWithMonitoringGoal.id, {});
+
+      // Get missing goals for inactive grant recipient
+      const inactiveGrantGoals = await missingStandardGoals(inactiveRecipient, {});
+
+      // Get missing goals for recipient with monitoring goal
+      const monitoringGoals = await missingStandardGoals(monitoringRecipient, {});
+
+      // Verify that the inactive grant is not considered when calculating missing standard goals
+      const inactiveGrantHasGoals = inactiveGrantGoals.some((g) => g.grantId === inactiveGrant.id);
+      expect(inactiveGrantHasGoals).toBe(false);
+
+      // Verify that the monitoring goal template is not included in missing goals
+      const monitoringTemplateIncluded = monitoringGoals.some(
+        (g) => g.goalTemplateId === monitoringGoalTemplate.id,
+      );
+      expect(monitoringTemplateIncluded).toBe(false);
     });
   });
 
