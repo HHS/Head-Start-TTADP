@@ -30,9 +30,9 @@ const CloseSuspendReasonModal = ({
     setShowValidationError(false);
   };
 
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
+  const generateReasonRadioButtons = () => reasonRadioOptions.map((r, index) => (
     <Radio
-      id={r.trim().replace(' ', '-').toLowerCase()}
+      id={`${reasonDisplayStatus}-reason-${index}`}
       key={r}
       onChange={reasonChanged}
       name="closeSuspendReason"
