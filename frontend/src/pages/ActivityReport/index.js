@@ -173,6 +173,7 @@ function ActivityReport({
     otherUsers: [],
     tabCount: 0,
   });
+  const [shouldAutoSave, setShouldAutoSave] = useState(true);
 
   const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
     LOCAL_STORAGE_DATA_KEY(activityReportId), null,
@@ -216,6 +217,22 @@ function ActivityReport({
     // seeing a save message if they refresh the page after creating a new report.
     history.replace();
   }, [activityReportId, history]);
+
+  // If there are multiple users working on the same report, we need to suspend auto-saving
+  useEffect(() => {
+    if (presenceData.hasMultipleUsers || presenceData.tabCount > 1) {
+      const otherUsernames = presenceData.otherUsers
+        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
+        .filter((username, index, self) => self.indexOf(username) === index);
+      if (otherUsernames.length > 0 || presenceData.tabCount > 1) {
+        setShouldAutoSave(false);
+      } else {
+        setShouldAutoSave(true);
+      }
+    } else {
+      setShouldAutoSave(true);
+    }
+  }, [presenceData]);
 
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
@@ -674,6 +691,7 @@ function ActivityReport({
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}
+          shouldAutoSave={shouldAutoSave}
         />
       </NetworkContext.Provider>
     </div>
