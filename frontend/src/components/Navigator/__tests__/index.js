@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
-  render, screen, act,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
@@ -99,19 +99,21 @@ describe('Navigator', () => {
   });
 
   const NavigatorWithForm = ({
-    onSaveAndContinue,
-    currentPage,
-    onSubmit,
-    onSave,
-    onSaveDraft,
-    updatePage,
-    updateForm,
-    pages,
-    formData,
-    onUpdateError,
-    editable,
-    hideSideNav,
-  }) => {
+    onSaveAndContinue = jest.fn(),
+    currentPage = 'first',
+    onSubmit = jest.fn(),
+    onSave = jest.fn(),
+    onSaveDraft = jest.fn(),
+    updatePage = jest.fn(),
+    updateForm = jest.fn(),
+    pages = defaultPages,
+    formData = initialData,
+    onUpdateError = jest.fn(),
+    editable = true,
+    hideSideNav = false,
+    autoSaveInterval = 500,
+    shouldAutoSave = true,
+  } = {}) => {
     const hookForm = useForm({
       defaultValues: formData,
     });
@@ -153,6 +155,8 @@ describe('Navigator', () => {
                 updateShowSavedDraft={jest.fn()}
                 showSavedDraft={false}
                 hideSideNav={hideSideNav}
+                autoSaveInterval={autoSaveInterval}
+                shouldAutoSave={shouldAutoSave}
               />
             </FormProvider>
           </AppLoadingContext.Provider>
@@ -162,35 +166,9 @@ describe('Navigator', () => {
   };
 
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (
-    onSaveAndContinue = jest.fn(),
-    currentPage = 'first',
-    onSubmit = jest.fn(),
-    onSave = jest.fn(),
-    onSaveDraft = jest.fn(),
-    updatePage = jest.fn(),
-    updateForm = jest.fn(),
-    pages = defaultPages,
-    formData = initialData,
-    onUpdateError = jest.fn(),
-    editable = true,
-    hideSideNav = false,
-  ) => {
+  const renderNavigator = (params) => {
     render(
-      <NavigatorWithForm
-        onSaveAndContinue={onSaveAndContinue}
-        currentPage={currentPage}
-        onSubmit={onSubmit}
-        onSave={onSave}
-        onSaveDraft={onSaveDraft}
-        updatePage={updatePage}
-        updateForm={updateForm}
-        pages={pages}
-        formData={formData}
-        onUpdateError={onUpdateError}
-        editable={editable}
-        hideSideNav={hideSideNav}
-      />,
+      <NavigatorWithForm {...params} />,
     );
   };
 
@@ -204,12 +182,9 @@ describe('Navigator', () => {
 
   it('calls on save and continue if passed in', async () => {
     const onSaveAndContinue = jest.fn();
-    act(() => {
-      renderNavigator(onSaveAndContinue);
-    });
+    renderNavigator({ onSaveAndContinue });
 
     const onSaveButton = screen.getByText('Save and continue');
-
     act(() => {
       userEvent.click(onSaveButton);
     });
@@ -218,47 +193,52 @@ describe('Navigator', () => {
   });
 
   it('hides the side nav when the hideSideNav prop is true', async () => {
-    const onSaveAndContinue = jest.fn();
-    act(() => {
-      renderNavigator(
-        onSaveAndContinue,
-        'first',
-        jest.fn(),
-        jest.fn(),
-        jest.fn(),
-        jest.fn(),
-        jest.fn(),
-        defaultPages,
-        initialData,
-        jest.fn(),
-        true,
-        true,
-      );
-    });
+    renderNavigator({ hideSideNav: true });
 
     // Expect not to find the class 'smart-hub-sidenav-wrapper' in the document.
     expect(screen.queryAllByTestId('side-nav').length).toBe(0);
   });
-  it('shows the side nav when the hideSideNav prop is false', async () => {
-    const onSaveAndContinue = jest.fn();
-    act(() => {
-      renderNavigator(
-        onSaveAndContinue,
-        'first',
-        jest.fn(),
-        jest.fn(),
-        jest.fn(),
-        jest.fn(),
-        jest.fn(),
-        defaultPages,
-        initialData,
-        jest.fn(),
-        true,
-        false,
-      );
-    });
 
-    // Expect to find the className 'smart-hub-sidenav-wrapper' in the document.
+  it('shows the side nav when the hideSideNav prop is false', async () => {
+    renderNavigator({ hideSideNav: false });
+
+    // Expect to find the test id 'side-nav' in the document.
     expect(screen.getByTestId('side-nav')).toBeInTheDocument();
+  });
+
+  it('autosaves when the shouldAutoSave prop is true', async () => {
+    const onSaveDraft = jest.fn();
+    renderNavigator({ shouldAutoSave: true, onSaveDraft });
+
+    // mark the form as dirty so that onSave is called
+    await act(() => waitFor(() => {
+      userEvent.click(screen.getByTestId('first'));
+    }));
+
+    // Fast-forward time to trigger the autosave interval
+    await act(() => waitFor(() => {
+      jest.advanceTimersByTime(800);
+    }));
+
+    await waitFor(() => {
+      expect(onSaveDraft).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not autosave when the shouldAutoSave prop is false', async () => {
+    const onSaveDraft = jest.fn();
+    renderNavigator({ shouldAutoSave: false, onSaveDraft });
+
+    // mark the form as dirty
+    await act(() => waitFor(() => {
+      userEvent.click(screen.getByTestId('first'));
+    }));
+
+    // Fast-forward time to trigger the autosave interval
+    await act(() => waitFor(() => {
+      jest.advanceTimersByTime(800);
+    }));
+
+    expect(onSaveDraft).toHaveBeenCalledTimes(0);
   });
 });
