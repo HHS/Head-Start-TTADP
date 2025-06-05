@@ -297,8 +297,11 @@ The application is deployed to the following URLs:
 
 | Environment | URL                                         |
 | :---------- | :------------------------------------------ |
+| dev         | https://tta-smarthub-dev.app.cloud.gov/
+| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/ |
+| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/ |
+| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/ |
 | sandbox     | https://tta-smarthub-sandbox.app.cloud.gov/ |
-| dev         | https://tta-smarthub-dev.app.cloud.gov/     |
 | staging     | https://tta-smarthub-staging.app.cloud.gov/ |
 | prod        | https://ttahub.ohs.acf.hhs.gov              |
 

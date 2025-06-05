@@ -260,4 +260,42 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Test objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
+
+  it('suspends without setting a reason and displays an error', async () => {
+    const objectiveOptions = [{
+      value: 3,
+      label: 'Test objective',
+      title: 'Test objective',
+      ttaProvided: '<p>hello</p>',
+      onAR: false,
+      onApprovedAR: false,
+      resources: [],
+      topics: [],
+      status: 'Not Started',
+      id: 3,
+      objectiveCreatedHere: false,
+    }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+
+    // Find the label 'Objective status' and select the suspend option.
+    const statusLabel = await screen.findByText(/objective status/i);
+    const statusSelect = statusLabel.parentElement.querySelector('select');
+    expect(statusSelect).toBeInTheDocument();
+    await selectEvent.select(statusSelect, ['Suspended']);
+
+    // Wait for the modal to appear.
+    const modal = await screen.findByRole('dialog', { name: /why are you suspending this objective/i });
+    expect(modal).toBeVisible();
+
+    // Click the submit button without selecting a reason.
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    userEvent.click(submitButton);
+
+    // Expect to see the error message "Reason for suspension is required".
+    const errorMessage = await screen.findByText(/reason for suspension is required/i);
+    expect(errorMessage).toBeVisible();
+  });
 });

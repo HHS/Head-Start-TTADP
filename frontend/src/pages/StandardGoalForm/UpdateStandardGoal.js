@@ -29,7 +29,7 @@ export default function UpdateStandardGoal({ recipient }) {
     },
   });
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   useEffect(() => {
     const fetchStandardGoal = async () => {

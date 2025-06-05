@@ -77,8 +77,9 @@ export default function StandardGoalForm({ recipient }) {
   // eslint-disable-next-line max-len
   const userCanEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(selectedGoal ? selectedGoal.id : null);
-
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(
+    selectedGoal ? selectedGoal.id : null,
+  );
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grants
     if (possibleGrants.length === 1) {

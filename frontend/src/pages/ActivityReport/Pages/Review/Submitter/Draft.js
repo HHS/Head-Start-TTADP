@@ -51,18 +51,19 @@ const Draft = ({
 
   const allGoalsHavePromptResponses = (() => {
     const goalsAndObjectives = getValues('goalsAndObjectives');
-    const curatedGoals = (goalsAndObjectives || []).filter((goal) => goal.isCurated);
-
+    const curatedGoals = (goalsAndObjectives || []).filter(
+      (goal) => goal.prompts && goal.prompts.length > 0,
+    );
     if (!curatedGoals.length) return true;
 
     return curatedGoals.every((goal) => goal.prompts
       .every((prompt) => {
-        if (!prompt.allGoalsHavePromptResponse) {
+        if (!prompt.response || !prompt.response.length) {
           promptsMissingResponses.push(prompt.title);
           goalsMissingResponses.push(goal);
         }
 
-        return prompt.allGoalsHavePromptResponse;
+        return prompt.response && prompt.response.length > 0;
       }));
   })();
 

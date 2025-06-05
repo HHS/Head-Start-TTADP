@@ -17,7 +17,6 @@ import db, {
 import { unlockReport } from '../../routes/activityReports/handlers';
 import ActivityReportPolicy from '../../policies/activityReport';
 import {
-  moveDraftGoalsToNotStartedOnSubmission,
   propagateSubmissionStatus,
 } from './activityReport';
 import { auditLogger } from '../../logger';
@@ -69,7 +68,7 @@ describe('activity report model hooks', () => {
 
       goal = await Goal.create({
         name: 'Goal 1',
-        status: 'Draft',
+        status: 'Not Started',
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -230,7 +229,7 @@ describe('activity report model hooks', () => {
       });
 
       const testGoal = await Goal.findByPk(goal.id);
-      expect(testGoal.status).toEqual('Draft');
+      expect(testGoal.status).toEqual('Not Started');
     });
 
     it('submitting the report should set the goal status to "Not Started"', async () => {
@@ -365,31 +364,6 @@ describe('activity report model hooks', () => {
 
       const testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
-    });
-  });
-  describe('moveDraftGoalsToNotStartedOnSubmission', () => {
-    it('logs an error if one is thrown', async () => {
-      const mockSequelize = {
-        models: {
-          Goal: {
-            findAll: jest.fn(() => { throw new Error('test error'); }),
-          },
-          ActivityReport: {},
-        },
-      };
-      const mockInstance = {
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        changed: jest.fn(() => ['submissionStatus']),
-        id: 1,
-      };
-      const mockOptions = {
-        transaction: 'transaction',
-      };
-
-      jest.spyOn(auditLogger, 'error');
-
-      await moveDraftGoalsToNotStartedOnSubmission(mockSequelize, mockInstance, mockOptions);
-      expect(auditLogger.error).toHaveBeenCalled();
     });
   });
 

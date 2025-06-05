@@ -1,7 +1,6 @@
 import {
   validateListOfResources,
   GOAL_NAME_ERROR,
-  GOAL_SOURCE_ERROR,
 } from '../../../../components/GoalForm/constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
@@ -86,18 +85,13 @@ export const unfinishedObjectives = (
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };
 
-export const unfinishedGoals = (goals, setError = () => {}, hasMultipleGrants) => {
+export const unfinishedGoals = (goals, setError = () => {}) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
 
     if (!goal.name) {
       setError('goalName', { message: GOAL_NAME_ERROR });
       return GOAL_NAME_ERROR;
-    }
-
-    if (!goal.source && !hasMultipleGrants) {
-      setError('goalSource', { message: GOAL_SOURCE_ERROR });
-      return GOAL_SOURCE_ERROR;
     }
 
     // Every goal must have an objective or the `goals` field has unfinished goals
@@ -115,12 +109,12 @@ export const unfinishedGoals = (goals, setError = () => {}, hasMultipleGrants) =
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}, hasMultipleGrants = false) => {
+export const validateGoals = (goals, setError = () => {}) => {
   if (goals.length < 1) {
     return GOALS_EMPTY;
   }
 
-  const unfinishedMessage = unfinishedGoals(goals, setError, hasMultipleGrants);
+  const unfinishedMessage = unfinishedGoals(goals, setError);
   if (unfinishedMessage) {
     return unfinishedMessage;
   }

@@ -51,6 +51,7 @@ import {
   createObjectivesForGoal,
   removeUnusedGoalsObjectivesFromReport,
   removeUnusedGoalsCreatedViaAr,
+  saveStandardGoalsForReport,
 } from '../services/standardGoals';
 
 // the page state location of the goals and objective page
@@ -1006,242 +1007,6 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   });
 }
 
-// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-export async function saveGoalsForReport(goals, report) {
-  // this will be all the currently used objectives
-  // so we can remove any objectives that are no longer being used
-  let currentObjectives = [];
-
-  // let's get all the existing goals that are not closed
-  // we'll use this to determine if we need to create or update
-  // we're doing it here so we don't have to query for each goal
-  const existingGoals = await Goal.findAll({
-    where: {
-      id: goals.map((goal) => goal.goalIds).flat(),
-      grantId: goals.map((goal) => goal.grantIds).flat(),
-      status: { [Op.not]: GOAL_STATUS.CLOSED },
-    },
-  });
-
-  // Loop and Create or Update goals.
-  const currentGoals = await Promise.all(goals.map(async (goal, index) => {
-    // We need to skip creation of monitoring goals for non monitoring grants.
-    if (goal.goalTemplateId) {
-      const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
-
-      if (goalTemplate.standard === 'Monitoring') {
-      // Find the corresponding monitoring goals.
-        const monitoringGoals = await Goal.findAll({
-          attributes: ['grantId'],
-          raw: true,
-          where: {
-            grantId: goal.grantIds,
-            createdVia: 'monitoring',
-            status: { [Op.not]: GOAL_STATUS.CLOSED },
-          },
-        });
-
-        const distinctMonitoringGoalGrantIds = [...new Set(
-          monitoringGoals.map((monitoringGoal) => monitoringGoal.grantId),
-        )];
-
-        if (distinctMonitoringGoalGrantIds.length > 0) {
-        // Replace the goal granIds only with the grants that should have monitoring goals created.
-        // eslint-disable-next-line no-param-reassign
-          goals[index].grantIds = distinctMonitoringGoalGrantIds;
-        } else {
-        // Do not create monitoring goals for any of these recipients.
-        // eslint-disable-next-line no-param-reassign
-        // delete goals[index];
-        // eslint-disable-next-line no-param-reassign
-          goals[index].grantIds = [];
-          return [];
-        }
-      }
-    }
-
-    const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
-    const isActivelyBeingEditing = goal.isActivelyBeingEditing
-      ? goal.isActivelyBeingEditing : false;
-
-    const isMultiRecipientReport = (goal.grantIds.length > 1);
-
-    return Promise.all(goal.grantIds.map(async (grantId) => {
-      let newOrUpdatedGoal;
-
-      // first pull out all the crufty fields
-      const {
-        isNew: isGoalNew,
-        goalIds,
-        objectives,
-        grantIds,
-        status: discardedStatus,
-        onApprovedAR,
-        createdVia,
-        prompts,
-        source,
-        grant,
-        goalTemplateId,
-        grantId: discardedGrantId,
-        id, // we can't be trying to set this
-        ...fields
-      } = goal;
-
-      // does a goal exist for this ID & grantId combination?
-      newOrUpdatedGoal = existingGoals.find((extantGoal) => (
-        (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
-      ));
-
-      // let's check for goal by template ID first
-      if (!newOrUpdatedGoal && goalTemplateId) {
-        newOrUpdatedGoal = await Goal.findOne({
-          where: {
-            goalTemplateId,
-            grantId,
-            status: { [Op.not]: GOAL_STATUS.CLOSED },
-          },
-        });
-
-        // if we don't find one, we check to see if that template is curated
-        if (!newOrUpdatedGoal) {
-          const goalTemplate = await GoalTemplate.findByPk(goalTemplateId);
-          // if the template is curated, we do not want to go to the next step,
-          // where we look up a goal with a matching name, as this can have inconsistent results
-          // instead: we create a new goal
-          if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-            newOrUpdatedGoal = await Goal.create({
-              goalTemplateId,
-              createdVia: 'activityReport',
-              name: goal.name ? goal.name.trim() : '',
-              grantId,
-              status,
-            }, { individualHooks: true });
-          }
-        }
-      }
-
-      // if not, does it exist for this name and grantId combination
-      if (!newOrUpdatedGoal) {
-        newOrUpdatedGoal = await Goal.findOne({
-          where: {
-            name: goal.name ? goal.name.trim() : '',
-            grantId,
-            status: { [Op.not]: GOAL_STATUS.CLOSED },
-          },
-        });
-      }
-
-      // if not, we create it
-      if (!newOrUpdatedGoal) {
-        newOrUpdatedGoal = await Goal.create({
-          createdVia: 'activityReport',
-          name: goal.name ? goal.name.trim() : '',
-          grantId,
-          status,
-        }, { individualHooks: true });
-      }
-
-      if (source && newOrUpdatedGoal.source !== source) {
-        newOrUpdatedGoal.set({ source });
-      }
-
-      if (!newOrUpdatedGoal.onApprovedAR) {
-        if (fields.name !== newOrUpdatedGoal.name && fields.name) {
-          newOrUpdatedGoal.set({ name: fields.name.trim() });
-        }
-      }
-
-      if (prompts && !isMultiRecipientReport) {
-        await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
-      }
-
-      // here we save the goal where the status (and collorary fields) have been set
-      // as well as possibly the name and end date
-      await newOrUpdatedGoal.save({ individualHooks: true });
-
-      // then we save the goal metadata (to the activity report goal table)
-      await cacheGoalMetadata(
-        newOrUpdatedGoal,
-        report.id,
-        isActivelyBeingEditing,
-        prompts || null,
-        isMultiRecipientReport,
-      );
-
-      // and pass the goal to the objective creation function
-      const newGoalObjectives = await createObjectivesForGoal(newOrUpdatedGoal, objectives, report);
-      currentObjectives = [...currentObjectives, ...newGoalObjectives];
-
-      return newOrUpdatedGoal;
-    }));
-  }));
-
-  const uniqueObjectives = uniqBy(currentObjectives, 'id');
-  await Promise.all(uniqueObjectives.map(async (savedObjective) => {
-    const {
-      status,
-      index,
-      topics,
-      files,
-      resources,
-      closeSuspendContext,
-      closeSuspendReason,
-      ttaProvided,
-      supportType,
-      courses,
-      objectiveCreatedHere,
-      citations,
-    } = savedObjective;
-
-    // this will link our objective to the activity report through
-    // activity report objective and then link all associated objective data
-    // to the activity report objective to capture this moment in time
-    return cacheObjectiveMetadata(
-      savedObjective,
-      report.id,
-      {
-        resources,
-        topics,
-        citations,
-        files,
-        courses,
-        status,
-        closeSuspendContext,
-        closeSuspendReason,
-        ttaProvided,
-        order: index,
-        supportType,
-        objectiveCreatedHere,
-      },
-    );
-  }));
-
-  const currentGoalIds = currentGoals.flat().map((g) => g.id);
-
-  // Get previous DB ARG's.
-  const previousActivityReportGoals = await ActivityReportGoal.findAll({
-    where: {
-      activityReportId: report.id,
-    },
-  });
-
-  const goalsToRemove = previousActivityReportGoals.filter(
-    (arg) => !currentGoalIds.includes(arg.goalId),
-  ).map((r) => r.goalId);
-
-  // Remove ARGs.
-  await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
-
-  // Delete Objective ARO and associated tables.
-  await removeUnusedGoalsObjectivesFromReport(
-    report.id,
-    currentObjectives.filter((o) => currentGoalIds.includes(o.goalId)),
-  );
-
-  // Delete Goals if not being used and created from AR.
-  await removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
-}
-
 /**
  * Verifies if the goal status transition is allowed
  * @param {string} oldStatus
@@ -1315,12 +1080,12 @@ export async function updateGoalStatusById(
     context: closeSuspendContext,
   })));
 }
-export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
+export async function createOrUpdateGoalsForActivityReport(goals, reportId, userId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = (await ActivityReport.findByPk(activityReportId)).toJSON();
 
-  // TODO: TTAHUB-3970: This should call the new saveStandardGoalsForReport function.
-  await saveGoalsForReport(goals, report);
+  // Save the standard goals for the report.
+  await saveStandardGoalsForReport(goals, userId, report);
 
   // updating the goals is updating the report, sorry everyone
   // let us consult the page state by taking a shallow copy

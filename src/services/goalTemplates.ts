@@ -48,6 +48,7 @@ interface PromptResponse {
   promptId: number,
   response: string[] | null;
   goalIds: number[];
+  grantId: number;
 }
 
 /**
@@ -262,6 +263,104 @@ export async function getFieldPromptsForCuratedTemplate(
 }
 
 /**
+Retrieves field prompts for a curated goal template and associated goals for Activity Reports.
+We need things a little bit differently for Activity Reports as we need it per grant.
+@param goalTemplateId - The ID of the goal template to retrieve prompts for.
+@param goalIds - An array of goal IDs to retrieve responses for. Can be null if no
+  responses are needed.
+@returns Any array of field prompt responses and prompts.
+*/
+export async function getFieldPromptsForActivityReports(
+  goalTemplateId: number,
+  goalIds: number[] | null,
+): Promise<FieldPrompts[]> {
+  // Collect the data from the DB for the passed goalTemplate and goalIds
+  // and return the prompts with the responses for the passed goalIds
+  const [prompts, responses] = await Promise.all([
+    GoalTemplateFieldPromptModel.findAll({
+      attributes: [
+        ['id', 'promptId'],
+        'ordinal',
+        'title',
+        'prompt',
+        'hint',
+        'caution',
+        'fieldType',
+        'options',
+        'validations',
+        'goalTemplateId',
+      ],
+      where: { goalTemplateId },
+      order: [['ordinal', 'asc']],
+      raw: true,
+    }),
+    GoalFieldResponseModel.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        'response',
+        [
+          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          'goalIds',
+        ],
+        [
+          sequelize.col('"goal"."grantId"'),
+          'grantId',
+        ],
+      ],
+      where: { goalId: goalIds },
+      include: [{
+        model: GoalTemplateFieldPromptModel,
+        as: 'prompt',
+        required: true,
+        attributes: [],
+        include: [{
+          model: GoalTemplateModel,
+          as: 'goalTemplate',
+          required: true,
+          attributes: [],
+          where: { id: goalTemplateId },
+        }],
+      },
+      {
+        model: GoalModel,
+        as: 'goal',
+        required: true,
+        attributes: [],
+      }],
+      group: [
+        '"GoalFieldResponse"."goalTemplateFieldPromptId"',
+        '"GoalFieldResponse"."response"',
+        '"goal"."grantId"',
+      ],
+      raw: true,
+    }),
+  ]);
+
+  // restructure the collected data into one object with all responses for the passed goalIds if
+  // any exists
+
+  const restructuredPrompts = responses.reduce(
+    (
+      promptsWithResponses: FieldPrompts[],
+      response: PromptResponse,
+    ) => {
+      // Find the matching prompt for this response.
+      const matchingPrompt = prompts.find((p) => p.promptId === response.promptId);
+      if (matchingPrompt) {
+        promptsWithResponses.push({
+          ...matchingPrompt,
+          grantId: response.grantId,
+          response: response.response ? [...response.response] : [],
+        });
+      }
+      return promptsWithResponses;
+    },
+    [],
+  );
+  return [restructuredPrompts, prompts];
+}
+
+/**
  * Validates the response for a given prompt based on its requirements.
  * @param {string[]} response - The response to validate.
  * @param {any} promptRequirements - The requirements of the prompt.
@@ -358,13 +457,12 @@ export async function setFieldPromptForCuratedTemplate(
       raw: true,
     }),
   ]);
-
   if (!promptRequirements) {
     throw new Error(`No prompt found with ID ${promptId}`);
   }
 
+  // We always want to update the goal field response when saving the report.
   const goalIdsToUpdate = currentResponses
-    .filter((r) => r.response)
     .map((r) => r.goalId);
 
   const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
@@ -373,7 +471,6 @@ export async function setFieldPromptForCuratedTemplate(
       goalTemplateFieldPromptId: promptId,
       response,
     }));
-
   if (goalIdsToUpdate.length || recordsToCreate.length) {
     validatePromptResponse(response, promptRequirements);
 
