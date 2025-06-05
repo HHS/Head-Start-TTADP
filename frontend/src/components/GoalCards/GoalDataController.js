@@ -48,6 +48,7 @@ function GoalDataController({
   recipientId,
   regionId,
   hasActiveGrants,
+  hasMissingStandardGoals,
   showNewGoals,
 }) {
   // Goal Data.
@@ -108,7 +109,6 @@ function GoalDataController({
         setIsAppLoading(true);
 
         const { sortBy } = sortConfig;
-
         const response = await getRecipientGoals(
           recipientId,
           regionId,
@@ -119,6 +119,7 @@ function GoalDataController({
           query,
           [],
         );
+
         const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
         const goalBuckets = response.allGoalIds;
         setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
@@ -229,6 +230,7 @@ function GoalDataController({
           regionId={regionId}
           filters={filters}
           hasActiveGrants={hasActiveGrants}
+          hasMissingStandardGoals={hasMissingStandardGoals}
           showNewGoals={showNewGoals || false}
           goals={displayGoals}
           error={error}
@@ -258,6 +260,7 @@ GoalDataController.propTypes = {
     }),
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  hasMissingStandardGoals: PropTypes.bool.isRequired,
   showNewGoals: PropTypes.bool.isRequired,
 };
 

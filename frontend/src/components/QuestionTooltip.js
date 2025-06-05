@@ -2,11 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import Tooltip from '../Tooltip';
+import Tooltip from './Tooltip';
 import './QuestionTooltip.css';
-import colors from '../../colors';
+import colors from '../colors';
 
-export default function QuestionTooltip({ text }) {
+export default function QuestionTooltip({ text, customClass }) {
   return (
     <Tooltip
       displayText={<FontAwesomeIcon color={colors.ttahubMediumBlue} icon={faQuestionCircle} />}
@@ -14,7 +14,7 @@ export default function QuestionTooltip({ text }) {
       hideUnderline
       buttonLabel={text}
       screenReadDisplayText={false}
-      className="smart-hub-tooltip--question margin-left-1"
+      className={customClass || 'smart-hub-tooltip--question margin-left-1'}
     />
   );
 }
@@ -24,4 +24,9 @@ QuestionTooltip.propTypes = {
     PropTypes.string,
     PropTypes.node,
   ]).isRequired,
+  customClass: PropTypes.string,
+};
+
+QuestionTooltip.defaultProps = {
+  customClass: null,
 };

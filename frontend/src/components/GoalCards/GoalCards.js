@@ -16,6 +16,7 @@ function GoalCards({
   recipientId,
   regionId,
   hasActiveGrants,
+  hasMissingStandardGoals,
   goals,
   error,
   goalsCount,
@@ -147,6 +148,7 @@ function GoalCards({
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
+          hasMissingStandardGoals={hasMissingStandardGoals}
           sortConfig={sortConfig}
           requestSort={requestSort}
           numberOfSelectedGoals={numberOfSelectedGoals}
@@ -183,6 +185,7 @@ GoalCards.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  hasMissingStandardGoals: PropTypes.bool.isRequired,
   goals: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
   })).isRequired,

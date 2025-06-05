@@ -43,6 +43,14 @@ export default function GoalsObjectives({
     return false;
   }, [recipient.grants]);
 
+  const hasMissingStandardGoals = useMemo(() => {
+    if (recipient.missingStandardGoals && recipient.missingStandardGoals.length > 0) {
+      return true;
+    }
+
+    return false;
+  }, [recipient.missingStandardGoals]);
+
   return (
     <>
       <Helmet>
@@ -64,6 +72,7 @@ export default function GoalsObjectives({
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
+          hasMissingStandardGoals={hasMissingStandardGoals}
           showNewGoals={showNewGoals || false}
         />
       </div>
@@ -78,6 +87,11 @@ GoalsObjectives.propTypes = {
     grants: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
       numberWithProgramTypes: PropTypes.string.isRequired,
+    })),
+    missingStandardGoals: PropTypes.arrayOf(PropTypes.shape({
+      goalTemplateId: PropTypes.number.isRequired,
+      templateName: PropTypes.string.isRequired,
+      grantId: PropTypes.number.isRequired,
     })),
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,

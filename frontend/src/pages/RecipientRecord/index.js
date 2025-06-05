@@ -101,6 +101,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
     recipientId,
     regionId,
     recipientName: '',
+    missingStandardGoals: [],
   });
 
   useDeepCompareEffect(() => {
