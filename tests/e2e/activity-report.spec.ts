@@ -356,7 +356,9 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('Goal summary').nth(1)).toBeVisible();
     await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
-    await expect(page.getByText('CQI and Data')).toBeVisible();
+
+    // Ensure we scroll down to have the second goal in view.
+    await page.getByText('CQI and Data').scrollIntoViewIfNeeded();
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
