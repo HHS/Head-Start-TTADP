@@ -22,9 +22,10 @@ import { mockRSSData } from '../../../../../testHelpers';
 
 const defaultSelectedGoals = [
   {
-    label: '123',
-    value: 123,
-    goalIds: [123],
+    label: 'Goal 2',
+    value: 2,
+    goalIds: [2],
+    goalTemplateId: 2,
   },
 ];
 
@@ -175,7 +176,16 @@ describe('GoalPicker', () => {
       value: 1,
       goalIds: [1],
       name: 'Goal 1',
-    }];
+      goalTemplateId: 1,
+    },
+    {
+      label: 'Goal 2',
+      value: 2,
+      goalIds: [2],
+      name: 'Goal 2',
+      goalTemplateId: 2,
+    }
+    ];
 
     const goalForEditing = {
       objectives: [{
