@@ -240,11 +240,9 @@ test.describe('Activity Report', () => {
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
-    // Select a standard goal.
+    // Select second standard goal.
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
-    //arrow down to select the second goal
-    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
 
@@ -358,8 +356,6 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
 
     // Scroll to the bottom of the page.
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-
     await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
