@@ -107,7 +107,6 @@ export const formatReportWithSaveBeforeConversion = async (
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
-
   const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(

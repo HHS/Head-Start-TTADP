@@ -38,24 +38,6 @@ describe('goal hooks', () => {
       await expect(beforeCreate(sequelize, instance)).resolves.not.toThrow();
       expect(instanceSet).not.toHaveBeenCalled();
     });
-
-    it('sets goalTemplateId if a curated template is found', async () => {
-      const instanceSet = jest.fn();
-      const instance = {
-        goalTemplateId: null,
-        set: instanceSet,
-      };
-      const sequelize = {
-        fn: jest.fn(),
-        models: {
-          GoalTemplate: {
-            findOne: jest.fn().mockResolvedValue({ id: 1 }),
-          },
-        },
-      };
-      await expect(beforeCreate(sequelize, instance)).resolves.not.toThrow();
-      expect(instanceSet).toHaveBeenCalledWith('goalTemplateId', 1);
-    });
   });
 
   describe('preventCloseIfObjectivesOpen', () => {
@@ -119,46 +101,6 @@ describe('goal hooks', () => {
       calculateIsAutoDetectedForGoal.mockReturnValueOnce(false);
       await processForEmbeddedResources(sequelize, instance);
       expect(processGoalForResourcesById).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('findOrCreateGoalTemplate', () => {
-    it('should find or create a goal template', async () => {
-      const sequelize = {
-        models: {
-          GoalTemplate: {
-            findOrCreate: jest.fn().mockResolvedValue([{ id: 1 }, true]),
-          },
-        },
-        fn: jest.fn(),
-      };
-      const transaction = {};
-      const regionId = 1;
-      const name = 'Test Template';
-      const createdAt = new Date();
-
-      const result = await findOrCreateGoalTemplate(
-        sequelize,
-        transaction,
-        regionId,
-        name,
-        createdAt,
-      );
-
-      expect(sequelize.models.GoalTemplate.findOrCreate).toHaveBeenCalledWith({
-        where: {
-          hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', name), '')),
-          regionId,
-        },
-        defaults: {
-          templateName: name,
-          lastUsed: createdAt,
-          regionId,
-          creationMethod: 'Automatic',
-        },
-        transaction,
-      });
-      expect(result).toEqual({ id: 1, name });
     });
   });
 });

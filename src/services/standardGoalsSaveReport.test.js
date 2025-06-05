@@ -602,6 +602,7 @@ describe('save standard goals for report', () => {
           prompts: [
             {
               promptId: prompt.id,
+              grantId: grant.id,
               response: ['option 2', 'option 3'],
             },
           ],
@@ -678,6 +679,7 @@ describe('save standard goals for report', () => {
           source: [],
           prompts: [
             {
+              grantId: grant.id,
               promptId: prompt.id,
               response: ['option 1'],
             },

@@ -3,7 +3,6 @@ const {
   GOAL_STATUS,
   GOAL_COLLABORATORS,
   OBJECTIVE_STATUS,
-  CREATION_METHOD,
 } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
@@ -16,43 +15,6 @@ const processForEmbeddedResources = async (_sequelize, instance) => {
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForGoal(changed)) {
     await processGoalForResourcesById(instance.id);
-  }
-};
-
-// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
-  const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-    where: {
-      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', name), '')),
-      regionId,
-    },
-    defaults: {
-      templateName: name,
-      lastUsed: createdAt,
-      regionId,
-      creationMethod: 'Automatic',
-    },
-    transaction,
-  });
-  return { id: goalTemplate[0].id, name, creationMethod: goalTemplate[0].creationMethod };
-};
-
-// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-const checkForCuratedGoal = async (sequelize, instance) => {
-  // we don't want to be setting goalTemplateId if it's already set
-  if (instance.goalTemplateId) return;
-
-  const curatedTemplate = await sequelize.models.GoalTemplate.findOne({
-    where: {
-      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')),
-      creationMethod: CREATION_METHOD.CURATED,
-      regionId: null,
-    },
-    attributes: ['id'],
-  });
-
-  if (curatedTemplate) {
-    instance.set('goalTemplateId', curatedTemplate.id);
   }
 };
 
@@ -73,36 +35,6 @@ const autoPopulateOnApprovedAR = (_sequelize, instance, options) => {
     if (!options.fields.includes('onApprovedAR')) {
       options.fields.push('onApprovedAR');
     }
-  }
-};
-
-// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-// Evaluate when implemented.
-const preventNameChangeWhenOnApprovedAR = (_sequelize, instance) => {
-  if (instance.onApprovedAR === true) {
-    const changed = instance.changed();
-    if (instance.id !== null
-      && Array.isArray(changed)
-      && changed.includes('name')) {
-      throw new Error('Goal name change not allowed for goals on approved activity reports.');
-    }
-  }
-};
-
-const propagateName = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('name')
-    && instance.goalTemplateId !== null
-    && instance.goalTemplateId !== undefined) {
-    await sequelize.models.GoalTemplate.update(
-      { templateName: instance.name },
-      {
-        where: { id: instance.goalTemplateId },
-        transaction: options.transaction,
-        individualHooks: true,
-      },
-    );
   }
 };
 
@@ -210,15 +142,12 @@ const beforeValidate = async (sequelize, instance, options) => {
   }
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
-  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
-  await checkForCuratedGoal(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
-  preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   await preventCloseIfObjectivesOpen(sequelize, instance, options);
 };
 
@@ -270,7 +199,6 @@ const afterCreate = async (sequelize, instance, options) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
-  await propagateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
 };
@@ -281,12 +209,8 @@ const afterDestroy = async (sequelize, instance, options) => {
 
 export {
   processForEmbeddedResources,
-  findOrCreateGoalTemplate,
   autoPopulateOnApprovedAR,
-  preventNameChangeWhenOnApprovedAR,
   preventCloseIfObjectivesOpen,
-  checkForCuratedGoal,
-  propagateName,
   createInitialStatusChange,
   beforeValidate,
   beforeUpdate,

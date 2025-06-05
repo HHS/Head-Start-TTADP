@@ -298,7 +298,7 @@ describe('recipient record page', () => {
         numberWithProgramTypes: '1234 EHS',
       },
     });
-    fetchMock.get('/api/goal-templates/10/prompts', []);
+    fetchMock.get('/api/goal-templates/10/prompts', [[], []]);
     memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10/restart');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
@@ -320,7 +320,7 @@ describe('recipient record page', () => {
         numberWithProgramTypes: '1234 EHS',
       },
     });
-    fetchMock.get('/api/goal-templates/10/prompts', []);
+    fetchMock.get('/api/goal-templates/10/prompts', [[], []]);
     memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());

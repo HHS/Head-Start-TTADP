@@ -179,13 +179,11 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the first goal
-
-    await page.getByLabel(/Select recipient's goal/i).click();
-    await page.keyboard.press('ArrowDown');
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').click();
-    await page.getByTestId('textarea').fill('g1');
+
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
     await page.keyboard.press('ArrowDown');
@@ -242,10 +240,13 @@ test.describe('Activity Report', () => {
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
-    await page.getByTestId('label').click();
-
+    // Select second standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').fill('g2');
+
+
+    // save goal 2.
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
     await page.keyboard.press('ArrowDown');
@@ -283,7 +284,7 @@ test.describe('Activity Report', () => {
     await page.waitForTimeout(5000);
 
     // edit the first goal
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    await page.getByText('Child Safety').locator('..').locator('..').getByRole('button')
       .click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
@@ -351,9 +352,11 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText('Goal summary').first()).toBeVisible();
     await expect(page.getByText('Goal summary').nth(1)).toBeVisible();
-    await expect(page.getByText('g1', { exact: true } )).toBeVisible();
+    await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+
+    // Scroll to the bottom of the page.
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
@@ -454,37 +457,37 @@ test.describe('Activity Report', () => {
     expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeTruthy();
 
     // check g1
-    await page.getByText('g1', { exact: true }).first().locator('..').locator('..').locator('..')
+    await page.getByText('Child Safety').first().locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
-      await page.getByText('g1', { exact: true }).nth(1).locator('..').locator('..').locator('..')
+      await page.getByText('Child Safety').nth(1).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..')
+    await page.getByText('Child Safety').locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
-    await expect(page.getByText('g1', { exact: true })).toBeVisible();
+    await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
 
     await page.getByRole('link', { name: 'Back to RTTAPA' }).click();
 
     // Check g2
-    await page.getByText('g2', { exact: true }).first().locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').first().locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
-    await page.getByText('g2', { exact: true }).nth(1).locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').nth(1).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
     */
   });
@@ -504,11 +507,12 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the goal
-    await page.getByLabel(/Select recipient's goal/i).click();
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').click();
-    await page.getByTestId('textarea').fill('g1');
+    
+    // Save goal.
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
@@ -560,7 +564,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1 o1 tta', { exact: true })).toBeVisible();
 
     // edit goals remove first objective
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    await page.getByText('Child Safety').locator('..').locator('..').getByRole('button')
     .click();
     await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByRole('button', { name: 'Remove this objective' }).first().click();
@@ -609,17 +613,16 @@ test.describe('Activity Report', () => {
 
     await p;
 
-    // create the goal
+    // Select a standard goal.
     await page.waitForTimeout(5000);
-    await page.getByTestId('label').click();
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(5000);
-    await page.getByTestId('textarea').fill('Test goal for preserving objectives');
 
     // create the objective
     await page.getByText('Select TTA objective *- Select -').click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    // Click the option 'Create a new objective'.
+    await page.getByText('Create a new objective', { exact: true }).click();
 
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await blur(page);
@@ -638,9 +641,11 @@ test.describe('Activity Report', () => {
 
     await p2;
 
-    await page.getByText('Select recipient\'s goal *Test goal for preserving objectives').click();
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+
     await page.getByRole('button', { name: 'Keep objective' }).click();
     await blur(page);
 

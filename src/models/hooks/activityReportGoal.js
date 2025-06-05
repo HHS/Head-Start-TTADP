@@ -1,4 +1,3 @@
-const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const { GOAL_COLLABORATORS } = require('../../constants');
 const {

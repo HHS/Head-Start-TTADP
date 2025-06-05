@@ -120,11 +120,11 @@ describe('saveReport', () => {
       name: 'New topic 2',
     });
 
-    // GOAK, I find it very funny
-    const firstGoalName = `GOAK ${faker.animal.dog()} ${faker.datatype.number({ min: 999 })}`;
-    const secondGoalName = `GOAK ${faker.animal.dog()} ${faker.datatype.number({ min: 999 })}`;
+    const firstGoalName = `GOAL ${faker.animal.dog()} ${faker.datatype.number({ min: 999 })}`;
+    const secondGoalName = `GOAL ${faker.animal.dog()} ${faker.datatype.number({ min: 999 })}`;
 
     firstGoal = await Goal.create({
+      goalTemplateId: 1,
       name: firstGoalName,
       createdVia: 'rtr',
       isRttapa: 'Yes',
@@ -133,6 +133,7 @@ describe('saveReport', () => {
     });
 
     secondGoal = await Goal.create({
+      goalTemplateId: 1,
       name: firstGoalName,
       createdVia: 'rtr',
       isRttapa: 'Yes',
@@ -141,6 +142,7 @@ describe('saveReport', () => {
     });
 
     thirdGoal = await Goal.create({
+      goalTemplateId: 2, // These all have the same grant id so we change the template id.
       name: secondGoalName,
       createdVia: 'rtr',
       isRttapa: 'Yes',
@@ -149,6 +151,7 @@ describe('saveReport', () => {
     });
 
     fourthGoal = await Goal.create({
+      goalTemplateId: 3, // These all have the same grant id so we change the template id.
       name: secondGoalName,
       createdVia: 'rtr',
       isRttapa: 'Yes',
@@ -301,9 +304,10 @@ describe('saveReport', () => {
       goalIsRttapa: '',
       goalName: '',
       goals: [{
+        goalTemplateId: 1,
         label: firstGoal.name,
         objectives: [{
-          title: 'first objective for goak',
+          title: 'first objective for goal',
           topics: [{ id: firstTopic.id, name: firstTopic.name }],
           resources: [],
           files: [],
@@ -415,9 +419,10 @@ describe('saveReport', () => {
       goalIsRttapa: '',
       goalName: '',
       goals: [{
+        goalTemplateId: 1,
         label: firstGoal.name,
         objectives: [{
-          title: 'second objective for goak',
+          title: 'second objective for goal',
           topics: [{ id: secondTopic.id, name: secondTopic.name }],
           resources: [],
           files: [],
@@ -450,6 +455,14 @@ describe('saveReport', () => {
       session: { userId: firstUser.id },
       params: { activityReportId: secondReport.id },
     }, mockResponse);
+
+    newReports = await ActivityReport.findAll({
+      where: {
+        userId: firstUser.id,
+      },
+    });
+
+    expect(newReports.length).toBe(2);
 
     allObjectivesForGoals = await Objective.findAll({
       where: {
@@ -489,6 +502,7 @@ describe('saveReport', () => {
     const fifthRequestBody = {
       recipientsWhoHaveGoalsThatShouldBeRemoved: [firstGrant.id],
       goals: [{
+        goalTemplateId: 1,
         id: firstGoal.id,
         name: firstGoal.name,
         status: firstGoal.status,
@@ -621,7 +635,7 @@ describe('saveReport', () => {
 
     expect(secondReportObjectives.length).toBe(1);
     const [secondReportObjective] = secondReportObjectives;
-    expect(secondReportObjective.title).toBe('second objective for goak');
+    expect(secondReportObjective.title).toBe('second objective for goal');
 
     // the grants should only have four goals (1 each)
     const grantGoals = await Goal.findAll({
@@ -657,11 +671,11 @@ describe('saveReport', () => {
     expect(goals.length).toBe(2);
     expect(goals[0].id).toBe(firstGoal.id);
     expect(goals[0].objectives.length).toBe(1);
-    expect(goals[0].objectives[0].title).toBe('first objective for goak');
+    expect(goals[0].objectives[0].title).toBe('first objective for goal');
 
     expect(goals[1].id).toBe(secondGoal.id);
     expect(goals[1].objectives.length).toBe(1);
-    expect(goals[1].objectives[0].title).toBe('second objective for goak');
+    expect(goals[1].objectives[0].title).toBe('second objective for goal');
   });
 
   it('scenario 2: goals are not lost', async () => {
@@ -730,9 +744,10 @@ describe('saveReport', () => {
       goalIsRttapa: '',
       goalName: '',
       goals: [{
+        goalTemplateId: 2,
         label: thirdGoal.name,
         objectives: [{
-          title: 'first objective for goak',
+          title: 'first objective for goal',
           topics: [{ id: firstTopic.id, name: firstTopic.name }],
           resources: [],
           files: [],
@@ -846,9 +861,10 @@ describe('saveReport', () => {
       goalIsRttapa: '',
       goalName: '',
       goals: [{
+        goalTemplateId: 3,
         label: fourthGoal.name,
         objectives: [{
-          title: 'second objective for goak',
+          title: 'second objective for goal',
           topics: [{ id: secondTopic.id, name: secondTopic.name }],
           resources: [],
           files: [],
