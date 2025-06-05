@@ -287,7 +287,9 @@ const GoalPicker = ({
               validate: validateGoals,
             }}
             className="usa-select"
-            options={goalTemplates}
+            options={goalTemplates.filter(
+              (goal) => !selectedGoals?.some((selectedGoal) => selectedGoal.goalTemplateId === goal.goalTemplateId)
+            )}
             styles={{
               ...selectOptionsReset,
               option: (provided) => ({
