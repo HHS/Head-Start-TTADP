@@ -184,7 +184,7 @@ describe('GoalPicker', () => {
       goalIds: [2],
       name: 'Goal 2',
       goalTemplateId: 2,
-    }
+    },
     ];
 
     const goalForEditing = {
