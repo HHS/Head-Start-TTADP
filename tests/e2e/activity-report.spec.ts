@@ -357,8 +357,10 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
 
-    // Ensure we scroll down to have the second goal in view.
-    await page.locator('text=CQI and Data').evaluate((element) => element.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    // Scroll to the bottom of the page.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
