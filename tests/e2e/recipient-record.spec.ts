@@ -24,13 +24,16 @@ test.describe('Recipient record', () => {
 
     await blur(page);
 
-    await page.getByText('Select recipient\'s goal *').click();
+    await page.getByText('Recipient\'s goal *').click();
     await page.keyboard.press('Enter');
 
-    await page.getByRole('button', { name: 'Add goal' }).click();
+   //  Arrow down and select the first option
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
 
-    // verify the goal appears in the table
-    await expect(page.getByText('The recipient will implement')).toBeVisible();
+    // Expect a goal containing the text (Child Safety) to be visible.
+    const childSafetyElements = page.getByText('Child Safety');
+    await expect(childSafetyElements).toHaveCount(2);
   });
 
   // TODO: This test will need to be reworked once the "new goal" form is changed to the

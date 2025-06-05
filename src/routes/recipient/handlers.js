@@ -5,6 +5,7 @@ import {
   recipientsByName,
   recipientsByUserId,
   recipientLeadership,
+  missingStandardGoals,
 } from '../../services/recipient';
 import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -66,6 +67,7 @@ export async function getRecipient(req, res) {
     const { recipientId } = req.params;
     const { grant: scopes } = await filtersToScopes(req.query);
     const recipient = await recipientById(recipientId, scopes);
+
     if (!recipient) {
       res.sendStatus(404);
       return;
@@ -74,9 +76,21 @@ export async function getRecipient(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
     const policy = new Recipient(user, recipient);
+
     if (!policy.canView()) {
       res.sendStatus(401);
       return;
+    }
+
+    // Get any goals missing for this recipient.
+    // We need this on the frontend to determine if they can create new goals.
+    const missingGoals = await missingStandardGoals(recipient);
+
+    // Add a NEW property for the missing goals to the recipient object.
+    if (recipient.dataValues) {
+      recipient.dataValues.missingStandardGoals = missingGoals;
+    } else {
+      recipient.missingStandardGoals = missingGoals;
     }
 
     res.json(recipient);

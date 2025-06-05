@@ -30,7 +30,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
 import selectOptionsReset from '../../../components/selectOptionsReset';
-import QuestionTooltip from '../../../components/GoalForm/QuestionTooltip';
+import QuestionTooltip from '../../../components/QuestionTooltip';
 import {
   sessionSummaryFields,
   pageComplete,
