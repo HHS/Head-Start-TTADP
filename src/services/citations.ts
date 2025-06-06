@@ -56,6 +56,7 @@ export async function getCitationsByGrantIds(
       JOIN "MonitoringFindingStatuses" mfs
         ON mf."statusId" = mfs."statusId"
       WHERE mfs.name = 'Active'
+        AND mf."sourceDeletedAt" IS NULL
       ),
       -- get the order and status of reviews associated with citations
       ordered_citation_reviews AS (
@@ -73,6 +74,9 @@ export async function getCitationsByGrantIds(
         ON mfh."reviewId" = mr."reviewId"
       JOIN "MonitoringReviewStatuses" mrs
         ON mr."statusId" = mrs."statusId"
+      -- This works without bringing in MonitoringFindings because when MonitoringFindings
+      -- are deleted in IT-AMS data, so are all linking MonitoringFindingHistories records
+      WHERE mfh."sourceDeletedAt" IS NULL
       ),
       -- union together active citations with those whose most recent linked
       -- review is not complete, yielding the list of citations on which TTA
