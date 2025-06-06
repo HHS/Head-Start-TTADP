@@ -75,6 +75,7 @@ const createMonitoringData = async (
   // MonitoringFindingHistory (this is the primary finding table and the relationship to citation is 1<>1).
   // If we wanted one grant to have multiple citations, we would need to create multiple findings here and below.
   await Promise.all(citationsArray.map(async (citation) => {
+    const sourceDeletedAt = citation.sourceDeletedAt || null;
     const findingId = citation.findingId || uuidv4();
     const findingStatusId = faker.datatype.number({ min: 9999 });
     await MonitoringFindingHistory.create({
@@ -88,7 +89,7 @@ const createMonitoringData = async (
       hash: faker.datatype.uuid(),
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
-      sourceDeletedAt: null,
+      sourceDeletedAt,
     }, { individualHooks: true });
 
     // MonitoringFinding.
@@ -100,6 +101,7 @@ const createMonitoringData = async (
       source: 'Internal Controls',
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
+      sourceDeletedAt,
     }, { individualHooks: true });
 
     // MonitoringFindingStatus.
@@ -421,6 +423,14 @@ describe('citations service', () => {
         monitoringFindingType: 'Citation 3 Monitoring Finding Type',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Corrective Action',
+      },
+      {
+        citationText: 'Grant 1 - Citation 4 - Deleted',
+        monitoringFindingType: 'Citation 4 Monitoring Finding Type',
+        monitoringFindingStatusName: 'Active',
+        monitoringFindingGrantFindingType: 'Corrective Action',
+        // This should make this citation not show up in counts
+        sourceDeletedAt: new Date(),
       },
     ];
 
