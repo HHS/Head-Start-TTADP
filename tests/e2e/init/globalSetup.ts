@@ -1,18 +1,19 @@
-import { spawn } from 'child_process';
-import waitOn from 'wait-on';
+const path = require('path');
+const { spawn } = require('child_process');
+const waitOn = require('wait-on');
 
-let serverProcess: ReturnType<typeof spawn>;
+let serverProcess;
 
 async function globalSetup() {
   process.env.SEND_NOTIFICATIONS = '';
 
-  // Start test server
-  serverProcess = spawn('node', ['src/testingOnly.js'], {
-    stdio: 'inherit', // show logs
+  const scriptPath = path.resolve(__dirname, '../../src/testingOnly.js');
+
+  serverProcess = spawn('node', [scriptPath], {
+    stdio: 'inherit',
     env: { ...process.env, NODE_ENV: 'test' },
   });
 
-  // Wait until /testingOnly/reseed is ready
   await new Promise<void>((resolve, reject) => {
     waitOn(
       {
