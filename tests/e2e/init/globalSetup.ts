@@ -7,7 +7,7 @@ let serverProcess;
 async function globalSetup() {
   process.env.SEND_NOTIFICATIONS = '';
 
-  const scriptPath = path.resolve(__dirname, '../../src/testingOnly.js');
+  const scriptPath = path.resolve(__dirname, '../../../src/testingOnly.js');
 
   serverProcess = spawn('node', [scriptPath], {
     stdio: 'inherit',
