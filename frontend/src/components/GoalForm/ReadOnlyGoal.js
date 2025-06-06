@@ -10,7 +10,7 @@ const formatPrompts = (prompts) => {
   return ps.filter((prompt) => (
     prompt.response && prompt.response.length)).map((prompt) => ({
     key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
-    title: prompt.title,
+    title: prompt.grantDisplayName,
     response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
   }));
 };
@@ -92,13 +92,16 @@ export default function ReadOnlyGoal({
             <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
           </div>
         ) : null}
-        {(goal.prompts) && (
-          formatPrompts(goal.prompts).map((prompt) => (
-            <div className="margin-bottom-2" key={prompt.key}>
-              <h4 className="margin-0">{prompt.title}</h4>
-              <p className="usa-prose margin-0">{prompt.response}</p>
-            </div>
-          ))
+        {goal.prompts && goal.prompts.length > 0 && (
+          <>
+            <h3 className="margin-top-3 margin-bottom-2">Root cause</h3>
+            {formatPrompts(goal.prompts).map((prompt) => (
+              <div className="margin-bottom-2" key={prompt.key}>
+                <h4 className="margin-0">{prompt.title}</h4>
+                <p className="usa-prose margin-0">{prompt.response}</p>
+              </div>
+            ))}
+          </>
         )}
         { goal.objectives.map((objective) => (
           <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
