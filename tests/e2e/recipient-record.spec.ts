@@ -95,7 +95,7 @@ test.describe('Recipient record', () => {
     await objective.getByLabel(/Change status for objective/i).click();
     await objective.getByRole('button', { name: /complete/i }).click();
     await page.waitForTimeout(3000);
-    await goal.getByTestId(/Change status for goal/i).click();
+    await goal.getByLabel(/Change status for goal/i).click();
     await goal.getByText(/closed/i).click();
     await page.waitForTimeout(3000);
     await page.getByText(/tta complete/i).click();
