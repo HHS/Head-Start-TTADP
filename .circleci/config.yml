@@ -238,16 +238,16 @@ jobs:
     - restore_cache:
         keys:
         # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v15-yarn-deps-
+        - v16-yarn-deps-
     - run: yarn deps
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -589,8 +589,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v15-yarn-deps-
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run: |
         yarn deps
         yarn build
