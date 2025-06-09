@@ -78,11 +78,11 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: /Add goal/i }).click();
     
     // verify the goal appears in the table
-    await expect(page.getByText('Developement and Learning')).toBeVisible();
+    await expect(page.getByText('Development and Learning')).toBeVisible();
 
     // get container for the goal
     const goal = page.getByTestId('goalCard').filter({
-      hasText: 'This is the second goal for this recipient' }
+      hasText: 'Development and Learning' }
     );
 
     await goal.getByTestId('goal-status-dropdown').click();
