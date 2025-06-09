@@ -85,7 +85,7 @@ test.describe('Recipient record', () => {
       hasText: 'Development and Learning' }
     );
 
-    await goal.getByTestId('goal-status-dropdown').click();
+    await goal.getByTestId('ttahub-menu-button-dropdown').click();
     await goal.getByText(/closed/i).click();
 
     // expect error
@@ -95,7 +95,7 @@ test.describe('Recipient record', () => {
     await objective.getByTestId('objective-status-dropdown').click();
     await objective.getByRole('button', { name: /complete/i }).click();
     await page.waitForTimeout(3000);
-    await goal.getByTestId('goal-status-dropdown').click();
+    await goal.getByTestId('ttahub-menu-button').click();
     await goal.getByText(/closed/i).click();
     await page.waitForTimeout(3000);
     await page.getByText(/tta complete/i).click();
