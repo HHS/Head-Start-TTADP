@@ -92,10 +92,10 @@ test.describe('Recipient record', () => {
     await expect(page.getByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i)).toBeVisible();
     await goal.getByTestId('expander-button').click();
     const objective = goal.getByTestId('objectiveList').first();
-    await objective.getByTestId('objective-status-dropdown').click();
+    await objective.getByTestId('expander-button').click();
     await objective.getByRole('button', { name: /complete/i }).click();
     await page.waitForTimeout(3000);
-    await goal.getByTestId('ttahub-menu-button').click();
+    await goal.getByTestId(/Change status for goal/i).click();
     await goal.getByText(/closed/i).click();
     await page.waitForTimeout(3000);
     await page.getByText(/tta complete/i).click();
