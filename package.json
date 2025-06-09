@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
+  "type": "module",
   "engines": {
     "node": "20.19.2"
   },
   "scripts": {
-    "build": "tsc -p src",
+    "build": "tsc --build src",
     "deps": "yarn global add node-gyp && yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "deps:local": "yarn global add node-gyp && yarn install && yarn --cwd frontend install",
     "deps:renew": "yarn install --mode update-lockfile && cd frontend && yarn install --mode update-lockfile",
