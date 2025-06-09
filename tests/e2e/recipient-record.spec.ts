@@ -85,7 +85,7 @@ test.describe('Recipient record', () => {
       hasText: 'Development and Learning' }
     );
 
-    await goal.getByTestId('ttahub-menu-button').click();
+    await goal.getByLabel(/Change status for goal/i).click();
     await goal.getByText(/closed/i).click();
 
     // expect error
