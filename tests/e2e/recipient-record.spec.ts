@@ -32,7 +32,7 @@ test.describe('Recipient record', () => {
     await page.keyboard.press('Enter');
 
     // Expect a goal containing the text (Child Safety) to be visible.
-    const childSafetyElements = page.getByText('Child Safety');
+    const childSafetyElements = page.getByText('Development and Learning');
     await expect(childSafetyElements).toHaveCount(2);
   });
 
