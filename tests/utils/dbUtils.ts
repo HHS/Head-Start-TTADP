@@ -34,15 +34,6 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
-  const blah = new Umzug({
-    storage: new SequelizeStorage({ sequelize: db.sequelize }),
-    migrations: {glob: migrationDir},
-    context: db.sequelize.getQueryInterface(),
-    logger: console,
-  })
-
-
-
   const umzug = new Umzug({
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
     migrations: {glob: migrationDir},
@@ -52,7 +43,6 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
 
   try {
     const migrations = await umzug.up();
-
     auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
   } catch (error) {
     if (error instanceof MigrationError) {
