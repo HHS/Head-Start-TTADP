@@ -36,7 +36,17 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
 
   const umzug = new Umzug({
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
-    migrations: {glob: migrationDir},
+    migrations: {
+      glob: migrationDir,
+      resolve: ({ name, path, context }) => {
+        const migration = import(path);
+        return {
+            name,
+            up: async () => migration.up(context, db.Sequelize),
+            down: async () => migration.down(db.Sequelize),
+        };
+      },
+    },
     context: db.sequelize.getQueryInterface(),
     logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
   })
