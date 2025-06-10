@@ -1,8 +1,8 @@
-import { Sequelize }  from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-import { calledFromTestFileOrDirectory } from './testOnly';
-import { auditLogger } from '../../src/logger';
-import configs from '../../config/config';
+import { calledFromTestFileOrDirectory } from './testOnly.js';
+import { auditLogger } from '../../src/logger.js';
+import configs from '../../config/config.js';
 
 const getDB = () => {
   const env = process.env.NODE_ENV || 'development';
@@ -34,22 +34,21 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
+  const blah = new Umzug({
+    storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    migrations: {glob: migrationDir},
+    context: db.sequelize.getQueryInterface(),
+    logger: console,
+  })
+
+
+
   const umzug = new Umzug({
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
-    migrations: {
-      glob: migrationDir,
-      resolve: ({ name, path, context }) => {
-        const migration = require(path);
-        return {
-            name,
-            up: async () => migration.up(context, db.Sequelize),
-            down: async () => migration.down(context, db.Sequelize),
-        };
-      },
-    },
+    migrations: {glob: migrationDir},
     context: db.sequelize.getQueryInterface(),
     logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
-  });
+  })
 
   try {
     const migrations = await umzug.up();
@@ -64,7 +63,7 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   }
 }
 
-export const reseed = async () => {
+const reseed = async () => {
   try {
     if (calledFromTestFileOrDirectory()) {
       await clear();
@@ -78,7 +77,7 @@ export const reseed = async () => {
   }
 };
 
-export const query = async(command, options = {}) => {
+const query = async(command, options = {}) => {
   try {
     if (calledFromTestFileOrDirectory()) {
       return await db.sequelize.query(command, options);
@@ -88,3 +87,5 @@ export const query = async(command, options = {}) => {
     return { error };
   }
 };
+
+export { query, reseed }

@@ -67,12 +67,12 @@
     "node": "20.19.2"
   },
   "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
+    "start": "cross-env-shell DISABLE_ESLINT_PLUGIN=true react-scripts start",
     "build:local": "INLINE_RUNTIME_CHUNK=false react-scripts build",
     "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client",
     "eject": "react-scripts eject",
-    "test": "cross-env TZ=America/New_York react-scripts test",
-    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
+    "test": "cross-env-shell TZ=America/New_York react-scripts test",
+    "test:ci": "cross-env-shell TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
     "lint:fix:single": "eslint --fix",

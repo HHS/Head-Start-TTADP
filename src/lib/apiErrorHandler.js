@@ -1,4 +1,4 @@
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { StatusCodes } from 'http-status-codes';
 import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
@@ -42,7 +42,7 @@ export async function logRequestError(req, operation, error, logContext) {
       method: req.method,
       requestBody,
       responseBody,
-      responseCode: INTERNAL_SERVER_ERROR,
+      responseCode: StatusCodes.INTERNAL_SERVER_ERROR,
     });
 
     return requestErrorId;
@@ -93,7 +93,7 @@ export const handleError = async (req, res, error, logContext) => {
     logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
   }
 
-  res.status(INTERNAL_SERVER_ERROR).end();
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
 };
 
 /**
@@ -105,7 +105,7 @@ export const handleError = async (req, res, error, logContext) => {
  */
 export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
   logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
-  res.status(INTERNAL_SERVER_ERROR).end();
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
     throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
@@ -162,7 +162,7 @@ export const logWorkerError = async (job, operation, error, logContext) => {
       method: 'PROCESS_JOB',
       requestBody,
       responseBody,
-      responseCode: INTERNAL_SERVER_ERROR,
+      responseCode: StatusCodes.INTERNAL_SERVER_ERROR,
     });
 
     return requestErrorId;
