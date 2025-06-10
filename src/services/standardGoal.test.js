@@ -324,6 +324,9 @@ describe('standardGoal service', () => {
       let goalTemplate;
       let goalTemplateNoUtilization;
       let objectiveTemplate;
+      let objectiveWithId;
+      let objectiveWithoutId;
+      const titleForLookup = 'Find this objective by goal id and title';
 
       const objectiveTitle = faker.lorem.sentence(5);
 
@@ -505,6 +508,87 @@ describe('standardGoal service', () => {
         expect(g).toBeDefined();
         expect(g.responses).toBeDefined();
         expect(g.responses[0].response).toEqual(['Option 1', 'Option 2']);
+      });
+
+      it('updates existing and reuses existing objective by id', async () => {
+        // Create the test objecitve here so its not dlelete by other tests in this block.
+        objectiveWithId = await Objective.create({
+          title: 'This is an existing supsended objective with the a matching ID',
+          objectiveTemplateId: null,
+          goalId: goal.id,
+          status: OBJECTIVE_STATUS.COMPLETE,
+        });
+
+        const g = await updateExistingStandardGoal(
+          grant.id,
+          goalTemplate.id,
+          [
+            {
+              id: objectiveWithId.id,
+              title: 'This is an existing suspended objective with the a matching ID Updated',
+              objectiveTemplateId: null,
+            },
+          ],
+          [],
+        );
+
+        expect(g).toBeDefined();
+        expect(g.objectives).toBeDefined();
+        expect(g.objectives.length).toBe(1);
+        expect(g.objectives[0].id).toBe(objectiveWithId.id);
+        expect(g.objectives[0].title).toBe('This is an existing suspended objective with the a matching ID Updated');
+        expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      });
+
+      it('updates existing and reuses existing objective by title and goal id', async () => {
+        objectiveWithoutId = await Objective.create({
+          title: titleForLookup,
+          objectiveTemplateId: null,
+          goalId: goal.id,
+          status: GOAL_STATUS.SUSPENDED,
+        });
+        const g = await updateExistingStandardGoal(
+          grant.id,
+          goalTemplate.id,
+          [
+            {
+              id: null, // For whatever reason there is no id.
+              title: titleForLookup,
+              objectiveTemplateId: null,
+            },
+          ],
+          [],
+        );
+
+        expect(g).toBeDefined();
+        expect(g.objectives).toBeDefined();
+        expect(g.objectives.length).toBe(1);
+        expect(g.objectives[0].id).toBe(objectiveWithoutId.id);
+        expect(g.objectives[0].title).toBe(titleForLookup);
+        expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      });
+
+      it('creates a new objective if its not found by id or title and goal id', async () => {
+        // Create the test objecitve here so its not dlelete by other tests in this block.
+        const g = await updateExistingStandardGoal(
+          grant.id,
+          goalTemplate.id,
+          [
+            {
+              id: null, // For whatever reason there is no id.
+              title: 'This does not exist',
+              objectiveTemplateId: null,
+            },
+          ],
+          [],
+        );
+
+        expect(g).toBeDefined();
+        expect(g.objectives).toBeDefined();
+        expect(g.objectives.length).toBe(1);
+        expect(g.objectives[0].id).toBeDefined();
+        expect(g.objectives[0].title).toBe('This does not exist');
+        expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.NOT_STARTED);
       });
     });
   });

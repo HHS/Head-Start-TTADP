@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -22,7 +23,7 @@ export default function ObjectivesSection({
   });
 
   const onAddNewObjectiveClick = () => {
-    append({ value: '' });
+    append({ value: '', objectiveId: null });
   };
 
   return (
@@ -42,6 +43,11 @@ export default function ObjectivesSection({
               label="TTA objective"
               name={`${fieldName}[${index}].value`}
             >
+              <input
+                type="hidden"
+                {...register(`${fieldName}.[${index}].objectiveId`)}
+                defaultValue={field.id}
+              />
               <Textarea
                 name={`${fieldName}[${index}].value`}
                 id={`${fieldName}[${index}].value`}
