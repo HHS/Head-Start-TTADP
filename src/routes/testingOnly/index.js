@@ -1,5 +1,5 @@
 import express from 'express';
-import { reseedDB, queryDB } from './handlers';
+import { reseedDB, queryDB } from './handlers.js';
 import testingOnly from '../../middleware/testingOnlyMiddleware';
 
 const router = express.Router();
