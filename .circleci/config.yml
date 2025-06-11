@@ -215,7 +215,7 @@ workflows:
         target_env: "staging"
         requires:
         - backup_temp_db
-        
+       
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
