@@ -558,7 +558,7 @@ jobs:
         steps:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
-            slack_channel: github-test
+            slack_channel: "github-test"
             target_env: << parameters.target_env >>
 
   backup_prod_db:
@@ -1386,6 +1386,10 @@ commands:
     - run:
         name: Post Slack Message
         command: |
+          # Ensure all parameters are provided
+          echo "Generated message:"
+          cat /tmp/message_file.json
+
           curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
