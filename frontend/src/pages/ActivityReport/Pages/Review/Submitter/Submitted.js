@@ -4,6 +4,7 @@ import { Editor } from 'react-draft-wysiwyg';
 import {
   Alert, Button,
 } from '@trussworks/react-uswds';
+import { Accordion } from '../../../../../components/Accordion';
 import { getEditorState } from '../../../../../utils';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
@@ -23,6 +24,7 @@ const Submitted = ({
   additionalNotes,
   resetToDraft,
   approverStatusList,
+  reviewItems,
 }) => {
   const additionalNotesState = getEditorState(additionalNotes || 'No creator notes');
 
@@ -33,6 +35,11 @@ const Submitted = ({
         <br />
         This report was successfully submitted for approval
       </Alert>
+      {reviewItems && reviewItems.length > 0 && (
+        <div className="margin-bottom-3">
+          <Accordion bordered items={reviewItems} multiselectable />
+        </div>
+      )}
       <div className="smart-hub--creator-notes margin-bottom-3">
         <p>
           <span className="text-bold">Creator notes</span>
@@ -60,6 +67,10 @@ Submitted.propTypes = {
   additionalNotes: PropTypes.string,
   resetToDraft: PropTypes.func.isRequired,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
+    approver: PropTypes.string,
+    status: PropTypes.string,
+  })).isRequired,
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
   })).isRequired,

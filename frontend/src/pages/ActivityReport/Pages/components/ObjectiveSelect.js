@@ -19,7 +19,7 @@ export default function ObjectiveSelect({
 
   return (
     <>
-      <div className="display-flex flex-justify maxw-mobile-lg margin-top-5">
+      <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
         <h3 className="margin-0">Objective summary</h3>
         { onRemove && (
           <ModalToggleButton

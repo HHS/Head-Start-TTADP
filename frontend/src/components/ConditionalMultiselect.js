@@ -31,6 +31,9 @@ export default function ConditionalMultiselect({
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-0">
+          {fieldData.displayName}
+        </p>
+        <p className="usa-prose text-bold margin-bottom-0">
           {fieldData.title}
         </p>
         <ul className="usa-list usa-list--unstyled">
@@ -43,9 +46,12 @@ export default function ConditionalMultiselect({
   }
 
   return (
-    <FormGroup error={error.props.children} key={fieldName}>
+    <FormGroup className="margin-top-0" error={error.props.children} key={fieldName}>
       <Label htmlFor={fieldName}>
         <>
+          <p className="usa-prose text-bold margin-bottom-0">
+            {fieldData.displayName}
+          </p>
           { fieldData.prompt }
           {' '}
           {validations.required && (<span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>)}
@@ -83,6 +89,7 @@ ConditionalMultiselect.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
     hint: PropTypes.string,
+    displayName: PropTypes.string.isRequired,
   }).isRequired,
   validations: PropTypes.shape({
     required: PropTypes.bool,
