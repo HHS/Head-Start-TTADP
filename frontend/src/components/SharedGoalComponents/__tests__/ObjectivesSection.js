@@ -70,4 +70,26 @@ describe('ObjectivesSection', () => {
     });
     expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
   });
+
+  it('rendes ReadOnlyField when status is Complete or Suspended', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        { objectiveId: '1', value: 'Objective 1', status: 'Complete' },
+        { objectiveId: '2', value: 'Objective 2', status: 'Suspended' },
+      ],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
+    expect(await screen.findByText('Objective 2', { selector: 'div' })).toBeInTheDocument();
+  });
+
+  it('doesnt render ReadOnlyField when status is not Complete or Suspended', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', status: 'In Progress' }],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
+  });
 });
