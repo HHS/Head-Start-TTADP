@@ -136,7 +136,7 @@ workflows:
         filters:
           branches:
             only:
-            - production
+            - main
     jobs:
     - run_import_job:
         target_env: "prod"
@@ -147,6 +147,15 @@ workflows:
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
+        target_env: "<< pipeline.parameters.target_env >>"
+
+  restore_db_manual:
+    # restore the anonymized db snapshot to a lower env db and run migrations
+    # uses the last production backup, does not interact with prod or modify snapshots
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
+    - restore_db_job:
+        serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_cron:
@@ -215,15 +224,6 @@ workflows:
         target_env: "staging"
         requires:
         - backup_temp_db
-
-  restore_db_manual:
-    # restore the anonymized db snapshot to a lower env db and run migrations
-    # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
-    jobs:
-    - restore_db_job:
-        serial-group: tta-automation-lock
-        target_env: "<< pipeline.parameters.target_env >>"
 
 # ----------------- Jobs -----------------
 
@@ -554,11 +554,11 @@ jobs:
         target_env: << parameters.target_env >>
     - when:
         condition:
-          equal: [ << parameters.target_env >>, prod ]
+          equal: [ << parameters.target_env >>, dev-blue ]
         steps:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
-            slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            slack_channel: github-test
             target_env: << parameters.target_env >>
 
   backup_prod_db:
@@ -1330,7 +1330,20 @@ commands:
     - run:
         name: Generate Slack Message JSON
         command: |
-          PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+          env_name=<< parameters.target_env >>
+
+          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+          else
+            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+              PR_NUMBER=$(echo "$COMMIT_MESSAGE" | grep -oP '(?<=Merge pull request #)\d+')
+            else
+              echo "No PR number found."
+              exit 0
+            fi
+          fi
+
           PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
           PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -1359,7 +1372,7 @@ commands:
             --arg title "$PR_TITLE" \
             --arg desc "$DESC" \
             --arg issues "$ISSUES" \
-            --arg env "<< parameters.target_env >>" \
+            --arg env "$env_name" \
             '{
               channel: $channel,
               blocks: [
