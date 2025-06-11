@@ -712,6 +712,35 @@ export async function updateExistingStandardGoal(
           });
         }
       }
+
+      // Lookup existing objective.
+      let existingObjective;
+      if (objective.id) {
+        // if we have an id, we can update the existing objective
+        existingObjective = await Objective.findByPk(objective.id);
+      } else {
+        // Find an existing objecitve for this goal id and title.
+        existingObjective = await Objective.findOne({
+          where: {
+            goalId: goal.id,
+            title: objective.title,
+          },
+        });
+      }
+
+      if (existingObjective) {
+        // Determine if we need to 'reset' the status.
+        const objectiveStatus = existingObjective.status === OBJECTIVE_STATUS.COMPLETE
+          || existingObjective.status === OBJECTIVE_STATUS.SUSPENDED
+          ? OBJECTIVE_STATUS.IN_PROGRESS : existingObjective.status;
+
+        // Update the existing objective.
+        return existingObjective.update({
+          status: objectiveStatus,
+          title: objective.title,
+        });
+      }
+      // If this is a new objective, create it.
       return Objective.create({
         title: objective.title,
         createdVia: 'rtr',
@@ -720,6 +749,7 @@ export async function updateExistingStandardGoal(
       });
     }));
 
+    // Delete any potentially removed objectives.
     await Objective.destroy({
       where: {
         goalId: goal.id,
