@@ -48,7 +48,7 @@ jobs:
             --arg desc "> $(echo "$DESC" | sed 's/^/> /')" \
             --arg issues "$(echo "$ISSUES" | sed 's/^/> /')" \
             '{
-              channel: "github-test",
+              channel: "acf-ohs-ttahub--contractor-customer-team",
               blocks: [
                 { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
