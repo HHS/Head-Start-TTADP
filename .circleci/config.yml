@@ -136,7 +136,7 @@ workflows:
         filters:
           branches:
             only:
-            - main
+            - production
     jobs:
     - run_import_job:
         target_env: "prod"
@@ -147,15 +147,6 @@ workflows:
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
-        target_env: "<< pipeline.parameters.target_env >>"
-
-  restore_db_manual:
-    # restore the anonymized db snapshot to a lower env db and run migrations
-    # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
-    jobs:
-    - restore_db_job:
-        serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_cron:
@@ -224,6 +215,15 @@ workflows:
         target_env: "staging"
         requires:
         - backup_temp_db
+        
+  restore_db_manual:
+    # restore the anonymized db snapshot to a lower env db and run migrations
+    # uses the last production backup, does not interact with prod or modify snapshots
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
+    - restore_db_job:
+        serial-group: tta-automation-lock
+        target_env: "<< pipeline.parameters.target_env >>"
 
 # ----------------- Jobs -----------------
 
