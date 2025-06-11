@@ -29,45 +29,50 @@ export default function ObjectivesSection({
   return (
     <div className="margin-top-4">
       {(objectives.length > 0) && <h2>Objectives</h2>}
-      {objectives.map((field, index) => (
-        <div key={field.id}>
-          <div hidden={!field.onAR}>
-            <ReadOnlyField
-              label="TTA objective"
-            >
-              {field.value}
-            </ReadOnlyField>
-          </div>
-          <div hidden={field.onAR}>
-            <FormItem
-              label="TTA objective"
-              name={`${fieldName}[${index}].value`}
-            >
-              <input
-                type="hidden"
-                {...register(`${fieldName}.[${index}].objectiveId`)}
-                defaultValue={field.id}
-              />
-              <Textarea
+      {objectives.map((field, index) => {
+        const isReadOnly = field.onAR === true
+        || field.status === 'Complete'
+        || field.status === 'Suspended';
+        return (
+          <div key={field.id}>
+            <div hidden={!isReadOnly}>
+              <ReadOnlyField
+                label="TTA objective"
+              >
+                {field.value}
+              </ReadOnlyField>
+            </div>
+            <div hidden={isReadOnly}>
+              <FormItem
+                label="TTA objective"
                 name={`${fieldName}[${index}].value`}
-                id={`${fieldName}[${index}].value`}
-                className="margin-bottom-1"
-                inputRef={register()}
-                defaultValue={field.value}
-              />
-            </FormItem>
-            <Button
-              type="button"
-              unstyled
-              onClick={() => {
-                remove(index);
-              }}
-            >
-              Remove this objective
-            </Button>
+              >
+                <input
+                  type="hidden"
+                  {...register(`${fieldName}.[${index}].objectiveId`)}
+                  defaultValue={field.id}
+                />
+                <Textarea
+                  name={`${fieldName}[${index}].value`}
+                  id={`${fieldName}[${index}].value`}
+                  className="margin-bottom-1"
+                  inputRef={register()}
+                  defaultValue={field.value}
+                />
+              </FormItem>
+              <Button
+                type="button"
+                unstyled
+                onClick={() => {
+                  remove(index);
+                }}
+              >
+                Remove this objective
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <div className="margin-y-4">
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>
