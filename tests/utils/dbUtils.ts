@@ -30,25 +30,37 @@ const clear = async () => {
   `);
 };
 
+    // migrations: {
+    //   glob: migrationDir,
+    //   resolve: ({ name, path, context }) => {
+    //     const migration = import(path);
+    //     return {
+    //         name,
+    //         up: async () => migration.up(context),
+    //         down: async () => migration.down(context),
+    //     };
+    //   },
+    // },
+
 const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
   const umzug = new Umzug({
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    context: db.sequelize.getQueryInterface(),
     migrations: {
       glob: migrationDir,
       resolve: ({ name, path, context }) => {
         const migration = import(path);
         return {
             name,
-            up: async () => migration.up(context, db.Sequelize),
-            down: async () => migration.down(db.Sequelize),
+            up: async () => migration.up(context),
+            down: async () => migration.down(context),
         };
       },
     },
-    context: db.sequelize.getQueryInterface(),
-    logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
+    logger: console,
   })
 
   try {
