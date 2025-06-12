@@ -39,8 +39,8 @@ const loadMigrations = async (migrationSet) => {
   const migrations = fs.readdirSync(migrationDir).map(name => {
     const { default: migration } = require(`src/${migrationSet}/${name}`);
     return {
-      up: async (params: MigrationParams<QueryInterface>) => await migration.up(params.context, sequelize),
-      down: async (params: MigrationParams<QueryInterface>) => await migration.down(params.context, sequelize),
+      up: async (params) => await migration.up(params.context, db.Sequelize),
+      down: async (params) => await migration.down(params.context, db.Sequelize),
       name,
     };
   });
