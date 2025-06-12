@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
 
-export const up = (queryInterface) => queryInterface.createTable('Users', {
+export const up = ({ queryInterface }) => queryInterface.createTable('Users', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,

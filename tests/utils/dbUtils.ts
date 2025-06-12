@@ -37,7 +37,7 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
   const umzug = new Umzug({
-    migrations: {glob: 'migrations/*.js'},
+    migrations: {glob: migrationDir},
     context: db.sequelize.getQueryInterface(),
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
     logger: console,
