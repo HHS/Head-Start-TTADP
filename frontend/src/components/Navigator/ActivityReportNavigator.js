@@ -47,11 +47,6 @@ export function getPrompts(promptTitles, getValues) {
   return prompts;
 }
 
-/**
-   *
-   * @param {} isAutoSave
-   * @returns
-   */
 export function getPromptErrors(promptTitles, errors) {
   let promptErrors = false;
 
@@ -108,7 +103,6 @@ const ActivityReportNavigator = ({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
-  socketMessageStore,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
@@ -728,7 +722,6 @@ const ActivityReportNavigator = ({
     >
       <FormProvider {...hookForm}>
         <Navigator
-          socketMessageStore={socketMessageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
@@ -801,14 +794,6 @@ ActivityReportNavigator.propTypes = {
       PropTypes.string,
     ]),
   }),
-  socketMessageStore: PropTypes.shape({
-    user: PropTypes.oneOfType([
-      PropTypes.shape({
-        name: PropTypes.string,
-      }),
-      PropTypes.string,
-    ]),
-  }),
 };
 
 ActivityReportNavigator.defaultProps = {
@@ -817,7 +802,6 @@ ActivityReportNavigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
-  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,
