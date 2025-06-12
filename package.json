@@ -13,7 +13,7 @@
     "deps:update-lockfile": "yarn install --mode update-lockfile && cd frontend && yarn install --mode update-lockfile",
     "deps:audit": "./run-yarn-audit.sh && cd frontend && ./run-yarn-audit.sh",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
-    "start:ci": "cross-env-shell BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 'concurrently \"yarn start:web\" \"yarn client\" \"yarn start:testingonly\"'",
+    "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 'concurrently \"yarn start:web\" \"yarn client\" \"yarn start:testingonly\"'",
     "start:web": "node ./build/server/src/index.js",
     "start:worker": "node ./build/server/src/worker.js",
     "start:testingonly": "tsx watch ./src/testingOnly.js",
