@@ -30,17 +30,6 @@ const clear = async () => {
   `);
 };
 
-    // migrations: {
-    //   glob: migrationDir,
-    //   resolve: ({ name, path, context }) => {
-    //     const migration = import(path);
-    //     return {
-    //         name,
-    //         up: async () => migration.up(context),
-    //         down: async () => migration.down(context),
-    //     };
-    //   },
-    // },
 
 
 const loadMigrations = async (migrationSet:string): Promise<void> => {
@@ -48,20 +37,25 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
   const umzug = new Umzug({
-    storage: new SequelizeStorage({ sequelize: db.sequelize }),
-    migrations: {
-      glob: migrationDir,
-      resolve: ({ name, path, context }) => {
-        const migration = require(path);
-        return {
-            name,
-            up: async () => migration.up(context, db.Sequelize),
-            down: async () => migration.down(context, db.Sequelize),
-        };
-      },
-    },
+    migrations: {glob: 'migrations/*.js'},
     context: db.sequelize.getQueryInterface(),
-    logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
+    storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    logger: console,
+
+    // storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    // migrations: {
+    //   glob: migrationDir,
+    //   resolve: ({ name, path, context }) => {
+    //     const migration = require(path);
+    //     return {
+    //         name,
+    //         up: async () => migration.up(context, db.Sequelize),
+    //         down: async () => migration.down(context, db.Sequelize),
+    //     };
+    //   },
+    // },
+    // context: db.sequelize.getQueryInterface(),
+    // logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
   });
 
   try {
