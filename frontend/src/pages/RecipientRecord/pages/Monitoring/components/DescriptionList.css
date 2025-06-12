@@ -37,6 +37,10 @@
   .ttahub-data-card-description-list {
     grid-template-columns: repeat(6, 1fr);
   }
+
+  .ttahub-review-card--finding-within-review-description-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
