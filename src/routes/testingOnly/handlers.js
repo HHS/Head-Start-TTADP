@@ -25,4 +25,8 @@ async function reseedDB(req, res) {
   }
 }
 
-export { queryDB, reseedDB };
+async function health(req, res) {
+  res.status(200).json();
+}
+
+export { queryDB, reseedDB, health };
