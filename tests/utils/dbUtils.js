@@ -52,46 +52,6 @@ const loadMigrations = async (migrationSet) => {
     logger: console,
   });
 
-  // const umzug = new Umzug({
-
-  //   storage: new SequelizeStorage({ sequelize: db.sequelize }),
-  //   migrations: {
-  //     glob: migrationDir,
-  //     resolve: ({ name, path, context }) => {
-  //       const migration = import(path);
-  //       return {
-  //           name,
-  //           up: async () => migration.up(context, db.Sequelize),
-  //           down: async () => migration.down(context, db.Sequelize),
-  //       };
-  //     },
-  //   },
-  //   context: db.sequelize.getQueryInterface(),
-  //   logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
-
-  //   // migrations: {glob: migrationDir},
-  //   // context: db.sequelize.getQueryInterface(),
-  //   // storage: new SequelizeStorage({ sequelize: db.sequelize }),
-  //   // logger: console,
-
-  //   // storage: new SequelizeStorage({ sequelize: db.sequelize }),
-  //   // migrations: {
-  //   //   glob: migrationDir,
-  //   //   resolve: ({ name, path, context }) => {
-  //   //     const migration = require(path);
-  //   //     return {
-  //   //         name,
-  //   //         up: async () => migration.up(context, db.Sequelize),
-  //   //         down: async () => migration.down(context, db.Sequelize),
-  //   //     };
-  //   //   },
-  //   // },
-  //   // context: db.sequelize.getQueryInterface(),
-  //   // logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
-  //   // const thing = await import("./main.mjs");
-
-  // });
-
   try {
     const migrations = await umzug.up();
     auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);

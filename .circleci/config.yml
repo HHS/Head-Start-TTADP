@@ -748,14 +748,6 @@ commands:
         command: |
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
-          #yarn start:ci
-          yarn start:web
-        background: true
-    - run:
-        name: Start testing server (9999)
-        command: |
-          export BYPASS_AUTH=true
-          export CURRENT_USER_ID=5
           yarn start:web
         background: true
     - run:
@@ -765,6 +757,13 @@ commands:
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
           yarn client
+        background: true
+    - run:
+        name: Start testing server (9999)
+        command: |
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          yarn start:testingonly
         background: true
     - run:
         name: Run migrations ci
