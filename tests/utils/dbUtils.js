@@ -37,10 +37,26 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
   const umzug = new Umzug({
-    migrations: {glob: migrationDir},
-    context: db.sequelize.getQueryInterface(),
+
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
-    logger: console,
+    migrations: {
+      glob: migrationDir,
+      resolve: ({ name, path, context }) => {
+        const migration = import(path);
+        return {
+            name,
+            up: async () => migration.up(context, db.Sequelize),
+            down: async () => migration.down(context, db.Sequelize),
+        };
+      },
+    },
+    context: db.sequelize.getQueryInterface(),
+    logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
+
+    // migrations: {glob: migrationDir},
+    // context: db.sequelize.getQueryInterface(),
+    // storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    // logger: console,
 
     // storage: new SequelizeStorage({ sequelize: db.sequelize }),
     // migrations: {
@@ -56,6 +72,8 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
     // },
     // context: db.sequelize.getQueryInterface(),
     // logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
+    // const thing = await import("./main.mjs");
+
   });
 
   try {
