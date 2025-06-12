@@ -51,7 +51,7 @@ const loadMigrations = async (migrationSet) => {
     migrations: {
       glob: migrationDir,
       resolve: ({ name, path, context }) => {
-        const migration = import(path);
+        const migration = require(path);
         return {
             name,
             up: async () => migration.up(context, db.Sequelize),
