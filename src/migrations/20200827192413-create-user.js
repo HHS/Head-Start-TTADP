@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
 
-export const up = ({ context: queryInterface }) => queryInterface.createTable('Users', {
+export const up = (queryInterface) => queryInterface.createTable('Users', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -30,4 +30,4 @@ export const up = ({ context: queryInterface }) => queryInterface.createTable('U
   },
 });
 
-export const down = ({ context: queryInterface }) => queryInterface.dropTable('Users');
+export const down = ({ queryInterface }) => queryInterface.dropTable('Users');
