@@ -761,7 +761,7 @@ commands:
         name: Wait for server to start
         command: |
           ./bin/ping-server 3000 # frontend
-          ./bin/ping-server 9999 # testing
+          ./bin/ping-server 9999 localhost "/testingonly" # testing
           # ./bin/ping-server 8080 # backend
     - run:
         name: << parameters.cmd >>
