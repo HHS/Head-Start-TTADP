@@ -9,6 +9,12 @@ on:
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
+    env:
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_CHANNEL: "acf-ohs-ttahub--contractor-customer-team"
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
       - name: Get PR body
         uses: actions/github-script@v7
@@ -17,12 +23,7 @@ jobs:
           result-encoding: string
           script: return context.payload.pull_request.body;
 
-      - name: Notify Slack when a PR to production in is opened
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
+      - name: Notify Slack when a PR to production is opened
         run: |
           echo "${{ steps.get-body.outputs.result }}" > pr_body.md
 
@@ -42,13 +43,14 @@ jobs:
           PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 
           JSON=$(jq -n \
+            --arg channel "$SLACK_CHANNEL" \
             --arg pr_number "#$PR_NUMBER" \
             --arg pr_link "$PR_LINK" \
             --arg title "$PR_TITLE" \
             --arg desc "> $(echo "$DESC" | sed 's/^/> /')" \
             --arg issues "$(echo "$ISSUES" | sed 's/^/> /')" \
             '{
-              channel: "acf-ohs-ttahub--contractor-customer-team",
+              channel: $channel,
               blocks: [
                 { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
