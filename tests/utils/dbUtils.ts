@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-import { calledFromTestFileOrDirectory } from './testOnly';
+import { calledFromTestFileOrDirectory } from './testOnly.js';
 import { auditLogger } from '../../src/logger.js';
 import configs from '../../config/config.js';
 
