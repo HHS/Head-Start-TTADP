@@ -266,7 +266,7 @@ The bulk of CD configurations can be found in this repo's [.circleci/config.yml]
 - The `main` branch is automatically deployed to `staging` on merge, after tests pass 
 - The `production` branch is automatically deployed to `production` on merge, after tests pass
 
-#### Secret Management
+### Secret Management
 
 CircleCI's project-based "environment variables" are used for secret management. These secrets include:
 
@@ -282,100 +282,15 @@ Exception:
 
 - The environment specific postgres database URI is automatically available in the relevant cloud.gov application environment (because they share a cloud.gov "space"). The URI is accessible to the application as POSTGRES_URL. Consequently, this secret does not need to be managed by developers.
 
-**Adding environment variables to an application**
+#### Adding environment variables to an application
+There are a few different things you will need to do in order to add a new secret or config variable, depending on whether the value is secret and whether it will change per environment or not.
 
-If you need to add a variable that is both public and _does not change_ between environments, simply add it under `env:` in **manifest.yml**. See `NODE_ENV` as an example.
-
-If your env variable is secret or the value is dependent on the deployment environment follow these directions.
-
-1. If secret, add your variable to CircleCI
-
-   If the variable value you want to add needs to remain secret, you will need to add it as a project-based "environment variable" in CircleCI. Ad Hoc engineers can use [this link][circleci-envvar] to navigate to the Environment Variables page for our forked repository. Add your environment variables here. If you need different values for sandbox and dev make sure to make two variables, one for each environment.
-
-   For example, if you needed to add an environment specific secret `SECRET_FRUIT` variable to your application, you could add `SANDBOX_SECRET_FRUIT` with value `strawberry` and `DEV_SECRET_FRUIT` with value `dewberry`.
-
-1. Add both secret and public variables to manifest.yml
-
-   In the application manifest, add your `SECRET_FRUIT` variable to the `env:` object. If you need another non-secret but environment specific variable, like `PUBLIC_VEGGIE`, in your application, add that here.
-
-   **manifest.yml**
-
-   ```
-   ---
-   applications:
-     - name: tta-smarthub-((env))
-       env:
-         SECRET_FRUIT: ((SECRET_FRUIT))
-         PUBLIC_VEGGIE: ((public_veggie))
-   ```
-
-1. If public, add the variable values to your deployment_config files
-
-   **deployment_config/sandbox_vars.yml**
-
-   ```
-   public_veggie: spinach
-   ```
-
-   **deployment_config/dev_vars.yml**
-
-   ```
-   public_veggie: dill
-   ```
-
-   You're all done with public env variables! In sandbox, `process.env.PUBLIC_VEGGIE` will be `"spinach"`. In dev, `process.env.PUBLIC_VEGGIE` will be `"dill"`. 🎉
-
-1. If secret, pass your variables to the `cf_deploy` command in the circleci config.
-
-   Make two additions here:
-
-   - Add the variable under `parameters`. Give your variable a description and a type of `env_var_name`.
-   - Under `steps:`, pass your new parameter to `cf push` with the `--var` flag. You can think of `cf_push` as a function, which uses the `parameters` as inputs. Make sure to retain the `${}` syntax. This forces CircleCI to interpret your `secret_fruit` parameter as a project-based environment variable, and make the correct substitution. This will become clearer in the next step.
-
-   **config/config.yml**
-
-   ```
-   commands:
-     ...
-     cf_deploy:
-       ...
-       parameters:
-         ...
-         secret_fruit:
-           description: "Name of CircleCI project environment variable that
-             holds the secret fruit"
-           type: env_var_name
-       steps:
-         ...
-         - run:
-             name: Push application with deployment vars
-             command: |
-               cf push --vars-file << parameters.deploy_config_file >> \
-                 --var SECRET_FRUIT=${<< parameters.secret_fruit >>}
-   ```
-
-1. If secret, in the `deploy` job, add the circle ci project environment variable name that you created in step 1 to the `cf_deploy` command as a parameter.
-
-   **config/config.yml**
-
-   ```
-   jobs:
-     ...
-     deploy:
-       ...
-       when: # sandbox
-         ...
-         steps:
-           - cf_deploy:
-               secret_fruit: SANDBOX_SECRET_FRUIT
-       when: # dev
-         ...
-         steps:
-           - cf_deploy:
-               secret_fruit: DEV_SECRET_FRUIT
-   ```
-
-   You're all done! In sandbox, `process.env.SECRET_FRUIT` will be `"strawberry"`. In dev, `process.env.SECRET_FRUIT` will be `"dewberry"`. 🎉
+* First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
+* Next, add the value to each of the files under [deployment_config/](deployment_config/).
+  * If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
+  * If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
+* If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
+  * Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
 
 ### Interacting with a deployed application or database
 
