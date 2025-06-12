@@ -26,7 +26,6 @@ async function reseedDB(req, res) {
 }
 
 async function health(req, res) {
-  auditLogger.info('healthcheck');
   res.status(200).json();
 }
 

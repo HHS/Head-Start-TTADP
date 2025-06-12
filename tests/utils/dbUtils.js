@@ -37,8 +37,8 @@ export async function loadMigrations(migrationSet) {
   const migrations = fs.readdirSync(migrationDir).map(async name => {
     const migration = await import(`src/${migrationSet}/${name}`);
     return {
-      up: async (params) => await migration.up(params.context, db.Sequelize),
-      down: async (params) => await migration.down(params.context, db.Sequelize),
+      up: async (context) => await migration.up(context, db.Sequelize),
+      down: async (context) => await migration.down(context, db.Sequelize),
       name,
     };
   });
