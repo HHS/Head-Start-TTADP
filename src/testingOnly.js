@@ -1,5 +1,4 @@
 import express from 'express';
-
 import { auditLogger } from './logger';
 import { testRouter } from './routes/testingOnly/index';
 

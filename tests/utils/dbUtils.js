@@ -1,8 +1,8 @@
 import { Sequelize } from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-import { calledFromTestFileOrDirectory } from './testOnly';
 import { auditLogger } from '../../src/logger';
 import configs from '../../config/config';
+import fs from 'fs'
 
 const getDB = () => {
   const env = process.env.NODE_ENV || 'development';
@@ -23,21 +23,19 @@ const getDB = () => {
 
 const db = getDB();
 
-const clear = async () => {
+export async function clear() {
   await db.sequelize.query(`
     DROP SCHEMA public CASCADE;
     CREATE SCHEMA public;
   `);
 };
 
-
-
-const loadMigrations = async (migrationSet) => {
+export async function loadMigrations(migrationSet) {
   const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
-  const migrations = fs.readdirSync(migrationDir).map(name => {
-    const { default: migration } = require(`src/${migrationSet}/${name}`);
+  const migrations = fs.readdirSync(migrationDir).map(async name => {
+    const migration = await import(`src/${migrationSet}/${name}`);
     return {
       up: async (params) => await migration.up(params.context, db.Sequelize),
       down: async (params) => await migration.down(params.context, db.Sequelize),
@@ -47,8 +45,8 @@ const loadMigrations = async (migrationSet) => {
 
   const umzug = new Umzug({
     migrations,
-    context: sequelize.getQueryInterface(),
-    storage: new SequelizeStorage({ sequelize }),
+    context: db.sequelize.getQueryInterface(),
+    storage: new SequelizeStorage({ sequelize:db.sequelize }),
     logger: console,
   });
 
@@ -64,29 +62,12 @@ const loadMigrations = async (migrationSet) => {
   }
 }
 
-const reseed = async () => {
-  try {
-    if (calledFromTestFileOrDirectory()) {
-      await clear();
-      await loadMigrations('migrations');
-      await loadMigrations('seeders');
-      return true;
-    }
-    return false;
-  } catch (error) {
-    return false;
-  }
+export async function reseed() {
+  await clear();
+  await loadMigrations('migrations');
+  await loadMigrations('seeders');
 };
 
-const query = async(command, options = {}) => {
-  try {
-    if (calledFromTestFileOrDirectory()) {
-      return await db.sequelize.query(command, options);
-    }
-    return { error: 'called from non-testing file or directory' };
-  } catch (error) {
-    return { error };
-  }
+export async function query(command, options = {}) {
+  return await db.sequelize.query(command, options);
 };
-
-export { query, reseed }
