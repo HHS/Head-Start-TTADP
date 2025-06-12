@@ -32,7 +32,7 @@ const clear = async () => {
 
 
 
-const loadMigrations = async (migrationSet:string): Promise<void> => {
+const loadMigrations = async (migrationSet) => {
   const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
 
