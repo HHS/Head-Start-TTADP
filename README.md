@@ -27,7 +27,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 - [Infrastructure](#infrastructure)
 - [Reference](#reference)
 
-### Running With Docker (preferred)
+### Running With Docker
 
 For a full list of available yarn commands, see [here](#yarn-commands)
 
@@ -61,6 +61,8 @@ When using Docker to run either the full app or the backend services, PostgreSQL
 
 On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
 `brew install docker-compose`
+
+If you run into issues with file permissions when using docker, you may want to try changing the CURRENT_USER values in your .env.  run `id -u` and `id -g` to get your current user uid/gid.
 
 **Apple Silicon & Chromium**
 
@@ -265,6 +267,14 @@ The bulk of CD configurations can be found in this repo's [.circleci/config.yml]
 
 - The `main` branch is automatically deployed to `staging` on merge, after tests pass 
 - The `production` branch is automatically deployed to `production` on merge, after tests pass
+
+##### Deploying changes directly to a test environment
+
+You can deploy changes from any remote branch to a non-production environment by following these steps:
+- Log in to CircleCI, go to pipelines https://app.circleci.com/pipelines
+- Select your branch from the dropdown on the top right side
+- Click "Trigger Pipeline" button in the top right
+- Select `deploy_manual`, choose the environment you want to deploy to (ie dev-blue) from the dropdown, then run the pipeline.
 
 ### Secret Management
 
