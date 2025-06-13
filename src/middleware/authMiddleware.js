@@ -7,6 +7,13 @@ import handleErrors from '../lib/apiErrorHandler';
 
 const namespace = 'MIDDLEWARE:AUTH';
 
+// Unused variable
+let a;
+// extra leading spaces
+const b = 'string';
+// extra  trailing spaces
+const c = 'string';
+
 export const hsesAuth = new ClientOAuth2({
   clientId: process.env.AUTH_CLIENT_ID,
   clientSecret: process.env.AUTH_CLIENT_SECRET,
