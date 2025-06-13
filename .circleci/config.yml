@@ -740,15 +740,14 @@ commands:
         type: string
       artifact_path:
         type: string
-    environment:
-      BYPASS_AUTH: true
-      CURRENT_USER_ID: 5
     steps:
     - attach_workspace:
         at: .
     - run:
         name: Start backend (8080)
         command: |
+          export BYPASS_AUTH: true
+          export CURRENT_USER_ID: 5
           POSTGRES_USERNAME: "postgres"
           POSTGRES_DB: "ttasmarthub"
           yarn start:web
@@ -756,6 +755,8 @@ commands:
     - run:
         name: Start frontend (3000)
         command: |
+          export BYPASS_AUTH: true
+          export CURRENT_USER_ID: 5
           export TTA_SMART_HUB_URI="http://localhost:3000"
           yarn playwright install
           yarn client
