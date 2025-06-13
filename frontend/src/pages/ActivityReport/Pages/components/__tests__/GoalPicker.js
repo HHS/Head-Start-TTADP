@@ -220,7 +220,7 @@ describe('GoalPicker', () => {
     expect(input.value).toBe(availableGoal.value.toString());
 
     const objective = document.querySelector('[name="goalForEditing.objectives[0].title"]');
-    expect(objective).toBeNull();
+    expect(objective).not.toBeNull();
   });
 
   it('you can select a goal with no selected goals', async () => {
