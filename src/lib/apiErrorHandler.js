@@ -1,4 +1,4 @@
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { StatusCodes } from 'http-status-codes';
 import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
@@ -42,12 +42,12 @@ export async function logRequestError(req, operation, error, logContext) {
       method: req.method,
       requestBody,
       responseBody,
-      responseCode: INTERNAL_SERVER_ERROR,
+      responseCode: StatusCodes.INTERNAL_SERVER_ERROR,
     });
 
     return requestErrorId;
   } catch (e) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
+    logger.error(`${logContext} - Sequelize Error - unable to store RequestError - ${error} - ${e}`);
   }
 
   return null;
@@ -61,9 +61,7 @@ export async function logRequestError(req, operation, error, logContext) {
  * @param {Object} logContext - The context for logging.
  */
 export const handleError = async (req, res, error, logContext) => {
-  if (process.env.NODE_ENV === 'development') {
-    logger.error(error);
-  }
+  logger.error(`Handling: ${error}`);
 
   let operation;
   let label;
@@ -77,7 +75,7 @@ export const handleError = async (req, res, error, logContext) => {
   }
 
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`);
+    logger.error(`${logContext} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`);
     throw error;
   }
 
@@ -88,12 +86,12 @@ export const handleError = async (req, res, error, logContext) => {
     : error;
 
   if (requestErrorId) {
-    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+    logger.error(`${logContext} - id: ${requestErrorId} ${label} - ${errorMessage}`);
   } else {
-    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
+    logger.error(`${logContext} - ${label} - ${errorMessage}`);
   }
 
-  res.status(INTERNAL_SERVER_ERROR).end();
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
 };
 
 /**
@@ -104,10 +102,10 @@ export const handleError = async (req, res, error, logContext) => {
  * @param {Object} logContext - The context for logging.
  */
 export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
-  logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
-  res.status(INTERNAL_SERVER_ERROR).end();
+  logger.error(`${logContext} - Unexpected error in catch block - ${error}`);
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    logger.error(`${logContext} - Critical error: Restarting server.`);
     throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
   }
 }
@@ -162,12 +160,12 @@ export const logWorkerError = async (job, operation, error, logContext) => {
       method: 'PROCESS_JOB',
       requestBody,
       responseBody,
-      responseCode: INTERNAL_SERVER_ERROR,
+      responseCode: StatusCodes.INTERNAL_SERVER_ERROR,
     });
 
     return requestErrorId;
   } catch (e) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
+    logger.error(`${logContext} - Sequelize error - unable to store RequestError - ${e}`);
   }
 
   return null;
@@ -196,7 +194,7 @@ export const handleWorkerError = async (job, error, logContext) => {
   }
 
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    logger.error(`${logContext} - Critical error: Restarting server.`);
     throw error;
   }
 
@@ -205,9 +203,9 @@ export const handleWorkerError = async (job, error, logContext) => {
   const errorMessage = error?.stack || error;
 
   if (requestErrorId) {
-    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+    logger.error(`${logContext} - id: ${requestErrorId} ${label} - ${errorMessage}`);
   } else {
-    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
+    logger.error(`${logContext} - ${label} - ${errorMessage}`);
   }
 
   // Handle job failure as needed
@@ -220,9 +218,9 @@ export const handleWorkerError = async (job, error, logContext) => {
  * @param {Object} logContext - The context for logging.
  */
 export const handleUnexpectedWorkerError = (job, error, logContext) => {
-  logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
+  logger.error(`${logContext} - Unexpected error in catch block - ${error}`);
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    logger.error(`${logContext} - Critical error: Restarting server.`);
     throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
   }
 };
