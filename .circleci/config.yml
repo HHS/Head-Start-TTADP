@@ -748,8 +748,8 @@ commands:
         command: |
           export BYPASS_AUTH = true
           export CURRENT_USER_ID = 5
-          POSTGRES_USERNAME: "postgres"
-          POSTGRES_DB: "ttasmarthub"
+          export POSTGRES_USERNAME = "postgres"
+          export POSTGRES_DB = "ttasmarthub"
           yarn start:web
         background: true
     - run:
@@ -764,8 +764,8 @@ commands:
     - run:
         name: Start testing server (9999)
         command: |
-          POSTGRES_USERNAME: "postgres"
-          POSTGRES_DB: "ttasmarthub"
+          export POSTGRES_USERNAME = "postgres"
+          export POSTGRES_DB = "ttasmarthub"
           yarn start:testingonly
         background: true
     - run:
