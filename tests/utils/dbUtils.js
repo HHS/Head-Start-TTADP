@@ -32,15 +32,17 @@ export async function clear() {
 
 export async function loadMigrations(migrationSet) {
   const migrationPattern = '*.js'; // File extension pattern for migration files
-  const migrationDir = `src/${migrationSet}/${migrationPattern}`; // path.join('./', migrationSet, migrationPattern);
+  const migrationDir = `src/${migrationSet}`; // /${migrationPattern} / path.join('./', migrationSet, migrationPattern);
 
-  const migrations = fs.readdirSync(migrationDir).map(async name => {
-    const migration = await import(`src/${migrationSet}/${name}`);
-    return {
-      up: async (context) => await migration.up(context, db.Sequelize),
-      down: async (context) => await migration.down(context, db.Sequelize),
-      name,
-    };
+  const migrations = fs.readdirSync(migrationDir)
+    .filter(fn => fn.endsWith('.js'))
+    .map(async name => {
+      const migration = await import(`src/${migrationSet}/${name}`);
+      return {
+        up: async (context) => await migration.up(context, db.Sequelize),
+        down: async (context) => await migration.down(context, db.Sequelize),
+        name,
+      };
   });
 
   const umzug = new Umzug({
