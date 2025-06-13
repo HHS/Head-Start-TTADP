@@ -60,6 +60,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
           goalStatus="In Progress"
           reportId={12}
           onSaveDraft={jest.fn()}
+          objectiveOptionsLoaded
         />
         <button type="button">blur me</button>
       </FormProvider>
@@ -84,9 +85,6 @@ describe('Objectives', () => {
     const objectiveOptions = [];
     const collabs = [{ role: 'Snake charmer' }, { role: 'lion tamer' }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} collaborators={collabs} />);
-    const select = await screen.findByLabelText(/Select TTA objective/i);
-    expect(screen.queryByText(/objective status/i)).toBeNull();
-    await selectEvent.select(select, ['Create a new objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
   it('allows for the selection and changing of an objective', async () => {
@@ -297,5 +295,12 @@ describe('Objectives', () => {
     // Expect to see the error message "Reason for suspension is required".
     const errorMessage = await screen.findByText(/reason for suspension is required/i);
     expect(errorMessage).toBeVisible();
+  });
+
+  it('automatically selects the create a new objecitve option when there are no objective options', async () => {
+    const objectiveOptions = [];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    expect(screen.getByText(/create a new objective/i)).toBeVisible();
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
 });
