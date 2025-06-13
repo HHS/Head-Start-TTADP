@@ -783,8 +783,8 @@ commands:
     - run:
         name: << parameters.cmd >>
         command: |
-          export BYPASS_AUTH = true
-          export CURRENT_USER_ID = 5
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
           export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
           << parameters.cmd >>
