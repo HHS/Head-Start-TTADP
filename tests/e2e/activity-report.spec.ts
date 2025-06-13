@@ -183,14 +183,14 @@ test.describe('Activity Report', () => {
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
+    await page.waitForTimeout(2000);
 
-    await page.getByRole('button', { name: 'Save goal' }).click();
+    //await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
-    await page.getByText('Create a new objective', { exact: true }).click();
-    
+    // Select the correct dropdown for objectives and choose 'Create a new objective'
+    const objectiveSelect = await page.locator('select').filter({ hasText: 'Create a new objective' }).first();
+    await objectiveSelect.selectOption({ label: 'Create a new objective' });
   
-
-
     await blur(page);
 
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1o1');
