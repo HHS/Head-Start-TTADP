@@ -119,11 +119,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
 
     // Objective.
-    await page.getByText('Select TTA objective *- Select -').click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    await blur(page);
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(5000);
 
     // Objective title.
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Prepare your first meal.');
