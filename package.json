@@ -171,6 +171,7 @@
       "frontend/public/*"
     ],
     "rules": {
+      "no-unused-vars": 2,
       "linebreak-style": 0,
       "@typescript-eslint/no-var-requires": 0,
       "@typescript-eslint/no-unused-vars": 0,

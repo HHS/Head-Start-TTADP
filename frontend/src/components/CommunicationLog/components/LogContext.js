@@ -10,6 +10,12 @@ import { getAdditionalCommunicationLogData } from '../../../fetchers/communicati
 const LogContext = createContext();
 
 const LogProvider = ({ children, regionId }) => {
+  // Unused variable
+  let a;
+  // extra leading spaces
+  const b = 'string';
+  // extra  trailing spaces
+  const c = 'string';
   const [regionalUsers, setRegionalUsers] = useState([]);
   const [standardGoals, setStandardGoals] = useState([]);
   const [recipients, setRecipients] = useState([]);
