@@ -2,7 +2,6 @@ import React from 'react';
 import { Switch, Route } from 'react-router';
 import { NavLink } from 'react-router-dom';
 import User from './users';
-import Cdi from './cdi';
 import Diag from './diag';
 import Flags from './Flags';
 import SiteAlerts from './SiteAlerts';
@@ -22,9 +21,6 @@ function Admin() {
       <h1>Admin</h1>
       <h2>Support</h2>
       <div className="margin-bottom-2 flex-wrap display-flex flex-gap-1">
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
-          CDI grants
-        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
           Courses
         </NavLink>
@@ -63,10 +59,6 @@ function Admin() {
         </NavLink>
       </div>
       <Switch>
-        <Route
-          path="/admin/cdi/:grantId?"
-          render={({ match }) => <Cdi match={match} />}
-        />
         <Route
           path="/admin/users/:userId?"
           render={({ match }) => <User match={match} />}
