@@ -27,10 +27,10 @@ test.describe('Recipient record', () => {
     await page.getByText('Recipient\'s goal *').click();
     await page.keyboard.press('Enter');
     // Fill the teex 'Child' into the combobox
-    await page.keyboard.type('Child');
+    await page.keyboard.type('Development and Learning');
     // arraow down and press entter.
     await page.keyboard.press('Enter');
-    const cqiAndDataElemnt = page.getByText('Child Safety');
+    const cqiAndDataElemnt = page.getByText('Development and Learning');
     await expect(cqiAndDataElemnt).toHaveCount(2);
   });
   /*
