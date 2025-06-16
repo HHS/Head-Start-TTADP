@@ -73,4 +73,4 @@ async function query(command, options = {}) {
   return await db.sequelize.query(command, options);
 };
 
-module.exports = { reseed, query };
+exports = { reseed, query };
