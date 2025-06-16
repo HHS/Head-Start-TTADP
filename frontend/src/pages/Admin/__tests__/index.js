@@ -10,7 +10,6 @@ import { createMemoryHistory } from 'history';
 
 import Admin from '../index';
 
-const grantsUrl = join('/', 'api', 'admin', 'grants', 'cdi?unassigned=false&active=true');
 const recipientsUrl = join('/', 'api', 'admin', 'recipients');
 const usersUrl = join('/', 'api', 'admin', 'users');
 const featuresUrl = join('/api', 'admin', 'users', 'features');
@@ -22,7 +21,6 @@ describe('Admin landing page', () => {
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
-    fetchMock.get(grantsUrl, []);
     fetchMock.get(recipientsUrl, []);
     fetchMock.get(usersUrl, []);
     fetchMock.get(featuresUrl, []);
@@ -32,17 +30,6 @@ describe('Admin landing page', () => {
       buildNumber: '123',
       timestamp: '2024-11-13 12:34:56',
     });
-  });
-
-  it('displays the cdi page', async () => {
-    history.push('/admin/cdi');
-    render(
-      <Router history={history}>
-        <Admin />
-      </Router>,
-    );
-    const grantView = await screen.findByText('Please select a grant');
-    expect(grantView).toBeVisible();
   });
 
   it('displays the user page', async () => {
