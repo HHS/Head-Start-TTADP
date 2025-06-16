@@ -37,8 +37,8 @@ export async function loadMigrations(migrationSet) {
   const migrations = fs.readdirSync(migrationDir)
     .filter(fn => fn.endsWith('.js'))
     .map(async name => {
-      auditLogger.log('info', `CWD: ${process.cwd()}, importing ./src/${migrationSet}/${name}`)
-      const migration = await import(`./src/${migrationSet}/${name}`);
+      //auditLogger.log('info', `CWD: ${process.cwd()}, importing ./src/${migrationSet}/${name}`)
+      const migration = await import(`../../src/${migrationSet}/${name}`);
       return {
         up: async (context) => await migration.up(context, db.Sequelize),
         down: async (context) => await migration.down(context, db.Sequelize),
