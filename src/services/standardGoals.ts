@@ -714,19 +714,15 @@ export async function updateExistingStandardGoal(
       }
 
       // Lookup existing objective.
-      let existingObjective;
-      if (objective.id) {
-        // if we have an id, we can update the existing objective
-        existingObjective = await Objective.findByPk(objective.id);
-      } else {
-        // Find an existing objecitve for this goal id and title.
-        existingObjective = await Objective.findOne({
-          where: {
-            goalId: goal.id,
-            title: objective.title,
-          },
-        });
-      }
+      const existingObjective = await (
+        objective.id
+          ? Objective.findByPk(objective.id)
+          : Objective.findOne({
+            where: {
+              goalId: goal.id,
+              title: objective.title,
+            },
+          }));
 
       if (existingObjective) {
         // Determine if we need to 'reset' the status.
