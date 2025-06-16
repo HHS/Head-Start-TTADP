@@ -187,6 +187,7 @@ test.describe('Activity Report', () => {
 
     //await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
+
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 

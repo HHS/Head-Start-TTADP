@@ -31,9 +31,8 @@ test.describe('Recipient record', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
-    // Expect a goal containing the text (Child Safety) to be visible.
-    const childSafetyElements = page.getByText('Development and Learning');
-    await expect(childSafetyElements).toHaveCount(2);
+    const cqiAndDataElemnt = page.getByText('CQI and Data');
+    await expect(cqiAndDataElemnt).toHaveCount(2);
   });
   /*
   TODO: This test will need to be reworked once the "new goal" form is changed to the
@@ -78,7 +77,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: /Add goal/i }).click();
     
     // verify the goal appears in the table
-    await expect(page.getByText('Development and Learning')).toBeVisible();
+    await expect(page.getByText('CQI and Data')).toBeVisible();
 
     // get container for the goal
     const goal = page.getByTestId('goalCard').filter({
