@@ -24,16 +24,23 @@ import { auditLogger } from '../../logger';
 jest.mock('../../policies/activityReport');
 
 describe('activity report model hooks', () => {
-  describe('automatic goal status changes', () => {
+  describe('automatic goal and objecitve status changes', () => {
     let recipient;
     let grant;
     let goal;
     let report;
     let report2;
+    let report3;
     let mockUser;
     let mockApprover;
     let objective;
     let objective2;
+
+    // Create objectives with different statuses
+    let objNotStarted;
+    let objInProgress;
+    let objCompleted;
+    let objSuspended;
 
     beforeAll(async () => {
       recipient = await Recipient.create({
@@ -122,6 +129,30 @@ describe('activity report model hooks', () => {
         activityReason: 'recipient reason',
       });
 
+      report3 = await ActivityReport.create({
+        userId: mockUser.id,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        additionalNotes: 'notes',
+        language: ['English'],
+        activityReason: 'recipient reason',
+        version: 2,
+      });
+
       await ActivityReportGoal.create({
         activityReportId: report.id,
         goalId: goal.id,
@@ -157,6 +188,12 @@ describe('activity report model hooks', () => {
         },
       });
 
+      await ActivityReportObjective.destroy({
+        where: {
+          activityReportId: [report.id, report2.id],
+        },
+      });
+
       await ActivityReportGoal.destroy({
         where: {
           activityReportId: [report.id, report2.id],
@@ -171,14 +208,21 @@ describe('activity report model hooks', () => {
 
       await Objective.destroy({
         where: {
-          id: [objective.id, objective2.id],
+          id: [
+            objective.id,
+            objective2.id,
+            objNotStarted.id,
+            objInProgress.id,
+            objCompleted.id,
+            objSuspended.id,
+          ],
         },
         force: true,
       });
 
       await ActivityReport.destroy({
         where: {
-          id: [report.id, report2.id],
+          id: [report.id, report2.id, report3.id],
         },
       });
 
@@ -364,6 +408,70 @@ describe('activity report model hooks', () => {
 
       const testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
+    });
+
+    it('submitting the report sets objectives that are "Complete" or "Suspended" to "Not Started" and leaves others unchanged', async () => {
+      // Create objectives with different statuses
+      objNotStarted = await Objective.create({
+        title: 'Obj Not Started',
+        goalId: goal.id,
+        status: 'Not Started',
+      });
+      objInProgress = await Objective.create({
+        title: 'Obj In Progress',
+        goalId: goal.id,
+        status: 'In Progress',
+      });
+      objCompleted = await Objective.create({
+        title: 'Obj Completed',
+        goalId: goal.id,
+        status: 'Complete',
+      });
+      objSuspended = await Objective.create({
+        title: 'Obj Suspended',
+        goalId: goal.id,
+        status: 'Suspended',
+      });
+
+      // Link all objectives to the report
+      await ActivityReportObjective.create({
+        activityReportId: report3.id,
+        status: 'Not Started',
+        objectiveId: objNotStarted.id,
+      });
+      await ActivityReportObjective.create({
+        activityReportId: report3.id,
+        status: 'In Progress',
+        objectiveId: objInProgress.id,
+      });
+      await ActivityReportObjective.create({
+        activityReportId: report3.id,
+        status: 'Complete',
+        objectiveId: objCompleted.id,
+      });
+      await ActivityReportObjective.create({
+        activityReportId: report3.id,
+        status: 'Suspended',
+        objectiveId: objSuspended.id,
+      });
+
+      // Move report to submitted
+      const testReport = await ActivityReport.findByPk(report3.id);
+      await testReport.update({
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      // Reload objectives
+      const reloadedNotStarted = await Objective.findByPk(objNotStarted.id);
+      const reloadedInProgress = await Objective.findByPk(objInProgress.id);
+      const reloadedCompleted = await Objective.findByPk(objCompleted.id);
+      const reloadedSuspended = await Objective.findByPk(objSuspended.id);
+
+      expect(reloadedNotStarted.status).toEqual('Not Started');
+      expect(reloadedInProgress.status).toEqual('In Progress');
+      expect(reloadedCompleted.status).toEqual('Not Started');
+      expect(reloadedSuspended.status).toEqual('Not Started');
     });
   });
 

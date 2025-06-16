@@ -83,6 +83,57 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
     auditLogger.error(`clearAdditionalNotes: ${e}`);
   }
 };
+const updateObjectiveStatusOnSubmit = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
+    let objectives;
+    try {
+      objectives = await sequelize.models.Objective.findAll({
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+            where: {
+              id: instance.id,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+        raw: true,
+      });
+
+      if (objectives.length) {
+      // Get the objective ids of any objectives that are COMPLETED or SUSPENDED.
+        const completedOrSuspendedObjectiveIds = objectives
+          .filter((o) => o.status === OBJECTIVE_STATUS.COMPLETE
+          || o.status === OBJECTIVE_STATUS.SUSPENDED)
+          .map((o) => o.id);
+
+        // Update their status to NOT_STARTED.
+        if (completedOrSuspendedObjectiveIds.length > 0) {
+          await sequelize.models.Objective.update(
+            { status: OBJECTIVE_STATUS.NOT_STARTED },
+            {
+              where: {
+                id: completedOrSuspendedObjectiveIds,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          );
+        }
+      }
+    } catch (e) {
+      auditLogger.error(`updateObjectiveStatusOnSubmit > updating objective status: ${e}`);
+    }
+  }
+};
 
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
@@ -755,6 +806,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoPopulateUtilizer(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
+  await updateObjectiveStatusOnSubmit(sequelize, instance, options);
 };
 
 export {
