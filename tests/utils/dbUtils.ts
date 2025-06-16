@@ -63,12 +63,14 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   }
 }
 
-export async function reseed() {
+async function reseed() {
   await clear();
   await loadMigrations('migrations');
   await loadMigrations('seeders');
 };
 
-export async function query(command, options = {}) {
+async function query(command, options = {}) {
   return await db.sequelize.query(command, options);
 };
+
+module.exports = { reseed, query };
