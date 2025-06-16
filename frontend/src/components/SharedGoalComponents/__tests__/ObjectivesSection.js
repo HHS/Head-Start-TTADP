@@ -48,7 +48,8 @@ describe('ObjectivesSection', () => {
     reset({ [GOAL_FORM_FIELDS.OBJECTIVES]: [] });
     fireEvent.click(screen.getByText('Add new objective'));
 
-    expect(await screen.findByLabelText(/tta objective/i)).toBeInTheDocument();
+    const objectives = await screen.findAllByLabelText(/tta objective/i);
+    expect(objectives).toHaveLength(2);
   });
 
   it('removes an objective when "Remove this objective" button is clicked', async () => {
@@ -56,7 +57,8 @@ describe('ObjectivesSection', () => {
     reset({
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: false }],
     });
-    expect(await screen.findByLabelText(/tta objective/i)).toBeInTheDocument();
+    const objectives = await screen.findAllByLabelText(/tta objective/i);
+    expect(objectives).toHaveLength(2);
     fireEvent.click(screen.getByText('Remove this objective'));
     expect(screen.queryByLabelText(/tta objective/i)).not.toBeInTheDocument();
   });
@@ -67,5 +69,27 @@ describe('ObjectivesSection', () => {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: true }],
     });
     expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
+  });
+
+  it('rendes ReadOnlyField when status is Complete or Suspended', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [
+        { objectiveId: '1', value: 'Objective 1', status: 'Complete' },
+        { objectiveId: '2', value: 'Objective 2', status: 'Suspended' },
+      ],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'div' })).toBeInTheDocument();
+    expect(await screen.findByText('Objective 2', { selector: 'div' })).toBeInTheDocument();
+  });
+
+  it('doesnt render ReadOnlyField when status is not Complete or Suspended', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', status: 'In Progress' }],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
   });
 });
