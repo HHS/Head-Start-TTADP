@@ -63,7 +63,7 @@ test.describe('Recipient record', () => {
     // Select standard goal.
     await page.getByText('Recipient\'s goal *').click();
    // Fill the teex 'Child' into the combobox
-    await page.keyboard.type('CQI ');
+    await page.keyboard.type('Fiscal Management ');
     // arraow down and press entter.
     await page.keyboard.press('Enter');
 
@@ -75,11 +75,11 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: /Add goal/i }).click();
     
     // verify the goal appears in the table
-    await expect(page.getByText('CQI and Data')).toBeVisible();
+    await expect(page.getByText('Fiscal Management')).toBeVisible();
 
     // get container for the goal
     const goal = page.getByTestId('goalCard').filter({
-      hasText: 'The recipient will implement data and' }
+      hasText: 'The recipient will implement strong fiscal' }
     );
 
     await goal.getByLabel(/Change status for goal/i).click();
