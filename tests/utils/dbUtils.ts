@@ -31,19 +31,19 @@ export async function clear() {
 };
 
 export async function loadMigrations(migrationSet) {
-  //const migrationPattern = '*.js'; // File extension pattern for migration files
-  const migrationDir = `./src/${migrationSet}`; // /${migrationPattern} / path.join('./', migrationSet, migrationPattern);
 
+  const migrationPattern = '*.js'; // File extension pattern for migration files
+  const migrationDir = `./src/${migrationSet}`; // /${migrationPattern} / path.join('./', migrationSet, migrationPattern);
   const context = db.sequelize.getQueryInterface();
+
   const migrations = fs.readdirSync(migrationDir)
     .filter(fn => fn.endsWith('.js'))
     .map(async name => {
       auditLogger.log('info', `CWD: ${process.cwd()}, importing ./src/${migrationSet}/${name}`)
       const migration = await import(`../../src/${migrationSet}/${name}`);
       return {
-        name,
-        up: async () => migration.up(context, Sequelize),
-        down: async () => migration.down(context, Sequelize),
+        up: async () => migration.up(context, db.Sequelize),
+        down: async () => migration.down(context, db.Sequelize),
       };
   });
 
@@ -54,9 +54,30 @@ export async function loadMigrations(migrationSet) {
     logger: console,
   });
 
+  // const migrationPattern = '*.js'; // File extension pattern for migration files
+  // const migrationDir = `./src/${migrationSet}/${migrationPattern}`; //
+
+  // const umzug = new Umzug({
+  //   storage: new SequelizeStorage({ sequelize: db.sequelize }),
+  //   migrations: {
+  //     glob: migrationDir,
+  //     resolve: ({ name, path, context }) => {
+  //       const migration = import(path);
+  //       return {
+  //           name,
+  //           up: async () => await migration.up(context, db.Sequelize),
+  //           down: async () => await migration.down(context, db.Sequelize),
+  //       };
+  //     },
+  //   },
+  //   context: db.sequelize.getQueryInterface(),
+  //   logger: { error: console.error, warn: () => {}, info: () => {}, debug: () => {} },
+  // });
+
+
   try {
-    await umzug.up();
-    auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
+    const executed = await umzug.up();
+    auditLogger.log('info', `Successfully executed ${executed.length} migrations.`);
   } catch (error) {
       if (error instanceof MigrationError) {
         auditLogger.error('Error executing migrations:', error.cause, '\n', error);
