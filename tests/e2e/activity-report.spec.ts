@@ -521,7 +521,8 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
-    await page.getByText(/Select TTA objective/i).click();
+    await page.getByText(/Select TTA objective/i).fill('Create a new objective');
+    // Arrow down then click enter.
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
