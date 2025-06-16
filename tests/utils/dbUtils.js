@@ -40,8 +40,8 @@ export async function loadMigrations(migrationSet) {
       auditLogger.log('info', `CWD: ${process.cwd()}, importing ./src/${migrationSet}/${name}`)
       const migration = await import(`../../src/${migrationSet}/${name}`);
       return {
-        up: async (context) => await migration.up(context, db.Sequelize),
-        down: async (context) => await migration.down(context, db.Sequelize),
+        up: async (context) => migration.up(context, db.Sequelize),
+        down: async (context) => migration.down(context, db.Sequelize),
         name,
       };
   });
