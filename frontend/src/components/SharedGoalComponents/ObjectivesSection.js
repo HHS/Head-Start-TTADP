@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -49,6 +48,7 @@ export default function ObjectivesSection({
               >
                 <input
                   type="hidden"
+                  // eslint-disable-next-line react/jsx-props-no-spreading
                   {...register(`${fieldName}.[${index}].objectiveId`)}
                   defaultValue={field.id}
                 />
