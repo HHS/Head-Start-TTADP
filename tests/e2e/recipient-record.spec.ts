@@ -26,12 +26,11 @@ test.describe('Recipient record', () => {
 
     await page.getByText('Recipient\'s goal *').click();
     await page.keyboard.press('Enter');
-
-   //  Arrow down and select the first option
-    await page.keyboard.press('ArrowDown');
+    // Fill the teex 'Child' into the combobox
+    await page.keyboard.type('Child');
+    // arraow down and press entter.
     await page.keyboard.press('Enter');
-
-    const cqiAndDataElemnt = page.getByText('CQI and Data');
+    const cqiAndDataElemnt = page.getByText('Child Safety');
     await expect(cqiAndDataElemnt).toHaveCount(2);
   });
   /*
@@ -63,10 +62,9 @@ test.describe('Recipient record', () => {
 
     // Select standard goal.
     await page.getByText('Recipient\'s goal *').click();
-    await page.keyboard.press('Enter');
-
-   //  Arrow down and select the first option
-    await page.keyboard.press('ArrowDown');
+   // Fill the teex 'Child' into the combobox
+    await page.keyboard.type('CQI ');
+    // arraow down and press entter.
     await page.keyboard.press('Enter');
 
     // edit that goal to add an objective
@@ -81,7 +79,7 @@ test.describe('Recipient record', () => {
 
     // get container for the goal
     const goal = page.getByTestId('goalCard').filter({
-      hasText: 'Development and Learning' }
+      hasText: 'The recipient will implement data and' }
     );
 
     await goal.getByLabel(/Change status for goal/i).click();
