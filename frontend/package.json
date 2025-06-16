@@ -122,7 +122,8 @@
       "airbnb",
       "plugin:jest/recommended",
       "plugin:testing-library/react",
-      "plugin:react-hooks/recommended"
+      "plugin:react-hooks/recommended",
+      "prettier"
     ],
     "ignorePatterns": [
       "build/*",
@@ -186,6 +187,7 @@
     "cross-env": "^7.0.2",
     "eslint": "^7.20.0",
     "eslint-config-airbnb": "^18.2.0",
+    "eslint-config-prettier": "^10.1.5",
     "eslint-formatter-multiple": "^1.0.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jest": "^24.1.5",
@@ -199,6 +201,7 @@
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
     "postcss": "^8.4.39",
+    "prettier": "^3.5.3",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
   },

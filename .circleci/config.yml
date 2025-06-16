@@ -255,6 +255,9 @@ jobs:
         name: Lint backend
         command: yarn lint:ci
     - run:
+        name: Lint frontend
+        command: yarn lint:ci        
+    - run:
         name: Audit vulnerability of backend node_modules
         command: |
           chmod 744 ./run-yarn-audit.sh

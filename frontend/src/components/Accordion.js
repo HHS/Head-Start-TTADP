@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
+export const a = 'mike';
+export const b = 'mike';
+export const c = `mike`;
+export const d = 'mike';
+
 export const AccordionItem = ({
   title,
   id,
@@ -58,15 +63,8 @@ AccordionItem.defaultProps = {
   handleToggle: undefined,
 };
 
-export const Accordion = ({
-  bordered,
-  items,
-  multiselectable,
-  headingSize,
-}) => {
-  const [openItems, setOpenState] = useState(
-    items.filter((i) => !!i.expanded).map((i) => i.id),
-  );
+export const Accordion = ({ bordered, items, multiselectable, headingSize }) => {
+  const [openItems, setOpenState] = useState(items.filter((i) => !!i.expanded).map((i) => i.id));
 
   const classes = bordered ? 'usa-accordion usa-accordion--bordered' : 'usa-accordion';
 

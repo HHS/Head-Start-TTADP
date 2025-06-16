@@ -104,6 +104,7 @@
     "updateCompletedEventReportPilots": "node ./build/server/src/tools/updateCompletedEventReportPilotsCLI.js",
     "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish",
+    "pre-commit": "lint-staged",
     "merge-coverage": "node ./src/tools/merge-coverage.js",
     "check-coverage": "node -r esm ./src/tools/check-coverage.js --fail-on-uncovered=true",
     "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
@@ -153,7 +154,8 @@
       "airbnb-base",
       "airbnb-typescript/base",
       "plugin:jest/recommended",
-      "plugin:@typescript-eslint/recommended"
+      "plugin:@typescript-eslint/recommended",
+      "prettier"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -255,6 +257,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "lint-staged": {
+    "frontend/src/**/*.{js,ts,jsx,tsx,cjs,mjs}": [
+      "yarn --cwd frontend eslint --fix",
+      "yarn --cwd frontend prettier --write"
+    ],
+    "src/**/*.{js,ts,cjs,mjs}": [
+      "yarn eslint --fix",
+      "yarn prettier --write"
+    ]
+  },
   "bugs": {
     "url": "https://github.com/adhocteam/Head-Start-TTADP/issues"
   },
@@ -293,6 +305,7 @@
     "eslint": "^7.20.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^10.1.5",
     "eslint-formatter-multiple": "^1.0.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jest": "^25.3.4",
@@ -302,13 +315,16 @@
     "ioredis-mock": "^8.9.0",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
+    "husky": "^9.1.7",
     "jest": "26.6.0",
     "jest-cli": "26.4.2",
     "jest-junit": "^12.0.0",
+    "lint-staged": "^16.1.2",
     "markdown-table": "^3.0.4",
     "mock-fs": "^5.4.1",
     "nodemon": "^2.0.4",
     "playwright": "^1.46.0",
+    "prettier": "^3.5.3",
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",

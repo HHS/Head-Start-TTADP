@@ -65,11 +65,13 @@ function makeColors() {
 // figma reference here:
 // https://www.figma.com/file/5Fr0NKQf9MQ5WGd8BWxA6i/TTA_SmartHub-Library-09132021?node-id=0%3A14
 
-${keys.map((key, index) => {
+${keys
+  .map((key, index) => {
     const propName = getPropName(key);
 
     return `$${propName}: ${values[index]};`;
-  }).join('\n')}`; // end contents string
+  })
+  .join('\n')}`; // end contents string
 
   fs.writeFile('./frontend/src/colors.scss', contents, (err) => {
     if (err) {
@@ -81,6 +83,6 @@ ${keys.map((key, index) => {
 
     generateHashes();
   }); // end fs call
-}// end make colors function
+} // end make colors function
 
 makeColors();
