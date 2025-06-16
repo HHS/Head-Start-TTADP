@@ -23,12 +23,6 @@ import {
 describe('Admin', () => {
   afterEach(() => fetchMock.restore());
 
-  const grants = [
-    {
-      id: 1,
-    },
-  ];
-
   const recipients = [
     {
       id: 1,
