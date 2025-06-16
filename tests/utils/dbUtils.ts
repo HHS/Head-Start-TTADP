@@ -1,6 +1,5 @@
 import { Sequelize }  from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
-import { calledFromTestFileOrDirectory } from './testOnly';
 import { auditLogger } from '../../src/logger';
 import configs from '../../config/config';
 
@@ -64,27 +63,12 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
   }
 }
 
-export const reseed = async () => {
-  try {
-    if (calledFromTestFileOrDirectory()) {
-      await clear();
-      await loadMigrations('migrations');
-      await loadMigrations('seeders');
-      return true;
-    }
-    return false;
-  } catch (error) {
-    return false;
-  }
+export async function reseed() {
+  await clear();
+  await loadMigrations('migrations');
+  await loadMigrations('seeders');
 };
 
-export const query = async(command, options = {}) => {
-  try {
-    if (calledFromTestFileOrDirectory()) {
-      return await db.sequelize.query(command, options);
-    }
-    return { error: 'called from non-testing file or directory' };
-  } catch (error) {
-    return { error };
-  }
+export async function query(command, options = {}) {
+  return await db.sequelize.query(command, options);
 };
