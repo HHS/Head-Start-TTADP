@@ -215,7 +215,7 @@ workflows:
         target_env: "staging"
         requires:
         - backup_temp_db
-
+       
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
@@ -1330,7 +1330,20 @@ commands:
     - run:
         name: Generate Slack Message JSON
         command: |
-          PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+          env_name=<< parameters.target_env >>
+
+          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+          else
+            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+              PR_NUMBER=$(echo "$COMMIT_MESSAGE" | grep -oP '(?<=Merge pull request #)\d+')
+            else
+              echo "No PR number found."
+              exit 0
+            fi
+          fi
+
           PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
 
           PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -1359,7 +1372,7 @@ commands:
             --arg title "$PR_TITLE" \
             --arg desc "$DESC" \
             --arg issues "$ISSUES" \
-            --arg env "<< parameters.target_env >>" \
+            --arg env "$env_name" \
             '{
               channel: $channel,
               blocks: [
