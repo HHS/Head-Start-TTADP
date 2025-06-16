@@ -38,7 +38,7 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
     migrations: {
       glob: migrationDir,
-      resolve: ({ name, path, context }) => {
+      resolve: async ({ name, path, context }) => {
         const migration = require(path);
         return {
             name,
