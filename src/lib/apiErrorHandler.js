@@ -75,7 +75,7 @@ export const handleError = async (req, res, error, logContext) => {
   }
 
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`);
+    logger.error(`${logContext.namespace} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`);
     throw error;
   }
 
@@ -86,9 +86,9 @@ export const handleError = async (req, res, error, logContext) => {
     : error;
 
   if (requestErrorId) {
-    logger.error(`${logContext} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
   } else {
-    logger.error(`${logContext} - ${label} - ${errorMessage}`);
+    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
   }
 
   res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
@@ -102,10 +102,10 @@ export const handleError = async (req, res, error, logContext) => {
  * @param {Object} logContext - The context for logging.
  */
 export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
-  logger.error(`${logContext} - Unexpected error in catch block - ${error}`);
+  logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
   res.status(StatusCodes.INTERNAL_SERVER_ERROR).end();
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext} - Critical error: Restarting server.`);
+    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
     throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
   }
 }
