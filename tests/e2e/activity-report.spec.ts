@@ -187,7 +187,6 @@ test.describe('Activity Report', () => {
 
     //await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
-    // Select the correct dropdown for objectives and choose 'Create a new objective'
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
@@ -251,8 +250,8 @@ test.describe('Activity Report', () => {
 
     // save goal 2.
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.getByText(/Select TTA objective/i).click();
-    await page.getByText('Create a new objective', { exact: true }).click();
+    
+
     await blur(page);
     await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');
     await page.getByText('Topics *').click()
@@ -519,7 +518,8 @@ test.describe('Activity Report', () => {
 
     // create first objective
     await page.getByText(/Select TTA objective/i).click();
-    await page.getByText('Create a new objective', { exact: true }).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
 
     const supportType = page.getByRole('combobox', { name: /Support type/i });
