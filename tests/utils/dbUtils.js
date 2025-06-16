@@ -34,7 +34,7 @@ export async function loadMigrations(migrationSet) {
   //const migrationPattern = '*.js'; // File extension pattern for migration files
   const migrationDir = `./src/${migrationSet}`; // /${migrationPattern} / path.join('./', migrationSet, migrationPattern);
 
-  const context = db.getQueryInterface();
+  const context = db.sequelize.getQueryInterface();
   const migrations = fs.readdirSync(migrationDir)
     .filter(fn => fn.endsWith('.js'))
     .map(async name => {
@@ -42,8 +42,8 @@ export async function loadMigrations(migrationSet) {
       const migration = await import(`../../src/${migrationSet}/${name}`);
       return {
         name,
-        up: async () => migration.up(context, db.Sequelize),
-        down: async () => migration.down(context, db.getQueryInterface(), db.Sequelize),
+        up: async () => migration.up(context, Sequelize),
+        down: async () => migration.down(context, Sequelize),
       };
   });
 
