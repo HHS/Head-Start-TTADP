@@ -119,9 +119,9 @@ export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
  */
 export default async function handleErrors(req, res, error, logContext) {
   try {
-    await handleError(req, res, error, logContext);
+    await handleError(req, res, error, logContext || '-');
   } catch (e) {
-    handleUnexpectedErrorInCatchBlock(req, res, e, logContext);
+    handleUnexpectedErrorInCatchBlock(req, res, e, logContext || '-');
   }
 }
 
