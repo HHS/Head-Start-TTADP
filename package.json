@@ -310,6 +310,7 @@
     "playwright": "^1.46.0",
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
+    "prettier": "^3.5.3",
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.3.0",
     "sinon": "^15.0.0",

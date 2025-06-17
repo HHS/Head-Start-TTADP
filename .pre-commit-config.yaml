@@ -1,0 +1,22 @@
+default_stages: [commit]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # - id: sort-simple-yaml
+      #   name: Sort YAML
+      #   exclude: (.github|pre-commit-config|docker-compose)
+      #   files: \.ya?ml$
+      - id: trailing-whitespace
+        name: Trim whitespace
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.8.0
+    hooks:
+      - id: eslint
+        args: [--fix]
+        # Specific groups of files targeted by eslint.config.mjs
+        # This is useful when running `pre-commit run eslint --all-files`
+        files: \.(c|m)?[jt]sx?$
+        name: Lint JavaScript & TypeScript
+        types: [file]
