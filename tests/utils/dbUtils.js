@@ -3,7 +3,6 @@ import { Umzug, SequelizeStorage, MigrationError, MigrationParams, RunnableMigra
 import { auditLogger } from '../../src/logger';
 import configs from '../../config/config';
 import fs from 'fs'
-import sequelize from 'sequelize/types/sequelize';
 
 const getDB = () => {
   const env = process.env.NODE_ENV || 'development';
