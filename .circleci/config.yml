@@ -253,10 +253,7 @@ jobs:
     - run: yarn build
     - run:
         name: Lint backend
-        command: yarn lint:ci
-    - run:
-        name: Lint frontend
-        command: yarn lint:ci        
+        command: yarn lint:ci 
     - run:
         name: Audit vulnerability of backend node_modules
         command: |
