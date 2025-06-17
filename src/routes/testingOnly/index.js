@@ -1,11 +1,12 @@
 import express from 'express';
-import { reseedDB, queryDB } from './handlers';
-import testingOnly from '../../middleware/testingOnlyMiddleware';
+import { reseedDB, queryDB, health } from './handlers';
 
-const router = express.Router();
-router.use(express.json({ limit: '2MB' }));
+const testRouter = express.Router();
+testRouter.use(express.json({ limit: '2MB' }));
 // must run outside of transaction wrapper as some of the action will run in a child process
-router.get('/reseed', testingOnly, reseedDB);
-router.post('/query', testingOnly, queryDB);
+testRouter.get('/', health);
+testRouter.get('/reseed', reseedDB);
+testRouter.post('/query', queryDB);
 
-export default router;
+/* eslint-disable import/prefer-default-export */
+export { testRouter };
