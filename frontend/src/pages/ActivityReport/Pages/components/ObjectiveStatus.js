@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
 import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
@@ -18,6 +18,14 @@ export default function ObjectiveStatus({
   closeSuspendContext,
   closeSuspendReason,
 }) {
+  // Only limit available satuses on initial render.
+  const [initialStatuses] = useState(() => {
+    if (status === 'Not Started') {
+      return statuses;
+    }
+    return ['In Progress', 'Suspended', 'Complete'];
+  });
+
   return (
     <>
       <Label>
@@ -29,7 +37,7 @@ export default function ObjectiveStatus({
           aria-label="Status for objective "
           onBlur={onBlur}
         >
-          {statuses.map((possibleStatus) => (
+          {initialStatuses.map((possibleStatus) => (
             <option
               key={possibleStatus}
               value={possibleStatus}

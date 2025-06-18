@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniqBy, uniq } from 'lodash';
+import { uniq } from 'lodash';
 import {
   DECIMAL_BASE,
   REPORT_STATUSES,
@@ -8,7 +8,6 @@ import {
   Goal,
   GoalFieldResponse,
   GoalTemplate,
-  GoalResource,
   GoalStatusChange,
   Grant,
   GrantRelationshipToActive,
@@ -33,10 +32,6 @@ import {
   SOURCE_FIELD,
   CREATION_METHOD,
 } from '../constants';
-import {
-  cacheObjectiveMetadata,
-  cacheGoalMetadata,
-} from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
 import changeGoalStatus from './changeGoalStatus';
@@ -48,9 +43,6 @@ import { reduceGoals } from './reduceGoals';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import {
-  createObjectivesForGoal,
-  removeUnusedGoalsObjectivesFromReport,
-  removeUnusedGoalsCreatedViaAr,
   saveStandardGoalsForReport,
 } from '../services/standardGoals';
 
@@ -146,18 +138,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         model: Objective,
         as: 'objectives',
         where: {
-          [Op.and]: [
-            {
-              title: {
-                [Op.ne]: '',
-              },
-            },
-            {
-              status: {
-                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
-              },
-            },
-          ],
+          title: {
+            [Op.ne]: '',
+          },
         },
         attributes: [
           'id',
