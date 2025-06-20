@@ -1,0 +1,18 @@
+default_stages: [commit]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim whitespace
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v7.20.0 # Should match version of eslint used
+    hooks:
+      - id: eslint
+        args: [--fix]
+        # Specific groups of files targeted by eslint.config.mjs
+        # This is useful when running `pre-commit run eslint --all-files`
+        files: \.(c|m)?[jt]sx?$
+        name: Lint JavaScript & TypeScript
+        types: [file]
