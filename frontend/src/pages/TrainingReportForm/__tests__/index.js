@@ -104,29 +104,6 @@ describe('TrainingReportForm', () => {
     await waitFor(() => expect(spy).toHaveBeenCalledWith('/something-went-wrong/500'));
   });
 
-  it('redirects to event summary', async () => {
-    fetchMock.get('/api/events/id/1', {
-      id: 1,
-      name: 'test event',
-      regionId: '1',
-      reportId: 1,
-      collaboratorIds: [],
-      ownerId: 1,
-      owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
-      },
-    });
-
-    act(() => {
-      renderTrainingReportForm('1', 'event-summary');
-    });
-
-    // this test might not seem too effective, but it fails if the component is not
-    // wrapped in a Router
-
-    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
-  });
-
   it('renders training report form if pocId is null', async () => {
     fetchMock.get('/api/events/id/1', {
       id: 1,
@@ -300,7 +277,7 @@ describe('TrainingReportForm', () => {
     await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
   });
-  it('passes correct values to backend', async () => {
+  it('passes correct values to backend and redirects', async () => {
     fetchMock.get('/api/events/id/1', completedForm);
 
     fetchMock.put('/api/events/id/1', {});
@@ -334,5 +311,27 @@ describe('TrainingReportForm', () => {
     expect(fetchMock.lastOptions('/api/events/id/1').body).toContain('"eventSubmitted":true');
 
     await waitFor(() => expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument());
+  });
+  it('saves and updates local storage', async () => {
+    fetchMock.get('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+      regionId: '1',
+      reportId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      owner: {
+        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+      },
+    });
+
+    jest.spyOn(Storage.prototype, 'setItem');
+
+    act(() => {
+      renderTrainingReportForm('1');
+    });
+
+    expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
+    expect(Storage.prototype.setItem).toHaveBeenCalled();
   });
 });
