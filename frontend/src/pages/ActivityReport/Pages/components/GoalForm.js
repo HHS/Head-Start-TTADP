@@ -41,6 +41,9 @@ export default function GoalForm({
    * if at all possible
    */
 
+  const mike = 'haley';
+  console.log(mike);
+
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
   const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);

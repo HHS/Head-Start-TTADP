@@ -113,7 +113,7 @@
   "eslintConfig": {
     "root": true,
     "parserOptions": {
-      "ecmaVersion": "latest"
+      "ecmaVersion": 2020
     },
     "plugins": [
       "testing-library"

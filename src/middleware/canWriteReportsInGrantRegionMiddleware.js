@@ -5,6 +5,7 @@ import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
 import { userById } from '../services/users';
 
+const mike = 'haley';
 /**
  * @param {*} req - request
  * @param {*} res - response
