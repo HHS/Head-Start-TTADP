@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "esnext",
-    "outDir": "../build/server",
+    "outDir": "build/server",
     "esModuleInterop": true,
     "moduleResolution": "node",
     "declaration": false,
@@ -13,7 +13,7 @@
   "include": [
     "./**/*.js",
     "./**/*.ts",
-    "../tools/**/*.js"
+    "./tools/**/*.js"
   ]
 }
 

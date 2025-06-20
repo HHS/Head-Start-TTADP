@@ -1,14 +1,7 @@
 {
-  "name": "head-start-ttadp",
+  "name": "backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
-  "engines": {
-    "node": "20.18.2"
-  },
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "build": "tsc -p src",
     "deps:local": "yarn global add node-gyp && yarn install && yarn --cwd frontend install",
@@ -112,88 +105,6 @@
     "createMonitoringGoalsCLI": "node ./build/server/src/tools/createMonitoringGoalsCLI.js",
     "createMonitoringGoalsCLI:local": "tsx ./src/tools/createMonitoringGoalsCLI.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
-  },
-  "resolutions": {
-    "axe-core": "4.6.3",
-    "@axe-core/webdriverjs": "4.6.0",
-    "ansi-regex": "^5.0.1",
-    "body-parser": "^1.20.3",
-    "colors": "1.4.0",
-    "follow-redirects": "^1.15.6",
-    "json-pointer": "0.6.2",
-    "marked": "^4.0.10",
-    "minimist": "^1.2.7",
-    "moment": "^2.29.2",
-    "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7",
-    "protobufjs": "^7.2.4",
-    "got": "^11.8.5",
-    "undici": "^5.10.0",
-    "selenium-webdriver": "4.3.0",
-    "json5": "^2.2.3",
-    "luxon": "^1.23.1",
-    "qs": "^6.9.7",
-    "cookie": "^0.7.0",
-    "cookiejar": "^2.1.4",
-    "http-cache-semantics": "^4.1.1",
-    "path-to-regexp": "^0.1.12",
-    "serve-static": "^1.16.0",
-    "send": "^0.19.0",
-    "xml2js": "^0.5.0",
-    "semver": "^7.5.3",
-    "tough-cookie": "^4.1.4",
-    "micromatch": "^4.0.7",
-    "axios": "^1.7.4",
-    "fast-xml-parser": "^4.4.1",
-    "ws": "^8.17.1",
-    "tar-fs": "^2.1.3"
-  },
-  "eslintConfig": {
-    "extends": [
-      "airbnb-base",
-      "airbnb-typescript/base",
-      "plugin:jest/recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 2020,
-      "project": "./src/tsconfig.json"
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "ignorePatterns": [
-      "node_modules/*",
-      "playwright.config.js",
-      "tests/*",
-      "packages/*",
-      "frontend/public/*"
-    ],
-    "rules": {
-      "linebreak-style": 0,
-      "@typescript-eslint/no-var-requires": 0,
-      "@typescript-eslint/no-unused-vars": 0,
-      "@typescript-eslint/no-empty-function": 0,
-      "@typescript-eslint/ban-ts-comment": 0
-    }
-  },
-  "eslint-formatter-multiple": {
-    "formatters": [
-      {
-        "name": "stylish",
-        "output": "console"
-      },
-      {
-        "name": "junit",
-        "output": "file",
-        "path": "reports/lint.xml"
-      }
-    ]
-  },
   "jest": {
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/",
@@ -254,76 +165,72 @@
       "./src/envParser.js"
     ]
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/adhocteam/Head-Start-TTADP/issues"
-  },
-  "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
-  "nodemonConfig": {
-    "ignore": [
-      "./reports/",
-      "./cucumber/",
-      "./frontend/",
-      "./tests/",
-      "./playwright/",
-      "./playwright-report/",
-      "./test-results/",
-      "./playwright.config.js"
-    ]
-  },
-  "devDependencies": {
-    "@axe-core/cli": "4.6.0",
-    "@axe-core/playwright": "^4.6.0",
-    "@babel/cli": "^7.11.6",
-    "@babel/core": "^7.11.6",
-    "@babel/node": "^7.10.5",
-    "@babel/plugin-transform-runtime": "^7.11.0",
-    "@babel/preset-env": "^7.11.5",
-    "@babel/preset-typescript": "^7.18.6",
-    "@cucumber/cucumber": "^7.0.0",
-    "@hapi/joi": "^17.1.1",
-    "@playwright/test": "^1.28.0",
-    "@types/hapi__joi": "^17.1.14",
-    "@types/jest": "^29.5.12",
-    "@typescript-eslint/eslint-plugin": "^5.13.0",
-    "@typescript-eslint/parser": "^5.0.0",
-    "concurrently": "^7.0.0",
-    "cross-env": "^7.0.2",
-    "depcheck": "^1.2.0",
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-formatter-multiple": "^1.0.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^25.3.4",
-    "eslint-plugin-jsx-a11y": "^6.3.1",
-    "eslint-plugin-react": "^7.20.6",
-    "esm": "^3.2.25",
-    "ioredis-mock": "^8.9.0",
-    "istanbul-lib-coverage": "^3.2.2",
-    "istanbul-lib-report": "^3.0.1",
-    "jest": "26.6.0",
-    "jest-cli": "26.4.2",
-    "jest-junit": "^12.0.0",
-    "markdown-table": "^3.0.4",
-    "mock-fs": "^5.4.1",
-    "nodemon": "^2.0.4",
-    "playwright": "^1.46.0",
-    "puppeteer": "^13.1.1",
-    "puppeteer-select": "^1.0.3",
-    "redoc-cli": "^0.13.2",
-    "selenium-webdriver": "4.3.0",
-    "sinon": "^15.0.0",
-    "supertest": "^6.1.3",
-    "tsx": "^3.12.2",
-    "typescript": "4.7.4",
-    "umzug": "^3.2.1"
-  },
   "dependencies": {
-	  "@babel/runtime": "^7.26.10",
+    "@babel/runtime": "^7.26.10",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
+    "@ttahub/common": "2.2.8",
+    "adm-zip": "^0.5.1",
+    "aws-sdk": "^2.826.0",
+    "aws4": "^1.11.0",
+    "axios": "^0.30.0",
+    "bull": "^4.2.0",
+    "chardet": "^2.0.0",
+    "cheerio": "^1.0.0-rc.10",
+    "client-oauth2": "^4.3.3",
+    "cls-hooked": "^4.2.2",
+    "cookie-session": "^2.0.0",
+    "cron": "^1.8.2",
+    "csv-parse": "^4.14.1",
+    "csv-stringify": "^5.6.2",
+    "cucumber-html-reporter": "^5.2.0",
+    "deepmerge": "^4.3.1",
+    "dompurify": "^3.2.4",
+    "dot-wild": "^3.0.1",
+    "dotenv": "^16.4.1",
+    "email-templates": "^8.0.4",
+    "express": "^4.20.0",
+    "express-http-context": "^1.2.4",
+    "express-unless": "^1.0.0",
+    "express-winston": "^4.0.5",
+    "file-type": "^16.5.4",
+    "form-data": "^4.0.0",
+    "he": "^1.2.0",
+    "helmet": "^5.0.1",
+    "html-to-text": "^8.1.0",
+    "http-codes": "^1.0.0",
+    "ioredis": "^5.3.2",
+    "jsdom": "^24.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "lodash": "^4.17.20",
+    "md5": "^2.3.0",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.45",
+    "multiparty": "^4.2.2",
+    "mz": "^2.7.0",
+    "newrelic": "^12.16.1",
+    "nodemailer": "^6.9.9",
+    "pg": "^8.3.3",
+    "plantuml-encoder": "^1.4.0",
+    "pug": "^3.0.3",
+    "redis": "^4.0.6",
+    "sax": "^1.3.0",
+    "sequelize": "^6.29.0",
+    "sequelize-cli": "^6.2.0",
+    "simple-git": "3.19.1",
+    "smartsheet": "^4.0.2",
+    "ssh2": "^1.15.0",
+    "throng": "^5.0.0",
+    "through2": "^4.0.2",
+    "unzipper": "^0.10.14",
+    "url-join": "^4.0.1",
+    "uuid": "^8.3.2",
+    "validator": "^13.7.0",
+    "wait-for-expect": "^3.0.2",
+    "winston": "^3.3.3",
+    "ws": "^8.17.1",
+    "xml2js": "^0.6.2",
+    "yargs": "^17.7.2",
+    "yayson": "^2.1.0"
   }
 }
