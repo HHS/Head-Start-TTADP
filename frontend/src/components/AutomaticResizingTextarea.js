@@ -30,6 +30,7 @@ export default function AutomaticResizingTextarea({
         // only - we wrap in a setTimeout to execute the resize after
         // the value has been updated
         setTimeout(() => {
+          /* istanbul ignore next: can't test with jest */
           if (
             e.target
             && e.target.scrollHeight
