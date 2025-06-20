@@ -164,7 +164,10 @@ export async function getCitationsByGrantIds(
       ON mf."findingId" = mfg."findingId"
       AND mrg."granteeId" = mfg."granteeId"
     WHERE 1 = 1
-      AND grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
+      AND (
+        grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
+        OR gr.id IN (${grantIds.join(',')})
+      )
     GROUP BY 1,2
     ORDER BY 2,1;
     `,
