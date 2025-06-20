@@ -26,14 +26,12 @@ test.describe('Recipient record', () => {
 
     await page.getByText('Recipient\'s goal *').click();
     await page.keyboard.press('Enter');
-
-   //  Arrow down and select the first option
-    await page.keyboard.press('ArrowDown');
+    // Fill the teex 'Child' into the combobox
+    await page.keyboard.type('Development and Learning');
+    // arraow down and press entter.
     await page.keyboard.press('Enter');
-
-    // Expect a goal containing the text (Child Safety) to be visible.
-    const childSafetyElements = page.getByText('Development and Learning');
-    await expect(childSafetyElements).toHaveCount(2);
+    const cqiAndDataElemnt = page.getByText('Development and Learning');
+    await expect(cqiAndDataElemnt).toHaveCount(2);
   });
   /*
   TODO: This test will need to be reworked once the "new goal" form is changed to the
@@ -64,10 +62,9 @@ test.describe('Recipient record', () => {
 
     // Select standard goal.
     await page.getByText('Recipient\'s goal *').click();
-    await page.keyboard.press('Enter');
-
-   //  Arrow down and select the first option
-    await page.keyboard.press('ArrowDown');
+   // Fill the teex 'Child' into the combobox
+    await page.keyboard.type('Fiscal Management ');
+    // arraow down and press entter.
     await page.keyboard.press('Enter');
 
     // edit that goal to add an objective
@@ -78,11 +75,11 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: /Add goal/i }).click();
     
     // verify the goal appears in the table
-    await expect(page.getByText('Development and Learning')).toBeVisible();
+    await expect(page.getByText('Fiscal Management')).toBeVisible();
 
     // get container for the goal
     const goal = page.getByTestId('goalCard').filter({
-      hasText: 'Development and Learning' }
+      hasText: 'The recipient will implement strong fiscal' }
     );
 
     await goal.getByLabel(/Change status for goal/i).click();

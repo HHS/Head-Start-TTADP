@@ -183,18 +183,22 @@ test.describe('Activity Report', () => {
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
+    await page.waitForTimeout(2000);
 
-    await page.getByRole('button', { name: 'Save goal' }).click();
+    //await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByText(/Select TTA objective/i).click();
+
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+
     await blur(page);
 
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1o1');
+
     // Topics.
-    await page.getByText('Topics *').click()
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await page.getByText('Topics *').click();
+    await page.getByLabel('Topics *').press('ArrowDown');
+    await page.getByLabel('Topics *').press('Enter');
     await blur(page);
 
 
@@ -248,11 +252,12 @@ test.describe('Activity Report', () => {
 
     // save goal 2.
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.getByText(/Select TTA objective/i).click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    
+
     await blur(page);
     await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');
+    await blur(page);
+          
     await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
@@ -516,23 +521,26 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
-    await page.getByText(/Select TTA objective/i).click();
+    await page.getByText(/Select TTA objective/i).fill('Create a new objective');
+    // Arrow down then click enter.
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
     const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
+    await blur(page);
     await page.waitForTimeout(10000);
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1 o1 title');
 
     // select a topic
-    await page.getByText('Topics *').click()
+    await page.locator('[id="goalForEditing\\.objectives\\[0\\]\\.topics"]').focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
+
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('g1 o1 tta');
@@ -542,10 +550,12 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.title"]').fill('g1 o2 title');
     await blur(page);
+
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.topics"]').focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
+
     await page.waitForTimeout(10000);
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
     await page.waitForTimeout(10000);
