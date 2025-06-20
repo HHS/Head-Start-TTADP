@@ -146,18 +146,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         model: Objective,
         as: 'objectives',
         where: {
-          [Op.and]: [
-            {
-              title: {
-                [Op.ne]: '',
-              },
-            },
-            {
-              status: {
-                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
-              },
-            },
-          ],
+          title: {
+            [Op.ne]: '',
+          },
         },
         attributes: [
           'id',

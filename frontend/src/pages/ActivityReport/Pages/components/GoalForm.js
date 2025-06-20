@@ -82,6 +82,7 @@ export default function GoalForm({
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
+  const [objectiveOptionsLoaded, setObjectiveOptionsLoaded] = useState(false);
 
   /*
    * this use effect fetches
@@ -94,14 +95,17 @@ export default function GoalForm({
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
         setObjectiveOptions(data[0].objectives);
+        setObjectiveOptionsLoaded(true);
       } finally {
         setIsAppLoading(false);
       }
     }
+
     if (goal.goalIds.length) {
       fetchData();
     } else {
       setObjectiveOptions([]);
+      setObjectiveOptionsLoaded(true); // Even though we didn't make the async call we are done.
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
@@ -153,6 +157,7 @@ export default function GoalForm({
         citationOptions={citationOptions}
         rawCitations={rawCitations}
         isMonitoringGoal={isMonitoringGoal}
+        objectiveOptionsLoaded={objectiveOptionsLoaded}
       />
     </>
   );
