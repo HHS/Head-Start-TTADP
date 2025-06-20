@@ -110,42 +110,6 @@
     "webpack": "^5.76.1",
     "yaml": "^2.2.2"
   },
-  "eslintConfig": {
-    "root": true,
-    "parserOptions": {
-      "ecmaVersion": 2020
-    },
-    "plugins": [
-      "testing-library"
-    ],
-    "extends": [
-      "airbnb",
-      "plugin:jest/recommended",
-      "plugin:testing-library/react",
-      "plugin:react-hooks/recommended"
-    ],
-    "ignorePatterns": [
-      "build/*",
-      "node_modules/*",
-      "public/*"
-    ],
-    "rules": {
-      "react/jsx-filename-extension": [
-        1,
-        {
-          "extensions": [
-            ".js",
-            ".jsx"
-          ]
-        }
-      ],
-      "linebreak-style": 0
-    },
-    "env": {
-      "jest/globals": true,
-      "browser": true
-    }
-  },
   "eslint-formatter-multiple": {
     "formatters": [
       {

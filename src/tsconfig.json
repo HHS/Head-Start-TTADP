@@ -13,7 +13,8 @@
   "include": [
     "./**/*.js",
     "./**/*.ts",
-    "../tools/**/*.js"
+    "../tools/**/*.js",
+    "../eslint.config.mjs"
   ]
 }
 
