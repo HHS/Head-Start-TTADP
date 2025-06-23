@@ -25,6 +25,7 @@ import { NOOP } from '../../../Constants';
 import useFormGrantData from '../../../hooks/useFormGrantData';
 import Modal from '../../../components/Modal';
 import ConnectionError from '../../../components/ConnectionError';
+import './goalsObjectives.scss';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -257,11 +258,19 @@ const GoalsObjectives = ({
 
   const isFormOpen = !isGoalFormClosed || !isObjectivesFormClosed;
 
+  // Add a variable to determine if a recipient has been selected.
+  const hasRecipient = activityRecipients && activityRecipients.length > 0;
+
   const startDateHasValue = startDate && startDate !== 'Invalid date';
 
   const alertIsDisplayed = !startDateHasValue || !hasGrant;
   const determineReportTypeAlert = () => {
     const messages = [];
+
+    // Check if the report is a recipient report.
+    if (!hasRecipient) {
+      messages.push('Recipinet for the activity');
+    }
 
     // Check the startDate is set.
     if (!startDateHasValue) {
@@ -311,7 +320,7 @@ const GoalsObjectives = ({
       <IndicatesRequiredField />
       ) }
 
-      <span className="usa-prose">Using a goal on an Activity Report will set the goal’s status to In progress.</span>
+      <p className="usa-prose margin-bottom-4">Using a goal on an Activity Report will set the goal’s status to In progress.</p>
 
       {
         determineReportTypeAlert()
@@ -361,7 +370,7 @@ const GoalsObjectives = ({
         */}
       {hasGrant && isGoalFormClosed
         ? (
-          <PlusButton onClick={addNewGoal} text="Add new goal" />
+          <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal222" />
         ) : (
           null
         ) }

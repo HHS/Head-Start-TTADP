@@ -65,13 +65,17 @@ export default function ReadOnlyGoal({
   return (
     <div key={`goal${goal.id}`}>
       <div className="ttahub-goal-form-goal-summary padding-3 position-relative margin-bottom-4">
-        <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
-        <div className="position-absolute pin-top pin-right padding-4">
-          <ContextMenu
-            label={`Actions for Goal ${goal.id}`}
-            menuItems={menuItems}
-            menuClassName="width-card"
-          />
+        <div className="display-flex flex-justify">
+          <div className="display-flex flex-align-start align-items-flex-start">
+            <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
+          </div>
+          <div className="margin-left-2">
+            <ContextMenu
+              label={`Actions for Goal ${goal.id}`}
+              menuItems={menuItems}
+              menuClassName="width-card"
+            />
+          </div>
         </div>
         <h3 className="margin-top-0 margin-bottom-2">Goal summary</h3>
         { goal.grants && goal.grants.length
@@ -82,7 +86,7 @@ export default function ReadOnlyGoal({
             </div>
           )
           : null }
-        <div className="margin-bottom-2">
+        <div className="margin-bottom-3">
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
