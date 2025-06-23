@@ -228,7 +228,7 @@ const GoalPicker = ({
         </Button>
         <Button type="button" onClick={onRemove} className="usa-button--subtle">Remove objective</Button>
       </Modal>
-      <div className="margin-top-3 position-relative">
+      <div className="position-relative">
         {
           grantsWithoutMonitoring.length > 0 && (
             <Alert type="warning" className="margin-bottom-2">
@@ -261,7 +261,7 @@ const GoalPicker = ({
           )
        }
         <div className="display-flex flex-align-center">
-          <Label className="margin-bottom-0">
+          <Label className="margin-bottom-0 margin-top-0">
             Select goal
             <Req />
           </Label>
