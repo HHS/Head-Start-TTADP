@@ -269,7 +269,7 @@ const GoalsObjectives = ({
 
     // Check if the report is a recipient report.
     if (!hasRecipient) {
-      messages.push('Recipinet for the activity');
+      messages.push('Recipient for the activity');
     }
 
     // Check the startDate is set.
@@ -370,7 +370,7 @@ const GoalsObjectives = ({
         */}
       {hasGrant && isGoalFormClosed
         ? (
-          <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal222" />
+          <PlusButton onClick={addNewGoal} className="ttahub-plus-button-no-margin-top" text="Add new goal" />
         ) : (
           null
         ) }

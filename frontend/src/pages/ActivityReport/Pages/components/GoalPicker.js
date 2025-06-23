@@ -261,7 +261,7 @@ const GoalPicker = ({
           )
        }
         <div className="display-flex flex-align-center">
-          <Label className="margin-bottom-0 margin-top-0">
+          <Label className="margin-bottom-0 margin-top-0" htmlFor="goalForEditing">
             Select goal
             <Req />
           </Label>
@@ -279,6 +279,7 @@ const GoalPicker = ({
         </Drawer>
         <div data-testid="goal-selector">
           <Select
+            id="goalForEditing"
             name="goalForEditing"
             control={control}
             components={components}
