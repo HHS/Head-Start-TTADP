@@ -141,7 +141,7 @@ export async function getCitationsByGrantIds(
     JOIN "Grants" gr
       ON  grta."grantId" = gr.id
     JOIN "Goals" g
-      ON grta."grantId" = g."grantId"
+      ON (grta."grantId" = g."grantId" OR grta."activeGrantId" = g."grantId")
       AND g."status" NOT IN ('Closed', 'Suspended')
     JOIN "GoalTemplates" gt
       ON g."goalTemplateId" = gt."id"
