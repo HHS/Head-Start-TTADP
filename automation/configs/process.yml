@@ -2,7 +2,7 @@ instances: 1
 memory: 512M
 disk_quota: 1G
 
-buildpack: "https://github.com/cloudfoundry/nodejs-buildpack"
+buildpack: "https://github.com/cloudfoundry/nodejs-buildpack#v1.8.36"
 command: "/home/vcap/app/automation/cf/scripts/idol.sh"
 
 bound_services:
