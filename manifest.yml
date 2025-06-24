@@ -4,7 +4,7 @@ applications:
     strategy: rolling
     stack: cflinuxfs4
     buildpacks:
-      - https://github.com/cloudfoundry/nodejs-buildpack
+      - https://github.com/cloudfoundry/nodejs-buildpack.git#v1.8.36
     env:
       AUTH_BASE: ((AUTH_BASE))
       AUTH_CLIENT_ID: ((AUTH_CLIENT_ID))
@@ -47,6 +47,7 @@ applications:
       BUILD_COMMIT: ((BUILD_COMMIT))
       BUILD_NUMBER: ((BUILD_NUMBER))
       BUILD_TIMESTAMP: ((BUILD_TIMESTAMP))
+      REACT_APP_WEBSOCKET_URL: ((REACT_APP_WEBSOCKET_URL))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
