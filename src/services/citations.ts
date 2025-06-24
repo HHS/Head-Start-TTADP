@@ -116,8 +116,8 @@ export async function getCitationsByGrantIds(
       JSONB_AGG( DISTINCT
         JSONB_BUILD_OBJECT(
           'findingId', mf."findingId",
-          'grantId', grta."activeGrantId",
-          'originalGrantId', grta."grantId",
+          'grantId', gr.id,
+          'originalGrantId', grta."grantId", -- this is not used anywhere
           'grantNumber', gr.number,
           'reviewName', rm."name",
           'reportDeliveryDate', rm."reportDeliveryDate",
