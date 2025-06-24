@@ -26,9 +26,6 @@ export default function ReviewWithinCitation({
         <DescriptionItem title="Review outcome">
           {review.outcome}
         </DescriptionItem>
-        <DescriptionItem title="Finding status">
-          {review.findingStatus}
-        </DescriptionItem>
         <DescriptionItem title="TTA specialists">
           <SpecialistTags specialists={review.specialists} />
         </DescriptionItem>
