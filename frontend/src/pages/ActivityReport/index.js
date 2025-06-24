@@ -588,6 +588,7 @@ function ActivityReport({
 
   // eslint-disable-next-line no-shadow, no-unused-vars
   const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
+    // If the user is not the one who made the revision, redirect them to the revision change page.
     if (user.id !== userId) {
       history.push('/activity-reports/revision-change');
     }
@@ -643,7 +644,8 @@ function ActivityReport({
       </Alert>
       )}
       {renderMultiUserAlert() || renderMultipleTabAlert()}
-      <Mesh room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />
+      {/* Don't render the Mesh component unless working on a saved report */}
+      { activityReportId !== 'new' && (<Mesh room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">

@@ -89,6 +89,14 @@ Buttons.propTypes = {
 const GoalsObjectives = ({
   reportId,
 }) => {
+  // Check if this is the first time the user has opened the page,
+  // if so, we need to refresh the page to ensure mesh-kit doesn't have duplicated data.
+  const isFirstLoad = window.localStorage.getItem(`goals-${reportId}-loaded`) === null;
+  if (isFirstLoad) {
+    window.localStorage.setItem(`goals-${reportId}-loaded`, 'true');
+    window.location.reload();
+  }
+
   const modalRef = useRef(null);
   const {
     watch, setValue, getValues, setError, trigger,
