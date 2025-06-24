@@ -70,15 +70,12 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
         });
       };
 
-      const result = await meshClient.subscribePresence(room, async () => {
+      await meshClient.subscribePresence(room, async () => {
         // when there's an update (a join, leave, or state change event), ask the server
         // for all current states instead of trying to juggle this stuff client-side
         const res = await meshClient.command('mesh/get-presence-state', { roomName: room });
         handlePresenceStateChange(res);
       });
-
-      // the initial subscribe result includes states for all present users
-      handlePresenceStateChange(result);
 
       // we only need to do this so that we can access the client
       // if/when this component cleanly unloads, in which case we

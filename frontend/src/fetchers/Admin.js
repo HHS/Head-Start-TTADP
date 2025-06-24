@@ -19,23 +19,9 @@ export const updateUser = async (userId, data) => {
   return user.json();
 };
 
-export const getCDIGrants = async (unassigned = true, active = true) => {
-  const grants = await get((join('/', 'api', 'admin', 'grants', `cdi?unassigned=${unassigned}&active=${active}`)));
-  return grants.json();
-};
-
 export const getRecipients = async () => {
   const recipients = await get(join('/', 'api', 'admin', 'recipients'));
   return recipients.json();
-};
-
-export const assignCDIGrant = async (grantId, regionId, recipientId) => {
-  const body = {
-    regionId,
-    recipientId,
-  };
-  const grant = await put(join('/', 'api', 'admin', 'grants', 'cdi', grantId.toString(DECIMAL_BASE)), body);
-  return grant.json();
 };
 
 export const getRoles = async () => {
