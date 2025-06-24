@@ -27,7 +27,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 - [Infrastructure](#infrastructure)
 - [Reference](#reference)
 
-### Running With Docker (preferred)
+### Running With Docker
 
 For a full list of available yarn commands, see [here](#yarn-commands)
 
@@ -35,15 +35,17 @@ If you run into issues, check the [troubleshooting](#troubleshooting) section.
 
 1. Install Docker. To check run `docker ps`.
 2. Install Node, matching the version in [.nvmrc](.nvmrc).
-3. Copy `.env.example` to `.env`.
-4. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
-5. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
-6. Run `yarn docker:start` to start the application.
+3. Install Yarn `npm install -g yarn`
+4. Install cross-env `npm install -g cross-env`
+5. Copy `.env.example` to `.env`.
+6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
+7. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders.
+8. Run `yarn docker:start` to start the application.
    - The [frontend][frontend] will run on `localhost:3000`
    - The [backend][backend] will run on `localhost:8080`
    - [API documentation][API documentation] will run on `localhost:5003`
    - [minio][minio] (S3-compatible file storage) will run on `localhost:9000`
-7. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+9. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 **Notes:**
 
@@ -60,6 +62,8 @@ When using Docker to run either the full app or the backend services, PostgreSQL
 On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`). To resolve:
 `brew install docker-compose`
 
+If you run into issues with file permissions when using docker, you may want to try changing the CURRENT_USER values in your .env.  run `id -u` and `id -g` to get your current user uid/gid.
+
 **Apple Silicon & Chromium**
 
 If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: `"The chromium binary is not available for arm64"`.
@@ -75,15 +79,25 @@ export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 
 Don't forget to run `source ~/.zshrc` or the equivalent after adding the above environment variables.
 
-**Cross-env**
-
-If you get an error running the frontend docker image saying that `cross-env` cannot be found, you can install it with `npm install -g cross-env`.
-
-#### Running Natively
+### Running Natively
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
+
+### Precommit hooks
+
+Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in .gihooks/pre-commit, also contains code to auto-format our terraform files, which you can read more about [here](terraform/README.md).
+
+If you are not using your own custom pre-commit hooks:
+
+- start from repo root directory
+- make the pre-commit file executable:
+  `chmod 755 .githooks/pre-commit`
+- change your default hooks directory to [.githooks](.githooks):
+  `git config core.hooksPath .githooks`
+
+If you are already using git hooks, add the [.githooks/pre-commit](.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
 ### Import Current Production Data
 
@@ -111,20 +125,6 @@ create database ttasmarthub;
 
 On Windows
 TBD
-
-### Precommit hooks
-
-Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in .gihooks/pre-commit, also contains code to auto-format our terraform files, which you can read more about [here](terraform/README.md).
-
-If you are not using your own custom pre-commit hooks:
-
-- start from repo root directory
-- make the pre-commit file executable:
-  `chmod 755 .githooks/pre-commit`
-- change your default hooks directory to [.githooks](.githooks):
-  `git config core.hooksPath .githooks`
-
-If you are already using git hooks, add the [.githooks/pre-commit](.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
 ## Testing
 
@@ -239,75 +239,44 @@ This Uncovered lines on PR builds can be configured to fail builds by either per
 
 ## Infrastructure
 
-### Persistent vs Ephemeral Infrastructure
+- The TTA Hub application(s) are run on the [cloud.gov](https://login.fr.cloud.gov/login) platform
+- cloud.gov uses AWS and leverages [Cloud Foundry](https://docs.cloudfoundry.org/) tools to provide a hosted platform
+- CircleCI is used for automated build/test/deploy jobs, the project can be found [here](https://app.circleci.com/pipelines/github/HHS/Head-Start-TTADP).
 
-The infrastructure used to run this application can be categorized into two distinct types: ephemeral and persistent.
+### Environments
 
-- **Ephemeral infrastructure** is all the infrastructure that is recreated each time the application is deployed. Ephemeral infrastructure includes the "application" (as defined in Cloud.gov), the EC2 instances that application runs on, and the routes that application utilizes. This infrastructure is defined and deployed to Cloud.gov by the CircleCI configuration.
-- **Persistent infrastructure** is all the infrastructure that remains constant and unchanged despite application deployments. Persistent infrastructure includes the database used in each development environment. This infrastructure is defined and instantiated on Cloud.gov by the Terraform configuration files. For more about Terraform see [terraform/README.md](terraform/README.md).
+This application consists of multiple deployed environments:
+
+| Environment | URL                                           | Details
+| :---------- | :-------------------------------------------- | :----------
+| prod        | https://ttahub.ohs.acf.hhs.gov                | autodeployed from `production`, live site
+| staging     | https://tta-smarthub-staging.app.cloud.gov/   | autodeployed from `main`, pre-prod stable
+| sandbox     | https://tta-smarthub-sandbox.app.cloud.gov/   | testing
+| dev         | https://tta-smarthub-dev.app.cloud.gov/       | testing
+| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/   | testing
+| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/  | testing
+| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/ | testing
 
 ### CI/CD with CircleCI
 
 #### Continuous Integration (CI)
 
-Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
-
-#### Creating and Applying a Deploy Key
-
-In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
-
-The following links outline the steps to take:
-https://circleci.com/docs/github-integration/#create-a-github-deploy-key
-https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
-
-Steps to create and apply deploy token:
-
-1. Open the Git Bash CMD window
-2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-3. When prompted to enter a file name leave blank and press ENTER
-4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
-5. Search for the file created with the name "id_rsa"
-6. Notice that two files have been created private and public in the .ssh folder
-7. Open the public file and copy the entire contents of the file
-8. In Github to the TTAHUB project and click 'Settings' in the top right corner
-9. Under 'Security' click 'Deploy Keys' then 'Add deploy Key'
-10. Give the key a name 'TTAHUB' and paste the private key contents, CHECK 'Allow write access' then click 'Add Key'
-11. Open the private key file that was created and copy the entire contents of the file
-12. Go to CircleCi and open the 'Head-Start-TTADP' project
-13. Click 'Project settings' in the top right corner
-14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
-15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
-16. Click 'Add SSH Key'
+The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file, the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/) variable files.  Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
 
 #### Continuous Deployment (CD)
 
-This application consists of three deployment environments: development/dev, staging, and
-production/prod. The CD pipeline is configured via CircleCi.
-The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file,
-the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/)
-variable files.
+- The `main` branch is automatically deployed to `staging` on merge, after tests pass 
+- The `production` branch is automatically deployed to `production` on merge, after tests pass
 
-Commits to specific branches in github repositories start automatic deployments as follows:
+##### Deploying changes directly to a test environment
 
-- **Dev** deployed by latest push to any remote branch of HHS/Head-Start-TTADP repo
-- **Staging** deployed by commit to [main branch][hhs-main] of HHS/Head-Start-TTADP repo
-- **Prod** deployed by commit to [production branch][hhs-prod] of HHS/Head-Start-TTADP repo
+You can deploy changes from any remote branch to a non-production environment by following these steps:
+- Log in to CircleCI, go to pipelines https://app.circleci.com/pipelines
+- Select your branch from the dropdown on the top right side
+- Click "Trigger Pipeline" button in the top right
+- Select `deploy_manual`, choose the environment you want to deploy to (ie dev-blue) from the dropdown, then run the pipeline.
 
-The application is deployed to the following URLs:
-
-| Environment | URL                                         |
-| :---------- | :------------------------------------------ |
-| sandbox     | https://tta-smarthub-sandbox.app.cloud.gov/ |
-| dev         | https://tta-smarthub-dev.app.cloud.gov/     |
-| staging     | https://tta-smarthub-staging.app.cloud.gov/ |
-| prod        | https://ttahub.ohs.acf.hhs.gov              |
-
-**Sandbox Environment**
-
-An additional deployment environment called "sandbox" is available to developers for testing and
-development on feature branches prior to making a commit to the main branch. Deployments are pushed to the ohstta-sandbox cloud.gov space. To conserve resources, running application instances pushed to this space should be deleted as soon as they are no longer needed. Running application instances can be deleted by logging into [cloud.gov][cloudgov], and then selecting and deleting the application.
-
-**Secret Management**
+### Secret Management
 
 CircleCI's project-based "environment variables" are used for secret management. These secrets include:
 
@@ -323,100 +292,15 @@ Exception:
 
 - The environment specific postgres database URI is automatically available in the relevant cloud.gov application environment (because they share a cloud.gov "space"). The URI is accessible to the application as POSTGRES_URL. Consequently, this secret does not need to be managed by developers.
 
-**Adding environment variables to an application**
+#### Adding environment variables to an application
+There are a few different things you will need to do in order to add a new secret or config variable, depending on whether the value is secret and whether it will change per environment or not.
 
-If you need to add a variable that is both public and _does not change_ between environments, simply add it under `env:` in **manifest.yml**. See `NODE_ENV` as an example.
-
-If your env variable is secret or the value is dependent on the deployment environment follow these directions.
-
-1. If secret, add your variable to CircleCI
-
-   If the variable value you want to add needs to remain secret, you will need to add it as a project-based "environment variable" in CircleCI. Ad Hoc engineers can use [this link][circleci-envvar] to navigate to the Environment Variables page for our forked repository. Add your environment variables here. If you need different values for sandbox and dev make sure to make two variables, one for each environment.
-
-   For example, if you needed to add an environment specific secret `SECRET_FRUIT` variable to your application, you could add `SANDBOX_SECRET_FRUIT` with value `strawberry` and `DEV_SECRET_FRUIT` with value `dewberry`.
-
-1. Add both secret and public variables to manifest.yml
-
-   In the application manifest, add your `SECRET_FRUIT` variable to the `env:` object. If you need another non-secret but environment specific variable, like `PUBLIC_VEGGIE`, in your application, add that here.
-
-   **manifest.yml**
-
-   ```
-   ---
-   applications:
-     - name: tta-smarthub-((env))
-       env:
-         SECRET_FRUIT: ((SECRET_FRUIT))
-         PUBLIC_VEGGIE: ((public_veggie))
-   ```
-
-1. If public, add the variable values to your deployment_config files
-
-   **deployment_config/sandbox_vars.yml**
-
-   ```
-   public_veggie: spinach
-   ```
-
-   **deployment_config/dev_vars.yml**
-
-   ```
-   public_veggie: dill
-   ```
-
-   You're all done with public env variables! In sandbox, `process.env.PUBLIC_VEGGIE` will be `"spinach"`. In dev, `process.env.PUBLIC_VEGGIE` will be `"dill"`. 🎉
-
-1. If secret, pass your variables to the `cf_deploy` command in the circleci config.
-
-   Make two additions here:
-
-   - Add the variable under `parameters`. Give your variable a description and a type of `env_var_name`.
-   - Under `steps:`, pass your new parameter to `cf push` with the `--var` flag. You can think of `cf_push` as a function, which uses the `parameters` as inputs. Make sure to retain the `${}` syntax. This forces CircleCI to interpret your `secret_fruit` parameter as a project-based environment variable, and make the correct substitution. This will become clearer in the next step.
-
-   **config/config.yml**
-
-   ```
-   commands:
-     ...
-     cf_deploy:
-       ...
-       parameters:
-         ...
-         secret_fruit:
-           description: "Name of CircleCI project environment variable that
-             holds the secret fruit"
-           type: env_var_name
-       steps:
-         ...
-         - run:
-             name: Push application with deployment vars
-             command: |
-               cf push --vars-file << parameters.deploy_config_file >> \
-                 --var SECRET_FRUIT=${<< parameters.secret_fruit >>}
-   ```
-
-1. If secret, in the `deploy` job, add the circle ci project environment variable name that you created in step 1 to the `cf_deploy` command as a parameter.
-
-   **config/config.yml**
-
-   ```
-   jobs:
-     ...
-     deploy:
-       ...
-       when: # sandbox
-         ...
-         steps:
-           - cf_deploy:
-               secret_fruit: SANDBOX_SECRET_FRUIT
-       when: # dev
-         ...
-         steps:
-           - cf_deploy:
-               secret_fruit: DEV_SECRET_FRUIT
-   ```
-
-   You're all done! In sandbox, `process.env.SECRET_FRUIT` will be `"strawberry"`. In dev, `process.env.SECRET_FRUIT` will be `"dewberry"`. 🎉
+* First, add it under the `env:` section in `manifest.yml`.  This is what populates values when the application is deployed to cloud.gov
+* Next, add the value to each of the files under [deployment_config/](deployment_config/).
+  * If the value is non-secret, simply add it in cleartext to these configs, ie `NEW_VAR: false`
+  * If the value is secret, for now you will add the var name here with reference to what it will be called in CircleCI. ie `NEW_VAR: "${CIRCLE_VAR_NAME}"`
+* If you created a secret-style var, you will now need to add it as a project-based "environment variable" in CircleCI.
+  * Go to CircleCI [project settings](https://app.circleci.com/settings/project/github/HHS/Head-Start-TTADP/environment-variables).  You can create a separate value for each environment here, or use the same value across all environments, depending on what you defined in the deployment config yml files.
 
 ### Interacting with a deployed application or database
 
@@ -587,6 +471,34 @@ Ex.
 ```
 
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
+
+
+#### Creating and Applying a Deploy Key
+
+In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
+
+The following links outline the steps to take:
+https://circleci.com/docs/github-integration/#create-a-github-deploy-key
+https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+
+Steps to create and apply deploy token:
+
+1. Open the Git Bash CMD window
+2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+3. When prompted to enter a file name leave blank and press ENTER
+4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
+5. Search for the file created with the name "id_rsa"
+6. Notice that two files have been created private and public in the .ssh folder
+7. Open the public file and copy the entire contents of the file
+8. In Github to the TTAHUB project and click 'Settings' in the top right corner
+9. Under 'Security' click 'Deploy Keys' then 'Add deploy Key'
+10. Give the key a name 'TTAHUB' and paste the private key contents, CHECK 'Allow write access' then click 'Add Key'
+11. Open the private key file that was created and copy the entire contents of the file
+12. Go to CircleCi and open the 'Head-Start-TTADP' project
+13. Click 'Project settings' in the top right corner
+14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
+15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
+16. Click 'Add SSH Key'
 
 ## Reference
 

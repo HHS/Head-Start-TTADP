@@ -11,18 +11,12 @@ import './FindingWithinReview.css';
 export default function FindingWithinReview({ finding, regionId }) {
   return (
     <div className="ttahub-review-card--finding-within-review margin-top-4" key={uniqueId('review-card-finding-')}>
-      <DescriptionList>
+      <DescriptionList className="ttahub-review-card--finding-within-review-description-list">
         <DescriptionItem title="Citation">
           <CitationDrawer citationNumber={finding.citation} />
         </DescriptionItem>
-        <DescriptionItem title="Finding status">
-          {finding.status}
-        </DescriptionItem>
         <DescriptionItem title="Finding type">
           {finding.findingType}
-        </DescriptionItem>
-        <DescriptionItem title="Due date (as of review)">
-          {finding.correctionDeadline}
         </DescriptionItem>
         <DescriptionItem title="Category" className="ttahub-review-card--finding-within-review-category">
           {finding.category}
