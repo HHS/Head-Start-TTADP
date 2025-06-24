@@ -116,12 +116,12 @@ describe('GoalPicker', () => {
     renderGoalPicker(defaultSelectedGoals, defaultGoalForEditing, availableGoals);
 
     const selectContainer = screen.getByTestId('goal-selector');
-    const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+    const selector = selectContainer.querySelector('input[name="goal-selector"]');
     const [availableGoal] = availableGoals;
 
     await selectEvent.select(selector, [availableGoal.label]);
 
-    const input = document.querySelector('[name="goalForEditing"');
+    const input = document.querySelector('[name="goal-selector"]');
     expect(input.value).toBe(availableGoal.value.toString());
   });
 
@@ -152,7 +152,7 @@ describe('GoalPicker', () => {
     );
 
     const selectContainer = screen.getByTestId('goal-selector');
-    const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+    const selector = selectContainer.querySelector('input[name="goal-selector"]');
     const [availableGoal] = availableGoals;
 
     await selectEvent.select(selector, [availableGoal.label]);
@@ -162,7 +162,7 @@ describe('GoalPicker', () => {
     const button = await screen.findByRole('button', { name: /keep objective/i });
     userEvent.click(button);
 
-    const input = document.querySelector('[name="goalForEditing"');
+    const input = document.querySelector('[name="goal-selector"]');
     expect(input.value).toBe(availableGoal.value.toString());
 
     const objective = await screen.findByText('Objective 1', { selector: 'textarea' });
@@ -206,7 +206,7 @@ describe('GoalPicker', () => {
     );
 
     const selectContainer = screen.getByTestId('goal-selector');
-    const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+    const selector = selectContainer.querySelector('input[name="goal-selector"]');
     const [availableGoal] = availableGoals;
 
     await selectEvent.select(selector, [availableGoal.label]);
@@ -216,7 +216,7 @@ describe('GoalPicker', () => {
     const button = await screen.findByRole('button', { name: /remove objective/i });
     userEvent.click(button);
 
-    const input = document.querySelector('[name="goalForEditing"');
+    const input = document.querySelector('[name="goal-selector"]');
     expect(input.value).toBe(availableGoal.value.toString());
 
     const objective = document.querySelector('[name="goalForEditing.objectives[0].title"]');
@@ -233,12 +233,12 @@ describe('GoalPicker', () => {
     renderGoalPicker(null, defaultGoalForEditing, availableGoals);
 
     const selectContainer = screen.getByTestId('goal-selector');
-    const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+    const selector = selectContainer.querySelector('input[name="goal-selector"]');
     const [availableGoal] = availableGoals;
 
     await selectEvent.select(selector, [availableGoal.label]);
 
-    const input = document.querySelector('[name="goalForEditing"');
+    const input = document.querySelector('[name="goal-selector"]');
     expect(input.value).toBe(availableGoal.value.toString());
   });
 
@@ -282,14 +282,14 @@ describe('GoalPicker', () => {
       });
 
       const selectContainer = screen.getByTestId('goal-selector');
-      const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
       const [availableGoal] = availableGoals;
 
       await act(async () => {
         await selectEvent.select(selector, [availableGoal.label]);
       });
 
-      const input = document.querySelector('[name="goalForEditing"]');
+      const input = document.querySelector('[name="goal-selector"]');
       expect(input.value).toBe(availableGoal.value.toString());
     });
     it('with prompts', async () => {
@@ -318,14 +318,14 @@ describe('GoalPicker', () => {
       });
 
       const selectContainer = screen.getByTestId('goal-selector');
-      const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
       const [availableGoal] = availableGoals;
 
       await act(async () => {
         await selectEvent.select(selector, [availableGoal.label]);
       });
 
-      const input = document.querySelector('[name="goalForEditing"]');
+      const input = document.querySelector('[name="goal-selector"]');
       expect(input.value).toBe(availableGoal.value.toString());
     });
   });
@@ -375,14 +375,14 @@ describe('GoalPicker', () => {
         renderGoalPicker(null, { objectives: [], goalIds: [] }, availableGoalTemplates);
       });
       const selectContainer = screen.getByTestId('goal-selector');
-      const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
       const [availableGoal] = availableGoalTemplates;
 
       await act(async () => {
         await selectEvent.select(selector, [availableGoal.label]);
       });
 
-      const input = document.querySelector('[name="goalForEditing"]');
+      const input = document.querySelector('[name="goal-selector"]');
       expect(input.value).toBe(availableGoal.value.toString());
 
       // Select 'Create a new objective' from the dropdown.
@@ -479,7 +479,7 @@ describe('GoalPicker', () => {
       });
 
       const selectContainer = screen.getByTestId('goal-selector');
-      const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
 
       // Select first template goal.
       fireEvent.focus(selector);
@@ -587,7 +587,7 @@ describe('GoalPicker', () => {
       const goalLabel = await screen.findByText(/select goal/i);
       expect(goalLabel).toBeVisible();
       const selectContainer = screen.getByTestId('goal-selector');
-      const selector = selectContainer.querySelector('input[name="goalForEditing"]');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
       await act(async () => {
         await selectEvent.select(selector, ['Monitoring Template Goal']);
       });
