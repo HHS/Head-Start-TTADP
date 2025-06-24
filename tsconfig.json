@@ -2,18 +2,22 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "esnext",
-    "outDir": "build/server",
+    "noEmit": false,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "declaration": false,
+    "outDir": "build",
     "allowJs": true,
+    "checkJs": false,
     "removeComments": true,
     "types": ["jest"]
   },
+  "exclude": ["node_modules","**/tests/**"],
   "include": [
-    "./**/*.js",
-    "./**/*.ts",
-    "./tools/**/*.js"
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.js",
+    "tools/**/*.js",
+    "tools/**/*.ts"
   ]
 }
 
