@@ -70,11 +70,10 @@ app.use((req, res, next) => {
       connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
       defaultSrc: [
         "'self'",
-        'wss://tta-smarthub-sandbox.app.cloud.gov',
-        'wss://tta-smarthub-dev.app.cloud.gov',
         'wss://tta-smarthub-dev-green.app.cloud.gov',
         'wss://tta-smarthub-dev-blue.app.cloud.gov',
         'wss://tta-smarthub-dev-red.app.cloud.gov',
+        'wss://tta-smarthub-dev-gold.app.cloud.gov',
       ],
     },
   });
