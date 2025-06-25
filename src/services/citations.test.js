@@ -660,7 +660,7 @@ describe('citations service', () => {
     expect(citation2).toBeDefined();
     expect(citation2.grants.length).toBe(1);
     expect(citation2.grants[0].findingId).toBeDefined();
-    expect(citation2.grants[0].grantId).toBe(grant4Replacement.id);
+    expect(citation2.grants[0].grantId).toBe(grant4Original.id);
     expect(citation2.grants[0].grantNumber).toBe(grant4Original.number); // ?
     expect(citation2.grants[0].reviewName).toBeDefined();
     expect(citation2.grants[0].reportDeliveryDate).toBeDefined();

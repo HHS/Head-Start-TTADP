@@ -116,8 +116,8 @@ export async function getCitationsByGrantIds(
       JSONB_AGG( DISTINCT
         JSONB_BUILD_OBJECT(
           'findingId', mf."findingId",
-          'grantId', grta."activeGrantId",
-          'originalGrantId', grta."grantId",
+          'grantId', gr.id,
+          'originalGrantId', grta."grantId", -- this is not used anywhere
           'grantNumber', gr.number,
           'reviewName', rm."name",
           'reportDeliveryDate', rm."reportDeliveryDate",
@@ -141,7 +141,7 @@ export async function getCitationsByGrantIds(
     JOIN "Grants" gr
       ON  grta."grantId" = gr.id
     JOIN "Goals" g
-      ON grta."activeGrantId" = g."grantId"
+      ON (grta."grantId" = g."grantId" OR grta."activeGrantId" = g."grantId")
       AND g."status" NOT IN ('Closed', 'Suspended')
     JOIN "GoalTemplates" gt
       ON g."goalTemplateId" = gt."id"
@@ -164,7 +164,10 @@ export async function getCitationsByGrantIds(
       ON mf."findingId" = mfg."findingId"
       AND mrg."granteeId" = mfg."granteeId"
     WHERE 1 = 1
-      AND grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
+      AND (
+        grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
+        OR gr.id IN (${grantIds.join(',')})
+      )
     GROUP BY 1,2
     ORDER BY 2,1;
     `,
