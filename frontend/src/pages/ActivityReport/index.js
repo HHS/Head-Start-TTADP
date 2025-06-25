@@ -581,11 +581,13 @@ function ActivityReport({
     </>
   ) : null;
 
+  /* istanbul ignore next: hard to test websocket functionality */
   // receives presence updates from the Mesh component
   const handlePresenceUpdate = (data) => {
     setPresenceData(data);
   };
 
+  /* istanbul ignore next: hard to test websocket functionality */
   // eslint-disable-next-line no-shadow, no-unused-vars
   const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
     // If the user is not the one who made the revision, redirect them to the revision change page.
@@ -594,6 +596,7 @@ function ActivityReport({
     }
   };
 
+  /* istanbul ignore next: hard to test websocket functionality */
   const renderMultiUserAlert = () => {
     if (presenceData.hasMultipleUsers) {
       const otherUsernames = presenceData.otherUsers
@@ -622,6 +625,7 @@ function ActivityReport({
     return null;
   };
 
+  /* istanbul ignore next: hard to test websocket functionality */
   const renderMultipleTabAlert = () => {
     if (presenceData.tabCount > 1) {
       return (
