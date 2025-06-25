@@ -47,11 +47,6 @@ export function getPrompts(promptTitles, getValues) {
   return prompts;
 }
 
-/**
-   *
-   * @param {} isAutoSave
-   * @returns
-   */
 export function getPromptErrors(promptTitles, errors) {
   let promptErrors = false;
 
@@ -108,7 +103,7 @@ const ActivityReportNavigator = ({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
-  socketMessageStore,
+  shouldAutoSave,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
@@ -167,7 +162,7 @@ const ActivityReportNavigator = ({
   };
 
   const activityRecipientType = watch('activityRecipientType');
-  const isGoalsObjectivesPage = page.path === 'goals-objectives';
+  const isGoalsObjectivesPage = page?.path === 'goals-objectives';
   const recipients = watch('activityRecipients');
   const isRecipientReport = activityRecipientType === 'recipient';
 
@@ -728,7 +723,6 @@ const ActivityReportNavigator = ({
     >
       <FormProvider {...hookForm}>
         <Navigator
-          socketMessageStore={socketMessageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
@@ -755,6 +749,7 @@ const ActivityReportNavigator = ({
           autoSaveInterval={autoSaveInterval}
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
+          shouldAutoSave={shouldAutoSave}
         />
       </FormProvider>
     </GoalFormContext.Provider>
@@ -801,14 +796,7 @@ ActivityReportNavigator.propTypes = {
       PropTypes.string,
     ]),
   }),
-  socketMessageStore: PropTypes.shape({
-    user: PropTypes.oneOfType([
-      PropTypes.shape({
-        name: PropTypes.string,
-      }),
-      PropTypes.string,
-    ]),
-  }),
+  shouldAutoSave: PropTypes.bool,
 };
 
 ActivityReportNavigator.defaultProps = {
@@ -817,11 +805,11 @@ ActivityReportNavigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
-  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,
   },
+  shouldAutoSave: true,
 };
 
 export default ActivityReportNavigator;
