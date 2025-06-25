@@ -683,7 +683,6 @@ export async function updateExistingStandardGoal(
 
   const [goal] = standard.goals;
   const { prompts } = standard;
-  console.log('\n\n\n----- Objectives passed in: ', objectives);
   // a new goal does not require objectives, but may include them
   let updatedObjectives = [];
   if (objectives.length) {
