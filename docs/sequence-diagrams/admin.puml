@@ -11,8 +11,6 @@ group Administration: Admin Options
     AD -> FRONTEND : View landing page
     AD -> FRONTEND : Navigate to User\Admin
     FRONTEND <- BACKEND : Display Admin Page
-    AD --> FRONTEND : Select CDI Grants
-    FRONTEND <-- BACKEND : Display CDI Grant page
     AD --> FRONTEND : Select Courses
     FRONTEND <-- BACKEND : Display Course page
     AD --> FRONTEND : Select Diag
