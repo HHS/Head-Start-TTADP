@@ -25,7 +25,7 @@ export default function useGoalTemplatePrompts(
           isForActivityReport,
         );
         setTemplatePrompts(prompts);
-        setGoalTemplatePrompts(promptsWithResponses);
+        setGoalTemplatePrompts(isForActivityReport ? promptsWithResponses : prompts);
       } catch (error) {
         setGoalTemplatePrompts([]);
       }
