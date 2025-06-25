@@ -683,10 +683,11 @@ export async function updateExistingStandardGoal(
 
   const [goal] = standard.goals;
   const { prompts } = standard;
-
+  console.log('\n\n\n----- Objectives passed in: ', objectives);
   // a new goal does not require objectives, but may include them
+  let updatedObjectives = [];
   if (objectives.length) {
-    const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
+    updatedObjectives = await Promise.all(objectives.map(async (objective) => {
       if (objective.objectiveTemplateId) {
         const orOptions = [
           { title: objective.title },
@@ -744,17 +745,17 @@ export async function updateExistingStandardGoal(
         goalId: goal.id,
       });
     }));
-
-    // Delete any potentially removed objectives.
-    await Objective.destroy({
-      where: {
-        goalId: goal.id,
-        id: {
-          [Op.notIn]: updatedObjectives.map((o) => o.id),
-        },
-      },
-    });
   }
+
+  // Delete any potentially removed objectives (regardless if we have any objectives).
+  await Objective.destroy({
+    where: {
+      goalId: goal.id,
+      id: {
+        [Op.notIn]: updatedObjectives.map((o) => o.id),
+      },
+    },
+  });
 
   if (requiresPrompts) {
     const existingResponse = await GoalFieldResponse.findOne({
