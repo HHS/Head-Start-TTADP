@@ -794,6 +794,7 @@ export async function standardGoalsForRecipient(
     goalIds = [],
     ...filters
   },
+  onlyApprovedObjectives = false,
 ) {
   const { goal: scopes } = await filtersToScopes(filters, {});
 
@@ -831,6 +832,19 @@ export async function standardGoalsForRecipient(
   });
 
   const ids = goals.map((g: { id: number }) => g.id);
+
+  // If param is true only return objectives created via activityReport if the AR is approved.
+  const objectiveWhere = onlyApprovedObjectives
+    ? {
+      [Op.or]: [
+        { createdVia: 'rtr' },
+        {
+          createdVia: 'activityReport',
+          onApprovedAR: true,
+        },
+      ],
+    }
+    : {};
 
   const rows = await Goal.findAll({
     attributes: [
@@ -935,6 +949,7 @@ export async function standardGoalsForRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
+        where: objectiveWhere,
         order: [
           [sequelize.col('activityReportObjectives.activityReport.endDate'), 'DESC'],
           ['createdAt', 'DESC'],

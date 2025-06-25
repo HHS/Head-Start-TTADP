@@ -134,7 +134,7 @@ export async function getGoalsByRecipient(req, res) {
     const { recipientId, regionId } = req.params;
 
     // Get goals for recipient.
-    const recipientGoals = await standardGoalsForRecipient(recipientId, regionId, req.query);
+    const recipientGoals = await standardGoalsForRecipient(recipientId, regionId, req.query, true);
     res.json(recipientGoals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
