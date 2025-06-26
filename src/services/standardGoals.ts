@@ -191,7 +191,24 @@ export async function createObjectivesForGoal(goal, objectives) {
     // Check if objective exists.
     let savedObjective;
     if (!isNew && id && !createNewObjectives) {
-      savedObjective = await Objective.findByPk(id);
+      // We now allow selecting of COMPLETE and SUSPENDED objectives.
+      // Find the objective by ID and ensure its parent goal is not closed.
+      savedObjective = await Objective.findOne({
+        where: {
+          id,
+          goalId: goal.id,
+        },
+        include: [
+          {
+            model: Goal,
+            as: 'goal',
+            required: true,
+            where: {
+              status: { [Op.not]: GOAL_STATUS.CLOSED },
+            },
+          },
+        ],
+      });
     }
 
     if (savedObjective) {
@@ -208,15 +225,26 @@ export async function createObjectivesForGoal(goal, objectives) {
       // Reuse an existing Objective:
       // - It is on the same goal.
       // - Has the same title.
-      // - And status is not completed.
+      // - And parent goal is not closed.
+      // - If the objective parent goal is NOT closed and the objective is SUSPENDED
       // Note: Values like 'Topics' will be pulled in from the existing objective.
       const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
           title: objectiveTitle,
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
         },
+        include: [
+          {
+            model: Goal,
+            as: 'goal',
+            required: true,
+            where: {
+              status: { [Op.not]: GOAL_STATUS.CLOSED },
+            },
+          },
+        ],
       });
+
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
@@ -225,6 +253,18 @@ export async function createObjectivesForGoal(goal, objectives) {
           createdVia: 'activityReport',
         });
       } else {
+        // If the objective status is complete or suspended
+        // and parent goal is not closed set it to not started.
+        if (existingObjective.status === OBJECTIVE_STATUS.COMPLETE
+          || existingObjective.status === OBJECTIVE_STATUS.SUSPENDED) {
+          // Update the existing objective.
+          await existingObjective.update({
+            ...updatedObjective,
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+          }, { individualHooks: true });
+        }
+
+        // Pass to the savedObjective object.
         savedObjective = existingObjective;
       }
     }

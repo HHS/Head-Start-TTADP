@@ -1204,7 +1204,6 @@ describe('standardGoal service', () => {
     });
 
     it('should create new objectives for new items', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1217,7 +1216,6 @@ describe('standardGoal service', () => {
 
       const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
       expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
         title: 'Objective title 2',
         goalId: goal.id,
@@ -1230,27 +1228,32 @@ describe('standardGoal service', () => {
     });
 
     it('should update existing objectives', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue({
-        id: 1,
-        title: 'Objective title 1',
-        onApprovedAR: false,
-        update: jest.fn().mockResolvedValue(true),
-        save: jest.fn().mockResolvedValue(true),
-        toJSON: () => ({
+      Objective.findOne = jest.fn()
+        .mockImplementationOnce(() => Promise.resolve({
           id: 1,
           title: 'Objective title 1',
-          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          onApprovedAR: false,
+          update: jest.fn().mockResolvedValue(true),
+          save: jest.fn().mockResolvedValue(true),
+          toJSON: () => ({
+            id: 1,
+            title: 'Objective title 1',
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+            goalId: goal.id,
+          }),
+        }))
+        .mockImplementationOnce(() => Promise.resolve(null));
+
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 2,
+          title: 'Objective title 2',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           goalId: goal.id,
         }),
       });
 
-      Objective.findOne = jest.fn().mockResolvedValue(null);
-
       const result = await createObjectivesForGoal(goal, objectives);
-
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
-      expect(Objective.findByPk).toHaveBeenCalledWith(1);
-
       expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
         title: 'Objective title 2',
         goalId: goal.id,
@@ -1264,11 +1267,13 @@ describe('standardGoal service', () => {
     });
 
     it('should reuse an existing objective if conditions match', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue({
         id: 2,
         title: 'Objective title 2',
         status: OBJECTIVE_STATUS.NOT_STARTED,
+        update: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
         toJSON: () => ({
           id: 2,
           title: 'Objective title 2',
@@ -1278,14 +1283,63 @@ describe('standardGoal service', () => {
 
       const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(Objective.findByPk).toHaveBeenCalledWith(1);
-      expect(Objective.findOne).toHaveBeenCalledWith({
-        where: expect.objectContaining({
+      expect(Objective.findOne).toHaveBeenCalledTimes(2);
+      expect(Objective.findOne).toHaveBeenCalledWith(expect.objectContaining({
+        include: [
+          {
+            as: 'goal',
+            model: expect.any(Function),
+            required: true,
+            where: {
+              status: expect.objectContaining({
+                [Symbol.for('not')]: 'Closed',
+              }),
+            },
+          },
+        ],
+        where: {
           goalId: goal.id,
           title: 'Objective title 2',
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-        }),
-      });
+        },
+      }));
+
+      expect(Objective.findOne).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        include: [
+          {
+            as: 'goal',
+            model: expect.any(Function),
+            required: true,
+            where: {
+              status: expect.objectContaining({
+                [Symbol.for('not')]: 'Closed',
+              }),
+            },
+          },
+        ],
+        where: {
+          goalId: goal.id,
+          id: 1,
+        },
+      }));
+
+      expect(Objective.findOne).toHaveBeenNthCalledWith(2, expect.objectContaining({
+        include: [
+          {
+            as: 'goal',
+            model: expect.any(Function),
+            required: true,
+            where: {
+              status: expect.objectContaining({
+                [Symbol.for('not')]: 'Closed',
+              }),
+            },
+          },
+        ],
+        where: {
+          goalId: goal.id,
+          title: 'Objective title 2',
+        },
+      }));
 
       expect(result[1].title).toBe('Objective title 2');
     });
@@ -1301,7 +1355,7 @@ describe('standardGoal service', () => {
         },
       ];
 
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1316,6 +1370,136 @@ describe('standardGoal service', () => {
 
       expect(result).toHaveLength(0);
       expect(Objective.create).not.toHaveBeenCalled();
+    });
+
+    it('correctly sets the objective status to NOT_STARTED when COMPLETED and the parent goal is not CLOSED', async () => {
+      const incompleteObjectives = [
+        {
+          id: 1,
+          isNew: true,
+          title: 'New Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          topics: [],
+          resources: [],
+          files: [],
+          courses: [],
+          closeSuspendReason: null,
+          closeSuspendContext: null,
+          supportType: 'supportType1',
+          goalId: goal.id,
+          createdHere: true,
+        },
+      ];
+
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      const mockUpdate = jest.fn();
+      const mockObjective = {
+        id: 1,
+        title: 'New Objective',
+        status: OBJECTIVE_STATUS.COMPLETE,
+        update: mockUpdate,
+        toJSON: () => ({
+          id: 1,
+          title: 'New Objective',
+          status: OBJECTIVE_STATUS.COMPLETE,
+          goalId: goal.id,
+        }),
+      };
+      Objective.findOne = jest.fn().mockResolvedValue(mockObjective);
+      const result = await createObjectivesForGoal(goal, incompleteObjectives);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.NOT_STARTED);
+
+      // expect Objective.update to have been called to set the objective status to NOT_STARTED.
+      expect(mockUpdate).toHaveBeenCalledWith(
+        {
+          goalId: 1,
+          title: 'New Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+        },
+        {
+          individualHooks: true,
+        },
+      );
+    });
+
+    it('correctly sets the objective status to NOT_STARTED when SUSPENDED and the parent goal is not CLOSED', async () => {
+      const incompleteObjectives = [
+        {
+          id: 1,
+          isNew: true,
+          title: 'New Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          topics: [],
+          resources: [],
+          files: [],
+          courses: [],
+          closeSuspendReason: null,
+          closeSuspendContext: null,
+          supportType: 'supportType1',
+          goalId: goal.id,
+          createdHere: true,
+        },
+      ];
+
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      const mockUpdate = jest.fn();
+      const mockObjective = {
+        id: 1,
+        title: 'New Objective',
+        status: OBJECTIVE_STATUS.SUSPENDED,
+        update: mockUpdate,
+        toJSON: () => ({
+          id: 1,
+          title: 'New Objective',
+          status: OBJECTIVE_STATUS.COMPLETE,
+          goalId: goal.id,
+        }),
+      };
+      Objective.findOne = jest.fn().mockResolvedValue(mockObjective);
+      const result = await createObjectivesForGoal(goal, incompleteObjectives);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe(OBJECTIVE_STATUS.NOT_STARTED);
+
+      // expect Objective.update to have been called to set the objective status to NOT_STARTED.
+      expect(mockUpdate).toHaveBeenCalledWith(
+        {
+          goalId: 1,
+          title: 'New Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+        },
+        {
+          individualHooks: true,
+        },
+      );
+    });
+
+    it('creates a new goal when the parent goal is CLOSED', async () => {
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 2,
+          title: 'Objective title 2',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
+
+      const closedGoal = {
+        id: 1,
+        status: GOAL_STATUS.CLOSED,
+      };
+
+      const result = await createObjectivesForGoal(closedGoal, objectives);
+      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Objective title 2',
+        goalId: closedGoal.id,
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        createdVia: 'activityReport',
+      }));
     });
   });
 });
