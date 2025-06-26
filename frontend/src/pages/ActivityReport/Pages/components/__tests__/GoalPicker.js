@@ -137,6 +137,7 @@ describe('GoalPicker', () => {
       objectives: [{
         topics: [],
         id: 1,
+        label: 'Objective 1',
         title: 'Objective 1',
         resources: [],
         ttaProvided: '',
