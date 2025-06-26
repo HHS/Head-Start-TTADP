@@ -99,11 +99,24 @@ export default function Objectives({
 
   const firstObjective = fields.length < 1;
   useEffect(() => {
-    if (objectiveOptionsLoaded && firstObjective && options && options.length === 1) {
-      // Instead of append, you can use setValue to directly set the first objective
-      setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
+    // Move the reApplyObjective check inside the effect
+    if (objectiveOptionsLoaded && options && options.length === 1) {
+      const shouldApplyObjective = firstObjective || (fields.length === 1 && !fields[0].label);
+      if (shouldApplyObjective) {
+        // Instead of append, you can use setValue to directly set the first objective
+        setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
+      }
     }
-  }, [firstObjective, options.length, objectiveOptionsLoaded, isMonitoring, options, setValue]);
+  }, [
+    firstObjective,
+    options.length,
+    objectiveOptionsLoaded,
+    isMonitoring,
+    options,
+    setValue,
+    fieldArrayName,
+    fields,
+  ]);
 
   const removeObjective = (index) => {
     // Remove the objective.
