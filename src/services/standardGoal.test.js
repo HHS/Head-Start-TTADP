@@ -21,6 +21,7 @@ import db, {
   Role,
   UserRole,
   CollaboratorType,
+  User,
 } from '../models';
 import {
   goalForRtr,
@@ -995,6 +996,162 @@ describe('standardGoal service', () => {
 
       // Verify the statuses object is returned
       expect(result.statuses).toBeDefined();
+    });
+  });
+
+  describe('standardGoalsForRecipient Only Approved Objectives Param', () => {
+    let user;
+    let recipientForParam;
+    let grant;
+    let goalTemplate;
+    let goal;
+
+    let createdViaRtrObjective;
+    let createdViaArButNotApprovedObjective;
+    let createdViaArAndApprovedObjective;
+
+    let creatorCollabType;
+
+    beforeAll(async () => {
+      user = await User.create({
+        id: faker.datatype.number({ min: 1000 }),
+        homeRegionId: 1,
+        name: 'Test Param User',
+        hsesUsername: 'Test Param User',
+        hsesUserId: 'Test Param User',
+        lastLogin: new Date(),
+      });
+
+      creatorCollabType = await CollaboratorType.findOrCreate({
+        where: { name: 'Creator' },
+        defaults: { name: 'Creator' },
+        validForId: 1,
+      });
+
+      recipientForParam = await createRecipient({});
+
+      grant = await createGrant({
+        recipientId: recipientForParam.id,
+        regionId: 1,
+      });
+
+      goalTemplate = await createGoalTemplate({
+        name: 'Test Param Template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      goal = await Goal.create({
+        name: 'Goal 1',
+        status: GOAL_STATUS.NOT_STARTED,
+        createdAt: new Date(),
+        goalTemplateId: goalTemplate.id,
+        grantId: grant.id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: goal.id,
+        userId: user.id,
+        collaboratorTypeId: creatorCollabType[0].id,
+      });
+
+      createdViaRtrObjective = await Objective.create({
+        title: 'Created via RTR Objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        goalId: goal.id,
+        createdVia: 'rtr',
+        onApprovedAR: true,
+      });
+
+      createdViaArButNotApprovedObjective = await Objective.create({
+        title: 'Created via AR but not approved Objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        goalId: goal.id,
+        createdVia: 'activityReport',
+        onApprovedAR: false,
+      });
+
+      createdViaArAndApprovedObjective = await Objective.create({
+        title: 'Created via AR and approved Objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        goalId: goal.id,
+        createdVia: 'activityReport',
+        onApprovedAR: true,
+      });
+    });
+
+    afterAll(async () => {
+      // cleanup all the crap you created for this test.
+      await GoalCollaborator.destroy({
+        where: {
+          goalId: goal.id,
+        },
+        force: true,
+      });
+      await Objective.destroy({
+        where: {
+          id: [
+            createdViaRtrObjective.id,
+            createdViaArButNotApprovedObjective.id,
+            createdViaArAndApprovedObjective.id,
+          ],
+        },
+        force: true,
+      });
+      await Goal.destroy({ where: { id: goal.id }, force: true });
+      await GoalTemplate.destroy({ where: { id: goalTemplate.id }, force: true });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
+      await Recipient.destroy({ where: { id: recipientForParam.id }, force: true });
+      await CollaboratorType.destroy({
+        where: { id: creatorCollabType[0].id },
+        force: true,
+      });
+      await User.destroy({ where: { id: user.id }, force: true });
+    });
+
+    it('returns goals for recipient with default params', async () => {
+      const result = await standardGoalsForRecipient(
+        recipientForParam.id,
+        grant.regionId,
+        {},
+      );
+      expect(result.count).toBe(1);
+      expect(result.goalRows[0].objectives.length).toBe(3);
+
+      // we expect two objectives find them by title.
+      const createdViaRtrObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via RTR Objective',
+      );
+      expect(createdViaRtrObjectiveToAssert).toBeDefined();
+
+      const createdViaArButNotApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via AR and approved Objective',
+      );
+      expect(createdViaArButNotApprovedObjectiveToAssert).toBeDefined();
+
+      const createdViaArAndApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via AR and approved Objective',
+      );
+      expect(createdViaArAndApprovedObjectiveToAssert).toBeDefined();
+    });
+
+    it('returns only approved objectives and rtr', async () => {
+      const result = await standardGoalsForRecipient(
+        recipientForParam.id,
+        grant.regionId,
+        {},
+        true,
+      );
+      expect(result.count).toBe(1);
+      expect(result.goalRows[0].objectives.length).toBe(2);
+
+      const createdViaRtrObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via RTR Objective',
+      );
+      expect(createdViaRtrObjectiveToAssert).toBeDefined();
+      const createdViaArAndApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via AR and approved Objective',
+      );
+      expect(createdViaArAndApprovedObjectiveToAssert).toBeDefined();
     });
   });
 
