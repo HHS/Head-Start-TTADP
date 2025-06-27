@@ -11,4 +11,5 @@ bound_services:
   - ttahub-dev-red
   - ttahub-dev-blue
   - ttahub-dev-gold
+  - ttahub-dev-pink
   - ttahub-staging
