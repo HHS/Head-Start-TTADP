@@ -24,7 +24,7 @@ const defaultObjective = {
   topics: [],
   title: 'This is an objective title',
   ttaProvided: '<p><ul><li>What</li></ul></p>',
-  status: 'Not started',
+  status: 'Not Started',
   ids: [1],
   objectiveCreatedHere: true,
 };
