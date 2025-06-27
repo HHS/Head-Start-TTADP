@@ -333,7 +333,22 @@ jobs:
         command: |
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
-
+    - run:
+        name: Merge coverage
+        when: always
+        command: |
+          target_dir="all-coverage-json"
+          report_dir="coverage-report"
+          mkdir -p ${target_dir}
+          
+          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
+            relative_path="${file#./}"
+            new_name="${relative_path//\//-}"
+            new_path="${target_dir}/${new_name}"
+            cp "$file" "${new_path}"
+          done
+          npx nyc merge ${target_dir} ${target_dir}/merged-coverage.json
+          npx nyc report -t ${target_dir} --report-dir ${report_dir} --reporter=html --reporter=cobertura
     - run:
         name: Check coverage for modified lines
         when: always
@@ -366,6 +381,8 @@ jobs:
     - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
+    - store_test_results:
+        path: reports/
 
   test_similarity_api:
     executor: docker-python-executor
