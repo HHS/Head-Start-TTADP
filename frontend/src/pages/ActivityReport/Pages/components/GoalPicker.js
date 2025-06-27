@@ -152,7 +152,7 @@ const GoalPicker = ({
   const onKeep = async () => {
     const savedObjectives = goalForEditing.objectives.map((o) => ({ ...o }));
     onChangeGoal(selectedGoal);
-    setValue('goalForEditing.objectives', savedObjectives);
+    setValue('goalForEditing.objectives', savedObjectives.map((o) => ({ ...o, keepObjective: true })));
     modalRef.current.toggleModal();
   };
 
