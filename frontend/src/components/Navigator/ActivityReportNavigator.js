@@ -660,12 +660,14 @@ const ActivityReportNavigator = ({
   };
 
   const onSaveDraft = async () => {
-    try {
-      setSavingLoadScreen();
-      await onSaveForm(); // save the form data to the server
-      updateShowSavedDraft(true); // show the saved draft message
-    } finally {
-      setIsAppLoading(false);
+    if (isDirty) {
+      try {
+        setSavingLoadScreen();
+        await onSaveForm(); // save the form data to the server
+        updateShowSavedDraft(true); // show the saved draft message
+      } finally {
+        setIsAppLoading(false);
+      }
     }
   };
 
