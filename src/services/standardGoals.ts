@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniqBy, uniq } from 'lodash';
+import { uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
@@ -33,7 +33,6 @@ const {
   Role,
   CollaboratorType,
   GoalCollaborator,
-  ActivityReportGoalFieldResponse,
 } = db;
 
 interface IObjective {
@@ -208,13 +207,14 @@ export async function createObjectivesForGoal(goal, objectives) {
       // Reuse an existing Objective:
       // - It is on the same goal.
       // - Has the same title.
-      // - And status is not completed.
       // Note: Values like 'Topics' will be pulled in from the existing objective.
       const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
           title: objectiveTitle,
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
+          // We don't want to duplicate objectives if they already exist.
+          // TODO: If we enable objective templates ensure the parent goal is not 'closed'.
+          // status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
         },
       });
       if (!existingObjective) {
