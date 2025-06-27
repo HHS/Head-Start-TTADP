@@ -251,10 +251,11 @@ This application consists of multiple deployed environments:
 | :---------- | :-------------------------------------------- | :----------
 | prod        | https://ttahub.ohs.acf.hhs.gov                | autodeployed from `production`, live site
 | staging     | https://tta-smarthub-staging.app.cloud.gov/   | autodeployed from `main`, pre-prod stable
-| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/   | testing
-| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/  | testing
-| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/ | testing
-| dev-gold    | https://tta-smarthub-dev-gold.app.cloud.gov/  | testing
+| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/   | 
+| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/  | 
+| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/ | 
+| dev-gold    | https://tta-smarthub-dev-gold.app.cloud.gov/  | 
+| dev-pink    | https://tta-smarthub-dev-pink.app.cloud.gov/  | 
 
 ### CI/CD with CircleCI
 

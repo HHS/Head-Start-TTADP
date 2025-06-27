@@ -74,6 +74,7 @@ app.use((req, res, next) => {
         'wss://tta-smarthub-dev-blue.app.cloud.gov',
         'wss://tta-smarthub-dev-red.app.cloud.gov',
         'wss://tta-smarthub-dev-gold.app.cloud.gov',
+        'wss://tta-smarthub-dev-pink.app.cloud.gov',
       ],
     },
   });
