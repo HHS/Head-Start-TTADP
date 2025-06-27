@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.2-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.2-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -237,16 +237,16 @@ jobs:
     - restore_cache:
         keys:
         # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v15-yarn-deps-
+        - v16-yarn-deps-
     - run: yarn deps
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -333,8 +333,10 @@ jobs:
         command: |
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
+
     - run:
         name: Check coverage for modified lines
+        when: always
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
@@ -345,24 +347,22 @@ jobs:
           else
             echo "Not a PR build. Skipping coverage check."
           fi
-        when: always
     - run:
         name: Summarize coverage
+        when: always
         command: |
           chmod +x ./tools/summarize-coverageCLI.js
           node ./tools/summarize-coverageCLI.js \
             ./coverage/coverage-final.json \
             90
-        when: always
     - run:
         name: Compress coverage artifacts
-        command: tar -cvzf backend-coverage-artifacts.tar coverage/
+        command: zip backend-coverage-artifacts.zip coverage/
+        when: always
     - store_artifacts:
-        path: coverage/
+        path: backend-coverage-artifacts.zip
     - store_artifacts:
-        path: backend-coverage-artifacts.tar
-    - store_test_results:
-        path: reports/
+        path: coverage-report/
     - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
@@ -588,8 +588,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v15-yarn-deps-
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run: |
         yarn deps
         yarn build
@@ -744,12 +744,31 @@ commands:
     - attach_workspace:
         at: .
     - run:
-        name: Start server
+        name: Start backend (8080) & watch logs
         command: |
-          yarn playwright install
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
-          yarn start:ci
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:web
+        background: true
+    - run:
+        name: Start frontend (3000) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          export TTA_SMART_HUB_URI="http://localhost:3000"
+          yarn playwright install
+          yarn client
+        background: true
+    - run:
+        name: Start testing server (9999) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:testingonly
         background: true
     - run:
         name: Run migrations ci
@@ -759,11 +778,15 @@ commands:
         command: yarn db:seed:ci
     - run:
         name: Wait for server to start
-        command: ./bin/ping-server 3000
+        command: |
+          ./bin/ping-server 3000 # frontend
+          ./bin/ping-server 9999 localhost "/testingonly" # testonly
+          #./bin/ping-server 8080 localhost "/health" # backend
+          sleep 30s # there is no way to check backend health without auth
     - run:
         name: << parameters.cmd >>
         command: |
-          export TTA_SMART_HUB_URI=http://localhost:3000
+          export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
           << parameters.cmd >>
     - store_artifacts:
