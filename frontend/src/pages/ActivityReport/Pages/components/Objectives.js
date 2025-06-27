@@ -106,16 +106,26 @@ export default function Objectives({
         // Instead of append, you can use setValue to directly set the first objective
         setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
       }
+    } else if (
+      objectiveOptionsLoaded
+      && options
+      && options.length > 1
+      && fields.length === 1
+      && fields[0].label === 'Create a new objective'
+      && fields[0].keepObjective !== true
+    ) {
+      // Clear the selection if "Create a new objective" is selected and there are multiple options
+      setValue(fieldArrayName, []);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    firstObjective,
-    options.length,
     objectiveOptionsLoaded,
-    isMonitoring,
-    options,
+    options, // options is memoized, so it's safe to use directly
+    fields, // fields is an array from useFieldArray, safe to use directly
     setValue,
     fieldArrayName,
-    fields,
+    isMonitoring,
+    firstObjective,
   ]);
 
   const removeObjective = (index) => {
