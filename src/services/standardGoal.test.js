@@ -3,6 +3,7 @@ import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
+import { before } from 'cheerio/lib/api/manipulation';
 import db, {
   ActivityReportGoal,
   ActivityReportObjective,
@@ -39,7 +40,6 @@ import {
 } from '../testUtils';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
-import { before } from 'cheerio/lib/api/manipulation';
 
 describe('standardGoal service', () => {
   let recipient;
@@ -1503,68 +1503,4 @@ describe('standardGoal service', () => {
       }));
     });
   });
-  describe('createObjectivesForGoal objective life cycle tests', () => {
-    /*
-      This tests cases for when we should use and existing objective, 
-      vs when we should create a new objective. We now expose CLOSED and SUSPENDED
-      objectives on the AR objective drop down. This means if the user selects a CLOSED or SUSPENDED objective
-      we need to ensure that the state of the parent goal is not CLOSED.
-      If the parent goal is CLOSED, we should create a new objective with a status of NOT_STARTED.
-      If the parent goal is not CLOSED, we should update the existing objective to NOT_STARTED.
-    */
-    let recipient;
-    let grant;
-    let goalTemplate;
-
-    let openGoal;
-    let closedGoal;
-
-    let openObjective;
-    let completeObjective;
-    let suspendedObjective;
-
-    beforeAll(async () => {
-      // Create a recipient for the tests.
-      recipient = await createRecipient({});
-
-      // Create a grant for the recipient.
-      grant = await createGrant({
-        recipientId: recipient.id,  
-      });
-   
-      // Create a goal template for the tests.
-      goalTemplate = await createGoalTemplate({
-          name: 'Goal Template for Objective Tests',
-          creationMethod: CREATION_METHOD.CURATED,
-        });
-
-      // Create an open goal.
-      openGoal == await Goal.create({
-          grantId: grant.id,
-          goalTemplateId: goalTemplate.id,
-          status: GOAL_STATUS.IN_PROGRESS,
-        });
-
-      // Create a closed goal.
-      closedGoal = await Goal.create({
-        grantId: grant.id,
-        goalTemplateId: goalTemplate.id,
-        status: GOAL_STATUS.CLOSED,
-      });
-
-      // Create an open objective.
-      openObjective = await Objective.create({
-          title: 'Open Objective for Life Cycle Tests',
-          goalId: openGoal.id,
-          status: OBJECTIVE_STATUS.IN_PROGRESS,
-        });
-
-    });
-
-    afterAll(async () => {
-      
-    });
-
-    it('', async () => {
-    });
 });
