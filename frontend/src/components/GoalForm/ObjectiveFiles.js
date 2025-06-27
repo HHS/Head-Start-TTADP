@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Label, Radio, Fieldset, FormGroup, ErrorMessage, Alert,
 } from '@trussworks/react-uswds';
-import QuestionTooltip from './QuestionTooltip';
+import QuestionTooltip from '../QuestionTooltip';
 import ObjectiveFileUploader from '../FileUploader/ObjectiveFileUploader';
 import './ObjectiveFiles.scss';
 

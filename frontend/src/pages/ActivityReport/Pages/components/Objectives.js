@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import Objective from './Objective';
@@ -14,6 +14,7 @@ export default function Objectives({
   citationOptions,
   rawCitations,
   isMonitoringGoal,
+  objectiveOptionsLoaded,
 }) {
   const { errors, getValues, setValue } = useFormContext();
   const isMonitoring = citationOptions && citationOptions.length > 0;
@@ -81,18 +82,51 @@ export default function Objectives({
     setUpdatedUsedObjectiveIds();
   };
 
-  const options = [
+  // filter out used objectives and return them in a format that react-select understands
+  const filteredObjectiveOptions = objectiveOptions
+    .filter((objective) => !usedObjectiveIds.includes(objective.value))
+    .map((objective) => ({
+      ...objective,
+      label: objective.title,
+      value: objective.value,
+      isNew: false,
+    }));
+
+  const options = useMemo(() => [
+    ...filteredObjectiveOptions,
     NEW_OBJECTIVE(isMonitoring),
-    // filter out used objectives and return them in them in a format that react-select understands
-    ...objectiveOptions.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
-      (objective) => ({
-        ...objective,
-        label: objective.title,
-        value: objective.value,
-        isNew: false,
-      }),
-    ),
-  ];
+  ], [filteredObjectiveOptions, isMonitoring]);
+
+  const firstObjective = fields.length < 1;
+  useEffect(() => {
+    // Move the reApplyObjective check inside the effect
+    if (objectiveOptionsLoaded && options && options.length === 1) {
+      const shouldApplyObjective = firstObjective || (fields.length === 1 && !fields[0].label);
+      if (shouldApplyObjective) {
+        // Instead of append, you can use setValue to directly set the first objective
+        setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
+      }
+    } else if (
+      objectiveOptionsLoaded
+      && options
+      && options.length > 1
+      && fields.length === 1
+      && fields[0].label === 'Create a new objective'
+      && fields[0].keepObjective !== true
+    ) {
+      // Clear the selection if "Create a new objective" is selected and there are multiple options
+      setValue(fieldArrayName, []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    objectiveOptionsLoaded,
+    options, // options is memoized, so it's safe to use directly
+    fields, // fields is an array from useFieldArray, safe to use directly
+    setValue,
+    fieldArrayName,
+    isMonitoring,
+    firstObjective,
+  ]);
 
   const removeObjective = (index) => {
     // Remove the objective.
@@ -101,7 +135,6 @@ export default function Objectives({
     setUpdatedUsedObjectiveIds();
   };
 
-  const firstObjective = fields.length < 1;
   return (
     <>
       {/*
@@ -109,7 +142,6 @@ export default function Objectives({
         afterwards, it does something slightly different and is shown within
         each objective
       */}
-
       {firstObjective
         ? (
           <ObjectiveSelect
@@ -178,6 +210,7 @@ Objectives.propTypes = {
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
+  objectiveOptionsLoaded: PropTypes.bool.isRequired,
 };
 
 Objectives.defaultProps = {

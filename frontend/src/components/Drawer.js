@@ -32,11 +32,17 @@ export default function Drawer({
   useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
 
   useEffect(() => {
-    const triggerElement = triggerRef.current;
+    const triggerElement = triggerRef ? triggerRef.current : null;
 
-    if (triggerElement) triggerElement.addEventListener('click', () => setIsOpen(true));
+    const openDrawer = () => setIsOpen(true);
+
+    if (triggerElement) {
+      triggerElement.addEventListener('click', openDrawer);
+    }
     return () => {
-      if (triggerElement) triggerElement.removeEventListener('click', () => setIsOpen(true));
+      if (triggerElement) {
+        triggerElement.removeEventListener('click', openDrawer);
+      }
     };
   }, [triggerRef]);
 
@@ -54,18 +60,6 @@ export default function Drawer({
     }
     return undefined;
   }, [isOpen]);
-
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-  }, [setIsOpen]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', onEscape, false);
-    return () => {
-      document.removeEventListener('keydown', onEscape, false);
-      setIsOpen(false);
-    };
-  }, [onEscape]);
 
   const classNames = [
     'smart-hub-drawer',
@@ -115,8 +109,8 @@ export default function Drawer({
 
             <div
               className="overflow-y-auto padding-1 margin-1"
-          // eslint-disable-next-line
-          tabIndex="0"
+              // eslint-disable-next-line
+              tabIndex="0"
             >
               {children}
             </div>

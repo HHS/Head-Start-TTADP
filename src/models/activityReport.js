@@ -141,9 +141,26 @@ export default (sequelize, DataTypes) => {
     },
     numberOfParticipants: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    numberOfParticipantsInPerson: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    numberOfParticipantsVirtually: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     deliveryMethod: {
       type: DataTypes.STRING,
+    },
+    activityReason: {
+      type: DataTypes.STRING,
+    },
+    reason: {
+      // Keep this for historical data in the db.
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true,
     },
     version: {
       type: DataTypes.INTEGER,
@@ -178,9 +195,6 @@ export default (sequelize, DataTypes) => {
     virtualDeliveryType: {
       type: DataTypes.STRING,
     },
-    reason: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-    },
     participants: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
@@ -205,8 +219,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
-          const requiredForSubmission = [
-            this.numberOfParticipants,
+          let requiredForSubmission = [
             this.deliveryMethod,
             this.duration,
             this.endDate,
@@ -214,12 +227,26 @@ export default (sequelize, DataTypes) => {
             this.activityRecipientType,
             this.requester,
             this.targetPopulations,
-            this.reason,
             this.participants,
             this.topics,
             this.ttaType,
             this.creatorRole,
+            this.activityReason,
+            this.language,
           ];
+
+          if (this.deliveryMethod === 'hybrid') {
+            requiredForSubmission = [
+              this.numberOfParticipantsInPerson,
+              this.numberOfParticipantsVirtually,
+              ...requiredForSubmission,
+            ];
+          } else {
+            requiredForSubmission = [
+              this.numberOfParticipants,
+              ...requiredForSubmission,
+            ];
+          }
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
             // Require fields when report is not a draft
