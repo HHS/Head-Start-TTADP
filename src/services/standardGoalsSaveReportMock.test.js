@@ -124,15 +124,8 @@ describe('Goals DB service', () => {
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
 
       Objective.destroy = jest.fn();
-      Objective.findOne = jest.fn();
-      Objective.create = jest.fn().mockResolvedValue({
-        id: mockObjectiveId,
-        toJSON: jest.fn().mockResolvedValue({ id: mockObjectiveId }),
-      });
 
-      Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: mockObjectiveId }]);
-      Objective.update = jest.fn().mockResolvedValue({ id: mockObjectiveId });
-      Objective.findByPk = jest.fn().mockResolvedValue({
+      Objective.findOne = jest.fn().mockResolvedValue({
         id: mockObjectiveId,
         update: existingObjectiveUpdate,
         save: jest.fn(),
@@ -141,6 +134,14 @@ describe('Goals DB service', () => {
           update: existingObjectiveUpdate,
         }),
       });
+
+      Objective.create = jest.fn().mockResolvedValue({
+        id: mockObjectiveId,
+        toJSON: jest.fn().mockResolvedValue({ id: mockObjectiveId }),
+      });
+
+      Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: mockObjectiveId }]);
+      Objective.update = jest.fn().mockResolvedValue({ id: mockObjectiveId });
     });
 
     describe('with removed goals', () => {
@@ -409,6 +410,9 @@ describe('Goals DB service', () => {
         templateName: 'title',
         standard: 'Standard',
       });
+
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+
       await saveStandardGoalsForReport([goalWithNewObjective], 1, { id: mockActivityReportId });
       expect(Objective.create).toHaveBeenCalledWith({
         createdVia: 'activityReport',
@@ -440,8 +444,15 @@ describe('Goals DB service', () => {
         templateName: 'title',
         standard: 'Standard',
       });
-
-      Objective.findOne.mockResolvedValue({ id: mockObjectiveId });
+      Objective.findOne.mockResolvedValue({
+        id: mockObjectiveId,
+        update: existingObjectiveUpdate,
+        save: jest.fn(),
+        toJSON: jest.fn().mockResolvedValue({
+          id: mockObjectiveId,
+          update: existingObjectiveUpdate,
+        }),
+      });
       await saveStandardGoalsForReport([existingGoal], 1, { id: mockActivityReportId });
       expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });

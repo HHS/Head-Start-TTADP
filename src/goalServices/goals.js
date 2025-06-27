@@ -33,10 +33,6 @@ import {
   SOURCE_FIELD,
   CREATION_METHOD,
 } from '../constants';
-import {
-  cacheObjectiveMetadata,
-  cacheGoalMetadata,
-} from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
 import changeGoalStatus from './changeGoalStatus';
@@ -48,9 +44,6 @@ import { reduceGoals } from './reduceGoals';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import {
-  createObjectivesForGoal,
-  removeUnusedGoalsObjectivesFromReport,
-  removeUnusedGoalsCreatedViaAr,
   saveStandardGoalsForReport,
 } from '../services/standardGoals';
 
