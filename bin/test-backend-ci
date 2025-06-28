@@ -113,8 +113,6 @@ main(){
     # Merge coverage reports
     node ./tools/merge-coverage.js
 
-	
-
     exit "$exit_code"
 }
 
