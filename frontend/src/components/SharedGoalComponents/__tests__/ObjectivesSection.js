@@ -55,12 +55,14 @@ describe('ObjectivesSection', () => {
   it('removes an objective when "Remove this objective" button is clicked', async () => {
     renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
     reset({
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: false }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{
+        objectiveId: '1', value: 'Objective 1', onAR: false, status: 'In Progress',
+      }],
     });
     const objectives = await screen.findAllByLabelText(/tta objective/i);
     expect(objectives).toHaveLength(2);
-    fireEvent.click(screen.getByText('Remove this objective'));
-    expect(screen.queryByLabelText(/tta objective/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Remove this objective')).toHaveLength(2);
+    expect(screen.queryAllByText(/tta objective/i).length).toBe(2);
   });
 
   it('renders ReadOnlyField when onAR is true', async () => {
@@ -91,5 +93,18 @@ describe('ObjectivesSection', () => {
     });
 
     expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
+  });
+
+  it('shows the readonly and remove button when onAR is false', async () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{
+        objectiveId: '1', value: 'Objective 1', onAR: false, statue: 'Suspended',
+      }],
+    });
+
+    expect(await screen.findByText('Objective 1', { selector: 'textarea' })).toBeInTheDocument();
+    // We hide the edite via css.
+    expect(screen.getAllByText('Remove this objective')).toHaveLength(2);
   });
 });
