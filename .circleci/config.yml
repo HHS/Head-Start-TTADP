@@ -959,28 +959,31 @@ commands:
           -u ${cg_username} \
           -p ${cg_password} \
           -o ${cg_org} \
-          -s ${cg_space}            
+          -s ${cg_space}
+    - run:
+        name: Set task name
+        command: |
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          echo ${TASK_NAME} >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
-        command: |+
-          set +e
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+        command: |
           cf run-task \
             tta-smarthub-<< parameters.target_env >> \
             --command "<< parameters.the_command >>" \
             --name ${TASK_NAME} \
             -m 2GB \
-            -k 2GB \
-            --wait && true
+            -k 2GB
 
-          rc=$?
-          echo "waiting for logs...."
-          sleep 15 # wait for logs
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | grep -i "error" 
-          echo "script exited with code:$rc"
-          exit ${rc}
-            
+          echo "Watching logs..."
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+
+    - run:
+      name: "Wait for task to complete"
+      command: |
+          set +e
+          ./tools/watch-task.js tta-smarthub-dev-blue ${TASK_NAME}
+
     - run:
         name: Logout of service account
         command: |
