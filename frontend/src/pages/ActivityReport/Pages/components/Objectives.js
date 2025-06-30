@@ -98,42 +98,19 @@ export default function Objectives({
   ], [filteredObjectiveOptions, isMonitoring]);
 
   const firstObjective = fields.length < 1;
-  useEffect(() => {
-    // Move the reApplyObjective check inside the effect
-    if (objectiveOptionsLoaded && options && options.length === 1) {
-      const shouldApplyObjective = firstObjective || (fields.length === 1 && !fields[0].label);
-      if (shouldApplyObjective) {
-        // Instead of append, you can use setValue to directly set the first objective
-        setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
-      }
-    } else if (
-      objectiveOptionsLoaded
-      && options
-      && options.length > 1
-      && fields.length === 1
-      && fields[0].label === 'Create a new objective'
-      && fields[0].keepObjective !== true
-    ) {
-      // Clear the selection if "Create a new objective" is selected and there are multiple options
-      setValue(fieldArrayName, []);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    objectiveOptionsLoaded,
-    options, // options is memoized, so it's safe to use directly
-    fields, // fields is an array from useFieldArray, safe to use directly
-    setValue,
-    fieldArrayName,
-    isMonitoring,
-    firstObjective,
-  ]);
-
   const removeObjective = (index) => {
     // Remove the objective.
     remove(index);
     // Update this list of available objectives.
     setUpdatedUsedObjectiveIds();
   };
+
+  useEffect(() => {
+    if (objectiveOptionsLoaded && firstObjective && options && options.length === 1) {
+      // Instead of append, you can use setValue to directly set the first objective
+      setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
+    }
+  }, [firstObjective, options.length, objectiveOptionsLoaded, isMonitoring, options, setValue]);
 
   return (
     <>
@@ -178,7 +155,7 @@ export default function Objectives({
             />
           );
         })}
-      {firstObjective ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
+      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
     </>
   );
 }
