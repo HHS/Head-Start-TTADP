@@ -8,11 +8,12 @@
     padding: 0;
   }
 
-  // Overrides the extra padding around the AR view
+  // Overrides the extra padding around the Approved AR view
   #main-content > .ttahub-activity-report-view > div {
     padding: 0;
   }
 
+  // Overrides specific to the Approved AR View
   .ttahub-activity-report-view {
     h1 {
       font-size: 31.2px;
