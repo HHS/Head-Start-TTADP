@@ -40,6 +40,20 @@ export default function ObjectivesSection({
               >
                 {field.value}
               </ReadOnlyField>
+              {
+              (field.onAR === false) && (
+                <Button
+                  type="button"
+                  className="margin-top-1"
+                  unstyled
+                  onClick={() => {
+                    remove(index);
+                  }}
+                >
+                  Remove this objective
+                </Button>
+              )
+              }
             </div>
             <div hidden={isReadOnly}>
               <FormItem
