@@ -982,7 +982,7 @@ commands:
         name: "Wait for task to complete"
         command: |
           set +e
-          ./tools/watch-task.js tta-smarthub-dev-blue ${TASK_NAME}
+          ./bin/watch-task.js tta-smarthub-dev-blue ${TASK_NAME}
 
     - run:
         name: Logout of service account
