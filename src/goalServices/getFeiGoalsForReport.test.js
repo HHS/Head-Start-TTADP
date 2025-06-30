@@ -45,10 +45,11 @@ describe('getFeiGoalsForReport', () => {
   beforeAll(async () => {
     // Create User.
     const userName = faker.random.word();
+    const idIterator = faker.helpers.uniqueArray(faker.datatype.number({ min: 1000 })).values();
 
     // User.
     user = await User.create({
-      id: faker.datatype.number({ min: 1000 }),
+      id: idIterator.next().value,
       homeRegionId: 1,
       name: userName,
       hsesUsername: userName,
