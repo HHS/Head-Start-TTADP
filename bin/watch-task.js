@@ -3,8 +3,8 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-console */
 
-import { parseArgs } from 'node:util';
-import { execSync } from 'child_process';
+const { parseArgs } = require('node:util');
+const { execSync } = require('child_process');
 
 function parse() {
   const args = process.argv.slice(2);
