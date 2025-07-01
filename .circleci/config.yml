@@ -964,7 +964,7 @@ commands:
         name: Set task name
         command: |
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          echo ${TASK_NAME} >> "$BASH_ENV"
+          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
         command: |
