@@ -977,7 +977,7 @@ commands:
             -k 2GB
 
           echo "Watching logs..."
-          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} | tee << parameters.logfile >>
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
 
     - run:
         name: "Wait for task to complete"
@@ -985,13 +985,14 @@ commands:
           set +e
           sleep 15
           ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          sleep 30
+          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
 
     - run:
         name: Logout of service account
         command: |
           # Wait for the log monitoring process to terminate
           sleep 5
-
           # Logout from Cloud Foundry
           cf logout
 
