@@ -967,6 +967,7 @@ commands:
           echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
+        background: true
         command: |
           cf run-task \
             tta-smarthub-<< parameters.target_env >> \
@@ -982,6 +983,7 @@ commands:
         name: "Wait for task to complete"
         command: |
           set +e
+          sleep 15
           ./bin/watch-task.js tta-smarthub-dev-blue ${TASK_NAME}
 
     - run:
