@@ -984,7 +984,7 @@ commands:
         command: |
           set +e
           sleep 15
-          ./bin/watch-task.js tta-smarthub-dev-blue ${TASK_NAME}
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
 
     - run:
         name: Logout of service account
