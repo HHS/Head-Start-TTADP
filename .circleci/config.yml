@@ -631,7 +631,7 @@ jobs:
       target_env:
         type: string
     steps:
-    - cf_cmd:
+    - cf_task:
         the_command: << parameters.command >>
         target_env: "<< parameters.target_env >>"
 
@@ -651,7 +651,7 @@ jobs:
         default: acf-head-start-alerts-lower
     steps:
     - checkout
-    - cf_cmd:
+    - cf_task:
         the_command: |
           node ./build/server/src/tools/importSystemCLI.js download 1
           node ./build/server/src/tools/importSystemCLI.js process 1
@@ -935,7 +935,7 @@ commands:
         paths:
         - environments
 
-  cf_cmd:
+  cf_task:
     description: "Login, run task, send notification"
     parameters:
       the_command:
@@ -977,7 +977,7 @@ commands:
             -k 2GB
 
           echo "Watching logs..."
-          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME} | tee << parameters.logfile >>
 
     - run:
         name: "Wait for task to complete"
@@ -989,10 +989,6 @@ commands:
     - run:
         name: Logout of service account
         command: |
-          # Signal the log monitoring to stop
-          CONTROL_FILE="/tmp/stop_tail"
-          touch $CONTROL_FILE
-
           # Wait for the log monitoring process to terminate
           sleep 5
 
