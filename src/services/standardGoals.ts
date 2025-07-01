@@ -552,9 +552,16 @@ export async function goalForRtr(
           'onAR',
           'status',
           'objectiveTemplateId',
+          'createdAt',
+          'updatedAt',
         ],
         model: Objective,
         as: 'objectives',
+        separate: true,
+        order: [
+          ['createdAt', 'ASC'],
+          ['updatedAt', 'ASC'],
+        ],
       },
       {
         model: GoalFieldResponse,
