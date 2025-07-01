@@ -554,10 +554,18 @@ export async function goalForRtr(
           'objectiveTemplateId',
           'createdAt',
           'updatedAt',
+          'createdVia',
+          'onApprovedAR',
         ],
         model: Objective,
         as: 'objectives',
         separate: true,
+        where: {
+          [Op.or]: [
+            { createdVia: 'rtr' },
+            { onApprovedAR: true },
+          ],
+        },
         order: [
           ['createdAt', 'ASC'],
           ['updatedAt', 'ASC'],
