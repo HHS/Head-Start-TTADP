@@ -2,7 +2,9 @@
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
-import updateGrantsRecipients, { getPersonnelField, processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
+import updateGrantsRecipients, {
+  getPersonnelField, processFiles, updateCDIGrantsWithOldGrantData, syncGeoRegionGroups,
+} from './updateGrantsRecipients';
 import db, {
   sequelize,
   Recipient,
@@ -1042,6 +1044,21 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(grantReplacementType.name).toEqual('DRS Non-Competitive Continuation');
   });
 
+  it('includes the geographicRegion and geographicRegionId', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 14869 } });
+
+    expect(grant).not.toBeNull();
+    expect(grant.geographicRegion).toBe('West');
+    expect(grant.geographicRegionId).toBe(85);
+
+    const grantWithNullGeo = await Grant.findOne({ where: { id: 7842 } });
+
+    expect(grantWithNullGeo).not.toBeNull();
+    expect(grantWithNullGeo.geographicRegion).toBeNull();
+    expect(grantWithNullGeo.geographicRegionId).toBeNull();
+  });
+
   describe('Updating GroupGrants', () => {
     let group;
     let groupGrant;
@@ -1200,6 +1217,146 @@ describe('Update grants, program personnel, and recipients', () => {
         'updateGrantsRecipients: Error updating grants:',
         'Expected all valid replaced grants to have the same recipient and region for CDI grant 8546, skipping',
       );
+    });
+  });
+
+  describe('syncGeoRegionGroups', () => {
+    let transaction;
+
+    beforeAll(async () => {
+      // Ensure test DB is clean
+      await sequelize.sync({ force: true });
+    });
+
+    beforeEach(async () => {
+      transaction = await sequelize.transaction();
+    });
+
+    afterEach(async () => {
+      await transaction.rollback();
+    });
+
+    it('adds missing GroupGrants for active grants in region', async () => {
+      // Setup
+      const regionName = 'Northeast';
+
+      const group = await Group.create({
+        name: regionName,
+        isPublic: true,
+      }, { transaction });
+
+      const grant = await Grant.create({
+        id: 1001,
+        status: 'Active',
+        geographicRegion: regionName,
+      }, { transaction });
+
+      // Confirm initially no GroupGrant
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(0);
+
+      // Call
+      await syncGeoRegionGroups({ sequelize, transaction });
+
+      // Expect
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(1);
+
+      const gg = await GroupGrant.findOne({ transaction });
+      expect(gg.groupId).toBe(group.id);
+      expect(gg.grantId).toBe(grant.id);
+    });
+
+    it('does not duplicate existing GroupGrants', async () => {
+      const regionName = 'Midwest';
+
+      const group = await Group.create({
+        name: regionName,
+        isPublic: true,
+      }, { transaction });
+
+      const grant = await Grant.create({
+        id: 1002,
+        status: 'Active',
+        geographicRegion: regionName,
+      }, { transaction });
+
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: grant.id,
+      }, { transaction });
+
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(1);
+
+      // Call
+      await syncGeoRegionGroups({ sequelize, transaction });
+
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(1);
+    });
+
+    it('removes GroupGrants for inactive grants', async () => {
+      const regionName = 'West';
+
+      const group = await Group.create({
+        name: regionName,
+        isPublic: true,
+      }, { transaction });
+
+      const inactiveGrant = await Grant.create({
+        id: 1003,
+        status: 'Inactive',
+        geographicRegion: regionName,
+      }, { transaction });
+
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: inactiveGrant.id,
+      }, { transaction });
+
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(1);
+
+      // Call
+      await syncGeoRegionGroups({ sequelize, transaction });
+
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(0);
+    });
+
+    it('does not remove replaced grants from groups', async () => {
+      const regionName = 'Southwest';
+
+      const group = await Group.create({
+        name: regionName,
+        isPublic: true,
+      }, { transaction });
+
+      const replacedGrant = await Grant.create({
+        id: 1004,
+        status: 'Inactive',
+        geographicRegion: regionName,
+      }, { transaction });
+
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: replacedGrant.id,
+      }, { transaction });
+
+      await GrantReplacements.create({
+        replacedGrantId: replacedGrant.id,
+        replacingGrantId: 2004,
+      }, { transaction });
+
+      const countBefore = await GroupGrant.count({ transaction });
+      expect(countBefore).toBe(1);
+
+      // Call
+      await syncGeoRegionGroups({ sequelize, transaction });
+
+      const countAfter = await GroupGrant.count({ transaction });
+      expect(countAfter).toBe(1);
     });
   });
 });
