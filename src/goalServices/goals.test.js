@@ -1,4 +1,7 @@
 import { Op } from 'sequelize';
+import crypto from 'crypto';
+import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   goalsByIdsAndActivityReport,
   goalByIdAndActivityReport,
@@ -30,8 +33,16 @@ import {
   Topic,
   File,
   GoalFieldResponse,
+  ObjectiveTemplate,
+  User,
+  Recipient,
+  GrantNumberLinks,
 } from '../models';
-import { GOAL_STATUS, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
+import {
+  GOAL_STATUS,
+  OBJECTIVE_STATUS,
+  SOURCE_FIELD,
+} from '../constants';
 import changeGoalStatus from './changeGoalStatus';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { auditLogger } from '../logger';
@@ -94,9 +105,282 @@ describe('Goals DB service', () => {
   const existingObjectiveUpdate = jest.fn();
 
   describe('goalsByIdsAndActivityReport', () => {
+    let user;
+
+    let goalTemplate;
+    let objectiveTemplate1; // Goal 1
+    let objectiveTemplate2; // Goal 2
+    let objectiveTemplate3; // Goal 2
+    let objectiveTemplate4; // Goal 3
+
+    let recipient;
+    let grant;
+
+    let activityReport;
+
+    let goal1;
+    let goal2;
+    let goal3;
+
+    let objective1;
+    let objective2;
+    let objective3;
+    let objective4;
+
+    const userKey = faker.datatype.number({ min: 7500 });
+    const mockUser = {
+      id: userKey,
+      homeRegionId: 1,
+      name: `user${userKey}`,
+      hsesUsername: `user${userKey}`,
+      hsesUserId: `user${userKey}`,
+      lastLogin: new Date(),
+    };
+
+    const report = {
+      userId: mockUser.id,
+      regionId: 1,
+      lastUpdatedById: mockUser.id,
+      ECLKCResourcesUsed: ['test'],
+      submissionStatus: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+      oldApprovingManagerId: 1,
+      numberOfParticipants: 1,
+      deliveryMethod: 'method',
+      duration: 0,
+      endDate: '2020-09-01T12:00:00Z',
+      startDate: '2020-09-01T12:00:00Z',
+      requester: 'requester',
+      targetPopulations: ['pop'],
+      participants: ['participants'],
+      reason: ['COVID-19 response', 'Complaint'],
+      topics: ['Learning Environments', 'Nutrition', 'Physical Health and Screenings'],
+      ttaType: ['type'],
+      version: 2,
+    };
+
+    beforeAll(async () => {
+      try {
+        console.log("\n\n\n--- create 1");
+        // Create mock user.
+        await User.create(mockUser);
+
+        // Create goal template.
+        const secret = 'secret';
+        const n = faker.lorem.sentence(5);
+        const hash = crypto
+          .createHmac('md5', secret)
+          .update(n)
+          .digest('hex');
+
+        goalTemplate = await GoalTemplate.create({
+          hash,
+          templateName: n,
+          creationMethod: 'Automatic',
+        });
+console.log("\n\n\n--- create 2");
+        // Create objective template.
+        objectiveTemplate1 = await ObjectiveTemplate.create({
+          templateTitle: 'Objective Template 1 - Goal 1',
+          hash,
+          creationMethod: 'Automatic',
+        });
+
+        objectiveTemplate2 = await ObjectiveTemplate.create({
+          templateTitle: 'Objective Template 2 - Goal 2a',
+          hash,
+          creationMethod: 'Automatic',
+        });
+
+        objectiveTemplate3 = await ObjectiveTemplate.create({
+          templateTitle: 'Objective Template 3 - Goal 2b',
+          hash,
+          creationMethod: 'Automatic',
+        });
+
+        objectiveTemplate4 = await ObjectiveTemplate.create({
+          templateTitle: 'Objective Template 4 - Goal 3',
+          hash,
+          creationMethod: 'Automatic',
+        });
+console.log("\n\n\n--- create 3");
+        // Create recipient.
+        recipient = await Recipient.create({
+          id: faker.datatype.number(),
+          name: faker.name.firstName(),
+        });
+
+        // Create grant.
+        grant = await Grant.create({
+          id: faker.datatype.number(),
+          number: faker.datatype.string(),
+          recipientId: recipient.id,
+          regionId: 1,
+          startDate: new Date(),
+          endDate: new Date(),
+        });
+console.log("\n\n\n--- create 4");
+        // Create goals.
+        goal1 = await Goal.create({
+          name: 'Goal 1 - Closed',
+          status: 'Closed',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: grant.id,
+          createdAt: '2021-05-02T19:16:15.842Z',
+          onApprovedAR: true,
+          createdVia: 'activityReport',
+          goalTemplateId: goalTemplate.id,
+        }, { hooks: false });
+console.log("\n\n\n--- create 4b");
+        goal2 = await Goal.create({
+          name: 'Goal 2 - Closed',
+          status: 'Closed',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: grant.id,
+          createdAt: '2021-05-02T19:16:15.842Z',
+          onApprovedAR: true,
+          createdVia: 'activityReport',
+          goalTemplateId: goalTemplate.id,
+        }, { hooks: false });
+console.log("\n\n\n--- create 4c");
+        goal3 = await Goal.create({
+          name: 'Goal 3 - Open',
+          status: 'In Progress',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: grant.id,
+          createdAt: '2021-05-02T19:16:15.842Z',
+          onApprovedAR: true,
+          createdVia: 'activityReport',
+          goalTemplateId: goalTemplate.id,
+        }, { hooks: false });
+
+        console.log("\n\n\n--- create 5");
+        // Create objectives for Goal 1.
+        objective1 = await Objective.create({
+          goalId: goal1.id,
+          title: 'Goal 1 - Objective 1',
+          status: OBJECTIVE_STATUS.COMPLETE,
+          onApprovedAR: true,
+          objectiveTemplateId: objectiveTemplate1.id,
+        }, { hooks: false });
+
+        objective2 = await Objective.create({
+          goalId: goal2.id,
+          title: 'Goal 2 - Objective 1',
+          status: OBJECTIVE_STATUS.COMPLETE,
+          onApprovedAR: true,
+          objectiveTemplateId: objectiveTemplate2.id,
+        }, { hooks: false });
+
+        objective3 = await Objective.create({
+          goalId: goal2.id,
+          title: 'Goal 3 - Objective 2',
+          status: OBJECTIVE_STATUS.COMPLETE,
+          onApprovedAR: true,
+          objectiveTemplateId: objectiveTemplate3.id,
+        }, { hooks: false });
+
+        objective4 = await Objective.create({
+          goalId: goal3.id,
+          title: 'Goal 3 - Objective 1',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          onApprovedAR: false,
+          objectiveTemplateId: objectiveTemplate4.id,
+        }, { hooks: false });
+
+        console.log('\n\n\n---- grantid : ', grant.id);
+        // Create activity report.
+        activityReport = await ActivityReport.create({
+          // activityRecipientType: 'recipient',
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          userId: mockUser.id,
+          regionId: 1,
+          lastUpdatedById: mockUser.id,
+          version: 2,
+          activityRecipients: [{ grantId: grant.id }],
+        });
+
+        // Create ActivityReportGoal.
+        await ActivityReportGoal.create({
+          activityReportId: activityReport.id,
+          goalId: goal3.id,
+          isActivelyEdited: false,
+        }, { hooks: false });
+
+        // Create ActivityReportObjective.
+        await ActivityReportObjective.create({
+          objectiveId: objective4.id,
+          activityReportId: activityReport.id,
+          ttaProvided: 'Goal 3 - Objective 1 tta',
+          status: 'In Progress',
+        }, { hooks: false });
+      } catch (error) {
+        console.log('\n\n\n--- Error On Create: ', error);
+      }
+    });
+
+    afterAll(async () => {
+      try {
+        // Clean up activity report objectives.
+        await ActivityReportObjective.destroy({ where: { activityReportId: activityReport.id } });
+
+        // Clean up activity report goals.
+        await ActivityReportGoal.destroy({ where: { activityReportId: activityReport.id } });
+
+        // Clean up activity report.
+        await ActivityReport.destroy({ where: { id: activityReport.id } });
+
+        // Clean up objectives.
+        const objectiveIds = [objective1.id, objective2.id, objective3.id, objective4.id];
+        await Objective.destroy({ where: { id: objectiveIds }, force: true });
+
+        // Clean up goals.
+        await Goal.destroy({ where: { id: [goal1.id, goal2.id, goal3.id] }, force: true });
+
+        // Clean up objective templates.
+        const objectiveTemplateIds = [
+          objectiveTemplate1.id,
+          objectiveTemplate2.id,
+          objectiveTemplate3.id,
+          objectiveTemplate4.id,
+        ];
+        await ObjectiveTemplate.destroy({ where: { id: objectiveTemplateIds } });
+
+        // Clean up goal template.
+        await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
+
+        // Clean up grant.
+        await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
+
+        // Clean up recipient.
+        await ActivityRecipient.destroy({ where: { id: recipient.id }, force: true });
+
+        // Clean up user.
+        await User.destroy({ where: { id: mockUser.id }, force: true });
+      } catch (error) {
+        console.log('\n\n\n--- Error On Cleanup: ', error);
+      }
+    });
+
     beforeEach(() => {
       jest.clearAllMocks();
     });
+
+    it('correctly return all past objective templates for the grant template combination', async () => {
+      const result = await goalsByIdsAndActivityReport(goal3.id, activityReport.id);
+
+      console.log('\n\n\n--- Result: ', result);
+
+      // Expect result to have the correct number of goals.
+      expect(result.length).toBe(1);
+
+      // Expect the first goal to have the correct number of objectives.
+      expect(result[0].objectives.length).toBe(4);
+    });
+
     it('should return goals with the correct structure and call associated services', async () => {
       Goal.findAll = jest.fn().mockResolvedValue([
         {

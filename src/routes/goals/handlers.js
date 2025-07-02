@@ -280,6 +280,7 @@ export async function retrieveGoalsByIds(req, res) {
     }
 
     const gIds = goalIds.map((g) => parseInt(g, 10));
+    console.log('\n\n\n\n--- Goal Ids:   ', gIds, '\n\n\n');
     const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
 
     if (!retrievedGoal || !retrievedGoal.length) {
