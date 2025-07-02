@@ -140,7 +140,7 @@ export function reduceObjectivesForActivityReport(
   newObjectives: IObjectiveModelInstance[],
   currentObjectives = [],
 ) {
-  console.log("\n\n\n--- objectives to reduce ---\n\n\n", newObjectives);
+  console.log('\n\n\n--- objectives to reduce ---\n\n\n', newObjectives);
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
