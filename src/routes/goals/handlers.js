@@ -307,10 +307,6 @@ export async function retrieveObjectiveOptionsByGoalTemplate(req, res) {
     }
     const retrievedGoal = await goalsByIdsAndActivityReport(goalIds, reportId);
 
-    if (!retrievedGoal || !retrievedGoal.length) {
-      res.sendStatus(404);
-      return;
-    }
     // Create unique objectives from all retrieved standard goals.
     const uniqueObjectives = retrievedGoal.reduce((acc, goal) => {
       goal.objectives.forEach((objective) => {

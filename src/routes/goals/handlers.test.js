@@ -923,8 +923,9 @@ describe('goal handlers', () => {
 
       goalsByIdsAndActivityReport.mockResolvedValueOnce([]);
 
-      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse, true);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
     it('the reducer returning null', async () => {
@@ -969,7 +970,7 @@ describe('goal handlers', () => {
       goalsByIdsAndActivityReport.mockResolvedValueOnce(null);
 
       await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
     it('handles error', async () => {
