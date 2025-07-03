@@ -6,7 +6,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useController, useFormContext } from 'react-hook-form';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalText from '../../../../components/GoalForm/GoalText';
-import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
+import { getGoalTemplateObjectiveOptions } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import ConditionalFields from './ConditionalFieldsForHookForm';
 import {
@@ -26,7 +26,6 @@ export default function GoalForm({
   rawCitations,
   isMonitoringGoal,
 }) {
-  // console.log('template id passsed into goal form: ', templateId);
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
 
@@ -93,15 +92,18 @@ export default function GoalForm({
       try {
         setIsAppLoading(true);
         setAppLoadingText('Loading');
-        const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-        setObjectiveOptions(data[0].objectives);
+        const allObjectiveOptions = await getGoalTemplateObjectiveOptions(
+          reportId,
+          goal.goalTemplateId,
+        );
+        setObjectiveOptions(allObjectiveOptions);
         setObjectiveOptionsLoaded(true);
       } finally {
         setIsAppLoading(false);
       }
     }
 
-    if (goal.goalIds.length) {
+    if (goal.goalTemplateId) {
       fetchData();
     } else {
       setObjectiveOptions([]);

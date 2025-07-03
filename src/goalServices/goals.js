@@ -25,7 +25,6 @@ import {
   File,
   Program,
   ActivityReportObjectiveCitation,
-  ObjectiveTemplate,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -103,7 +102,7 @@ export function mapGrantsWithReplacements(grants) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export async function goalsByIdsAndActivityReport(id, activityReportId) {
+export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
   const goals = await Goal.findAll({
     attributes: [
       'status',
@@ -114,10 +113,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       'isSourceEditable',
       'onApprovedAR',
       'source',
-      'goalTemplateId',
     ],
     where: {
-      id,
+      id: goalIds,
     },
     include: [
       {
@@ -241,7 +239,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               'response',
             ],
             required: false,
-            where: { goalId: id },
+            where: { goalId: goalIds },
           },
           {
             model: ActivityReportGoalFieldResponse,
@@ -253,7 +251,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               as: 'activityReportGoal',
               attributes: ['activityReportId', ['id', 'activityReportGoalId']],
               required: true,
-              where: { goalId: id, activityReportId },
+              where: { goalId: goalIds, activityReportId },
             }],
           },
         ],
@@ -261,71 +259,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     ],
   });
 
-  // We need to add any objective templates that have been previously associated with this
-  // grant / template combination and add them to objectives for the goal if they are missing.
-  // This includes objectives linked to closed goals for the grant / template combo.
-  let goalsWithMissingObjectiveTitles = goals;
-  if (goals && goals.length) {
-    // Map each goal.
-    goalsWithMissingObjectiveTitles = await Promise.all(goals.map(async (goal) => {
-      const grantId = goal.grant ? goal.grant.id : null;
-      const goalTemplateId = goal.goalTemplateId ? goal.goalTemplateId : null;
-
-      if (grantId && goalTemplateId) {
-        // Get all the goals that used this grant and template combo regardless of status.
-        const goalsWithAllObjectiveTemplates = await Goal.findAll({
-          attributes: ['id'],
-          where: {
-            grantId,
-            goalTemplateId,
-          },
-          include: [{
-            model: Objective,
-            as: 'objectives',
-            attributes: ['id', 'title', 'status', 'objectiveTemplateId'],
-            required: true,
-          }],
-        });
-
-        // Determine if any of the goals have objectives that are not in the current goal by title.
-        const existingObjectiveTitles = goal.objectives.map((o) => o.title);
-        const missingObjectiveTitles = goalsWithAllObjectiveTemplates
-          .flatMap((g) => g.objectives)
-          .filter((o) => (
-            o.title && !existingObjectiveTitles.includes(o.title)
-          ))
-          .map((o) => ({ title: o.title }));
-
-        if (missingObjectiveTitles.length > 0) {
-          // Create new objectives for each missing template.
-          const missingObjectiveTemplatesToAdd = missingObjectiveTitles.map(
-            (missingTemplate) => ({
-              title: missingTemplate.title,
-              status: OBJECTIVE_STATUS.NOT_STARTED,
-              goalId: goal.id,
-              activityReportObjectives: [],
-              activityReports: [],
-              // Add toJSON method to make it compatible with the existing objectives
-              toJSON() {
-                return {
-                  ...this,
-                  activityReportObjectives: [],
-                  activityReports: [],
-                };
-              },
-            }),
-          );
-
-          // Add the missing objective templates to the goal's objectives.
-          // eslint-disable-next-line no-param-reassign
-          goal.objectives = [...goal.objectives, ...missingObjectiveTemplatesToAdd];
-        }
-      }
-      return goal;
-    }));
-  }
-
-  const reformattedGoals = goalsWithMissingObjectiveTitles.map((goal) => ({
+  const reformattedGoals = goals.map((goal) => ({
     ...goal,
     isSourceEditable: goal.isSourceEditable,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
@@ -357,6 +291,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
   }));
 
   const reducedGoals = reduceGoals(reformattedGoals) || [];
+
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {
     if (a.rtrOrder < b.rtrOrder) {

@@ -99,7 +99,7 @@ const renderGoalPicker = (
 describe('GoalPicker', () => {
   beforeEach(async () => {
     fetchMock.get('/api/topic', []);
-    fetchMock.get('/api/goals?reportId=1&goalIds=1', [{ objectives: [] }]);
+    fetchMock.get('/api/goals?reportId=1&goalTemplateId=1', [{ objectives: [] }]);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
   });
 
