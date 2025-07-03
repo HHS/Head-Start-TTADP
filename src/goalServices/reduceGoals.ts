@@ -140,7 +140,6 @@ export function reduceObjectivesForActivityReport(
   newObjectives: IObjectiveModelInstance[],
   currentObjectives = [],
 ) {
-  console.log('\n\n\n--- objectives to reduce ---\n\n\n', newObjectives);
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
@@ -410,7 +409,6 @@ export function reduceGoals(
   goals: IGoalModelInstance[],
   forReport = false,
 ): IReducedGoal[] {
-  console.log('reduceGoals called with forReport:', forReport);
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
   const where = (g: IReducedGoal, currentValue: IGoalModelInstance) => (forReport
