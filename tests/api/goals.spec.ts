@@ -6,7 +6,7 @@ import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
 
 test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   const response = await request.get(
-    `${root}/goals?goalIds[]=4&reportId=10000`,
+    `${root}/goals?reportId=10000&goalTemplateId=1000`,
     { headers: { 'playwright-user-id': '1' } },
   );
 
