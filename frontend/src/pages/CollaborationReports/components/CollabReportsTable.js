@@ -3,13 +3,15 @@ import {
   Table,
   Checkbox,
 } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import TableHeader from '../../../components/TableHeader';
 import { parseCheckboxEvent } from '../../../Constants';
 // TODO: These are from activity
 
 // TODO: Addd filters as a dependency/prop in future
-const CollabReportsTable = () => {
+const CollabReportsTable = (props) => {
+  const { title, emptyMsg, showCreateMsgOnEmpty } = props;
   // const [reports, setReports] = useState([]);
 
   // useEffect(() => {
@@ -19,14 +21,21 @@ const CollabReportsTable = () => {
   const reports = []; // Placeholder for actual reports data
   return (
     <>
-      <CollabReportsTablePrivate reports={reports} />
+      <CollabReportsTablePrivate
+        reports={reports}
+        title={title}
+        emptyMsg={emptyMsg}
+        showCreateMsgOnEmpty={showCreateMsgOnEmpty}
+      />
     </>
   );
 };
 
-const CollabReportsTablePrivate = ({
-  offset = 0, loading, reports = [], title = 'Collaboration Reports',
-}) => {
+// TODO: Keeping these two seperate for now because of checkboxes, may make sense to combine later
+const CollabReportsTablePrivate = (props) => {
+  const {
+    emptyMsg, loading, offset, reports, showCreateMsgOnEmpty, title,
+  } = props;
   const [reportCheckboxes, setReportCheckboxes] = useState([]);
   const reportsCount = reports?.length ?? 0;
 
@@ -51,6 +60,7 @@ const CollabReportsTablePrivate = ({
         numberOfSelected={numberOfSelectedReports}
         toggleSelectAll={toggleSelectAll}
         count={reportsCount}
+        hideMenu
         offset={offset}
         perPage={10}
       />
@@ -58,7 +68,15 @@ const CollabReportsTablePrivate = ({
         <Container className="landing" paddingX={0} paddingY={0} loading={loading}>
           <div className="text-center padding-10">
             <div>
-              <h2>You have no approved Collaboration Reports.</h2>
+              <strong>{ emptyMsg }</strong>
+              { showCreateMsgOnEmpty && (
+                <>
+                  <br />
+                  Document your work connecting Head Start programs with state-level systems.
+                  <br />
+                  To get started, click the &quot;New Collaboration Report&quot; button.
+                </>
+              )}
             </div>
           </div>
         </Container>
@@ -92,4 +110,34 @@ const CollabReportsTablePrivate = ({
     </Container>
   );
 };
+
+CollabReportsTable.defaultProps = {
+  emptyMsg: 'You have no Collaboration Reports',
+  showCreateMsgOnEmpty: false,
+  title: 'Collaboration Reports',
+};
+
+CollabReportsTable.propTypes = {
+  emptyMsg: PropTypes.string,
+  showCreateMsgOnEmpty: PropTypes.bool,
+  title: PropTypes.string,
+};
+
+CollabReportsTablePrivate.defaultProps = {
+  offset: 0,
+  loading: false,
+  emptyMsg: 'You have no Collaboration Reports',
+  showCreateMsgOnEmpty: false,
+};
+
+CollabReportsTablePrivate.propTypes = {
+  emptyMsg: PropTypes.string,
+  loading: PropTypes.bool,
+  offset: PropTypes.number,
+  // eslint-disable-next-line react/forbid-prop-types
+  reports: PropTypes.arrayOf(PropTypes.object).isRequired,
+  showCreateMsgOnEmpty: PropTypes.bool,
+  title: PropTypes.string.isRequired,
+};
+
 export default CollabReportsTable;

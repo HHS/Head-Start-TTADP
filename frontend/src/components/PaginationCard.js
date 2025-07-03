@@ -90,14 +90,16 @@ function PaginationCard({
               <option value={totalCount}>all</option>
             </Dropdown>
           ) : null }
-          <span className={totalPages < 2 ? 'margin-right-1' : ''}>
-            {getPageInfo(
-              offset,
-              totalCount,
-              currentPage,
-              perPage,
-            )}
-          </span>
+          { totalCount > 0 && (
+            <span className={totalPages < 2 ? 'margin-right-1' : ''}>
+              {getPageInfo(
+                offset,
+                totalCount,
+                currentPage,
+                perPage,
+              )}
+            </span>
+          )}
         </div>
       )}
       {totalPages > 1 && (
