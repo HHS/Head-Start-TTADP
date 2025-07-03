@@ -512,12 +512,13 @@ describe('standardGoal service', () => {
       });
 
       it('updates existing and reuses existing objective by id', async () => {
-        // Create the test objecitve here so its not dlelete by other tests in this block.
+        // Create the test objective here so its not deleted by other tests in this block.
         objectiveWithId = await Objective.create({
-          title: 'This is an existing supsended objective with the a matching ID',
+          title: 'This is an existing suspended objective with the a matching ID',
           objectiveTemplateId: null,
           goalId: goal.id,
           status: OBJECTIVE_STATUS.COMPLETE,
+          createdVia: 'rtr',
         });
 
         const g = await updateExistingStandardGoal(
@@ -547,6 +548,7 @@ describe('standardGoal service', () => {
           objectiveTemplateId: null,
           goalId: goal.id,
           status: GOAL_STATUS.SUSPENDED,
+          onApprovedAR: true,
         });
         const g = await updateExistingStandardGoal(
           grant.id,
@@ -1280,11 +1282,17 @@ describe('standardGoal service', () => {
 
       expect(Objective.findByPk).toHaveBeenCalledWith(1);
       expect(Objective.findOne).toHaveBeenCalledWith({
-        where: expect.objectContaining({
+        where: {
           goalId: goal.id,
           title: 'Objective title 2',
-          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-        }),
+        },
+      });
+
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: {
+          goalId: goal.id,
+          title: 'Objective title 1',
+        },
       });
 
       expect(result[1].title).toBe('Objective title 2');
