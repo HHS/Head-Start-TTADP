@@ -74,6 +74,7 @@ const renderReview = (
   additionalCitations = [],
   grantIds = [2],
   additionalObjectives = [],
+  hasMultipleGrantsMissingMonitoring = false,
 ) => {
   const formData = {
     approvers,
@@ -88,7 +89,6 @@ const renderReview = (
     formData.goalsAndObjectives = [{
       isCurated: true,
       prompts: [{
-        allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
       goalIds: [1, 2],
@@ -106,12 +106,18 @@ const renderReview = (
     },
     ];
 
+    if (hasMultipleGrantsMissingMonitoring) {
+      formData.activityRecipients.push({
+        activityRecipientId: 3,
+        name: 'recipient with monitoring 3',
+      });
+    }
+
     formData.goalsAndObjectives = [
       ...goalsAndObjectives,
       {
         isCurated: true,
         prompts: [{
-          allGoalsHavePromptResponse: false,
           title: 'FEI Goal',
         }],
         standard: 'Monitoring',
@@ -134,6 +140,10 @@ const renderReview = (
         goalIds: [1, 2],
         grantIds,
       }];
+
+    if (hasMultipleGrantsMissingMonitoring) {
+      formData.goalsAndObjectives[0].grantIds.push(3);
+    }
   }
 
   const history = createMemoryHistory();
@@ -161,7 +171,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Submit Report')).toBeVisible();
+      expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {
@@ -211,6 +221,35 @@ describe('Submitter review page', () => {
       expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
     });
 
+    it('shows an error if multiple grants don\'t have monitoring', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+        [],
+        [2, 3],
+      );
+      expect(await screen.findByText(/these grants do not have the standard monitoring goal/i)).toBeVisible();
+      expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
+    });
+
     it('shows an error if some of the grants are missing citations', async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
@@ -229,6 +268,30 @@ describe('Submitter review page', () => {
       );
       expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error when more than one grant is missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [1, 2, 3],
+        [],
+        true,
+      );
+
+      expect(await screen.findByText(/these grants do not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+      // expect(true).toBe(false);
     });
 
     it('shows an error if some of the objectives are missing citations', async () => {
@@ -256,6 +319,7 @@ describe('Submitter review page', () => {
       );
       expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+      // expect(true).toBe(false);
     });
 
     it('shows an error if missing citations with multiple goals', async () => {
@@ -309,7 +373,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [
@@ -348,7 +411,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [

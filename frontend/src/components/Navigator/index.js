@@ -170,7 +170,7 @@ const Navigator = ({
         />
       </Grid>
       )}
-      <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
+      <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 6 }}>
         <SocketAlert store={socketMessageStore} />
 
         <div id="navigator-form">
