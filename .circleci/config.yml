@@ -39,8 +39,8 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
-    default: dev
+    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
+    default: '-'
 
 # ----------------- Workflows -----------------
 
@@ -201,6 +201,18 @@ workflows:
         name: restore (dev-red)
         serial-group: "tta-automation-lock"
         target_env: "dev-red"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-gold)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-gold"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-pink)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-pink"
         requires:
         - backup_temp_db
     - restore_db_job:
