@@ -23,30 +23,6 @@ services:
     volumes:
       - ".:/app:rw"
 
-  similarity_api:
-    build:
-      context: ./similarity_api
-    command: gunicorn -w 4 -b 0.0.0.0:8080 app:app --preload
-    user: ${CURRENT_USER:-root}
-    platform: linux/amd64
-    depends_on:
-      - db
-    environment:
-      - POSTGRES_HOST=postgres_docker
-      - NODE_ENV=dss
-      - POSTGRES_USERNAME=postgres
-      - POSTGRES_PASSWORD=secretpass
-      - POSTGRES_DB=ttasmarthub
-      - DATABASE_URL=postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
-      - SESSION_SECRET=notasecret
-      - BYPASS_SOCKETS="true"
-    volumes:
-      - "./similarity_api/src:/app:rw"
-    ports:
-      - "9100:8080"
-    networks:
-      - smarthub
-
   db:
     image: postgres:15.6
     container_name: postgres_docker

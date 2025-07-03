@@ -128,7 +128,7 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     expect(xAxisTitle).toBeInTheDocument();
 
     // Find the button to show the table
-    const menuButton = screen.getByTestId('ellipsis-button');
+    const menuButton = screen.getByTestId('actions-button');
     fireEvent.click(menuButton);
     const tableButton = screen.getByText('Display table');
     fireEvent.click(tableButton);
