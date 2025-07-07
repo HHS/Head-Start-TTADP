@@ -324,7 +324,7 @@ export async function processFiles(hashSumHex) {
           g.grants_specialist_last_name,
         );
 
-        const regionId = parseInt(g.region_id, 10);
+        const regionId = parseInt(g.numeric_region_id, 10);
         const cdi = regionId === 13;
         const id = parseInt(g.grant_award_id, 10);
         // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
