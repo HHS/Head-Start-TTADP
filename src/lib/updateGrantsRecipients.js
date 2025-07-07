@@ -248,7 +248,6 @@ export async function syncGeoRegionGroups({ transaction }) {
       transaction,
     });
     const regionMap = new Map(regionGroups.map((g) => [g.name, g.id]));
-
     // Get all replacing grants to protect them
     const replacingGrantIds = (await GrantReplacements.findAll({
       attributes: ['replacingGrantId'],
@@ -260,9 +259,8 @@ export async function syncGeoRegionGroups({ transaction }) {
     // For each region group
     for (const [regionName, groupId] of regionMap.entries()) {
       logger.info(`Syncing region: ${regionName}`);
-
       // Add missing GroupGrants
-      const [missingGrants] = await sequelize.query(
+      const missingGrants = await sequelize.query(
         `
           SELECT g."id"
           FROM "Grants" g
@@ -281,7 +279,6 @@ export async function syncGeoRegionGroups({ transaction }) {
           transaction,
         },
       );
-
       if (missingGrants.length > 0) {
         logger.info(`Adding ${missingGrants.length} new grants to ${regionName} group`);
         await GroupGrant.bulkCreate(
@@ -298,7 +295,7 @@ export async function syncGeoRegionGroups({ transaction }) {
       }
 
       // Remove stale GroupGrants (excluding replacing grants)
-      const [result] = await sequelize.query(
+      const result = await sequelize.query(
         `
           DELETE FROM "GroupGrants"
           WHERE "groupId" = :groupId
@@ -323,7 +320,7 @@ export async function syncGeoRegionGroups({ transaction }) {
         },
       );
 
-      logger.info(`Removed ${result.rowCount || result} stale grants from ${regionName} group`);
+      logger.info(`Removed ${result[1].rowCount} stale grants from ${regionName} group`);
     }
 
     if (createdHere) await useTransaction.commit();
