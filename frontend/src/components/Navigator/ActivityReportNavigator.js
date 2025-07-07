@@ -663,7 +663,14 @@ const ActivityReportNavigator = ({
   const onSaveDraft = async () => {
     try {
       setSavingLoadScreen();
-      await onSaveForm(); // save the form data to the server
+
+      // Prevent saving draft if the form is not dirty,
+      // unless we are on the supporting attachments page which can be "blank".
+      if (isDirty || currentPage === 'supporting-attachments') {
+        // save the form data to the server
+        await onSaveForm();
+      }
+
       updateShowSavedDraft(true); // show the saved draft message
     } finally {
       setIsAppLoading(false);
