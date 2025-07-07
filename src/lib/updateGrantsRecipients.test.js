@@ -1329,7 +1329,7 @@ describe('Update grants, program personnel, and recipients', () => {
         where: { groupId: group.id },
         transaction,
       });
-      const grantIds = existingGroupGrants.map(g => g.grantId);
+      const grantIds = existingGroupGrants.map((g) => g.grantId);
 
       expect(grantIds).toContain(replacingGrant.id);
       expect(grantIds).toContain(grant.id);
