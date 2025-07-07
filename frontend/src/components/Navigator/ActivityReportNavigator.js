@@ -103,6 +103,7 @@ const ActivityReportNavigator = ({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
+  shouldAutoSave,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
@@ -161,7 +162,7 @@ const ActivityReportNavigator = ({
   };
 
   const activityRecipientType = watch('activityRecipientType');
-  const isGoalsObjectivesPage = page.path === 'goals-objectives';
+  const isGoalsObjectivesPage = page?.path === 'goals-objectives';
   const recipients = watch('activityRecipients');
   const isRecipientReport = activityRecipientType === 'recipient';
 
@@ -662,7 +663,14 @@ const ActivityReportNavigator = ({
   const onSaveDraft = async () => {
     try {
       setSavingLoadScreen();
-      await onSaveForm(); // save the form data to the server
+
+      // Prevent saving draft if the form is not dirty,
+      // unless we are on the supporting attachments page which can be "blank".
+      if (isDirty || currentPage === 'supporting-attachments') {
+        // save the form data to the server
+        await onSaveForm();
+      }
+
       updateShowSavedDraft(true); // show the saved draft message
     } finally {
       setIsAppLoading(false);
@@ -748,6 +756,7 @@ const ActivityReportNavigator = ({
           autoSaveInterval={autoSaveInterval}
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
+          shouldAutoSave={shouldAutoSave}
         />
       </FormProvider>
     </GoalFormContext.Provider>
@@ -794,6 +803,7 @@ ActivityReportNavigator.propTypes = {
       PropTypes.string,
     ]),
   }),
+  shouldAutoSave: PropTypes.bool,
 };
 
 ActivityReportNavigator.defaultProps = {
@@ -806,6 +816,7 @@ ActivityReportNavigator.defaultProps = {
     name: null,
     role: null,
   },
+  shouldAutoSave: true,
 };
 
 export default ActivityReportNavigator;
