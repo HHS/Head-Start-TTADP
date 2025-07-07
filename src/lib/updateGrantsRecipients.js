@@ -22,7 +22,7 @@ import {
   ProgramPersonnel,
 } from '../models';
 import { logger, auditLogger } from '../logger';
-import { GRANT_PERSONNEL_ROLES } from '../constants';
+import { GRANT_PERSONNEL_ROLES, REGIONS } from '../constants';
 
 const fs = require('mz/fs');
 
@@ -230,21 +230,11 @@ export async function syncGeoRegionGroups({ transaction }) {
   const createdHere = !transaction;
 
   try {
-    // Define your geo region group names
-    const REGION_NAMES = [
-      'Northeast',
-      'Midwest',
-      'West',
-      'AIAN',
-      'Southeast',
-      'Southwest',
-    ];
-
     logger.info('Starting Geo Region Groups Sync');
 
     // Get all geo region Groups
     const regionGroups = await Group.findAll({
-      where: { name: { [Op.in]: REGION_NAMES } },
+      where: { name: { [Op.in]: REGIONS } },
       transaction,
     });
     const regionMap = new Map(regionGroups.map((g) => [g.name, g.id]));

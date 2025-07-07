@@ -1,4 +1,5 @@
 const { prepMigration } = require('../lib/migration');
+const { REGIONS } = require('../constants');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,15 +10,6 @@ module.exports = {
 
       const CREATOR_ID = 765;
       const COLLABORATOR_ID = 654;
-
-      const REGIONS = [
-        'Northeast',
-        'Midwest',
-        'West',
-        'AIAN',
-        'Southeast',
-        'Southwest',
-      ];
 
       // Insert users if missing
       await queryInterface.sequelize.query(
@@ -95,15 +87,6 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-
-      const REGIONS = [
-        'Northeast',
-        'Midwest',
-        'West',
-        'AIAN',
-        'Southeast',
-        'Southwest',
-      ];
 
       // Remove all GroupCollaborators for these groups
       await queryInterface.sequelize.query(
