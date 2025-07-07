@@ -43,6 +43,8 @@ function main() {
     status = checkStatus(appName, taskName);
     if (status !== 'RUNNING') {
       complete = true;
+    } else {
+      runCmd('sleep 10', false);
     }
   }
 
