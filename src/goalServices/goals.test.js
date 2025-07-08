@@ -29,9 +29,14 @@ import {
   Resource,
   Topic,
   File,
-  GoalFieldResponse,
+  User,
+  Recipient,
 } from '../models';
-import { GOAL_STATUS, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
+import {
+  GOAL_STATUS,
+  OBJECTIVE_STATUS,
+  SOURCE_FIELD,
+} from '../constants';
 import changeGoalStatus from './changeGoalStatus';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { auditLogger } from '../logger';

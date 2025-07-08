@@ -4,9 +4,9 @@ import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
 
-test('get /goals?goalIds[]=&reportId', async ({ request }) => {
+test('get /goals?reportId&goalTemplateId', async ({ request }) => {
   const response = await request.get(
-    `${root}/goals?goalIds[]=4&reportId=10000`,
+    `${root}/goals?reportId=10000&goalTemplateId=1`,
     { headers: { 'playwright-user-id': '1' } },
   );
 
