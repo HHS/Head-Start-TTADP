@@ -3,7 +3,6 @@ import {
   NOT_FOUND,
   BAD_REQUEST,
   UNAUTHORIZED,
-  FORBIDDEN,
 } from 'http-codes';
 import db from '../../models';
 import { userById } from '../../services/users';
@@ -12,7 +11,7 @@ import SCOPES from '../../middleware/scopeConstants';
 import {
   changeGoalStatus,
   createGoals,
-  retrieveGoalsByIds,
+  retrieveObjectiveOptionsByGoalTemplate,
   deleteGoal,
   createGoalsForReport,
   getMissingDataForActivityReport,
@@ -779,32 +778,48 @@ describe('goal handlers', () => {
     });
   });
 
-  describe('retrieveGoalsByIds', () => {
-    it('success with array in query paramter', async () => {
+  describe('retrieveObjectiveOptionsByGoalTemplate', () => {
+    beforeAll(() => {
+      db.ActivityReport.findByPk = jest.fn();
+    });
+    it('successfully returns the deduplicated objectives for the standard goal', async () => {
       const req = {
         query: {
-          goalIds: [1, 2],
+          goalTemplateId: 1,
         },
         session: {
           userId: 1,
         },
       };
 
+      db.ActivityReport.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grants: [{ id: 2, regionId: 2 }],
+      });
+
+      // Mock Goal.findAll once to return a object.
+      db.Goal.findAll = jest.fn().mockResolvedValueOnce([
+        {
+          id: 1,
+          name: 'Goal 1',
+          grant: { id: 1, regionId: 1 },
+        },
+        {
+          id: 2,
+          name: 'Goal 2',
+          grant: { id: 2, regionId: 1 },
+        },
+      ]);
+
       currentUserId.mockResolvedValueOnce(1);
       userById.mockResolvedValueOnce({
         permissions: [
           {
-            regionId: 2,
+            regionId: 1,
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
       });
-
-      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-        objectives: [],
-        grant: { regionId: 2 },
-      });
-
       goalsByIdsAndActivityReport.mockResolvedValueOnce([
         {
           id: 1,
@@ -812,7 +827,7 @@ describe('goal handlers', () => {
           objectives: [
             {
               id: 1,
-              name: 'Objective 1',
+              title: 'Objective 1',
             },
           ],
         },
@@ -822,92 +837,19 @@ describe('goal handlers', () => {
           objectives: [
             {
               id: 2,
-              name: 'Objective 2',
+              title: 'Objective 2',
             },
           ],
         },
       ]);
 
-      await retrieveGoalsByIds(req, mockResponse);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
 
       expect(mockResponse.json).toHaveBeenCalledWith([
-        {
-          id: 1,
-          name: 'Goal 1',
-          objectives: [
-            {
-              id: 1,
-              name: 'Objective 1',
-            },
-          ],
-        },
-        {
-          id: 2,
-          name: 'Goal 2',
-          objectives: [
-            {
-              id: 2,
-              name: 'Objective 2',
-            },
-          ],
-        },
+        { id: 1, title: 'Objective 1' },
+        { id: 2, title: 'Objective 2' },
       ]);
     });
-
-    it('handles success with single number in query parameter', async () => {
-      const req = {
-        query: {
-          goalIds: 1,
-        },
-        session: {
-          userId: 1,
-        },
-      };
-
-      currentUserId.mockResolvedValueOnce(1);
-      userById.mockResolvedValueOnce({
-        permissions: [
-          {
-            regionId: 2,
-            scopeId: SCOPES.READ_REPORTS,
-          },
-        ],
-      });
-
-      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-        objectives: [],
-        grant: { regionId: 2 },
-      });
-
-      goalsByIdsAndActivityReport.mockResolvedValueOnce([
-        {
-          id: 1,
-          name: 'Goal 1',
-          objectives: [
-            {
-              id: 1,
-              name: 'Objective 1',
-            },
-          ],
-        },
-      ]);
-
-      await retrieveGoalsByIds(req, mockResponse);
-
-      expect(mockResponse.json).toHaveBeenCalledWith([
-        {
-          id: 1,
-          name: 'Goal 1',
-          objectives: [
-            {
-              id: 1,
-              name: 'Objective 1',
-            },
-          ],
-        },
-      ]);
-    });
-
     it('rejects based on permissions', async () => {
       const req = {
         query: {
@@ -917,6 +859,25 @@ describe('goal handlers', () => {
           userId: 1,
         },
       };
+
+      db.ActivityReport.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grants: [{ id: 2, regionId: 2 }],
+      });
+
+      // Mock Goal.findAll once to return a object.
+      db.Goal.findAll = jest.fn().mockResolvedValueOnce([
+        {
+          id: 1,
+          name: 'Goal 1',
+          grant: { id: 1, regionId: 1 },
+        },
+        {
+          id: 2,
+          name: 'Goal 2',
+          grant: { id: 2, regionId: 2 }, // Wrong region should trigger permission error.
+        },
+      ]);
 
       goalByIdWithActivityReportsAndRegions.mockResolvedValue({
         objectives: [],
@@ -928,11 +889,11 @@ describe('goal handlers', () => {
         permissions: [],
       });
 
-      await retrieveGoalsByIds(req, mockResponse);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
     });
 
-    it('handles goal not found', async () => {
+    it('handles goals not found', async () => {
       const req = {
         query: {
           goalIds: [1],
@@ -952,15 +913,19 @@ describe('goal handlers', () => {
         ],
       });
 
-      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-        objectives: [],
-        grant: { regionId: 2 },
+      db.ActivityReport.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grants: [{ id: 2, regionId: 2 }],
       });
+
+      // Mock Goal.findAll once to return a object.
+      db.Goal.findAll = jest.fn().mockResolvedValueOnce([]);
 
       goalsByIdsAndActivityReport.mockResolvedValueOnce([]);
 
-      await retrieveGoalsByIds(req, mockResponse, true);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
     it('the reducer returning null', async () => {
@@ -973,57 +938,85 @@ describe('goal handlers', () => {
         },
       };
 
+      db.ActivityReport.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grants: [{ id: 2, regionId: 2 }],
+      });
+
+      // Mock Goal.findAll once to return a object.
+      db.Goal.findAll = jest.fn().mockResolvedValueOnce([
+        {
+          id: 1,
+          name: 'Goal 1',
+          grant: { id: 1, regionId: 1 },
+        },
+        {
+          id: 2,
+          name: 'Goal 2',
+          grant: { id: 2, regionId: 1 },
+        },
+      ]);
+
       currentUserId.mockResolvedValueOnce(1);
       userById.mockResolvedValueOnce({
         permissions: [
           {
-            regionId: 2,
+            regionId: 1,
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
       });
 
-      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-        objectives: [],
-        grant: { regionId: 2 },
-      });
-
       goalsByIdsAndActivityReport.mockResolvedValueOnce(null);
 
-      await retrieveGoalsByIds(req, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
 
     it('handles error', async () => {
       const req = {
         query: {
-          goalIds: [1],
+          goalTemplateId: 1,
         },
         session: {
           userId: 1,
         },
       };
 
+      db.ActivityReport.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grants: [{ id: 2, regionId: 2 }],
+      });
+
+      // Mock Goal.findAll once to return a object.
+      db.Goal.findAll = jest.fn().mockResolvedValueOnce([
+        {
+          id: 1,
+          name: 'Goal 1',
+          grant: { id: 1, regionId: 1 },
+        },
+        {
+          id: 2,
+          name: 'Goal 2',
+          grant: { id: 2, regionId: 1 },
+        },
+      ]);
+
       currentUserId.mockResolvedValueOnce(1);
       userById.mockResolvedValueOnce({
         permissions: [
           {
-            regionId: 2,
+            regionId: 1,
             scopeId: SCOPES.READ_REPORTS,
           },
         ],
-      });
-
-      goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-        objectives: [],
-        grant: { regionId: 2 },
       });
 
       goalsByIdsAndActivityReport.mockImplementationOnce(() => {
         throw new Error('a test error for the goals handler');
       });
 
-      await retrieveGoalsByIds(req, mockResponse);
+      await retrieveObjectiveOptionsByGoalTemplate(req, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
     });
   });

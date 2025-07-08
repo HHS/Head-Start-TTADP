@@ -257,37 +257,66 @@ export async function deleteGoal(req, res) {
   }
 }
 
-export async function retrieveGoalsByIds(req, res) {
+export async function retrieveObjectiveOptionsByGoalTemplate(req, res) {
   try {
-    let { goalIds } = req.query;
-    const { reportId } = req.query;
-    goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
+    const { reportId, goalTemplateId } = req.query;
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    const permissions = await Promise.all(goalIds.map(async (id) => {
-      const goal = await goalByIdWithActivityReportsAndRegions(id);
+    // Get the grant from the activity report.
+    const activityReport = await sequelize.models.ActivityReport.findByPk(reportId, {
+      include: [
+        {
+          model: sequelize.models.Grant,
+          as: 'grants',
+          attributes: ['id', 'regionId'],
+        },
+      ],
+    });
 
+    // Get grantIds.
+    const grantIds = activityReport.grants.map((g) => g.id);
+    const uniqueGrantIds = [...new Set(grantIds)];
+
+    // Get all goals for the grant / goal template id combination.
+    const goals = await sequelize.models.Goal.findAll({
+      where: {
+        grantId: uniqueGrantIds,
+        goalTemplateId,
+      },
+      include: [
+        {
+          model: sequelize.models.Grant,
+          as: 'grant',
+          attributes: ['id', 'regionId'],
+        },
+      ],
+    });
+    const goalIds = goals.map((g) => parseInt(g.id, 10));
+
+    // Validate that the user can view all goals.
+    const permissions = await Promise.all(goals.map(async (goal) => {
       const policy = new Goal(user, goal);
       return policy.canView();
     }));
-
     const canView = permissions.every((permission) => permission);
-
     if (!canView) {
       res.sendStatus(401);
       return;
     }
+    const retrievedGoal = await goalsByIdsAndActivityReport(goalIds, reportId);
 
-    const gIds = goalIds.map((g) => parseInt(g, 10));
-    const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
+    // Create unique objectives from all retrieved standard goals.
+    const uniqueObjectives = retrievedGoal.reduce((acc, goal) => {
+      goal.objectives.forEach((objective) => {
+        if (!acc.some((obj) => obj.title === objective.title)) {
+          acc.push(objective);
+        }
+      });
+      return acc;
+    }, []);
 
-    if (!retrievedGoal || !retrievedGoal.length) {
-      res.sendStatus(404);
-      return;
-    }
-
-    res.json(retrievedGoal);
+    res.json(uniqueObjectives);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOALS_BY_IDS`);
   }

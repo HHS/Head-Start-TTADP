@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniqBy, uniq } from 'lodash';
+import { uniq } from 'lodash';
 import {
   DECIMAL_BASE,
   REPORT_STATUSES,
@@ -8,7 +8,6 @@ import {
   Goal,
   GoalFieldResponse,
   GoalTemplate,
-  GoalResource,
   GoalStatusChange,
   Grant,
   GrantRelationshipToActive,
@@ -33,10 +32,6 @@ import {
   SOURCE_FIELD,
   CREATION_METHOD,
 } from '../constants';
-import {
-  cacheObjectiveMetadata,
-  cacheGoalMetadata,
-} from '../services/reportCache';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { auditLogger } from '../logger';
 import changeGoalStatus from './changeGoalStatus';
@@ -48,9 +43,6 @@ import { reduceGoals } from './reduceGoals';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import {
-  createObjectivesForGoal,
-  removeUnusedGoalsObjectivesFromReport,
-  removeUnusedGoalsCreatedViaAr,
   saveStandardGoalsForReport,
 } from '../services/standardGoals';
 
@@ -110,7 +102,7 @@ export function mapGrantsWithReplacements(grants) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export async function goalsByIdsAndActivityReport(id, activityReportId) {
+export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
   const goals = await Goal.findAll({
     attributes: [
       'status',
@@ -123,7 +115,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       'source',
     ],
     where: {
-      id,
+      id: goalIds,
     },
     include: [
       {
@@ -247,7 +239,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               'response',
             ],
             required: false,
-            where: { goalId: id },
+            where: { goalId: goalIds },
           },
           {
             model: ActivityReportGoalFieldResponse,
@@ -259,7 +251,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               as: 'activityReportGoal',
               attributes: ['activityReportId', ['id', 'activityReportGoalId']],
               required: true,
-              where: { goalId: id, activityReportId },
+              where: { goalId: goalIds, activityReportId },
             }],
           },
         ],

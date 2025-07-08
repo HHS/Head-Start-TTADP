@@ -3,14 +3,14 @@ import {
   createGoals,
   changeGoalStatus,
   reopenGoal,
-  retrieveGoalsByIds,
+  retrieveObjectiveOptionsByGoalTemplate,
   deleteGoal,
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
   getGoalHistory,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
-import { checkRegionIdParam, checkRecipientIdParam, checkGoalTemplateIdParam } from '../../middleware/checkIdParamMiddleware';
+import { checkRegionIdParam, checkGoalTemplateIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
@@ -19,7 +19,7 @@ router.post(
   checkGoalTemplateIdParam,
   transactionWrapper(createGoalsFromTemplate),
 );
-router.get('/', transactionWrapper(retrieveGoalsByIds));
+router.get('/', transactionWrapper(retrieveObjectiveOptionsByGoalTemplate));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.delete('/', transactionWrapper(deleteGoal));
 
