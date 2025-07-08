@@ -417,7 +417,7 @@ describe('Activity report service', () => {
         inactivationDate: new Date(new Date().setDate(new Date().getDate() - 60)),
       });
 
-      // Create a inactive grant with a 'inactivationDate' date more than 60 days ago.
+      // Create a inactive grant with a 'inactivationDate' date more than 90 days ago.
       await Grant.create({
         id: INACTIVE_GRANT_ID_TWO,
         number: faker.datatype.number({ min: 9999 }),
@@ -426,7 +426,7 @@ describe('Activity report service', () => {
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
-        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 62)),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 92)),
       });
 
       await Grant.create({
@@ -453,7 +453,7 @@ describe('Activity report service', () => {
         endDate: new Date(new Date().setDate(new Date().getDate() - 62)),
       });
 
-      // Create a ActivityReport outside of 60 days.
+      // Create a ActivityReport outside of 90 days.
       inactiveActivityReportTwo = await ActivityReport.create({
         ...submittedReport,
         userId: mockUser.id,
@@ -462,8 +462,8 @@ describe('Activity report service', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         activityRecipients: [],
         // Set a start date that will NOT return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() + 62)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 62)),
+        startDate: new Date(new Date().setDate(new Date().getDate() + 92)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 92)),
       });
 
       // Create a ActivityReport without start date.
