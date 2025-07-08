@@ -259,8 +259,7 @@ export async function deleteGoal(req, res) {
 
 export async function retrieveObjectiveOptionsByGoalTemplate(req, res) {
   try {
-    const { reportId } = req.query;
-    const { goalTemplateId } = req.query;
+    const { reportId, goalTemplateId } = req.query;
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
