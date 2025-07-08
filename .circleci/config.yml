@@ -39,8 +39,8 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
-    default: dev
+    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
+    default: '-'
 
 # ----------------- Workflows -----------------
 
@@ -201,6 +201,18 @@ workflows:
         name: restore (dev-red)
         serial-group: "tta-automation-lock"
         target_env: "dev-red"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-gold)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-gold"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-pink)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-pink"
         requires:
         - backup_temp_db
     - restore_db_job:
@@ -631,7 +643,7 @@ jobs:
       target_env:
         type: string
     steps:
-    - cf_cmd:
+    - cf_task:
         the_command: << parameters.command >>
         target_env: "<< parameters.target_env >>"
 
@@ -651,7 +663,7 @@ jobs:
         default: acf-head-start-alerts-lower
     steps:
     - checkout
-    - cf_cmd:
+    - cf_task:
         the_command: |
           node ./build/server/src/tools/importSystemCLI.js download 1
           node ./build/server/src/tools/importSystemCLI.js process 1
@@ -935,7 +947,7 @@ commands:
         paths:
         - environments
 
-  cf_cmd:
+  cf_task:
     description: "Login, run task, send notification"
     parameters:
       the_command:
@@ -959,38 +971,40 @@ commands:
           -u ${cg_username} \
           -p ${cg_password} \
           -o ${cg_org} \
-          -s ${cg_space}            
+          -s ${cg_space}
+    - run:
+        name: Set task name
+        command: |
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
-        command: |+
-          set +e
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+        background: true
+        command: |
           cf run-task \
             tta-smarthub-<< parameters.target_env >> \
             --command "<< parameters.the_command >>" \
             --name ${TASK_NAME} \
             -m 2GB \
-            -k 2GB \
-            --wait && true
+            -k 2GB
 
-          rc=$?
-          echo "waiting for logs...."
-          sleep 15 # wait for logs
+          echo "Watching logs..."
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+
+    - run:
+        name: "Wait for task to complete"
+        command: |
+          set +e
+          sleep 15
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          sleep 30
           cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | grep -i "error" 
-          echo "script exited with code:$rc"
-          exit ${rc}
-            
+
     - run:
         name: Logout of service account
         command: |
-          # Signal the log monitoring to stop
-          CONTROL_FILE="/tmp/stop_tail"
-          touch $CONTROL_FILE
-
           # Wait for the log monitoring process to terminate
           sleep 5
-
           # Logout from Cloud Foundry
           cf logout
 
@@ -1046,13 +1060,13 @@ commands:
         task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
         task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
         config: "<< parameters.backup_prefix >>-restore"
-        success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+        success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
         timeout: "1800"
     - run:
         when: on_fail
         command: |
-          msg="DB Restore failed to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
-          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
 
 
   cf_retention:
