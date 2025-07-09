@@ -1,8 +1,5 @@
 import React, { useContext, useMemo, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Grid,
-} from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -13,6 +10,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import UserContext from '../../UserContext';
 import CollabReports from './components/CollabReports';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import './index.scss';
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -48,48 +46,43 @@ export const CollabReportsLanding = () => {
   const inProgressCollabEmptyMsg = 'You have no Collaboration Reports in progress.';
   const approvedCollabEmptyMsg = 'You have no approved Collaboration Reports.';
   return (
-    <>
+    <div className="ttahub-dashboard">
       <Helmet>
         <title>Collaboration Reports</title>
       </Helmet>
-      <>
-        <RegionPermissionModal
-          filters={filters}
-          user={user}
-          showFilterWithMyRegions={
+      <RegionPermissionModal
+        filters={filters}
+        user={user}
+        showFilterWithMyRegions={
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
+      />
+      <div className="collab-report-header flex-align-center margin-top-0 margin-bottom-3">
+        <h1 className="landing">
+          {`Collaboration reports - ${regionLabel}`}
+        </h1>
+        <div>
+          <Link
+            to="/collaboration-report/new"
+            className="usa-button smart-hub--new-report-btn"
+          >
+            <span className="smart-hub--plus">+</span>
+            <span className="smart-hub--new-report">New Collaboration Report</span>
+          </Link>
+        </div>
+      </div>
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for activity reports"
+          filters={filters}
+          filterConfig={filtersToUse}
+          allUserRegions={regions}
         />
-        <Grid row gap="lg" className="margin-bottom-3">
-          <Grid col={12} className="display-flex flex-wrap">
-            <h1 className="landing margin-top-0 margin-bottom-3 margin-right-2">{`Collaboration reports - ${regionLabel}`}</h1>
-            <div>
-              <Link
-                to="/collaboration-report/new"
-                className="usa-button smart-hub--new-report-btn"
-              >
-                <span className="smart-hub--plus">+</span>
-                <span className="smart-hub--new-report">New Collaboration Report</span>
-              </Link>
-            </div>
-          </Grid>
-        </Grid>
-        <Grid row gap="lg">
-          <FilterPanelContainer>
-            <FilterPanel
-              applyButtonAria="apply filters for activity reports"
-              filters={filters}
-              filterConfig={filtersToUse}
-              allUserRegions={regions}
-            />
-          </FilterPanelContainer>
-        </Grid>
-        {/* </Grid> */}
-        {/* TODO: Wrap this in a FilterContext.Provider component when filters added */}
-        <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} />
-        <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
-      </>
-    </>
+      </FilterPanelContainer>
+      {/* TODO: Wrap this in a FilterContext.Provider component when filters added */}
+      <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} />
+      <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
+    </div>
   );
 };
 

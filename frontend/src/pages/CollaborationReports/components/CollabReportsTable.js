@@ -5,7 +5,8 @@ import {
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
-import TableHeader from '../../../components/TableHeader';
+import WidgetContainer from '../../../components/WidgetContainer';
+
 import { parseCheckboxEvent } from '../../../Constants';
 
 const CollabReportsTable = (props) => {
@@ -27,23 +28,24 @@ const CollabReportsTable = (props) => {
 
   const allReportsChecked = reports.every((report) => reportCheckboxes.includes(report.id));
 
-  const numberOfSelectedReports = reportCheckboxes?.length ?? 0;
   return (
-    <Container className="landing inline-size-auto maxw-full position-relative" paddingX={0} paddingY={0} loading={loading} loadingLabel="Collaboration reports table loading">
-      <div className="border-bottom smart-hub-border-base-lighter">
-        <TableHeader
-          title={title}
-          numberOfSelected={numberOfSelectedReports}
-          toggleSelectAll={toggleSelectAll}
-          count={reportsCount}
-          hideMenu
-          hideCountHeaderOnEmpty
-          offset={offset}
-          perPage={10}
-        />
-      </div>
-      { reports.length === 0 && (
-        <Container className="landing" paddingX={0} paddingY={0} loading={loading}>
+    <>
+      <WidgetContainer
+        title={title}
+        enableCheckboxes
+        checkboxes={reportCheckboxes}
+        setCheckboxes={setReportCheckboxes}
+        showPagingBottom={reportsCount > 0}
+        showPagingTop={false}
+        loading={loading}
+        loadingLabel="Collaboration reports table loading"
+        totalCount={reportsCount}
+        offset={offset}
+        perPage={10}
+        titleMargin={{ bottom: 3 }}
+      >
+        { reports.length === 0 && (
+        <Container className="landing" paddingX={0} paddingY={0}>
           <div className="text-center padding-10">
             <p className="usa-prose text-center bold">
               <strong>{ emptyMsg }</strong>
@@ -58,33 +60,34 @@ const CollabReportsTable = (props) => {
             </p>
           </div>
         </Container>
-      )}
-      { reports.length > 0 && (
-      <div className="usa-table-container--scrollable">
-        <Table fullWidth striped stackedStyle="default">
-          <caption className="usa-sr-only">
-            {title}
-          </caption>
-          <thead>
-            <tr>
-              <th
-                className="width-8 tta-smarthub--report-heading"
-                aria-label="Select"
-              >
-                <Checkbox
-                  id="all-reports"
-                  label=""
-                  onChange={toggleSelectAll}
-                  checked={allReportsChecked}
-                  aria-label="Select or de-select all reports"
-                />
-              </th>
-            </tr>
-          </thead>
-        </Table>
-      </div>
-      )}
-    </Container>
+        )}
+        { reports.length > 0 && (
+        <div className="usa-table-container--scrollable">
+          <Table fullWidth striped stackedStyle="default">
+            <caption className="usa-sr-only">
+              {title}
+            </caption>
+            <thead>
+              <tr>
+                <th
+                  className="width-8 tta-smarthub--report-heading"
+                  aria-label="Select"
+                >
+                  <Checkbox
+                    id="all-reports"
+                    label=""
+                    onChange={toggleSelectAll}
+                    checked={allReportsChecked}
+                    aria-label="Select or de-select all reports"
+                  />
+                </th>
+              </tr>
+            </thead>
+          </Table>
+        </div>
+        )}
+      </WidgetContainer>
+    </>
   );
 };
 
