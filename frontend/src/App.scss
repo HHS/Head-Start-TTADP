@@ -1,7 +1,7 @@
 @use 'colors.scss' as *;
 @use './Grid.scss';
-
 @use './widgets/widgets.scss';
+@use './print.scss';
 
 @font-face {
   font-family: 'FontAwesome';
@@ -177,8 +177,8 @@ body {
 /* ========== some form resets ========== */
 
 .usa-button:not(
-  .usa-button--outline, 
-  .usa-button--unstyled, 
+  .usa-button--outline,
+  .usa-button--unstyled,
   .usa-button--secondary,
   :disabled,
   .usa-modal__close
@@ -195,9 +195,9 @@ body {
   color: $ttahub-medium-blue;
 }
 
-input:not([disabled]):focus, 
-select:not([disabled]):focus, 
-textarea:not([disabled]):focus, 
+input:not([disabled]):focus,
+select:not([disabled]):focus,
+textarea:not([disabled]):focus,
 button:not([disabled]):focus {
   outline: .25rem solid $blue-vivid-focus;
 }
