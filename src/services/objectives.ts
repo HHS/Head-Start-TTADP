@@ -45,6 +45,8 @@ export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
     id: number,
     goalId: number,
     status: string,
+    onApprovedAR?: boolean,
+    overrideStatus?: string,
     goal: {
       id: number,
       status: string,
