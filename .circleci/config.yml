@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.2-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.2-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -39,8 +39,8 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
-    default: dev
+    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
+    default: '-'
 
 # ----------------- Workflows -----------------
 
@@ -204,6 +204,18 @@ workflows:
         requires:
         - backup_temp_db
     - restore_db_job:
+        name: restore (dev-gold)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-gold"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-pink)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-pink"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
         name: restore (sandbox)
         serial-group: "tta-automation-lock"
         target_env: "sandbox"
@@ -237,16 +249,16 @@ jobs:
     - restore_cache:
         keys:
         # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v15-yarn-deps-
+        - v16-yarn-deps-
     - run: yarn deps
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -334,7 +346,25 @@ jobs:
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:
+        name: Merge coverage & generate report
+        when: always
+        command: |
+          temp_dir="coverage-temp"
+          report_dir="coverage-report"
+          mkdir -p ${temp_dir}
+          
+          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
+            relative_path="${file#./}"
+            new_name="${relative_path//\//-}"
+            new_path="${temp_dir}/${new_name}"
+            cp "$file" "${new_path}"
+          done
+          npx nyc merge ${temp_dir} ${temp_dir}/merged-coverage.json
+          npx nyc report --temp-dir ${temp_dir} --report-dir ${report_dir} --reporter=html --reporter=json-summary
+          echo "Coverage report: https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}/coverage-report/index.html"
+    - run:
         name: Check coverage for modified lines
+        when: always
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
@@ -345,27 +375,27 @@ jobs:
           else
             echo "Not a PR build. Skipping coverage check."
           fi
-        when: always
     - run:
         name: Summarize coverage
+        when: always
         command: |
           chmod +x ./tools/summarize-coverageCLI.js
           node ./tools/summarize-coverageCLI.js \
             ./coverage/coverage-final.json \
             90
-        when: always
     - run:
         name: Compress coverage artifacts
-        command: tar -cvzf backend-coverage-artifacts.tar coverage/
+        command: zip backend-coverage-artifacts.zip coverage/
+        when: always
     - store_artifacts:
-        path: coverage/
+        path: backend-coverage-artifacts.zip
     - store_artifacts:
-        path: backend-coverage-artifacts.tar
-    - store_test_results:
-        path: reports/
+        path: coverage-report/
     - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
+    - store_test_results:
+        path: reports/
 
   test_similarity_api:
     executor: docker-python-executor
@@ -588,8 +618,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v15-yarn-deps-
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run: |
         yarn deps
         yarn build
@@ -631,7 +661,7 @@ jobs:
       target_env:
         type: string
     steps:
-    - cf_cmd:
+    - cf_task:
         the_command: << parameters.command >>
         target_env: "<< parameters.target_env >>"
 
@@ -651,7 +681,7 @@ jobs:
         default: acf-head-start-alerts-lower
     steps:
     - checkout
-    - cf_cmd:
+    - cf_task:
         the_command: |
           node ./build/server/src/tools/importSystemCLI.js download 1
           node ./build/server/src/tools/importSystemCLI.js process 1
@@ -744,12 +774,31 @@ commands:
     - attach_workspace:
         at: .
     - run:
-        name: Start server
+        name: Start backend (8080) & watch logs
         command: |
-          yarn playwright install
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
-          yarn start:ci
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:web
+        background: true
+    - run:
+        name: Start frontend (3000) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          export TTA_SMART_HUB_URI="http://localhost:3000"
+          yarn playwright install
+          yarn client
+        background: true
+    - run:
+        name: Start testing server (9999) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:testingonly
         background: true
     - run:
         name: Run migrations ci
@@ -759,11 +808,15 @@ commands:
         command: yarn db:seed:ci
     - run:
         name: Wait for server to start
-        command: ./bin/ping-server 3000
+        command: |
+          ./bin/ping-server 3000 # frontend
+          ./bin/ping-server 9999 localhost "/testingonly" # testonly
+          #./bin/ping-server 8080 localhost "/health" # backend
+          sleep 30s # there is no way to check backend health without auth
     - run:
         name: << parameters.cmd >>
         command: |
-          export TTA_SMART_HUB_URI=http://localhost:3000
+          export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
           << parameters.cmd >>
     - store_artifacts:
@@ -935,7 +988,7 @@ commands:
         paths:
         - environments
 
-  cf_cmd:
+  cf_task:
     description: "Login, run task, send notification"
     parameters:
       the_command:
@@ -959,38 +1012,40 @@ commands:
           -u ${cg_username} \
           -p ${cg_password} \
           -o ${cg_org} \
-          -s ${cg_space}            
+          -s ${cg_space}
+    - run:
+        name: Set task name
+        command: |
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
-        command: |+
-          set +e
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+        background: true
+        command: |
           cf run-task \
             tta-smarthub-<< parameters.target_env >> \
             --command "<< parameters.the_command >>" \
             --name ${TASK_NAME} \
             -m 2GB \
-            -k 2GB \
-            --wait && true
+            -k 2GB
 
-          rc=$?
-          echo "waiting for logs...."
-          sleep 15 # wait for logs
+          echo "Watching logs..."
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+
+    - run:
+        name: "Wait for task to complete"
+        command: |
+          set +e
+          sleep 15
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          sleep 30
           cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | grep -i "error" 
-          echo "script exited with code:$rc"
-          exit ${rc}
-            
+
     - run:
         name: Logout of service account
         command: |
-          # Signal the log monitoring to stop
-          CONTROL_FILE="/tmp/stop_tail"
-          touch $CONTROL_FILE
-
           # Wait for the log monitoring process to terminate
           sleep 5
-
           # Logout from Cloud Foundry
           cf logout
 
@@ -1046,13 +1101,13 @@ commands:
         task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
         task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
         config: "<< parameters.backup_prefix >>-restore"
-        success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+        success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
         timeout: "1800"
     - run:
         when: on_fail
         command: |
-          msg="DB Restore failed to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
-          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
 
 
   cf_retention:
