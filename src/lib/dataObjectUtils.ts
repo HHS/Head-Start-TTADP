@@ -184,7 +184,7 @@ const remap = (
     let sourcePath:string;
     if (reverse) {
       sourcePath = Array.isArray(remappingDefinition[key])
-        ? remappingDefinition[key].slice(-1) as string
+        ? remappingDefinition[key].slice(-1)[0] as string
         : remappingDefinition[key] as string;
     } else {
       sourcePath = key;
