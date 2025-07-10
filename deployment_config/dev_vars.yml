@@ -3,9 +3,6 @@ web_instances: 1
 web_memory: 2GB
 worker_instances: 1
 worker_memory: 512M
-similarity_api_instances: 1
-similarity_api_memory: 1GB
-similarity_api_disk_quota: 6GB
 
 app_name: tta-smarthub-${full_env}
 app_url: https://tta-smarthub-${full_env}.app.cloud.gov/
@@ -25,7 +22,8 @@ AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://tta-smarthub-${full_env}.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-${full_env}.app.cloud.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
-SIMILARITY_ENDPOINT: https://tta-similarity-api-${full_env}.app.cloud.gov/compute
+SEND_NOTIFICATIONS: "true"
+SUPPRESS_ERROR_LOGGING: "false"
 SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
 
 AUTH_CLIENT_ID: "${DEV_AUTH_CLIENT_ID}"

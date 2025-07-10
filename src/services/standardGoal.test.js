@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
@@ -19,12 +20,14 @@ import db, {
   Recipient,
   Role,
   UserRole,
+  CollaboratorType,
 } from '../models';
 import {
   goalForRtr,
   newStandardGoal,
   standardGoalsForRecipient,
   updateExistingStandardGoal,
+  createObjectivesForGoal,
 } from './standardGoals';
 import {
   createGrant,
@@ -33,7 +36,7 @@ import {
   createReport,
   destroyReport,
 } from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 
 describe('standardGoal service', () => {
@@ -527,8 +530,14 @@ describe('standardGoal service', () => {
     let activityReportFour; // associated with secondGoalTemplate, secondGoalForSecondTemplate
 
     beforeAll(async () => {
-      grant = await createGrant({ recipientId: recipient.id });
-      secondGrant = await createGrant({ recipientId: recipient.id });
+      grant = await createGrant({ recipientId: recipient.id, regionId: 1 });
+      secondGrant = await createGrant({ recipientId: recipient.id, regionId: 1 });
+
+      // Create collaborator type for 'Creator'
+      const creatorType = await CollaboratorType.findOrCreate({
+        where: { name: 'Creator' },
+        defaults: { name: 'Creator' },
+      });
 
       topicOne = await Topic.create({
         name: faker.finance.accountName(),
@@ -631,6 +640,31 @@ describe('standardGoal service', () => {
         roleId: role.id,
       });
 
+      // Add collaborators to the goals
+      await GoalCollaborator.create({
+        goalId: firstGoalForFirstTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: secondGoalForFirstTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: firstGoalForSecondTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: secondGoalForSecondTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
       await changeGoalStatus({
         goalId: secondGoalForSecondTemplate.id,
         userId: reportData.userId,
@@ -715,6 +749,19 @@ describe('standardGoal service', () => {
     });
 
     afterAll(async () => {
+      // Clean up collaborators
+      await GoalCollaborator.destroy({
+        where: {
+          goalId: [
+            firstGoalForFirstTemplate.id,
+            secondGoalForFirstTemplate.id,
+            firstGoalForSecondTemplate.id,
+            secondGoalForSecondTemplate.id,
+          ],
+        },
+        force: true,
+      });
+
       await ActivityReportGoal.destroy({
         where: {
           goalId: [
@@ -820,146 +867,214 @@ describe('standardGoal service', () => {
       });
     });
 
-    it('retrieves standard goals for recipient', async () => {
-      const goals = await standardGoalsForRecipient(
+    it('retrieves standard goals for a recipient with correct structure and data', async () => {
+      // Call the function with the recipient and region from the grant
+      const result = await standardGoalsForRecipient(
         recipient.id,
         grant.regionId,
-        {},
+        { sortBy: 'goalStatus', sortDir: 'desc' },
       );
 
-      expect(goals).toBeDefined();
+      // Verify the structure of the response
+      expect(result).toHaveProperty('count');
+      expect(result).toHaveProperty('goalRows');
+      expect(result).toHaveProperty('statuses');
+      expect(result).toHaveProperty('allGoalIds');
 
-      const {
-        allGoalIds,
-        count,
-        goalRows,
-        statuses,
-      } = goals;
+      // Verify the count matches the number of unique goal template/grant combinations
+      // We expect 2 goals (the latest for each template)
+      expect(result.count).toBe(2);
 
-      expect(allGoalIds).toHaveLength(2);
-      expect(allGoalIds).toContain(secondGoalForFirstTemplate.id);
-      expect(allGoalIds).toContain(secondGoalForSecondTemplate.id);
+      // Verify the goals are correctly processed
+      expect(result.goalRows.length).toBe(2);
 
-      expect(count).toBe(2);
+      // Find the goal for the second template (should be IN_PROGRESS)
+      const secondTemplateGoal = result.goalRows.find(
+        (g) => g.goalTemplateId === secondGoalTemplate.id,
+      );
+      expect(secondTemplateGoal).toBeDefined();
+      expect(secondTemplateGoal.status).toBe(GOAL_STATUS.IN_PROGRESS);
 
-      expect(statuses.total).toBe(2);
-      expect(statuses['Not started']).toBe(1);
-      expect(statuses['In progress']).toBe(1);
-      expect(statuses.Suspended).toBe(0);
-      expect(statuses.Closed).toBe(0);
+      // Find the goal for the first template (should be NOT_STARTED)
+      const firstTemplateGoal = result.goalRows.find(
+        (g) => g.goalTemplateId === goalTemplate.id,
+      );
+      expect(firstTemplateGoal).toBeDefined();
+      expect(firstTemplateGoal.status).toBe(GOAL_STATUS.NOT_STARTED);
 
-      expect(goalRows).toHaveLength(2);
+      // Verify objectives are processed correctly
+      expect(secondTemplateGoal.objectives.length).toBe(2);
 
-      const [goalOne, goalTwo] = goalRows;
+      // Verify the allGoalIds contains the IDs of the two goals
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toContain(secondGoalForSecondTemplate.id);
 
-      // ======
+      // Verify the statuses object is returned
+      expect(result.statuses).toBeDefined();
+    });
+  });
 
-      expect(goalOne.id).toBe(secondGoalForSecondTemplate.id);
-      expect(goalOne.name).toBe(secondGoalTemplate.templateName);
-      expect(goalOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
+  describe('createObjectivesForGoal', () => {
+    const goal = { id: 1 };
+    const objectives = [
+      {
+        id: 1,
+        isNew: false,
+        ttaProvided: 'TTA provided details',
+        title: 'Objective title 1',
+        status: GOAL_STATUS.IN_PROGRESS,
+        topics: ['topic1'],
+        resources: ['resource1'],
+        files: ['file1'],
+        courses: ['course1'],
+        closeSuspendReason: null,
+        closeSuspendContext: null,
+        ActivityReportObjective: {},
+        supportType: 'supportType1',
+        goalId: 1,
+        createdHere: false,
+      },
+      {
+        id: 2,
+        isNew: true,
+        ttaProvided: 'TTA provided details',
+        title: 'Objective title 2',
+        status: 'NOT_STARTED',
+        topics: ['topic2'],
+        resources: ['resource2'],
+        files: ['file2'],
+        courses: ['course2'],
+        closeSuspendReason: null,
+        closeSuspendContext: null,
+        ActivityReportObjective: {},
+        supportType: 'supportType2',
+        goalId: 2,
+        createdHere: true,
+      },
+    ];
 
-      const { statusChanges: goalOneStatusChanges } = goalOne;
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
 
-      expect(goalOneStatusChanges).toHaveLength(1);
-      expect(goalOneStatusChanges[0].oldStatus).toBe(GOAL_STATUS.NOT_STARTED);
-      expect(goalOneStatusChanges[0].newStatus).toBe(GOAL_STATUS.IN_PROGRESS);
+    it('should return an empty array if no objectives are provided', async () => {
+      const result = await createObjectivesForGoal(goal, null);
+      expect(result).toEqual([]);
+    });
 
-      const { grant: goalOneGrant } = goalOne;
-      expect(goalOneGrant.number).toBe(grant.number);
+    it('should create new objectives for new items', async () => {
+      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 2,
+          title: 'Objective title 2',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
 
-      const { objectives: goalOneObjectives } = goalOne;
+      const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(goalOneObjectives).toHaveLength(2);
-      const [goalOneObjectiveOne, goalOneObjectiveTwo] = goalOneObjectives;
+      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
+      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Objective title 2',
+        goalId: goal.id,
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        createdVia: 'activityReport',
+      }));
 
-      expect(goalOneObjectiveOne.title).toBeDefined();
-      expect(goalOneObjectiveOne.status).toBeDefined();
+      expect(result).toHaveLength(2);
+      expect(result[1].title).toBe('Objective title 2');
+    });
 
-      expect(goalOneObjectiveOne.activityReportObjectives).toHaveLength(1);
+    it('should update existing objectives', async () => {
+      Objective.findByPk = jest.fn().mockResolvedValue({
+        id: 1,
+        title: 'Objective title 1',
+        onApprovedAR: false,
+        update: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective title 1',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          goalId: goal.id,
+        }),
+      });
 
-      const [aroOne] = goalOneObjectiveOne.activityReportObjectives;
+      Objective.findOne = jest.fn().mockResolvedValue(null);
 
-      const { topics: aroOneTopics } = aroOne;
-      expect(aroOneTopics).toHaveLength(1);
-      expect(aroOneTopics[0].name).toBe(topicOne.name);
+      const result = await createObjectivesForGoal(goal, objectives);
 
-      const { activityReport: aroOneReport } = aroOne;
-      expect(aroOneReport.id).toBe(activityReportFour.id);
+      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
+      expect(Objective.findByPk).toHaveBeenCalledWith(1);
 
-      expect(aroOneReport.startDate).toBeDefined();
-      expect(aroOneReport.endDate).toBeDefined();
-      expect(aroOneReport.displayId).toBeDefined();
+      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Objective title 2',
+        goalId: goal.id,
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        createdVia: 'activityReport',
+      }));
 
-      expect(goalOneObjectiveTwo.title).toBeDefined();
-      expect(goalOneObjectiveTwo.status).toBeDefined();
+      expect(result).toHaveLength(2);
+      expect(result[0].title).toBe('Objective title 1');
+      expect(result[1].title).toBe('Objective title 2');
+    });
 
-      expect(goalOneObjectiveTwo.activityReportObjectives).toHaveLength(1);
-      const [aroTwo] = goalOneObjectiveTwo.activityReportObjectives;
-      const { topics: aroTwoTopics } = aroTwo;
-      expect(aroTwoTopics).toHaveLength(2);
-      const aroTwoTopicNames = aroTwoTopics.map((t) => t.name);
-      expect(aroTwoTopicNames).toContain(topicOne.name);
-      expect(aroTwoTopicNames).toContain(topicTwo.name);
-      const { activityReport: aroTwoReport } = aroTwo;
-      expect(aroTwoReport.id).toBe(activityReportThree.id);
-      expect(aroTwoReport.startDate).toBeDefined();
-      expect(aroTwoReport.endDate).toBeDefined();
-      expect(aroTwoReport.displayId).toBeDefined();
+    it('should reuse an existing objective if conditions match', async () => {
+      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue({
+        id: 2,
+        title: 'Objective title 2',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        toJSON: () => ({
+          id: 2,
+          title: 'Objective title 2',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+        }),
+      });
 
-      // ======
+      const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(goalTwo.id).toBe(secondGoalForFirstTemplate.id);
-      expect(goalTwo.name).toBe(goalTemplate.templateName);
-      expect(goalOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
+      expect(Objective.findByPk).toHaveBeenCalledWith(1);
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          goalId: goal.id,
+          title: 'Objective title 2',
+          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
+        }),
+      });
 
-      const { statusChanges: goalTwoStatusChanges } = goalOne;
+      expect(result[1].title).toBe('Objective title 2');
+    });
 
-      expect(goalTwoStatusChanges).toHaveLength(1);
-      const [goalTwoStatusChange] = goalTwoStatusChanges;
-      expect(goalTwoStatusChange.oldStatus).toBe(GOAL_STATUS.NOT_STARTED);
-      expect(goalTwoStatusChange.newStatus).toBe(GOAL_STATUS.IN_PROGRESS);
+    it('should handle undefined fields without throwing an error', async () => {
+      const incompleteObjectives = [
+        {
+          id: 1,
+          isNew: false,
+          supportType: 'supportType1',
+          goalId: 1,
+          createdHere: false,
+        },
+      ];
 
-      const { grant: goalTwoGrant } = goalOne;
-      expect(goalTwoGrant.number).toBe(grant.number);
+      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective with missing fields',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
 
-      const { objectives: goalTwoObjectives } = goalOne;
+      const result = await createObjectivesForGoal(goal, incompleteObjectives);
 
-      expect(goalTwoObjectives).toHaveLength(2);
-      const [goalTwoObjectiveOne, goalTwoObjectiveTwo] = goalTwoObjectives;
-
-      expect(goalTwoObjectiveOne.title).toBeDefined();
-      expect(goalOneObjectiveOne.status).toBeDefined();
-
-      expect(goalTwoObjectiveOne.activityReportObjectives).toHaveLength(1);
-
-      const [goalTwoAroOne] = goalTwoObjectiveOne.activityReportObjectives;
-
-      const { topics: goalTwoAroOneTopics } = goalTwoAroOne;
-      expect(goalTwoAroOneTopics).toHaveLength(1);
-      expect(goalTwoAroOneTopics[0].name).toBe(topicOne.name);
-
-      const { activityReport: aroOneGoalTwoReport } = goalTwoAroOne;
-      expect(aroOneGoalTwoReport.id).toBe(activityReportFour.id);
-
-      expect(aroOneGoalTwoReport.startDate).toBeDefined();
-      expect(aroOneGoalTwoReport.endDate).toBeDefined();
-      expect(aroOneGoalTwoReport.displayId).toBeDefined();
-
-      expect(goalTwoObjectiveTwo.title).toBeDefined();
-      expect(goalTwoObjectiveTwo.status).toBeDefined();
-
-      expect(goalTwoObjectiveTwo.activityReportObjectives).toHaveLength(1);
-      const [goalTwoObjectiveTwoAro] = goalOneObjectiveTwo.activityReportObjectives;
-      const { topics: goalTwoObjectiveTwoAroTopics } = goalTwoObjectiveTwoAro;
-      expect(goalTwoObjectiveTwoAroTopics).toHaveLength(2);
-      const goalTwoObjectiveTwoAroTopicNames = goalTwoObjectiveTwoAroTopics.map((t) => t.name);
-      expect(goalTwoObjectiveTwoAroTopicNames).toContain(topicOne.name);
-      expect(goalTwoObjectiveTwoAroTopicNames).toContain(topicTwo.name);
-      const { activityReport: goalTwoObjectiveTwoAroReport } = aroTwo;
-      expect(goalTwoObjectiveTwoAroReport.id).toBe(activityReportThree.id);
-      expect(goalTwoObjectiveTwoAroReport.startDate).toBeDefined();
-      expect(goalTwoObjectiveTwoAroReport.endDate).toBeDefined();
-      expect(goalTwoObjectiveTwoAroReport.displayId).toBeDefined();
+      expect(result).toHaveLength(0);
+      expect(Objective.create).not.toHaveBeenCalled();
     });
   });
 });

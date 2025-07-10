@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react-hooks';
 import useWidgetPaging, { parseValue } from '../useWidgetPaging';
 
 describe('useWidgetPaging', () => {
@@ -19,9 +19,8 @@ describe('useWidgetPaging', () => {
       false,
       [],
       'RecipientsWithNoTta',
-      jest.fn(),
-      ['string_header'],
-      ['data_header'],
+      jest.fn(), // setDataPerPage
+      // stringColumns and dateColumns omitted to test defaults
     ));
 
     expect(result.current.offset).toEqual(0);
@@ -58,7 +57,9 @@ describe('useWidgetPaging', () => {
       ['data_header'],
     ));
 
-    result.current.handlePageChange(2);
+    act(() => {
+      result.current.handlePageChange(2);
+    });
 
     expect(result.current.activePage).toEqual(2);
     expect(result.current.offset).toEqual(1);
@@ -86,7 +87,9 @@ describe('useWidgetPaging', () => {
       ['data_header'],
     ));
 
-    result.current.requestSort('1');
+    act(() => {
+      result.current.requestSort('1');
+    });
 
     expect(result.current.sortConfig).toEqual({
       sortBy: '1',
@@ -117,7 +120,9 @@ describe('useWidgetPaging', () => {
       ['data_header'],
     ));
 
-    result.current.requestSort('1');
+    act(() => {
+      result.current.requestSort('1');
+    });
 
     expect(result.current.sortConfig).toEqual({
       sortBy: '1',
@@ -164,7 +169,9 @@ describe('useWidgetPaging', () => {
       ['data_header'],
     ));
 
-    result.current.requestSort('string_header');
+    act(() => {
+      result.current.requestSort('string_header');
+    });
 
     expect(result.current.sortConfig).toEqual({
       sortBy: 'string_header',
@@ -211,7 +218,9 @@ describe('useWidgetPaging', () => {
       ['date_header'],
     ));
 
-    result.current.requestSort('date_header');
+    act(() => {
+      result.current.requestSort('date_header');
+    });
 
     expect(result.current.sortConfig).toEqual({
       sortBy: 'date_header',
@@ -258,7 +267,9 @@ describe('useWidgetPaging', () => {
       ['data_header'],
     ));
 
-    result.current.requestSort('number_header');
+    act(() => {
+      result.current.requestSort('number_header');
+    });
 
     expect(result.current.sortConfig).toEqual({
       sortBy: 'number_header',
@@ -305,13 +316,52 @@ describe('useWidgetPaging', () => {
       ['date_header'],
     ));
 
-    result.current.requestSort('value_header');
+    act(() => {
+      result.current.requestSort('value_header');
+    });
 
     expect(result.current.sortConfig).toEqual({
       sortBy: 'value_header',
       direction: 'asc',
       activePage: 1,
     });
+  });
+
+  it('resets pagination when resetPagination is true', () => {
+    const setResetPagination = jest.fn();
+    const { result, rerender } = renderHook(({ resetPagination }) => useWidgetPaging(
+      [], 'testPaging', { sortBy: '1', direction: 'desc', activePage: 2 }, 10, [], jest.fn(),
+      resetPagination, setResetPagination, false, [], 'TestExport', jest.fn(), [], [], 'TestName', null, [],
+    ), { initialProps: { resetPagination: false } });
+
+    // initial state check
+    expect(result.current.activePage).toBe(2);
+    expect(result.current.offset).toBe(10);
+
+    // trigger reset
+    act(() => {
+      rerender({ resetPagination: true });
+    });
+
+    // check if reset happened
+    expect(result.current.activePage).toBe(1);
+    expect(result.current.offset).toBe(0);
+    expect(setResetPagination).toHaveBeenCalledWith(false);
+  });
+
+  it('does not handle page change when loading', () => {
+    const { result } = renderHook(() => useWidgetPaging(
+      [], 'testPaging', { sortBy: '1', direction: 'desc', activePage: 1 }, 10, [], jest.fn(),
+      false, jest.fn(), true, [], 'TestExport', jest.fn(), [], [], 'TestName', null, [],
+    ));
+
+    act(() => {
+      result.current.handlePageChange(3);
+    });
+
+    // page should not change because loading is true
+    expect(result.current.activePage).toBe(1);
+    expect(result.current.offset).toBe(0);
   });
 
   describe('parseValue', () => {

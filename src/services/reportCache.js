@@ -439,6 +439,7 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
+  // TODO: We shouldn't need this once standard goals is implemented.
   if (isMultiRecipientReport) {
     // Check for fei goal prompts we need to update on the activity report goal.
     const goalPrompts = await GoalFieldResponse.findAll({
