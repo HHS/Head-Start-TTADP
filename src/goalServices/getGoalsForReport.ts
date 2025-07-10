@@ -29,7 +29,8 @@ const {
   File,
   Program,
 } = db;
-
+// TODO: TTAHUB-3970: This might need to be changed to ensure we
+//  return the selected goal template name for display.
 export default async function getGoalsForReport(reportId: number) {
   const goals = await Goal.findAll({
     attributes: {

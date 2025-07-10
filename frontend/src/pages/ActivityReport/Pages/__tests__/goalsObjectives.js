@@ -588,45 +588,6 @@ describe('goals objectives', () => {
       expect(goal).toBeVisible();
     });
 
-    it('displays other-entity objectives', async () => {
-      render(<RenderReview
-        activityRecipientType="other-entity"
-        objectivesWithoutGoals={[
-          {
-            id: 1,
-            title: 'title one',
-            ttaProvided: 'ttaProvided one',
-            status: 'Not Started',
-            topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
-            resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
-            roles: ['Chief Inspector'],
-            files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
-            supportType: SUPPORT_TYPES[1],
-            courses: [],
-          },
-          {
-            id: 2,
-            title: 'title two',
-            ttaProvided: 'ttaProvided two',
-            status: 'Not Started',
-            topics: [],
-            resources: [],
-            roles: ['Chief Inspector'],
-            files: [],
-            supportType: SUPPORT_TYPES[1],
-            courses: [],
-          },
-        ]}
-      />);
-      const objective = await screen.findByText('title one');
-      expect(await screen.findByText(/topic 1, topic 2, topic 3/i)).toBeVisible();
-      expect(await screen.findByRole('link', { name: /test1\.txt \(opens in new tab\)/i })).toBeVisible();
-      expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
-      expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
-      expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
-      expect(objective).toBeVisible();
-    });
-
     it('displays goals with objectives', async () => {
       render(<RenderReview goals={[{
         id: 1,

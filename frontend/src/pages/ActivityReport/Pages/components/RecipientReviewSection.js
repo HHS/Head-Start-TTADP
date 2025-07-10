@@ -26,8 +26,7 @@ const RecipientReviewSection = () => {
       anchor: 'goal-summary',
       items: [
         { label: 'Recipient\'s goal', name: 'name' },
-        { label: 'Goal source', name: 'source' },
-        { label: 'Goal number', name: 'goalNumber' },
+        { label: 'Goal numbers', name: 'goalNumber' },
         { label: 'Root cause', name: 'promptsForReview' },
       ],
     },
@@ -44,6 +43,9 @@ const RecipientReviewSection = () => {
         },
         {
           label: 'Topics', name: 'topics', path: 'name', sort: true,
+        },
+        {
+          label: 'iPD Courses', name: 'courses', path: 'name', sort: true,
         },
         {
           label: 'Resource links', name: 'resources', path: 'value', sort: true,

@@ -254,9 +254,9 @@ describe('EventCard', () => {
     userEvent.click(createSession);
     expect(history.push).toHaveBeenCalledWith('/training-report/1234/session/new/');
 
-    // View event.
+    // View/Print event.
     contextBtn.click();
-    const viewEvent = screen.queryByText(/view event/i);
+    const viewEvent = screen.queryByText(/view\/print event/i);
     expect(viewEvent).toBeInTheDocument();
     userEvent.click(viewEvent);
     expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');

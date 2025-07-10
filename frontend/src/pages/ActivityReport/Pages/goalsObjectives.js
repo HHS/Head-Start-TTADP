@@ -15,7 +15,6 @@ import { IN_PROGRESS } from '../../../components/Navigator/constants';
 import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals, validatePrompts } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
-import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 import ConnectionError from '../../../components/ConnectionError';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
@@ -464,23 +463,11 @@ GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
 
-const ReviewSection = () => {
-  const { watch } = useFormContext();
-  const {
-    activityRecipientType,
-  } = watch();
-
-  const otherEntity = activityRecipientType === 'other-entity';
-
-  return (
-    <>
-      {!otherEntity
-        && <RecipientReviewSection />}
-      {otherEntity
-        && <OtherEntityReviewSection />}
-    </>
-  );
-};
+const ReviewSection = () => (
+  <>
+    <RecipientReviewSection />
+  </>
+);
 
 export default {
   position: 2,

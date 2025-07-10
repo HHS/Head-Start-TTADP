@@ -20,6 +20,7 @@ const Approver = ({
   onResetToDraft,
   onFormSubmit,
   availableApprovers,
+  reviewItems,
 }) => {
   const {
     additionalNotes,
@@ -132,6 +133,7 @@ const Approver = ({
               onResetToDraft={onResetToDraft}
               calculatedStatus={calculatedStatus}
               availableApprovers={availableApprovers}
+              reviewItems={reviewItems}
             />
           )}
         {approved
@@ -139,6 +141,7 @@ const Approver = ({
             <Approved
               additionalNotes={additionalNotes}
               approverStatusList={approvers}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
@@ -181,6 +184,13 @@ Approver.propTypes = {
   })).isRequired,
   onResetToDraft: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      content: PropTypes.node.isRequired,
+    }),
+  ).isRequired,
 };
 
 Approver.defaultProps = {
