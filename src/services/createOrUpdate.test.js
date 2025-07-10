@@ -244,13 +244,13 @@ describe('createOrUpdate', () => {
     const request = {
       recipientsWhoHaveGoalsThatShouldBeRemoved,
       goals: [{
+        goalTemplateId: 2,
         id: goal.id,
         name: goal.name,
         status: goal.status,
         timeframe: null,
         isFromSmartsheetTtaPlan: null,
         grantId: grantIds[0],
-        goalTemplateId: null,
         onAR: true,
         onApprovedAR: false,
         isRttapa: null,

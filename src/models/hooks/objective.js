@@ -8,6 +8,12 @@ import {
   currentUserPopulateCollaboratorForType,
 } from '../helpers/genericCollaborator';
 
+// Find or create templates for each of the distinct titles.
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// Probably we don't want to create an objective template every time.
+// But have a finite list of hardcoded objective templates for each goal template.
+// We need to check this with ohs. findOrCreateObjectiveTemplate().
+// NOTE: Determine what to do here when we implement the objective changes.
 const findOrCreateObjectiveTemplate = async (
   sequelize,
   transaction,
@@ -129,6 +135,12 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
   }
 };
 
+// Find or create templates for each of the distinct titles.
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// Probably we don't want to create an objective template every time.
+// If we we have a set list of objective templates
+// they will already be linked to their goal templates.
+// NOTE: Determine what to do here when we implement the objective changes.
 const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (instance.goalId !== undefined
@@ -217,6 +229,10 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// If we move to standard objectives, we don't want to change the objective title.
+// We also shouldn't be creating an objective template every time.
+// NOTE: Determine what to do here when we implement the objective changes.
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('title') && instance.goalTemplateId) {

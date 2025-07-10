@@ -103,6 +103,7 @@ const sampleReport = {
   reason: ['reason'],
   ttaType: ['type'],
   regionId: 2,
+  activityReason: 'recipient request',
   targetPopulations: ['target pop'],
   author: {
     fullName: 'Kiwi, GS',

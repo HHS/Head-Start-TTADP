@@ -7,14 +7,12 @@ const {
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
 const { auditLogger } = require('../../logger');
-const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
-const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
@@ -42,50 +40,6 @@ const copyStatus = (instance) => {
   if (submissionStatus === REPORT_STATUSES.DRAFT
     || submissionStatus === REPORT_STATUSES.DELETED) {
     instance.set('calculatedStatus', submissionStatus);
-  }
-};
-
-const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
-  // eslint-disable-next-line global-require
-  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('submissionStatus')
-    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    try {
-      const goals = await sequelize.models.Goal.findAll({
-        where: {
-          status: 'Draft',
-        },
-        include: [
-          {
-            attributes: [],
-            through: { attributes: [] },
-            model: sequelize.models.ActivityReport,
-            as: 'activityReports',
-            required: true,
-            where: {
-              id: instance.id,
-            },
-          },
-        ],
-        includeIgnoreAttributes: false,
-        transaction: options.transaction,
-      });
-
-      const goalIds = goals.map((goal) => goal.id);
-      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-      await Promise.all(goalIds.map((goalId) => changeGoalStatus({
-        goalId,
-        userId,
-        newStatus: GOAL_STATUS.NOT_STARTED,
-        reason: 'Activity Report submission',
-        context: null,
-        transaction: options.transaction,
-      })));
-    } catch (error) {
-      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
-    }
   }
 };
 
@@ -135,56 +89,6 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
     && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    let goals;
-    try {
-      goals = await sequelize.models.Goal.findAll({
-        where: { goalTemplateId: null },
-        include: [
-          {
-            attributes: [],
-            through: { attributes: [] },
-            model: sequelize.models.ActivityReport,
-            as: 'activityReports',
-            required: true,
-            where: {
-              id: instance.id,
-            },
-          },
-        ],
-        includeIgnoreAttributes: false,
-        transaction: options.transaction,
-        raw: true,
-      });
-      // Generate a distinct list of goal names.
-      const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
-      // Find or create templates for each of the distinct names.
-      const distinctTemplates = await Promise.all(distinctlyNamedGoals
-        .map(async (goal) => findOrCreateGoalTemplate(
-          sequelize,
-          options.transaction,
-          instance.regionId,
-          goal.name,
-          goal.createdAt,
-          goal.updatedAt,
-        )));
-      // Add the corresponding template id to each of the goals.
-      goals = goals.map((goal) => {
-        const goalTemplateId = distinctTemplates.find((dt) => dt.name === goal.name).id;
-        return { ...goal, goalTemplateId };
-      });
-      // Update all the goals with their template id.
-      await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
-        { goalTemplateId: goal.goalTemplateId },
-        {
-          where: { id: goal.id },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      )));
-    } catch (e) {
-      auditLogger.error(`propagateSubmissionStatus > updating goal: ${e}}`);
-    }
-
     let objectives;
     try {
       objectives = await sequelize.models.Objective.findAll({
@@ -209,6 +113,11 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       const distinctlyTitledObjectives = [...new Map(objectives
         .map((objective) => [objective.title, objective])).values()];
       // Find or create templates for each of the distinct titles.
+      // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+      // Probably we don't want to create an objective template every time.
+      // But have a finite list of hardcoded objective templates for each goal template.
+      // We need to check this with ohs. findOrCreateObjectiveTemplate().
+      // NOTE: lets address this when we make the objective changes.
       const distinctTemplates = await Promise.all(distinctlyTitledObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
@@ -595,11 +504,11 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     // and 2) goals that are "In Progress" are not moved backward
     // so we start with finding all the goals that *could* be changed
     // (goals in draft or not started)
+    // Standard Goals: We need to keep this for not started moved to in progress.
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
           status: [
-            GOAL_STATUS.DRAFT,
             GOAL_STATUS.NOT_STARTED,
           ],
         },
@@ -834,34 +743,6 @@ const beforeUpdate = async (sequelize, instance, options) => {
   clearAdditionalNotes(sequelize, instance, options);
 };
 
-const afterDestroy = async (sequelize, instance, options) => {
-  try {
-    if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
-      return;
-    }
-    auditLogger.info(`Destroying linked similarity groups for AR-${instance.id}`);
-    const { id: activityReportId, calculatedStatus } = instance;
-
-    const arGoals = await sequelize.models.ActivityReportGoal.findAll({
-      attributes: ['goalId'],
-      where: { activityReportId },
-      transaction: options.transaction,
-    });
-
-    await Promise.all((arGoals.map(async (arGoal) => {
-      const i = {
-        calculatedStatus,
-        goalId: arGoal.goalId,
-      };
-      // regen similarity groups
-      return destroyLinkedSimilarityGroups(sequelize, i, options);
-    })));
-  } catch (e) {
-    // we do not want to surface these errors to the UI
-    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
-  }
-};
-
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
 };
@@ -873,9 +754,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await autoPopulateUtilizer(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
-  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await afterDestroy(sequelize, instance, options);
 };
 
 export {
@@ -889,7 +768,5 @@ export {
   beforeUpdate,
   afterCreate,
   afterUpdate,
-  moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,
-  afterDestroy,
 };
