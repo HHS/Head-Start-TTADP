@@ -138,6 +138,7 @@ function ObjectiveCard({
             className="line-height-sans-5"
             onUpdateObjectiveStatus={onUpdateObjectiveStatus}
             forceReadOnly={forceReadOnly}
+            onApprovedAR={objective.onApprovedAR}
           />
           {!(forceReadOnly) && (
             <ObjectiveSuspendModal
@@ -162,6 +163,7 @@ function ObjectiveCard({
 
 export const objectivePropTypes = PropTypes.shape({
   title: PropTypes.string.isRequired,
+  onApprovedAR: PropTypes.bool,
   endDate: PropTypes.string,
   status: PropTypes.string,
   activityReports: PropTypes.arrayOf(PropTypes.shape({
