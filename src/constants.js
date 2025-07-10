@@ -258,6 +258,15 @@ const SORT_DIR = {
   DESC: 'DESC',
 };
 
+const REGIONS = [
+  'Northeast',
+  'Midwest',
+  'West',
+  'AIAN',
+  'Southeast',
+  'Southwest',
+];
+
 module.exports = {
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,
@@ -295,4 +304,5 @@ module.exports = {
   FEATURE_FLAGS,
   SORT_DIR,
   COMMUNICATION_LOG_LIMIT_MAX,
+  REGIONS,
 };
