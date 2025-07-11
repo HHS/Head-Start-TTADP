@@ -294,7 +294,7 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - ./*
+        - build
 
   build_similarity_api:
     executor: docker-python-executor
