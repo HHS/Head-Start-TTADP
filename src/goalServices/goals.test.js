@@ -771,6 +771,7 @@ describe('Goals DB service', () => {
         goalId: mockGoalId,
         title: 'title',
         status: 'Not Started',
+        createdViaActivityReportId: mockActivityReportId,
       });
     });
 
