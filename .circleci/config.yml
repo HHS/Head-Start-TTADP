@@ -295,6 +295,9 @@ jobs:
         root: .
         paths:
         - build
+        - node_modules
+        - frontend/node_modules
+        - packages/common/node_modules
 
   build_similarity_api:
     executor: docker-python-executor
