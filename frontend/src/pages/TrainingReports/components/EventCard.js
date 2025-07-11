@@ -189,9 +189,9 @@ function EventCard({
     });
   }
 
-  // View event.
+  // View/Print event.
   menuItems.push({
-    label: 'View event',
+    label: 'View/Print event',
     onClick: () => {
       history.push(`/training-report/view/${idForLink}`);
     },

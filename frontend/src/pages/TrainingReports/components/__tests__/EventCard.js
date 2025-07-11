@@ -115,7 +115,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
   });
 
@@ -125,7 +125,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
   it('hides the edit and create options for users with only write permission and no event roles', async () => {
@@ -134,7 +134,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/view/1234');
   });
 
@@ -149,7 +149,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     contextBtn.click();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
   it('does not show the create session option for poc without write permission', async () => {
@@ -172,7 +172,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).toBeNull();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
   it('hides the delete for events that arent not started or suspended', async () => {
@@ -254,9 +254,9 @@ describe('EventCard', () => {
     userEvent.click(createSession);
     expect(history.push).toHaveBeenCalledWith('/training-report/1234/session/new/');
 
-    // View event.
+    // View/Print event.
     contextBtn.click();
-    const viewEvent = screen.queryByText(/view event/i);
+    const viewEvent = screen.queryByText(/view\/print event/i);
     expect(viewEvent).toBeInTheDocument();
     userEvent.click(viewEvent);
     expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
@@ -276,7 +276,7 @@ describe('EventCard', () => {
     const createSession = screen.queryByText(/create session/i);
     expect(createSession).toBeInTheDocument();
 
-    const viewEvent = screen.queryByText(/view event/i);
+    const viewEvent = screen.queryByText(/view\/print event/i);
     expect(viewEvent).toBeInTheDocument();
   });
 
