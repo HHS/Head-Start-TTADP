@@ -180,12 +180,6 @@ workflows:
         requires:
         - process_temp_db
     - restore_db_job:
-        name: restore (dev)
-        serial-group: "tta-automation-lock"
-        target_env: "dev"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
         name: restore (dev-green)
         serial-group: "tta-automation-lock"
         target_env: "dev-green"
@@ -213,12 +207,6 @@ workflows:
         name: restore (dev-pink)
         serial-group: "tta-automation-lock"
         target_env: "dev-pink"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
-        name: restore (sandbox)
-        serial-group: "tta-automation-lock"
-        target_env: "sandbox"
         requires:
         - backup_temp_db
     - restore_db_job:
