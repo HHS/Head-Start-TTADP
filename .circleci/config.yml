@@ -52,7 +52,9 @@ workflows:
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
     - build_and_lint
-    - build_similarity_api
+    - build_similarity_api:
+        requires:
+        - build_and_lint
     - checkpoint:
         name: build_done
         requires:
@@ -294,10 +296,7 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - build
-        - node_modules
-        - frontend/node_modules
-        - packages/common/node_modules
+        - ./*
 
   build_similarity_api:
     executor: docker-python-executor
