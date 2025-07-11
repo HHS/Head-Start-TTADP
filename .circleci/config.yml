@@ -262,7 +262,12 @@ jobs:
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
-    - run: yarn build
+    - run: 
+        name: Build backend
+        yarn build
+    - run:
+        name: Build frontend
+        command: yarn --cwd frontend run build
     - run:
         name: Lint backend
         command: yarn lint:ci
