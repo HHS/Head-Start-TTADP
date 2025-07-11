@@ -262,12 +262,12 @@ jobs:
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
+    #- run:
+    #    name: Build frontend
+    #    command: yarn --cwd frontend run build
     - run: 
         name: Build backend
         command: yarn build
-    - run:
-        name: Build frontend
-        command: yarn --cwd frontend run build
     - run:
         name: Lint backend
         command: yarn lint:ci
@@ -294,7 +294,7 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - .
+        - ./*
 
   build_similarity_api:
     executor: docker-python-executor
@@ -785,6 +785,8 @@ commands:
           export CURRENT_USER_ID=5
           export POSTGRES_USERNAME="postgres"
           export POSTGRES_DB="ttasmarthub"
+          ls -la build/server/src
+          cat build/server/src/index.js
           yarn start:web
         background: true
     - run:
