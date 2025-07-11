@@ -1,4 +1,4 @@
-import { reseedDB, queryDB } from './handlers';
+import { reseedDB, queryDB, health } from './handlers';
 import { reseed, query } from '../../../tests/utils/dbUtils';
 import handleErrors from '../../lib/apiErrorHandler';
 
@@ -75,6 +75,13 @@ describe('handlers', () => {
       query.mockRejectedValue(error);
       await queryDB(req, res);
       expect(handleErrors).toHaveBeenCalledWith(req, res, error, 'queryDB');
+    });
+  });
+
+  describe('health', () => {
+    it('should always return 200', async () => {
+      await health(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 });
