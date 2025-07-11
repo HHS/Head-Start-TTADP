@@ -763,7 +763,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save objectives' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Goals and objectives Complete' }).click();
-    await page.getByTestId('ellipsis-button').click();
+    await page.getByTestId('actions-button').click();
     await page.getByTestId('menu').getByTestId('button').click();
     await page.getByRole('button', { name: 'Remove this objective' }).click();
     await page.getByRole('button', { name: 'This button will remove the objective from the activity report' }).click();
