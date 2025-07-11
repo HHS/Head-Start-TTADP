@@ -141,6 +141,22 @@ export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
           title: {
             [Op.ne]: '',
           },
+          [Op.or]: [
+            { createdVia: 'rtr' },
+            {
+              [Op.and]: [
+                { createdVia: 'activityReport' },
+                { onApprovedAR: true },
+              ],
+            },
+            {
+              [Op.and]: [
+                { createdVia: 'activityReport' },
+                // eslint-disable-next-line max-len
+                { createdViaActivityReportId: activityReportId }, // This is the report that created the objective.
+              ],
+            },
+          ],
         },
         attributes: [
           'id',
