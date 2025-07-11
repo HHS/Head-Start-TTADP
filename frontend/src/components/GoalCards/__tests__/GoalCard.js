@@ -289,12 +289,12 @@ describe('GoalCard', () => {
 
   it('shows the goal options by default', () => {
     renderGoalCard();
-    expect(screen.getByTestId('ellipsis-button')).toBeInTheDocument();
+    expect(screen.getByTestId('actions-button')).toBeInTheDocument();
   });
 
   it('shows only one options by default', async () => {
     renderGoalCard();
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
   });
@@ -315,7 +315,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -338,7 +338,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Draft' }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -361,7 +361,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Draft', onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -384,7 +384,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -407,7 +407,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Draft', onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -430,7 +430,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -453,7 +453,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -482,7 +482,7 @@ describe('GoalCard', () => {
       ],
     };
     renderGoalCard(DEFAULT_PROPS, { ...goal, goalStatus: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('ellipsis-button'));
+    userEvent.click(screen.getByTestId('actions-button'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -497,7 +497,7 @@ describe('GoalCard', () => {
 
   it('can hide the goal options', () => {
     renderGoalCard({ ...DEFAULT_PROPS, hideGoalOptions: true });
-    expect(screen.queryByTestId('ellipsis-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('actions-button')).not.toBeInTheDocument();
   });
 
   it('display correct last tta date', () => {
