@@ -867,6 +867,7 @@ class ObjectiveTemplates{
 
 class Objectives{
  * id : integer : <generated>
+!issue='column reference missing' createdViaActivityReportId : integer : REFERENCES "ActivityReports".id
  goalId : integer : REFERENCES "Goals".id
  mapsToParentObjectiveId : integer : REFERENCES "Objectives".id
  objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
