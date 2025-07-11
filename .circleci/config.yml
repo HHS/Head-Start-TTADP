@@ -264,7 +264,7 @@ jobs:
         command: mkdir reports
     - run: 
         name: Build backend
-        yarn build
+        command: yarn build
     - run:
         name: Build frontend
         command: yarn --cwd frontend run build
