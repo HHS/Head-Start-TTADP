@@ -11799,10 +11799,10 @@ smart-buffer@^4.2.0:
   resolved "https://registry.npmjs.org/smart-buffer/-/smart-buffer-4.2.0.tgz#6e1d71fa4f18c05f7d0ff216dd16a481d0e8d9ae"
   integrity sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==
 
-smartsheet@^4.0.2:
-  version "4.2.3"
-  resolved "https://registry.npmjs.org/smartsheet/-/smartsheet-4.2.3.tgz#7177c3cd68dfe0f7122dbd10dc20114c8da00186"
-  integrity sha512-Q18e+rWf4Ogbm/GGSENvuQKQs2f9bO+ANWmt5ejX9V+fcLqV08hhaDMX2qIUpAsTnTHzqpCnaGS3BO8U3VwbwA==
+smartsheet@^4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/smartsheet/-/smartsheet-4.3.0.tgz#53dde11cdd54243fe2753cbfb490eefb6c27cd86"
+  integrity sha512-f3CnpyPqGG17Ys6pNA1YAmK+eFNz3J7h7qwkkn8WIqvH2T98nIgWQOAtUJsiKTg3OnzBP65MktZiDiTC+6LiKA==
   dependencies:
     axios "^1.4.0"
     bluebird "^3.5.0"
@@ -12822,10 +12822,10 @@ typedarray@^0.0.6:
   resolved "https://registry.npmjs.org/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==
 
-typescript@^4.9.0:
-  version "4.9.5"
-  resolved "https://registry.npmjs.org/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
-  integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
+typescript@~5.2.0:
+  version "5.2.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.2.2.tgz#5ebb5e5a5b75f085f22bc3f8460fba308310fa78"
+  integrity sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==
 
 uc.micro@^2.0.0:
   version "2.1.0"
