@@ -11,13 +11,15 @@ executors:
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
-        REDIS_PASS: ""
+        REDIS_PASS: secretpass
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: secretpass
         POSTGRES_DB: ttasmarthub
     - image: cimg/redis:6.2.17
+      environment:
+        REDIS_PASS: secretpass
   docker-python-executor:
     docker:
     - image: cimg/python:3.9.21
