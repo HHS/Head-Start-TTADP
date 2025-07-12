@@ -19,7 +19,7 @@ executors:
         POSTGRES_DB: ttasmarthub
     - image: cimg/redis:6.2.17
       environment:
-        REDIS_PASS: secretpass
+        REDIS_PASSWORD: secretpass
   docker-python-executor:
     docker:
     - image: cimg/python:3.9.21
