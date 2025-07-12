@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import express from 'express';
-import smartsheet from 'smartsheet';
+import { createClient } from 'smartsheet';
 import transactionWrapper from '../transactionWrapper';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger as logger } from '../../logger';
@@ -25,7 +25,7 @@ const router = express.Router();
 
 // Function to create and return the Smartsheet client
 function createSmartsheetClient() {
-  return smartsheet.createClient({
+  return createClient({
     accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
     baseUrl: process.env.SMARTSHEET_ENDPOINT,
     logLevel: 'info',
