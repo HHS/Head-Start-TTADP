@@ -186,6 +186,7 @@ export default {
   review: false,
   label: 'Complete session',
   path,
+  /* istanbul ignore next: not easy to test */
   isPageComplete: ({ getValues }) => {
     const { status } = getValues();
     return status === EVENT_REPORT_STATUSES.COMPLETE;

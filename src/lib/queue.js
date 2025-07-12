@@ -1,11 +1,11 @@
 /* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
+import { formatLogObject } from '../processHandler';
 
 const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
     const services = JSON.parse(process.env.VCAP_SERVICES);
-
     // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
     if (services['aws-elasticache-redis'] && services['aws-elasticache-redis'].length > 0) {
       const {
@@ -125,7 +125,7 @@ function handleShutdown(queue) {
 
 function handleException(queue) {
   return (err) => {
-    auditLogger.error('Uncaught exception:', err);
+    auditLogger.error('Uncaught exception:', formatLogObject(err));
     // queue.close().then(() => {
     //   auditLogger.error('Queue closed after uncaught exception.');
     //   removeQueueEventHandlers(queue);
