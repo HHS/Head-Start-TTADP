@@ -121,10 +121,16 @@ function handleShutdown(queue) {
     // });
   };
 }
+const formatLogObject = (logObject) => ({
+  message: logObject.message,
+  name: logObject.name,
+  stack: logObject.stack,
+  ...logObject,
+});
 
 function handleException(queue) {
   return (err) => {
-    auditLogger.error('Uncaught exception:', err);
+    auditLogger.error('Uncaught exception:', formatLogObject(err));
     // queue.close().then(() => {
     //   auditLogger.error('Queue closed after uncaught exception.');
     //   removeQueueEventHandlers(queue);
