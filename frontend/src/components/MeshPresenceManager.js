@@ -7,7 +7,7 @@ import UserContext from '../UserContext';
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL || '';
 
-function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
+function MeshPresenceManager({ room, onPresenceUpdate, onRevisionUpdate }) {
   const [client, setClient] = useState(null);
   const userContext = useContext(UserContext);
 
@@ -23,6 +23,12 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
 
   // initialize client and connect on mount
   useEffect(() => {
+    async function cleanup() {
+      if (client) {
+        await client.close();
+      }
+    }
+
     async function connect() {
       const meshClient = new MeshClient(WS_URL);
       await meshClient.connect();
@@ -84,12 +90,17 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
 
       // not strictly necessary because the mesh server will detect this
       // websocket disconnection and handle cleanup, but its good to be thorough
-      window.addEventListener('beforeunload', async () => {
-        await meshClient.close();
-      });
+      window.addEventListener('beforeunload', cleanup);
     }
 
     connect();
+
+    return () => {
+      if (client) {
+        // remove the beforeunload listener
+        window.removeEventListener('beforeunload', cleanup);
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
@@ -106,15 +117,15 @@ function Mesh({ room, onPresenceUpdate, onRevisionUpdate }) {
   return null;
 }
 
-Mesh.propTypes = {
+MeshPresenceManager.propTypes = {
   room: PropTypes.string.isRequired,
   onPresenceUpdate: PropTypes.func,
   onRevisionUpdate: PropTypes.func,
 };
 
-Mesh.defaultProps = {
+MeshPresenceManager.defaultProps = {
   onPresenceUpdate: null,
   onRevisionUpdate: null,
 };
 
-export default Mesh;
+export default MeshPresenceManager;
