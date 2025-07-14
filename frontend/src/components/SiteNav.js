@@ -131,6 +131,14 @@ const SiteNav = ({
                   <li>
                     <NavLink
                       withinDisclosure
+                      to="/collaboration-reports"
+                    >
+                      Collaboration Reports
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      withinDisclosure
                       to="/communication-log"
                     >
                       Communication Log
