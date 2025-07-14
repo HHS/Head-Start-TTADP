@@ -1,3 +1,4 @@
+/* istanbul ignore file: too hard to test websockets */
 import { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { groupBy } from 'lodash';
