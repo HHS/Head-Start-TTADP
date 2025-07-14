@@ -83,19 +83,17 @@ export default function Objectives({
   };
 
   // filter out used objectives and return them in a format that react-select understands
-  const filteredObjectiveOptions = objectiveOptions
-    .filter((objective) => !usedObjectiveIds.includes(objective.value))
-    .map((objective) => ({
-      ...objective,
-      label: objective.title,
-      value: objective.value,
-      isNew: false,
-    }));
-
   const options = useMemo(() => [
-    ...filteredObjectiveOptions,
+    ...objectiveOptions
+      .filter((objective) => !usedObjectiveIds.includes(objective.value))
+      .map((objective) => ({
+        ...objective,
+        label: objective.title,
+        value: objective.value,
+        isNew: false,
+      })),
     NEW_OBJECTIVE(isMonitoring),
-  ], [filteredObjectiveOptions, isMonitoring]);
+  ], [usedObjectiveIds, objectiveOptions, isMonitoring]);
 
   const firstObjective = fields.length < 1;
   const removeObjective = (index) => {
