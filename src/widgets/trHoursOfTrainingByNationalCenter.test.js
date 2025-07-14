@@ -223,27 +223,6 @@ describe('TR hours of training by national center', () => {
     });
   });
 
-  it('filters and calculates hours of training by national center', async () => {
-    // Confine this to the grants and reports that we created
-    const scopes = {
-      grant: [
-        { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
-      ],
-      trainingReport: [
-        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
-      ],
-    };
-
-    // run our function
-    const data = await trHoursOfTrainingByNationalCenter(scopes);
-
-    const center1 = data.find((d) => nationalCenter1.name === d.name);
-    expect(center1.count).toBe(3);
-
-    const center2 = data.find((d) => nationalCenter2.name === d.name);
-    expect(center2.count).toBe(3);
-  });
-
   afterAll(async () => {
     // delete session reports
     await SessionReportPilot.destroy({
@@ -295,5 +274,26 @@ describe('TR hours of training by national center', () => {
     });
 
     await db.sequelize.close();
+  });
+
+  it('filters and calculates hours of training by national center', async () => {
+    // Confine this to the grants and reports that we created
+    const scopes = {
+      grant: [
+        { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
+      ],
+      trainingReport: [
+        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
+      ],
+    };
+
+    // run our function
+    const data = await trHoursOfTrainingByNationalCenter(scopes);
+
+    const center1 = data.find((d) => nationalCenter1.name === d.name);
+    expect(center1.count).toBe(3);
+
+    const center2 = data.find((d) => nationalCenter2.name === d.name);
+    expect(center2.count).toBe(3);
   });
 });
