@@ -6,6 +6,7 @@ worker_memory: 512M
 similarity_api_instances: 1
 similarity_api_memory: 1GB
 similarity_api_disk_quota: 6GB
+node_disk_quota: 4GB
 
 app_name: tta-smarthub-${full_env}
 app_url: https://tta-smarthub-${full_env}.app.cloud.gov/
