@@ -58,9 +58,10 @@ export default async function getCachedResponse(
     if (response && redisClient) {
       try {
         await redisClient.set(key, response, 'EX', options.EX || 600);
-        await redisClient.quit();
       } catch (err) {
         auditLogger.error('Error setting cache response', { err });
+      } finally {
+        await redisClient.quit();
       }
     }
   }
