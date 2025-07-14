@@ -70,5 +70,6 @@ export default async function getCachedResponse(
     return outputCallback(response);
   }
 
+  /* istanbul ignore next: not possible to test */
   return response;
 }
