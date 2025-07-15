@@ -556,6 +556,10 @@ export function reduceObjectivesForRecipientRecord(
         existing.grantNumbers = grantNumbers;
         existing.ids = combineObjectiveIds(existing, objective);
 
+        // Update onApprovedAR if current objective has it set to true
+        if (objective.onApprovedAR) {
+          existing.onApprovedAR = true;
+        }
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
 
@@ -578,6 +582,7 @@ export function reduceObjectivesForRecipientRecord(
         topics: [...reportTopics, ...objectiveTopics],
         citations: uniq(reportObjectiveCitations),
         ids: combineObjectiveIds({ ids: [] }, objective),
+        onApprovedAR: objective.onApprovedAR || false,
       };
 
       formattedObjective.topics.sort();
