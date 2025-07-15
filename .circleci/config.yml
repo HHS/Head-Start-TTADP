@@ -34,7 +34,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, restore_db ]
+    enum: [ build_test_deploy, deploy_only, import_data, backup_db, restore_db ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
