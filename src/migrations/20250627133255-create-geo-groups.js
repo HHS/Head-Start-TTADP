@@ -64,8 +64,8 @@ module.exports = {
       await queryInterface.sequelize.query(`
         INSERT INTO "CollaboratorTypes" (id, name, "validForId", "propagateOnMerge", "mapsTo", "createdAt", "updatedAt")
         VALUES
-          (13, 'Creator', 1, true, NULL, NOW(), NOW()),
-          (14, 'Co-Owner', 1, true, NULL, NOW(), NOW())
+          (13, 'Creator', 3, true, NULL, NOW(), NOW()),
+          (14, 'Co-Owner', 3, true, NULL, NOW(), NOW())
         ON CONFLICT (id) DO NOTHING;
       `, { transaction });
 
