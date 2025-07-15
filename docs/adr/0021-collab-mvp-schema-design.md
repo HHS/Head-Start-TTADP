@@ -55,7 +55,7 @@ Purpose: The `CollabReportSpecialist` table is used to store the one-to-many rel
 
 ##### CollabReportReasons
 
-Purpose: The `CollabReportReason` table is used to store the one-to-many relationship between A collab report & the reason(s) ( i.e. purpose ) of the report. The UI presents a short list of reasons, of which one or more are selected. These could be stored as top-level `boolean` types, however expanding the list of reasons in the future would require new columns. Instead, a single column is used to store a well known mnemonic for each ( these mnemonics could also be broken out into their own distinct `CollabReportReasonDict` with a foreign key pointed back)
+Purpose: The `CollabReportReasons` table is used to store the one-to-many relationship between A collab report & the reason(s) ( i.e. purpose ) of the report. The UI presents a short list of reasons, of which one or more are selected. These could be stored as top-level `boolean` types, however expanding the list of reasons in the future would require new columns. Instead, a single column is used to store a well known mnemonic for each ( these mnemonics could also be broken out into their own distinct `CollabReportReasonDict` with a foreign key pointed back)
 
 | ColumnName | DataType | Required? | Allow Null? |  UI DataType | Attributes | Notes |
 |------------|----------|-----------|-------------|--------------|------------|-------|
@@ -89,9 +89,9 @@ Purpose: The `CollabReportGoals` table is used to store the one-to-many relation
 | collabReportId | INTEGER | Y | N | NONE | PK, FK (`CollabReport.reportId`) ||
 | collabReportGoalId | ENUM | Y | N | String | PK | If there is already a table for this, but if so that would be a FK here rather than an enum of all goals |
 
-##### CollabReportDatumUsed
+##### CollabReportDataUsed
 
-Purpose: The `CollabReportDatumUsed` table is used to store the one-to-many relationship that _may exist_ between a collab report and the pieces of data being collected/shared/used.
+Purpose: The `CollabReportDataUsed` table is used to store the one-to-many relationship that _may exist_ between a collab report and the pieces of data being collected/shared/used.
 
 Similar to the note in `CollabReportGoals` above, this multiple is gated by a boolean radio button in the UI.
 
