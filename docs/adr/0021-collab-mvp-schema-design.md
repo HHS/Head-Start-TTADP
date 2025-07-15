@@ -6,11 +6,11 @@ Proposed
 
 ## Context
 
-[TTAHUB-3473](https://jira.acf.gov/browse/TTAHUB-3473) is tracking the work to create an MVP (Minium Viable Product) for Collaboration (collab) Reports. Collab reports are a new entity within the TTA Hub and as such new database constructs ( tables, indices etc.) are needed. This ADR will document a proposed schema to serve as basis for the database design, prior to implementation.
+[TTAHUB-3473](https://jira.acf.gov/browse/TTAHUB-3473) is tracking the work to create an MVP (Minimum Viable Product) for Collaboration (collab) Reports. Collab reports are a new entity within the TTA Hub and as such new database constructs ( tables, indices etc.) are needed. This ADR will document a proposed schema to serve as basis for the database design, prior to implementation.
 
 ## Decision
 
-The following is proposed design of the tables required to support the collab report MVP. Non-Primary key indices have not been included as it is not yet clear if any are needed ( can be added during the MVP process as needed). Data types and and attributes have been expressed as PostgreSQL provided constructs, rather than the abstractions provide by [Sequelize](https://sequelize.org/docs/v7/models/data-types/)
+The following is proposed design of the tables required to support the collab report MVP. Non-Primary key indices have not been included as it is not yet clear if any are needed ( can be added during the MVP process as needed). Data types and and attributes have been expressed as PostgreSQL provided constructs, rather than the abstractions provided by [Sequelize](https://sequelize.org/docs/v7/models/data-types/)
 
 
 ### Terminology
@@ -28,9 +28,9 @@ The following are a list of mnemonics and abbreviations used through the rest of
 
 ### Tables
 
-#### CollabReport
+#### CollabReports
 
-Purpose: This is the top-level "root" table for Collaboration Reports. Scalar properties of collab reports ( that are not calculated at run/read time ) should be stored as columns here. Non-scalar properties are stored in other tables and that all share include the `reportId` column in this table as a primary key.
+Purpose: This is the top-level "root" table for Collaboration Reports. Scalar properties of collab reports ( that are not calculated at run/read time ) should be stored as columns here. Non-scalar properties are stored in other tables and that all share the `reportId` column in this table as a primary key.
 
 | ColumnName | DataType | Required? | Allow Null? |  UI DataType | Attributes | Notes |
 |------------|----------|-----------|-------------|--------------|------------|-------|
@@ -44,7 +44,7 @@ Purpose: This is the top-level "root" table for Collaboration Reports. Scalar pr
 | conductMethod | enum | Yes | No | CHOICE ||`[EMAIL, PHONE, IN_PERSON, VIRTUAL]`|
 | description | TEXT | Yes | No | Text Area |||
 
-##### CollabReportSpecialist
+##### CollabReportSpecialists
 
 Purpose: The `CollabReportSpecialist` table is used to store the one-to-many relationship between a collab report & the collaboration specialists that are part of it. This is the only relationship that needs to be expressed, and there should never be duplicate collaboration specialists for the same report.
 
@@ -53,9 +53,9 @@ Purpose: The `CollabReportSpecialist` table is used to store the one-to-many rel
 | collabReportId | INTEGER | Y | N | NONE | PK, FK (`CollabReport.reportId`)| |
 | specialistId | INTEGER | Y | N | "Collaborating Specialist" | PK, FK (`User.userId`)| |
 
-##### CollabReportReason
+##### CollabReportReasons
 
-Purpose: The `CollabReportReason` table is used to store the on-to-many relationship between A collab report & the reason(s) ( i.e. purpose ) of the report. The UI presents a short list of reasons, of which one or more are selected. These could be stored as top-level `boolean` types, however expanding the list of reasons in the future would require new columns. Instead, a single column is used to store a well known mnemonic for each ( these mnemonics could also be broken out into their own distinct `CollabReportReasonDict` with a foreign key pointed back)
+Purpose: The `CollabReportReason` table is used to store the one-to-many relationship between A collab report & the reason(s) ( i.e. purpose ) of the report. The UI presents a short list of reasons, of which one or more are selected. These could be stored as top-level `boolean` types, however expanding the list of reasons in the future would require new columns. Instead, a single column is used to store a well known mnemonic for each ( these mnemonics could also be broken out into their own distinct `CollabReportReasonDict` with a foreign key pointed back)
 
 | ColumnName | DataType | Required? | Allow Null? |  UI DataType | Attributes | Notes |
 |------------|----------|-----------|-------------|--------------|------------|-------|
