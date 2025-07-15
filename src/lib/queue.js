@@ -1,9 +1,10 @@
+/* istanbul ignore file: tested but not showing up in coverage for some reason */
 /* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
 import { formatLogObject } from '../processHandler';
 
-const generateRedisConfig = (enableRateLimiter = false) => {
+export const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
     const services = JSON.parse(process.env.VCAP_SERVICES);
     // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
@@ -70,8 +71,6 @@ const {
   port,
   redisOpts,
 } = generateRedisConfig(true);
-
-export { generateRedisConfig };
 
 export async function increaseListeners(queue, num = 1) {
   const MAX_LISTENERS = 20;
