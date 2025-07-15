@@ -38,7 +38,7 @@ function ContextMenu({
           <FontAwesomeIcon color={colors.textLink} icon={faChevronDown} />
         </>
 )}
-      buttonTestId="actions-button"
+      buttonTestId="context-menu-actions-btn"
       fixed={fixed}
     />
   );
