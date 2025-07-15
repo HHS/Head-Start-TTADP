@@ -74,7 +74,7 @@ describe('ContextMenu', () => {
     });
 
     it('can be shifted up and left', async () => {
-      render(<ContextMenu up menuItems={menuItems('one')} label="label" />);
+      render(<ContextMenu up left menuItems={menuItems('one')} label="label" />);
       const button = await screen.findByTestId('context-menu-actions-btn');
       userEvent.click(button);
       const menu = await screen.findByTestId('menu');
