@@ -107,4 +107,22 @@ describe('ObjectivesSection', () => {
     // We hide the edite via css.
     expect(screen.getAllByText('Remove this objective')).toHaveLength(2);
   });
+
+  it('renders the alert when objectives are onAR', () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: true }],
+    });
+
+    expect(screen.getByText('Objectives used on reports cannot be edited.')).toBeInTheDocument();
+  });
+
+  it('does not render the alert when no objectives are onAR', () => {
+    renderWithFormProvider(<ObjectivesSection fieldName={GOAL_FORM_FIELDS.OBJECTIVES} />);
+    reset({
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ objectiveId: '1', value: 'Objective 1', onAR: false }],
+    });
+
+    expect(screen.queryByText('Objectives used on reports cannot be edited.')).not.toBeInTheDocument();
+  });
 });

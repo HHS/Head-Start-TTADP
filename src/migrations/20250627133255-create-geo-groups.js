@@ -60,6 +60,15 @@ module.exports = {
       // Extract ids
       const groupIds = insertedGroupResults.map((rows) => rows[0].id);
 
+      // We need to ensure the CollaboratorTypes exist for Groups.
+      await queryInterface.sequelize.query(`
+        INSERT INTO "CollaboratorTypes" (id, name, "validForId", "propagateOnMerge", "mapsTo", "createdAt", "updatedAt")
+        VALUES
+          (13, 'Creator', 3, true, NULL, NOW(), NOW()),
+          (14, 'Co-Owner', 3, true, NULL, NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING;
+      `, { transaction });
+
       // Build all collaborators in bulk
       const now = new Date();
       const collaborators = groupIds.flatMap((groupId) => ([
