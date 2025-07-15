@@ -178,8 +178,6 @@ class ActivityReports{
  userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone : now()
-!issue='column should not allow null'
-!issue='column missing from model' * <color:#d54309>revision</color>: integer : 0
  * updatedAt : timestamp with time zone : now()
  * version : integer : 2
  activityRecipientType : varchar(255)
