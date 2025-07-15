@@ -70,6 +70,14 @@ export default (sequelize, DataTypes) => {
     endDate: DataTypes.DATE,
     inactivationDate: DataTypes.DATE,
     inactivationReason: DataTypes.ENUM(inactivationReasons),
+    geographicRegion: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    geographicRegionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
