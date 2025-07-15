@@ -237,6 +237,14 @@ workflows:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
+  backup_db_manual:
+    when: pipeline.parameters.action == "backup_db" and pipeline.trigger_source == "api"
+    jobs:
+    - backup_db_job:
+        serial-group: tta-automation-lock
+        target_env: "<< pipeline.parameters.target_env >>"
+
+
 # ----------------- Jobs -----------------
 
 jobs:
@@ -590,6 +598,19 @@ jobs:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
             target_env: << parameters.target_env >>
+
+  backup_db_job:
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - cf_backup:
+        target_env: << parameters.target_env >>
+        rds_service_name: ttahub-<< parameters.target_env >>
+        s3_service_name: ttahub-db-backups
+        backup_prefix: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
