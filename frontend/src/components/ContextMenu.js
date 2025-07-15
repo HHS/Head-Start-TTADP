@@ -61,7 +61,7 @@ ContextMenu.propTypes = {
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
-  left: true,
+  left: false,
   up: false,
   menuHeightOffset: 120,
   menuWidthOffset: 135,
