@@ -80,7 +80,6 @@
   <grant_start_date>2020-05-01</grant_start_date>
   <grant_end_date>2025-04-30</grant_end_date>
   <annual_funding_month>February</annual_funding_month>
-  <grantee_state>KS</grantee_state>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Active</grant_status>
@@ -319,7 +318,104 @@
   <agency_id>628</agency_id>
   <region_id>9</region_id>
   <numeric_region_id>9</numeric_region_id>
+  <geographic_region_id>85</geographic_region_id>
+  <geographic_region>West</geographic_region>
   <grant_number>09CH012355</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2023-08-01</grant_start_date>
+  <grant_end_date>2028-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Active</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
+<grant_award>
+  <grant_award_id>4001</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <numeric_region_id>9</numeric_region_id>
+  <geographic_region_id>81</geographic_region_id>
+  <geographic_region>Northeast</geographic_region>
+  <grant_number>09CH012356</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2023-08-01</grant_start_date>
+  <grant_end_date>2028-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Inactive</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
+<grant_award>
+  <grant_award_id>4002</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <numeric_region_id>9</numeric_region_id>
+  <geographic_region_id>81</geographic_region_id>
+  <geographic_region>Northeast</geographic_region>
+  <grant_number>09CH012357</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2023-08-01</grant_start_date>
+  <grant_end_date>2028-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Active</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
+<grant_award>
+  <grant_award_id>5001</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <numeric_region_id>9</numeric_region_id>
+  <geographic_region_id>81</geographic_region_id>
+  <geographic_region>Northeast</geographic_region>
+  <grant_number>09CH05001</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2023-08-01</grant_start_date>
+  <grant_end_date>2028-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Inactive</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
+<grant_award>
+  <grant_award_id>5002</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <numeric_region_id>9</numeric_region_id>
+  <geographic_region_id>81</geographic_region_id>
+  <geographic_region>Northeast</geographic_region>
+  <grant_number>09CH05002</grant_number>
+  <grantee_state>FC</grantee_state>
+  <grant_start_date>2023-08-01</grant_start_date>
+  <grant_end_date>2028-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Community Action Agency</grantee_name>
+  <grant_status>Inactive</grant_status>
+  <acquired_from_cdi>false</acquired_from_cdi>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
+<grant_award>
+  <grant_award_id>5003</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>9</region_id>
+  <numeric_region_id>9</numeric_region_id>
+  <geographic_region_id>81</geographic_region_id>
+  <geographic_region>Northeast</geographic_region>
+  <grant_number>09CH05003</grant_number>
   <grantee_state>FC</grantee_state>
   <grant_start_date>2023-08-01</grant_start_date>
   <grant_end_date>2028-07-31</grant_end_date>
