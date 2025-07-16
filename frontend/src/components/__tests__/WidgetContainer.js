@@ -109,7 +109,7 @@ describe('Widget Container', () => {
     renderWidgetContainer('Widget Container Title', null, [true, false], () => {}, null, false, true, exportRows);
 
     // Click the context menu button.
-    const contextMenuBtn = screen.getByTestId('ellipsis-button');
+    const contextMenuBtn = screen.getByTestId('context-menu-actions-btn');
     userEvent.click(contextMenuBtn);
 
     // Export all rows.

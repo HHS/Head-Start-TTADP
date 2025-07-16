@@ -99,6 +99,8 @@ test.describe('get /recipient', () => {
         createdAt: Joi.string().isoDate(),
         updatedAt: Joi.string().isoDate(),
       }),
+      geographicRegionId: Joi.number().allow(null),
+      geographicRegion: Joi.string().allow(null),
     });
 
     const recipientSchema = Joi.object({

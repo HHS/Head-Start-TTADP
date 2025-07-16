@@ -1,6 +1,6 @@
-import testingOnly from './testingOnlyMiddleware';
+import { testingOnly } from './testingOnlyMiddleware';
 
-describe('testingOnlyMiddleware', () => {
+describe('testingOnly', () => {
   let statusCode;
   let message;
   const mockRequest = {

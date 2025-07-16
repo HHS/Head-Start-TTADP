@@ -105,19 +105,10 @@ function Menu({
   };
 
   const placementClass = (() => {
-    if (left && up) {
-      return 'smart-hub--menu__left_and_up';
-    }
-
-    if (left) {
-      return 'smart-hub--menu__left';
-    }
-
-    if (up) {
-      return 'smart-hub--menu__up';
-    }
-
-    return '';
+    if (left && up) return 'smart-hub--menu__left_and_up';
+    if (left) return 'smart-hub--menu__left';
+    if (up) return 'smart-hub--menu__up';
+    return 'smart-hub--menu__right';
   })();
 
   const positionClass = fixed ? 'position-fixed' : 'position-absolute';

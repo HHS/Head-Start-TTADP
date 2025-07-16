@@ -483,6 +483,8 @@ class Grants{
  cdi : boolean : false
  deleted : boolean : false
  endDate : timestamp with time zone
+ geographicRegion : varchar(255)
+ geographicRegionId : integer
  granteeName : varchar(255)
  grantSpecialistEmail : varchar(255)
  grantSpecialistName : varchar(255)

@@ -9,19 +9,20 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Op } from 'sequelize';
 import { fileHash } from './fileUtils';
-import db, {
+import {
   Recipient,
   Grant,
   GrantRelationshipToActive,
   GrantReplacements,
   GrantReplacementTypes,
   GroupGrant,
+  Group,
   Program,
   sequelize,
   ProgramPersonnel,
 } from '../models';
 import { logger, auditLogger } from '../logger';
-import { GRANT_PERSONNEL_ROLES } from '../constants';
+import { GRANT_PERSONNEL_ROLES, REGIONS } from '../constants';
 
 const fs = require('mz/fs');
 
@@ -224,6 +225,103 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   }
 };
 
+export async function syncGeoRegionGroups({ transaction }) {
+  const useTransaction = transaction || await sequelize.transaction();
+  const createdHere = !transaction;
+
+  try {
+    logger.info('Starting Geo Region Groups Sync');
+
+    // Get all geo region Groups
+    const regionGroups = await Group.findAll({
+      where: { name: { [Op.in]: REGIONS } },
+      transaction,
+    });
+    const regionMap = new Map(regionGroups.map((g) => [g.name, g.id]));
+    // Get all replacing grants to protect them
+    const replacingGrantIds = (await GrantReplacements.findAll({
+      attributes: ['replacingGrantId'],
+      transaction,
+    })).map((r) => r.replacingGrantId);
+
+    const safeReplacingIds = replacingGrantIds.length > 0 ? replacingGrantIds : [-1];
+
+    // For each region group
+    for (const [regionName, groupId] of regionMap.entries()) {
+      logger.info(`Syncing region: ${regionName}`);
+      // Add missing GroupGrants
+      const missingGrants = await sequelize.query(
+        `
+          SELECT g."id"
+          FROM "Grants" g
+          WHERE g."status" = 'Active'
+            AND g."geographicRegion" = :regionName
+            AND NOT EXISTS (
+              SELECT 1
+              FROM "GroupGrants" gg
+              WHERE gg."groupId" = :groupId
+                AND gg."grantId" = g."id"
+            )
+        `,
+        {
+          replacements: { regionName, groupId },
+          type: sequelize.QueryTypes.SELECT,
+          transaction,
+        },
+      );
+      if (missingGrants.length > 0) {
+        logger.info(`Adding ${missingGrants.length} new grants to ${regionName} group`);
+        await GroupGrant.bulkCreate(
+          missingGrants.map((g) => ({
+            groupId,
+            grantId: g.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })),
+          { transaction },
+        );
+      } else {
+        logger.info(`No new grants to add for ${regionName}`);
+      }
+
+      // Remove stale GroupGrants (excluding replacing grants)
+      const result = await sequelize.query(
+        `
+          DELETE FROM "GroupGrants"
+          WHERE "groupId" = :groupId
+            AND "grantId" IN (
+              SELECT g."id"
+              FROM "Grants" g
+              WHERE g."id" = "GroupGrants"."grantId"
+                AND (
+                  g."status" != 'Active'
+                  OR g."geographicRegion" IS DISTINCT FROM :regionName
+                )
+                AND g."id" NOT IN (:replacingGrantIds)
+            )
+        `,
+        {
+          replacements: {
+            groupId,
+            regionName,
+            replacingGrantIds: safeReplacingIds,
+          },
+          transaction,
+        },
+      );
+
+      logger.info(`Removed ${result[1].rowCount} stale grants from ${regionName} group`);
+    }
+
+    if (createdHere) await useTransaction.commit();
+    logger.info('Geo Region Groups Sync Complete!');
+  } catch (err) {
+    if (createdHere) await useTransaction.rollback();
+    logger.error('Error syncing geo region groups:', err);
+    throw err;
+  }
+}
+
 /**
  * Reads HSES data files that were previously extracted to the "temp" directory.
  * The files received from HSES are:
@@ -324,7 +422,7 @@ export async function processFiles(hashSumHex) {
           g.grants_specialist_last_name,
         );
 
-        const regionId = parseInt(g.region_id, 10);
+        const regionId = parseInt(g.numeric_region_id, 10);
         const cdi = regionId === 13;
         const id = parseInt(g.grant_award_id, 10);
         // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
@@ -347,6 +445,8 @@ export async function processFiles(hashSumHex) {
           grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
           annualFundingMonth: valueFromXML(g.annual_funding_month),
           inactivationReason: valueFromXML(g.inactivation_reason),
+          geographicRegion: valueFromXML(g.geographic_region),
+          geographicRegionId: parseInt(g.geographic_region_id, 10) || null,
         };
       });
 
@@ -394,7 +494,7 @@ export async function processFiles(hashSumHex) {
       await Grant.unscoped().bulkCreate(
         nonCdiGrants,
         {
-          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
+          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason', 'geographicRegion', 'geographicRegionId'],
           transaction,
         },
       );
@@ -506,6 +606,7 @@ export async function processFiles(hashSumHex) {
       });
 
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
+      await syncGeoRegionGroups({ transaction });
 
       await Program.bulkCreate(
         uniqueProgramsForDb,
