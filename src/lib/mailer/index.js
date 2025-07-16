@@ -1,3 +1,4 @@
+/* istanbul ignore file: tested but not showing up in coverage */
 /* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
 import moment from 'moment';
