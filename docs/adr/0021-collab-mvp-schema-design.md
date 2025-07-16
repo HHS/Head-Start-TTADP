@@ -36,12 +36,12 @@ Purpose: This is the top-level "root" table for Collaboration Reports. Scalar pr
 |------------|----------|-----------|-------------|--------------|------------|-------|
 | reportId | INTEGER | Yes | No | none (generated) | PK, AUTO | |
 | name | VARCHAR | Yes | No | String |||
-| status | ENUM | Yes | No | None/String || `[DRAFT,SUBMITTED,REVIEWED,NEEDS_APPROVAL,APPROVED]` |
+| status | ENUM | Yes | No | None/String || `['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']` |
 | startDate | DATE | Yes | No | YYYYMMDD |||
 | endDate | DATE | Yes | No | YYYYMMDD |||
 | duration | SMALLINT | Yes | No | non-negative integer |||
 | isStateActivity | boolean | Yes | No | Binary Radio Buttons || If there will EVER be a third option to regional/state then this should be a different type, but assume this is unlikely |
-| conductMethod | enum | Yes | No | CHOICE ||`[EMAIL, PHONE, IN_PERSON, VIRTUAL]`|
+| conductMethod | enum | Yes | No | CHOICE ||`['email', 'phone', 'in_person', 'virtual']`|
 | description | TEXT | Yes | No | Text Area |||
 
 ##### CollabReportSpecialists
@@ -60,16 +60,16 @@ Purpose: The `CollabReportReasons` table is used to store the one-to-many relati
 | ColumnName | DataType | Required? | Allow Null? |  UI DataType | Attributes | Notes |
 |------------|----------|-----------|-------------|--------------|------------|-------|
 | collabReportId | INTEGER | Y | N | NONE | PK, FK (`CollabReport.reportId`)||
-| reasonId | ENUM | Y | N | See above | PK | see proposed mnemonic values below |
+| reasonId | ENUM | Y | N | See above | PK | `['participate_work_groups', 'support_coordination', 'agg_regional_data', 'develop_presentations']` |
 
 Basic enum ( or Dictionary ) Values
 
 | reasonId mnemonic | Associated UI text |
 |-------------------|--------------------|
-| PARTICIPATE_WORK_GROUPS | Participate in national, regional, state and local working groups and meetings. |
-| SUPPORT_COORDINATION | Support partnerships, coordination, and collaboration with state/regional partners |
-| AGG_REGIONAL_DATA | Aggregate, analyze, and/or present regional data |
-| DEVELOP_PRESENTATIONS | Develop and provide presentations, training, and resources to RO and/or state/regional partners |  
+| participate_work_groups | Participate in national, regional, state and local working groups and meetings. |
+| support_coordination | Support partnerships, coordination, and collaboration with state/regional partners |
+| agg_regional_data | Aggregate, analyze, and/or present regional data |
+| develop_presentations | Develop and provide presentations, training, and resources to RO and/or state/regional partners |  
 
 ##### CollabReportActivityStates
 
