@@ -18,7 +18,7 @@ describe('TRHoursOfTrainingByNationalCenter', () => {
     render(<TRHoursOfTrainingByNationalCenter />);
 
     // Get ellipsis menu and click "display table"
-    const menuButton = screen.getByTestId('actions-button');
+    const menuButton = screen.getByTestId('context-menu-actions-btn');
     fireEvent.click(menuButton);
     const tableButton = screen.getByText('Display table');
     expect(tableButton).toBeInTheDocument();
