@@ -665,7 +665,6 @@ export async function newStandardGoal(
           status: OBJECTIVE_STATUS.NOT_STARTED, // Using OBJECTIVE_STATUS instead of GOAL_STATUS
           goalId: newGoal.id,
         };
-        console.log('Creating objective:', JSON.stringify(mappedObjective, null, 2));
         return mappedObjective;
       });
 
