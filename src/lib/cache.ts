@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { Redis } from 'ioredis';
 import { generateRedisConfig } from './queue';
 import { auditLogger } from '../logger';
 
@@ -37,27 +37,15 @@ export default async function getCachedResponse(
 
   // we create a fake redis client because we don't want to fail the request if redis is down
   // or if we can't connect to it, or whatever else might go wrong
-  let redisClient = {
-    connect: () => Promise.resolve(),
-    get: (_k: string) => Promise.resolve(null),
-    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve(''),
-    quit: () => Promise.resolve(),
-  };
-
-  let clientConnected = false;
+  let redisClient: Redis | null = null;
   let response: string | null = null;
 
   try {
     if (!ignoreCache) {
-      redisClient = createClient({
-        url: redisUrl,
-        socket: {
-          tls: tlsEnabled,
-        },
+      redisClient = new Redis(redisUrl, {
+        tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
       });
-      await redisClient.connect();
       response = await redisClient.get(key);
-      clientConnected = true;
     }
   } catch (err) {
     auditLogger.error('Error creating & connecting to redis client', { err });
@@ -66,13 +54,14 @@ export default async function getCachedResponse(
   // if we do not have a response, we need to call the callback
   if (!response) {
     response = await responseCallback();
-    // and then, if we have a response and we are connected to redis, we need to set the cache
-    if (response && clientConnected) {
+    // and then, if we have a response and we have a redis client, we need to set the cache
+    if (response && redisClient) {
       try {
-        await redisClient.set(key, response, options);
-        await redisClient.quit();
+        await redisClient.set(key, response, 'EX', options.EX || 600);
       } catch (err) {
         auditLogger.error('Error setting cache response', { err });
+      } finally {
+        await redisClient.quit();
       }
     }
   }
@@ -81,5 +70,6 @@ export default async function getCachedResponse(
     return outputCallback(response);
   }
 
+  /* istanbul ignore next: not possible to test */
   return response;
 }
