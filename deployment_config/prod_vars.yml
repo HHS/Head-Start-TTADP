@@ -3,6 +3,7 @@ web_instances: 3
 web_memory: 4GB
 worker_instances: 2
 worker_memory: 1GB
+app_disk_quota: 4GB
 
 app_name: tta-smarthub-prod
 app_url: https://tta-smarthub-prod.app.cloud.gov/

@@ -3,6 +3,7 @@ web_instances: 1
 web_memory: 2GB
 worker_instances: 1
 worker_memory: 512M
+app_disk_quota: 4GB
 
 app_name: tta-smarthub-${full_env}
 app_url: https://tta-smarthub-${full_env}.app.cloud.gov/
