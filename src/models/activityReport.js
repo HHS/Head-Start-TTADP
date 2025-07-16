@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.hasMany(models.Objective, { foreignKey: 'createdViaActivityReportId', as: 'createdViaActivityReportObjectives' });
       ActivityReport.belongsToMany(models.Grant, {
         through: models.ActivityRecipient,
         foreignKey: 'activityReportId',
