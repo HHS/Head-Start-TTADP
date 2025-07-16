@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
@@ -377,6 +378,12 @@ export async function getGoalHistory(req, res) {
           model: sequelize.models.Objective,
           as: 'objectives',
           required: false,
+          where: {
+            [Op.or]: [
+              { createdVia: 'rtr' },
+              { onApprovedAR: true },
+            ],
+          },
           include: [
             {
               model: sequelize.models.ActivityReportObjective,
