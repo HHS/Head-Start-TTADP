@@ -379,7 +379,7 @@
     "sequelize": "^6.29.0",
     "sequelize-cli": "^6.2.0",
     "simple-git": "3.19.1",
-    "smartsheet": "^4.0.2",
+    "smartsheet": "^4.3.0",
     "ssh2": "^1.15.0",
     "throng": "^5.0.0",
     "through2": "^4.0.2",
