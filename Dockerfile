@@ -1,4 +1,4 @@
-FROM node:20.19.2
+FROM node:20.19.3
 WORKDIR /app
 
 # Install system dependencies
