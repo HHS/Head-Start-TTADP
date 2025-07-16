@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   INTERNAL_SERVER_ERROR,
   NOT_FOUND,
@@ -1264,6 +1265,61 @@ describe('goal handlers', () => {
       await getGoalHistory(req, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+
+    it('ensures only objectives with createdVia = "rtr" or onApprovedAR = true are queried', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findAll.mockResolvedValueOnce([]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(db.Goal.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.arrayContaining([
+            expect.objectContaining({
+              as: 'objectives',
+              required: false,
+              where: {
+                [Op.or]: [
+                  { createdVia: 'rtr' },
+                  { onApprovedAR: true },
+                ],
+              },
+            }),
+          ]),
+        }),
+      );
     });
   });
 });
