@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from './testingOnly';
+import { app } from './testingOnly';
 import { auditLogger } from './logger';
 
 describe('testingOnly', () => {

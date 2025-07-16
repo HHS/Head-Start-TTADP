@@ -44,7 +44,7 @@ import {
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
-import Mesh from '../../hooks/useMesh';
+import MeshPresenceManager from '../../components/MeshPresenceManager';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -649,7 +649,7 @@ function ActivityReport({
       )}
       {renderMultiUserAlert() || renderMultipleTabAlert()}
       {/* Don't render the Mesh component unless working on a saved report */}
-      { activityReportId !== 'new' && (<Mesh room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
+      { activityReportId !== 'new' && (<MeshPresenceManager room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row className="flex-justify">
         <Grid col="auto">
