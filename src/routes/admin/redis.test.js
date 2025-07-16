@@ -3,9 +3,11 @@ import { getRedisInfo, flushRedis } from './redis';
 const mockQuit = jest.fn(() => Promise.resolve());
 const mockInfo = jest.fn(() => Promise.resolve(''));
 const mockFlushall = jest.fn(() => Promise.resolve(''));
+const mockConnect = jest.fn(() => Promise.resolve());
 
 jest.mock('ioredis', () => ({
   Redis: jest.fn().mockImplementation(() => ({
+    connect: mockConnect,
     quit: mockQuit,
     info: mockInfo,
     flushall: mockFlushall,
