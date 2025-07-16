@@ -402,7 +402,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
 
     // Click the context menu button.
-    let contextMenuBtn = screen.getByTestId('actions-button');
+    let contextMenuBtn = screen.getByTestId('context-menu-actions-btn');
     userEvent.click(contextMenuBtn);
 
     // Export selected rows.
@@ -414,7 +414,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     expect(downloadLink).not.toBeNull();
 
     // Click the context menu button.
-    contextMenuBtn = screen.getByTestId('actions-button');
+    contextMenuBtn = screen.getByTestId('context-menu-actions-btn');
     userEvent.click(contextMenuBtn);
 
     // Export all rows.

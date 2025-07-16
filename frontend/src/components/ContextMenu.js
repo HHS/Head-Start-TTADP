@@ -38,7 +38,7 @@ function ContextMenu({
           <FontAwesomeIcon color={colors.textLink} icon={faChevronDown} />
         </>
 )}
-      buttonTestId="actions-button"
+      buttonTestId="context-menu-actions-btn"
       fixed={fixed}
     />
   );
@@ -61,7 +61,7 @@ ContextMenu.propTypes = {
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
-  left: true,
+  left: false,
   up: false,
   menuHeightOffset: 120,
   menuWidthOffset: 135,

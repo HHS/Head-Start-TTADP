@@ -248,17 +248,17 @@ describe('StandardGoalCard', () => {
 
   it('shows the goal options by default', () => {
     renderStandardGoalCard();
-    expect(screen.getByTestId('actions-button')).toBeInTheDocument();
+    expect(screen.getByTestId('context-menu-actions-btn')).toBeInTheDocument();
   });
 
   it('hides the goal options when readonly is true', () => {
     renderStandardGoalCard({ ...DEFAULT_PROPS, readonly: true });
-    expect(screen.queryByTestId('actions-button')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('context-menu-actions-btn')).not.toBeInTheDocument();
   });
 
   it('shows only edit option by default', async () => {
     renderStandardGoalCard();
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
   });
@@ -279,7 +279,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, onAR: false }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -302,7 +302,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Draft' }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -325,7 +325,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Draft', onAR: false }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -348,7 +348,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -371,7 +371,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Draft', onAR: false }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
     const deleteButton = screen.queryByText(/Delete/i);
@@ -394,7 +394,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
     fetchMock.delete(url, {});
@@ -421,7 +421,7 @@ describe('StandardGoalCard', () => {
       ],
     };
     renderStandardGoalCard(DEFAULT_PROPS, { ...goal, status: 'Not Started', onAR: false }, user);
-    userEvent.click(screen.getByTestId('actions-button'));
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
     fetchMock.delete(url, 500);
