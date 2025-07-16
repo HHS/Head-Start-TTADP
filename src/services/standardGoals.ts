@@ -10,7 +10,6 @@ import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { cacheGoalMetadata, cacheObjectiveMetadata, destroyActivityReportObjectiveMetadata } from './reportCache';
-import { auditLogger as logger } from '../logger';
 
 const GOALS_PER_PAGE = 10;
 
@@ -660,23 +659,17 @@ export async function newStandardGoal(
 
   // a new goal does not require objectives, but may include them
   if (objectives && objectives.length) {
-    try {
-      const objectivesToCreate = objectives.map((objective) => {
-        const mappedObjective = {
-          ...objective,
-          createdVia: 'rtr',
-          status: OBJECTIVE_STATUS.NOT_STARTED, // Using OBJECTIVE_STATUS instead of GOAL_STATUS
-          goalId: newGoal.id,
-        };
-        return mappedObjective;
-      });
+    const objectivesToCreate = objectives.map((objective) => {
+      const mappedObjective = {
+        ...objective,
+        createdVia: 'rtr',
+        status: OBJECTIVE_STATUS.NOT_STARTED, // Using OBJECTIVE_STATUS instead of GOAL_STATUS
+        goalId: newGoal.id,
+      };
+      return mappedObjective;
+    });
 
-      await Objective.bulkCreate(objectivesToCreate);
-    } catch (error) {
-      logger.error('11 - Error creating objectives:', error);
-      logger.error('22 - Objectives data:', JSON.stringify(objectives, null, 2));
-      throw error;
-    }
+    await Objective.bulkCreate(objectivesToCreate);
   }
 
   const { prompts } = standard;
