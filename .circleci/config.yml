@@ -571,7 +571,7 @@ jobs:
         name: Run database migrations
         command: |
           set -x
-          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate --wait
     - run:
         name: Alert on migration failure
         when: on_fail
