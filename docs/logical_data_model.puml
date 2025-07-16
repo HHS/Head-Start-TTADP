@@ -869,6 +869,7 @@ class ObjectiveTemplates{
 
 class Objectives{
  * id : integer : <generated>
+ createdViaActivityReportId : integer : REFERENCES "ActivityReports".id
  goalId : integer : REFERENCES "Goals".id
  mapsToParentObjectiveId : integer : REFERENCES "Objectives".id
  objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
@@ -2608,7 +2609,7 @@ ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topi
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, activityReports
-ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports
+ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : createdViaActivityReportObjectives, objectivesWithoutGoals, objectivesWithGoals, objectives, activityReports, createdViaActivityReport
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" OtherEntities : otherEntities, activityReports
 ActivityReports "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReports
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, collaboratorTypes

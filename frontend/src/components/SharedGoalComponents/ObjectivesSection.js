@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Button, Textarea } from '@trussworks/react-uswds';
+import { Button, Textarea, Alert } from '@trussworks/react-uswds';
 import PlusButton from '../GoalForm/PlusButton';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
 import FormItem from '../FormItem';
@@ -25,13 +25,24 @@ export default function ObjectivesSection({
     append({ value: '', objectiveId: null });
   };
 
+  const hasReportedObjectives = objectives.some((objective) => objective.onAR === true);
+
   return (
     <div className="margin-top-4">
-      {(objectives.length > 0) && <h2>Objectives</h2>}
+      {(objectives.length > 0)
+        && <h2>Objectives</h2>}
+      {hasReportedObjectives
+        && (
+        <Alert
+          type="info"
+          slim
+          className="margin-top-3 margin-bottom-2"
+        >
+          Objectives used on reports cannot be edited.
+        </Alert>
+        )}
       {objectives.map((field, index) => {
-        const isReadOnly = field.onAR === true
-        || field.status === 'Complete'
-        || field.status === 'Suspended';
+        const isReadOnly = field.onAR === true;
         return (
           <div key={field.id}>
             <div hidden={!isReadOnly}>

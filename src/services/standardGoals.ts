@@ -145,7 +145,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
  * @param objectives
  * @returns {object} Objective
  */
-export async function createObjectivesForGoal(goal, objectives) {
+export async function createObjectivesForGoal(goal, objectives, reportId) {
   /*
      Note: Objective Status
      We only want to set Objective status from here on initial Objective creation.
@@ -218,12 +218,14 @@ export async function createObjectivesForGoal(goal, objectives) {
           // status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
         },
       });
+
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
           createdVia: 'activityReport',
+          createdViaActivityReportId: reportId, // AR ID if created via AR.
         });
       } else {
         savedObjective = existingObjective;
@@ -415,6 +417,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       const newGoalObjectives = await createObjectivesForGoal(
         newOrUpdatedGoal,
         goal.objectives,
+        reportId,
       );
       currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
