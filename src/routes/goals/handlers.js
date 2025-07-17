@@ -121,42 +121,19 @@ export async function reopenGoal(req, res) {
     const { goalId, reason, context } = req.body;
     const userId = await currentUserId(req, res);
 
-    const existingGoal = await sequelize.models.Goal.findByPk(goalId);
-
-    // If the goal isn't found or status isn't closed we can't reopen it.
-    if (!existingGoal || existingGoal.status !== 'Closed') {
-      res.sendStatus(httpCodes.BAD_REQUEST);
-      return;
-    }
-
-    // Else we can reopen the goal by creating a new goal with a status of 'In Progress'.
-    // This will be for the same grant and goal template as the original goal.
-    const reopenedGoal = await sequelize.models.Goal.create({
-      grantId: existingGoal.grantId,
-      name: existingGoal.name,
-      status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
-      isFromSmartsheetTtaPlan: false,
-      rtrOrder: existingGoal.rtrOrder,
-      createdVia: 'rtr',
-      goalTemplateId: existingGoal.goalTemplateId,
-      createdById: userId,
-
-    });
-
-    // Update the status and set the reason and context for reopening.
-    await _changeGoalStatus({
-      goalId: reopenedGoal.id,
+    const updatedGoal = await _changeGoalStatus({
+      goalId,
       userId,
       newStatus: 'In Progress',
       reason,
       context,
     });
 
-    if (!reopenedGoal) {
+    if (!updatedGoal) {
       res.sendStatus(httpCodes.BAD_REQUEST);
     }
 
-    res.json(reopenedGoal);
+    res.json(updatedGoal);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:REOPEN_GOAL`);
   }

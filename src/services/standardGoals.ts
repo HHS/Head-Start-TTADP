@@ -650,7 +650,7 @@ export async function newStandardGoal(
   }
 
   const newGoal = await Goal.create({
-    status: GOAL_STATUS.NOT_STARTED,
+    status: GOAL_STATUS.IN_PROGRESS,
     name: standard.templateName,
     grantId,
     goalTemplateId: standard.id,
