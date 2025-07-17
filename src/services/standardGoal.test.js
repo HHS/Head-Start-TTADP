@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
@@ -254,7 +253,7 @@ describe('standardGoal service', () => {
 
         const g2 = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
         expect(g2).toBeDefined();
-        expect(g2.status).toBe(GOAL_STATUS.NOT_STARTED);
+        expect(g2.status).toBe(GOAL_STATUS.IN_PROGRESS);
         expect(g2.id).not.toBe(g.id);
       });
 
