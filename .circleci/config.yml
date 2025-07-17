@@ -4,10 +4,10 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.3-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.3-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
@@ -180,12 +180,6 @@ workflows:
         requires:
         - process_temp_db
     - restore_db_job:
-        name: restore (dev)
-        serial-group: "tta-automation-lock"
-        target_env: "dev"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
         name: restore (dev-green)
         serial-group: "tta-automation-lock"
         target_env: "dev-green"
@@ -216,12 +210,6 @@ workflows:
         requires:
         - backup_temp_db
     - restore_db_job:
-        name: restore (sandbox)
-        serial-group: "tta-automation-lock"
-        target_env: "sandbox"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
         name: restore (staging)
         serial-group: "tta-automation-lock"
         target_env: "staging"
@@ -249,16 +237,16 @@ jobs:
     - restore_cache:
         keys:
         # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v15-yarn-deps-
+        - v16-yarn-deps-
     - run: yarn deps
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -346,7 +334,25 @@ jobs:
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:
+        name: Merge coverage & generate report
+        when: always
+        command: |
+          temp_dir="coverage-temp"
+          report_dir="coverage-report"
+          mkdir -p ${temp_dir}
+          
+          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
+            relative_path="${file#./}"
+            new_name="${relative_path//\//-}"
+            new_path="${temp_dir}/${new_name}"
+            cp "$file" "${new_path}"
+          done
+          npx nyc merge ${temp_dir} ${temp_dir}/merged-coverage.json
+          npx nyc report --temp-dir ${temp_dir} --report-dir ${report_dir} --reporter=html --reporter=json-summary
+          echo "Coverage report: https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}/coverage-report/index.html"
+    - run:
         name: Check coverage for modified lines
+        when: always
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
@@ -357,27 +363,27 @@ jobs:
           else
             echo "Not a PR build. Skipping coverage check."
           fi
-        when: always
     - run:
         name: Summarize coverage
+        when: always
         command: |
           chmod +x ./tools/summarize-coverageCLI.js
           node ./tools/summarize-coverageCLI.js \
             ./coverage/coverage-final.json \
             90
-        when: always
     - run:
         name: Compress coverage artifacts
-        command: tar -cvzf backend-coverage-artifacts.tar coverage/
+        command: zip backend-coverage-artifacts.zip coverage/
+        when: always
     - store_artifacts:
-        path: coverage/
+        path: backend-coverage-artifacts.zip
     - store_artifacts:
-        path: backend-coverage-artifacts.tar
-    - store_test_results:
-        path: reports/
+        path: coverage-report/
     - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
+    - store_test_results:
+        path: reports/
 
   test_similarity_api:
     executor: docker-python-executor
@@ -553,7 +559,9 @@ jobs:
         name: Run database migrations
         command: |
           set -x
-          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
+          cf logs tta-smarthub-${cfg_env} --recent | grep ${TASK_NAME}
     - run:
         name: Alert on migration failure
         when: on_fail
@@ -600,8 +608,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v15-yarn-deps-
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run: |
         yarn deps
         yarn build
@@ -756,12 +764,31 @@ commands:
     - attach_workspace:
         at: .
     - run:
-        name: Start server
+        name: Start backend (8080) & watch logs
         command: |
-          yarn playwright install
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
-          yarn start:ci
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:web
+        background: true
+    - run:
+        name: Start frontend (3000) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          export TTA_SMART_HUB_URI="http://localhost:3000"
+          yarn playwright install
+          yarn client
+        background: true
+    - run:
+        name: Start testing server (9999) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:testingonly
         background: true
     - run:
         name: Run migrations ci
@@ -771,11 +798,15 @@ commands:
         command: yarn db:seed:ci
     - run:
         name: Wait for server to start
-        command: ./bin/ping-server 3000
+        command: |
+          ./bin/ping-server 3000 # frontend
+          ./bin/ping-server 9999 localhost "/testingonly" # testonly
+          #./bin/ping-server 8080 localhost "/health" # backend
+          sleep 30s # there is no way to check backend health without auth
     - run:
         name: << parameters.cmd >>
         command: |
-          export TTA_SMART_HUB_URI=http://localhost:3000
+          export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
           << parameters.cmd >>
     - store_artifacts:
@@ -1138,7 +1169,7 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"
