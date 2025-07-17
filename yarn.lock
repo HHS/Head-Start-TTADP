@@ -4436,7 +4436,7 @@ cron-parser@^4.9.0:
   dependencies:
     luxon "^3.2.1"
 
-cron@^1.8.2:
+cron@1.8.3:
   version "1.8.3"
   resolved "https://registry.yarnpkg.com/cron/-/cron-1.8.3.tgz#2a61d7b15848716885834ec56ac072f4b9744ebd"
   integrity sha512-JYR/QZFklJCIPndBLfd/2nU1nSlCMrUdtQ2mGLXSVM/qqqEK7DOrFR0gsEiyeqs0PdWrs0ve1ggH4V7XksDwXg==
