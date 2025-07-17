@@ -5,7 +5,7 @@ import {
 } from '../../testUtils';
 import { GOAL_STATUS } from './goalsByStatus';
 
-const { Grant, Recipient } = db;
+const { Grant, Recipient, Goal } = db;
 
 describe('goalsPercentage', () => {
   const goals = [];
@@ -15,6 +15,7 @@ describe('goalsPercentage', () => {
 
   beforeAll(async () => {
     try {
+      await Goal.destroy({ where: {}, truncate: true });
       recipient = await createRecipient();
       const recipientId = recipient.id;
       grant = await createGrant({ recipientId });
