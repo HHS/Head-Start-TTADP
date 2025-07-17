@@ -1321,5 +1321,74 @@ describe('goal handlers', () => {
         }),
       );
     });
+
+    it('ensures only approved activity reports are included', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findAll.mockResolvedValueOnce([]);
+
+      await getGoalHistory(req, mockResponse);
+
+      // Check that both activity reports in objectives
+      //  and direct activity reports are filtered by approved status
+      expect(db.Goal.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.arrayContaining([
+            expect.objectContaining({
+              as: 'objectives',
+              include: expect.arrayContaining([
+                expect.objectContaining({
+                  as: 'activityReportObjectives',
+                  include: expect.arrayContaining([
+                    expect.objectContaining({
+                      as: 'activityReport',
+                      where: {
+                        calculatedStatus: 'approved',
+                      },
+                    }),
+                  ]),
+                }),
+                expect.objectContaining({
+                  as: 'activityReports',
+                  where: {
+                    calculatedStatus: 'approved',
+                  },
+                }),
+              ]),
+            }),
+          ]),
+        }),
+      );
+    });
   });
 });

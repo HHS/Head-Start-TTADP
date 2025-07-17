@@ -394,6 +394,9 @@ export async function getGoalHistory(req, res) {
                   model: sequelize.models.ActivityReport,
                   as: 'activityReport',
                   attributes: ['id', 'displayId', 'startDate', 'endDate', 'calculatedStatus'],
+                  where: {
+                    calculatedStatus: 'approved',
+                  },
                 },
                 {
                   model: sequelize.models.Topic,
@@ -412,6 +415,9 @@ export async function getGoalHistory(req, res) {
               as: 'activityReports',
               required: false,
               attributes: ['id', 'displayId', 'startDate', 'endDate', 'calculatedStatus'],
+              where: {
+                calculatedStatus: 'approved',
+              },
             },
           ],
         },
