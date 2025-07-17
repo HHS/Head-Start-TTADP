@@ -545,7 +545,7 @@ describe('goal filtersToScopes', () => {
         [Op.or]: [
           {
             [Op.and]: [
-              { status: { [Op.notILike]: `%Needs status%` } },
+              { status: { [Op.notILike]: '%Needs status%' } },
             ],
           },
           {
