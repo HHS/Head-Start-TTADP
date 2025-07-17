@@ -18,7 +18,9 @@ import {
   getMissingDataForActivityReport,
   createGoalsFromTemplate,
   getGoalHistory,
+  reopenGoal,
 } from './handlers';
+import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import {
   updateGoalStatusById,
   createOrUpdateGoals,
@@ -29,6 +31,8 @@ import {
 } from '../../goalServices/goals';
 import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
 import { currentUserId } from '../../services/currentUser';
+import goalTemplate from '../../models/goalTemplate';
+import goal from '../../models/goal';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -53,6 +57,8 @@ jest.mock('../../goalServices/goals', () => ({
 jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
 
 jest.mock('../../goalServices/goalsFromTemplate', () => jest.fn());
+
+jest.mock('../../goalServices/changeGoalStatus', () => jest.fn());
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -1389,6 +1395,121 @@ describe('goal handlers', () => {
           ]),
         }),
       );
+    });
+  });
+
+  describe('reopenGoal', () => {
+    beforeEach(() => {
+      db.Goal.findByPk = jest.fn();
+      db.Goal.create = jest.fn();
+    });
+    it('reopens a goal successfully', async () => {
+      const req = {
+        body: {
+          goalId: 1,
+          reason: 'Reopening for further work',
+          context: 'Additional context for reopening',
+          regionId: 2,
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      // mock goal.findByPk to return a goal with status 'Closed'.
+      db.Goal.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grantId: 1,
+        goalTemplateId: 1,
+        createdVia: 'rtr',
+        status: 'Closed',
+        grant: { regionId: 2 },
+      });
+
+      // Mock goal.create
+      db.Goal.create.mockResolvedValueOnce({
+        id: 2,
+        status: 'In Progress',
+      });
+      // Mock _changeGoalStatus
+      _changeGoalStatus.mockResolvedValueOnce({ id: 1, status: 'In Progress' });
+
+      await reopenGoal(req, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ id: 2, status: 'In Progress' });
+    });
+
+    it('returns a bad request if it finds a goal by pk that is not closed', async () => {
+      const req = {
+        body: {
+          goalId: 1,
+          reason: 'Reopening for further work',
+          context: 'Additional context for reopening',
+          regionId: 2,
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      // mock goal.findByPk to return a goal with status 'In Progress'.
+      db.Goal.findByPk.mockResolvedValueOnce({
+        id: 1,
+        grantId: 1,
+        goalTemplateId: 1,
+        createdVia: 'rtr',
+        status: 'In Progress',
+        grant: { regionId: 2 },
+      });
+
+      await reopenGoal(req, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(BAD_REQUEST);
+    });
+
+    it('returns a bad request if it does not find a goal by pk', async () => {
+      const req = {
+        body: {
+          goalId: 1,
+          reason: 'Reopening for further work',
+          context: 'Additional context for reopening',
+          regionId: 2,
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      });
+
+      // mock goal.findByPk to return null.
+      db.Goal.findByPk.mockResolvedValueOnce(null);
+
+      await reopenGoal(req, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(BAD_REQUEST);
     });
   });
 });
