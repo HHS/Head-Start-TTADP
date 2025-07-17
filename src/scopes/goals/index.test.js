@@ -543,11 +543,13 @@ describe('goal filtersToScopes', () => {
       const out = withoutStatus(['Needs status']);
       expect(out).toMatchObject({
         [Op.or]: [
-          { status: { [Op.eq]: null } },
           {
-            [Op.and]: [{
-              status: { [Op.notILike]: '%sNeeds status%s' },
-            }],
+            [Op.and]: [
+              { status: { [Op.notILike]: `%Needs status%` } },
+            ],
+          },
+          {
+            status: { [Op.not]: null },
           },
         ],
       });
