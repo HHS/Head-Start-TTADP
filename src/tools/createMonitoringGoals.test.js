@@ -2577,6 +2577,8 @@ describe('createMonitoringGoals', () => {
   };
 
   it('creates monitoring goals for grants that need them', async () => {
+    await Goal.destroy({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
+
     // 1st Run of the CRON job.
     await createMonitoringGoals();
     await assertMonitoringGoals();

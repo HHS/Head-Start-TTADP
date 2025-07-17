@@ -107,7 +107,9 @@ describe('DB Cron Enrollment', () => {
       testTimezone,
       testSchedule,
     );
-    expect(job.constructor.name).toBe('CronJob');
+
+    expect(typeof job.start).toBe('function');
+    expect(typeof job.stop).toBe('function');
     // Verify that the cron job uses the schedule we provided.
     expect(job.cronTime.source).toBe(testSchedule);
   });
