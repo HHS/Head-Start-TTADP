@@ -2577,16 +2577,21 @@ describe('createMonitoringGoals', () => {
   };
 
   it('creates monitoring goals for grants that need them', async () => {
-    await Goal.destroy({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
-
+    // await Goal.destroy({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
+    const grant6GoalsBefore = await Goal.findAll({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
+    console.log(grant6GoalsBefore);
     // 1st Run of the CRON job.
     await createMonitoringGoals();
     await assertMonitoringGoals();
 
+    const grant6GoalsAfterFirstRun = await Goal.findAll({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
+    console.log(grant6GoalsAfterFirstRun);
     // 2nd Run of the CRON job.
     // Run the job again to make sure we don't duplicate goals.
     await createMonitoringGoals();
     await assertMonitoringGoals();
+    const grant6GoalsAfterSecondRun = await Goal.findAll({ where: { grantId: grantThatsMonitoringReviewStatusIsNotComplete6.id } });
+    console.log(grant6GoalsAfterSecondRun);
   });
 
   it('uses auditlogger.error to log an error', async () => {
