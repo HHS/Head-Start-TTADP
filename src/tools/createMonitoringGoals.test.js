@@ -2576,16 +2576,17 @@ describe('createMonitoringGoals', () => {
     expect(grant18Goals[0].status).toBe('In Progress');
   };
   // TODO: Figure out why this test is failing in CI, but works locally.
-  // it('creates monitoring goals for grants that need them', async () => {
-  //   // 1st Run of the CRON job.
-  //   await createMonitoringGoals();
-  //   await assertMonitoringGoals();
+  // eslint-disable-next-line jest/no-disabled-tests -- fails in CI, but works locally.
+  it.skip('creates monitoring goals for grants that need them', async () => {
+    // 1st Run of the CRON job.
+    await createMonitoringGoals();
+    await assertMonitoringGoals();
 
-  //   // 2nd Run of the CRON job.
-  //   // Run the job again to make sure we don't duplicate goals.
-  //   await createMonitoringGoals();
-  //   await assertMonitoringGoals();
-  // });
+    // 2nd Run of the CRON job.
+    // Run the job again to make sure we don't duplicate goals.
+    await createMonitoringGoals();
+    await assertMonitoringGoals();
+  });
 
   it('uses auditlogger.error to log an error', async () => {
     // Mock GoalTemplate.findOne to throw an error:
