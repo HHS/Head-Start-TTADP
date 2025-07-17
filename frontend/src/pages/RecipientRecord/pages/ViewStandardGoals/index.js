@@ -209,13 +209,8 @@ export default function ViewGoalDetails({
                   </ReadOnlyField>
 
                   {/* Display Reports */}
-                  {!objective.activityReportObjectives
-                      || objective.activityReportObjectives.length === 0 ? (
-                        <div className="margin-top-2">
-                          <p className="usa-prose">This objective has not been used in any activity reports.</p>
-                        </div>
-                    ) : (
-                      objective.activityReportObjectives.length > 0 && (
+                  {objective.activityReportObjectives
+                      && objective.activityReportObjectives.length > 0 && (
                         <div className="margin-top-2">
                           <ReadOnlyField label="Reports">
                             {objective.activityReportObjectives
@@ -230,8 +225,7 @@ export default function ViewGoalDetails({
                               ))}
                           </ReadOnlyField>
                         </div>
-                      )
-                    )}
+                  )}
 
                   {/* Display Topics */}
                   {!objective.activityReportObjectives

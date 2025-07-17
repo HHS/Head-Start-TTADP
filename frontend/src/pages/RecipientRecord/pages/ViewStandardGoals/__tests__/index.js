@@ -395,22 +395,6 @@ describe('ViewGoalDetails', () => {
     expect(resourceLink2).toHaveAttribute('href', 'http://example.com/resource2');
   });
 
-  test('renders message when objective has no reports', async () => {
-    fetchMock.get(goalHistoryUrl, mockGoalHistory);
-    await act(async () => {
-      renderViewGoalDetails();
-    });
-    const firstAccordionButton = await screen.findByRole('button', { name: /G-1 \| In Progress/i });
-    await waitFor(() => expect(firstAccordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
-
-    const objective2 = within(firstAccordionContent).getByText('Objective with no reports/topics/resources').closest('div.margin-bottom-3');
-    expect(within(objective2).getByText('This objective has not been used in any activity reports.')).toBeInTheDocument();
-    // should not render topics or resources sections if no reports
-    expect(within(objective2).queryByText('Topics')).not.toBeInTheDocument();
-    expect(within(objective2).queryByText('Resources')).not.toBeInTheDocument();
-  });
-
   test('renders root causes', async () => {
     fetchMock.get(goalHistoryUrl, mockGoalHistory);
     await act(async () => {
