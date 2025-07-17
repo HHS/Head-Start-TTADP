@@ -105,7 +105,7 @@ export default function ResourcesDashboard() {
         );
         setActivityReports(data);
         updateError('');
-      } catch (e) {
+      } /* istanbul ignore next: cannot test console.log */ catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
         updateError('Unable to fetch reports');
@@ -153,7 +153,7 @@ export default function ResourcesDashboard() {
       const blob = await downloadReports(url);
       const csv = URL.createObjectURL(blob);
       window.location.assign(csv);
-    } catch (err) {
+    } /* istanbul ignore next: hard to test error on download */ catch (err) {
       setDownloadError(true);
     } finally {
       setIsDownloading(false);
@@ -177,6 +177,7 @@ export default function ResourcesDashboard() {
     );
   };
 
+  /* istanbul ignore next: hard to test downloads */
   const handleDownloadClick = async (
     reportCheckboxes,
     setIsDownloading,

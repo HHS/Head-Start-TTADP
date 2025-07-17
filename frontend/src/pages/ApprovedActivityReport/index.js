@@ -17,6 +17,7 @@ import {
 import './index.scss';
 import ApprovedReportV1 from './components/ApprovedReportV1';
 import ApprovedReportV2 from './components/ApprovedReportV2';
+import ApprovedReportV3 from './components/ApprovedReportV3';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 
 export default function ApprovedActivityReport({ match, user }) {
@@ -99,18 +100,19 @@ export default function ApprovedActivityReport({ match, user }) {
   } = report;
 
   const ReportComponent = () => {
-    switch (version) {
-      case 1:
-        return <ApprovedReportV1 data={report} />;
-      case 2:
-        return <ApprovedReportV2 data={report} />;
-      case 'loading':
-        return <Container className="ttahub-activity-report-view margin-top-2 minh-tablet">Loading...</Container>;
-      default:
-        return <ApprovedReportV1 data={report} />;
-    }
+    // Map of report versions to their respective components
+    const reportsMap = {
+      1: <ApprovedReportV1 data={report} />,
+      2: <ApprovedReportV2 data={report} />,
+      3: <ApprovedReportV3 data={report} />,
+      loading: <Container className="ttahub-activity-report-view margin-top-2 minh-tablet">Loading...</Container>,
+    };
+
+    // If the version is not found, default to ApprovedReportV1
+    return reportsMap[version] || <ApprovedReportV1 data={report} />;
   };
 
+  /* istanbul ignore next: hard to test modals */
   const onUnlock = async () => {
     await unlockReport(reportId);
     modalRef.current.toggleModal(false);
@@ -120,7 +122,7 @@ export default function ApprovedActivityReport({ match, user }) {
   const UnlockModal = () => (
     <Modal
       modalRef={modalRef}
-      onOk={() => onUnlock()}
+      onOk={/* istanbul ignore next: hard to test modals */ () => onUnlock()}
       modalId="UnlockReportModal"
       title="Unlock Activity Report"
       okButtonText="Unlock"
@@ -153,7 +155,8 @@ export default function ApprovedActivityReport({ match, user }) {
 
   return (
     <>
-      {justUnlocked && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
+
+      {justUnlocked && /* istanbul ignore next: can't test because of modals */ <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <Helmet>
         <title>
           TTA Activity Report

@@ -7,14 +7,12 @@ const {
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
 const { auditLogger } = require('../../logger');
-const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
-const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
@@ -42,50 +40,6 @@ const copyStatus = (instance) => {
   if (submissionStatus === REPORT_STATUSES.DRAFT
     || submissionStatus === REPORT_STATUSES.DELETED) {
     instance.set('calculatedStatus', submissionStatus);
-  }
-};
-
-const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
-  // eslint-disable-next-line global-require
-  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('submissionStatus')
-    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    try {
-      const goals = await sequelize.models.Goal.findAll({
-        where: {
-          status: 'Draft',
-        },
-        include: [
-          {
-            attributes: [],
-            through: { attributes: [] },
-            model: sequelize.models.ActivityReport,
-            as: 'activityReports',
-            required: true,
-            where: {
-              id: instance.id,
-            },
-          },
-        ],
-        includeIgnoreAttributes: false,
-        transaction: options.transaction,
-      });
-
-      const goalIds = goals.map((goal) => goal.id);
-      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-      await Promise.all(goalIds.map((goalId) => changeGoalStatus({
-        goalId,
-        userId,
-        newStatus: GOAL_STATUS.NOT_STARTED,
-        reason: 'Activity Report submission',
-        context: null,
-        transaction: options.transaction,
-      })));
-    } catch (error) {
-      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
-    }
   }
 };
 
@@ -135,56 +89,6 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
     && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    let goals;
-    try {
-      goals = await sequelize.models.Goal.findAll({
-        where: { goalTemplateId: null },
-        include: [
-          {
-            attributes: [],
-            through: { attributes: [] },
-            model: sequelize.models.ActivityReport,
-            as: 'activityReports',
-            required: true,
-            where: {
-              id: instance.id,
-            },
-          },
-        ],
-        includeIgnoreAttributes: false,
-        transaction: options.transaction,
-        raw: true,
-      });
-      // Generate a distinct list of goal names.
-      const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
-      // Find or create templates for each of the distinct names.
-      const distinctTemplates = await Promise.all(distinctlyNamedGoals
-        .map(async (goal) => findOrCreateGoalTemplate(
-          sequelize,
-          options.transaction,
-          instance.regionId,
-          goal.name,
-          goal.createdAt,
-          goal.updatedAt,
-        )));
-      // Add the corresponding template id to each of the goals.
-      goals = goals.map((goal) => {
-        const goalTemplateId = distinctTemplates.find((dt) => dt.name === goal.name).id;
-        return { ...goal, goalTemplateId };
-      });
-      // Update all the goals with their template id.
-      await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
-        { goalTemplateId: goal.goalTemplateId },
-        {
-          where: { id: goal.id },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      )));
-    } catch (e) {
-      auditLogger.error(`propagateSubmissionStatus > updating goal: ${e}}`);
-    }
-
     let objectives;
     try {
       objectives = await sequelize.models.Objective.findAll({
@@ -209,6 +113,11 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       const distinctlyTitledObjectives = [...new Map(objectives
         .map((objective) => [objective.title, objective])).values()];
       // Find or create templates for each of the distinct titles.
+      // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+      // Probably we don't want to create an objective template every time.
+      // But have a finite list of hardcoded objective templates for each goal template.
+      // We need to check this with ohs. findOrCreateObjectiveTemplate().
+      // NOTE: lets address this when we make the objective changes.
       const distinctTemplates = await Promise.all(distinctlyTitledObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
@@ -239,7 +148,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
 };
 
 const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked) => {
-  // Get all AR Objective Id's.
+  // 1. Get all the objectives for this activity report.
   const objectives = await sequelize.models.ActivityReportObjective.findAll(
     {
       attributes: [
@@ -249,9 +158,11 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       where: { activityReportId },
     },
   );
+
+  // 2. Get all the objective ids from this activity report.
   const objectiveIds = objectives.map((o) => o.objectiveId);
 
-  // Get all the reports that use the objectives
+  // 3. Get all the activity reports that use these objectives.
   const allReports = await sequelize.models.ActivityReport.findAll({
     attributes: ['id', 'calculatedStatus', 'endDate'],
     include: [
@@ -278,10 +189,15 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     ],
   });
 
+  // 4. Of all the activity reports that use these objectives,
+  //    filter out the ones that are approved using these objectives.
   const approvedReports = allReports.filter((report) => (
     report.calculatedStatus === REPORT_STATUSES.APPROVED
   ));
 
+  // 5. If we don't have any approved activity reports using these objectives,
+  //    we want to reset the status of the objectives
+  //    that are ONLY used by this activity report to NOT_STARTED.
   if (isUnlocked && !approvedReports.length) {
     const report = allReports.find((r) => r.id === activityReportId);
     const objectivesToReset = report && report.activityReportObjectives
@@ -301,20 +217,29 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     return Promise.resolve();
   }
 
+  // 6. If we have approved activity reports using these objectives,
+  //    Then we loop each objective on the activity report.
   return Promise.all(objectiveIds.map((objectiveId) => {
-    // Get reports that use this objective.
+    // 7. From all the approved activity reports,
+    //    Get the ones that use this particular objective we are looping.
     const relevantARs = approvedReports.filter(
       (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === objectiveId),
     );
 
+    // 8. Get all the ARO objectives that are used by these approved activity reports.
     const objectivesToUpdate = relevantARs.map((a) => a.activityReportObjectives
       .filter((aro) => aro.objectiveId === objectiveId).map((aro) => aro.objective)).flat();
 
+    // 9. If we don't have any relevant activity reports for this objective,
+    //    we don't need to do anything and can go to the next one.
     if (!relevantARs && !relevantARs.length) {
       return Promise.resolve();
     }
 
-    // Get latest report by end date.
+    // 10. Of the activity reports that use this objective,
+    //     we want to find the one with the latest end date.
+    //     If there are no end dates, we will use the first one.
+    //     If there are no activity reports, we will return an empty object.
     const latestAR = relevantARs.reduce((r, a) => {
       if (r && r.endDate) {
         return new Date(r.endDate) > new Date(a.endDate) ? r : a;
@@ -325,16 +250,33 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       activityReportObjectives: [],
     });
 
-    // // Get Objective to take status from.
+    //  11. From the latest activity report,
+    //      find the ARO that corresponds to the objective we are looping.
     const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === objectiveId));
+    // 12. Get the end date of the latest activity report.
     const latestEndDate = latestAR.endDate;
 
+    // 13. If we don't have an ARO, we don't need to do anything and can go to the next objective.
     if (!aro) {
       return Promise.resolve();
     }
 
+    // 14. Loop all the objectives that we want to update.
     return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
-      const newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+      let newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+
+      // See TTAHUB-4138 for standard goals objective status logic.
+      if (objectiveToUpdate.status === OBJECTIVE_STATUS.IN_PROGRESS
+        && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
+        newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
+      } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.COMPLETE
+        && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
+        newStatus = OBJECTIVE_STATUS.COMPLETE;
+      } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.SUSPENDED
+        && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
+        newStatus = OBJECTIVE_STATUS.SUSPENDED;
+      }
+
       // status is the same, no need to update
       if (newStatus === objectiveToUpdate.status) {
         return Promise.resolve();
@@ -595,11 +537,11 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     // and 2) goals that are "In Progress" are not moved backward
     // so we start with finding all the goals that *could* be changed
     // (goals in draft or not started)
+    // Standard Goals: We need to keep this for not started moved to in progress.
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
           status: [
-            GOAL_STATUS.DRAFT,
             GOAL_STATUS.NOT_STARTED,
           ],
         },
@@ -834,34 +776,6 @@ const beforeUpdate = async (sequelize, instance, options) => {
   clearAdditionalNotes(sequelize, instance, options);
 };
 
-const afterDestroy = async (sequelize, instance, options) => {
-  try {
-    if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
-      return;
-    }
-    auditLogger.info(`Destroying linked similarity groups for AR-${instance.id}`);
-    const { id: activityReportId, calculatedStatus } = instance;
-
-    const arGoals = await sequelize.models.ActivityReportGoal.findAll({
-      attributes: ['goalId'],
-      where: { activityReportId },
-      transaction: options.transaction,
-    });
-
-    await Promise.all((arGoals.map(async (arGoal) => {
-      const i = {
-        calculatedStatus,
-        goalId: arGoal.goalId,
-      };
-      // regen similarity groups
-      return destroyLinkedSimilarityGroups(sequelize, i, options);
-    })));
-  } catch (e) {
-    // we do not want to surface these errors to the UI
-    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
-  }
-};
-
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
 };
@@ -873,9 +787,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await autoPopulateUtilizer(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
-  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await afterDestroy(sequelize, instance, options);
 };
 
 export {
@@ -889,7 +801,5 @@ export {
   beforeUpdate,
   afterCreate,
   afterUpdate,
-  moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,
-  afterDestroy,
 };
