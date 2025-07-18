@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Convert environment to app name if necessary
-APP_NAME=$( [ "$1" == "DEV" ] && echo "tta-smarthub-dev" || ([ "$1" == "SANDBOX" ] && echo "tta-smarthub-sandbox") || echo "$1" )
+APP_NAME=$( [ "$1" == "DEV" ] && echo "tta-smarthub-dev" || echo "$1" )
 BRANCH=$2
 BUILD_ID=$3
 JOB_NAME=${CIRCLE_JOB}  # Automatically use the current CircleCI job name
