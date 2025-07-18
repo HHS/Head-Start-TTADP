@@ -237,6 +237,8 @@ workflows:
         - process_temp_db
     - restore_db_job:
         serial-group: tta-automation-lock
+        requires:
+        - backup_temp_db
         target_env: "<< pipeline.parameters.target_env >>"
 
 # ----------------- Jobs -----------------
