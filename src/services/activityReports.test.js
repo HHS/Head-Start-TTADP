@@ -426,7 +426,7 @@ describe('Activity report service', () => {
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
-        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 92)),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
       });
 
       await Grant.create({
@@ -462,8 +462,8 @@ describe('Activity report service', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         activityRecipients: [],
         // Set a start date that will NOT return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() + 92)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 92)),
+        startDate: new Date(new Date().setDate(new Date().getDate() + 366)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 366)),
       });
 
       // Create a ActivityReport without start date.
