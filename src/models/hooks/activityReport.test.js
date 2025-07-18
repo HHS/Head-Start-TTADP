@@ -553,6 +553,102 @@ describe('activity report model hooks', () => {
         });
       });
 
+      it('correctly sets the objective status to in progress when the existing objective status is suspended and the lastInProgressAt is defined', async () => {
+        // Update the objective status to suspended with lastInProgressAt defined
+        const firstInProgressAt = new Date('2025-01-01');
+        await Objective.update({
+          status: 'Suspended',
+          firstInProgressAt,
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+
+        // Verify initial state
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+        expect(testObjective.firstInProgressAt).toEqual(firstInProgressAt);
+
+        // Update activity report objective status to In Progress
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // Approve the new report
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Check that the objective status is now in progress and lastInProgressAt is updated
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('In Progress');
+
+        // Set the firstInProgressAt to null
+        await Objective.update({
+          firstInProgressAt: null,
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+      });
+
+      it('correctly sets the objective status to suspended when the existing objective status is suspended and the lastInProgressAt is not defined', async () => {
+        await Objective.update({
+          status: 'Suspended',
+          firstInProgressAt: null, // Never was in progress.
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+
+        // Verify initial state
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+        expect(testObjective.firstInProgressAt).toBeNull();
+
+        // Update activity report objective status to In Progress
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // Approve the new report
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Check that the objective status is now in progress and lastInProgressAt is updated
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('Suspended');
+      });
+
       it('correctly sets the objective status to in progress when the existing objective status is in progress', async () => {
         // Update the objective status to in progress without firing any hooks.
         await Objective.update({ status: 'In Progress' }, {
