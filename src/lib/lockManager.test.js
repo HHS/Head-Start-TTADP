@@ -140,13 +140,14 @@ describe('LockManager', () => {
   describe('stopRenewal', () => {
     it('should stop the renewal process', async () => {
       jest.useFakeTimers();
-      const clearIntervalSpy = jest.spyOn(global, 'clearInterval'); // <- spy added here
+      const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
       await lockManager.acquireLock();
       await lockManager.startRenewal();
 
       await lockManager.stopRenewal();
-      expect(clearIntervalSpy).toHaveBeenCalled(); // use the spy here
+      expect(clearIntervalSpy).toHaveBeenCalled();
+      clearIntervalSpy.mockRestore();
       jest.useRealTimers();
     });
   });
