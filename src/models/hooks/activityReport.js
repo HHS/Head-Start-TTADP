@@ -260,11 +260,9 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     if (!aro) {
       return Promise.resolve();
     }
-
     // 14. Loop all the objectives that we want to update.
     return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
       let newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
-
       // See TTAHUB-4138 for standard goals objective status logic.
       if (objectiveToUpdate.status === OBJECTIVE_STATUS.IN_PROGRESS
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
@@ -274,7 +272,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
         newStatus = OBJECTIVE_STATUS.COMPLETE;
       } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.SUSPENDED
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
-        newStatus = OBJECTIVE_STATUS.SUSPENDED;
+        newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
       }
 
       // status is the same, no need to update
