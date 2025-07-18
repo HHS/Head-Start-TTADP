@@ -1,3 +1,4 @@
+/* istanbul ignore file: tested elsewhere */
 const {
   processMaintenanceQueue,
   executeCronEnrollmentFunctions,
