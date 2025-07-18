@@ -107,7 +107,7 @@ describe('LockManager', () => {
     beforeEach(async () => {
       lockManager2 = new LockManager(lockKey2, lockTTL2);
       jest.spyOn(lockManager2, 'renewHoldTTL').mockImplementation(async () => true);
-      jest.spyOn(lockManager2, 'stopRenewal').mockImplementation(async () => {});
+      jest.spyOn(lockManager2, 'stopRenewal').mockImplementation(async () => { });
     });
 
     afterEach(async () => {
@@ -140,11 +140,13 @@ describe('LockManager', () => {
   describe('stopRenewal', () => {
     it('should stop the renewal process', async () => {
       jest.useFakeTimers();
+      const clearIntervalSpy = jest.spyOn(global, 'clearInterval'); // <- spy added here
+
       await lockManager.acquireLock();
       await lockManager.startRenewal();
 
       await lockManager.stopRenewal();
-      expect(clearInterval).toHaveBeenCalled();
+      expect(clearIntervalSpy).toHaveBeenCalled(); // use the spy here
       jest.useRealTimers();
     });
   });
