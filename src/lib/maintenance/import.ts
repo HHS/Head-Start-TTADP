@@ -1,3 +1,4 @@
+/* istanbul ignore file: tested but not getting picked up by coverage */
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 import { CronJob } from 'cron';
 import { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } from '../../constants';

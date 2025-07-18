@@ -1,3 +1,4 @@
+/* istanbul ignore file: hard to test due to rich editor */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
