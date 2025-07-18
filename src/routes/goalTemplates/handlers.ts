@@ -59,13 +59,14 @@ export async function getGoalTemplates(req: Request, res: Response) {
 export async function useStandardGoal(req: Request, res: Response) {
   try {
     const { grantId, goalTemplateId } = req.params;
-    const { objectives, rootCauses } = req.body;
+    const { objectives, rootCauses, status } = req.body;
 
     const standards = await newStandardGoal(
       Number(grantId),
       Number(goalTemplateId),
       objectives,
       rootCauses,
+      status || undefined, // if status is not provided, it will default to NOT_STARTED
     );
 
     res.json(standards);

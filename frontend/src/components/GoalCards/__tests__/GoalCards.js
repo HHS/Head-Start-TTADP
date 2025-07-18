@@ -234,7 +234,6 @@ const goalWithObjectives = [{
 
 const handlePageChange = jest.fn();
 const requestSort = jest.fn();
-const setGoals = jest.fn();
 const history = createMemoryHistory();
 
 const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
@@ -260,7 +259,6 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
               activePage: 1,
               offset: 0,
             }}
-            setGoals={setGoals}
             allGoalIds={allGoalIds || goals.map((g) => g.id)}
             canMergeGoals={false}
             perPageChange={jest.fn()}
