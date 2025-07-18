@@ -93,6 +93,7 @@ export default function RestartStandardGoal({ recipient }) {
       await addStandardGoal({
         goalTemplateId,
         grantId,
+        status: GOAL_STATUS.IN_PROGRESS,
         ...mapObjectivesAndRootCauses(data),
       });
 

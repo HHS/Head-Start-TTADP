@@ -642,6 +642,7 @@ export async function newStandardGoal(
   objectives?: Array<IObjective>,
   // todo: if we ever add more prompt responses, we will need to make this next param generic
   rootCauses?: Array<string>,
+  status: string = GOAL_STATUS.NOT_STARTED, // default to not started
 ) {
   const { standard, requiresPrompts } = await getStardard(standardGoalId, grantId, rootCauses);
 
@@ -650,7 +651,7 @@ export async function newStandardGoal(
   }
 
   const newGoal = await Goal.create({
-    status: GOAL_STATUS.IN_PROGRESS,
+    status,
     name: standard.templateName,
     grantId,
     goalTemplateId: standard.id,
