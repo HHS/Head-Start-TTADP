@@ -261,11 +261,11 @@ const createMonitoringGoals = async () => {
       }
       */
 
-    // 4. Mark eligible AR-duped or RTR monitoring Goals so they can be used for follow-up TTA.
-    //    This checks to make sure the unmarked monitoring goals are on grants that replace
-    //    grants that already have properly marked Goals. This is intended to address cases
-    //    where follow-up TTA is being performed beyond the initial review, which will usually
-    //    be recorded on the currently active grant anyway.
+      // 4. Mark eligible AR-duped or RTR monitoring Goals so they can be used for follow-up TTA.
+      //    This checks to make sure the unmarked monitoring goals are on grants that replace
+      //    grants that already have properly marked Goals. This is intended to address cases
+      //    where follow-up TTA is being performed beyond the initial review, which will usually
+      //    be recorded on the currently active grant anyway.
       await sequelize.query(`
       WITH elegible_grants AS (
       SELECT DISTINCT
