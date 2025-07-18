@@ -260,6 +260,43 @@ const createMonitoringGoals = async () => {
         })));
       }
       */
+
+    // 4. Mark eligible AR-duped or RTR monitoring Goals so they can be used for follow-up TTA.
+    //    This checks to make sure the unmarked monitoring goals are on grants that replace
+    //    grants that already have properly marked Goals. This is intended to address cases
+    //    where follow-up TTA is being performed beyond the initial review, which will usually
+    //    be recorded on the currently active grant anyway.
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(`
+      WITH elegible_grants AS (
+      SELECT DISTINCT
+        gr."replacingGrantId" grid
+      FROM "Goals" g
+      JOIN "GoalTemplates" gt
+        ON g."goalTemplateId" = gt.id
+      JOIN "GrantReplacements" gr
+        ON gr."replacedGrantId" = g."grantId"
+      WHERE gt."creationMethod" = 'Curated'
+        AND gt.standard = 'Monitoring'
+        AND EXTRACT(DAY FROM NOW() - g."createdAt") < 365
+      ),
+      goals_to_update AS (
+      SELECT DISTINCT
+        g.id gid
+      FROM elegible_grants eg
+      JOIN "Goals" g
+        ON g."grantId" = grid
+      JOIN "GoalTemplates" gt
+        ON g."goalTemplateId" = gt.id
+      WHERE g."createdVia" IN ('rtr','activityReport')
+        AND gt.standard = 'Monitoring'
+      )
+      UPDATE "Goals"
+      SET "createdVia" = 'monitoring'
+      FROM goals_to_update
+      WHERE id = gid
+      ;
+    `, { transaction });
     });
   } catch (error) {
     // eslint-disable-next-line no-console
