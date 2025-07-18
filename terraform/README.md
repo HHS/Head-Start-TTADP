@@ -45,7 +45,6 @@ Follow the steps below to generate a new set of credentials. If you need more in
 cf login -a api.fr.cloud.gov --sso
 # follow temporary authorization code prompts
 # select org "hhs-acf-ohs-tta", and the space (env) within which you want to build infrastructure
-# sandbox = ttahub-sandbox
 # dev = ttahub-dev
 # staging = ttahub-staging
 # prod = ttahub-prod
