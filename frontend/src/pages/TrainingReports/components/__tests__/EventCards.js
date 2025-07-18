@@ -210,7 +210,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
 
     // Show correct actions for region event.
@@ -218,7 +218,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
   it('POC cannot create sessions', () => {
@@ -266,7 +266,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
   });
 
@@ -315,7 +315,7 @@ describe('EventCards', () => {
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
   });
 
@@ -365,7 +365,7 @@ describe('EventCards', () => {
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);
   });
 
@@ -422,7 +422,7 @@ describe('EventCards', () => {
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
-    expect(screen.queryByText(/view event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
 
     // Click delete.
     expect(screen.queryByText(/delete event/i)).toBeInTheDocument();
