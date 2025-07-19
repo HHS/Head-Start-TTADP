@@ -153,9 +153,6 @@ const createMonitoringData = async (
 };
 
 describe('citations service', () => {
-  afterAll(async () => {
-    await db.sequelize.close();
-  });
   let snapShot;
 
   let recipient1;

@@ -208,7 +208,7 @@ export default function newQueue(queName, timeout = 30000) {
     },
     // Safely merge the timeout into redisOpts.settings
     settings: {
-      ...redisOpts.settings, // Preserve existing settings from redisOpts
+      ...((redisOpts?.settings) || {}), // Preserve existing settings from redisOpts
       stalledInterval: timeout, // Add or overwrite the timeout for stalled jobs
     },
   });

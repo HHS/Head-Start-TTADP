@@ -16,7 +16,6 @@ import {
   findSessionHelper,
   validateFields,
 } from './sessionReports';
-import sessionReportPilot from '../models/sessionReportPilot';
 import { createGrant, createGoal, destroyGoal } from '../testUtils';
 
 jest.mock('bull');
@@ -308,7 +307,7 @@ describe('session reports service', () => {
     });
 
     afterAll(async () => {
-      await sessionReportPilot.destroy({
+      await SessionReportPilot.destroy({
         where: {
           id: sessionIds,
         },

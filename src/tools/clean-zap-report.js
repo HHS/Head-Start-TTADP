@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const fs = require('fs');
 const cheerio = require('cheerio');
 
