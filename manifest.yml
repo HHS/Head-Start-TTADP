@@ -57,6 +57,7 @@ applications:
         instances: ((web_instances))
         command: yarn start:web
         memory: ((web_memory))
+        disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
         command: yarn start:worker
