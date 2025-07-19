@@ -24,3 +24,9 @@
 .position-absolute.smart-hub--menu__up {
   transform: translateY(-120%); 
 }
+
+.smart-hub--menu__right {
+  right: 0;
+  left: auto;
+  top: calc(100% + 1rem);
+}
