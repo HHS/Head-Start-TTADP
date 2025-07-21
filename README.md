@@ -332,11 +332,13 @@ Our project includes four deployed Postgres databases, one to interact with each
 
    ```bash
    # Mac OSX ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_darwin_arm64 
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_arm64 
    # Mac OSX non-ARM
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_darwin_amd64
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_darwin_amd64
    # Windows
-   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_windows_386
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_windows_386
+   # Linux
+   cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
    ```
 
 1. Connect to your desired database
