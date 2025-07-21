@@ -269,7 +269,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
         newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
       } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.COMPLETE
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
-        newStatus = OBJECTIVE_STATUS.COMPLETE;
+        newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
       } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.SUSPENDED
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
         // We need to determine if the objective to update has ever been in progress.
