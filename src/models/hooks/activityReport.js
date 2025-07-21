@@ -100,9 +100,11 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
  */
 const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) => {
   try {
-    // If the report is being approved.
-    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-      && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // If the report is being approved or set from approved back to needs action.
+    if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)
+     || (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)) {
     // Get all the goals for this report.
     // eslint-disable-next-line global-require
       const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
