@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import db, {
   Recipient,
@@ -652,14 +653,16 @@ describe('mergeGoals', () => {
 
     await GoalSimilarityGroupGoal.destroy({
       where: {
-        goalId: allGoalIds,
+        // goalId: allGoalIds,
       },
+      force: true,
     });
 
     await GoalSimilarityGroup.destroy({
       where: {
         id: similarityGroup.id,
       },
+      force: true,
     });
 
     await ActivityReportObjective.destroy({
@@ -676,9 +679,13 @@ describe('mergeGoals', () => {
 
     await Objective.destroy({
       where: {
-        id: allObjectiveIds,
+        [Op.or]: [
+          { id: allObjectiveIds },
+          { goalId: allGoalIds },
+        ],
       },
       force: true,
+      individualHooks: true,
     });
 
     await destroyReport(report);
@@ -695,11 +702,20 @@ describe('mergeGoals', () => {
       },
     });
 
-    await Goal.unscoped().destroy({
+    await Goal.destroy({
+      where: {
+        mapsToParentGoalId: allGoalIds,
+      },
+      force: true,
+      individualHooks: true,
+    });
+
+    await Goal.destroy({
       where: {
         id: allGoalIds,
       },
       force: true,
+      individualHooks: true,
     });
 
     await GoalTemplateFieldPrompt.destroy({
@@ -720,9 +736,17 @@ describe('mergeGoals', () => {
       },
     });
 
+    await GrantReplacements.destroy({
+      where: { replacingGrantId: [grantZero.id, grantTwo.id, grantThree.id] },
+      force: true,
+      individualHooks: true,
+    });
     await Grant.destroy({
       where: {
-        id: [grantOne.id, grantTwo.id, grantThree.id],
+        [Op.or]: [
+          { id: [grantOne.id, grantTwo.id, grantThree.id] },
+          { recipientId: recipient.id },
+        ],
       },
       force: true,
       individualHooks: true,
