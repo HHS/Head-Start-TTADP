@@ -362,6 +362,7 @@ describe('getGoalIdsBySimilarity', () => {
     await destroyReport(needsActionReport);
     await destroyReport(report);
 
+    await GrantReplacements.destroy({ where: {}, force: true });
     await GrantNumberLink.destroy({
       where: {
         grantId: activeGrant.id,
