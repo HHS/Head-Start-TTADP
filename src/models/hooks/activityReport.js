@@ -84,6 +84,54 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
   }
 };
 
+/**
+ * When a report is approved and a goal referenced by this report is closed,
+ * we need to create a new iteration of the goal's life-cycle.
+ * Because we already have the code written to create a new iteration
+ * and update all linked tables, lets call it like it was a save.
+ * This should handle two edge cases:
+ * 1. When a reports goal is closed after the report is created or submitted.
+ * 2. When a reports goal is closed and the report is unlocked (re-opened).
+ *  Note: That if the user happens to save the AR goals and objectives
+ *  page before submitting this will have already occurred through a normal save.
+ * @param {*} _sequelize
+ * @param {*} instance
+ * @param {*} _options
+ */
+const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) => {
+  try {
+    // If the report is being approved.
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+      const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+      const reportGoals = await getGoalsForReport(instance.id);
+      // If we have goals that are closed, we need to re-save create a new iteration.
+      const closedGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.CLOSED);
+      // If we have at least one closed goal,
+      // lets call the save standard goals for report to ensure its all up to snuff.
+      if (closedGoals.length) {
+        // eslint-disable-next-line global-require
+        const { saveStandardGoalsForReport } = require('../../services/standardGoals');
+        // Set the status of each closed goal to 'In Progress'.
+        const updateStatusGoals = closedGoals.map((g) => ({
+          ...g,
+          status: GOAL_STATUS.IN_PROGRESS,
+        }));
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        // We pass the reduced goals to be saved.
+        // This will create a new life cycle for the goal
+        // if its currently closed and all related tables.
+        // This is the same function as if they had saved on the AR goals and objectives page.
+        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id }, true);
+      }
+    }
+  } catch (e) {
+    auditLogger.error(`checkForNewGoalCycleOnApproval: ${e}`);
+  }
+};
+
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -788,6 +836,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoPopulateUtilizer(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
+  await checkForNewGoalCycleOnApproval(sequelize, instance, options);
 };
 
 export {
