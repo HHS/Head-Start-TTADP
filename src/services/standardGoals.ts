@@ -329,7 +329,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId, report) {
+export async function saveStandardGoalsForReport(goals, userId, report, createInProgress = false) {
   // Loop goal templates.
   let currentObjectives = [];
 
@@ -384,7 +384,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
           createdVia: 'activityReport',
           name: goalTemplate.templateName,
           grantId,
-          status: GOAL_STATUS.NOT_STARTED,
+          status: createInProgress ? GOAL_STATUS.IN_PROGRESS : GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
       }
 
