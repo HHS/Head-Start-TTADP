@@ -41,20 +41,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.SMALLINT,
       comment: 'Used for ordering steps without affecting auto-generated IDs',
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     sequelize,
     modelName: 'CollabReportStep',
     tableName: 'CollabReportSteps',
+    timestamps: true,
     indexes: [
       {
         name: 'collab_report_steps_collab_step_id_collab_report_id',
