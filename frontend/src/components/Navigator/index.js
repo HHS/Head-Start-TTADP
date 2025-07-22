@@ -154,6 +154,7 @@ const Navigator = ({
   );
 
   const newLocal = 'smart-hub-sidenav-wrapper no-print';
+
   return (
     <Grid row gap>
       { !hideSideNav && (

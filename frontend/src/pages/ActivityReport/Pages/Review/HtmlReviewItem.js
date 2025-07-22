@@ -10,6 +10,7 @@ import { getEditorState } from '../../../../utils';
  * Reasoning for another component is to not overload `ReviewItem`
  */
 
+/* istanbul ignore next: hard to test without setting up a form context */
 const HtmlReviewItem = ({ label, name }) => {
   const { watch } = useFormContext();
   const value = watch(name);
@@ -54,7 +55,6 @@ const HtmlReviewItem = ({ label, name }) => {
 HtmlReviewItem.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-
 };
 
 export default HtmlReviewItem;
