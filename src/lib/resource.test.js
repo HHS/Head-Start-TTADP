@@ -59,7 +59,9 @@ const mockUpdate = jest.spyOn(Resource, 'update').mockImplementation(() => Promi
 describe('resource worker tests', () => {
   let resource;
   afterAll(async () => {
-    await Resource.destroy({ where: { id: resource.id } });
+    if (resource?.id) {
+      await Resource.destroy({ where: { id: resource.id } });
+    }
     await db.sequelize.close();
   });
   afterEach(() => {
