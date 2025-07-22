@@ -8,10 +8,15 @@ export default (sequelize, DataTypes) => {
   }
 
   CollabReportReason.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     collabReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
-      primaryKey: true,
       references: {
         model: 'CollabReports',
         key: 'id',
@@ -20,12 +25,21 @@ export default (sequelize, DataTypes) => {
     reasonId: {
       allowNull: false,
       type: DataTypes.ENUM([
-        'PARTICIPATE_WORK_GROUPS',
-        'SUPPORT_COORDINATION',
-        'AGG_REGIONAL_DATA',
-        'DEVELOP_PRESENTATIONS',
+        'participate_work_groups',
+        'support_coordination',
+        'agg_regional_data',
+        'develop_presentations',
       ]),
-      primaryKey: true,
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   }, {
     sequelize,
@@ -33,6 +47,7 @@ export default (sequelize, DataTypes) => {
     tableName: 'CollabReportReasons',
     indexes: [
       {
+        name: 'collab_report_reasons_reason_id_collab_report_id',
         unique: true,
         fields: ['collabReportId', 'reasonId'],
       },

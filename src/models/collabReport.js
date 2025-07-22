@@ -32,8 +32,8 @@ export default (sequelize, DataTypes) => {
     },
     status: {
       allowNull: false,
-      type: DataTypes.ENUM(['DRAFT', 'SUBMITTED', 'REVIEWED', 'NEEDS_APPROVAL', 'APPROVED']),
-      defaultValue: 'DRAFT',
+      type: DataTypes.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
+      defaultValue: 'draft',
     },
     startDate: {
       allowNull: false,
@@ -58,11 +58,26 @@ export default (sequelize, DataTypes) => {
     },
     conductMethod: {
       allowNull: false,
-      type: DataTypes.ENUM(['EMAIL', 'PHONE', 'IN_PERSON', 'VIRTUAL']),
+      type: DataTypes.ENUM(['email', 'phone', 'in_person', 'virtual']),
     },
     description: {
       allowNull: false,
       type: DataTypes.TEXT,
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    deletedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
+      defaultValue: null,
     },
   }, {
     sequelize,

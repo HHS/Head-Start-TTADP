@@ -8,10 +8,15 @@ export default (sequelize, DataTypes) => {
   }
 
   CollabReportActivityState.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     collabReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
-      primaryKey: true,
       references: {
         model: 'CollabReports',
         key: 'id',
@@ -20,8 +25,17 @@ export default (sequelize, DataTypes) => {
     activityStateCode: {
       allowNull: false,
       type: DataTypes.STRING,
-      primaryKey: true,
       comment: 'State code (e.g., CA, NY, TX) where the activity takes place',
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   }, {
     sequelize,
@@ -29,6 +43,7 @@ export default (sequelize, DataTypes) => {
     tableName: 'CollabReportActivityStates',
     indexes: [
       {
+        name: 'collab_report_activity_states_activity_state_code_collab_report_id',
         unique: true,
         fields: ['collabReportId', 'activityStateCode'],
       },
