@@ -221,7 +221,6 @@ test.describe('Activity Report', () => {
     await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.waitForTimeout(5000);
 
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();
@@ -270,13 +269,9 @@ test.describe('Activity Report', () => {
     await page.getByRole('combobox', { name: /Support type/i }).selectOption('Implementing');
     await blur(page);
 
-    await page.waitForTimeout(10000);
-
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.waitForTimeout(10000);
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.waitForTimeout(10000);
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
@@ -558,7 +553,6 @@ test.describe('Activity Report', () => {
 
     await page.waitForTimeout(10000);
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
-    await page.waitForTimeout(10000);
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
     await page.keyboard.type('g1 o2 tta');
     await blur(page);

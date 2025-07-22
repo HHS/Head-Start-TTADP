@@ -15,6 +15,11 @@ jest.mock('redis', () => ({
   })),
 }));
 
+jest.mock('../lib/cache', () => ({
+  __esModule: true,
+  default: jest.fn((_key, cb) => cb()),
+}));
+
 jest.mock('../lib/queue', () => ({
   generateRedisConfig: jest.fn(() => ({
     uri: 'arg',

@@ -46,6 +46,7 @@ applications:
       BUILD_COMMIT: ((BUILD_COMMIT))
       BUILD_NUMBER: ((BUILD_NUMBER))
       BUILD_TIMESTAMP: ((BUILD_TIMESTAMP))
+      REACT_APP_WEBSOCKET_URL: ((REACT_APP_WEBSOCKET_URL))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))

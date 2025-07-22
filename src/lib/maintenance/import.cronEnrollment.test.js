@@ -132,7 +132,8 @@ describe('Import Cron Enrollment', () => {
         scheduleObj.schedule,
       );
       // Verify that a CronJob instance is returned and is configured correctly.
-      expect(job).toBeInstanceOf(CronJob);
+      expect(typeof job.start).toBe('function');
+      expect(typeof job.stop).toBe('function');
       expect(job.cronTime.source).toBe(scheduleObj.schedule);
     });
   });

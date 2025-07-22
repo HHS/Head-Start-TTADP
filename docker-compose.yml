@@ -55,6 +55,16 @@ services:
     env_file: .env
     ports:
       - "6379:6379"
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    profiles:
+      - minimal_required_redis
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASS}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
   mailcatcher:
     image: schickling/mailcatcher
     profiles:

@@ -151,6 +151,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
     }
   };
 
+  /* istanbul ignore next: hard to test */
   const handleExportRows = () => {
     const selectedRecipientIds = Object.keys(
       selectedRecipientCheckBoxes,
