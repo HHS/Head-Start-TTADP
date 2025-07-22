@@ -1,56 +1,33 @@
-import { CollaboratorType, sequelize } from '..';
+import { after } from 'cheerio/lib/api/manipulation';
+import { CollaboratorType } from '..';
 
 describe('CollaboratorType Model', () => {
+  const instanceId1 = 1001;
+  const instanceId2 = 1002;
+
   let instance;
   let mapsToInstance;
-  let newInstance1;
-  let newInstance2;
-  // Generate unique timestamp for this test run to avoid collisions
-  const uniqueSuffix = `_${Date.now()}`;
 
   beforeAll(async () => {
-    // Use a transaction to ensure atomicity
-    const t = await sequelize.transaction();
-    // Create mapped instance with unique name
-    mapsToInstance = await CollaboratorType.create(
-      { name: `Mapped Collaborator${uniqueSuffix}`, validForId: 1 },
-      { transaction: t },
-    );
-
-    // Create instance with unique name that maps to the first instance
-    instance = await CollaboratorType.create(
-      { name: `Original Collaborator${uniqueSuffix}`, mapsTo: mapsToInstance.id, validForId: 1 },
-      { transaction: t },
-    );
-
-    // Commit the transaction
-    await t.commit();
-  });
-
-  afterAll(async () => {
-    await CollaboratorType.destroy({
-      where: {
-        id: [
-          instance?.id,
-          mapsToInstance?.id,
-          newInstance1?.id,
-          newInstance2?.id,
-        ],
-      },
-      force: true,
+    mapsToInstance = await CollaboratorType.create({ id: instanceId1, name: 'Mapped Collaborator', validForId: 1 });
+    instance = await CollaboratorType.create({
+      id: instanceId2, name: 'Original Collaborator', mapsTo: mapsToInstance.id, validForId: 1,
     });
   });
 
-  it('should return correct latestName and latestId when mapsTo is not defined', async () => {
-    const standaloneName = `Standalone Collaborator${uniqueSuffix}`;
-    newInstance1 = await CollaboratorType.create({ name: standaloneName, validForId: 1 });
-    expect(newInstance1.latestName).toEqual(standaloneName);
-    expect(newInstance1.latestId).toBe(newInstance1.id);
+  afterAll(async () => {
+    await CollaboratorType.destroy({ where: { id: [instanceId1, instanceId2] }, force: true });
+  });
+
+  it('should return correct latestName and latestId when mapsTo is not defined', () => {
+    const newInstance = CollaboratorType.build({ name: 'Standalone Collaborator', validForId: 1 });
+    expect(newInstance.latestName).toEqual('Standalone Collaborator');
+    expect(newInstance.latestId).toBeNull();
   });
 
   it('should return correct latestName and latestId when mapsTo is defined', async () => {
-    newInstance2 = await CollaboratorType.findByPk(instance.id);
-    expect(newInstance2.latestName).toEqual(`Mapped Collaborator${uniqueSuffix}`);
-    expect(newInstance2.latestId).toEqual(mapsToInstance.id);
+    const newInstance = await CollaboratorType.findByPk(instance.id);
+    expect(newInstance.latestName).toEqual('Mapped Collaborator');
+    expect(newInstance.latestId).toEqual(mapsToInstance.id);
   });
 });
