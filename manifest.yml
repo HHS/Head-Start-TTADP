@@ -47,6 +47,7 @@ applications:
       BUILD_COMMIT: ((BUILD_COMMIT))
       BUILD_NUMBER: ((BUILD_NUMBER))
       BUILD_TIMESTAMP: ((BUILD_TIMESTAMP))
+      REACT_APP_WEBSOCKET_URL: ((REACT_APP_WEBSOCKET_URL))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
@@ -56,6 +57,7 @@ applications:
         instances: ((web_instances))
         command: yarn start:web
         memory: ((web_memory))
+        disk_quota: ((app_disk_quota))
       - type: worker
         instances: ((worker_instances))
         command: yarn start:worker

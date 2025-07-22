@@ -4,8 +4,9 @@ web_memory: 2GB
 worker_instances: 1
 worker_memory: 512M
 similarity_api_instances: 1
-similarity_api_memory: 1GB
+similarity_api_memory: 512M
 similarity_api_disk_quota: 6GB
+app_disk_quota: 4GB
 
 app_name: tta-smarthub-${full_env}
 app_url: https://tta-smarthub-${full_env}.app.cloud.gov/
@@ -54,5 +55,5 @@ REACT_APP_GTM_ENABLED: "${$DEV_GTM_ENABLED}"
 REACT_APP_GTM_ID: "${GLOBAL_GTM_ID}"
 REACT_APP_GTM_AUTH: "${DEV_GTM_AUTH}"
 REACT_APP_GTM_PREVIEW: "${PROD_GTM_PREVIEW}"
-REACT_APP_WEBSOCKET_URL: "${WEBSOCKET_URL}"
+REACT_APP_WEBSOCKET_URL: ws://tta-smarthub-${full_env}.app.cloud.gov
 REACT_APP_INCLUDE_ACCESSIBILITY_CSS: "false"
