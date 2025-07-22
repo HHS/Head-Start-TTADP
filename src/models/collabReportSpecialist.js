@@ -31,20 +31,11 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     sequelize,
     modelName: 'CollabReportSpecialist',
     tableName: 'CollabReportSpecialists',
+    timestamps: true, // enables createdAt and updatedAt
     indexes: [
       {
         name: 'collab_report_specialists_specialist_id_collab_report_id',

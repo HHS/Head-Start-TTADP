@@ -31,20 +31,11 @@ export default (sequelize, DataTypes) => {
         'develop_presentations',
       ]),
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     sequelize,
     modelName: 'CollabReportReason',
     tableName: 'CollabReportReasons',
+    timestamps: true,
     indexes: [
       {
         name: 'collab_report_reasons_reason_id_collab_report_id',

@@ -64,25 +64,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.TEXT,
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    deletedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
-      defaultValue: null,
-    },
   }, {
     sequelize,
     modelName: 'CollabReport',
     tableName: 'CollabReports',
+    paranoid: true, // enables soft deletes with deletedAt
+    timestamps: true, // enables createdAt and updatedAt
   });
 
   return CollabReport;

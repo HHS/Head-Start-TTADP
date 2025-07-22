@@ -27,20 +27,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       comment: 'State code (e.g., CA, NY, TX) where the activity takes place',
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     sequelize,
     modelName: 'CollabReportActivityState',
     tableName: 'CollabReportActivityStates',
+    timestamps: true, // enables createdAt and updatedAt
     indexes: [
       {
         name: 'collab_report_activity_states_activity_state_code_collab_report_id',

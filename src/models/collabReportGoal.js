@@ -32,20 +32,11 @@ export default (sequelize, DataTypes) => {
       },
       comment: 'The actual value a user chooses is a string that is from the GoalTemplates.standard column',
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     sequelize,
     modelName: 'CollabReportGoal',
     tableName: 'CollabReportGoals',
+    timestamps: true, // enables createdAt and updatedAt
     indexes: [
       {
         name: 'collab_report_goals_goal_template_id_collab_report_id',

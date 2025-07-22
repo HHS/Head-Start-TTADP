@@ -45,20 +45,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       comment: 'Required when collabReportDatum is "other"',
     },
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     sequelize,
     modelName: 'CollabReportDataUsed',
     tableName: 'CollabReportDataUsed',
+    timestamps: true, // enables createdAt and updatedAt
     indexes: [
       {
         name: 'collab_report_data_used_collab_report_datum_id_collab_report_id',
