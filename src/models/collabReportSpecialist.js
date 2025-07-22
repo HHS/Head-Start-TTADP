@@ -9,10 +9,15 @@ export default (sequelize, DataTypes) => {
   }
 
   CollabReportSpecialist.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     collabReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
-      primaryKey: true,
       references: {
         model: 'CollabReports',
         key: 'id',
@@ -21,11 +26,20 @@ export default (sequelize, DataTypes) => {
     specialistId: {
       allowNull: false,
       type: DataTypes.INTEGER,
-      primaryKey: true,
       references: {
         model: 'Users',
         key: 'id',
       },
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   }, {
     sequelize,
@@ -33,6 +47,7 @@ export default (sequelize, DataTypes) => {
     tableName: 'CollabReportSpecialists',
     indexes: [
       {
+        name: 'collab_report_specialists_specialist_id_collab_report_id',
         unique: true,
         fields: ['collabReportId', 'specialistId'],
       },

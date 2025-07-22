@@ -9,10 +9,15 @@ export default (sequelize, DataTypes) => {
   }
 
   CollabReportStep.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     collabReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
-      primaryKey: true,
       references: {
         model: 'CollabReports',
         key: 'id',
@@ -20,8 +25,6 @@ export default (sequelize, DataTypes) => {
     },
     collabStepId: {
       allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
       type: DataTypes.INTEGER,
     },
     collabStepDetail: {
@@ -38,11 +41,26 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.SMALLINT,
       comment: 'Used for ordering steps without affecting auto-generated IDs',
     },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
   }, {
     sequelize,
     modelName: 'CollabReportStep',
     tableName: 'CollabReportSteps',
     indexes: [
+      {
+        name: 'collab_report_steps_collab_step_id_collab_report_id',
+        unique: true,
+        fields: ['collabReportId', 'collabStepId'],
+      },
       {
         fields: ['collabReportId', 'collabStepPriority'],
       },

@@ -8,25 +8,52 @@ export default (sequelize, DataTypes) => {
   }
 
   CollabReportDataUsed.init({
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     collabReportId: {
       allowNull: false,
       type: DataTypes.INTEGER,
-      primaryKey: true,
       references: {
         model: 'CollabReports',
         key: 'id',
       },
     },
-    collabReportDatumId: {
+    collabReportDatum: {
       allowNull: false,
-      type: DataTypes.STRING,
-      primaryKey: true,
-      comment: 'Data identifier - could be enum or FK to existing data dictionary',
+      type: DataTypes.ENUM([
+        'census_data',
+        'child_abuse_and_neglect',
+        'child_safety',
+        'child_family_health',
+        'disabilities',
+        'foster_care',
+        'homelessness',
+        'kids_count',
+        'licensing_data',
+        'ohs_monitoring',
+        'pir',
+        'tta_hub',
+        'other',
+      ]),
     },
-    collabReportDatumOther: {
+    collabReportDataOther: {
       allowNull: true,
       type: DataTypes.STRING,
-      comment: 'Required when collabReportDatumId is "OTHER"',
+      comment: 'Required when collabReportDatum is "other"',
+    },
+    createdAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      allowNull: false,
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   }, {
     sequelize,
@@ -34,8 +61,9 @@ export default (sequelize, DataTypes) => {
     tableName: 'CollabReportDataUsed',
     indexes: [
       {
+        name: 'collab_report_data_used_collab_report_datum_id_collab_report_id',
         unique: true,
-        fields: ['collabReportId', 'collabReportDatumId'],
+        fields: ['collabReportId', 'collabReportDatum'],
       },
     ],
   });
