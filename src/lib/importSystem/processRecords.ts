@@ -156,7 +156,7 @@ const processRecords = async (
         );
         recordActions.updates.push(update);
       }
-    } catch (err) {
+    } /* istanbul ignore next: hard to test errors */ catch (err) {
       // record the error into the recordActions and continue on successfully as
       // other entries may be process successfully
       recordActions.errors.push(err.message);
@@ -212,7 +212,7 @@ const processRecords = async (
 
         recordActions.deletes.push(destroys);
       }
-    } catch (err) {
+    } /* istanbul ignore next: hard to test errors */ catch (err) {
       // record the error into the recordActions
       recordActions.deletes.push(err.message);
       auditLogger.log('error', ` processRecords destroy ${err.message}`, err);

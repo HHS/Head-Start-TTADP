@@ -7,6 +7,7 @@ import {
   EventReportPilot,
   NationalCenterUser,
   NationalCenter,
+  EventReportPilotNationalCenterUser,
   sequelize,
 } from '../../models';
 import { filterAssociation } from './utils';
@@ -360,6 +361,8 @@ describe('filtersToScopes', () => {
         reportWithOtherCollaborator.id];
     });
     afterAll(async () => {
+      await EventReportPilotNationalCenterUser.destroy({ where: {} });
+
       // destroy national centers users.
       await NationalCenterUser.destroy({
         where: {
