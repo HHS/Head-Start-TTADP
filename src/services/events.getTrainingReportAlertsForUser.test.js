@@ -232,14 +232,7 @@ async function createEvents({
 }
 
 describe('getTrainingReportAlertsForUser', () => {
-  let snapshot;
-
-  beforeAll(async () => {
-    snapshot = await transactionModule.captureSnapshot();
-  });
-
   afterAll(async () => {
-    await transactionModule.rollbackToSnapshot(snapshot);
     await sequelize.close();
   });
 
@@ -296,7 +289,7 @@ describe('getTrainingReportAlertsForUser', () => {
       const events = await EventReportPilot.findAll({
         where: {
           collaboratorIds: {
-            [Op.contains]: collaboratorId,
+            [Op.contains]: [collaboratorId],
           },
         },
       });
@@ -335,7 +328,7 @@ describe('getTrainingReportAlertsForUser', () => {
       const events = await EventReportPilot.findAll({
         where: {
           pocIds: {
-            [Op.contains]: pocId,
+            [Op.contains]: [pocId],
           },
         },
       });
