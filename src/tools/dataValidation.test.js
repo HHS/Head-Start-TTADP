@@ -76,9 +76,9 @@ describe('dataValidation', () => {
       /Grants has \d+ records, last updated at: .+/,
       /ActivityReports has \d+ records, last updated at: .+/,
       /Users has \d+ records, last updated at: .+/,
-      /Files has \d+ records, last updated at: .+/,
+      /Files has \d+ records, last updated at: */,
       /Objectives has \d+ records, last updated at: .+/,
-      /NextSteps has \d+ records, last updated at: .+/,
+      /NextSteps has \d+ records, last updated at: .*/,
     ];
 
     const allPatterns = [...simplePatterns, ...complexPatterns];

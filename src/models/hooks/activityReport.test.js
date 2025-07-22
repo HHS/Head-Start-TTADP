@@ -19,12 +19,20 @@ import ActivityReportPolicy from '../../policies/activityReport';
 import {
   moveDraftGoalsToNotStartedOnSubmission,
   propagateSubmissionStatus,
+  revisionBump,
 } from './activityReport';
 import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 
+auditLogger.info('Starting up, logger initialized');
+
 describe('activity report model hooks', () => {
+  afterAll(async () => {
+    auditLogger.info('Cleaning up database after tests');
+    await db.sequelize.close();
+  });
+
   describe('automatic goal status changes', () => {
     let recipient;
     let grant;
@@ -37,6 +45,7 @@ describe('activity report model hooks', () => {
     let objective2;
 
     beforeAll(async () => {
+      auditLogger.info('Creating recipient, user, and grant');
       recipient = await Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
@@ -209,7 +218,6 @@ describe('activity report model hooks', () => {
           id: [mockUser.id, mockApprover.id],
         },
       });
-      await db.sequelize.close();
     });
 
     it('saving objectives should not change goal status if the goal is in draft', async () => {
@@ -363,6 +371,7 @@ describe('activity report model hooks', () => {
       expect(testObjective.status).toEqual('Not Started');
     });
   });
+
   describe('moveDraftGoalsToNotStartedOnSubmission', () => {
     it('logs an error if one is thrown', async () => {
       const mockSequelize = {
@@ -431,6 +440,74 @@ describe('activity report model hooks', () => {
 
       await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
       expect(auditLogger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('revisionBump', () => {
+    it('increments revision when report is updated', async () => {
+      const testReport = await ActivityReport.create({
+        userId: 1,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        version: 2,
+        revision: 0,
+      });
+
+      expect(testReport.revision).toBe(0);
+
+      await testReport.update({
+        additionalNotes: 'Updated notes',
+      });
+
+      await testReport.reload();
+
+      expect(testReport.revision).toBe(1);
+
+      await testReport.update({
+        additionalNotes: 'Updated notes again',
+      });
+
+      await testReport.reload();
+
+      expect(testReport.revision).toBe(2);
+
+      await ActivityReport.destroy({
+        where: {
+          id: testReport.id,
+        },
+        force: true,
+      });
+    });
+
+    it('does not increment revision when no changes are made', async () => {
+      const mockInstance = {
+        changed: jest.fn(() => []),
+        revision: 5,
+        set: jest.fn(),
+      };
+
+      const mockOptions = {
+        fields: [],
+      };
+
+      await revisionBump(null, mockInstance, mockOptions);
+
+      expect(mockInstance.set).not.toHaveBeenCalled();
+      expect(mockOptions.fields).toEqual([]);
     });
   });
 });
