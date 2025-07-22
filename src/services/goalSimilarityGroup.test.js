@@ -11,6 +11,7 @@ import {
   Grant,
   sequelize,
 } from '../models';
+import goal from '../models/goal';
 import {
   createGoal,
   createGrant,
@@ -135,11 +136,11 @@ describe('goalSimilarityGroup services', () => {
     expect(groups.length).toBe(1);
     expect(groups[0].finalGoalId).toBe(null);
 
-    await setSimilarityGroupAsUserMerged(groups[0].id, 1);
+    await setSimilarityGroupAsUserMerged(groups[0].id, goal1.id);
 
     const updatedGroups = await getSimilarityGroupsByRecipientId(recipient.id);
     expect(updatedGroups.length).toBe(1);
-    expect(updatedGroups[0].finalGoalId).toBe(1);
+    expect(updatedGroups[0].finalGoalId).toBe(goal1.id);
   });
 
   test('createSimilarityGroup & deleteSimilarityGroup', async () => {
