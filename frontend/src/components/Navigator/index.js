@@ -19,7 +19,6 @@ import {
 import moment from 'moment';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
-import SocketAlert from '../SocketAlert';
 import {
   IN_PROGRESS, COMPLETE,
 } from './constants';
@@ -46,7 +45,6 @@ const Navigator = ({
   lastSaveTime,
   errorMessage,
   savedToStorageTime,
-  socketMessageStore,
   onSaveDraft,
   onSaveAndContinue,
   showSavedDraft,
@@ -171,8 +169,6 @@ const Navigator = ({
       </Grid>
       )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <SocketAlert store={socketMessageStore} />
-
         <div id="navigator-form">
           {page.review && page.render(
             formData,
@@ -261,14 +257,6 @@ Navigator.propTypes = {
       PropTypes.string,
     ]),
   }),
-  socketMessageStore: PropTypes.shape({
-    user: PropTypes.oneOfType([
-      PropTypes.shape({
-        name: PropTypes.string,
-      }),
-      PropTypes.string,
-    ]),
-  }),
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string,
@@ -286,7 +274,6 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
-  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,

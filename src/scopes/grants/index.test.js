@@ -423,6 +423,9 @@ describe('grant filtersToScopes', () => {
       },
     });
 
+    await GoalFieldResponse.destroy({ where: {}, force: true });
+    await Goal.destroy({ where: {}, force: true });
+
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
@@ -804,11 +807,11 @@ describe('grant filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await GoalFieldResponse.destroy({
-        where: {
-          id: [response1.id, response2.id, response3.id],
-        },
-      });
+      const idsToDelete = [response1?.id, response2?.id, response3?.id].filter(Boolean);
+
+      if (idsToDelete.length > 0) {
+        await GoalFieldResponse.destroy({ where: { id: idsToDelete } });
+      }
 
       await Goal.destroy({
         where: {
@@ -910,6 +913,7 @@ describe('grant filtersToScopes', () => {
         where: {
           id: grantIds,
         },
+        individualHooks: true,
       });
 
       // Clean up recipients.
