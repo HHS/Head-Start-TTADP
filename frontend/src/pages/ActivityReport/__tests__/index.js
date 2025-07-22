@@ -242,7 +242,6 @@ describe('ActivityReport', () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
-
       await screen.findByRole('group', { name: 'Who was the activity for?' });
       const recipientName = await screen.findByText('Recipient');
       const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
