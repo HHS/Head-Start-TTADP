@@ -109,6 +109,7 @@ const ActivityReportNavigator = ({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
+  shouldAutoSave,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
@@ -166,7 +167,7 @@ const ActivityReportNavigator = ({
     }
   };
 
-  const isGoalsObjectivesPage = page.path === 'goals-objectives';
+  const isGoalsObjectivesPage = page?.path === 'goals-objectives';
   const recipients = watch('activityRecipients');
 
   const {
@@ -610,6 +611,7 @@ const ActivityReportNavigator = ({
           autoSaveInterval={autoSaveInterval}
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
+          shouldAutoSave={shouldAutoSave}
         />
       </FormProvider>
     </GoalFormContext.Provider>
@@ -656,6 +658,7 @@ ActivityReportNavigator.propTypes = {
       PropTypes.string,
     ]),
   }),
+  shouldAutoSave: PropTypes.bool,
 };
 
 ActivityReportNavigator.defaultProps = {
@@ -668,6 +671,7 @@ ActivityReportNavigator.defaultProps = {
     name: null,
     role: null,
   },
+  shouldAutoSave: true,
 };
 
 export default ActivityReportNavigator;
