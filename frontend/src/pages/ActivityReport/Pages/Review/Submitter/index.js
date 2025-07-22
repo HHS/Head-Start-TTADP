@@ -55,9 +55,6 @@ const Submitter = ({
     return '';
   };
 
-  const totalApprovers = approvers ? approvers.length : 0;
-  const pendingApprovals = approvers ? approvers.filter((a) => a.status === null || a.status === 'needs_action').length : 0;
-
   const renderTopAlert = () => (
     <>
       {needsAction && (
@@ -74,18 +71,6 @@ const Submitter = ({
       {approved && (
         <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
           This report has been approved and is no longer editable
-        </Alert>
-      )}
-      {submitted && (
-        <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
-          <b>Report is not editable</b>
-          <br />
-          This report is no longer editable while it is waiting for manager approval&#40;s&#41;
-          <strong>{` (${pendingApprovals} of ${totalApprovers} reviews pending)`}</strong>
-          .
-          <br />
-          If you wish to update this report click &quot;Reset to Draft&quot; below to
-          move the report back to draft mode.
         </Alert>
       )}
     </>
@@ -184,8 +169,18 @@ const Submitter = ({
   return (
     <>
       {renderTopAlert()}
+      <Container skipTopPadding className="margin-top-2 padding-top-2">
+        <h1>Review and Submit</h1>
+        <p className="margin-top-0">
+          {/* eslint-disable-next-line max-len */}
+          Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.
+        </p>
+      </Container>
+
+      {/* Accordion of "pages" items goes here */}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!draft}>
+
+      <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!submitted && !draft}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
