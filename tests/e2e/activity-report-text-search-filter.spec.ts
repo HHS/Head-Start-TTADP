@@ -146,8 +146,6 @@ test.describe('Activity Report Text Search Filter', () => {
 
     await blur(page);
 
-    await page.getByRole('button', { name: 'Save goal' }).click();
-
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // Attachments page.
