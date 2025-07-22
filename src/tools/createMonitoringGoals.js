@@ -267,7 +267,7 @@ const createMonitoringGoals = async () => {
       //    where follow-up TTA is being performed beyond the initial review, which will usually
       //    be recorded on the currently active grant anyway.
       await sequelize.query(`
-      WITH elegible_grants AS (
+      WITH eligible_grants AS (
       SELECT DISTINCT
         gr."replacingGrantId" grid
       FROM "Goals" g
@@ -282,7 +282,7 @@ const createMonitoringGoals = async () => {
       goals_to_update AS (
       SELECT DISTINCT
         g.id gid
-      FROM elegible_grants eg
+      FROM eligible_grants eg
       JOIN "Goals" g
         ON g."grantId" = grid
       JOIN "GoalTemplates" gt
