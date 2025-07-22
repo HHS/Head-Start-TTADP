@@ -155,6 +155,38 @@ describe('ConditionalFields', () => {
     fireEvent.blur(screen.getByLabelText('What is a test?'));
 
     // Check if validatePrompts has been called with the expected arguments
-    expect(validatePrompts).toHaveBeenCalledWith('Test', expect.any(Boolean), expect.any(String));
+    expect(validatePrompts).toHaveBeenCalledWith('Test', false, expect.any(String));
+  });
+
+  it('validates when given a rule that fails on blur', async () => {
+    const validatePrompts = jest.fn();
+    const prompts = [{
+      fieldType: 'multiselect',
+      title: 'Test',
+      prompt: 'What is a test?',
+      options: ['option1', 'option2', 'option3'],
+      validations: {
+        rules: [
+          {
+            name: 'minSelections',
+            value: 2, // This will fail validation if only one option is selected
+            message: 'How DARE you',
+          },
+        ],
+      },
+      response: [],
+    }];
+    act(() => {
+      render(<CF prompts={prompts} validatePrompts={validatePrompts} />);
+    });
+
+    // Select an option to have a value to blur from
+    await selectEvent.select(screen.getByLabelText('What is a test?'), ['option1']);
+
+    // Simulate the onBlur event
+    fireEvent.blur(screen.getByLabelText('What is a test?'));
+
+    // Check if validatePrompts has been called with the expected arguments
+    expect(validatePrompts).toHaveBeenCalledWith('Test', true, expect.any(String));
   });
 });

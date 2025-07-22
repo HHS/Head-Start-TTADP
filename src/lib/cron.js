@@ -29,7 +29,7 @@ const runUpdateJob = () => {
   try {
     logger.info('Starting update job');
     return updateGrantsRecipients();
-  } catch (error) {
+  } /* istanbul ignore next: can't force an error here */ catch (error) {
     auditLogger.error(`Error processing HSES file: ${error}`);
     logger.error(error);
   }
