@@ -53,10 +53,18 @@ describe('activity report model hooks', () => {
     let approvedReportClosedObjective;
     let approvedNewGoal;
     let approvedNewObjective;
+    // Anything > Submitted
+    let submittedGoalTemplate;
+    let submittedReportWithClosedGoal;
+    let submittedReportClosedGoal;
+    let submittedReportClosedObjective;
+    let submittedNewGoal;
+    let submittedNewObjective;
 
     beforeAll(async () => {
       const n = faker.lorem.sentence(5);
       const n2 = faker.lorem.sentence(5);
+      const n3 = faker.lorem.sentence(5);
 
       const secret = 'secret';
       const hash = crypto
@@ -69,6 +77,11 @@ describe('activity report model hooks', () => {
         .update(n2)
         .digest('hex');
 
+      const hash3 = crypto
+        .createHmac('md5', secret)
+        .update(n3)
+        .digest('hex');
+
       closedGoalTemplate = await GoalTemplate.create({
         hash,
         templateName: n,
@@ -78,6 +91,12 @@ describe('activity report model hooks', () => {
       approvedGoalTemplate = await GoalTemplate.create({
         hash2,
         templateName: n2,
+        creationMethod: 'Automatic',
+      });
+
+      submittedGoalTemplate = await GoalTemplate.create({
+        hash3,
+        templateName: n3,
         creationMethod: 'Automatic',
       });
 
@@ -138,6 +157,16 @@ describe('activity report model hooks', () => {
         grantId: grant.id,
         createdVia: 'rtr',
         goalTemplateId: approvedGoalTemplate.id,
+      });
+
+      submittedReportClosedGoal = await Goal.create({
+        name: 'Submitted Report Closed Goal',
+        status: 'Closed',
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+        goalTemplateId: submittedGoalTemplate.id,
       });
 
       report = await ActivityReport.create({
@@ -234,6 +263,36 @@ describe('activity report model hooks', () => {
         version: 2,
       });
 
+      submittedReportWithClosedGoal = await ActivityReport.create({
+        userId: mockUser.id,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        additionalNotes: 'notes',
+        language: ['English'],
+        activityReason: 'recipient reason',
+        version: 2,
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: submittedReportWithClosedGoal.id,
+        goalId: submittedReportClosedGoal.id,
+        status: 'In Progress',
+      });
+
       await ActivityReportGoal.create({
         activityReportId: reportWithClosedGoal.id,
         goalId: closedGoal.id,
@@ -262,10 +321,22 @@ describe('activity report model hooks', () => {
         status: 'Complete',
       });
 
+      submittedReportClosedObjective = await Objective.create({
+        title: 'Approved Report Closed Objective',
+        goalId: submittedReportClosedGoal.id,
+        status: 'Complete',
+      });
+
       approvedReportClosedObjective = await Objective.create({
         title: 'Approved Report Closed Objective',
         goalId: approvedReportClosedGoal.id,
         status: 'Complete',
+      });
+
+      await ActivityReportObjective.create({
+        activityReportId: submittedReportWithClosedGoal.id,
+        status: 'In Progress',
+        objectiveId: submittedReportClosedObjective.id,
       });
 
       await ActivityReportObjective.create({
@@ -309,6 +380,7 @@ describe('activity report model hooks', () => {
             report2.id,
             reportWithClosedGoal.id,
             approvedReportWithClosedGoal.id,
+            submittedReportWithClosedGoal.id,
           ],
         },
         force: true,
@@ -321,6 +393,7 @@ describe('activity report model hooks', () => {
             report2.id,
             reportWithClosedGoal.id,
             approvedReportWithClosedGoal.id,
+            submittedReportWithClosedGoal.id,
           ],
         },
       });
@@ -332,6 +405,7 @@ describe('activity report model hooks', () => {
             report2.id,
             reportWithClosedGoal.id,
             approvedReportWithClosedGoal.id,
+            submittedReportWithClosedGoal.id,
           ],
         },
       });
@@ -343,6 +417,7 @@ describe('activity report model hooks', () => {
             report2.id,
             reportWithClosedGoal.id,
             approvedReportWithClosedGoal.id,
+            submittedReportWithClosedGoal.id,
           ],
         },
       });
@@ -355,6 +430,7 @@ describe('activity report model hooks', () => {
             closedObjective.id,
             newObjective?.id,
             approvedNewObjective?.id,
+            submittedNewObjective?.id,
           ],
         },
         force: true,
@@ -362,13 +438,19 @@ describe('activity report model hooks', () => {
 
       await ActivityReport.destroy({
         where: {
-          id: [report.id, report2.id, reportWithClosedGoal.id, approvedReportWithClosedGoal.id],
+          id: [
+            report.id,
+            report2.id,
+            reportWithClosedGoal.id,
+            approvedReportWithClosedGoal.id,
+            submittedReportWithClosedGoal.id,
+          ],
         },
       });
 
       await Goal.destroy({
         where: {
-          id: [goal.id, closedGoal.id, newGoal?.id, approvedNewGoal?.id],
+          id: [goal.id, closedGoal.id, newGoal?.id, approvedNewGoal?.id, submittedNewGoal?.id],
         },
         force: true,
       });
@@ -399,12 +481,75 @@ describe('activity report model hooks', () => {
 
       await GoalTemplate.destroy({
         where: {
-          id: [closedGoalTemplate.id, approvedGoalTemplate.id],
+          id: [closedGoalTemplate.id, approvedGoalTemplate.id, submittedGoalTemplate.id],
         },
         force: true, // force to ensure deletion
       });
 
       await db.sequelize.close();
+    });
+
+    it('starts a new goal life cycle when the report being submitted is linked to a closed goal', async () => {
+      const testReport = await ActivityReport.findByPk(submittedReportWithClosedGoal.id);
+      expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+
+      await testReport.update({
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      await ActivityReportApprover.create({
+        activityReportId: submittedReportWithClosedGoal.id,
+        userId: mockApprover.id,
+        status: APPROVER_STATUSES.SUBMITTED,
+        note: 'approver notes',
+      });
+
+      // Ensure old goal is still closed.
+      const testGoal = await Goal.findByPk(submittedReportClosedGoal.id);
+      expect(testGoal.status).toEqual('Closed');
+
+      // Find the new goal with same grantId and goalTemplateId that is NOT closed.
+      newGoal = await Goal.findOne({
+        where: {
+          goalTemplateId: submittedReportClosedGoal.goalTemplateId,
+          grantId: submittedReportClosedGoal.grantId,
+          status: 'In Progress',
+        },
+      });
+
+      expect(newGoal).toBeDefined();
+      // Get the ActivityReportGoals for the report.
+      const activityReportGoals = await ActivityReportGoal.findAll({
+        where: {
+          activityReportId: submittedReportWithClosedGoal.id,
+        },
+      });
+
+      // Assert its using the new goal.
+      expect(activityReportGoals.length).toBe(1);
+      expect(activityReportGoals[0].goalId).toBe(newGoal.id);
+      expect(activityReportGoals[0].status).toBe('In Progress');
+
+      // Get the objective for the new goal.
+      newObjective = await Objective.findOne({
+        where: {
+          goalId: newGoal.id,
+        },
+      });
+
+      // Assert its using the new goal.
+      expect(newObjective.status).toBe('Not Started');
+      // Get the ActivityReportObjective for the closed objective.
+      const activityReportObjectives = await ActivityReportObjective.findAll({
+        where: {
+          activityReportId: submittedReportWithClosedGoal.id,
+        },
+      });
+
+      expect(activityReportObjectives.length).toBe(1);
+      expect(activityReportObjectives[0].objectiveId).toBe(newObjective.id);
+      expect(activityReportObjectives[0].status).toBe('In Progress');
     });
 
     it('starts a new goal life cycle when the report being approved is linked to a closed goal', async () => {
