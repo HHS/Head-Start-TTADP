@@ -7,8 +7,8 @@ async function blur(page) {
 /**
  * This should be called before clicking the apply filters button, it returns three
  * "waitForRequest" promises that should be awaited before continuing.
- * 
- * @param page 
+ *
+ * @param page
  * @returns Array of three promises that can be awaited
  */
 const waitForLandingFilterRequests = (page: Page): Promise<any>[] => {
@@ -103,11 +103,11 @@ test.describe('Activity Report Text Search Filter', () => {
     // Save and Continue.
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    await page.waitForNavigation({ waitUntil: 'networkidle' });
+    await page.waitForURL('**\/goals-objectives', {waitUntil: "networkidle"});
 
     // Goals page.
     await page.getByTestId('label').click();
-    await page.waitForTimeout(5000);
+
 
     await page.keyboard.press('Enter');
     await blur(page);
@@ -136,7 +136,6 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('textInput').fill('https://test1.gov');
     // TTA provided.
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).fill('Basic prep instruction.');
-    await page.waitForTimeout(10000);
 
     await blur(page);
 
@@ -145,7 +144,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
     await page.getByRole('button', { name: 'Save goal' }).click();
 
-    await page.waitForTimeout(10000);
+    await blur(page);
+
+    await page.getByRole('button', { name: 'Save goal' }).click();
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
@@ -194,10 +195,11 @@ test.describe('Activity Report Text Search Filter', () => {
     // submit for approval
     await page.getByRole('button', { name: 'Submit for approval' }).click();
 
-    await page.waitForTimeout(5000);
+    // Wait for Activity Reports page to load
+    const filtersButton = await page.getByRole('button', { name: 'open filters for this page' })
 
     // Report text filter search.
-    await page.getByRole('button', { name: 'open filters for this page' }).click();
+    filtersButton.click();
 
     // Add report text filter.
     await page.locator('select[name="topic"]').selectOption('reportText');
@@ -211,7 +213,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
     // Doesn't contain context.
-    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();    
+    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
     await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
     await page.getByLabel('Enter report text').fill('the ocean is');
     prs = waitForLandingFilterRequests(page);
@@ -242,7 +244,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
     await page.getByLabel('Enter report text').fill('first meal');
     prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();    
+    await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 

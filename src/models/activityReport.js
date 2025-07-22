@@ -170,6 +170,11 @@ export default (sequelize, DataTypes) => {
       // changed in coordination
       defaultValue: 2,
     },
+    revision: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
     },
