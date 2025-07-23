@@ -40,6 +40,29 @@ module.exports = {
         },
       );
 
+      // Lookup collaborator type IDs from database
+      const collaboratorTypes = await queryInterface.sequelize.query(
+        `
+        SELECT ct.id, ct.name
+        FROM "CollaboratorTypes" ct
+        INNER JOIN "ValidFor" vf ON ct."validForId" = vf."id"
+        WHERE ct.name IN ('Creator', 'Co-Owner')
+        AND vf.name = 'Groups'
+        `,
+        {
+          type: Sequelize.QueryTypes.SELECT,
+          transaction,
+        },
+      );
+
+      // Extract collaborator type IDs
+      const creatorTypeId = collaboratorTypes.find((type) => type.name === 'Creator')?.id;
+      const coOwnerTypeId = collaboratorTypes.find((type) => type.name === 'Co-Owner')?.id;
+
+      if (!creatorTypeId || !coOwnerTypeId) {
+        throw new Error('Required collaborator types not found in database');
+      }
+
       // Insert Groups, returning ids
       const insertedGroupResults = await Promise.all(
         REGIONS.map((region) => queryInterface.sequelize.query(
@@ -60,33 +83,24 @@ module.exports = {
       // Extract ids
       const groupIds = insertedGroupResults.map((rows) => rows[0].id);
 
-      // We need to ensure the CollaboratorTypes exist for Groups.
-      await queryInterface.sequelize.query(`
-        INSERT INTO "CollaboratorTypes" (id, name, "validForId", "propagateOnMerge", "mapsTo", "createdAt", "updatedAt")
-        VALUES
-          (13, 'Creator', 3, true, NULL, NOW(), NOW()),
-          (14, 'Co-Owner', 3, true, NULL, NOW(), NOW())
-        ON CONFLICT (id) DO NOTHING;
-      `, { transaction });
-
       // Build all collaborators in bulk
       const now = new Date();
-      const collaborators = groupIds.flatMap((groupId) => ([
+      const collaborators = groupIds.flatMap((groupId) => [
         {
           groupId,
           userId: CREATOR_ID,
-          collaboratorTypeId: 13, // Creator
+          collaboratorTypeId: creatorTypeId, // Dynamically looked up Creator ID
           createdAt: now,
           updatedAt: now,
         },
         {
           groupId,
           userId: COLLABORATOR_ID,
-          collaboratorTypeId: 14, // Collaborator
+          collaboratorTypeId: coOwnerTypeId, // Dynamically looked up Co-Owner ID
           createdAt: now,
           updatedAt: now,
         },
-      ]));
+      ]);
 
       await queryInterface.bulkInsert('GroupCollaborators', collaborators, { transaction });
     });
