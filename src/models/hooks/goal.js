@@ -156,6 +156,11 @@ const beforeUpdate = async (sequelize, instance, options) => {
  * This ensures the creation event is always included in status history
  */
 const createInitialStatusChange = async (sequelize, instance, options) => {
+  if (!instance.id) {
+    // If the instance does not have an ID, it means it has not been created yet.
+    // We should not create a status change for a goal that does not exist.
+    return;
+  }
   // get the creator collaborator type
   const creatorType = await sequelize.models.CollaboratorType.findOne({
     where: { name: GOAL_COLLABORATORS.CREATOR },
