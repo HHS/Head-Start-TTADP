@@ -1911,11 +1911,15 @@ describe('resource', () => {
           individualHooks: true,
           raw: true,
         });
+        // eslint-disable-next-line no-console
+        console.log('\n\n\n---- next step1: ', nextStep);
       });
       beforeEach(async () => {
         resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
+        // eslint-disable-next-line no-console
+        console.log('\n\n\n---- next step id2: ', nextStep);
         await NextStepResource.destroy({
           where: { nextStepId: nextStep.id },
           individualHooks: true,
