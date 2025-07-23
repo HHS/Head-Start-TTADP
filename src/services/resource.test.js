@@ -52,7 +52,6 @@ import {
   OBJECTIVE_STATUS,
   GOAL_STATUS,
 } from '../constants';
-import { auditLogger } from '../logger';
 
 describe('resource', () => {
   afterAll(async () => {
@@ -76,32 +75,27 @@ describe('resource', () => {
       });
 
       afterAll(async () => {
-        try {
         // Delete created ECLKC resource.
-          await Resource.destroy({
-            where: {
-              id: [
-                createdECLKCResource ? createdECLKCResource.id : 0,
-                createdECLKCResource2 ? createdECLKCResource2.id : 0],
-            },
-            individualHooks: false,
-            force: true,
-          });
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
 
-          // Delete existingHeadStartResource.
-          await Resource.destroy({
-            where: {
-              id: [
-                existingHeadStartResource ? existingHeadStartResource.id : 0,
-                createdHeadStartResource ? createdHeadStartResource.id : 0],
-            },
-            individualHooks: false,
-            force: true,
-          });
-        } catch (error) {
-          auditLogger.info('Error during cleanup:', error);
-          console.log('\n\n---- error 1', error);
-        }
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
       });
 
       beforeEach(() => {
@@ -109,15 +103,10 @@ describe('resource', () => {
       });
 
       afterEach(async () => {
-        try {
-          await Resource.destroy({
-            where: { url: urlGoogle },
-            individualHooks: true,
-          });
-        } catch (error) {
-          auditLogger.info('Error during afterEach cleanup:', error);
-          console.log('\n\n---- error 2', error);
-        }
+        await Resource.destroy({
+          where: { url: urlGoogle },
+          individualHooks: true,
+        });
       });
       it('expected usage, new', async () => {
         const resource = await findOrCreateResource(url);
@@ -209,47 +198,37 @@ describe('resource', () => {
       });
 
       afterAll(async () => {
-        try {
         // Delete created ECLKC resource.
-          await Resource.destroy({
-            where: {
-              id: [
-                createdECLKCResource ? createdECLKCResource.id : 0,
-                createdECLKCResource2 ? createdECLKCResource2.id : 0],
-            },
-            individualHooks: false,
-            force: true,
-          });
+        await Resource.destroy({
+          where: {
+            id: [
+              createdECLKCResource ? createdECLKCResource.id : 0,
+              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
 
-          // Delete existingHeadStartResource.
-          await Resource.destroy({
-            where: {
-              id: [
-                existingHeadStartResource ? existingHeadStartResource.id : 0,
-                createdHeadStartResource ? createdHeadStartResource.id : 0],
-            },
-            individualHooks: false,
-            force: true,
-          });
-        } catch (error) {
-          auditLogger.info('Error during cleanup:', error);
-          console.log('\n\n---- error 3', error);
-        }
+        // Delete existingHeadStartResource.
+        await Resource.destroy({
+          where: {
+            id: [
+              existingHeadStartResource ? existingHeadStartResource.id : 0,
+              createdHeadStartResource ? createdHeadStartResource.id : 0],
+          },
+          individualHooks: false,
+          force: true,
+        });
       });
 
       beforeEach(() => {
         urls = urlsTest;
       });
       afterEach(async () => {
-        try {
-          await Resource.destroy({
-            where: { url: { [Op.in]: urlsTest } },
-            individualHooks: true,
-          });
-        } catch (error) {
-          auditLogger.info('Error during afterEach cleanup:', error);
-          console.log('\n\n---- error 4', error);
-        }
+        await Resource.destroy({
+          where: { url: { [Op.in]: urlsTest } },
+          individualHooks: true,
+        });
       });
       it('expected usage, new', async () => {
         const resources = await findOrCreateResources(urls);
@@ -1201,18 +1180,13 @@ describe('resource', () => {
         resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
-        try {
-          await ActivityReportResource.destroy({
-            where: {
-              activityReportId: 9999,
-              resourceId: { [Op.in]: resources.map((r) => r.id) },
-            },
-            individualHooks: true,
-          });
-        } catch (err) {
-          auditLogger.info('error on clean up: ', err); // Ignore errors, as this is a cleanup step
-          console.log('\n\n---- error 5', err);
-        }
+        await ActivityReportResource.destroy({
+          where: {
+            activityReportId: 9999,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          individualHooks: true,
+        });
       });
       afterAll(async () => {
         await Resource.destroy({
@@ -1654,21 +1628,15 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
-        try {
-          [nextStep] = await NextStep.findOrCreate({
-            where: {
-              activityReportId: 9999,
-              note: 'Resource NextStep test. http://google.com',
-              noteType: NEXTSTEP_NOTETYPE.SPECIALIST,
-            },
-            individualHooks: true,
-            raw: true,
-          });
-        } catch (error) {
-          auditLogger.info('Error creating NextStep in test:', error);
-          console.log('\n\n---- error 6', error);
-          throw error; // Re-throw to fail the test appropriately
-        }
+        [nextStep] = await NextStep.findOrCreate({
+          where: {
+            activityReportId: 9999,
+            note: 'Resource NextStep test. http://google.com',
+            noteType: NEXTSTEP_NOTETYPE.SPECIALIST,
+          },
+          individualHooks: true,
+          raw: true,
+        });
       });
       beforeEach(async () => {
         resources = await findOrCreateResources(urls);
@@ -1926,7 +1894,6 @@ describe('resource', () => {
           individualHooks: true,
           raw: true,
         });
-        console.log('\n\n\n--- next step created ---\n\n\n', nextStep);
       });
       beforeEach(async () => {
         resources = await findOrCreateResources(urls);
