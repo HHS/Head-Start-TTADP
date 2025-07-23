@@ -1641,68 +1641,86 @@ describe('resource', () => {
         resources = await findOrCreateResources(urls);
       });
       afterEach(async () => {
-        await NextStepResource.destroy({
-          where: {
-            nextStepId: nextStep.id,
-            resourceId: { [Op.in]: resources.map((r) => r.id) },
-          },
-          individualHooks: true,
-        });
+        try {
+          await NextStepResource.destroy({
+            where: {
+              nextStepId: nextStep.id,
+              resourceId: { [Op.in]: resources.map((r) => r.id) },
+            },
+            individualHooks: true,
+          });
+        } catch (err) {
+          // Ignore errors, as this is a test cleanup
+          // eslint-disable-next-line no-console
+          console.error('Error during NextStepResource cleanup:', err);
+        }
       });
       afterAll(async () => {
-        await Resource.destroy({
-          where: { id: { [Op.in]: resources.map((r) => r.id) } },
-          individualHooks: true,
-        });
-        await NextStep.destroy({
-          where: {
-            id: nextStep.id,
-          },
-          individualHooks: true,
-        });
+        try {
+          await Resource.destroy({
+            where: { id: { [Op.in]: resources.map((r) => r.id) } },
+            individualHooks: true,
+          });
+          await NextStep.destroy({
+            where: {
+              id: nextStep.id,
+            },
+            individualHooks: true,
+          });
+        } catch (err) {
+          // Ignore errors, as this is a test cleanup
+          // eslint-disable-next-line no-console
+          console.error('Error during NextStep cleanup:', err);
+        }
       });
       it('expected usage, insert', async () => {
-        const data = {
-          create: [
-            {
+        try {
+          const data = {
+            create: [
+              {
+                nextStepId: nextStep.id,
+                resourceId: resources[0].id,
+                sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+                isAutoDetected: true,
+              },
+              {
+                nextStepId: nextStep.id,
+                resourceId: resources[1].id,
+                sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+                isAutoDetected: true,
+              },
+              {
+                nextStepId: nextStep.id,
+                resourceId: resources[2].id,
+                sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+                isAutoDetected: true,
+              },
+              {
+                nextStepId: nextStep.id,
+                resourceId: resources[3].id,
+                sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+                isAutoDetected: true,
+              },
+            ],
+            update: [],
+            destroy: [],
+          };
+          await syncResourcesForNextStep(data);
+          const nsResources = await NextStepResource.findAll({
+            where: {
               nextStepId: nextStep.id,
-              resourceId: resources[0].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
+              resourceId: { [Op.in]: resources.map((r) => r.id) },
             },
-            {
-              nextStepId: nextStep.id,
-              resourceId: resources[1].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
-            },
-            {
-              nextStepId: nextStep.id,
-              resourceId: resources[2].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
-            },
-            {
-              nextStepId: nextStep.id,
-              resourceId: resources[3].id,
-              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
-              isAutoDetected: true,
-            },
-          ],
-          update: [],
-          destroy: [],
-        };
-        await syncResourcesForNextStep(data);
-        const nsResources = await NextStepResource.findAll({
-          where: {
-            nextStepId: nextStep.id,
-            resourceId: { [Op.in]: resources.map((r) => r.id) },
-          },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
-        });
-        expect(nsResources.length).toEqual(4);
+            include: [
+              { model: Resource, as: 'resource' },
+            ],
+          });
+          expect(nsResources.length).toEqual(4);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Error during syncResourcesForNextStep insert test:', err);
+          throw err; // Re-throw to fail the test if needed
+        }
       });
       it('expected usage, update', async () => {
         let data = {
