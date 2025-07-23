@@ -80,13 +80,11 @@ describe('createOrUpdate', () => {
         activityReportId: report.id,
       },
     });
-
     grantIds = arecips.map((ar) => ar.grantId);
 
     topic = await Topic.create({
       name: faker.lorem.sentence(),
     });
-
     goals = await Promise.all(grantIds.map((grantId) => Goal.create({
       name: faker.lorem.sentence(),
       status: GOAL_STATUS.NOT_STARTED,
@@ -115,7 +113,6 @@ describe('createOrUpdate', () => {
         goalId: g.id,
       })
     ))));
-
     const aros = await Promise.all((objectives.map((o) => (
       ActivityReportObjective.create({
         activityReportId: report.id,
@@ -204,7 +201,10 @@ describe('createOrUpdate', () => {
 
     await Objective.destroy({
       where: {
-        goalId: goals[0].id,
+        [db.Sequelize.Op.or]: [
+          { goalId: goals[0].id },
+          { createdViaActivityReportId: report.id },
+        ],
       },
       individualHooks: true,
       force: true,
@@ -216,7 +216,6 @@ describe('createOrUpdate', () => {
       },
       individualHooks: true,
     });
-
     await Goal.destroy({
       where: {
         grantId: grantIds[0],
@@ -232,7 +231,6 @@ describe('createOrUpdate', () => {
       individualHooks: true,
       force: true,
     });
-
     await destroyReport(report);
     await db.sequelize.close();
   });
