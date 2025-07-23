@@ -12,8 +12,9 @@ The TTA Hub integrates with IT-AMS to retrieve and process monitoring data relat
 2. The TTA Hub downloads the data via SFTP from IT-AMS host.
 3. Relevant data is processed and stored in the PostgreSQL database at **8:30 AM EST**.
 4. The system matches reviews with grant recipients and auto-generates goals.
-5. The HSES system processes its copy at **8:00 AM EST** to ensure visibility.
-6. Specialists can manually add objectives based on compliance citations.
+5. If an AR has propagated a Monitoring goal to a replacing grant, that goal is marked as 'monitoring' so it can be used like the auto-generated goals.
+6. The HSES system processes its copy at **8:00 AM EST** to ensure visibility.
+7. Specialists can manually add objectives based on compliance citations.
 
 ## Key System Components
 - **IT-AMS**: The external system that generates monitoring review data.
@@ -128,7 +129,7 @@ A: It tracks monitoring reviews, ensuring grant recipients receive TTA to help a
 A: The system updates daily at 8:30 AM EST, after HSES processes its copy at 8:00 AM EST.
 
 ### Q: Can specialists manually edit goals?
-A: Yes, specialists can add objectives to automatically created monitoring goals.
+A: Specialists can add objectives to automatically created monitoring goals, or goals on their replacement grants once they have been marked by the daily job.
 
 ### Q: What happens if data import fails?
 A: If the automatic import fails, an engineer must manually run an import command in production.
