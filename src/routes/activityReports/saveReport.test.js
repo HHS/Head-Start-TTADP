@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -184,15 +185,21 @@ describe('saveReport', () => {
       where: { activityReportId: reportIds },
       individualHooks: true,
     });
+    await Objective.destroy({
+      where: {
+        [Op.or]: [
+          { goalId: goalsToDelete.map(({ id }) => id) },
+          { createdViaActivityReportId: reportIds },
+        ],
+      },
+      individualHooks: true,
+      force: true,
+    });
     await ActivityReport.destroy({
       where: { id: reportIds },
       individualHooks: true,
     });
-    await Objective.destroy({
-      where: { goalId: goalsToDelete.map(({ id }) => id) },
-      individualHooks: true,
-      force: true,
-    });
+
     await Goal.destroy({
       where: { id: goalsToDelete.map(({ id }) => id) },
       individualHooks: true,
