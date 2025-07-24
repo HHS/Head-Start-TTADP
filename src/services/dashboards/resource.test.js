@@ -185,7 +185,7 @@ describe('Resources dashboard', () => {
 
       const [topic] = await Topic.findOrCreate({
         where: { name: 'CLASS: Classroom Organization' },
-        defaults: { name: 'CLASS: Classroom Organization' }
+        defaults: { name: 'CLASS: Classroom Organization' },
       });
       const topicId = topic.id;
 
