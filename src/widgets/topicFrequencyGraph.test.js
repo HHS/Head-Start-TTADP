@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TOPICS } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -158,6 +158,15 @@ describe('Topics and frequency graph widget', () => {
           id: 5,
         },
       });
+
+      // Find or create every topic in the TOPICS constant.
+      await Promise.all(TOPICS.map(async (topicName) => {
+        await Topic.findOrCreate({
+          where: { name: topicName },
+          defaults: { name: topicName },
+        });
+      }));
+
       const [systemSpecialist] = await Role.findOrCreate({
         where: {
           fullName: 'System Specialist',
