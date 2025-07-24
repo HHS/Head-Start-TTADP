@@ -192,7 +192,41 @@ describe('Resources dashboard', () => {
       });
 
       auditLogger.info('---- Topics in the database: ', topics);
+      // Create topics if they don't exist
+      const [, classOrgTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'CLASS: Classroom Organization' },
+        defaults: { name: 'CLASS: Classroom Organization' },
+      });
 
+      const [, erseaTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'ERSEA' },
+        defaults: { name: 'ERSEA' },
+      });
+
+      const [, coachingTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'Coaching' },
+        defaults: { name: 'Coaching' },
+      });
+
+      const [, facilitiesTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'Facilities' },
+        defaults: { name: 'Facilities' },
+      });
+
+      const [, fiscalBudgetTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'Fiscal / Budget' },
+        defaults: { name: 'Fiscal / Budget' },
+      });
+
+      const [, nutritionTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'Nutrition' },
+        defaults: { name: 'Nutrition' },
+      });
+
+      const [, oralHealthTopicCreated] = await Topic.findOrCreate({
+        where: { name: 'Oral Health' },
+        defaults: { name: 'Oral Health' },
+      });
       // Get topic ID's.
       const { id: classOrgTopicId } = await Topic.findOne({
         attributes: ['id'],
