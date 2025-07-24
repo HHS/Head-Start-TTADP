@@ -49,3 +49,7 @@ __pycache__/
 # Database backup stuff
 bounce.sql
 db.sql
+
+# E2E Test report files
+tests/e2e/html-report
+tests/e2e/report.xml

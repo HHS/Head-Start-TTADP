@@ -113,7 +113,10 @@ describe('save standard goals for report', () => {
     // Destroy the objectives.
     await Objective.destroy({
       where: {
-        goalId: goalIds,
+        [Op.or]: [
+          { goalId: goalIds },
+          { createdViaActivityReportId: reportIdToClean },
+        ],
       },
       force: true,
     });

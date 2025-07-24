@@ -489,30 +489,44 @@ describe('Activity report service', () => {
         alertsMockUserOne.id,
         alertsMockUserTwo.id,
         mockUserFour.id,
-        mockUserFive.id];
+        mockUserFive.id,
+      ];
+
+      // Get reports and their IDs
       const reports = await ActivityReport.findAll({ where: { userId: userIds } });
       const ids = reports.map((report) => report.id);
+
+      // Delete dependent entities FIRST (in the correct order)
       await NextStep.destroy({ where: { activityReportId: ids } });
       await ActivityRecipient.destroy({ where: { activityReportId: ids } });
       await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
       await ActivityReportCollaborator.destroy({ where: { activityReportId: ids }, force: true });
-      await ActivityReport.destroy({ where: { id: ids } });
+
+      await ActivityReport.destroy({ where: { id: ids }, force: true });
+
+      // User-related cleanup
       await UserRole.destroy({ where: { userId: userIds } });
-      await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
-      await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
+      await User.destroy({ where: { id: userIds }, force: true });
+
+      // Delete program dependencies
       await Program.destroy({ where: { id: [585, 586, 587] } });
-      await Grant.unscoped().destroy({
+
+      // Delete Grants BEFORE Recipients
+      await Grant.destroy({
         where: {
-          id: [
+          recipientId: [
             RECIPIENT_ID,
             RECIPIENT_ID_SORTING,
             RECIPIENT_WITH_PROGRAMS_ID,
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        force: true,
         individualHooks: true,
       });
+
+      // Only now delete the Recipients
       await Recipient.unscoped().destroy({
         where: {
           id: [
@@ -522,7 +536,12 @@ describe('Activity report service', () => {
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        force: true,
+        individualHooks: true,
       });
+
+      // Clean up any additional entities
+      await OtherEntity.destroy({ where: { id: RECIPIENT_ID }, force: true });
       await Region.destroy({ where: { id: 19 } });
     });
 
@@ -2057,7 +2076,8 @@ describe('Activity report service', () => {
       );
       await Objective.destroy({ where: { goalId: goals }, force: true });
       await Goal.destroy({ where: { id: goals }, force: true });
-      await ActivityReport.destroy({ where: { id: reports }, force: true });
+      await ActivityReport.unscoped().destroy({ where: { id: reports }, force: true });
+      // await ActivityReport.unscoped().destroy({ where: { userId: user.id }, force: true });
       await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, force: true });
       await User.destroy({ where: { id: user.id }, force: true });
