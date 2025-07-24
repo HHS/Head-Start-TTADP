@@ -106,7 +106,7 @@ A new goal is created if:
 * The review is Complete
 * It is of a type like 'AIAN-DEF', 'RAN', 'FA-1', 'Follow-up', 'FA1-FR',
           'FA-2', 'FA2-CR', 'Special'
-* There is at least one finding with a status name of 'Active' linked to the grant.
+* There is at least one finding with a status name of 'Active' linked to the grant
 * The grant has no existing goal linked to the Monitoring goal template
 
 In short:
