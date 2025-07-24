@@ -223,7 +223,7 @@ const createMonitoringGoals = async () => {
       ON mfh."findingId" = mf."findingId"
       JOIN "MonitoringFindingStatuses" mfs
       ON mf."statusId" = mfs."statusId"
-      AND mfs.name = 'Active'
+      AND mfs.name in ('Active', 'Elevated Deficiency')
       JOIN "MonitoringFindingGrants" mfg
       ON mf."findingId" = mfg."findingId"
       AND mrg."granteeId" = mfg."granteeId"
