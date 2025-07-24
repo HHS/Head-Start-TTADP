@@ -126,7 +126,7 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
       where: {
         goalId: instance.id,
         status: {
-          [Op.not]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+          [Op.not]: [OBJECTIVE_STATUS.COMPLETE],
         },
         [Op.or]: [
           sequelize.literal('NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'),

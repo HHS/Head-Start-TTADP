@@ -362,8 +362,8 @@ describe('preventCloseIfObjectivesOpen with Data', () => {
       id: goal.id,
     };
 
-    // Should not throw since SUSPENDED objectives are considered acceptable for closing
-    await expect(preventCloseIfObjectivesOpen(sequelize, instance)).resolves.not.toThrow();
+    // Should not throw since SUSPENDED objectives are not considered acceptable for closing
+    await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow();
 
     // Reset objective status
     await objectiveArApproved.update({ status: OBJECTIVE_STATUS.COMPLETE });
