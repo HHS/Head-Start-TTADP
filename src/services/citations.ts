@@ -55,7 +55,7 @@ export async function getCitationsByGrantIds(
       FROM "MonitoringFindings" mf
       JOIN "MonitoringFindingStatuses" mfs
         ON mf."statusId" = mfs."statusId"
-      WHERE mfs.name = 'Active'
+      WHERE mfs.name IN ('Active', 'Elevated Deficiency')
         AND mf."sourceDeletedAt" IS NULL
       ),
       -- get the order and status of reviews associated with citations
