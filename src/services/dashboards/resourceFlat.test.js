@@ -503,6 +503,7 @@ describe('Resources dashboard', () => {
     } catch (error) {
       auditLogger.error('--- Error in beforeAll setup:', error);
       auditLogger.error('--- Before all call stack: ', error.stack);
+      console.log('--- Error in beforeAll setup:', error);
     }
   });
 
@@ -537,6 +538,7 @@ describe('Resources dashboard', () => {
     } catch (error) {
       auditLogger.error('--- Error in afterAll cleanup:', error);
       auditLogger.error('--- before all stack trace: ', error.stack);
+      console.log('--- Error in afterAll cleanup:', error);
     }
   });
 
