@@ -25,6 +25,7 @@ import {
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
+import { auditLogger } from '../../logger';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
@@ -149,336 +150,344 @@ let arIds;
 
 describe('Resources dashboard', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser, individualHooks: true });
-    await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
-    await Grant.findOrCreate({
-      where: mockGrant,
-      validate: true,
-      individualHooks: true,
-    });
-    [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
-    [goalTwo] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 2' }, validate: true, individualHooks: true });
-    [goalThree] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 3' }, validate: true, individualHooks: true });
-    [objective] = await Objective.findOrCreate({
-      where: {
-        title: 'Objective 1',
-        goalId: goal.dataValues.id,
-        status: 'In Progress',
-      },
-    });
+    try {
+      await User.findOrCreate({ where: mockUser, individualHooks: true });
+      await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
+      await Grant.findOrCreate({
+        where: mockGrant,
+        validate: true,
+        individualHooks: true,
+      });
+      [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
+      [goalTwo] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 2' }, validate: true, individualHooks: true });
+      [goalThree] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 3' }, validate: true, individualHooks: true });
+      [objective] = await Objective.findOrCreate({
+        where: {
+          title: 'Objective 1',
+          goalId: goal.dataValues.id,
+          status: 'In Progress',
+        },
+      });
 
-    [objectiveTwo] = await Objective.findOrCreate({
-      where: {
-        title: 'Objective 2',
-        goalId: goalTwo.dataValues.id,
-        status: 'In Progress',
-      },
-    });
+      [objectiveTwo] = await Objective.findOrCreate({
+        where: {
+          title: 'Objective 2',
+          goalId: goalTwo.dataValues.id,
+          status: 'In Progress',
+        },
+      });
 
-    [objectiveThree] = await Objective.findOrCreate({
-      where: {
-        title: 'Objective 3',
-        goalId: goalThree.dataValues.id,
-        status: 'In Progress',
-      },
-    });
+      [objectiveThree] = await Objective.findOrCreate({
+        where: {
+          title: 'Objective 3',
+          goalId: goalThree.dataValues.id,
+          status: 'In Progress',
+        },
+      });
 
-    // Get topic ID's.
-    const { topicId: classOrgTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
-    });
+      // Get topic ID's.
+      const { topicId: classOrgTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'CLASS: Classroom Organization' },
+        raw: true,
+      });
 
-    const { topicId: erseaTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'ERSEA' },
-      raw: true,
-    });
+      const { topicId: erseaTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'ERSEA' },
+        raw: true,
+      });
 
-    const { topicId: coachingTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Coaching' },
-      raw: true,
-    });
+      const { topicId: coachingTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Coaching' },
+        raw: true,
+      });
 
-    const { topicId: facilitiesTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Facilities' },
-      raw: true,
-    });
+      const { topicId: facilitiesTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Facilities' },
+        raw: true,
+      });
 
-    const { topicId: fiscalBudgetTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Fiscal / Budget' },
-      raw: true,
-    });
+      const { topicId: fiscalBudgetTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Fiscal / Budget' },
+        raw: true,
+      });
 
-    const { topicId: nutritionTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Nutrition' },
-      raw: true,
-    });
+      const { topicId: nutritionTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Nutrition' },
+        raw: true,
+      });
 
-    const { topicId: oralHealthTopicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'Oral Health' },
-      raw: true,
-    });
+      const { topicId: oralHealthTopicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Oral Health' },
+        raw: true,
+      });
 
-    // Report 1 (Mixed Resources).
-    const reportOne = await ActivityReport.create({
-      ...regionOneReportA,
-    }, {
-      individualHooks: true,
-    });
-    await ActivityRecipient.findOrCreate({
-      where: { activityReportId: reportOne.id, grantId: mockGrant.id },
-    });
+      // Report 1 (Mixed Resources).
+      const reportOne = await ActivityReport.create({
+        ...regionOneReportA,
+      }, {
+        individualHooks: true,
+      });
+      await ActivityRecipient.findOrCreate({
+        where: { activityReportId: reportOne.id, grantId: mockGrant.id },
+      });
 
-    // Report 1 - Activity Report Objective 1
-    [activityReportOneObjectiveOne] = await ActivityReportObjective.findOrCreate({
-      where: {
-        activityReportId: reportOne.id,
+      // Report 1 - Activity Report Objective 1
+      [activityReportOneObjectiveOne] = await ActivityReportObjective.findOrCreate({
+        where: {
+          activityReportId: reportOne.id,
+          status: 'Complete',
+          objectiveId: objective.id,
+        },
+      });
+
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportOneObjectiveOne.id,
+          topicId: classOrgTopicId,
+        },
+      });
+
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportOneObjectiveOne.id,
+          topicId: erseaTopicId,
+        },
+      });
+
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportOneObjectiveOne.id,
+          topicId: coachingTopicId,
+        },
+      });
+
+      // Report 1 HeadStart Resource 1.
+      // Report 1 Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportOneObjectiveOne.id,
+        [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL, MAPPED_ECLKC_RESOURCE],
+      );
+
+      // Report 1 - Activity Report Objective 2
+      [activityReportOneObjectiveTwo] = await ActivityReportObjective.findOrCreate({
+        where: {
+          activityReportId: reportOne.id,
+          status: 'Complete',
+          objectiveId: objectiveTwo.id,
+        },
+      });
+
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportOneObjectiveTwo.id,
+          topicId: coachingTopicId,
+        },
+      });
+
+      await processActivityReportObjectiveForResourcesById(
+        activityReportOneObjectiveTwo.id,
+        [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
+      );
+
+      // Report 1 - Activity Report Objective 3 (No resources)
+      // This topic should NOT count as there are no resources.
+      [activityReportOneObjectiveThree] = await ActivityReportObjective.findOrCreate({
+        where: {
+          activityReportId: reportOne.id,
+          status: 'Complete',
+          objectiveId: objectiveThree.id,
+        },
+      });
+
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportOneObjectiveThree.id,
+          topicId: nutritionTopicId,
+        },
+      });
+
+      // Report 2 (Only HeadStart).
+      const reportTwo = await ActivityReport.create({ ...regionOneReportB });
+      await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
+
+      activityReportObjectiveTwo = await ActivityReportObjective.create({
+        activityReportId: reportTwo.id,
         status: 'Complete',
         objectiveId: objective.id,
-      },
-    });
+      });
 
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: classOrgTopicId,
-      },
-    });
+      // Report 2 HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveTwo.id,
+        [HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
+      );
 
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: erseaTopicId,
-      },
-    });
+      // Report 2 Topic 1.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveTwo.id,
+          topicId: oralHealthTopicId,
+        },
+      });
 
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportOneObjectiveOne.id,
-        topicId: coachingTopicId,
-      },
-    });
+      // Report 3 (Only Non-HeadStart).
+      const reportThree = await ActivityReport.create({ ...regionOneReportC });
+      await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
-    // Report 1 HeadStart Resource 1.
-    // Report 1 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportOneObjectiveOne.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL, MAPPED_ECLKC_RESOURCE],
-    );
-
-    // Report 1 - Activity Report Objective 2
-    [activityReportOneObjectiveTwo] = await ActivityReportObjective.findOrCreate({
-      where: {
-        activityReportId: reportOne.id,
+      activityReportObjectiveThree = await ActivityReportObjective.create({
+        activityReportId: reportThree.id,
         status: 'Complete',
-        objectiveId: objectiveTwo.id,
-      },
-    });
+        objectiveId: objective.id,
+      });
 
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportOneObjectiveTwo.id,
-        topicId: coachingTopicId,
-      },
-    });
+      // Report 3 Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveThree.id,
+        [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
+      );
 
-    await processActivityReportObjectiveForResourcesById(
-      activityReportOneObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+      // Report 3 Topic 1.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveThree.id,
+          topicId: nutritionTopicId,
+        },
+      });
 
-    // Report 1 - Activity Report Objective 3 (No resources)
-    // This topic should NOT count as there are no resources.
-    [activityReportOneObjectiveThree] = await ActivityReportObjective.findOrCreate({
-      where: {
-        activityReportId: reportOne.id,
+      // Report 4.
+      const reportFour = await ActivityReport.create({ ...regionOneReportD });
+      await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
+
+      const activityReportObjectiveForReport4 = await ActivityReportObjective.create({
+        activityReportId: reportFour.id,
         status: 'Complete',
-        objectiveId: objectiveThree.id,
-      },
-    });
+        objectiveId: objective.id,
+      });
 
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportOneObjectiveThree.id,
-        topicId: nutritionTopicId,
-      },
-    });
+      // Report 4 Topic 1.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveForReport4.id,
+          topicId: facilitiesTopicId,
+        },
+      });
 
-    // Report 2 (Only HeadStart).
-    const reportTwo = await ActivityReport.create({ ...regionOneReportB });
-    await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
+      // Report 4 Topic 2.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveForReport4.id,
+          topicId: fiscalBudgetTopicId,
+        },
+      });
 
-    activityReportObjectiveTwo = await ActivityReportObjective.create({
-      activityReportId: reportTwo.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      // Report 4 Topic 3.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveForReport4.id,
+          topicId: erseaTopicId,
+        },
+      });
 
-    // Report 2 HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+      // Report 4 Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveForReport4.id,
+        [HEADSTART_RESOURCE_URL2],
+      );
 
-    // Report 2 Topic 1.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveTwo.id,
-        topicId: oralHealthTopicId,
-      },
-    });
+      // Report 5 (No resources).
+      const reportFive = await ActivityReport.create({ ...regionOneReportD });
+      await ActivityRecipient.create({ activityReportId: reportFive.id, grantId: mockGrant.id });
 
-    // Report 3 (Only Non-HeadStart).
-    const reportThree = await ActivityReport.create({ ...regionOneReportC });
-    await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
+      const activityReportObjectiveForReport5 = await ActivityReportObjective.create({
+        activityReportId: reportFive.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    activityReportObjectiveThree = await ActivityReportObjective.create({
-      activityReportId: reportThree.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      // Report 5 Topic 1.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveForReport5.id,
+          topicId: facilitiesTopicId,
+        },
+      });
 
-    // Report 3 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveThree.id,
-      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+      // Draft Report (Excluded).
+      const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
+      await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
 
-    // Report 3 Topic 1.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveThree.id,
-        topicId: nutritionTopicId,
-      },
-    });
+      const activityReportObjectiveDraft = await ActivityReportObjective.create({
+        activityReportId: reportDraft.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // Report 4.
-    const reportFour = await ActivityReport.create({ ...regionOneReportD });
-    await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
+      // Report Draft HeadStart Resource 1.
+      // Report Draft Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveDraft.id,
+        [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
+      );
 
-    const activityReportObjectiveForReport4 = await ActivityReportObjective.create({
-      activityReportId: reportFour.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      // Draft Report 5 Topic 2.
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveDraft.id,
+          topicId: erseaTopicId,
+        },
+      });
 
-    // Report 4 Topic 1.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: facilitiesTopicId,
-      },
-    });
-
-    // Report 4 Topic 2.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: fiscalBudgetTopicId,
-      },
-    });
-
-    // Report 4 Topic 3.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveForReport4.id,
-        topicId: erseaTopicId,
-      },
-    });
-
-    // Report 4 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveForReport4.id,
-      [HEADSTART_RESOURCE_URL2],
-    );
-
-    // Report 5 (No resources).
-    const reportFive = await ActivityReport.create({ ...regionOneReportD });
-    await ActivityRecipient.create({ activityReportId: reportFive.id, grantId: mockGrant.id });
-
-    const activityReportObjectiveForReport5 = await ActivityReportObjective.create({
-      activityReportId: reportFive.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
-
-    // Report 5 Topic 1.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveForReport5.id,
-        topicId: facilitiesTopicId,
-      },
-    });
-
-    // Draft Report (Excluded).
-    const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
-    await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
-
-    const activityReportObjectiveDraft = await ActivityReportObjective.create({
-      activityReportId: reportDraft.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
-
-    // Report Draft HeadStart Resource 1.
-    // Report Draft Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveDraft.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
-
-    // Draft Report 5 Topic 2.
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveDraft.id,
-        topicId: erseaTopicId,
-      },
-    });
-
-    arIds = [
-      reportOne.id,
-      reportTwo.id,
-      reportThree.id,
-      reportFour.id,
-      reportFive.id,
-      reportDraft.id,
-    ];
+      arIds = [
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
+        reportFour.id,
+        reportFive.id,
+        reportDraft.id,
+      ];
+    } catch (error) {
+      auditLogger.info('Error in beforeAll setup:', error);
+    }
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    try {
+      const reports = await ActivityReport
+        .findAll({ where: { userId: [mockUser.id] } });
+      const ids = reports.map((report) => report.id);
+      await NextStep.destroy({ where: { activityReportId: ids } });
+      await ActivityRecipient.destroy({ where: { activityReportId: ids } });
 
-    await ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: activityReportOneObjectiveOne.id,
-      },
-    });
-    await ActivityReportObjectiveTopic.destroy({
-      where: {
-        activityReportObjectiveId: arIds,
-      },
-    });
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportOneObjectiveOne.id,
+        },
+      });
+      await ActivityReportObjectiveTopic.destroy({
+        where: {
+          activityReportObjectiveId: arIds,
+        },
+      });
 
-    // eslint-disable-next-line max-len
-    await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] } });
-    await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] }, force: true });
-    await Goal.destroy({ where: { id: [goal.id, goalTwo.id, goalThree.id] }, force: true });
-    await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
-    await User.destroy({ where: { id: [mockUser.id] } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
-    await db.sequelize.close();
+      // eslint-disable-next-line max-len
+      await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] } });
+      await ActivityReport.destroy({ where: { id: ids } });
+      await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] }, force: true });
+      await Goal.destroy({ where: { id: [goal.id, goalTwo.id, goalThree.id] }, force: true });
+      await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
+      await User.destroy({ where: { id: [mockUser.id] } });
+      await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+      await db.sequelize.close();
+    } catch (error) {
+      auditLogger.info('Error in afterAll cleanup:', error);
+    }
   });
 
   afterEach(() => {
