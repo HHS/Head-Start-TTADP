@@ -235,7 +235,7 @@ describe('Resources dashboard', () => {
         raw: true,
       });
 
-     const topic4 = await Topic.findOne({
+      const topic4 = await Topic.findOne({
         attributes: [['id', 'topicId']],
         where: { name: 'Fiscal / Budget' },
         raw: true,
