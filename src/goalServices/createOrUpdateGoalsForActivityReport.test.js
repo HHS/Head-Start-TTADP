@@ -133,11 +133,19 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       },
     });
 
+    // Delete Recipient Obj's
+    await Objective.destroy({
+      where: {
+        [db.Sequelize.Op.or]: [
+          { goalId: goalIds },
+          { createdViaActivityReportId: activityReport.id },
+        ],
+      },
+      force: true,
+    });
+
     // Delete Recipient AR.
     await ActivityReport.destroy({ where: { id: activityReport.id } });
-
-    // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goalIds }, force: true });
 
     // Delete Goal.
     await Goal.destroy({
