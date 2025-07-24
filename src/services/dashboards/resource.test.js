@@ -24,6 +24,7 @@ import {
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
+import { auditLogger } from '../../logger';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
@@ -147,146 +148,154 @@ let activityReportObjectiveThree;
 
 describe('Resources dashboard', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser, individualHooks: true });
-    await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
-    [grant] = await Grant.findOrCreate({
-      where: mockGrant,
-      validate: true,
-      individualHooks: true,
-    });
-    [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
-    [objective] = await Objective.findOrCreate({
-      where: {
-        title: 'Objective 1',
-        goalId: goal.dataValues.id,
-        status: 'In Progress',
-      },
-    });
+    try {
+      await User.findOrCreate({ where: mockUser, individualHooks: true });
+      await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
+      [grant] = await Grant.findOrCreate({
+        where: mockGrant,
+        validate: true,
+        individualHooks: true,
+      });
+      [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
+      [objective] = await Objective.findOrCreate({
+        where: {
+          title: 'Objective 1',
+          goalId: goal.dataValues.id,
+          status: 'In Progress',
+        },
+      });
 
-    // Report 1 (Mixed Resources).
-    const reportOne = await ActivityReport.create({
-      ...regionOneReportA,
-    }, {
-      individualHooks: true,
-    });
-    await ActivityRecipient.findOrCreate({
-      where: { activityReportId: reportOne.id, grantId: mockGrant.id },
-    });
+      // Report 1 (Mixed Resources).
+      const reportOne = await ActivityReport.create({
+        ...regionOneReportA,
+      }, {
+        individualHooks: true,
+      });
+      await ActivityRecipient.findOrCreate({
+        where: { activityReportId: reportOne.id, grantId: mockGrant.id },
+      });
 
-    [activityReportObjectiveOne] = await ActivityReportObjective.findOrCreate({
-      where: {
-        activityReportId: reportOne.id,
+      [activityReportObjectiveOne] = await ActivityReportObjective.findOrCreate({
+        where: {
+          activityReportId: reportOne.id,
+          status: 'Complete',
+          objectiveId: objective.id,
+        },
+      });
+
+      const { topicId } = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'CLASS: Classroom Organization' },
+        raw: true,
+      });
+
+      await ActivityReportObjectiveTopic.findOrCreate({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveOne.id,
+          topicId,
+        },
+      });
+
+      // Report 1 HeadStart Resource 1.
+      // Report 1 Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveOne.id,
+        [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
+      );
+
+      // Report 2 (Only HeadStart).
+      const reportTwo = await ActivityReport.create({ ...regionOneReportB });
+      await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
+
+      activityReportObjectiveTwo = await ActivityReportObjective.create({
+        activityReportId: reportTwo.id,
         status: 'Complete',
         objectiveId: objective.id,
-      },
-    });
+      });
 
-    const { topicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
-    });
+      // Report 2 HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveTwo.id,
+        [HEADSTART_RESOURCE_URL],
+      );
 
-    await ActivityReportObjectiveTopic.findOrCreate({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveOne.id,
-        topicId,
-      },
-    });
+      // Report 3 (Only Non-HeadStart).
+      const reportThree = await ActivityReport.create({ ...regionOneReportC });
+      await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
-    // Report 1 HeadStart Resource 1.
-    // Report 1 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveOne.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+      activityReportObjectiveThree = await ActivityReportObjective.create({
+        activityReportId: reportThree.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // Report 2 (Only HeadStart).
-    const reportTwo = await ActivityReport.create({ ...regionOneReportB });
-    await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
+      // Report 3 Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveThree.id,
+        [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
+      );
 
-    activityReportObjectiveTwo = await ActivityReportObjective.create({
-      activityReportId: reportTwo.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      // Report 4 (No Resources).
+      const reportFour = await ActivityReport.create({ ...regionOneReportD });
+      await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
 
-    // Report 2 HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL],
-    );
+      await ActivityReportObjective.create({
+        activityReportId: reportFour.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // Report 3 (Only Non-HeadStart).
-    const reportThree = await ActivityReport.create({ ...regionOneReportC });
-    await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
+      // Draft Report (Excluded).
+      const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
+      await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
 
-    activityReportObjectiveThree = await ActivityReportObjective.create({
-      activityReportId: reportThree.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      const activityReportObjectiveDraft = await ActivityReportObjective.create({
+        activityReportId: reportDraft.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // Report 3 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveThree.id,
-      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
-
-    // Report 4 (No Resources).
-    const reportFour = await ActivityReport.create({ ...regionOneReportD });
-    await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
-
-    await ActivityReportObjective.create({
-      activityReportId: reportFour.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
-
-    // Draft Report (Excluded).
-    const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
-    await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
-
-    const activityReportObjectiveDraft = await ActivityReportObjective.create({
-      activityReportId: reportDraft.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
-
-    // Report Draft HeadStart Resource 1.
-    // Report Draft Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveDraft.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+      // Report Draft HeadStart Resource 1.
+      // Report Draft Non-HeadStart Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveDraft.id,
+        [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
+      );
+    } catch (error) {
+      auditLogger.info('\n\n\n---- before all error2:', error, '\n\n\n');
+    }
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    try {
+      const reports = await ActivityReport
+        .findAll({ where: { userId: [mockUser.id] } });
+      const ids = reports.map((report) => report.id);
+      await NextStep.destroy({ where: { activityReportId: ids } });
+      await ActivityRecipient.destroy({ where: { activityReportId: ids } });
 
-    await ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveOne.id,
-      },
-    });
-    await ActivityReportObjectiveTopic.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveOne.id,
-      },
-    });
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveOne.id,
+        },
+      });
+      await ActivityReportObjectiveTopic.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveOne.id,
+        },
+      });
 
-    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
-    await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: objective.id }, force: true });
-    await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
-    await User.destroy({ where: { id: [mockUser.id] } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
-    await db.sequelize.close();
+      await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
+      await ActivityReport.destroy({ where: { id: ids } });
+      await Objective.destroy({ where: { id: objective.id }, force: true });
+      await Goal.destroy({ where: { id: goal.id }, force: true });
+      await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
+      await User.destroy({ where: { id: [mockUser.id] } });
+      await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+      await db.sequelize.close();
+    } catch (error) {
+      auditLogger.info('\n\n\n---- after all error:', error, '\n\n\n');
+    }
   });
 
   afterEach(() => {
