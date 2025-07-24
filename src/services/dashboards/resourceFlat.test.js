@@ -186,6 +186,15 @@ describe('Resources dashboard', () => {
       });
 
       // Get topic ID's.
+
+      const topic1 = await Topic.findOne({
+        attributes: [['id', '']],
+        where: { name: 'CLASS: Classroom Organization' },
+        raw: true,
+      });
+
+      auditLogger.info('--- Topic 1 ID:', topic1);
+
       const { topicId: classOrgTopicId } = await Topic.findOne({
         attributes: [['id', 'topicId']],
         where: { name: 'CLASS: Classroom Organization' },
@@ -198,11 +207,27 @@ describe('Resources dashboard', () => {
         raw: true,
       });
 
+      const topic2 = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Coaching' },
+        raw: true,
+      });
+
+      auditLogger.info('--- Topic 2 ID:', topic2);
+
       const { topicId: coachingTopicId } = await Topic.findOne({
         attributes: [['id', 'topicId']],
         where: { name: 'Coaching' },
         raw: true,
       });
+
+      const topic3 = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Facilities' },
+        raw: true,
+      });
+
+      auditLogger.info('--- Topic 3 ID:', topic3);
 
       const { topicId: facilitiesTopicId } = await Topic.findOne({
         attributes: [['id', 'topicId']],
@@ -210,17 +235,40 @@ describe('Resources dashboard', () => {
         raw: true,
       });
 
+     const topic4 = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Fiscal / Budget' },
+        raw: true,
+      });
+
+      auditLogger.info('--- Topic 4 ID:', topic4);
+
       const { topicId: fiscalBudgetTopicId } = await Topic.findOne({
         attributes: [['id', 'topicId']],
         where: { name: 'Fiscal / Budget' },
         raw: true,
       });
 
+      const topic5 = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Nutrition' },
+        raw: true,
+      });
+
+      auditLogger.info('--- Topic 5 ID:', topic5);
+
       const { topicId: nutritionTopicId } = await Topic.findOne({
         attributes: [['id', 'topicId']],
         where: { name: 'Nutrition' },
         raw: true,
       });
+
+      const topic6 = await Topic.findOne({
+        attributes: [['id', 'topicId']],
+        where: { name: 'Oral Health' },
+        raw: true,
+      });
+      auditLogger.info('--- Topic 6 ID:', topic6);
 
       const { topicId: oralHealthTopicId } = await Topic.findOne({
         attributes: [['id', 'topicId']],
@@ -453,7 +501,8 @@ describe('Resources dashboard', () => {
         reportDraft.id,
       ];
     } catch (error) {
-      auditLogger.info('Error in beforeAll setup:', error);
+      auditLogger.error('--- Error in beforeAll setup:', error);
+      auditLogger.error('--- Before all call stack: ', error.stack);
     }
   });
 
@@ -486,7 +535,8 @@ describe('Resources dashboard', () => {
       await Recipient.destroy({ where: { id: RECIPIENT_ID } });
       await db.sequelize.close();
     } catch (error) {
-      auditLogger.info('Error in afterAll cleanup:', error);
+      auditLogger.error('--- Error in afterAll cleanup:', error);
+      auditLogger.error('--- before all stack trace: ', error.stack);
     }
   });
 
