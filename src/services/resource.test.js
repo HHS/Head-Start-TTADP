@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
@@ -2520,6 +2521,7 @@ describe('resource', () => {
     });
     describe('syncResourcesForActivityReportObjective', () => {
       let resources;
+      let goal;
       let objective;
       let reportObjective;
       const urls = [
@@ -2529,9 +2531,19 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
+        [goal] = await Goal.findOrCreate({
+          where: {
+            grantId: 315,
+            name: 'Resource Goal test. http://google.com',
+            status: GOAL_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+        });
         [objective] = await Objective.findOrCreate({
           where: {
-            goalId: 1,
+            goalId: goal.id,
             title: 'Resource Objective test. http://google.com',
             status: OBJECTIVE_STATUS.NOT_STARTED,
             onAR: false,
@@ -2801,6 +2813,7 @@ describe('resource', () => {
     });
     describe('processActivityReportObjectiveForResourcesById', () => {
       let resources;
+      let goal;
       let objective;
       let reportObjective;
       const urls = [
@@ -2810,9 +2823,19 @@ describe('resource', () => {
         'https://adhocteam.us/',
       ];
       beforeAll(async () => {
+        [goal] = await Goal.findOrCreate({
+          where: {
+            grantId: 315,
+            name: 'Resource Goal test. http://google.com',
+            status: GOAL_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+        });
         [objective] = await Objective.findOrCreate({
           where: {
-            goalId: 1,
+            goalId: goal.id,
             title: 'Resource Objective test. http://google.com',
             status: OBJECTIVE_STATUS.NOT_STARTED,
             onAR: false,

@@ -19,13 +19,22 @@ import db, {
 import { unlockReport } from '../../routes/activityReports/handlers';
 import ActivityReportPolicy from '../../policies/activityReport';
 import {
+  moveDraftGoalsToNotStartedOnSubmission,
   propagateSubmissionStatus,
+  revisionBump,
 } from './activityReport';
 import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 
+auditLogger.info('Starting up, logger initialized');
+
 describe('activity report model hooks', () => {
+  afterAll(async () => {
+    auditLogger.info('Cleaning up database after tests');
+    await db.sequelize.close();
+  });
+
   describe('automatic goal status changes', () => {
     let recipient;
     let grant;
@@ -100,6 +109,7 @@ describe('activity report model hooks', () => {
         creationMethod: 'Automatic',
       });
 
+      auditLogger.info('Creating recipient, user, and grant');
       recipient = await Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
@@ -424,13 +434,26 @@ describe('activity report model hooks', () => {
 
       await Objective.destroy({
         where: {
-          id: [
-            objective.id,
-            objective2.id,
-            closedObjective.id,
-            newObjective?.id,
-            approvedNewObjective?.id,
-            submittedNewObjective?.id,
+          [db.Sequelize.Op.or]: [
+            {
+              id: [
+                objective.id,
+                objective2.id,
+                closedObjective.id,
+                newObjective?.id,
+                approvedNewObjective?.id,
+                submittedNewObjective?.id,
+              ],
+            },
+            {
+              createdViaActivityReportId: [
+                report.id,
+                report2.id,
+                reportWithClosedGoal.id,
+                approvedReportWithClosedGoal.id,
+                submittedReportWithClosedGoal.id,
+              ],
+            },
           ],
         },
         force: true,
@@ -961,7 +984,10 @@ describe('activity report model hooks', () => {
         });
         await Objective.destroy({
           where: {
-            id: objStatusObjective.id,
+            [db.Sequelize.Op.or]: [
+              { id: objStatusObjective.id },
+              { createdViaActivityReportId: [existingReport.id, newReport.id] },
+            ],
           },
           force: true, // force to ensure deletion
         });
@@ -1007,6 +1033,102 @@ describe('activity report model hooks', () => {
             id: [objStatusUser.id],
           },
         });
+      });
+
+      it('correctly sets the objective status to in progress when the existing objective status is suspended and the lastInProgressAt is defined', async () => {
+        // Update the objective status to suspended with lastInProgressAt defined
+        const firstInProgressAt = new Date('2025-01-01');
+        await Objective.update({
+          status: 'Suspended',
+          firstInProgressAt,
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+
+        // Verify initial state
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+        expect(testObjective.firstInProgressAt).toEqual(firstInProgressAt);
+
+        // Update activity report objective status to In Progress
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // Approve the new report
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Check that the objective status is now in progress and lastInProgressAt is updated
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('In Progress');
+
+        // Set the firstInProgressAt to null
+        await Objective.update({
+          firstInProgressAt: null,
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+      });
+
+      it('correctly sets the objective status to suspended when the existing objective status is suspended and the lastInProgressAt is not defined', async () => {
+        await Objective.update({
+          status: 'Suspended',
+          firstInProgressAt: null, // Never was in progress.
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+
+        // Verify initial state
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+        expect(testObjective.firstInProgressAt).toBeNull();
+
+        // Update activity report objective status to In Progress
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // Approve the new report
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Check that the objective status is now in progress and lastInProgressAt is updated
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('Suspended');
       });
 
       it('correctly sets the objective status to in progress when the existing objective status is in progress', async () => {
@@ -1135,6 +1257,32 @@ describe('activity report model hooks', () => {
     });
   });
 
+  describe('moveDraftGoalsToNotStartedOnSubmission', () => {
+    it('logs an error if one is thrown', async () => {
+      const mockSequelize = {
+        models: {
+          Goal: {
+            findAll: jest.fn(() => { throw new Error('test error'); }),
+          },
+          ActivityReport: {},
+        },
+      };
+      const mockInstance = {
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        changed: jest.fn(() => ['submissionStatus']),
+        id: 1,
+      };
+      const mockOptions = {
+        transaction: 'transaction',
+      };
+
+      jest.spyOn(auditLogger, 'error');
+
+      await moveDraftGoalsToNotStartedOnSubmission(mockSequelize, mockInstance, mockOptions);
+      expect(auditLogger.error).toHaveBeenCalled();
+    });
+  });
+
   describe('propagateSubmissionStatus', () => {
     it('logs an error if one is thrown updating goals', async () => {
       const mockSequelize = {
@@ -1177,6 +1325,74 @@ describe('activity report model hooks', () => {
 
       await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
       expect(auditLogger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('revisionBump', () => {
+    it('increments revision when report is updated', async () => {
+      const testReport = await ActivityReport.create({
+        userId: 1,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        version: 2,
+        revision: 0,
+      });
+
+      expect(testReport.revision).toBe(0);
+
+      await testReport.update({
+        additionalNotes: 'Updated notes',
+      });
+
+      await testReport.reload();
+
+      expect(testReport.revision).toBe(1);
+
+      await testReport.update({
+        additionalNotes: 'Updated notes again',
+      });
+
+      await testReport.reload();
+
+      expect(testReport.revision).toBe(2);
+
+      await ActivityReport.destroy({
+        where: {
+          id: testReport.id,
+        },
+        force: true,
+      });
+    });
+
+    it('does not increment revision when no changes are made', async () => {
+      const mockInstance = {
+        changed: jest.fn(() => []),
+        revision: 5,
+        set: jest.fn(),
+      };
+
+      const mockOptions = {
+        fields: [],
+      };
+
+      await revisionBump(null, mockInstance, mockOptions);
+
+      expect(mockInstance.set).not.toHaveBeenCalled();
+      expect(mockOptions.fields).toEqual([]);
     });
   });
 });

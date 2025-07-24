@@ -170,6 +170,11 @@ export default (sequelize, DataTypes) => {
       // changed in coordination
       defaultValue: 2,
     },
+    revision: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
     },
@@ -336,7 +341,6 @@ export default (sequelize, DataTypes) => {
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
     sequelize,
     modelName: 'ActivityReport',

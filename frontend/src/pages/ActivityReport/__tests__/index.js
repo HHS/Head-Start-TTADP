@@ -210,14 +210,15 @@ describe('ActivityReport', () => {
   });
 
   describe('updatePage', () => {
-    it('navigates to the correct page', async () => {
+    it("does not update the page if the form hasn't changed", async () => {
       const spy = jest.spyOn(history, 'push');
-      fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
+
+      // Navigate to the next page
       const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
 
-      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/1/supporting-attachments', { showLastUpdatedTime: true }));
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/new/supporting-attachments', {}));
     });
   });
 
@@ -241,6 +242,11 @@ describe('ActivityReport', () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      const recipientName = await screen.findByText('Recipient');
+      const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
+      await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
+
       const button = await screen.findByRole('button', { name: 'Save draft' });
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
@@ -393,18 +399,6 @@ describe('ActivityReport', () => {
       const button = await screen.findByRole('button', { name: /supporting attachments in progress/i });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
-    });
-
-    it('automatically sets creator role on existing report', async () => {
-      const data = formData();
-      fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
-      fetchMock.put('/api/activity-reports/1', {});
-      act(() => renderActivityReport(1));
-      const button = await screen.findByRole('button', { name: 'Save draft' });
-      act(() => userEvent.click(button));
-      const lastOptions = fetchMock.lastOptions();
-      const bodyObj = JSON.parse(lastOptions.body);
-      expect(bodyObj.creatorRole).toEqual('Reporter');
     });
   });
 

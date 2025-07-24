@@ -11,13 +11,15 @@ executors:
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost
-        REDIS_PASS: ""
+        REDIS_PASS: secretpass
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: secretpass
         POSTGRES_DB: ttasmarthub
     - image: cimg/redis:6.2.17
+      environment:
+        REDIS_PASSWORD: secretpass
   docker-python-executor:
     docker:
     - image: cimg/python:3.9.21
@@ -172,12 +174,6 @@ workflows:
         requires:
         - process_temp_db
     - restore_db_job:
-        name: restore (dev)
-        serial-group: "tta-automation-lock"
-        target_env: "dev"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
         name: restore (dev-green)
         serial-group: "tta-automation-lock"
         target_env: "dev-green"
@@ -208,25 +204,35 @@ workflows:
         requires:
         - backup_temp_db
     - restore_db_job:
-        name: restore (sandbox)
-        serial-group: "tta-automation-lock"
-        target_env: "sandbox"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
         name: restore (staging)
         serial-group: "tta-automation-lock"
         target_env: "staging"
         requires:
         - backup_temp_db
-       
+
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
     when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
     jobs:
+    - backup_prod_db:
+        serial-group: "tta-automation-lock"
+    - restore_prod_to_temp:
+        serial-group: "tta-automation-lock"
+        requires:
+        - backup_prod_db
+    - process_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - restore_prod_to_temp
+    - backup_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - process_temp_db
     - restore_db_job:
         serial-group: tta-automation-lock
+        requires:
+        - backup_temp_db
         target_env: "<< pipeline.parameters.target_env >>"
 
 # ----------------- Jobs -----------------
@@ -315,7 +321,7 @@ jobs:
           temp_dir="coverage-temp"
           report_dir="coverage-report"
           mkdir -p ${temp_dir}
-          
+
           find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
             relative_path="${file#./}"
             new_name="${relative_path//\//-}"
@@ -486,7 +492,9 @@ jobs:
         name: Run database migrations
         command: |
           set -x
-          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
+          cf logs tta-smarthub-${cfg_env} --recent | grep ${TASK_NAME}
     - run:
         name: Alert on migration failure
         when: on_fail
@@ -658,7 +666,7 @@ commands:
           ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
           # substitute actual values from circle into env.vars file
           circleci env subst < ./temp.vars > env.vars
-          # iterate through ci.vars file and export each line, 
+          # iterate through ci.vars file and export each line,
           while read line; do
             if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
               echo "export ${line}">>"$BASH_ENV"
@@ -860,8 +868,8 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then 
-            exit 0; 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
+            exit 0;
           fi
           if [ -f ./environments/${current_env} ]; then
             old_owner=$(cat ./environments/${current_env})
@@ -871,10 +879,10 @@ commands:
               echo "${new_owner}" > environments/${current_env}
               msg = ""
               cd environments
-              for file in *; do 
-                if [ ! -d ${file} ]; then 
+              for file in *; do
+                if [ ! -d ${file} ]; then
                   msg="${file}: $(cat ${file})\n${msg}"
-                fi; 
+                fi;
               done
               cd ..
               ./bin/notify-slack.sh \
@@ -884,7 +892,7 @@ commands:
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
-          else 
+          else
             echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
@@ -1075,7 +1083,7 @@ commands:
           sudo apt-get update
           # Install uuid-runtime to have access to uuidgen
           # Install pv wget
-          sudo apt-get install -y pv uuid-runtime wget coreutils jq
+          sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
 
           # Install Cloud Foundry CLI
           wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
@@ -1083,7 +1091,7 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/latest/cf-service-connect_linux_amd64
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"
@@ -1178,7 +1186,7 @@ commands:
           echo "cf logs command for tta-automation has been terminated."
     - run:
         name: |
-          "Running cmd: << parameters.task_name >> 
+          "Running cmd: << parameters.task_name >>
               in << parameters.target_env >>
               args:<< parameters.task_args >>
               cmd: << parameters.task_command >>"
@@ -1243,9 +1251,9 @@ commands:
           if [[ -n "<< parameters.message_text >>" ]]; then
             MESSAGE="<< parameters.message_text >>"
           else
-            MESSAGE=$(cat "<< parameters.message_text_file >>")            
+            MESSAGE=$(cat "<< parameters.message_text_file >>")
           fi
-          
+
           echo "Sending: ${MESSAGE}"
           # Ensure all parameters are provided
           if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
@@ -1270,13 +1278,13 @@ commands:
             echo "Slack notification sent successfully"
           fi
 
-  
+
   notify_slack_deploy:
     parameters:
       slack_bot_token:
         description: "Slack bot token"
         type: string
-        default: $SLACK_BOT_TOKEN 
+        default: $SLACK_BOT_TOKEN
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string

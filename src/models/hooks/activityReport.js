@@ -43,6 +43,50 @@ const copyStatus = (instance) => {
   }
 };
 
+const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
+    try {
+      const goals = await sequelize.models.Goal.findAll({
+        where: {
+          status: 'Draft',
+        },
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+            where: {
+              id: instance.id,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+      });
+
+      const goalIds = goals.map((goal) => goal.id);
+      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+      await Promise.all(goalIds.map((goalId) => changeGoalStatus({
+        goalId,
+        userId,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        reason: 'Activity Report submission',
+        context: null,
+        transaction: options.transaction,
+      })));
+    } catch (error) {
+      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
+    }
+  }
+};
+
 const setSubmittedDate = (sequelize, instance, options) => {
   try {
     if (!options.fields.includes('submittedDate')) {
@@ -133,6 +177,18 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
     }
   } catch (e) {
     auditLogger.error(`checkForNewGoalCycleOnApproval: ${e}`);
+  }
+};
+
+const revisionBump = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed) && changed.length > 0) {
+    const currentRevision = instance.revision || 0;
+    instance.set('revision', currentRevision + 1);
+
+    if (!options.fields.includes('revision')) {
+      options.fields.push('revision');
+    }
   }
 };
 
@@ -312,21 +368,24 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     if (!aro) {
       return Promise.resolve();
     }
-
     // 14. Loop all the objectives that we want to update.
     return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
       let newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
-
       // See TTAHUB-4138 for standard goals objective status logic.
       if (objectiveToUpdate.status === OBJECTIVE_STATUS.IN_PROGRESS
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
         newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
       } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.COMPLETE
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
-        newStatus = OBJECTIVE_STATUS.COMPLETE;
+        newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
       } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.SUSPENDED
         && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
-        newStatus = OBJECTIVE_STATUS.SUSPENDED;
+        // We need to determine if the objective to update has ever been in progress.
+        if (objectiveToUpdate.firstInProgressAt) {
+          newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
+        } else {
+          newStatus = OBJECTIVE_STATUS.SUSPENDED;
+        }
       }
 
       // status is the same, no need to update
@@ -814,6 +873,55 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
   }
 };
 
+/**
+ * This hook is called after a transaction is committed.
+ * It broadcasts the revision update to all users in the activity report room
+ * only if the revision was changed during the transaction.
+ *
+ * @param {*} sequelize - The Sequelize instance
+ * @param {*} instance - The ActivityReport instance
+ */
+const revisionBumpBroadcast = async (sequelize, instance) => {
+  try {
+    // Only proceed if the revision was changed
+    const changed = instance.previous && instance.previous();
+    const previousRevision = changed ? instance.previous('revision') : null;
+    const currentRevision = instance.revision;
+
+    // Check if revision was actually changed
+    if (previousRevision !== null && previousRevision !== currentRevision) {
+      // Only attempt to broadcast if we're not in a test environment
+      if (process.env.NODE_ENV !== 'test') {
+        // Get the current user ID
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+        // Dynamically import the mesh server to avoid circular dependencies
+        // eslint-disable-next-line global-require
+        const { getMeshServer } = require('../../index');
+        const mesh = getMeshServer();
+
+        if (mesh) {
+          const roomName = `ar-${instance.id}`;
+          await mesh.broadcastRoom(
+            roomName,
+            'revision-updated',
+            {
+              reportId: instance.id,
+              revision: currentRevision,
+              userId: userId || null, // Include the user ID who made the change
+              timestamp: new Date().toISOString(), // Add a timestamp
+            },
+          );
+          auditLogger.info(`Broadcasted revision update (${currentRevision}) to room ${roomName}`);
+        }
+      }
+    }
+  } catch (error) {
+    // Log the error but don't fail the process
+    auditLogger.error(`Failed to broadcast revision update: ${error}`);
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -826,6 +934,7 @@ const beforeUpdate = async (sequelize, instance, options) => {
   purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);
+  await revisionBump(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -838,9 +947,11 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await autoPopulateUtilizer(sequelize, instance, options);
+  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await checkForNewGoalCycleOnApproval(sequelize, instance, options);
+  await revisionBumpBroadcast(sequelize, instance);
 };
 
 export {
@@ -855,4 +966,7 @@ export {
   afterCreate,
   afterUpdate,
   setSubmittedDate,
+  moveDraftGoalsToNotStartedOnSubmission,
+  revisionBump,
+  revisionBumpBroadcast,
 };
