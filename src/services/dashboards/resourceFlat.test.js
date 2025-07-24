@@ -185,6 +185,14 @@ describe('Resources dashboard', () => {
         },
       });
 
+      // Get all the topics in the database and audit log them.
+      const topics = await Topic.findAll({
+        attributes: ['id', 'name'],
+        raw: true,
+      });
+
+      auditLogger.info('---- Topics in the database: ', topics);
+
       // Get topic ID's.
       const { id: classOrgTopicId } = await Topic.findOne({
         attributes: ['id'],
@@ -192,11 +200,15 @@ describe('Resources dashboard', () => {
         raw: true,
       });
 
+      auditLogger.info('---- classOrgTopicId: ', classOrgTopicId);
+
       const { id: erseaTopicId } = await Topic.findOne({
         attributes: ['id'],
         where: { name: 'ERSEA' },
         raw: true,
       });
+
+      auditLogger.info('---- erseaTopicId: ', erseaTopicId);
 
       const { id: coachingTopicId } = await Topic.findOne({
         attributes: ['id'],
@@ -204,17 +216,23 @@ describe('Resources dashboard', () => {
         raw: true,
       });
 
+      auditLogger.info('---- coachingTopicId: ', coachingTopicId);
+
       const { id: facilitiesTopicId } = await Topic.findOne({
         attributes: ['id'],
         where: { name: 'Facilities' },
         raw: true,
       });
 
+      auditLogger.info('---- facilitiesTopicId: ', facilitiesTopicId);
+
       const { id: fiscalBudgetTopicId } = await Topic.findOne({
         attributes: ['id'],
         where: { name: 'Fiscal / Budget' },
         raw: true,
       });
+
+      auditLogger.info('---- fiscalBudgetTopicId: ', fiscalBudgetTopicId);
 
       const { id: nutritionTopicId } = await Topic.findOne({
         attributes: ['id'],
@@ -227,6 +245,8 @@ describe('Resources dashboard', () => {
         where: { name: 'Oral Health' },
         raw: true,
       });
+
+      auditLogger.info('---- oralHealthTopicId: ', oralHealthTopicId);
 
       // Report 1 (Mixed Resources).
       const reportOne = await ActivityReport.create({
@@ -454,6 +474,8 @@ describe('Resources dashboard', () => {
       ];
     } catch (error) {
       auditLogger.info('----Before All Catch----', error);
+      // audit log the call to the error call stack
+      auditLogger.info('\n\n---- call stack from beoreAll error: \n', error.stack);
     }
   });
 
