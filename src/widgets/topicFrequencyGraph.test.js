@@ -18,7 +18,6 @@ import db, {
 } from '../models';
 import filtersToScopes from '../scopes';
 import { topicFrequencyGraph } from './topicFrequencyGraph';
-import { auditLogger } from '../logger';
 
 jest.mock('bull');
 
@@ -127,307 +126,297 @@ describe('Topics and frequency graph widget', () => {
   let regionOneReportWithDifferentTopicsAroA;
 
   beforeAll(async () => {
-    try {
-      await User.bulkCreate([
-        mockUser,
-        mockUserTwo,
-        mockUserThree,
-      ]);
+    await User.bulkCreate([
+      mockUser,
+      mockUserTwo,
+      mockUserThree,
+    ]);
 
-      // Create Topics.
-      const [coachingTopic] = await Topic.findOrCreate({
-        where: {
-          name: 'Coaching',
-        },
+    // Create Topics.
+    const [coachingTopic] = await Topic.findOrCreate({
+      where: {
+        name: 'Coaching',
+      },
+    });
+    const [communicationTopic] = await Topic.findOrCreate({
+      where: {
+        name: 'Communication',
+      },
+    });
+    const [cultureAndLanguageTopic] = await Topic.findOrCreate({
+      where: {
+        name: 'Culture & Language',
+      },
+    });
+    const [grantsSpecialist] = await Role.findOrCreate({
+      where: {
+        fullName: 'Grants Specialist',
+        name: 'GS',
+        isSpecialist: true,
+        id: 5,
+      },
+    });
+
+    // Find or create every topic in the TOPICS constant.
+    await Promise.all(TOPICS.map(async (topicName) => {
+      await Topic.findOrCreate({
+        where: { name: topicName },
+        defaults: { name: topicName },
       });
-      const [communicationTopic] = await Topic.findOrCreate({
-        where: {
-          name: 'Communication',
-        },
-      });
-      const [cultureAndLanguageTopic] = await Topic.findOrCreate({
-        where: {
-          name: 'Culture & Language',
-        },
-      });
-      const [grantsSpecialist] = await Role.findOrCreate({
-        where: {
-          fullName: 'Grants Specialist',
-          name: 'GS',
-          isSpecialist: true,
-          id: 5,
-        },
-      });
+    }));
 
-      // Find or create every topic in the TOPICS constant.
-      await Promise.all(TOPICS.map(async (topicName) => {
-        await Topic.findOrCreate({
-          where: { name: topicName },
-          defaults: { name: topicName },
-        });
-      }));
+    const [systemSpecialist] = await Role.findOrCreate({
+      where: {
+        fullName: 'System Specialist',
+        name: 'SS',
+        isSpecialist: true,
+        id: 16,
+      },
+    });
 
-      const [systemSpecialist] = await Role.findOrCreate({
-        where: {
-          fullName: 'System Specialist',
-          name: 'SS',
-          isSpecialist: true,
-          id: 16,
-        },
-      });
+    await UserRole.create({
+      userId: mockUser.id,
+      roleId: grantsSpecialist.id,
+    });
 
-      await UserRole.create({
-        userId: mockUser.id,
-        roleId: grantsSpecialist.id,
-      });
+    await UserRole.create({
+      userId: mockUserTwo.id,
+      roleId: systemSpecialist.id,
+    });
 
-      await UserRole.create({
-        userId: mockUserTwo.id,
-        roleId: systemSpecialist.id,
-      });
+    await UserRole.create({
+      userId: mockUserThree.id,
+      roleId: grantsSpecialist.id,
+    });
 
-      await UserRole.create({
-        userId: mockUserThree.id,
-        roleId: grantsSpecialist.id,
-      });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
+    await Region.create({ name: 'office 17', id: 17 });
+    await Region.create({ name: 'office 18', id: 18 });
+    await Grant.create({
+      id: GRANT_ID,
+      number: GRANT_ID,
+      recipientId: RECIPIENT_ID,
+      regionId: 17,
+      status: 'Active',
+      startDate: new Date('2000/01/01'),
+      endDate: new Date(),
+    });
 
-      await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
-      await Region.create({ name: 'office 17', id: 17 });
-      await Region.create({ name: 'office 18', id: 18 });
-      await Grant.create({
-        id: GRANT_ID,
-        number: GRANT_ID,
-        recipientId: RECIPIENT_ID,
-        regionId: 17,
-        status: 'Active',
-        startDate: new Date('2000/01/01'),
-        endDate: new Date(),
-      });
+    // Create Goals.
+    firstGoal = await Goal.create({
+      name: 'First Topics Goal',
+      status: 'In Progress',
+      grantId: GRANT_ID,
+      createdVia: 'activityReport',
+    });
 
-      // Create Goals.
-      firstGoal = await Goal.create({
-        name: 'First Topics Goal',
-        status: 'In Progress',
-        grantId: GRANT_ID,
-        createdVia: 'activityReport',
-      });
+    secondGoal = await Goal.create({
+      name: 'Second Topics Goal',
+      status: 'In Progress',
+      grantId: GRANT_ID,
+      createdVia: 'activityReport',
+    });
 
-      secondGoal = await Goal.create({
-        name: 'Second Topics Goal',
-        status: 'In Progress',
-        grantId: GRANT_ID,
-        createdVia: 'activityReport',
-      });
+    thirdGoal = await Goal.create({
+      name: 'Third Topics Goal',
+      status: 'In Progress',
+      grantId: GRANT_ID,
+      createdVia: 'activityReport',
+    });
 
-      thirdGoal = await Goal.create({
-        name: 'Third Topics Goal',
-        status: 'In Progress',
-        grantId: GRANT_ID,
-        createdVia: 'activityReport',
-      });
+    // Create Objectives.
+    firstGoalObjA = await Objective.create(
+      {
+        title: 'Topics Graph First Goal - Obj A',
+        goalId: firstGoal.id,
+        status: 'Not Started',
+      },
+    );
 
-      // Create Objectives.
-      firstGoalObjA = await Objective.create(
-        {
-          title: 'Topics Graph First Goal - Obj A',
-          goalId: firstGoal.id,
-          status: 'Not Started',
-        },
-      );
+    firstGoalObjB = await Objective.create(
+      {
+        title: 'Topics Graph First Goal - Obj B',
+        goalId: firstGoal.id,
+        status: 'Not Started',
+      },
+    );
 
-      firstGoalObjB = await Objective.create(
-        {
-          title: 'Topics Graph First Goal - Obj B',
-          goalId: firstGoal.id,
-          status: 'Not Started',
-        },
-      );
+    secondGoalObjA = await Objective.create(
+      {
+        title: 'Topics Graph Second Goal - Obj A',
+        goalId: secondGoal.id,
+        status: 'Not Started',
+      },
+    );
 
-      secondGoalObjA = await Objective.create(
-        {
-          title: 'Topics Graph Second Goal - Obj A',
-          goalId: secondGoal.id,
-          status: 'Not Started',
-        },
-      );
+    thirdGoalObjA = await Objective.create(
+      {
+        title: 'Topics Graph Third Goal - Obj A',
+        goalId: thirdGoal.id,
+        status: 'Not Started',
+      },
+    );
 
-      thirdGoalObjA = await Objective.create(
-        {
-          title: 'Topics Graph Third Goal - Obj A',
-          goalId: thirdGoal.id,
-          status: 'Not Started',
-        },
-      );
+    await ActivityReport.bulkCreate([
+      regionOneReport,
+      regionOneReportDistinctDate,
+      regionTwoReport,
+      regionOneReportWithDifferentTopics,
+    ]);
 
-      await ActivityReport.bulkCreate([
-        regionOneReport,
-        regionOneReportDistinctDate,
-        regionTwoReport,
-        regionOneReportWithDifferentTopics,
-      ]);
+    // Create ARO's.
+    // First ARO.
+    regionOneReportAroA = await ActivityReportObjective.create({
+      activityReportId: regionOneReport.id,
+      objectiveId: firstGoalObjA.id,
+      status: 'In Progress',
+    });
 
-      // Create ARO's.
-      // First ARO.
-      regionOneReportAroA = await ActivityReportObjective.create({
-        activityReportId: regionOneReport.id,
-        objectiveId: firstGoalObjA.id,
-        status: 'In Progress',
-      });
+    // First ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportAroA.id,
+      topicId: coachingTopic.id,
+    });
 
-      // First ARO A Topic.
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: regionOneReportAroA.id,
-        topicId: coachingTopic.id,
-      });
+    regionOneReportAroB = await ActivityReportObjective.create({
+      activityReportId: regionOneReport.id,
+      objectiveId: firstGoalObjB.id,
+      status: 'In Progress',
+    });
 
-      regionOneReportAroB = await ActivityReportObjective.create({
-        activityReportId: regionOneReport.id,
-        objectiveId: firstGoalObjB.id,
-        status: 'In Progress',
-      });
+    // First ARO B Topic's.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportAroB.id,
+      topicId: coachingTopic.id,
+    });
 
-      // First ARO B Topic's.
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: regionOneReportAroB.id,
-        topicId: coachingTopic.id,
-      });
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportAroB.id,
+      topicId: communicationTopic.id,
+    });
 
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: regionOneReportAroB.id,
-        topicId: communicationTopic.id,
-      });
+    // Region Two ARO.
+    regionTwoReportAroA = await ActivityReportObjective.create({
+      activityReportId: regionTwoReport.id,
+      objectiveId: firstGoalObjA.id,
+      status: 'In Progress',
+    });
 
-      // Region Two ARO.
-      regionTwoReportAroA = await ActivityReportObjective.create({
-        activityReportId: regionTwoReport.id,
-        objectiveId: firstGoalObjA.id,
-        status: 'In Progress',
-      });
+    // Region Two ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionTwoReportAroA.id,
+      topicId: coachingTopic.id,
+    });
 
-      // Region Two ARO A Topic.
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: regionTwoReportAroA.id,
-        topicId: coachingTopic.id,
-      });
+    // Second ARO.
+    regionOneReportDistinctDateAroA = await ActivityReportObjective.create({
+      activityReportId: regionOneReportDistinctDate.id,
+      objectiveId: secondGoalObjA.id,
+      status: 'In Progress',
+    });
 
-      // Second ARO.
-      regionOneReportDistinctDateAroA = await ActivityReportObjective.create({
-        activityReportId: regionOneReportDistinctDate.id,
-        objectiveId: secondGoalObjA.id,
-        status: 'In Progress',
-      });
+    // Second ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportDistinctDateAroA.id,
+      topicId: cultureAndLanguageTopic.id,
+    });
 
-      // Second ARO A Topic.
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: regionOneReportDistinctDateAroA.id,
-        topicId: cultureAndLanguageTopic.id,
-      });
+    // Third ARO.
+    regionOneReportWithDifferentTopicsAroA = await ActivityReportObjective.create({
+      activityReportId: regionOneReportWithDifferentTopics.id,
+      objectiveId: thirdGoalObjA.id,
+      status: 'In Progress',
+    });
 
-      // Third ARO.
-      regionOneReportWithDifferentTopicsAroA = await ActivityReportObjective.create({
-        activityReportId: regionOneReportWithDifferentTopics.id,
-        objectiveId: thirdGoalObjA.id,
-        status: 'In Progress',
-      });
+    // Third ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportWithDifferentTopicsAroA.id,
+      topicId: communicationTopic.id,
+    });
 
-      // Third ARO A Topic.
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: regionOneReportWithDifferentTopicsAroA.id,
-        topicId: communicationTopic.id,
-      });
+    await ActivityReportCollaborator.create({
+      id: 2000,
+      activityReportId: 17772,
+      userId: mockUserTwo.id,
+    });
 
-      await ActivityReportCollaborator.create({
-        id: 2000,
-        activityReportId: 17772,
-        userId: mockUserTwo.id,
-      });
+    await ActivityReportCollaborator.create({
+      id: 2001,
+      activityReportId: 17772,
+      userId: mockUserThree.id,
+    });
 
-      await ActivityReportCollaborator.create({
-        id: 2001,
-        activityReportId: 17772,
-        userId: mockUserThree.id,
-      });
+    await ActivityReportCollaborator.create({
+      id: 2002,
+      activityReportId: 17773,
+      userId: mockUserTwo.id,
+    });
 
-      await ActivityReportCollaborator.create({
-        id: 2002,
-        activityReportId: 17773,
-        userId: mockUserTwo.id,
-      });
-
-      await ActivityReportCollaborator.create({
-        id: 2003,
-        activityReportId: 17774,
-        userId: mockUserThree.id,
-      });
-    } catch (error) {
-      auditLogger.info('\n\n\n---- before all error:', error, '\n\n\n');
-      auditLogger.info('\n\n\n---- before all error2:', error.stack, '\n\n\n');
-    }
+    await ActivityReportCollaborator.create({
+      id: 2003,
+      activityReportId: 17774,
+      userId: mockUserThree.id,
+    });
   });
 
   afterAll(async () => {
-    try {
-      const ids = [17772, 17773, 17774, 17775];
-      await NextStep.destroy({ where: { activityReportId: ids } });
-      await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-      await ActivityReportObjectiveTopic.destroy({
-        where: {
-          activityReportObjectiveId: [
-            regionOneReportAroA.id,
-            regionOneReportAroB.id,
-            regionOneReportDistinctDateAroA.id,
-            regionOneReportWithDifferentTopicsAroA.id,
-            regionTwoReportAroA.id,
-          ],
-        },
-      });
-      await ActivityReportObjective.destroy({
-        where: {
-          objectiveId: [
-            firstGoalObjA.id,
-            firstGoalObjB.id,
-            secondGoalObjA.id,
-            thirdGoalObjA.id,
-          ],
-        },
-      });
-      await ActivityReport.destroy({ where: { id: ids } });
-      await Objective.destroy({
-        where: {
-          id: [
-            firstGoalObjA.id,
-            firstGoalObjB.id,
-            secondGoalObjA.id,
-            thirdGoalObjA.id,
-          ],
-        },
-        force: true,
-      });
-      await Goal.destroy({
-        where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] },
-        force: true,
-      });
-      await UserRole.destroy({
-        where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
-      });
-      await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
-      await Grant.destroy({
-        where: { id: [GRANT_ID] },
-        individualHooks: true,
-      });
-      await Recipient.destroy({
-        where:
+    const ids = [17772, 17773, 17774, 17775];
+    await NextStep.destroy({ where: { activityReportId: ids } });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReportObjectiveTopic.destroy({
+      where: {
+        activityReportObjectiveId: [
+          regionOneReportAroA.id,
+          regionOneReportAroB.id,
+          regionOneReportDistinctDateAroA.id,
+          regionOneReportWithDifferentTopicsAroA.id,
+          regionTwoReportAroA.id,
+        ],
+      },
+    });
+    await ActivityReportObjective.destroy({
+      where: {
+        objectiveId: [
+          firstGoalObjA.id,
+          firstGoalObjB.id,
+          secondGoalObjA.id,
+          thirdGoalObjA.id,
+        ],
+      },
+    });
+    await ActivityReport.destroy({ where: { id: ids } });
+    await Objective.destroy({
+      where: {
+        id: [
+          firstGoalObjA.id,
+          firstGoalObjB.id,
+          secondGoalObjA.id,
+          thirdGoalObjA.id,
+        ],
+      },
+      force: true,
+    });
+    await Goal.destroy({
+      where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] },
+      force: true,
+    });
+    await UserRole.destroy({
+      where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
+    });
+    await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
+    await Grant.destroy({
+      where: { id: [GRANT_ID] },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where:
       { id: [RECIPIENT_ID] },
-      });
-      await Region.destroy({ where: { id: [17, 18] } });
-      await ActivityReportCollaborator.destroy(
-        { where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
-      );
-      await db.sequelize.close();
-    } catch (error) {
-      auditLogger.info('\n\n\n---- after all error:', error, '\n\n\n');
-      auditLogger.info('\n\n\n---- after all error2:', error.stack, '\n\n\n');
-    }
+    });
+    await Region.destroy({ where: { id: [17, 18] } });
+    await ActivityReportCollaborator.destroy(
+      { where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
+    );
+    await db.sequelize.close();
   });
 
   afterEach(() => {
