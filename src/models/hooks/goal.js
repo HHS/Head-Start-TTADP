@@ -121,13 +121,32 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
   if (Array.isArray(changed)
     && changed.includes('status')
     && NO_GOOD_STATUSES.includes(instance.status)) {
+    // Only check the objectives created via RTR or linked to approved activity reports.
     const objectives = await sequelize.models.Objective.findAll({
       where: {
         goalId: instance.id,
         status: {
-          [Op.not]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+          [Op.not]: [OBJECTIVE_STATUS.COMPLETE],
         },
+        [Op.or]: [
+          sequelize.literal('NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'),
+          { '$activityReportObjectives.activityReport.calculatedStatus$': 'approved' },
+        ],
       },
+      include: [
+        {
+          model: sequelize.models.ActivityReportObjective,
+          as: 'activityReportObjectives',
+          required: false,
+          include: [
+            {
+              model: sequelize.models.ActivityReport,
+              as: 'activityReport',
+              required: false,
+            },
+          ],
+        },
+      ],
     });
 
     if (objectives.length > 0) {
