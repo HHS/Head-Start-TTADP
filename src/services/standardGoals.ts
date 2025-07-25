@@ -1004,35 +1004,6 @@ export async function standardGoalsForRecipient(
                 model: Topic,
                 as: 'topics',
                 attributes: ['name'],
-                required: false,
-                include: [
-                  {
-                    model: ActivityReportObjective,
-                    as: 'activityReportObjectives',
-                    required: true,
-                    attributes: [],
-                    include: [
-                      {
-                        model: ActivityReport,
-                        as: 'activityReport',
-                        required: true,
-                        attributes: [],
-                        where: {
-                          calculatedStatus: REPORT_STATUSES.APPROVED,
-                        },
-                      },
-                      {
-                        model: Objective,
-                        as: 'objective',
-                        required: true,
-                        attributes: [],
-                        where: {
-                          onApprovedAR: true,
-                        },
-                      },
-                    ],
-                  },
-                ],
               },
               {
                 model: ActivityReportObjectiveCitation,
