@@ -1042,6 +1042,7 @@ commands:
 
     - run:
         name: "Wait for task to complete"
+        no_output_timeout: 30m
         command: |
           set +e
           sleep 15
