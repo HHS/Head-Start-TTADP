@@ -471,22 +471,30 @@ describe('activity report model hooks', () => {
         },
       });
 
-      await Goal.destroy({
+      // First delete associated objectives to avoid foreign key constraint violations
+      await Objective.destroy({
         where: {
-          id: [goal.id, closedGoal.id, newGoal?.id, approvedNewGoal?.id, submittedNewGoal?.id],
+          goalId: {
+            [db.Sequelize.Op.in]: db.Sequelize.literal(`(SELECT id FROM "Goals" WHERE "grantId" = ${grant.id})`),
+          },
         },
         force: true,
       });
 
-      await GrantNumberLink.destroy({
-        where: { grantId: grant.id },
+      // Then delete the goals
+      await Goal.destroy({
+        where: {
+          grantId: [grant.id],
+        },
         force: true,
+        individualHooks: true,
       });
 
       await Grant.unscoped().destroy({
         where: {
           id: grant.id,
         },
+        individualHooks: true,
         force: true,
       });
 
@@ -508,8 +516,6 @@ describe('activity report model hooks', () => {
         },
         force: true, // force to ensure deletion
       });
-
-      await db.sequelize.close();
     });
 
     it('starts a new goal life cycle when the report being submitted is linked to a closed goal', async () => {
@@ -605,7 +611,7 @@ describe('activity report model hooks', () => {
           activityReportId: reportWithClosedGoal.id,
         },
       });
-      // Assert its using the new goal.
+        // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(newGoal.id);
       expect(activityReportGoals[0].status).toBe('In Progress');
@@ -669,7 +675,7 @@ describe('activity report model hooks', () => {
           activityReportId: approvedReportWithClosedGoal.id,
         },
       });
-      // Assert its using the new goal.
+        // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(approvedNewGoal.id);
       expect(activityReportGoals[0].status).toBe('In Progress');
@@ -1296,6 +1302,10 @@ describe('activity report model hooks', () => {
           },
           GoalTemplate: {
             findOrCreate: jest.fn(() => [{ id: 1, name: 'name' }]),
+          },
+          Objective: {
+            findAll: jest.fn(() => []),
+            update: jest.fn(),
           },
           Goal: {
             findAll: jest.fn(() => [{
