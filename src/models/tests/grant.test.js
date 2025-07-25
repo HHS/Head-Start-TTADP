@@ -128,8 +128,8 @@ describe('Grants', () => {
       }
 
       const expectedName = inactiveGrant.recipient
-        ? `${inactiveGrant.recipient.name} - ${inactiveGrant.numberWithProgramTypes} - (inactive)`
-        : `${inactiveGrant.numberWithProgramTypes} - (inactive)`;
+        ? `${inactiveGrant.recipient.name} - ${inactiveGrant.numberWithProgramTypes} (inactive)`
+        : `${inactiveGrant.numberWithProgramTypes} (inactive)`;
 
       expect(inactiveGrant.name).toBe(expectedName);
     });
