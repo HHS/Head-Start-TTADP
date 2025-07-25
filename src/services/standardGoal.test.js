@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
@@ -255,6 +254,40 @@ describe('standardGoal service', () => {
         const g2 = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
         expect(g2).toBeDefined();
         expect(g2.status).toBe(GOAL_STATUS.NOT_STARTED);
+        expect(g2.id).not.toBe(g.id);
+      });
+
+      it('sets the goal status to the provided status', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+        });
+
+        const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
+        expect(g).toBeDefined();
+
+        await Goal.update(
+          {
+            status: GOAL_STATUS.CLOSED,
+          },
+          {
+            where: {
+              id: g.id,
+            },
+          },
+        );
+
+        const g2 = await newStandardGoal(
+          grant.id,
+          goalTemplateNoPrompt.id,
+          [],
+          [],
+          GOAL_STATUS.IN_PROGRESS,
+        );
+        expect(g2).toBeDefined();
+        expect(g2.status).toBe(GOAL_STATUS.IN_PROGRESS);
         expect(g2.id).not.toBe(g.id);
       });
 

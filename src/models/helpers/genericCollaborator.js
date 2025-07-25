@@ -80,12 +80,19 @@ const createCollaborator = async (
   typeName,
   linkBack = null,
 ) => {
-  const { id: collaboratorTypeId } = await getIdForCollaboratorType(
+  const collaboratorType = await getIdForCollaboratorType(
     genericCollaboratorType,
     sequelize,
     transaction,
     typeName,
   );
+
+  if (!collaboratorType) {
+    throw new Error(`No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`);
+  }
+
+  const { id: collaboratorTypeId } = collaboratorType;
+
   return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators]
     .create({
       [collaboratorDetails[genericCollaboratorType].idName]: entityId,

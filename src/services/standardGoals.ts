@@ -329,7 +329,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId, report) {
+export async function saveStandardGoalsForReport(goals, userId, report, createInProgress = false) {
   // Loop goal templates.
   let currentObjectives = [];
 
@@ -384,7 +384,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
           createdVia: 'activityReport',
           name: goalTemplate.templateName,
           grantId,
-          status: GOAL_STATUS.NOT_STARTED,
+          status: createInProgress ? GOAL_STATUS.IN_PROGRESS : GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
       }
 
@@ -642,6 +642,7 @@ export async function newStandardGoal(
   objectives?: Array<IObjective>,
   // todo: if we ever add more prompt responses, we will need to make this next param generic
   rootCauses?: Array<string>,
+  status: string = GOAL_STATUS.NOT_STARTED, // default to not started
 ) {
   const { standard, requiresPrompts } = await getStardard(standardGoalId, grantId, rootCauses);
 
@@ -650,7 +651,7 @@ export async function newStandardGoal(
   }
 
   const newGoal = await Goal.create({
-    status: GOAL_STATUS.NOT_STARTED,
+    status,
     name: standard.templateName,
     grantId,
     goalTemplateId: standard.id,
