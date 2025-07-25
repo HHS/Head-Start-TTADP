@@ -48,7 +48,7 @@ describe('standardGoal service', () => {
         id: recipient.id,
       },
     });
-    await db.sequelize.close();
+    // Database connection will be closed in the global afterAll
   });
   beforeAll(async () => {
     recipient = await createRecipient({});
@@ -1536,4 +1536,9 @@ describe('standardGoalsForRecipient Only Approved Topics', () => {
     // Should NOT include the topic from the non-approved objective
     expect(objectiveTopics).not.toContain('Topic on non-approved objective');
   });
+});
+
+// Global afterAll to close the database connection after all tests have completed
+afterAll(async () => {
+  await db.sequelize.close();
 });
