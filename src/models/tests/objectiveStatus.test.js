@@ -73,6 +73,8 @@ const sampleReport = {
     homeRegionId: 1,
   },
   version: 2,
+  language: ['English'],
+  activityReason: 'recipient reason',
 };
 
 describe('Objective status update hook', () => {

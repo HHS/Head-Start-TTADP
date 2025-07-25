@@ -24,6 +24,7 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
   // eslint-disable-next-line max-len
   const prompt = useMemo(() => (goalTemplatePrompts ? goalTemplatePrompts[0] : null), [goalTemplatePrompts]);
   const promptId = useMemo(() => uniqueId('goal-form-prompt-'), []);
+
   // eslint-disable-next-line max-len
   const options = useMemo(() => (prompt ? prompt.options.map((option) => ({ name: option, id: option })) : []), [prompt]);
 

@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
-import { removeUnusedGoalsObjectivesFromReport } from '../goalServices/goals';
+import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
 import { cacheObjectiveMetadata } from './reportCache';
 import extractObjectiveAssociationsFromActivityReportObjectives from '../goalServices/extractObjectiveAssociationsFromActivityReportObjectives';
 import { IOtherEntityObjectiveModelInstance, IOtherEntityObjective } from '../goalServices/types';
@@ -45,6 +45,8 @@ export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
     id: number,
     goalId: number,
     status: string,
+    onApprovedAR?: boolean,
+    overrideStatus?: string,
     goal: {
       id: number,
       status: string,

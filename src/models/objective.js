@@ -41,6 +41,7 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'mapsToParentObjectiveId',
         as: 'childObjectives',
       });
+      Objective.belongsTo(models.ActivityReport, { foreignKey: 'createdViaActivityReportId', as: 'createdViaActivityReport' });
     }
   }
   Objective.init({
@@ -119,6 +120,10 @@ export default (sequelize, DataTypes) => {
     closeSuspendReason: {
       allowNull: true,
       type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
+    },
+    createdViaActivityReportId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     closeSuspendContext: {
       type: DataTypes.TEXT,
