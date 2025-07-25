@@ -33,8 +33,11 @@ describe('Grants', () => {
         : `${grant.numberWithProgramTypes}`);
   });
   it('numberWithProgramTypes', () => {
+    const programTypes = grant.programTypes.length > 0
+      ? ` - ${grant.programTypes.join(', ')}`
+      : '';
     expect(grant.numberWithProgramTypes)
-      .toStrictEqual(`${grant.dataValues.number} ${grant.programTypes?.join(', ')}`);
+      .toStrictEqual(`${grant.dataValues.number}${programTypes}`);
   });
   it('numberWithProgramTypes with program types', async () => {
     const grantWithPrograms = await Grant.unscoped().findOne({
@@ -100,6 +103,44 @@ describe('Grants', () => {
         limit: 1,
       });
       expect(g.name).toContain(`${g.numberWithProgramTypes}`);
+    });
+  });
+
+  describe('name virtual field with status', () => {
+    it('includes status when inactive', async () => {
+      const inactiveGrant = await Grant.unscoped().findOne({
+        where: { status: 'Inactive' },
+        include: [
+          {
+            model: Recipient.unscoped(),
+            as: 'recipient',
+          },
+          {
+            model: Program,
+            as: 'programs',
+          },
+        ],
+        order: [['id', 'ASC']],
+      });
+
+      if (!inactiveGrant) {
+        throw new Error('Test requires at least one inactive grant');
+      }
+
+      const expectedName = inactiveGrant.recipient
+        ? `${inactiveGrant.recipient.name} - ${inactiveGrant.numberWithProgramTypes} (inactive)`
+        : `${inactiveGrant.numberWithProgramTypes} (inactive)`;
+
+      expect(inactiveGrant.name).toBe(expectedName);
+    });
+
+    it('omits status when active', async () => {
+      const expectedName = grant.recipient
+        ? `${grant.recipient.name} - ${grant.numberWithProgramTypes}`
+        : `${grant.numberWithProgramTypes}`;
+
+      expect(grant.name).toBe(expectedName);
+      expect(grant.name).not.toContain('(inactive)');
     });
   });
 });

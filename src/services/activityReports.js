@@ -1136,7 +1136,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['number', ['id', 'activityRecipientId'], 'name'],
+        attributes: ['number', ['id', 'activityRecipientId'], 'name', 'status'],
         required: true,
         include: [
           {
