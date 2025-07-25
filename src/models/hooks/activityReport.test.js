@@ -78,7 +78,7 @@ describe('activity report model hooks', () => {
 
       goal = await Goal.create({
         name: 'Goal 1',
-        status: 'Draft',
+        status: 'Not Started',
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -104,6 +104,8 @@ describe('activity report model hooks', () => {
         ttaType: ['type'],
         creatorRole: 'TTAC',
         additionalNotes: 'notes',
+        language: ['English'],
+        activityReason: 'recipient reason',
         version: 2,
       });
 
@@ -126,6 +128,8 @@ describe('activity report model hooks', () => {
         ttaType: ['type'],
         creatorRole: 'TTAC',
         version: 2,
+        language: ['English'],
+        activityReason: 'recipient reason',
       });
 
       await ActivityReportGoal.create({
@@ -234,7 +238,7 @@ describe('activity report model hooks', () => {
       });
 
       const testGoal = await Goal.findByPk(goal.id);
-      expect(testGoal.status).toEqual('Draft');
+      expect(testGoal.status).toEqual('Not Started');
     });
 
     it('submitting the report should set the goal status to "Not Started"', async () => {
@@ -369,6 +373,414 @@ describe('activity report model hooks', () => {
 
       const testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
+    });
+
+    describe('sets the correct objective status', () => {
+      let objStatusUser;
+
+      let objStatusRecipient;
+      let objStatusGrant;
+
+      let existingReport;
+      let newReport;
+
+      let objStatusGoal;
+      let objStatusObjective;
+
+      beforeAll(async () => {
+        objStatusUser = await User.create({
+          id: faker.datatype.number(),
+          homeRegionId: 1,
+          hsesUsername: faker.datatype.string(),
+          hsesUserId: faker.datatype.string(),
+          lastLogin: new Date(),
+        });
+
+        objStatusRecipient = await Recipient.create({
+          id: faker.datatype.number(),
+          name: faker.name.firstName(),
+        });
+
+        objStatusGrant = await Grant.create({
+          id: faker.datatype.number({ min: 133434 }),
+          number: faker.datatype.string(),
+          recipientId: objStatusRecipient.id,
+          regionId: 1,
+          startDate: new Date(),
+          endDate: new Date(),
+        });
+
+        objStatusGoal = await Goal.create({
+          name: 'Goal to test objective status',
+          status: 'Not Started',
+          isFromSmartsheetTtaPlan: false,
+          onApprovedAR: true,
+          grantId: objStatusGrant.id,
+          createdVia: 'activityReport',
+        });
+
+        objStatusObjective = await Objective.create({
+          title: 'Objective to test status',
+          goalId: objStatusGoal.id,
+          status: 'Not Started',
+        });
+
+        existingReport = await ActivityReport.create({
+          userId: objStatusUser.id,
+          regionId: 1,
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          numberOfParticipants: 1,
+          deliveryMethod: 'virtual',
+          duration: 10,
+          endDate: '2025-07-09T12:00:00Z',
+          startDate: '2000-01-01T12:00:00Z',
+          activityRecipientType: 'something',
+          requester: 'requester',
+          targetPopulations: ['pop'],
+          reason: ['reason'],
+          participants: ['participants'],
+          topics: ['topics'],
+          ttaType: ['type'],
+          creatorRole: 'TTAC',
+          additionalNotes: 'notes',
+          language: ['English'],
+          activityReason: 'recipient reason',
+          version: 2,
+        });
+
+        await ActivityRecipient.create({
+          activityReportId: existingReport.id,
+          grantId: objStatusGrant.id,
+        });
+
+        await ActivityReportGoal.create({
+          activityReportId: existingReport.id,
+          goalId: objStatusGoal.id,
+        });
+
+        await ActivityReportObjective.create({
+          activityReportId: existingReport.id,
+          status: 'In Progress', // This is what the hooks should find as most recent activity.
+          objectiveId: objStatusObjective.id,
+        });
+
+        newReport = await ActivityReport.create({
+          userId: objStatusUser.id,
+          regionId: 1,
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          numberOfParticipants: 1,
+          deliveryMethod: 'virtual',
+          duration: 10,
+          endDate: '2025-07-08T12:00:00Z',
+          startDate: '2000-01-01T12:00:00Z',
+          activityRecipientType: 'something',
+          requester: 'requester',
+          targetPopulations: ['pop'],
+          reason: ['reason'],
+          participants: ['participants'],
+          topics: ['topics'],
+          ttaType: ['type'],
+          creatorRole: 'TTAC',
+          version: 2,
+          language: ['English'],
+          activityReason: 'recipient reason',
+        });
+
+        await ActivityRecipient.create({
+          activityReportId: newReport.id,
+          grantId: objStatusGrant.id,
+        });
+
+        await ActivityReportGoal.create({
+          activityReportId: newReport.id,
+          goalId: objStatusGoal.id,
+        });
+
+        await ActivityReportObjective.create({
+          activityReportId: newReport.id,
+          status: 'Not Started',
+          objectiveId: objStatusObjective.id,
+        });
+      });
+
+      afterAll(async () => {
+        // clean up all the data we created.
+        await ActivityReportObjective.destroy({
+          where: {
+            activityReportId: [existingReport.id, newReport.id],
+          },
+        });
+        await Objective.destroy({
+          where: {
+            id: objStatusObjective.id,
+          },
+          force: true, // force to ensure deletion
+        });
+        await ActivityReportGoal.destroy({
+          where: {
+            activityReportId: [existingReport.id, newReport.id],
+          },
+        });
+        await Goal.destroy({
+          where: {
+            id: objStatusGoal.id,
+          },
+          force: true, // force to ensure deletion
+
+        });
+        await ActivityRecipient.destroy({
+          where: {
+            activityReportId: [existingReport.id, newReport.id],
+          },
+        });
+        await ActivityReport.destroy({
+          where: {
+            id: [existingReport.id, newReport.id],
+          },
+        });
+        await GrantNumberLink.destroy({
+          where: { grantId: objStatusGrant.id },
+          force: true, // force to ensure deletion
+        });
+        await Grant.unscoped().destroy({
+          where: {
+            id: objStatusGrant.id,
+          },
+          force: true, // force to ensure deletion
+        });
+        await Recipient.unscoped().destroy({
+          where: {
+            id: objStatusRecipient.id,
+          },
+        });
+        await User.destroy({
+          where: {
+            id: [objStatusUser.id],
+          },
+        });
+      });
+
+      it('correctly sets the objective status to in progress when the existing objective status is suspended and the lastInProgressAt is defined', async () => {
+        // Update the objective status to suspended with lastInProgressAt defined
+        const firstInProgressAt = new Date('2025-01-01');
+        await Objective.update({
+          status: 'Suspended',
+          firstInProgressAt,
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+
+        // Verify initial state
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+        expect(testObjective.firstInProgressAt).toEqual(firstInProgressAt);
+
+        // Update activity report objective status to In Progress
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // Approve the new report
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Check that the objective status is now in progress and lastInProgressAt is updated
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('In Progress');
+
+        // Set the firstInProgressAt to null
+        await Objective.update({
+          firstInProgressAt: null,
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+      });
+
+      it('correctly sets the objective status to suspended when the existing objective status is suspended and the lastInProgressAt is not defined', async () => {
+        await Objective.update({
+          status: 'Suspended',
+          firstInProgressAt: null, // Never was in progress.
+        }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+
+        // Verify initial state
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+        expect(testObjective.firstInProgressAt).toBeNull();
+
+        // Update activity report objective status to In Progress
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // Approve the new report
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        // Check that the objective status is now in progress and lastInProgressAt is updated
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('Suspended');
+      });
+
+      it('correctly sets the objective status to in progress when the existing objective status is in progress', async () => {
+        // Update the objective status to in progress without firing any hooks.
+        await Objective.update({ status: 'In Progress' }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('In Progress');
+
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // now we update the new report to be submitted
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('In Progress');
+      });
+      it('correctly sets the objective status to complete when the existing objective status is complete', async () => {
+        // Update the objective status to in progress without firing any hooks.
+        await Objective.update({ status: 'Complete' }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Complete');
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // now we update the new report to be submitted
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('Complete');
+      });
+
+      it('correctly sets the objective status to in progress when the existing objective status is not started', async () => {
+        // Update the objective status to in progress without firing any hooks.
+        await Objective.update({ status: 'In Progress' }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('In Progress');
+
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // now we update the new report to be submitted
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('In Progress');
+      });
+
+      it('correctly sets the objective status to suspended when the existing objective status is not started', async () => {
+        // Update the objective status to in progress without firing any hooks.
+        await Objective.update({ status: 'Suspended' }, {
+          where: {
+            id: objStatusObjective.id,
+          },
+          individualHooks: false,
+        });
+        const testObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(testObjective.status).toEqual('Suspended');
+
+        await ActivityReportObjective.update(
+          { status: 'Not Started' },
+          {
+            where: {
+              activityReportId: existingReport.id,
+              objectiveId: objStatusObjective.id,
+            },
+            individualHooks: false,
+          },
+        );
+        const testReport = await ActivityReport.findByPk(existingReport.id);
+        expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+        // now we update the new report to be submitted
+        await newReport.update({
+          submissionStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
+
+        const updatedTestObjective = await Objective.findByPk(objStatusObjective.id);
+        expect(updatedTestObjective.status).toEqual('Suspended');
+      });
     });
   });
 

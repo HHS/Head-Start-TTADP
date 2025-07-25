@@ -1,10 +1,15 @@
 import { Op } from 'sequelize';
+import { uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import filtersToScopes from '../scopes';
+import { reduceObjectivesForRecipientRecord } from './recipient';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
+import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
+import { cacheGoalMetadata, cacheObjectiveMetadata, destroyActivityReportObjectiveMetadata } from './reportCache';
 
 const GOALS_PER_PAGE = 10;
 
@@ -18,6 +23,7 @@ const {
   Objective,
   Program,
   ActivityReport,
+  ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   Topic,
@@ -33,6 +39,459 @@ interface IObjective {
   id?: number;
   title: string;
   objectiveTemplateId?: number;
+}
+
+export async function removeObjectivesFromReport(objectivesToRemove, reportId) {
+  if (!objectivesToRemove.length) {
+    return Promise.resolve();
+  }
+
+  // TODO - when we have an "onAnyReport" flag, we can use that here instead of two SQL statements
+  const objectivesToPossiblyDestroy = await Objective.findAll({
+    where: {
+      createdVia: 'activityReport',
+      id: objectivesToRemove,
+      onApprovedAR: false,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: reportId,
+          },
+        },
+      },
+    ],
+  });
+
+  // see TODO above, but this can be removed when we have an "onAnyReport" flag
+  const objectivesToDefinitelyDestroy = objectivesToPossiblyDestroy
+    .filter((o) => !o.activityReports.length);
+
+  if (!objectivesToDefinitelyDestroy.length) {
+    return Promise.resolve();
+  }
+
+  // Objectives to destroy.
+  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
+
+  // Delete objective.
+  return Objective.destroy({
+    where: {
+      id: objectivesToDefinitelyDestroy.map((o) => o.id),
+    },
+  });
+}
+
+export async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
+  const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
+  && objectiveIdsToRemove.length > 0
+    ? await ActivityReportObjective.findAll({
+      attributes: ['id'],
+      where: {
+        activityReportId: reportId,
+        objectiveId: objectiveIdsToRemove,
+      },
+    })
+    : [];
+
+  const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
+
+  // Delete ARO Topics, Files, etc.
+  await destroyActivityReportObjectiveMetadata(idsToDestroy, objectiveIdsToRemove);
+
+  // Delete ARO's.
+  return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
+    ? ActivityReportObjective.destroy({
+      where: {
+        id: idsToDestroy,
+      },
+      individualHooks: true,
+    })
+    : Promise.resolve();
+}
+
+export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
+  const previousActivityReportObjectives = await ActivityReportObjective.findAll({
+    where: {
+      activityReportId: reportId,
+    },
+  });
+
+  const currentObjectiveIds = currentObjectives.map((o) => o.id);
+
+  const activityReportObjectivesToRemove = previousActivityReportObjectives.filter(
+    (aro) => !currentObjectiveIds.includes(aro.objectiveId),
+  );
+
+  const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
+
+  // Delete ARO and Topics, Resources, etc.
+  await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
+
+  // attempt to remove objectives that are no longer associated with any ARs
+  // and weren't created on the RTR as a planning exercise
+  await removeObjectivesFromReport(objectiveIdsToRemove, reportId);
+}
+
+/** *
+ * This function will create objectives for a goal.
+ * It will only create objectives that have a title or other data.
+ * @param goal
+ * @param objectives
+ * @returns {object} Objective
+ */
+export async function createObjectivesForGoal(goal, objectives, reportId) {
+  /*
+     Note: Objective Status
+     We only want to set Objective status from here on initial Objective creation.
+     All subsequent Objective status updates should come from the AR Hook using end date.
+  */
+
+  if (!objectives) {
+    return [];
+  }
+
+  return Promise.all(objectives.filter((o) => o.title
+    || o.ttaProvided
+    || o.topics?.length
+    || o.resources?.length
+    || o.courses?.length
+    || o.files?.length).map(async (objective, index) => {
+    const {
+      id,
+      isNew,
+      ttaProvided,
+      ActivityReportObjective: aro,
+      title,
+      status,
+      resources,
+      topics,
+      citations, // Not saved for objective only ARO (pass through).
+      files,
+      supportType,
+      courses,
+      closeSuspendReason,
+      closeSuspendContext,
+      createdHere: objectiveCreatedHere,
+      ...updatedFields
+    } = objective;
+
+    // If the goal set on the objective does not match
+    // the goals passed we need to save the objectives.
+    const createNewObjectives = objective.goalId !== goal.id;
+    const updatedObjective = {
+      ...updatedFields, title, goalId: goal.id,
+    };
+
+    // Check if objective exists.
+    let savedObjective;
+    if (!isNew && id && !createNewObjectives) {
+      savedObjective = await Objective.findByPk(id);
+    }
+
+    if (savedObjective) {
+      // We should only allow the title to change if we are not on a approved AR.
+      if (!savedObjective.onApprovedAR) {
+        await savedObjective.update({
+          title,
+        }, { individualHooks: true });
+        await savedObjective.save({ individualHooks: true });
+      }
+    } else {
+      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
+
+      // Reuse an existing Objective:
+      // - It is on the same goal.
+      // - Has the same title.
+      // Note: Values like 'Topics' will be pulled in from the existing objective.
+      const existingObjective = await Objective.findOne({
+        where: {
+          goalId: updatedObjective.goalId,
+          title: objectiveTitle,
+          // We don't want to duplicate objectives if they already exist.
+          // TODO: If we enable objective templates ensure the parent goal is not 'closed'.
+          // status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
+        },
+      });
+
+      if (!existingObjective) {
+        savedObjective = await Objective.create({
+          ...updatedObjective,
+          title: objectiveTitle,
+          status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
+          createdVia: 'activityReport',
+          createdViaActivityReportId: reportId, // AR ID if created via AR.
+        });
+      } else {
+        savedObjective = existingObjective;
+      }
+    }
+    return {
+      ...savedObjective.toJSON(),
+      status,
+      topics,
+      citations, // Not saved for objective only ARO (pass through).
+      resources,
+      files,
+      courses,
+      ttaProvided,
+      closeSuspendReason,
+      closeSuspendContext,
+      index,
+      supportType,
+      objectiveCreatedHere,
+    };
+  }));
+}
+
+export async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
+  return ActivityReportGoal.destroy({
+    where: {
+      activityReportId: reportId,
+      goalId: {
+        [Op.notIn]: currentGoalIds,
+      },
+    },
+    individualHooks: true,
+  });
+}
+
+export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
+  // If we don't have goals return.
+  if (!goalsToRemove.length) {
+    return Promise.resolve();
+  }
+
+  // Find all goals.
+  const goals = await Goal.findAll({
+    where: {
+      createdVia: 'activityReport',
+      id: goalsToRemove,
+      onApprovedAR: false,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: reportId,
+          },
+        },
+      },
+      {
+        attributes: ['id', 'goalId', 'title'],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+      },
+    ],
+  });
+
+  // Get goals without Activity Reports.
+  let unusedGoals = goals.filter((g) => !g.activityReports.length);
+
+  // Get Goals without Objectives.
+  unusedGoals = unusedGoals.filter((g) => !g.objectives.length);
+
+  // If we have activity report goals without activity reports delete.
+  if (unusedGoals.length) {
+    // Delete goals.
+    return Goal.destroy({
+      where: {
+        id: unusedGoals.map((g) => g.id),
+      },
+    });
+  }
+
+  // else do nothing.
+  return Promise.resolve();
+}
+
+/** *
+ * This function will save the standard goals for a report.
+ * We still save for each recipient.
+ * But we now have special logic for when to re-use va create a new goal.
+ *  - Not Used: Grant gets the goal and moved to 'Not Started status,
+ *   until report is approved then 'In progress'.
+ *  - Not Started: Existing goal moves to 'In progress'.
+ *  - In progress: Existing goal gets new objectives.
+ *  - Suspended: Existing goal moves to 'In progress'.
+ *  - Closed: Goal is restarted and moves to 'In progress' (restarted = create a new goal).
+ * Objectives will save exactly as they did before.
+*
+ * @param goals
+ * @returns {object} Goal
+ * @return {object} Goal.objectives
+ */
+export async function saveStandardGoalsForReport(goals, userId, report) {
+  // Loop goal templates.
+  let currentObjectives = [];
+
+  // let's get all the existing goals that are not closed
+  // we'll use this to determine if we need to create or update
+  // we're doing it here so we don't have to query for each goal
+  const existingGoals = await Goal.findAll({
+    where: {
+      goalTemplateId: goals.map((goal) => goal.goalTemplateId),
+      grantId: goals.map((goal) => goal.grantIds).flat(),
+      status: { [Op.not]: GOAL_STATUS.CLOSED },
+    },
+  });
+
+  let updatedGoals = await Promise.all(goals.map(async (goal) => {
+    // Loops recipients update / create goals.
+    // eslint-disable-next-line implicit-arrow-linebreak
+    const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
+    const isMonitoring = goalTemplate.standard === 'Monitoring';
+    return Promise.all(goal.grantIds.map(async (grantId) => {
+      let newOrUpdatedGoal = existingGoals.find((existingGoal) => (
+        existingGoal.grantId === grantId && existingGoal.goalTemplateId === goal.goalTemplateId
+      ));
+
+      // If this is a monitoring goal check for existing goal.
+      if (isMonitoring && !newOrUpdatedGoal) {
+        // No monitoring goal for this grant skip.
+        return null;
+      }
+
+      if (newOrUpdatedGoal) {
+        // If the goal is 'Suspended' move to 'In progress'.
+        if (newOrUpdatedGoal.status === GOAL_STATUS.SUSPENDED) {
+          await changeGoalStatus({
+            goalId: newOrUpdatedGoal.id,
+            userId,
+            newStatus: GOAL_STATUS.IN_PROGRESS,
+            reason: 'Goal moved to In Progress from Suspended',
+            context: 'saveStandardGoalsForReport',
+          });
+          newOrUpdatedGoal.status = GOAL_STATUS.IN_PROGRESS;
+        } else if (newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
+          // If the goal is 'Closed' create a new goal.
+          newOrUpdatedGoal = null;
+        }
+      }
+
+      // If there is no existing goal, or its closed, create a new one in 'Not started'.
+      if (!newOrUpdatedGoal) {
+        newOrUpdatedGoal = await Goal.create({
+          goalTemplateId: goalTemplate.id,
+          createdVia: 'activityReport',
+          name: goalTemplate.templateName,
+          grantId,
+          status: GOAL_STATUS.NOT_STARTED,
+        }, { individualHooks: true });
+      }
+
+      // Filter prompts for the grant associated with the goal.
+      const filteredPrompts = goal.prompts?.filter((prompt) => prompt.grantId === grantId);
+      // Handle goal prompts for curated goals like FEI.
+      if (goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+        // If there are not prompts from the report (ARG), we then save
+        // them from the goal field responses in the cacheGoalMetadata() below.
+        if (filteredPrompts && filteredPrompts.length) {
+          await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], filteredPrompts);
+        }
+      }
+
+      // Did the save happen in the edit mode.
+      const isActivelyBeingEditing = goal.isActivelyBeingEditing
+        ? goal.isActivelyBeingEditing : false;
+      const reportId = report.id ? report.id : report.dataValues.id;
+
+      // Save goal meta data.
+      await cacheGoalMetadata(
+        newOrUpdatedGoal,
+        reportId,
+        isActivelyBeingEditing, // We need to correctly populate if editing on FE.
+        filteredPrompts || [],
+      );
+
+      // and pass the goal to the objective creation function
+      const newGoalObjectives = await createObjectivesForGoal(
+        newOrUpdatedGoal,
+        goal.objectives,
+        reportId,
+      );
+      currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+      return newOrUpdatedGoal;
+    }));
+  }));
+
+  // Filter out any null values in the updated goals array.
+  updatedGoals = updatedGoals.flat().filter((goal) => goal);
+
+  const uniqueObjectives = uniqBy(currentObjectives, 'id');
+  await Promise.all(uniqueObjectives.map(async (savedObjective) => {
+    const {
+      status,
+      index,
+      topics,
+      files,
+      resources,
+      closeSuspendContext,
+      closeSuspendReason,
+      ttaProvided,
+      supportType,
+      courses,
+      objectiveCreatedHere,
+      citations,
+    } = savedObjective;
+
+    // this will link our objective to the activity report through
+    // activity report objective and then link all associated objective data
+    // to the activity report objective to capture this moment in time
+    return cacheObjectiveMetadata(
+      savedObjective,
+      report.id,
+      {
+        resources,
+        topics,
+        citations,
+        files,
+        courses,
+        status,
+        closeSuspendContext,
+        closeSuspendReason,
+        ttaProvided,
+        order: index,
+        supportType,
+        objectiveCreatedHere,
+      },
+    );
+  }));
+
+  // Get all goal ids.
+  const currentGoalIds = updatedGoals.map((g) => g.id);
+
+  // Get previous DB ARG's.
+  const previousActivityReportGoals = await ActivityReportGoal.findAll({
+    where: {
+      activityReportId: report.id,
+    },
+  });
+
+  const goalsToRemove = previousActivityReportGoals.filter(
+    (arg) => !currentGoalIds.includes(arg.goalId),
+  ).map((r) => r.goalId);
+
+  // Remove ARGs.
+  await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
+
+  // Delete Objective ARO and associated tables.
+  await removeUnusedGoalsObjectivesFromReport(
+    report.id,
+    currentObjectives.filter((o) => currentGoalIds.includes(o.goalId)),
+  );
+
+  // Delete Goals if not being used and created from AR.
+  await removeUnusedGoalsCreatedViaAr(goalsToRemove, report.id);
 }
 
 /**
@@ -96,9 +555,24 @@ export async function goalForRtr(
           'onAR',
           'status',
           'objectiveTemplateId',
+          'createdAt',
+          'updatedAt',
+          'createdVia',
+          'onApprovedAR',
         ],
         model: Objective,
         as: 'objectives',
+        separate: true,
+        where: {
+          [Op.or]: [
+            { createdVia: 'rtr' },
+            { onApprovedAR: true },
+          ],
+        },
+        order: [
+          ['createdAt', 'ASC'],
+          ['updatedAt', 'ASC'],
+        ],
       },
       {
         model: GoalFieldResponse,
@@ -185,12 +659,17 @@ export async function newStandardGoal(
 
   // a new goal does not require objectives, but may include them
   if (objectives && objectives.length) {
-    await Objective.bulkCreate(objectives.map((objective) => ({
-      ...objective,
-      createdVia: 'rtr',
-      status: GOAL_STATUS.NOT_STARTED,
-      goalId: newGoal.id,
-    })));
+    const objectivesToCreate = objectives.map((objective) => {
+      const mappedObjective = {
+        ...objective,
+        createdVia: 'rtr',
+        status: OBJECTIVE_STATUS.NOT_STARTED, // Using OBJECTIVE_STATUS instead of GOAL_STATUS
+        goalId: newGoal.id,
+      };
+      return mappedObjective;
+    });
+
+    await Objective.bulkCreate(objectivesToCreate);
   }
 
   const { prompts } = standard;
@@ -227,10 +706,10 @@ export async function updateExistingStandardGoal(
 
   const [goal] = standard.goals;
   const { prompts } = standard;
-
   // a new goal does not require objectives, but may include them
+  let updatedObjectives = [];
   if (objectives.length) {
-    const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
+    updatedObjectives = await Promise.all(objectives.map(async (objective) => {
       if (objective.objectiveTemplateId) {
         const orOptions = [
           { title: objective.title },
@@ -256,6 +735,31 @@ export async function updateExistingStandardGoal(
           });
         }
       }
+
+      // Lookup existing objective.
+      const existingObjective = await (
+        objective.id
+          ? Objective.findByPk(objective.id)
+          : Objective.findOne({
+            where: {
+              goalId: goal.id,
+              title: objective.title,
+            },
+          }));
+
+      if (existingObjective) {
+        // Determine if we need to 'reset' the status.
+        const objectiveStatus = existingObjective.status === OBJECTIVE_STATUS.COMPLETE
+          || existingObjective.status === OBJECTIVE_STATUS.SUSPENDED
+          ? OBJECTIVE_STATUS.IN_PROGRESS : existingObjective.status;
+
+        // Update the existing objective.
+        return existingObjective.update({
+          status: objectiveStatus,
+          title: objective.title,
+        });
+      }
+      // If this is a new objective, create it.
       return Objective.create({
         title: objective.title,
         createdVia: 'rtr',
@@ -263,16 +767,17 @@ export async function updateExistingStandardGoal(
         goalId: goal.id,
       });
     }));
-
-    await Objective.destroy({
-      where: {
-        goalId: goal.id,
-        id: {
-          [Op.notIn]: updatedObjectives.map((o) => o.id),
-        },
-      },
-    });
   }
+
+  // Delete any potentially removed objectives (regardless if we have any objectives).
+  await Objective.destroy({
+    where: {
+      goalId: goal.id,
+      id: {
+        [Op.notIn]: updatedObjectives.map((o) => o.id),
+      },
+    },
+  });
 
   if (requiresPrompts) {
     const existingResponse = await GoalFieldResponse.findOne({
@@ -312,6 +817,7 @@ export async function standardGoalsForRecipient(
     goalIds = [],
     ...filters
   },
+  onlyApprovedObjectives = false,
 ) {
   const { goal: scopes } = await filtersToScopes(filters, {});
 
@@ -350,12 +856,34 @@ export async function standardGoalsForRecipient(
 
   const ids = goals.map((g: { id: number }) => g.id);
 
+  // If param is true only return objectives created via activityReport if the AR is approved.
+  const objectiveWhere = onlyApprovedObjectives
+    ? {
+      [Op.or]: [
+        { createdVia: 'rtr' },
+        {
+          createdVia: 'activityReport',
+          onApprovedAR: true,
+        },
+      ],
+    }
+    : {};
+
   const rows = await Goal.findAll({
     attributes: [
       'id',
       'name',
       'status',
       'createdAt',
+      'goalTemplateId',
+      [
+        sequelize.literal(`(
+          SELECT MAX("createdAt")
+          FROM "GoalStatusChanges"
+          WHERE "goalId" = "Goal"."id"
+        )`),
+        'latestStatusChangeDate',
+      ],
       [sequelize.literal(`
         CASE
           WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
@@ -380,14 +908,12 @@ export async function standardGoalsForRecipient(
       {
         model: GoalCollaborator,
         as: 'goalCollaborators',
-        attributes: [],
-        separate: true,
-        required: false,
+        attributes: ['id'],
+        required: true,
         include: [
           {
             model: CollaboratorType,
             as: 'collaboratorType',
-            required: true,
             where: {
               name: 'Creator',
             },
@@ -402,16 +928,14 @@ export async function standardGoalsForRecipient(
               {
                 model: UserRole,
                 as: 'userRoles',
-                required: true,
                 include: [
                   {
                     model: Role,
                     as: 'role',
                     attributes: ['name'],
-                    required: true,
                   },
                 ],
-                attributes: [],
+                attributes: ['id'],
               },
             ],
           },
@@ -424,7 +948,6 @@ export async function standardGoalsForRecipient(
         attributes: ['response', 'goalId'],
       },
       {
-        required: true,
         model: Grant,
         as: 'grant',
         attributes: [
@@ -449,7 +972,7 @@ export async function standardGoalsForRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
-        separate: true,
+        where: objectiveWhere,
         order: [
           [sequelize.col('activityReportObjectives.activityReport.endDate'), 'DESC'],
           ['createdAt', 'DESC'],
@@ -482,6 +1005,34 @@ export async function standardGoalsForRecipient(
                 as: 'topics',
                 attributes: ['name'],
                 required: false,
+                include: [
+                  {
+                    model: ActivityReportObjective,
+                    as: 'activityReportObjectives',
+                    required: true,
+                    attributes: [],
+                    include: [
+                      {
+                        model: ActivityReport,
+                        as: 'activityReport',
+                        required: true,
+                        attributes: [],
+                        where: {
+                          calculatedStatus: REPORT_STATUSES.APPROVED,
+                        },
+                      },
+                      {
+                        model: Objective,
+                        as: 'objective',
+                        required: true,
+                        attributes: [],
+                        where: {
+                          onApprovedAR: true,
+                        },
+                      },
+                    ],
+                  },
+                ],
               },
               {
                 model: ActivityReportObjectiveCitation,
@@ -493,6 +1044,24 @@ export async function standardGoalsForRecipient(
                 required: false,
               },
             ],
+          },
+          {
+            attributes: [
+              'id',
+              'reason',
+              'topics',
+              'endDate',
+              'calculatedStatus',
+              'legacyId',
+              'regionId',
+              'displayId',
+            ],
+            model: ActivityReport,
+            as: 'activityReports',
+            required: false,
+            where: {
+              calculatedStatus: REPORT_STATUSES.APPROVED,
+            },
           },
         ],
       },
@@ -506,9 +1075,39 @@ export async function standardGoalsForRecipient(
     },
   });
 
+  // Process each goal to format objectives properly with endDate (Last TTA in the UI)
+  const processedRows = rows.map((current) => {
+    // Create a goal object similar to what getGoalsByActivityRecipient does
+    const goalToAdd = {
+      id: current.id,
+      ids: [current.id],
+      goalStatus: current.status,
+      createdOn: current.createdAt,
+      goalText: current.name,
+      goalNumbers: [current.grant.number],
+      objectiveCount: 0,
+      goalTopics: [],
+      reasons: [],
+      grantNumbers: [current.grant.number],
+    };
+
+    // Process objectives through reduceObjectivesForRecipientRecord
+    const processedObjectives = reduceObjectivesForRecipientRecord(
+      current,
+      goalToAdd,
+      [current.grant.number],
+    );
+
+    // Create a new object with processed objectives to avoid modifying the parameter
+    return {
+      ...current.toJSON(),
+      objectives: processedObjectives,
+    };
+  });
+
   return {
     count: rows.length,
-    goalRows: rows,
+    goalRows: processedRows,
     statuses,
     allGoalIds: ids,
   };
