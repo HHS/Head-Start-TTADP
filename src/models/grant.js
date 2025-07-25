@@ -99,7 +99,7 @@ export default (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        const statusText = this.status === 'Inactive' ? ' - (inactive)' : '';
+        const statusText = this.status === 'Inactive' ? ' (inactive)' : '';
 
         if (this.recipient) {
           return `${this.recipient.name} - ${this.numberWithProgramTypes}${statusText}`;
