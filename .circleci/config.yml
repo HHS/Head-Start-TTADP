@@ -533,7 +533,7 @@ jobs:
         command: ./bin/ping-server 9100 localhost /openapi.json
     - run:
         name: Pull OWASP ZAP docker image
-        command: docker pull softwaresecurityproject/zap-stable:latest
+        command: docker pull softwaresecurityproject/zap-stable:2.16.0
     - run:
         name: Run OWASP ZAP scan for Node.js server
         command: ./bin/run-owasp-scan --target http://server:8080 --full
@@ -1042,6 +1042,7 @@ commands:
 
     - run:
         name: "Wait for task to complete"
+        no_output_timeout: 30m
         command: |
           set +e
           sleep 15
