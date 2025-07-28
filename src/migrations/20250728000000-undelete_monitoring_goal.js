@@ -18,7 +18,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(/* sql */`
-        UPDATE "Objectives" SET "deletedAt" = now() WHERE id = 102169 AND name LIKE '(Monitoring)%';
+        UPDATE "Goals" SET "deletedAt" = now() WHERE id = 102169 AND name LIKE '(Monitoring)%';
     `, { transaction });
     });
   },
