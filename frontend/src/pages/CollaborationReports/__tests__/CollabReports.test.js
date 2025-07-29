@@ -1,0 +1,64 @@
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import CollabReports from '../components/CollabReports';
+import * as fetchers from '../../../fetchers/collaboratorReports.ts';
+
+jest.mock('../../../fetchers/collaboratorReports.ts');
+
+describe('CollabReports', () => {
+  const mockReports = [
+    { id: 1, name: 'Report 1' },
+    { id: 2, name: 'Report 2' },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('Renders loading state and then reports table', async () => {
+    fetchers.default.mockResolvedValue({ rows: mockReports });
+
+    render(<CollabReports title="Test Title" />);
+
+    expect(screen.getByText('Test Title')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(fetchers.default).toHaveBeenCalled();
+      expect(screen.getByText('Test Title')).toBeInTheDocument();
+    });
+  });
+
+  test('Renders empty message when no reports', async () => {
+    fetchers.default.mockResolvedValue({ rows: [] });
+
+    render(<CollabReports emptyMsg="No reports found" />);
+
+    await waitFor(() => {
+      expect(fetchers.default).toHaveBeenCalled();
+      expect(screen.getByText('No reports found')).toBeInTheDocument();
+    });
+  });
+
+  test('Renders error alert on fetch failure', async () => {
+    fetchers.default.mockRejectedValue(new Error('Network error'));
+
+    render(<CollabReports />);
+
+    await waitFor(() => {
+      expect(fetchers.default).toHaveBeenCalled();
+      expect(screen.getByRole('alert')).toHaveTextContent('Unable to fetch reports');
+    });
+  });
+
+  test('Passes showCreateMsgOnEmpty prop to table', async () => {
+    fetchers.default.mockResolvedValue({ rows: [] });
+
+    render(<CollabReports showCreateMsgOnEmpty />);
+
+    await waitFor(() => {
+      expect(fetchers.default).toHaveBeenCalled();
+      // The empty message should still be present
+      expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
+    });
+  });
+});
