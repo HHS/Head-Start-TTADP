@@ -107,13 +107,13 @@ export const Accordion = ({
     setOpenState(newOpenItems);
   };
 
-  const itemNavigation = items.map((item) => {
+  const itemNavigation = pages ? items.map((item) => {
     const page = pages.find((pagesItem) => pagesItem.label === item.title);
     return {
       id: item.id,
       onNavigation: page.onNavigation,
     };
-  });
+  }) : [];
 
   return (
     <div
