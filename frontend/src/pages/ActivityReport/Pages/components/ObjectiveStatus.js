@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
 import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
@@ -18,6 +18,17 @@ export default function ObjectiveStatus({
   closeSuspendContext,
   closeSuspendReason,
 }) {
+  const [availableStatuses, setAvailableStatuses] = useState(statuses);
+
+  // Only filter statuses once on initial render
+  useEffect(() => {
+    // Filter out 'Not Started' if status is already In Progress, Suspended, or Complete
+    if (['In Progress', 'Suspended', 'Complete'].includes(status)) {
+      setAvailableStatuses(statuses.filter((s) => s !== 'Not Started'));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   return (
     <>
       <Label>
@@ -29,7 +40,7 @@ export default function ObjectiveStatus({
           aria-label="Status for objective "
           onBlur={onBlur}
         >
-          {statuses.map((possibleStatus) => (
+          {availableStatuses.map((possibleStatus) => (
             <option
               key={possibleStatus}
               value={possibleStatus}

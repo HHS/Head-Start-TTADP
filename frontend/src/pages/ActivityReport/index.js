@@ -48,7 +48,7 @@ import MeshPresenceManager from '../../components/MeshPresenceManager';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
-  activityRecipientType: '',
+  activityRecipientType: 'recipient',
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
@@ -64,11 +64,12 @@ const defaultValues = {
   recipients: [],
   nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
+  numberOfParticipantsInPerson: null,
+  numberOfParticipantsVirtually: null,
   objectivesWithoutGoals: [],
   otherResources: [],
   participantCategory: '',
   participants: [],
-  reason: [],
   requester: '',
   specialistNextSteps: [{ id: null, note: '' }],
   startDate: null,
@@ -78,6 +79,7 @@ const defaultValues = {
   approvers: [],
   recipientGroup: null,
   language: [],
+  activityReason: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -104,7 +106,6 @@ export const formatReportWithSaveBeforeConversion = async (
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
-
   const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(
@@ -113,6 +114,7 @@ export const formatReportWithSaveBeforeConversion = async (
         version: 2,
         approverUserIds: approverIds,
         pageState: data.pageState,
+        activityRecipientType: 'recipient',
       }, {},
     );
 
@@ -290,6 +292,10 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
+
+        // If the report creator is in the collaborators list, remove them.
+        const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 
@@ -308,6 +314,7 @@ function ActivityReport({
         );
 
         // Add recipientIds to groups.
+        // TODO remove for standard goals.
         const groupsWithRecipientIds = groups.map((group) => ({
           ...group,
           // Match groups to grants as recipients could have multiple grants.
@@ -319,7 +326,7 @@ function ActivityReport({
             grants: [],
             otherEntities: [],
           },
-          collaborators: collaborators || [],
+          collaborators: filteredCollaborators || [],
           availableApprovers: availableApprovers || [],
           groups: groupsWithRecipientIds || [],
         });
@@ -481,6 +488,7 @@ function ActivityReport({
             regionId: formData.regionId,
             approverUserIds: approverIds,
             version: 2,
+            activityRecipientType: 'recipient',
           },
         );
 
@@ -509,21 +517,19 @@ function ActivityReport({
 
         let reportData = updatedReport;
 
-        // if we are dealing with a recipient report, we need to do a little magic to
         // format the goals and objectives appropriately, as well as divide them
         // by which one is open and which one is not
-        if (updatedReport.activityRecipientType === 'recipient') {
-          const { goalForEditing, goals } = convertGoalsToFormData(
-            updatedReport.goalsAndObjectives,
-            updatedReport.activityRecipients.map((r) => r.activityRecipientId),
-          );
+        const { goalForEditing, goals } = convertGoalsToFormData(
+          updatedReport.goalsAndObjectives,
+          updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+        );
 
-          reportData = {
-            ...updatedReport,
-            goalForEditing,
-            goals,
-          };
-        }
+        reportData = {
+          ...updatedReport,
+          goalForEditing,
+          goals,
+        };
+
         updateFormData(reportData, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
@@ -651,7 +657,7 @@ function ActivityReport({
       {/* Don't render the Mesh component unless working on a saved report */}
       { activityReportId !== 'new' && (<MeshPresenceManager room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
-      <Grid row className="flex-justify">
+      <Grid row>
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
@@ -662,9 +668,9 @@ function ActivityReport({
             {author}
           </div>
         </Grid>
-        <Grid col="auto" className="flex-align-self-center">
+        <Grid col="auto" className="flex-align-self-center margin-left-2">
           {formData.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold`}>{startCase(formData.calculatedStatus)}</div>
+            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
       </Grid>
