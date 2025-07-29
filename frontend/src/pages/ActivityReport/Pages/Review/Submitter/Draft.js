@@ -145,7 +145,7 @@ const Draft = ({
             </div>
           </FormItem>
         </Fieldset>
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
+        <Fieldset className="smart-hub--report-legend margin-top-4">
           { !connectionActive && (
             <ConnectionError />
           )}
