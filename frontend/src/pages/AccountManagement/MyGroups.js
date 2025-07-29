@@ -20,7 +20,7 @@ import {
 } from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
 import AppLoadingContext from '../../AppLoadingContext';
-import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
+import QuestionTooltip from '../../components/QuestionTooltip';
 
 const mapSelectedRecipients = (grants) => grants.map((grant) => ({
   value: grant.id,

@@ -48,8 +48,8 @@ function GoalDataController({
   recipientId,
   regionId,
   hasActiveGrants,
+  hasMissingStandardGoals,
   showNewGoals,
-  canMergeGoals,
 }) {
   // Goal Data.
   const [data, setData] = useState({
@@ -67,7 +67,6 @@ function GoalDataController({
   // Page Behavior.
   const [error, setError] = useState('');
   const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
-  const [shouldDisplayMergeSuccess, setShouldDisplayMergedSuccess] = useState(false);
   const [logs, setLogs] = useState([]);
   const [logsLoaded, setLogsLoaded] = useState(false);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
@@ -108,20 +107,8 @@ function GoalDataController({
     async function fetchGoals(query) {
       try {
         setIsAppLoading(true);
-        const mergedGoals = (() => {
-          if (history.location && history.location.state) {
-            return history.location.state.mergedGoals;
-          }
 
-          return null;
-        })();
-
-        let { sortBy } = sortConfig;
-
-        if (mergedGoals) {
-          sortBy = 'mergedGoals';
-        }
-
+        const { sortBy } = sortConfig;
         const response = await getRecipientGoals(
           recipientId,
           regionId,
@@ -130,14 +117,13 @@ function GoalDataController({
           sortConfig.offset,
           goalsPerPage,
           query,
-          mergedGoals || [],
+          [],
         );
+
         const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
         const goalBuckets = response.allGoalIds;
         setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
         setError('');
-        // display success message if we have merged goals
-        setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
       } catch (e) {
         setError('Unable to fetch goals');
       } finally {
@@ -224,20 +210,6 @@ function GoalDataController({
 
   const setGoals = (goals) => setData({ ...data, goalRows: goals });
 
-  const dismissMergeSuccess = () => {
-    if (history.location.state && history.location.state.mergedGoals) {
-      history.location.state.mergedGoals = null;
-    }
-
-    setSortConfig({
-      ...defaultSort,
-      activePage: 1,
-      offset: 0,
-    });
-
-    setShouldDisplayMergedSuccess(false);
-  };
-
   return (
     <div>
       <Grid gap={5} row>
@@ -258,6 +230,7 @@ function GoalDataController({
           regionId={regionId}
           filters={filters}
           hasActiveGrants={hasActiveGrants}
+          hasMissingStandardGoals={hasMissingStandardGoals}
           showNewGoals={showNewGoals || false}
           goals={displayGoals}
           error={error}
@@ -269,10 +242,6 @@ function GoalDataController({
           setGoals={setGoals}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
-          canMergeGoals={canMergeGoals}
-          shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
-          dismissMergeSuccess={dismissMergeSuccess}
-          goalBuckets={data.goalBuckets}
         />
       </FilterContext.Provider>
     </div>
@@ -291,8 +260,8 @@ GoalDataController.propTypes = {
     }),
   ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  hasMissingStandardGoals: PropTypes.bool.isRequired,
   showNewGoals: PropTypes.bool.isRequired,
-  canMergeGoals: PropTypes.bool.isRequired,
 };
 
 export default GoalDataController;

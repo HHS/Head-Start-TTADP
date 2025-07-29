@@ -399,6 +399,19 @@ export async function group(groupId: number): Promise<GroupResponse> {
     ],
   });
 
+  const allGroupCollaborators = await GroupCollaborator.findAll({
+    attributes: [
+      'id',
+      'groupId',
+      'userId',
+      'updatedAt',
+      'collaboratorTypeId',
+    ],
+    where: {
+      groupId: returnGroup.id,
+    },
+  });
+
   // Get the creator of the group.
   const creator = returnGroup.groupCollaborators.find(
     (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
@@ -903,7 +916,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
     // Find grants that are not already existing group grants
     grants
       .filter((grantId) => !existingGroupGrants
-        .find((egg) => egg.dataValues.grantId === grantId)),
+        .find((egg: { dataValues: { grantId: number } }) => egg.dataValues.grantId === grantId)),
     // Find existing group grants that are not in the grants list
     existingGroupGrants
       .filter(({
@@ -919,7 +932,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
     // Find co-owners that are not already current group co-owners
     coOwners
       .filter((id) => !currentGroupCoOwners
-        .find((cgco) => cgco.dataValues.userId === id)),
+        .find((cgco: { dataValues: { userId: number } }) => cgco.dataValues.userId === id)),
     // Find current group co-owners that are not in the co-owners list
     currentGroupCoOwners
       .filter(({
@@ -934,8 +947,8 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
       }) => userId),
     // Find shareWiths that are not already current group shareWiths
     individuals
-      .filter((id) => !currentGroupIndividuals
-        .find((cgc) => cgc.dataValues.userId === id)),
+      .filter((id: number) => !currentGroupIndividuals
+        .find((cgc: { dataValues: { userId: number } }) => cgc.dataValues.userId === id)),
     // Find current group shareWiths that are not in the shareWiths list
     currentGroupIndividuals
       .filter(({
@@ -1032,6 +1045,19 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
       returning: true,
     }),
   ]);
+
+  const allGroupCollaborators = await GroupCollaborator.findAll({
+    attributes: [
+      'id',
+      'groupId',
+      'userId',
+      'updatedAt',
+      'collaboratorTypeId',
+    ],
+    where: {
+      groupId,
+    },
+  });
 
   // Return the updated group
   return group(groupId);

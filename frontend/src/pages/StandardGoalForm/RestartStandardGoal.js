@@ -30,7 +30,7 @@ export default function RestartStandardGoal({ recipient }) {
     },
   });
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   useEffect(() => {
     const fetchStandardGoal = async () => {
