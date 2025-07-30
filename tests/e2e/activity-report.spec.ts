@@ -313,7 +313,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label');
+    const approverDropdown = page.getByLabel("Approving managers");
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -583,7 +583,7 @@ test.describe('Activity Report', () => {
     await nextSteps(page);
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label');
+    const approverDropdown = page.getByLabel("Approving managers");
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
