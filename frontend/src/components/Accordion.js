@@ -43,6 +43,7 @@ export const AccordionItem = ({
               unstyled
               className="smart-hub--navigator-link flex-justify-end"
               role="button"
+              aria-label={`Edit ${title}`}
             >
               Edit
             </Button>

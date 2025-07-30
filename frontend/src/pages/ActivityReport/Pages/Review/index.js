@@ -121,7 +121,7 @@ const ReviewSubmit = ({
             onFormSubmit={onFormSubmit}
           >
             <>
-              <Accordion bordered items={items} pages={pages} canEdit />
+              <Accordion bordered={false} items={items} pages={pages} canEdit />
             </>
           </Approver>
         )}
