@@ -172,7 +172,7 @@ const Submitter = ({
       {renderTopAlert()}
       {!submitted && (
       <Container skipTopPadding className="margin-top-2 padding-top-2">
-        <h2>Review and Submit</h2>
+        <h2 className="font-family-serif">Review and Submit</h2>
         <IndicatesRequiredField />
         <p className="margin-top-0">
           {/* eslint-disable-next-line max-len */}
