@@ -151,7 +151,7 @@ Accordion.propTypes = {
     state: PropTypes.string,
     label: PropTypes.string,
     onNavigation: PropTypes.func,
-  })).isRequired,
+  })),
   headingSize: PropTypes.number,
   canEdit: PropTypes.bool,
 };
@@ -161,6 +161,7 @@ Accordion.defaultProps = {
   multiselectable: false,
   headingSize: 2,
   canEdit: false,
+  pages: null,
 };
 
 export default Accordion;
