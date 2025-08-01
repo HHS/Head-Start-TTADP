@@ -64,7 +64,7 @@ class S3Client {
           Bucket: this.bucketName,
           Key: key,
         });
-      return Readable.from(response.Body as Buffer);
+      return Readable.from(response.Body as unknown as Buffer);
     } catch (error) {
       auditLogger.error('Error downloading file:', error);
       throw error;
