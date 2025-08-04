@@ -505,14 +505,6 @@ describe('Submitter review page', () => {
       expect(successAlert).toBeVisible();
     });
 
-    it('the reset to draft button works', async () => {
-      const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, onReset);
-      const button = await screen.findByRole('button', { name: 'Reset to Draft' });
-      userEvent.click(button);
-      await waitFor(() => expect(onReset).toHaveBeenCalled());
-    });
-
     it('shows manager notes', async () => {
       const approvers = [
         { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },

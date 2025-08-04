@@ -2,27 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import {
-  Alert, Button,
+  Alert,
 } from '@trussworks/react-uswds';
 import { Accordion } from '../../../../../components/Accordion';
 import { getEditorState } from '../../../../../utils';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 
-const NotEditableAlert = () => (
-  <Alert type="warning" noIcon slim className="margin-bottom-1 no-print">
-    <b>Caution:</b>
-    {' '}
-    Report has been submitted to manager(s) for approval.
-    <br />
-    If you wish to update this report,
-    please check with your manager before clicking &quot;Reset to Draft&quot;.
-  </Alert>
-);
-
 const Submitted = ({
   additionalNotes,
-  resetToDraft,
   approverStatusList,
   reviewItems,
 }) => {
@@ -52,12 +40,8 @@ const Submitted = ({
         </p>
         <DisplayApproverNotes approverStatusList={approverStatusList} />
       </div>
-      <div className="margin-top-205">
+      <div className="margin-top-205 margin-bottom-3">
         <ApproverStatusList approverStatus={approverStatusList} />
-      </div>
-      <NotEditableAlert />
-      <div className="margin-top-3">
-        <Button className="margin-bottom-3" type="button" onClick={resetToDraft}>Reset to Draft</Button>
       </div>
     </>
   );
@@ -65,7 +49,6 @@ const Submitted = ({
 
 Submitted.propTypes = {
   additionalNotes: PropTypes.string,
-  resetToDraft: PropTypes.func.isRequired,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
