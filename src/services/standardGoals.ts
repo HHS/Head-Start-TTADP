@@ -837,6 +837,10 @@ export async function standardGoalsForRecipient(
             INNER JOIN "GoalTemplates" gt2 ON g2."goalTemplateId" = gt2.id
             WHERE gr2."recipientId" = ${recipientId}
             AND gr2."regionId" = ${regionId}
+            AND (
+              g2."createdVia" !='activityReport' 
+              OR (g2."createdVia" = 'activityReport' AND g2."onApprovedAR" = true)
+            )
             GROUP BY g2."goalTemplateId", g2."grantId"
           )`),
         ),
