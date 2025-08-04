@@ -119,9 +119,7 @@ const ReviewSubmit = ({
             onResetToDraft={onReset}
             onFormSubmit={onFormSubmit}
             reviewItems={items || []}
-          >
-            <Accordion bordered={false} items={items} pages={pages} canEdit />
-          </Approver>
+          />
         )}
     </>
   );
