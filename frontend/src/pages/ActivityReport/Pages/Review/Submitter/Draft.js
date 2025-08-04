@@ -6,7 +6,6 @@ import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
-import { Accordion } from '../../../../../components/Accordion';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../../../../../components/IncompletePages';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
@@ -18,7 +17,6 @@ import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Draft = ({
   availableApprovers,
@@ -32,7 +30,6 @@ const Draft = ({
   creatorRole,
   grantsMissingMonitoring,
   grantsMissingCitations,
-  reviewItems,
 }) => {
   const {
     watch,
@@ -242,11 +239,6 @@ Draft.propTypes = {
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reviewItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    title: PropTypes.string,
-    content: PropTypes.node,
-  })).isRequired,
 };
 
 Draft.defaultProps = {
