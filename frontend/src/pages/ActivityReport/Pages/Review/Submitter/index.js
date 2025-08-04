@@ -207,7 +207,6 @@ const Submitter = ({
               creatorRole={creatorRole}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
-              reviewItems={reviewItems}
             />
           )}
         {submitted
