@@ -113,16 +113,6 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Review and submit</h2>
-      <IndicatesRequiredField />
-      <p className="usa-prose margin-top-2 margin-bottom-3">
-        Review the information in each section before submitting for approval.
-        <br />
-        Once submitted, you will no longer be able to edit the report.
-      </p>
-      {reviewItems && reviewItems.length > 0 && (
-      <Accordion bordered items={reviewItems} multiselectable />
-      )}
       <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
           showRolesDropdown
