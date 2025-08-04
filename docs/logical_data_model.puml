@@ -210,12 +210,10 @@ class ActivityReports{
  virtualDeliveryType : varchar(255)
 }
 
-!issue='model missing for table'
-class CollabReportActivityState #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : integer : <generated>
-!issue='column should not allow null'
-!issue='column reference missing' * collabReportId : integer : REFERENCES "CollabReports".id
-!issue='column should not allow null' * activityStateId : varchar(255)
+class CollabReportActivityStates{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * activityStateCode : varchar(255)
 }
 
 class CollabReportDataUsed{
@@ -225,41 +223,31 @@ class CollabReportDataUsed{
  collabReportDataOther : varchar(255)
 }
 
-!issue='model missing for table'
-class CollabReportGoal #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : integer : <generated>
-!issue='column should not allow null'
-!issue='column reference missing' * collabReportId : integer : REFERENCES "CollabReports".id
-!issue='column should not allow null'
-!issue='column reference missing' * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+class CollabReportGoals{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
 }
 
-!issue='model missing for table'
-class CollabReportReason #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : integer : <generated>
-!issue='column should not allow null'
-!issue='column reference missing' * collabReportId : integer : REFERENCES "CollabReports".id
- reasonId : enum
+class CollabReportReasons{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * reasonId : enum
 }
 
-!issue='model missing for table'
-class CollabReportSpecialist #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : integer : <generated>
-!issue='column should not allow null'
-!issue='column reference missing' * collabReportId : integer : REFERENCES "CollabReports".id
-!issue='column should not allow null'
-!issue='column reference missing' * specialistId : integer : REFERENCES "Users".id
+class CollabReportSpecialists{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * specialistId : integer : REFERENCES "Users".id
 }
 
-!issue='model missing for table'
-class CollabReportStep #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : integer : <generated>
-!issue='column should not allow null'
-!issue='column reference missing' * collabReportId : integer : REFERENCES "CollabReports".id
-!issue='column should not allow null' * collabStepCompleteDate : timestamp with time zone
-!issue='column should not allow null' * collabStepDetail : text
-!issue='column should not allow null' * collabStepId : integer
-!issue='column should not allow null' * collabStepPriority : smallint
+class CollabReportSteps{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * collabStepCompleteDate : date
+ * collabStepDetail : text
+ * collabStepId : integer
+ * collabStepPriority : smallint
 }
 
 class CollabReports{
@@ -267,11 +255,11 @@ class CollabReports{
  * conductMethod : enum
  * description : text
  * duration : smallint
-!issue='column type does not match model: timestamp with time zone != date' * endDate : <color:#d54309>timestamp with time zone</color>
-!issue='column default does not match model' * isStateActivity : boolean : false
+ * endDate : date
+ * isStateActivity : boolean : false
  * name : varchar(255)
-!issue='column type does not match model: timestamp with time zone != date' * startDate : <color:#d54309>timestamp with time zone</color>
-!issue='column default does not match model' * status : enum : 'draft'::"enum_CollabReports_status"
+ * startDate : date
+ * status : enum
 }
 
 class CollaboratorRoles{
@@ -1443,15 +1431,14 @@ class ZALActivityReports{
  session_sig : text
 }
 
-!issue='model missing for table'
-class ZALCollabReportActivityState #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : bigint : <generated>
-!issue='column should not allow null' * data_id : bigint
-!issue='column should not allow null' * dml_as : bigint
-!issue='column should not allow null' * dml_by : bigint
-!issue='column should not allow null' * dml_timestamp : timestamp with time zone
-!issue='column should not allow null' * dml_txid : uuid
-!issue='column should not allow null' * dml_type : enum
+class ZALCollabReportActivityStates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
@@ -1472,60 +1459,56 @@ class ZALCollabReportDataUsed{
  session_sig : text
 }
 
-!issue='model missing for table'
-class ZALCollabReportGoal #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : bigint : <generated>
-!issue='column should not allow null' * data_id : bigint
-!issue='column should not allow null' * dml_as : bigint
-!issue='column should not allow null' * dml_by : bigint
-!issue='column should not allow null' * dml_timestamp : timestamp with time zone
-!issue='column should not allow null' * dml_txid : uuid
-!issue='column should not allow null' * dml_type : enum
+class ZALCollabReportGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
 }
 
-!issue='model missing for table'
-class ZALCollabReportReason #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : bigint : <generated>
-!issue='column should not allow null' * data_id : bigint
-!issue='column should not allow null' * dml_as : bigint
-!issue='column should not allow null' * dml_by : bigint
-!issue='column should not allow null' * dml_timestamp : timestamp with time zone
-!issue='column should not allow null' * dml_txid : uuid
-!issue='column should not allow null' * dml_type : enum
+class ZALCollabReportReasons{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
 }
 
-!issue='model missing for table'
-class ZALCollabReportSpecialist #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : bigint : <generated>
-!issue='column should not allow null' * data_id : bigint
-!issue='column should not allow null' * dml_as : bigint
-!issue='column should not allow null' * dml_by : bigint
-!issue='column should not allow null' * dml_timestamp : timestamp with time zone
-!issue='column should not allow null' * dml_txid : uuid
-!issue='column should not allow null' * dml_type : enum
+class ZALCollabReportSpecialists{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
  session_sig : text
 }
 
-!issue='model missing for table'
-class ZALCollabReportStep #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : bigint : <generated>
-!issue='column should not allow null' * data_id : bigint
-!issue='column should not allow null' * dml_as : bigint
-!issue='column should not allow null' * dml_by : bigint
-!issue='column should not allow null' * dml_timestamp : timestamp with time zone
-!issue='column should not allow null' * dml_txid : uuid
-!issue='column should not allow null' * dml_type : enum
+class ZALCollabReportSteps{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
@@ -2698,7 +2681,11 @@ class ZALZAFilter{
 
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
+!issue='associations need to be defined both directions'
+GoalTemplates "1" --[#d54309,plain,thickness=2]-- "1" CollabReportGoals : goalTemplate
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" CollabReportSpecialists : specialist
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -2716,8 +2703,12 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportActivityStates : collabReport, activityStates
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportDataUsed : collabReport, dataUsed
-CollabReports "1" --[#black,dashed,thickness=2]--{  "n" undefined : specialists, reportReasons, activityStates, reportGoals, steps
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : collabReport, reportGoals
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportReasons : collabReport, reportReasons
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : collabReport, specialists
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSteps : collabReport, steps
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : mapsToCollaboratorType, mapsFromCollaboratorTypes
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goalCollaborator, collaboratorType
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : groupCollaborator, collaboratorType
@@ -2878,20 +2869,5 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
-
-!issue='association missing from models'!issue='associations need to be defined both directions'
-CollabReports o--[#yellow,bold,thickness=2]--o CollabReportActivityState : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-CollabReports o--[#yellow,bold,thickness=2]--o CollabReportGoal : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-CollabReports o--[#yellow,bold,thickness=2]--o CollabReportReason : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-CollabReports o--[#yellow,bold,thickness=2]--o CollabReportSpecialist : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-CollabReports o--[#yellow,bold,thickness=2]--o CollabReportStep : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-GoalTemplates o--[#yellow,bold,thickness=2]--o CollabReportGoal : <color:#2491FF>missing-from-model</color>
-!issue='associations need to be defined both directions'
-Users o--[#yellow,bold,thickness=2]--o CollabReportSpecialist : <color:#2491FF>missing-from-model</color>
 
 @enduml

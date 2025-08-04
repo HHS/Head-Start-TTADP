@@ -21,14 +21,13 @@ module.exports = {
         status: {
           type: Sequelize.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
           allowNull: false,
-          defaultValue: 'draft',
         },
         startDate: {
-          type: Sequelize.DATE,
+          type: Sequelize.DATEONLY,
           allowNull: false,
         },
         endDate: {
-          type: Sequelize.DATE,
+          type: Sequelize.DATEONLY,
           allowNull: false,
         },
         duration: {
@@ -53,7 +52,7 @@ module.exports = {
         },
       }, { transaction });
 
-      await queryInterface.createTable('CollabReportActivityState', {
+      await queryInterface.createTable('CollabReportActivityStates', {
         id: {
           type: Sequelize.INTEGER,
           autoIncrement: true,
@@ -68,7 +67,7 @@ module.exports = {
           },
           onDelete: 'CASCADE',
         },
-        activityStateId: {
+        activityStateCode: {
           type: Sequelize.STRING,
           allowNull: false,
         },
@@ -113,7 +112,7 @@ module.exports = {
         },
       }, { transaction });
 
-      await queryInterface.createTable('CollabReportGoal', {
+      await queryInterface.createTable('CollabReportGoals', {
         id: {
           type: Sequelize.INTEGER,
           autoIncrement: true,
@@ -139,7 +138,7 @@ module.exports = {
         },
       }, { transaction });
 
-      await queryInterface.createTable('CollabReportReason', {
+      await queryInterface.createTable('CollabReportReasons', {
         id: {
           type: Sequelize.INTEGER,
           autoIncrement: true,
@@ -161,10 +160,11 @@ module.exports = {
             'agg_regional_data',
             'develop_presentations',
           ]),
+          allowNull: false,
         },
       }, { transaction });
 
-      await queryInterface.createTable('CollabReportSpecialist', {
+      await queryInterface.createTable('CollabReportSpecialists', {
         id: {
           type: Sequelize.INTEGER,
           autoIncrement: true,
@@ -190,7 +190,7 @@ module.exports = {
         },
       }, { transaction });
 
-      await queryInterface.createTable('CollabReportStep', {
+      await queryInterface.createTable('CollabReportSteps', {
         id: {
           type: Sequelize.INTEGER,
           autoIncrement: true,
@@ -214,7 +214,7 @@ module.exports = {
           allowNull: false,
         },
         collabStepCompleteDate: {
-          type: Sequelize.DATE,
+          type: Sequelize.DATEONLY,
           allowNull: false,
         },
         collabStepPriority: {
