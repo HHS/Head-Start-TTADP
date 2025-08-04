@@ -1109,7 +1109,7 @@ export async function handleSoftDeleteReport(report) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId, activityReportId = null) {
-  const inactiveDayDuration = 90;
+  const inactiveDayDuration = 365;
   const grants = await Recipient.findAll({
     attributes: [
       'id',
@@ -1120,7 +1120,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['number', ['id', 'activityRecipientId'], 'name'],
+        attributes: ['number', ['id', 'activityRecipientId'], 'name', 'status'],
         required: true,
         include: [
           {

@@ -427,7 +427,7 @@ describe('Activity report service', () => {
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
-        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 92)),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
       });
 
       await Grant.create({
@@ -463,8 +463,8 @@ describe('Activity report service', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         activityRecipients: [],
         // Set a start date that will NOT return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() + 92)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 92)),
+        startDate: new Date(new Date().setDate(new Date().getDate() + 366)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 366)),
       });
 
       // Create a ActivityReport without start date.
@@ -1002,11 +1002,11 @@ describe('Activity report service', () => {
 
         expect(recipientWithProgram.name).toBe('recipient with program');
         const createdGrant = await Grant.findOne({ where: { number: 'recipgrantnumber695' } });
-        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695 ');
+        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695');
         const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
         expect(foundReport).not.toBeNull();
         expect(activityRecipients.length).toBe(1);
-        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695  - EHS, HS');
+        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695 - EHS, HS');
       });
       it('excludes soft deleted approvers', async () => {
         // To include deleted approvers in future add paranoid: false
@@ -1336,7 +1336,7 @@ describe('Activity report service', () => {
           (r) => r.id === approvedReport.id,
         );
         expect(foundApprovedReports.length).toBe(1);
-        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
+        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695 - DWN');
       });
 
       it('returns all approved reports when provided with IDs', async () => {
