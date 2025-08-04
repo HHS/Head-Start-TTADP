@@ -16,7 +16,6 @@ import DismissingComponentWrapper from '../../../../../components/DismissingComp
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 
 const Draft = ({
@@ -110,8 +109,6 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Submit Report</h2>
-      <IndicatesRequiredField />
       <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
           showRolesDropdown
@@ -148,12 +145,7 @@ const Draft = ({
             </div>
           </FormItem>
         </Fieldset>
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
-          <p className="margin-top-4">
-            Submitting this form for approval means that you will no longer be in draft
-            mode. Please review all information in each section before submitting to your
-            manager(s) for approval.
-          </p>
+        <Fieldset className="smart-hub--report-legend margin-top-4">
           { !connectionActive && (
             <ConnectionError />
           )}

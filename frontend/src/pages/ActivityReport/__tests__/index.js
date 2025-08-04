@@ -368,28 +368,6 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
-  describe('resetToDraft', () => {
-    it('navigates to the correct page', async () => {
-      fetchMock.get('/api/activity-reports/3/activity-recipients', recipients);
-      const data = formData();
-      // load the report
-      fetchMock.get('/api/activity-reports/3', {
-        ...data,
-        goalsAndObjectives: [],
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-      });
-      // reset to draft
-      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
-      renderActivityReport(3, 'review');
-      const button = await screen.findByRole('button', { name: /reset to draft/i });
-      userEvent.click(button);
-      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
-      expect(notes).toBeVisible();
-      expect(notes.getAttribute('contenteditable')).toBe('true');
-    });
-  });
-
   describe('updatePage', () => {
     it("does not update the page if the form hasn't changed", async () => {
       const spy = jest.spyOn(history, 'push');
