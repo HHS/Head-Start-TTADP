@@ -247,7 +247,7 @@ describe('ReviewSubmit', () => {
         null,
         [{ userId: 1 }],
       );
-      const header = await screen.findByText('Review and approve report');
+      const header = await screen.findByText('Review and approve');
       expect(header).toBeVisible();
       expect(screen.getByRole('button', { name: 'Submit' })).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Submit for approval' })).toBeNull();
