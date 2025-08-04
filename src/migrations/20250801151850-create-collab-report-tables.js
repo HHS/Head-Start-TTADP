@@ -230,23 +230,23 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.dropTable('ZALCollabReportStep', { transaction });
-      await queryInterface.dropTable('CollabReportStep', { transaction });
+      await queryInterface.dropTable('ZALCollabReportSteps', { transaction });
+      await queryInterface.dropTable('CollabReportSteps', { transaction });
 
-      await queryInterface.dropTable('ZALCollabReportSpecialist', { transaction });
-      await queryInterface.dropTable('CollabReportSpecialist', { transaction });
+      await queryInterface.dropTable('ZALCollabReportSpecialists', { transaction });
+      await queryInterface.dropTable('CollabReportSpecialists', { transaction });
 
-      await queryInterface.dropTable('ZALCollabReportReason', { transaction });
-      await queryInterface.dropTable('CollabReportReason', { transaction });
+      await queryInterface.dropTable('ZALCollabReportReasons', { transaction });
+      await queryInterface.dropTable('CollabReportReasons', { transaction });
 
-      await queryInterface.dropTable('ZALCollabReportGoal', { transaction });
-      await queryInterface.dropTable('CollabReportGoal', { transaction });
+      await queryInterface.dropTable('ZALCollabReportGoals', { transaction });
+      await queryInterface.dropTable('CollabReportGoals', { transaction });
 
       await queryInterface.dropTable('ZALCollabReportDataUsed', { transaction });
       await queryInterface.dropTable('CollabReportDataUsed', { transaction });
 
-      await queryInterface.dropTable('ZALCollabReportActivityState', { transaction });
-      await queryInterface.dropTable('CollabReportActivityState', { transaction });
+      await queryInterface.dropTable('ZALCollabReportActivityStates', { transaction });
+      await queryInterface.dropTable('CollabReportActivityStates', { transaction });
 
       await queryInterface.dropTable('ZALCollabReports', { transaction });
       await queryInterface.dropTable('CollabReports', { transaction });
