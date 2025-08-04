@@ -33,7 +33,6 @@ export default (sequelize, DataTypes) => {
     status: {
       allowNull: false,
       type: DataTypes.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
-      defaultValue: 'draft',
     },
     startDate: {
       allowNull: false,
@@ -55,6 +54,7 @@ export default (sequelize, DataTypes) => {
     isStateActivity: {
       allowNull: false,
       type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     conductMethod: {
       allowNull: false,
