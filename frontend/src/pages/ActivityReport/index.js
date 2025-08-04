@@ -574,6 +574,7 @@ function ActivityReport({
 
   const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
+  const hideSideNav = formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
 
   const author = creatorNameWithRole ? (
     <>
@@ -668,11 +669,13 @@ function ActivityReport({
             {author}
           </div>
         </Grid>
-        <Grid col="auto" className="flex-align-self-center margin-left-2">
+        {!hideSideNav && (
+        <Grid col="auto" className="flex-align-self-center">
           {formData.calculatedStatus && (
             <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
+        )}
       </Grid>
       <NetworkContext.Provider value={
         {
@@ -704,6 +707,7 @@ function ActivityReport({
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}
           shouldAutoSave={shouldAutoSave}
+          hideSideNav={hideSideNav}
         />
       </NetworkContext.Provider>
     </div>

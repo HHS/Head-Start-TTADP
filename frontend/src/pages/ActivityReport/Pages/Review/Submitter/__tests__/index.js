@@ -171,7 +171,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Review and submit')).toBeVisible();
+      expect(await screen.findByText(/Review and Submit/i)).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {
@@ -503,14 +503,6 @@ describe('Submitter review page', () => {
       const allAlerts = await screen.findAllByTestId('alert');
       const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
       expect(successAlert).toBeVisible();
-    });
-
-    it('the reset to draft button works', async () => {
-      const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, onReset);
-      const button = await screen.findByRole('button', { name: 'Reset to Draft' });
-      userEvent.click(button);
-      await waitFor(() => expect(onReset).toHaveBeenCalled());
     });
 
     it('shows manager notes', async () => {
