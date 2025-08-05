@@ -155,15 +155,14 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
     // eslint-disable-next-line global-require
       const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
       const reportGoals = await getGoalsForReport(instance.id);
-      // If we have goals that are closed, we need to re-save create a new iteration.
-      const closedGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.CLOSED);
       // If we have at least one closed goal,
       // lets call the save standard goals for report to ensure its all up to snuff.
-      if (closedGoals.length) {
+      // We need to re-save all goals not just the closed ones.
+      if (reportGoals.length) {
         // eslint-disable-next-line global-require
         const { saveStandardGoalsForReport } = require('../../services/standardGoals');
         // Set the status of each closed goal to 'In Progress'.
-        const updateStatusGoals = closedGoals.map((g) => ({
+        const updateStatusGoals = reportGoals.map((g) => ({
           ...g,
           status: GOAL_STATUS.IN_PROGRESS,
         }));
