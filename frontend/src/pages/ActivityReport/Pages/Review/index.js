@@ -102,7 +102,7 @@ const ReviewSubmit = ({
             lastSaveTime={lastSaveTime}
           >
             <>
-              <Accordion bordered={false} items={items} multiselectable />
+              <Accordion bordered={false} items={items} pages={pages} multiselectable />
             </>
           </Submitter>
         )}
@@ -121,7 +121,7 @@ const ReviewSubmit = ({
             onFormSubmit={onFormSubmit}
           >
             <>
-              <Accordion bordered={false} items={items} />
+              <Accordion bordered={false} items={items} pages={pages} canEdit />
             </>
           </Approver>
         )}
