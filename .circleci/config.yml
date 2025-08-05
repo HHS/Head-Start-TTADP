@@ -275,8 +275,8 @@ jobs:
     - run:
         name: Audit vulnerability of backend node_modules
         command: |
-          chmod 744 ./run-yarn-audit.sh
-          ./run-yarn-audit.sh;
+          chmod 744 ./tools/run-yarn-audit.js
+          ./tools/run-yarn-audit.js;
     - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
@@ -284,8 +284,8 @@ jobs:
         name: Audit vulnerability of frontend node_modules
         command: |
           cd frontend
-          chmod 744 ./run-yarn-audit.sh
-          ./run-yarn-audit.sh;
+          chmod 744 ../tools/run-yarn-audit.js
+          ../tools/run-yarn-audit.js;
     - store_artifacts:
         path: reports
         destination: backend-lint.xml
