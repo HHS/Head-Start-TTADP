@@ -672,7 +672,7 @@ function ActivityReport({
         {!hideSideNav && (
         <Grid col="auto" className="flex-align-self-center">
           {formData.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2`}>{startCase(formData.calculatedStatus)}</div>
+            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2 margin-left-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
         )}
