@@ -4,7 +4,7 @@ const { formatDate } = require('../lib/modelHelpers');
 export default (sequelize, DataTypes) => {
   class CollabReport extends Model {
     static associate(models) {
-      CollabReport.hasMany(models.CollabReportSpecialist, { foreignKey: 'collabReportId', as: 'specialists' });
+      CollabReport.hasMany(models.CollabReportSpecialist, { foreignKey: 'collabReportId', as: 'collabReportSpecialists' });
       CollabReport.belongsToMany(models.User, {
         through: models.CollabReportSpecialist,
         foreignKey: 'collabReportId',
