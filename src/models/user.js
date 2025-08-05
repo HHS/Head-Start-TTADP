@@ -30,7 +30,12 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
       User.belongsToMany(models.NationalCenter, { through: models.NationalCenterUser, foreignKey: 'userId', as: 'nationalCenters' });
       User.hasMany(models.CollabReportSpecialist, { foreignKey: 'userId', as: 'specialist' });
-      User.hasMany(models.CollabReport, { foreignKey: 'userId', as: 'collaboratingSpecialists' });
+      User.belongsToMany(models.CollabReport, {
+        through: models.CollabReportSpecialist,
+        foreignKey: 'specialistId',
+        otherKey: 'collabReportId',
+        as: 'collaborativeReports',
+      });
     }
   }
   User.init({
