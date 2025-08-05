@@ -90,7 +90,7 @@ const Review = ({
       }
 
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top" legend="Review and submit report">
+        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top">
           <Label htmlFor="note">Add manager notes</Label>
           <div className={`margin-top-1 ${textAreaClass}`}>
             <HookFormRichEditor
@@ -137,12 +137,7 @@ const Review = ({
           </>
         ) : (
           <div className="margin-bottom-3">
-            <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
-              <p className="margin-top-4">
-                Submitting this form for approval means that you will no longer be in draft
-                mode. Please review all information in each section before submitting to your
-                manager(s) for approval.
-              </p>
+            <Fieldset className="smart-hub--report-legend margin-top-4">
               <FormItem
                 label="Approving manager"
                 name="approvers"
