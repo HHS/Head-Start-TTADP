@@ -312,12 +312,30 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       ? report.activityReportObjectives.map((a) => a.objectiveId)
       : [];
 
+    // Filter out objectives that are linked to closed goals.
+    // If we are unlocking a report that is linked to closed goals,
+    // we should keep the objectives closed. And start a new goal cycle,
+    // with new objectives in the hook on re-submission.
+    const goalsThatAreNotClosed = await sequelize.models.Goal.findAll({
+      where: { status: { [Op.ne]: GOAL_STATUS.CLOSED } },
+      include: [{
+        model: sequelize.models.Objective,
+        as: 'objectives',
+        required: true,
+        where: { id: objectivesToReset },
+      }],
+    });
+
+    const objectiveIdsForNotClosedGoals = goalsThatAreNotClosed.map(
+      (g) => g.objectives.map((o) => o.id),
+    ).flat();
     // we don't need to run this query with an empty array I don't think
-    if (objectivesToReset.length) {
+    // We also don't want to update the status of objectives that are linked to closed goals.
+    if (objectiveIdsForNotClosedGoals.length) {
       return sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
-        where: { id: objectivesToReset },
+        where: { id: objectiveIdsForNotClosedGoals },
         individualHooks: true,
       });
     }
