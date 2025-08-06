@@ -137,7 +137,7 @@ export default function ViewGoalDetails({
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
-      handleToggle: () => {}, // Add dummy handler to satisfy prop-types
+      handleToggle: () => { }, // Add dummy handler to satisfy prop-types
       className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
@@ -193,45 +193,59 @@ export default function ViewGoalDetails({
             )}
           </div>
 
-          <div className="goal-status-section">
-            <ReadOnlyField label="Goal status">
-              {goal.status}
-            </ReadOnlyField>
-          </div>
+          {goal.responses && goal.responses.length > 0 && (            
+              <ReadOnlyField label="Root causes">
+                {goal.responses.map((response) => (
+                  <div key={response.id}>
+                    {Array.isArray(response.response) ? (
+                      response.response.join(', ')                                     
+                    ) : (
+                      <p>{response.response}</p>
+                    )}
+                  </div>
+                ))}
+              </ReadOnlyField>
+          )}
 
-          {objectives.length > 0 && (
-            <div className="objective-section">
-              {objectives.map((objective) => (
-                <div key={objective.id} className="margin-bottom-3">
-                  <h3 className="smart-hub-serif">Objective summary</h3>
-                  <ReadOnlyField label="TTA objective">
-                    {objective.title}
-                  </ReadOnlyField>
+              <div className="goal-status-section">
+                <ReadOnlyField label="Goal status">
+                  {goal.status}
+                </ReadOnlyField>
+              </div>
 
-                  {/* Display Reports */}
-                  {objective.activityReportObjectives
-                      && objective.activityReportObjectives.length > 0 && (
-                        <div className="margin-top-2">
-                          <ReadOnlyField label="Reports">
-                            {objective.activityReportObjectives
-                              .filter((aro) => aro.activityReport)
-                              .map((aro, reportIndex, array) => (
-                                <React.Fragment key={`report-${aro.activityReport.id}`}>
-                                  <Link to={`/activity-reports/${aro.activityReport.id}`}>
-                                    {aro.activityReport.displayId}
-                                  </Link>
-                                  {reportIndex < array.length - 1 && ', '}
-                                </React.Fragment>
-                              ))}
-                          </ReadOnlyField>
-                        </div>
-                  )}
+              {objectives.length > 0 && (
+                <div className="objective-section">
+                  {objectives.map((objective) => (
+                    <div key={objective.id} className="margin-bottom-3">
+                      <h3 className="smart-hub-serif">Objective summary</h3>
+                      <ReadOnlyField label="TTA objective">
+                        {objective.title}
+                      </ReadOnlyField>
 
-                  {/* Display Topics */}
-                  {!objective.activityReportObjectives
-                      || !objective.activityReportObjectives.some(
-                        (aro) => aro.topics && aro.topics.length > 0,
-                      ) ? null : (
+                      {/* Display Reports */}
+                      {objective.activityReportObjectives
+                        && objective.activityReportObjectives.length > 0 && (
+                          <div className="margin-top-2">
+                            <ReadOnlyField label="Reports">
+                              {objective.activityReportObjectives
+                                .filter((aro) => aro.activityReport)
+                                .map((aro, reportIndex, array) => (
+                                  <React.Fragment key={`report-${aro.activityReport.id}`}>
+                                    <Link to={`/activity-reports/${aro.activityReport.id}`}>
+                                      {aro.activityReport.displayId}
+                                    </Link>
+                                    {reportIndex < array.length - 1 && ', '}
+                                  </React.Fragment>
+                                ))}
+                            </ReadOnlyField>
+                          </div>
+                        )}
+
+                      {/* Display Topics */}
+                      {!objective.activityReportObjectives
+                        || !objective.activityReportObjectives.some(
+                          (aro) => aro.topics && aro.topics.length > 0,
+                        ) ? null : (
                         <div className="margin-top-2">
                           <ReadOnlyField label="Topics">
                             {objective.activityReportObjectives
@@ -249,13 +263,13 @@ export default function ViewGoalDetails({
                               ))}
                           </ReadOnlyField>
                         </div>
-                    )}
+                      )}
 
-                  {/* Display Resources */}
-                  {!objective.activityReportObjectives
-                      || !objective.activityReportObjectives.some(
-                        (aro) => aro.resources && aro.resources.length > 0,
-                      ) ? null : (
+                      {/* Display Resources */}
+                      {!objective.activityReportObjectives
+                        || !objective.activityReportObjectives.some(
+                          (aro) => aro.resources && aro.resources.length > 0,
+                        ) ? null : (
                         <div className="margin-top-2">
                           {/* Render label and list separately to avoid nesting ul in p */}
                           <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
@@ -276,90 +290,71 @@ export default function ViewGoalDetails({
                               ))}
                           </ul>
                         </div>
-                    )}
+                      )}
 
-                  {/* Display Objective Status */}
-                  <ReadOnlyField label="Objective status" className="margin-top-2">
-                    {objective.status}
-                  </ReadOnlyField>
+                      {/* Display Objective Status */}
+                      <ReadOnlyField label="Objective status" className="margin-top-2">
+                        {objective.status}
+                      </ReadOnlyField>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-
-          {goal.responses && goal.responses.length > 0 && (
-            <div className="responses-section">
-              <h3>Root causes</h3>
-                {goal.responses.map((response) => (
-                  <div key={response.id}>
-                    {Array.isArray(response.response) ? (
-                      <ul className="usa-list">
-                        {response.response.map((item) => (
-                          <li key={`root-cause-${item}`}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>{response.response}</p>
-                    )}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      ),
+          ),
     };
   });
 
-  return (
-    <>
-      <Link
-        className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-        to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
-      >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-        <span>Back to RTTAPA</span>
-      </Link>
+          return (
+          <>
+            <Link
+              className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
+              to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
+            >
+              <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+              <span>Back to RTTAPA</span>
+            </Link>
 
-      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
-        TTA Goals for
-        {' '}
-        {recipient.name}
-        {' '}
-        - Region
-        {' '}
-        {regionId}
-      </h1>
+            <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
+              TTA Goals for
+              {' '}
+              {recipient.name}
+              {' '}
+              - Region
+              {' '}
+              {regionId}
+            </h1>
 
-      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        <div className="margin-bottom-5">
-          <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
-          <ReadOnlyField label="Recipient grant numbers">
-            {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
-          </ReadOnlyField>
-          <ReadOnlyField label="Recipient's goal">
-            {firstGoal.name || goalTemplateName}
-          </ReadOnlyField>
-        </div>
+            <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
+              <div className="margin-bottom-5">
+                <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
+                <ReadOnlyField label="Recipient grant numbers">
+                  {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
+                </ReadOnlyField>
+                <ReadOnlyField label="Recipient's goal">
+                  {firstGoal.name || goalTemplateName}
+                </ReadOnlyField>
+              </div>
 
-        <Accordion
-          bordered
-          items={accordionItems}
-        />
-      </Container>
-    </>
-  );
+              <Accordion
+                bordered
+                items={accordionItems}
+              />
+            </Container>
+          </>
+          );
 }
 
-ViewGoalDetails.propTypes = {
-  recipient: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    grants: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        numberWithProgramTypes: PropTypes.string,
+          ViewGoalDetails.propTypes = {
+            recipient: PropTypes.shape({
+            id: PropTypes.number,
+          name: PropTypes.string,
+          grants: PropTypes.arrayOf(
+          PropTypes.shape({
+            id: PropTypes.number,
+          numberWithProgramTypes: PropTypes.string,
       }),
-    ),
+          ),
   }).isRequired,
-  regionId: PropTypes.string.isRequired,
+          regionId: PropTypes.string.isRequired,
 };
