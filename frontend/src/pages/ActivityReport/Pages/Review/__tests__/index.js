@@ -160,7 +160,7 @@ describe('ReviewSubmit', () => {
       const calculatedStatus = REPORT_STATUSES.DRAFT;
 
       renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus);
-      const header = await screen.findByText('Review and Submit');
+      const header = await screen.findByText(/review and submit/i);
       expect(header).toBeVisible();
       expect(screen.queryAllByRole('button', { name: 'Submit' }).length).toBe(0);
       expect(screen.queryByRole('button', { name: 'Submit for approval' })).toBeVisible();
@@ -189,7 +189,7 @@ describe('ReviewSubmit', () => {
         null,
         [{ userId: 1 }],
       );
-      const header = await screen.findByText('Review and Submit');
+      const header = await screen.findByText(/review and submit/i);
       expect(header).toBeVisible();
       expect(screen.queryAllByRole('button', { name: 'Submit' }).length).toBe(0);
       expect(screen.queryByRole('button', { name: 'Submit for approval' })).toBeVisible();
@@ -218,7 +218,7 @@ describe('ReviewSubmit', () => {
         null,
         [{ userId: 1 }],
       );
-      const header = await screen.findByText('Review and Submit');
+      const header = await screen.findByText(/review and submit/i);
       expect(header).toBeVisible();
       expect(screen.queryAllByRole('button', { name: 'Submit' }).length).toBe(0);
       expect(screen.getByRole('button', { name: 'Submit for approval' })).toBeVisible();

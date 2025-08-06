@@ -630,6 +630,7 @@ export async function getStardard(
 
   return { standard, requiresPrompts };
 }
+type GoalStatusType = typeof GOAL_STATUS[keyof typeof GOAL_STATUS];
 
 // This function will handle
 // - creating a new standard goal
@@ -642,7 +643,8 @@ export async function newStandardGoal(
   objectives?: Array<IObjective>,
   // todo: if we ever add more prompt responses, we will need to make this next param generic
   rootCauses?: Array<string>,
-  status: string = GOAL_STATUS.NOT_STARTED, // default to not started
+  // default to not started
+  status: GoalStatusType = GOAL_STATUS.NOT_STARTED, // default to not started
 ) {
   const { standard, requiresPrompts } = await getStardard(standardGoalId, grantId, rootCauses);
 
