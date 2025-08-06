@@ -31,8 +31,12 @@ export default function useGoalTemplatePrompts(
       }
     }
 
-    if (goalTemplateId && ((!goalTemplatePrompts)
-      || (goalTemplateId !== currentGoalTemplateId))) {
+    if (!goalTemplateId) {
+      return;
+    }
+
+    if ((!goalTemplatePrompts)
+      || (goalTemplateId !== currentGoalTemplateId)) {
       setCurrentGoalTemplateId(goalTemplateId);
       fetchGoalTemplatePrompts();
     }

@@ -12,8 +12,9 @@ The TTA Hub integrates with IT-AMS to retrieve and process monitoring data relat
 2. The TTA Hub downloads the data via SFTP from IT-AMS host.
 3. Relevant data is processed and stored in the PostgreSQL database at **8:30 AM EST**.
 4. The system matches reviews with grant recipients and auto-generates goals.
-5. The HSES system processes its copy at **8:00 AM EST** to ensure visibility.
-6. Specialists can manually add objectives based on compliance citations.
+5. If an AR has propagated a Monitoring goal to a replacing grant, that goal is marked as 'monitoring' so it can be used like the auto-generated goals.
+6. The HSES system processes its copy at **8:00 AM EST** to ensure visibility.
+7. Specialists can manually add objectives based on compliance citations.
 
 ## Key System Components
 - **IT-AMS**: The external system that generates monitoring review data.
@@ -128,7 +129,7 @@ A: It tracks monitoring reviews, ensuring grant recipients receive TTA to help a
 A: The system updates daily at 8:30 AM EST, after HSES processes its copy at 8:00 AM EST.
 
 ### Q: Can specialists manually edit goals?
-A: Yes, specialists can add objectives to automatically created monitoring goals.
+A: Specialists can add objectives to automatically created monitoring goals, or goals on their replacement grants once they have been marked by the daily job.
 
 ### Q: What happens if data import fails?
 A: If the automatic import fails, an engineer must manually run an import command in production.
@@ -137,7 +138,7 @@ A: If the automatic import fails, an engineer must manually run an import comman
 A: The intent is for citations to be available to select within the time period that TTA is being provided and ARs written. So:
 - As a prerequisite, a **Review** needs to reach a `Complete` status while being linked an `Active` **Finding** so a **Monitoring Goal** is created and available for use in ARs
 - The **Finding** must be linked through a **MonitoringFindingStandards** record to a **MonitoringStandards** record, which contains the citation text
-- As long as the **Finding** remains in `Active` status, it will remain selectable on ARs using the monitoring goal.
+- As long as the **Finding** remains in `Active` or `Elevated Deficiency` status, it will remain selectable on ARs using the monitoring goal.
 - Regardless of **Finding** status, if the _most recent_ **Review** has not reached a `Complete` state with a `reportDeliveryDate` prior to the AR `startDate`, then the citation will remain selectable
 - Once _both_ the most recent **Review** is `Complete` with a `reportDeliveryDate` prior to the AR `startDate` _and_ the **Finding** reaches one of the terminal states (`Corrected`,`Withdrawn`,`Closed`), then the citation will not appear or be selectable.
 
