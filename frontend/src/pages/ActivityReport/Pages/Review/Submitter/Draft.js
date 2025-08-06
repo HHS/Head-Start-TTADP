@@ -113,7 +113,7 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Review and submit</h2>
+      <h2 className="font-family-serif">Review and submit</h2>
       <IndicatesRequiredField />
       <p className="usa-prose margin-top-2 margin-bottom-3">
         Review the information in each section before submitting for approval.
