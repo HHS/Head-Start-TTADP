@@ -14,7 +14,6 @@ const Submitter = ({
   availableApprovers,
   onFormSubmit,
   formData,
-  onResetToDraft,
   children,
   error,
   onSaveForm,
@@ -43,10 +42,6 @@ const Submitter = ({
       updateApproverStatusList(updatedApprovers);
     }
   }, [approvers, formData]);
-
-  const resetToDraft = async () => {
-    await onResetToDraft();
-  };
 
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
@@ -212,7 +207,6 @@ const Submitter = ({
           && (
             <Submitted
               additionalNotes={additionalNotes}
-              resetToDraft={resetToDraft}
               reportId={id}
               displayId={displayId}
               approverStatusList={approverStatusList}
@@ -246,7 +240,6 @@ const Submitter = ({
 };
 
 Submitter.propTypes = {
-  onResetToDraft: PropTypes.func.isRequired,
   error: PropTypes.string,
   children: PropTypes.node.isRequired,
   onSaveForm: PropTypes.func.isRequired,
