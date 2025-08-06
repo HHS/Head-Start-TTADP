@@ -36,6 +36,7 @@ export default function GoalForm({
   const [templateResponses, templatePrompts] = useGoalTemplatePrompts(
     goal.goalTemplateId,
     goal.goalIds,
+    true // isForActivityReport (looks like it is)
   );
 
   /**
