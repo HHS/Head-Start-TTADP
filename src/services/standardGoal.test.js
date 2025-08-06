@@ -1327,4 +1327,3 @@ describe('standardGoal service', () => {
     });
   });
 });
-
