@@ -8,7 +8,6 @@ import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from '../Approved';
 import Submitted from './Submitted';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Submitter = ({
   availableApprovers,
@@ -166,18 +165,6 @@ const Submitter = ({
   return (
     <>
       {renderTopAlert()}
-      {!submitted && (
-      <Container skipTopPadding className="margin-top-2 padding-top-2">
-        <h2 className="font-family-serif">Review and Submit</h2>
-        <IndicatesRequiredField />
-        <p className="margin-top-0">
-          {/* eslint-disable-next-line max-len */}
-          Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.
-        </p>
-      </Container>
-      )}
-
-      {/* Accordion of "pages" items goes here */}
       {children}
 
       <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!submitted && !draft}>
@@ -202,6 +189,7 @@ const Submitter = ({
               creatorRole={creatorRole}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
+              reviewItems={reviewItems}
             />
           )}
         {submitted

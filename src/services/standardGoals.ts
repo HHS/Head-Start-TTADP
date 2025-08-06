@@ -329,7 +329,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId, report) {
+export async function saveStandardGoalsForReport(goals, userId, report, createInProgress = false) {
   // Loop goal templates.
   let currentObjectives = [];
 
@@ -384,7 +384,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
           createdVia: 'activityReport',
           name: goalTemplate.templateName,
           grantId,
-          status: GOAL_STATUS.NOT_STARTED,
+          status: createInProgress ? GOAL_STATUS.IN_PROGRESS : GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
       }
 
@@ -630,6 +630,7 @@ export async function getStardard(
 
   return { standard, requiresPrompts };
 }
+type GoalStatusType = typeof GOAL_STATUS[keyof typeof GOAL_STATUS];
 
 // This function will handle
 // - creating a new standard goal
@@ -642,6 +643,8 @@ export async function newStandardGoal(
   objectives?: Array<IObjective>,
   // todo: if we ever add more prompt responses, we will need to make this next param generic
   rootCauses?: Array<string>,
+  // default to not started
+  status: GoalStatusType = GOAL_STATUS.NOT_STARTED, // default to not started
 ) {
   const { standard, requiresPrompts } = await getStardard(standardGoalId, grantId, rootCauses);
 
@@ -650,7 +653,7 @@ export async function newStandardGoal(
   }
 
   const newGoal = await Goal.create({
-    status: GOAL_STATUS.NOT_STARTED,
+    status,
     name: standard.templateName,
     grantId,
     goalTemplateId: standard.id,
@@ -836,6 +839,10 @@ export async function standardGoalsForRecipient(
             INNER JOIN "GoalTemplates" gt2 ON g2."goalTemplateId" = gt2.id
             WHERE gr2."recipientId" = ${recipientId}
             AND gr2."regionId" = ${regionId}
+            AND (
+              g2."createdVia" !='activityReport' 
+              OR (g2."createdVia" = 'activityReport' AND g2."onApprovedAR" = true)
+            )
             GROUP BY g2."goalTemplateId", g2."grantId"
           )`),
         ),
