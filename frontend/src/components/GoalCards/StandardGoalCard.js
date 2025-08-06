@@ -248,6 +248,11 @@ export default function StandardGoalCard({
     );
   };
 
+  const getResponses = () => {
+    const responses = goal.responses && goal.responses.length ? goal.responses[0].response : [];
+    return responses.map((r) => r).join(', ');
+  };
+
   return (
     <DataCard testId="goalCard" className="ttahub-goal-card position-relative" errorBorder={erroneouslySelected || deleteError || statusChangeError}>
       <div className="display-flex">
@@ -277,7 +282,7 @@ export default function StandardGoalCard({
                   previousStatus={previousStatus || 'Not Started'}
                   regionId={regionId}
                 />
-                { !readonly && (
+                {!readonly && (
                   <ContextMenu
                     label={contextMenuLabel}
                     menuItems={menuItems}
@@ -317,6 +322,16 @@ export default function StandardGoalCard({
                   />
                 )}
               </p>
+              {goal.responses && goal.responses.length ? (
+                <div className="grid-row">
+                  <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
+                    Root cause:
+                  </p>
+                  <p className="usa-prose margin-bottom-0 margin-top-1">
+                    {getResponses()}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             {/* Right section - Details */}
