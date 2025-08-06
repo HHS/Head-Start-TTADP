@@ -1,5 +1,4 @@
 import React, { useContext } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
@@ -8,7 +7,6 @@ import {
   Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
-import { useHistory } from 'react-router-dom';
 import IncompletePages from '../../../../../components/IncompletePages';
 import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
@@ -28,26 +26,12 @@ const Review = ({
   dateSubmitted,
   pages,
   showDraftViewForApproverAndCreator,
-  creatorIsApprover,
-  onResetToDraft,
-  calculatedStatus,
   availableApprovers,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('note');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
   const { user } = useContext(UserContext);
-  const history = useHistory();
-
-  const onReset = async () => {
-    try {
-      await onResetToDraft();
-      history.push('/activity-reports');
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(err);
-    }
-  };
 
   const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
   const otherManagerNotes = approverStatusList
@@ -65,8 +49,6 @@ const Review = ({
   const incompletePages = filtered.map((f) => f.label);
   const hasIncompletePages = incompletePages.length > 0;
   const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
-
-  const showReset = (calculatedStatus !== REPORT_STATUSES.DRAFT && creatorIsApprover);
 
   return (
     <>
@@ -156,7 +138,6 @@ const Review = ({
         <ApproverStatusList approverStatus={approverStatusList} />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Update report' : 'Submit'}</Button>
-        {showReset && <Button className="margin-bottom-3" type="button" outline onClick={onReset}>Reset to Draft</Button>}
       </Form>
     </>
   );
@@ -172,14 +153,11 @@ Review.propTypes = {
     status: PropTypes.string,
   })),
   showDraftViewForApproverAndCreator: PropTypes.bool.isRequired,
-  creatorIsApprover: PropTypes.bool,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
-  calculatedStatus: PropTypes.string.isRequired,
   availableApprovers: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -191,7 +169,6 @@ Review.defaultProps = {
   additionalNotes: '',
   approverStatusList: [],
   dateSubmitted: null,
-  creatorIsApprover: false,
 };
 
 export default Review;
