@@ -33,7 +33,6 @@ const reviewPage = {
       onReview,
       isApprover,
       isPendingApprover,
-      onResetToDraft,
       onSaveForm,
       allPages,
       reportCreator,
@@ -46,7 +45,6 @@ const reviewPage = {
         onReview={onReview}
         isApprover={isApprover}
         isPendingApprover={isPendingApprover}
-        onResetToDraft={onResetToDraft}
         lastSaveTime={lastSaveTime}
         reviewItems={
           pages.map((p) => ({
