@@ -31,7 +31,7 @@ export default function useGoalTemplatePrompts(
       }
     }
 
-    if(!goalTemplateId) {
+    if (!goalTemplateId) {
       return;
     }
 
