@@ -8,7 +8,6 @@ import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from '../Approved';
 import Submitted from './Submitted';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Submitter = ({
   availableApprovers,
