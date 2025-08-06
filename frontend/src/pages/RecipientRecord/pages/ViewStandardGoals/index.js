@@ -137,7 +137,7 @@ export default function ViewGoalDetails({
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
-      handleToggle: () => {}, // Add dummy handler to satisfy prop-types
+      handleToggle: () => { }, // Add dummy handler to satisfy prop-types
       className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
@@ -193,6 +193,20 @@ export default function ViewGoalDetails({
             )}
           </div>
 
+          {goal.responses && goal.responses.length > 0 && (
+          <ReadOnlyField label="Root causes">
+            {goal.responses.map((response) => (
+              <div key={response.id}>
+                {Array.isArray(response.response) ? (
+                  response.response.join(', ')
+                ) : (
+                  <p>{response.response}</p>
+                )}
+              </div>
+            ))}
+          </ReadOnlyField>
+          )}
+
           <div className="goal-status-section">
             <ReadOnlyField label="Goal status">
               {goal.status}
@@ -200,110 +214,91 @@ export default function ViewGoalDetails({
           </div>
 
           {objectives.length > 0 && (
-            <div className="objective-section">
-              {objectives.map((objective) => (
-                <div key={objective.id} className="margin-bottom-3">
-                  <h3 className="smart-hub-serif">Objective summary</h3>
-                  <ReadOnlyField label="TTA objective">
-                    {objective.title}
-                  </ReadOnlyField>
+          <div className="objective-section">
+            {objectives.map((objective) => (
+              <div key={objective.id} className="margin-bottom-3">
+                <h3 className="smart-hub-serif">Objective summary</h3>
+                <ReadOnlyField label="TTA objective">
+                  {objective.title}
+                </ReadOnlyField>
 
-                  {/* Display Reports */}
-                  {objective.activityReportObjectives
-                      && objective.activityReportObjectives.length > 0 && (
-                        <div className="margin-top-2">
-                          <ReadOnlyField label="Reports">
-                            {objective.activityReportObjectives
-                              .filter((aro) => aro.activityReport)
-                              .map((aro, reportIndex, array) => (
-                                <React.Fragment key={`report-${aro.activityReport.id}`}>
-                                  <Link to={`/activity-reports/${aro.activityReport.id}`}>
-                                    {aro.activityReport.displayId}
-                                  </Link>
-                                  {reportIndex < array.length - 1 && ', '}
-                                </React.Fragment>
-                              ))}
-                          </ReadOnlyField>
-                        </div>
+                {/* Display Reports */}
+                {objective.activityReportObjectives
+                        && objective.activityReportObjectives.length > 0 && (
+                          <div className="margin-top-2">
+                            <ReadOnlyField label="Reports">
+                              {objective.activityReportObjectives
+                                .filter((aro) => aro.activityReport)
+                                .map((aro, reportIndex, array) => (
+                                  <React.Fragment key={`report-${aro.activityReport.id}`}>
+                                    <Link to={`/activity-reports/${aro.activityReport.id}`}>
+                                      {aro.activityReport.displayId}
+                                    </Link>
+                                    {reportIndex < array.length - 1 && ', '}
+                                  </React.Fragment>
+                                ))}
+                            </ReadOnlyField>
+                          </div>
+                )}
+
+                {/* Display Topics */}
+                {!objective.activityReportObjectives
+                        || !objective.activityReportObjectives.some(
+                          (aro) => aro.topics && aro.topics.length > 0,
+                        ) ? null : (
+                          <div className="margin-top-2">
+                            <ReadOnlyField label="Topics">
+                              {objective.activityReportObjectives
+                                .flatMap((aro) => aro.topics || [])
+                                .filter(
+                                  (topic, i, self) => i === self.findIndex(
+                                    (t) => t.id === topic.id,
+                                  ),
+                                )
+                                .map((topic, topicIndex, array) => (
+                                  <React.Fragment key={`topic-${topic.id}`}>
+                                    {topic.name}
+                                    {topicIndex < array.length - 1 && ', '}
+                                  </React.Fragment>
+                                ))}
+                            </ReadOnlyField>
+                          </div>
                   )}
 
-                  {/* Display Topics */}
-                  {!objective.activityReportObjectives
-                      || !objective.activityReportObjectives.some(
-                        (aro) => aro.topics && aro.topics.length > 0,
-                      ) ? null : (
-                        <div className="margin-top-2">
-                          <ReadOnlyField label="Topics">
-                            {objective.activityReportObjectives
-                              .flatMap((aro) => aro.topics || [])
-                              .filter(
-                                (topic, i, self) => i === self.findIndex(
-                                  (t) => t.id === topic.id,
-                                ),
-                              )
-                              .map((topic, topicIndex, array) => (
-                                <React.Fragment key={`topic-${topic.id}`}>
-                                  {topic.name}
-                                  {topicIndex < array.length - 1 && ', '}
-                                </React.Fragment>
-                              ))}
-                          </ReadOnlyField>
-                        </div>
-                    )}
+                {/* Display Resources */}
+                {!objective.activityReportObjectives
+                        || !objective.activityReportObjectives.some(
+                          (aro) => aro.resources && aro.resources.length > 0,
+                        ) ? null : (
+                          <div className="margin-top-2">
+                            {/* Render label and list separately to avoid nesting ul in p */}
+                            <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
+                            <ul className="usa-list margin-top-0">
+                              {objective.activityReportObjectives
+                                .flatMap((aro) => aro.resources || [])
+                                .filter(
+                                  (resource, i, self) => i === self.findIndex(
+                                    (r) => r.id === resource.id,
+                                  ),
+                                )
+                                .map((resource) => (
+                                  <li key={`resource-${resource.id}`}>
+                                    <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                      {resource.title || resource.url}
+                                    </a>
+                                  </li>
+                                ))}
+                            </ul>
+                          </div>
+                  )}
 
-                  {/* Display Resources */}
-                  {!objective.activityReportObjectives
-                      || !objective.activityReportObjectives.some(
-                        (aro) => aro.resources && aro.resources.length > 0,
-                      ) ? null : (
-                        <div className="margin-top-2">
-                          {/* Render label and list separately to avoid nesting ul in p */}
-                          <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-                          <ul className="usa-list margin-top-0">
-                            {objective.activityReportObjectives
-                              .flatMap((aro) => aro.resources || [])
-                              .filter(
-                                (resource, i, self) => i === self.findIndex(
-                                  (r) => r.id === resource.id,
-                                ),
-                              )
-                              .map((resource) => (
-                                <li key={`resource-${resource.id}`}>
-                                  <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                                    {resource.title || resource.url}
-                                  </a>
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                    )}
-
-                  {/* Display Objective Status */}
-                  <ReadOnlyField label="Objective status" className="margin-top-2">
-                    {objective.status}
-                  </ReadOnlyField>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {goal.responses && goal.responses.length > 0 && (
-            <div className="responses-section">
-              <h3>Root causes</h3>
-                {goal.responses.map((response) => (
-                  <div key={response.id}>
-                    {Array.isArray(response.response) ? (
-                      <ul className="usa-list">
-                        {response.response.map((item) => (
-                          <li key={`root-cause-${item}`}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>{response.response}</p>
-                    )}
-                  </div>
-                ))}
-            </div>
+                {/* Display Objective Status */}
+                <ReadOnlyField label="Objective status" className="margin-top-2">
+                  {objective.status}
+                </ReadOnlyField>
+              </div>
+            ))}
+          </div>
           )}
         </div>
       ),

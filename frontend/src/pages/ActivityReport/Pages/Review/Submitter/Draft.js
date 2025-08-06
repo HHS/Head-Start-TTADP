@@ -6,7 +6,6 @@ import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
-import { Accordion } from '../../../../../components/Accordion';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../../../../../components/IncompletePages';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
@@ -17,7 +16,6 @@ import DismissingComponentWrapper from '../../../../../components/DismissingComp
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
 
 const Draft = ({
@@ -32,7 +30,6 @@ const Draft = ({
   creatorRole,
   grantsMissingMonitoring,
   grantsMissingCitations,
-  reviewItems,
 }) => {
   const {
     watch,
@@ -113,16 +110,6 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Review and submit</h2>
-      <IndicatesRequiredField />
-      <p className="usa-prose margin-top-2 margin-bottom-3">
-        Review the information in each section before submitting for approval.
-        <br />
-        Once submitted, you will no longer be able to edit the report.
-      </p>
-      {reviewItems && reviewItems.length > 0 && (
-      <Accordion bordered items={reviewItems} multiselectable />
-      )}
       <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
           showRolesDropdown
@@ -159,12 +146,7 @@ const Draft = ({
             </div>
           </FormItem>
         </Fieldset>
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
-          <p className="margin-top-4">
-            Submitting this form for approval means that you will no longer be in draft
-            mode. Please review all information in each section before submitting to your
-            manager(s) for approval.
-          </p>
+        <Fieldset className="smart-hub--report-legend margin-top-4">
           { !connectionActive && (
             <ConnectionError />
           )}
@@ -257,11 +239,6 @@ Draft.propTypes = {
   creatorRole: PropTypes.string.isRequired,
   grantsMissingMonitoring: PropTypes.arrayOf(PropTypes.string).isRequired,
   grantsMissingCitations: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reviewItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    title: PropTypes.string,
-    content: PropTypes.node,
-  })).isRequired,
 };
 
 Draft.defaultProps = {

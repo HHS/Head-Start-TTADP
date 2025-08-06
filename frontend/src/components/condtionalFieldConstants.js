@@ -89,7 +89,6 @@ const updateRefToInitialValues = (initialValues, prompts) => {
 * grant on the report has a prompt to get a response on the goal form.
 */
 export const
-
   combinePrompts = (
     goalResponses,
     templateResponses,
@@ -100,12 +99,6 @@ export const
     templatePrompts,
     activityRecipients,
   ) => {
-    /*
-    console.log('1. For Combine: goalPrompts', goalResponses);
-    console.log('2. For Combine: templateResponses', templateResponses);
-    console.log('3. For Combine: templatePrompts', templatePrompts);
-    console.log('4. For Combine: grantIds', activityRecipients);
-    */
     // Get a distinct list of prompts per grant.
     const promptsPerGrant = uniqBy([
       ...(templateResponses || []),
@@ -123,8 +116,6 @@ export const
         grantId: prompt.grantId,
       })),
     ], (item) => `${item.grantId || ''}__${item.title}`);
-
-    // console.log('5. For Combine: promptsPerGrant', promptsPerGrant);
 
     // Loop all templatePrompts and add prompts for any grants that don't have prompts yet.
     const result = [];
@@ -161,7 +152,6 @@ export const
         }
       });
     });
-    // console.log('6. For Combine: result', result);
     return result;
   };
 

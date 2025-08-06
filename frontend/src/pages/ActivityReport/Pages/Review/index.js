@@ -9,6 +9,7 @@ import PrintSummary from '../PrintSummary';
 import './index.scss';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
+import { Accordion } from '../../../../components/Accordion';
 
 const ReviewSubmit = ({
   onSubmit,
@@ -19,7 +20,6 @@ const ReviewSubmit = ({
   isPendingApprover,
   reportCreator,
   formData,
-  onResetToDraft,
   onSaveForm,
   pages,
   lastSaveTime,
@@ -63,15 +63,6 @@ const ReviewSubmit = ({
     }
   };
 
-  const onReset = async () => {
-    try {
-      await onResetToDraft();
-      updateError();
-    } catch (e) {
-      updateError('Unable to reset Activity Report to draft');
-    }
-  };
-
   const editing = calculatedStatus === REPORT_STATUSES.DRAFT
     || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const items = editing ? reviewItems.map((ri) => ({
@@ -94,13 +85,14 @@ const ReviewSubmit = ({
             availableApprovers={availableApprovers}
             pages={pages}
             onFormSubmit={onFormSubmit}
-            onResetToDraft={onReset}
             formData={formData}
             error={error}
             onSaveForm={onSaveForm}
             lastSaveTime={lastSaveTime}
             reviewItems={items || []}
-          />
+          >
+            <Accordion bordered={false} items={items} pages={pages} multiselectable />
+          </Submitter>
         )}
       {(isApprover && !isDraft)
         && (
@@ -113,7 +105,6 @@ const ReviewSubmit = ({
             error={error}
             formData={formData}
             isPendingApprover={isPendingApprover}
-            onResetToDraft={onReset}
             onFormSubmit={onFormSubmit}
             reviewItems={items || []}
           />
@@ -132,7 +123,6 @@ ReviewSubmit.propTypes = {
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
   isApprover: PropTypes.bool.isRequired,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({

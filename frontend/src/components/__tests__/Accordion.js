@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, within } from '@testing-library/react';
 import { Accordion } from '../Accordion';
 
 const testItems = [
@@ -101,6 +101,25 @@ describe('Accordion component', () => {
     expect(getByTestId(`accordionItem_${testItems[2].id}`)).not.toBeVisible();
     expect(getByTestId(`accordionItem_${testItems[3].id}`)).not.toBeVisible();
     expect(getByTestId(`accordionItem_${testItems[4].id}`)).not.toBeVisible();
+  });
+
+  it('renders an edit button with an onNav function if canEdit is true', () => {
+    const onNavigation = jest.fn();
+    const { getByTestId, getByText } = render(
+      <Accordion items={testItems} canEdit onNavigation={onNavigation} />,
+    );
+    const item = getByTestId(`accordionItem_${testItems[0].id}`);
+    expect(item).not.toBeVisible();
+
+    fireEvent.click(getByText(testItems[0].title));
+
+    expect(item).toBeVisible();
+
+    const editButton = within(item).getByText('Edit');
+    expect(editButton).toBeVisible();
+
+    const onClickFunc = editButton.getAttribute('onClick');
+    expect(onClickFunc).toBeDefined();
   });
 
   describe('when you toggle a closed item', () => {
