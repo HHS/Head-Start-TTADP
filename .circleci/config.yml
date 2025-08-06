@@ -493,8 +493,8 @@ jobs:
         command: |
           set -x
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
-          cf logs tta-smarthub-${cfg_env} --recent | grep ${TASK_NAME}
+          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
+          cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
     - run:
         name: Alert on migration failure
         when: on_fail
