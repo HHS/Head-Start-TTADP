@@ -42,6 +42,28 @@ describe('GenericCollaborator', () => {
         { transaction },
       );
     });
+
+    it('throws an exception if the collaborator type is not found', async () => {
+      // Mock Sequelize instance and transaction
+      const sequelize = {
+        models: {
+          CollaboratorType: {
+            findOne: jest.fn().mockResolvedValue(null),
+          },
+        },
+      };
+      const transaction = {};
+
+      // Define input parameters
+      const goalId = 1;
+      const userId = 2;
+      const typeName = 'NonExistentType';
+      const linkBack = null;
+
+      // Call the function and expect an error
+      await expect(createCollaborator('goal', sequelize, transaction, goalId, userId, typeName, linkBack))
+        .rejects.toThrow('No collaborator type found for "NonExistentType" in Goals');
+    });
   });
 
   describe('getCollaboratorRecord', () => {

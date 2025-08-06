@@ -54,7 +54,7 @@ const Review = ({
 
   return (
     <>
-      <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
+      <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
       <IndicatesRequiredField />
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-3">

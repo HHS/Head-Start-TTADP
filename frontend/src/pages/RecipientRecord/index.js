@@ -244,32 +244,26 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard"
           render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <ViewGoalDetails
-                regionId={regionId}
-                recipient={recipientData}
-              />
-            </FeatureFlag>
+            <ViewGoalDetails
+              regionId={regionId}
+              recipient={recipientData}
+            />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId/restart"
           render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <RestartStandardGoal
-                recipient={recipientData}
-              />
-            </FeatureFlag>
+            <RestartStandardGoal
+              recipient={recipientData}
+            />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId"
           render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <UpdateStandardGoal
-                recipient={recipientData}
-              />
-            </FeatureFlag>
+            <UpdateStandardGoal
+              recipient={recipientData}
+            />
           )}
         />
         <Route
