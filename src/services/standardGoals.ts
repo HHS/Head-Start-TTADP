@@ -909,7 +909,7 @@ export async function standardGoalsForRecipient(
         model: GoalCollaborator,
         as: 'goalCollaborators',
         attributes: ['id'],
-        required: false,
+        required: true,
         include: [
           {
             model: CollaboratorType,
