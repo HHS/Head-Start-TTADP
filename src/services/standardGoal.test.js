@@ -1065,7 +1065,7 @@ describe('standardGoal service', () => {
 
       creatorCollabType = await CollaboratorType.findOrCreate({
         where: { name: 'Creator' },
-        defaults: { name: 'Creator' },
+        defaults: { name: 'Creator', validForId: 1 },
         validForId: 1,
       });
 
