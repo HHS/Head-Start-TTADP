@@ -323,11 +323,11 @@ export default function StandardGoalCard({
                 )}
               </p>
               {goal.responses && goal.responses.length ? (
-                <div className="grid-row">
-                  <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
+                <div className="grid-row margin-top-1">
+                  <p className="usa-prose text-bold margin-bottom-0 margin-top-0 margin-right-1">
                     Root cause:
                   </p>
-                  <p className="usa-prose margin-bottom-0 margin-top-1">
+                  <p className="usa-prose margin-bottom-0 margin-top-0">
                     {getResponses()}
                   </p>
                 </div>
