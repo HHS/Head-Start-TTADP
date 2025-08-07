@@ -307,9 +307,6 @@ describe('standardGoalsForRecipient Only Approved Topics', () => {
       },
     );
 
-    const objectiveStructure = JSON.stringify(goalRow.objectives, null, 2);
-    expect(true).toBeTruthy(); // Force output the structure in case of failure
-
     // Should include the citation from the approved report
     expect(objectiveCitations).toContain('Type 1 - Citation on approved report - Source 1');
 
