@@ -42,6 +42,7 @@ export default function GoalFormUpdateOrRestart({
           />
           <ObjectivesSection
             fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
+            options={goal.objectives}
           />
           <GoalFormButtonIterator buttons={standardGoalFormButtons} />
         </form>
@@ -70,6 +71,12 @@ GoalFormUpdateOrRestart.propTypes = {
     grant: PropTypes.shape({
       numberWithProgramTypes: PropTypes.string,
     }),
+    objectives: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        title: PropTypes.string,
+      }),
+    ),
   }).isRequired,
   standardGoalFormButtons: PropTypes.arrayOf(
     PropTypes.shape({

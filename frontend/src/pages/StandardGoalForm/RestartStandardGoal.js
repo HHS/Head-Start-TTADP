@@ -86,6 +86,14 @@ export default function RestartStandardGoal({ recipient }) {
   ], [recipient.id, regionId]);
 
   const onSubmit = async (data) => {
+    console.log({
+      goalTemplateId,
+      grantId,
+      status: GOAL_STATUS.IN_PROGRESS,
+      ...mapObjectivesAndRootCauses(data),
+    })
+
+    return;
     try {
       setIsAppLoading(true);
 
