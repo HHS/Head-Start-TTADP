@@ -869,7 +869,7 @@ export async function standardGoalsForRecipient(
     }
     : {};
 
-  const rows = await Goal.findAll({
+  const goalRows = await Goal.findAll({
     attributes: [
       'id',
       'name',
@@ -909,7 +909,7 @@ export async function standardGoalsForRecipient(
         model: GoalCollaborator,
         as: 'goalCollaborators',
         attributes: ['id'],
-        required: true,
+        required: false,
         include: [
           {
             model: CollaboratorType,
@@ -974,85 +974,14 @@ export async function standardGoalsForRecipient(
         required: false,
         where: objectiveWhere,
         order: [
-          [sequelize.col('activityReportObjectives.activityReport.endDate'), 'DESC'],
           ['createdAt', 'DESC'],
         ],
         include: [
           {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            attributes: ['id', 'objectiveId'],
-            required: false,
-            include: [
-              {
-                attributes: [
-                  'id',
-                  'startDate',
-                  'endDate',
-                  'calculatedStatus',
-                  'regionId',
-                  'displayId',
-                ],
-                model: ActivityReport,
-                as: 'activityReport',
-                required: false,
-                where: {
-                  calculatedStatus: REPORT_STATUSES.APPROVED,
-                },
-              },
-              {
-                model: Topic,
-                as: 'topics',
-                attributes: ['name'],
-                required: false,
-                include: [
-                  {
-                    model: ActivityReportObjective,
-                    as: 'activityReportObjectives',
-                    required: true,
-                    attributes: [],
-                    include: [
-                      {
-                        model: ActivityReport,
-                        as: 'activityReport',
-                        required: true,
-                        attributes: [],
-                        where: {
-                          calculatedStatus: REPORT_STATUSES.APPROVED,
-                        },
-                      },
-                      {
-                        model: Objective,
-                        as: 'objective',
-                        required: true,
-                        attributes: [],
-                        where: {
-                          onApprovedAR: true,
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
-              {
-                model: ActivityReportObjectiveCitation,
-                as: 'activityReportObjectiveCitations',
-                attributes: [
-                  'citation',
-                  'monitoringReferences',
-                ],
-                required: false,
-              },
-            ],
-          },
-          {
             attributes: [
               'id',
-              'reason',
-              'topics',
               'endDate',
               'calculatedStatus',
-              'legacyId',
               'regionId',
               'displayId',
             ],
@@ -1069,6 +998,85 @@ export async function standardGoalsForRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
+  // Get all objective IDs from the query results
+  const objectiveIds = goalRows.flatMap((goal) => {
+    if (goal.objectives) {
+      return goal.objectives.map((objective) => objective.id);
+    }
+    return [];
+  });
+
+  // Get topics and citations for objectives from approved reports
+  const approvedObjectiveMetaData = await ActivityReportObjective.findAll({
+    where: {
+      objectiveId: objectiveIds,
+    },
+    attributes: ['id', 'objectiveId'],
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReport',
+        attributes: ['id', 'endDate', 'displayId'],
+        required: true,
+        where: {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+      },
+      {
+        model: Topic,
+        as: 'topics',
+        attributes: ['name'],
+        required: false,
+      },
+      {
+        model: ActivityReportObjectiveCitation,
+        as: 'activityReportObjectiveCitations',
+        attributes: [
+          'citation',
+          'monitoringReferences',
+        ],
+        required: false,
+      },
+    ],
+    order: [
+      [sequelize.col('activityReport.endDate'), 'DESC'],
+    ],
+  });
+
+  // Create a map of objective IDs to their metadata
+  const approvedMetaDataByObjectiveId = {};
+  approvedObjectiveMetaData.forEach((aro) => {
+    if (!approvedMetaDataByObjectiveId[aro.objectiveId]) {
+      approvedMetaDataByObjectiveId[aro.objectiveId] = [];
+    }
+    approvedMetaDataByObjectiveId[aro.objectiveId].push({
+      id: aro.id,
+      activityReport: aro.activityReport,
+      topics: aro.topics.flatMap((t) => t.name),
+      activityReportObjectiveCitations: aro.activityReportObjectiveCitations.map((c) => ({
+        dataValues: {
+          citation: c.citation,
+          monitoringReferences: c.monitoringReferences,
+        },
+        citation: c.citation,
+        monitoringReferences: c.monitoringReferences,
+      })),
+    });
+  });
+
+  // Populate the metadata into the corresponding goal rows
+  goalRows.forEach((row) => {
+    if (row.objectives) {
+      // eslint-disable-next-line no-param-reassign
+      row.objectives = row.objectives.map((objective) => {
+        const mutableObjective = { ...objective.toJSON() };
+        // eslint-disable-next-line max-len
+        mutableObjective.activityReportObjectives = approvedMetaDataByObjectiveId[objective.id] || [];
+        return mutableObjective;
+      });
+    }
+  });
+
   const statuses = await goalStatusByGoalName({
     goal: {
       id: ids,
@@ -1076,7 +1084,7 @@ export async function standardGoalsForRecipient(
   });
 
   // Process each goal to format objectives properly with endDate (Last TTA in the UI)
-  const processedRows = rows.map((current) => {
+  const processedRows = goalRows.map((current) => {
     // Create a goal object similar to what getGoalsByActivityRecipient does
     const goalToAdd = {
       id: current.id,
@@ -1106,7 +1114,7 @@ export async function standardGoalsForRecipient(
   });
 
   return {
-    count: rows.length,
+    count: goalRows.length,
     goalRows: processedRows,
     statuses,
     allGoalIds: ids,

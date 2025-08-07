@@ -534,9 +534,12 @@ export function reduceObjectivesForRecipientRecord(
 
       // get our citations.
       const objectiveCitations = objective.activityReportObjectives?.flatMap(
-        (aro) => aro.activityReportObjectiveCitations,
+        (aro) => (aro.activityReportObjectiveCitations || []).filter(Boolean),
       ) || [];
-      const reportObjectiveCitations = objectiveCitations.map((c) => `${c.dataValues.monitoringReferences[0].findingType} - ${c.dataValues.citation} - ${c.dataValues.monitoringReferences[0].findingSource}`);
+
+      const reportObjectiveCitations = objectiveCitations.length
+        ? objectiveCitations.map((c) => `${c.dataValues.monitoringReferences[0].findingType} - ${c.dataValues.citation} - ${c.dataValues.monitoringReferences[0].findingSource}`)
+        : [];
 
       const existing = acc.objectives.find((o) => (
         o.title === objectiveTitle
