@@ -824,10 +824,7 @@ export async function standardGoalsForRecipient(
 ) {
   const { goal: scopes } = await filtersToScopes(filters, {});
 
-
-  console.log('\n\n\n----- Before SQL');
   const goals = await Goal.findAll({
-    logging: console.log,
     attributes: ['id'],
     where: {
       [Op.and]: [
@@ -864,11 +861,7 @@ export async function standardGoalsForRecipient(
     ],
   });
 
-  console.log('\n\n\n----- goal ids: ', goalIds);
-
   const ids = goals.map((g: { id: number }) => g.id);
-
-  console.log('\n\n\n----- goal ids after map: ', ids);
 
   // If param is true only return objectives created via activityReport if the AR is approved.
   const objectiveWhere = onlyApprovedObjectives
@@ -1012,8 +1005,6 @@ export async function standardGoalsForRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
-  console.log('\n\n\n--- goal rows: ', goalRows.map((g) => g.id));
-
   // Get all objective IDs from the query results
   const objectiveIds = goalRows.flatMap((goal) => {
     if (goal.objectives) {
@@ -1092,8 +1083,6 @@ export async function standardGoalsForRecipient(
       });
     }
   });
-
-  console.log('\n\n\n--- goal rows goal ids: ', goalRows.map((g) => g.id));
 
   const statuses = await goalStatusByGoalName({
     goal: {
