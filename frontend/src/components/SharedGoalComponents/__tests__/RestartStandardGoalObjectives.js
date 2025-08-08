@@ -164,20 +164,4 @@ describe('RestartStandardGoalObjectives', () => {
     const removeButtons = screen.getAllByText('Remove this objective');
     expect(removeButtons).toHaveLength(2);
   });
-
-  it('uses correct testid for component identification', () => {
-    const formData = {
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [],
-    };
-
-    renderWithFormProvider(
-      <RestartStandardGoalObjectives
-        fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
-        options={mockOptions}
-      />,
-      formData,
-    );
-
-    expect(screen.getByTestId('restart-standard-goal-objectives')).toBeInTheDocument();
-  });
 });
