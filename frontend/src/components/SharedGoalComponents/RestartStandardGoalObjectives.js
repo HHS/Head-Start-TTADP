@@ -46,7 +46,7 @@ export default function RestartStandardGoalObjectives({
   ];
 
   return (
-    <div className={hidePlusButton ? 'margin-top-4 padding-bottom-3' : 'margin-top-4'}>
+    <div className={hidePlusButton ? 'margin-top-4 padding-bottom-3' : 'margin-top-4'} data-testid="restart-standard-goal-objectives">
       {(objectives.length > 0)
         && <h2>Objectives</h2>}
       {hasReportedObjectives
