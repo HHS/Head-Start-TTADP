@@ -231,7 +231,7 @@ export default function ViewGoalDetails({
                                 .filter((aro) => aro.activityReport)
                                 .map((aro, reportIndex, array) => (
                                   <React.Fragment key={`report-${aro.activityReport.id}`}>
-                                    <Link to={`/activity-reports/${aro.activityReport.id}`}>
+                                    <Link to={`/activity-reports/view/${aro.activityReport.id}`}>
                                       {aro.activityReport.displayId}
                                     </Link>
                                     {reportIndex < array.length - 1 && ', '}
