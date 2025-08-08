@@ -369,8 +369,8 @@ describe('ViewGoalDetails', () => {
 
     const reportLink1 = within(reportsValue).getByRole('link', { name: 'R-101' });
     const reportLink2 = within(reportsValue).getByRole('link', { name: 'R-102' });
-    expect(reportLink1).toHaveAttribute('href', '/activity-reports/101');
-    expect(reportLink2).toHaveAttribute('href', '/activity-reports/102');
+    expect(reportLink1).toHaveAttribute('href', '/activity-reports/view/101');
+    expect(reportLink2).toHaveAttribute('href', '/activity-reports/view/102');
     expect(reportsValue).toHaveTextContent('R-101, R-102'); // check comma separation
 
     // topics (unique and sorted)
