@@ -369,8 +369,8 @@ describe('ViewGoalDetails', () => {
 
     const reportLink1 = within(reportsValue).getByRole('link', { name: 'R-101' });
     const reportLink2 = within(reportsValue).getByRole('link', { name: 'R-102' });
-    expect(reportLink1).toHaveAttribute('href', '/activity-reports/101');
-    expect(reportLink2).toHaveAttribute('href', '/activity-reports/102');
+    expect(reportLink1).toHaveAttribute('href', '/activity-reports/view/101');
+    expect(reportLink2).toHaveAttribute('href', '/activity-reports/view/102');
     expect(reportsValue).toHaveTextContent('R-101, R-102'); // check comma separation
 
     // topics (unique and sorted)
@@ -405,8 +405,7 @@ describe('ViewGoalDetails', () => {
     const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     expect(within(firstAccordionContent).getByText('Root causes')).toBeInTheDocument();
-    expect(within(firstAccordionContent).getByText('Root cause 1')).toBeInTheDocument();
-    expect(within(firstAccordionContent).getByText('Root cause 2')).toBeInTheDocument();
+    expect(within(firstAccordionContent).getByText('Root cause 1, Root cause 2')).toBeInTheDocument();
   });
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null

@@ -32,7 +32,6 @@ export default function StandardGoalCard({
   goal,
   recipientId,
   regionId,
-  showReopenGoalModal,
   handleGoalCheckboxSelect,
   isChecked,
   readonly,
@@ -91,6 +90,7 @@ export default function StandardGoalCard({
   const goalNumber = goal.goalNumbers ? goal.goalNumbers.join(', ') : `G-${id}`;
 
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
+  const reopenLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}/restart`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
 
   const changeGoalStatus = async (newStatus, reason = null, context = null) => {
@@ -151,11 +151,11 @@ export default function StandardGoalCard({
         history.push(editLink);
       },
     });
-  } else if (localStatus === 'Closed' && hasEditButtonPermissions && showReopenGoalModal) {
+  } else if (localStatus === 'Closed' && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
-        showReopenGoalModal(id);
+        history.push(reopenLink);
       },
     });
   }
@@ -248,6 +248,11 @@ export default function StandardGoalCard({
     );
   };
 
+  const getResponses = () => {
+    const responses = goal.responses && goal.responses.length ? goal.responses[0].response : [];
+    return responses.map((r) => r).join(', ');
+  };
+
   return (
     <DataCard testId="goalCard" className="ttahub-goal-card position-relative" errorBorder={erroneouslySelected || deleteError || statusChangeError}>
       <div className="display-flex">
@@ -277,7 +282,7 @@ export default function StandardGoalCard({
                   previousStatus={previousStatus || 'Not Started'}
                   regionId={regionId}
                 />
-                { !readonly && (
+                {!readonly && (
                   <ContextMenu
                     label={contextMenuLabel}
                     menuItems={menuItems}
@@ -317,6 +322,16 @@ export default function StandardGoalCard({
                   />
                 )}
               </p>
+              {goal.responses && goal.responses.length ? (
+                <div className="grid-row margin-top-1">
+                  <p className="usa-prose text-bold margin-bottom-0 margin-top-0 margin-right-1">
+                    Root cause:
+                  </p>
+                  <p className="usa-prose margin-bottom-0 margin-top-0">
+                    {getResponses()}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             {/* Right section - Details */}
@@ -388,7 +403,6 @@ StandardGoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
-  showReopenGoalModal: PropTypes.func,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
   readonly: PropTypes.bool,
@@ -398,7 +412,6 @@ StandardGoalCard.propTypes = {
 StandardGoalCard.defaultProps = {
   readonly: false,
   erroneouslySelected: false,
-  showReopenGoalModal: null,
 };
 
 export const ObjectiveSwitch = ({

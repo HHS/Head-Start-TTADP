@@ -13,7 +13,6 @@ const Submitter = ({
   availableApprovers,
   onFormSubmit,
   formData,
-  onResetToDraft,
   children,
   error,
   onSaveForm,
@@ -44,10 +43,6 @@ const Submitter = ({
     }
   }, [approvers, formData]);
 
-  const resetToDraft = async () => {
-    await onResetToDraft();
-  };
-
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
     if (needActionApprovers && needActionApprovers.length > 0) {
@@ -55,9 +50,6 @@ const Submitter = ({
     }
     return '';
   };
-
-  const totalApprovers = approvers ? approvers.length : 0;
-  const pendingApprovals = approvers ? approvers.filter((a) => a.status === null || a.status === 'needs_action').length : 0;
 
   const renderTopAlert = () => (
     <>
@@ -75,18 +67,6 @@ const Submitter = ({
       {approved && (
         <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
           This report has been approved and is no longer editable
-        </Alert>
-      )}
-      {submitted && (
-        <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
-          <b>Report is not editable</b>
-          <br />
-          This report is no longer editable while it is waiting for manager approval&#40;s&#41;
-          <strong>{` (${pendingApprovals} of ${totalApprovers} reviews pending)`}</strong>
-          .
-          <br />
-          If you wish to update this report click &quot;Reset to Draft&quot; below to
-          move the report back to draft mode.
         </Alert>
       )}
     </>
@@ -186,7 +166,8 @@ const Submitter = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-0 padding-top-2" skipBottomPadding={!draft}>
+
+      <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!submitted && !draft}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -215,7 +196,6 @@ const Submitter = ({
           && (
             <Submitted
               additionalNotes={additionalNotes}
-              resetToDraft={resetToDraft}
               reportId={id}
               displayId={displayId}
               approverStatusList={approverStatusList}
@@ -252,7 +232,6 @@ const Submitter = ({
 };
 
 Submitter.propTypes = {
-  onResetToDraft: PropTypes.func.isRequired,
   error: PropTypes.string,
   children: PropTypes.node.isRequired,
   onSaveForm: PropTypes.func.isRequired,

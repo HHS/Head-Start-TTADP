@@ -208,8 +208,6 @@ function GoalDataController({
     data.goalRows && data.goalRows.length ? data.goalRows : []),
   [data.goalRows]);
 
-  const setGoals = (goals) => setData({ ...data, goalRows: goals });
-
   return (
     <div>
       <Grid gap={5} row>
@@ -239,7 +237,6 @@ function GoalDataController({
           handlePageChange={handlePageChange}
           requestSort={requestSort}
           sortConfig={sortConfig}
-          setGoals={setGoals}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
         />
