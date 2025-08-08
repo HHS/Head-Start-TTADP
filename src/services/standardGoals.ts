@@ -875,7 +875,6 @@ export async function standardGoalsForRecipient(
       ],
     }
     : {};
-
   const goalRows = await Goal.findAll({
     attributes: [
       'id',
@@ -883,14 +882,7 @@ export async function standardGoalsForRecipient(
       'status',
       'createdAt',
       'goalTemplateId',
-      [
-        sequelize.literal(`(
-          SELECT MAX("createdAt")
-          FROM "GoalStatusChanges"
-          WHERE "goalId" = "Goal"."id"
-        )`),
-        'latestStatusChangeDate',
-      ],
+      // The underlying sort expect the status_sort column to be the first column _0.
       [sequelize.literal(`
         CASE
           WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
@@ -901,6 +893,14 @@ export async function standardGoalsForRecipient(
           WHEN "Goal"."status" = 'Suspended' THEN 6
           ELSE 7 END`),
       'status_sort'],
+      [
+        sequelize.literal(`(
+          SELECT MAX("createdAt")
+          FROM "GoalStatusChanges"
+          WHERE "goalId" = "Goal"."id"
+        )`),
+        'latestStatusChangeDate',
+      ],
     ],
     where: {
       id: ids,
