@@ -8,6 +8,30 @@ import FormItem from '../FormItem';
 import selectOptionsReset from '../selectOptionsReset';
 import { CREATE_A_NEW_OBJECTIVE } from './constants';
 
+const ObjectiveTextArea = ({ fieldName, index, fieldValue }) => {
+  const { register } = useFormContext();
+  return (
+    <Textarea
+      name={`${fieldName}[${index}].value`}
+      id={`${fieldName}[${index}].value`}
+      className="margin-bottom-1"
+      inputRef={register()}
+      defaultValue={fieldValue}
+      required
+    />
+  );
+};
+
+ObjectiveTextArea.propTypes = {
+  fieldName: PropTypes.string.isRequired,
+  index: PropTypes.number.isRequired,
+  fieldValue: PropTypes.string,
+};
+
+ObjectiveTextArea.defaultProps = {
+  fieldValue: '',
+};
+
 export default function ObjectiveSelection({
   field,
   index,
@@ -29,10 +53,13 @@ export default function ObjectiveSelection({
       return true;
     }
 
-    // console.log(selectedObjectiveTitles, fieldLabel, !selectedObjectiveTitles.includes(fieldLabel));
-
-    return selectedObjectiveTitles.includes(fieldLabel);
+    return !(selectedObjectiveTitles.includes(option.label));
   });
+
+  const onlyCreateNew = (
+    filteredOptions.length === 1
+    && filteredOptions[0].label === CREATE_A_NEW_OBJECTIVE
+  );
 
   return (
     <div key={field.id}>
@@ -70,6 +97,7 @@ export default function ObjectiveSelection({
         defaultValue={field.objectiveId}
       />
       <div hidden={isReadOnly}>
+        {(!onlyCreateNew) && (
         <FormItem
           label="Select TTA objective"
           name={`${fieldName}[${index}].label`}
@@ -92,26 +120,36 @@ export default function ObjectiveSelection({
               />
             )}
           />
-          {fieldLabel === CREATE_A_NEW_OBJECTIVE && (
-          <Textarea
-            name={`${fieldName}[${index}].value`}
-            id={`${fieldName}[${index}].value`}
-            className="margin-bottom-1"
-            inputRef={register()}
-            defaultValue={field.value}
-            required
-          />
-          )}
-          <Button
-            type="button"
-            unstyled
-            onClick={() => {
-              remove(index);
-            }}
-          >
-            Remove this objective
-          </Button>
         </FormItem>
+        )}
+        {(fieldLabel === CREATE_A_NEW_OBJECTIVE && !onlyCreateNew) && (
+        <ObjectiveTextArea
+          index={index}
+          fieldName={fieldName}
+          fieldValue={field.value}
+        />
+        )}
+        {onlyCreateNew && (
+        <FormItem
+          label="TTA objective"
+          name={`${fieldName}[${index}].value`}
+        >
+          <ObjectiveTextArea
+            index={index}
+            fieldName={fieldName}
+            fieldValue={field.value}
+          />
+        </FormItem>
+        )}
+        <Button
+          type="button"
+          unstyled
+          onClick={() => {
+            remove(index);
+          }}
+        >
+          Remove this objective
+        </Button>
       </div>
     </div>
 
