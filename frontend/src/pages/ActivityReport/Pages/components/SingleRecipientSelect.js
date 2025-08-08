@@ -50,6 +50,8 @@ export default function SingleRecipientSelect(
         setCheckedCheckBoxes([]);
         setShowRecipientGrants(false);
       }
+    } else {
+      setCheckedCheckBoxes([]);
     }
   }, [possibleRecipients, selectedRecipients]);
 
@@ -199,13 +201,13 @@ const RecipientPropType = PropTypes.shape({
   grantIds: PropTypes.arrayOf(PropTypes.number),
 });
 
-const SelectedRecipientsPropType = {
+const SelectedRecipientsPropType = PropTypes.shape({
   id: PropTypes.number,
   recipientId: PropTypes.number,
   activityRecipientId: PropTypes.number,
   name: PropTypes.string,
-};
-
+  recipientIdForLookUp: PropTypes.number,
+});
 SingleRecipientSelect.propTypes = {
   selectedRecipients: PropTypes.arrayOf(SelectedRecipientsPropType).isRequired,
   possibleRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,

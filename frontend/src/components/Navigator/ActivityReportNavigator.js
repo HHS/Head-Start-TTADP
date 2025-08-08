@@ -110,6 +110,7 @@ const ActivityReportNavigator = ({
   updateErrorMessage,
   savedToStorageTime,
   shouldAutoSave,
+  setShouldAutoSave,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
@@ -612,6 +613,7 @@ const ActivityReportNavigator = ({
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
           shouldAutoSave={shouldAutoSave}
+          setShouldAutoSave={setShouldAutoSave}
         />
       </FormProvider>
     </GoalFormContext.Provider>
@@ -659,6 +661,7 @@ ActivityReportNavigator.propTypes = {
     ]),
   }),
   shouldAutoSave: PropTypes.bool,
+  setShouldAutoSave: PropTypes.func.isRequired,
 };
 
 ActivityReportNavigator.defaultProps = {
