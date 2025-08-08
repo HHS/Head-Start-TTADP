@@ -704,6 +704,7 @@ function ActivityReport({
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}
           shouldAutoSave={shouldAutoSave}
+          setShouldAutoSave={setShouldAutoSave}
         />
       </NetworkContext.Provider>
     </div>
