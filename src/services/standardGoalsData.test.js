@@ -79,6 +79,7 @@ describe('standardGoalsForRecipient Only Approved Topics', () => {
         createdAt: new Date(),
         goalTemplateId: goalTemplate.id,
         grantId: grant.id,
+        createdVia: 'rtr',
       });
 
       await GoalCollaborator.create({
