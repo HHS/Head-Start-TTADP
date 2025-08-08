@@ -1120,9 +1120,12 @@ export async function standardGoalsForRecipient(
     };
   });
 
+  const offsetNum = parseInt(String(offset), 10);
+  const limitNum = parseInt(String(limit), 10);
+
   return {
     count: goalRows.length,
-    goalRows: processedRows,
+    goalRows: limitNum ? processedRows.slice(offsetNum, offsetNum + limitNum) : processedRows,
     statuses,
     allGoalIds: ids,
   };
