@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import { Button, Textarea } from '@trussworks/react-uswds';
-import ReadOnlyField from '../ReadOnlyField';
 import FormItem from '../FormItem';
 import selectOptionsReset from '../selectOptionsReset';
 import { CREATE_A_NEW_OBJECTIVE } from './constants';
@@ -40,7 +39,6 @@ export default function ObjectiveSelection({
   objectiveOptions,
 }) {
   const { setValue, register, watch } = useFormContext();
-  const isReadOnly = field.onAR === true;
 
   const selectedObjectives = watch(fieldName);
   const selectedObjectiveTitles = useMemo(() => (
@@ -63,27 +61,6 @@ export default function ObjectiveSelection({
 
   return (
     <div key={field.id}>
-      <div hidden={!isReadOnly}>
-        <ReadOnlyField
-          label="TTA objective"
-        >
-          {field.value}
-        </ReadOnlyField>
-        {
-            (field.onAR === false) && (
-            <Button
-              type="button"
-              className="margin-top-1"
-              unstyled
-              onClick={() => {
-                remove(index);
-              }}
-            >
-              Remove this objective
-            </Button>
-            )
-        }
-      </div>
       <input
         type="hidden"
         // eslint-disable-next-line react/jsx-props-no-spreading
@@ -96,7 +73,7 @@ export default function ObjectiveSelection({
         {...register(`${fieldName}[${index}].value`)}
         defaultValue={field.objectiveId}
       />
-      <div hidden={isReadOnly}>
+      <div>
         {(!onlyCreateNew) && (
         <FormItem
           label="Select TTA objective"
