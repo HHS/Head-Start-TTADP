@@ -1,0 +1,151 @@
+import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { Controller, useFormContext } from 'react-hook-form';
+import Select from 'react-select';
+import { Button, Textarea } from '@trussworks/react-uswds';
+import FormItem from '../FormItem';
+import selectOptionsReset from '../selectOptionsReset';
+import { CREATE_A_NEW_OBJECTIVE } from './constants';
+
+const ObjectiveTextArea = ({ fieldName, index, fieldValue }) => {
+  const { register } = useFormContext();
+  return (
+    <Textarea
+      name={`${fieldName}[${index}].value`}
+      id={`${fieldName}[${index}].value`}
+      className="margin-bottom-1"
+      inputRef={register()}
+      defaultValue={fieldValue}
+      required
+    />
+  );
+};
+
+ObjectiveTextArea.propTypes = {
+  fieldName: PropTypes.string.isRequired,
+  index: PropTypes.number.isRequired,
+  fieldValue: PropTypes.string,
+};
+
+ObjectiveTextArea.defaultProps = {
+  fieldValue: '',
+};
+
+export default function ObjectiveSelection({
+  field,
+  index,
+  remove,
+  fieldName,
+  objectiveOptions,
+}) {
+  const { setValue, register, watch } = useFormContext();
+
+  const selectedObjectives = watch(fieldName);
+  const selectedObjectiveTitles = useMemo(() => (
+    selectedObjectives.map((o) => o.label)
+  ), [selectedObjectives]);
+  const fieldLabel = watch(`${fieldName}[${index}].label`);
+
+  const filteredOptions = objectiveOptions.filter((option) => {
+    if (option.label === fieldLabel) {
+      return true;
+    }
+
+    return !(selectedObjectiveTitles.includes(option.label));
+  });
+
+  const onlyCreateNew = (
+    filteredOptions.length === 1
+    && filteredOptions[0].label === CREATE_A_NEW_OBJECTIVE
+  );
+
+  return (
+    <div key={field.id}>
+      <input
+        type="hidden"
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        {...register(`${fieldName}[${index}].objectiveId`)}
+        defaultValue={field.objectiveId}
+      />
+      <input
+        type="hidden"
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        {...register(`${fieldName}[${index}].value`)}
+        defaultValue={field.objectiveId}
+      />
+      <div>
+        {(!onlyCreateNew) && (
+        <FormItem
+          label="Select TTA objective"
+          name={`${fieldName}[${index}].label`}
+        >
+          <Controller
+            name={`${fieldName}[${index}].label`}
+            defaultValue={null}
+            render={({ value, onChange }) => (
+              <Select
+                className="usa-select margin-bottom-1"
+                options={filteredOptions}
+                styles={selectOptionsReset}
+                value={{ label: value, value }}
+                onChange={(v) => {
+                  setValue(`${fieldName}[${index}].value`, v.value);
+                  setValue(`${fieldName}[${index}].objectiveId`, v.objectiveId);
+                  onChange(v.label);
+                }}
+                required
+              />
+            )}
+          />
+        </FormItem>
+        )}
+        {(fieldLabel === CREATE_A_NEW_OBJECTIVE && !onlyCreateNew) && (
+        <ObjectiveTextArea
+          index={index}
+          fieldName={fieldName}
+          fieldValue={field.value}
+        />
+        )}
+        {onlyCreateNew && (
+        <FormItem
+          label="TTA objective"
+          name={`${fieldName}[${index}].value`}
+        >
+          <ObjectiveTextArea
+            index={index}
+            fieldName={fieldName}
+            fieldValue={field.value}
+          />
+        </FormItem>
+        )}
+        <Button
+          type="button"
+          unstyled
+          onClick={() => {
+            remove(index);
+          }}
+        >
+          Remove this objective
+        </Button>
+      </div>
+    </div>
+
+  );
+}
+
+ObjectiveSelection.propTypes = {
+  field: PropTypes.shape({
+    id: PropTypes.string,
+    objectiveId: PropTypes.number,
+    label: PropTypes.string,
+    onAR: PropTypes.bool,
+    value: PropTypes.string,
+  }).isRequired,
+  fieldName: PropTypes.string.isRequired,
+  remove: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  objectiveOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.string,
+    label: PropTypes.string,
+  })).isRequired,
+};
