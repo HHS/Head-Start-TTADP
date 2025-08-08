@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
@@ -255,6 +254,40 @@ describe('standardGoal service', () => {
         const g2 = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
         expect(g2).toBeDefined();
         expect(g2.status).toBe(GOAL_STATUS.NOT_STARTED);
+        expect(g2.id).not.toBe(g.id);
+      });
+
+      it('sets the goal status to the provided status', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+        });
+
+        const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
+        expect(g).toBeDefined();
+
+        await Goal.update(
+          {
+            status: GOAL_STATUS.CLOSED,
+          },
+          {
+            where: {
+              id: g.id,
+            },
+          },
+        );
+
+        const g2 = await newStandardGoal(
+          grant.id,
+          goalTemplateNoPrompt.id,
+          [],
+          [],
+          GOAL_STATUS.IN_PROGRESS,
+        );
+        expect(g2).toBeDefined();
+        expect(g2.status).toBe(GOAL_STATUS.IN_PROGRESS);
         expect(g2.id).not.toBe(g.id);
       });
 
@@ -649,6 +682,7 @@ describe('standardGoal service', () => {
         goalTemplateId: goalTemplate.id,
         status: GOAL_STATUS.CLOSED,
         name: goalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       secondGoalForFirstTemplate = await Goal.create({
@@ -656,6 +690,7 @@ describe('standardGoal service', () => {
         goalTemplateId: goalTemplate.id,
         status: GOAL_STATUS.NOT_STARTED,
         name: goalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       firstGoalForSecondTemplate = await Goal.create({
@@ -663,6 +698,7 @@ describe('standardGoal service', () => {
         goalTemplateId: secondGoalTemplate.id,
         status: GOAL_STATUS.CLOSED,
         name: secondGoalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       secondGoalForSecondTemplate = await Goal.create({
@@ -670,6 +706,7 @@ describe('standardGoal service', () => {
         goalTemplateId: secondGoalTemplate.id,
         status: GOAL_STATUS.NOT_STARTED,
         name: secondGoalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       const reportData = {
@@ -1006,7 +1043,9 @@ describe('standardGoal service', () => {
     let recipientForParam;
     let grant;
     let goalTemplate;
+    let goalTemplateNotOnApprovedAR;
     let goal;
+    let goalNotOnApprovedAR;
 
     let createdViaRtrObjective;
     let createdViaArButNotApprovedObjective;
@@ -1026,7 +1065,7 @@ describe('standardGoal service', () => {
 
       creatorCollabType = await CollaboratorType.findOrCreate({
         where: { name: 'Creator' },
-        defaults: { name: 'Creator' },
+        defaults: { name: 'Creator', validForId: 1 },
         validForId: 1,
       });
 
@@ -1042,12 +1081,28 @@ describe('standardGoal service', () => {
         creationMethod: CREATION_METHOD.CURATED,
       });
 
+      goalTemplateNotOnApprovedAR = await createGoalTemplate({
+        name: 'Test Param Template Not on Approved AR',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
       goal = await Goal.create({
         name: 'Goal 1',
         status: GOAL_STATUS.NOT_STARTED,
         createdAt: new Date(),
         goalTemplateId: goalTemplate.id,
         grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      goalNotOnApprovedAR = await Goal.create({
+        name: 'Goal 2 - Not on Approved AR',
+        status: GOAL_STATUS.NOT_STARTED,
+        createdAt: new Date(),
+        goalTemplateId: goalTemplate.id,
+        grantId: grant.id,
+        createdVia: 'activityReport',
+        onApprovedAR: false, // Should not be included in the results.
       });
 
       await GoalCollaborator.create({
@@ -1099,8 +1154,11 @@ describe('standardGoal service', () => {
         },
         force: true,
       });
-      await Goal.destroy({ where: { id: goal.id }, force: true });
-      await GoalTemplate.destroy({ where: { id: goalTemplate.id }, force: true });
+      await Goal.destroy({ where: { id: [goal.id, goalNotOnApprovedAR.id] }, force: true });
+      await GoalTemplate.destroy({
+        where: { id: [goalTemplate.id, goalTemplateNotOnApprovedAR.id] },
+        force: true,
+      });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
       await Recipient.destroy({ where: { id: recipientForParam.id }, force: true });
       await CollaboratorType.destroy({

@@ -32,7 +32,6 @@ const Navigator = ({
   pages,
   onFormSubmit,
   onReview,
-  onResetToDraft,
   currentPage,
   additionalData,
   onSave,
@@ -179,7 +178,6 @@ const Navigator = ({
             onReview,
             isApprover,
             isPendingApprover,
-            onResetToDraft,
             onSave,
             navigatorPages,
             reportCreator,
@@ -225,7 +223,6 @@ const Navigator = ({
 Navigator.propTypes = {
   onSaveDraft: PropTypes.func.isRequired,
   onSaveAndContinue: PropTypes.func,
-  onResetToDraft: PropTypes.func.isRequired,
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),

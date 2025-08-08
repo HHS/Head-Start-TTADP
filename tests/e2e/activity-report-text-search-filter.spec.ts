@@ -177,7 +177,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // add creator notes
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('Sample creator notes');
-    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label')
+    const approverDropdown = page.getByLabel('Approving manager');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us

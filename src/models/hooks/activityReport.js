@@ -128,6 +128,57 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
   }
 };
 
+/**
+ * When a report is approved and a goal referenced by this report is closed,
+ * we need to create a new iteration of the goal's life-cycle.
+ * Because we already have the code written to create a new iteration
+ * and update all linked tables, lets call it like it was a save.
+ * This should handle two edge cases:
+ * 1. When a reports goal is closed after the report is created or submitted.
+ * 2. When a reports goal is closed and the report is unlocked (re-opened).
+ *  Note: That if the user happens to save the AR goals and objectives
+ *  page before submitting this will have already occurred through a normal save.
+ * @param {*} _sequelize
+ * @param {*} instance
+ * @param {*} _options
+ */
+const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) => {
+  try {
+    // If the report is being approved, unlocked, or submitted,
+    if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)
+     || (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
+     || (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+      const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+      const reportGoals = await getGoalsForReport(instance.id);
+      // If we have at least one closed goal,
+      // lets call the save standard goals for report to ensure its all up to snuff.
+      // We need to re-save all goals not just the closed ones.
+      if (reportGoals.length) {
+        // eslint-disable-next-line global-require
+        const { saveStandardGoalsForReport } = require('../../services/standardGoals');
+        // Set the status of each closed goal to 'In Progress'.
+        const updateStatusGoals = reportGoals.map((g) => ({
+          ...g,
+          status: GOAL_STATUS.IN_PROGRESS,
+        }));
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        // We pass the reduced goals to be saved.
+        // This will create a new life cycle for the goal
+        // if its currently closed and all related tables.
+        // This is the same function as if they had saved on the AR goals and objectives page.
+        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id }, true);
+      }
+    }
+  } catch (e) {
+    auditLogger.error(`checkForNewGoalCycleOnApproval: ${e}`);
+  }
+};
+
 const revisionBump = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.length > 0) {
@@ -260,12 +311,30 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       ? report.activityReportObjectives.map((a) => a.objectiveId)
       : [];
 
+    // Filter out objectives that are linked to closed goals.
+    // If we are unlocking a report that is linked to closed goals,
+    // we should keep the objectives closed. And start a new goal cycle,
+    // with new objectives in the hook on re-submission.
+    const goalsThatAreNotClosed = await sequelize.models.Goal.findAll({
+      where: { status: { [Op.ne]: GOAL_STATUS.CLOSED } },
+      include: [{
+        model: sequelize.models.Objective,
+        as: 'objectives',
+        required: true,
+        where: { id: objectivesToReset },
+      }],
+    });
+
+    const objectiveIdsForNotClosedGoals = goalsThatAreNotClosed.map(
+      (g) => g.objectives.map((o) => o.id),
+    ).flat();
     // we don't need to run this query with an empty array I don't think
-    if (objectivesToReset.length) {
+    // We also don't want to update the status of objectives that are linked to closed goals.
+    if (objectiveIdsForNotClosedGoals.length) {
       return sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
-        where: { id: objectivesToReset },
+        where: { id: objectiveIdsForNotClosedGoals },
         individualHooks: true,
       });
     }
@@ -898,6 +967,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
+  await checkForNewGoalCycleOnApproval(sequelize, instance, options);
   await revisionBumpBroadcast(sequelize, instance);
 };
 
