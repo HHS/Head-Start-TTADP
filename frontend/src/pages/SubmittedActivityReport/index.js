@@ -12,7 +12,6 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
 } from '../../Constants';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
-import './index.scss';
 import SubmittedReport from '../../components/ReportView/SubmittedReport';
 
 export default function SubmittedActivityReport({ match, user }) {

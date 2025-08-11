@@ -447,7 +447,10 @@ function ActivityReport({
     );
   }
 
-  if (connectionActive && isCollaboratorOrCreator && !editable) {
+  if (connectionActive
+    && isCollaboratorOrCreator
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+  ) {
     return (
       <Redirect to={`/activity-reports/submitted/${activityReportId}`} />
     );
