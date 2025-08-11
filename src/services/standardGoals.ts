@@ -889,8 +889,8 @@ export async function standardGoalsForRecipient(
           WHEN "Goal"."status" = 'Draft' THEN 2
           WHEN "Goal"."status" = 'Not Started' THEN 3
           WHEN "Goal"."status" = 'In Progress' THEN 4
-          WHEN "Goal"."status" = 'Closed' THEN 5
-          WHEN "Goal"."status" = 'Suspended' THEN 6
+          WHEN "Goal"."status" = 'Suspended' THEN 5
+          WHEN "Goal"."status" = 'Closed' THEN 6
           ELSE 7 END`),
       'status_sort'],
       [
