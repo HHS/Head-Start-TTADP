@@ -77,6 +77,5 @@ export default function useReadOnlyReportFetch(match, user) {
     fetchReport();
   }, [match.params.activityReportId, user, history]);
 
-
   return report;
 }
