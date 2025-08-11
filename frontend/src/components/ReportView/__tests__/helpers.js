@@ -284,6 +284,7 @@ describe('helpers', () => {
       expect(sections).toHaveLength(1);
       expect(sections[0]).toEqual({
         heading: 'Objective summary',
+        headingLevel: 4,
         data: {
           'TTA objective': 'Test Objective 1',
           Topics: 'Topic 1, Topic 2',
