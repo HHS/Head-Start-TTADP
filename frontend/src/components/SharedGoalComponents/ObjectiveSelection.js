@@ -85,9 +85,10 @@ export default function ObjectiveSelection({
             render={({ value, onChange }) => (
               <Select
                 className="usa-select margin-bottom-1"
+                placeholder="- Select -"
                 options={filteredOptions}
                 styles={selectOptionsReset}
-                value={{ label: value, value }}
+                value={value ? { label: value, value } : null}
                 onChange={(v) => {
                   setValue(`${fieldName}[${index}].value`, v.value);
                   setValue(`${fieldName}[${index}].objectiveId`, v.objectiveId);
