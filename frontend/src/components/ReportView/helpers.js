@@ -222,6 +222,7 @@ export function addObjectiveSectionsToArray(
   objectives.forEach((objective) => {
     const objectiveSection = {
       heading: 'Objective summary',
+      headingLevel: 4,
       data: {
         'TTA objective': objective.title,
         ...(objective.citations && objective.citations.length > 0
