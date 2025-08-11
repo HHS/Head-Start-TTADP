@@ -615,6 +615,9 @@ test.describe('Activity Report', () => {
     await page.waitForTimeout(5000);
     await page.getByTestId('goal-selector').click();
     await page.waitForTimeout(2000);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
     // create the objective
