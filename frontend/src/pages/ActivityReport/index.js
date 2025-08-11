@@ -450,6 +450,7 @@ function ActivityReport({
   if (connectionActive
     && isCollaboratorOrCreator
     && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    && !isPendingApprover
   ) {
     return (
       <Redirect to={`/activity-reports/submitted/${activityReportId}`} />
