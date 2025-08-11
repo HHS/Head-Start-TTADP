@@ -38,7 +38,7 @@ export default function ReadOnlyContent({
   sections,
   className,
   displayStatus,
-}) {  
+}) {
   return (
     <div className={`ttahub-read-only-content-section-container ${className}`}>
       <div className="display-flex">
