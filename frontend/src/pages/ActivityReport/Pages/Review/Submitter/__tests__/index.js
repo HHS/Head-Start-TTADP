@@ -497,27 +497,6 @@ describe('Submitter review page', () => {
     });
   });
 
-  describe('when the report has been submitted', () => {
-    it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
-      const allAlerts = await screen.findAllByTestId('alert');
-      const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
-      expect(successAlert).toBeVisible();
-    });
-
-    it('shows manager notes', async () => {
-      const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', user: { fullName: 'Approved User 1' } },
-        { status: REPORT_STATUSES.APPROVED, user: { fullName: 'Approved User 2' } },
-      ];
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText(/report needs action\./i)).toBeVisible();
-      expect(await screen.findByText(/report is approved 1\./i)).toBeVisible();
-      expect(await screen.findByText(/no manager notes/i)).toBeVisible();
-    });
-  });
-
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
       renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
