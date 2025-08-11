@@ -178,7 +178,7 @@ function Landing() {
         {' '}
         report
         {' '}
-        <Link to={`/activity-reports/${message.reportId}`}>
+        <Link to={`/activity-reports/submitted/${message.reportId}`}>
           {message.displayId}
         </Link>
         {' '}

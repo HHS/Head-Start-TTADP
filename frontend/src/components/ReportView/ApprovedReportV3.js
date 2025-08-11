@@ -8,7 +8,7 @@ import {
 } from '../../Constants';
 import {
   reportDataPropTypes, formatSimpleArray, mapAttachments,
-} from '../../pages/ApprovedActivityReport/helpers';
+} from './helpers';
 import ReadOnlyContent from '../ReadOnlyContent';
 import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
 

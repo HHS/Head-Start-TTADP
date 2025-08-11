@@ -37,7 +37,6 @@ import {
   getCollaborators,
   getApprovers,
   reviewReport,
-  resetToDraft,
   getGroupsForActivityReport,
   getRecipients,
 } from '../../fetchers/activityReports';
@@ -201,6 +200,9 @@ function ActivityReport({
   const [editable, updateEditable] = useLocalStorage(
     LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
+
+  const [isCollaboratorOrCreator, setIsCollaboratorOrCreator] = useState(false);
+
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
@@ -304,6 +306,8 @@ function ActivityReport({
         // The report can be edited if its in draft OR needs_action state.
 
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
+
+        setIsCollaboratorOrCreator(isCollaborator || isAuthor);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
@@ -443,6 +447,12 @@ function ActivityReport({
     );
   }
 
+  if (connectionActive && isCollaboratorOrCreator && !editable) {
+    return (
+      <Redirect to={`/activity-reports/submitted/${activityReportId}`} />
+    );
+  }
+
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
       <Redirect to={`/activity-reports/${activityReportId}/review`} />
@@ -563,13 +573,6 @@ function ActivityReport({
 
   const onReview = async (data) => {
     await reviewReport(reportId.current, { note: data.note, status: data.status });
-  };
-
-  const onResetToDraft = async () => {
-    const fetchedReport = await resetToDraft(reportId.current);
-    const report = convertReportToFormData(fetchedReport);
-    updateFormData(report, true);
-    updateEditable(true);
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
@@ -696,7 +699,6 @@ function ActivityReport({
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSave}
-          onResetToDraft={onResetToDraft}
           isApprover={isApprover}
           isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
           onReview={onReview}

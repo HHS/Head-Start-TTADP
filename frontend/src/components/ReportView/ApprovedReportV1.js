@@ -8,7 +8,7 @@ import {
 } from '../../Constants';
 import {
   reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
-} from '../../pages/ApprovedActivityReport/helpers';
+} from './helpers';
 
 /**
  *
