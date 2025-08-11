@@ -35,8 +35,8 @@ Status.propTypes = {
 
 export default function ReadOnlyContent({
   title,
-  sections,  
-  className,   
+  sections,
+  className,
   displayStatus,
 }) {
   return (
