@@ -185,8 +185,8 @@ describe('standardGoalsForRecipient sorting tests', () => {
     const expectedOrder = [
       GOAL_STATUS.NOT_STARTED,
       GOAL_STATUS.IN_PROGRESS,
-      GOAL_STATUS.CLOSED,
       GOAL_STATUS.SUSPENDED,
+      GOAL_STATUS.CLOSED,
     ];
     const actualOrder = result.goalRows.map((goal) => goal.status);
     expect(actualOrder).toEqual(expectedOrder);
