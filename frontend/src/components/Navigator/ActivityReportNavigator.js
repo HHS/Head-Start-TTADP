@@ -612,6 +612,7 @@ const ActivityReportNavigator = ({
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
           shouldAutoSave={shouldAutoSave}
+          hideSideNav
         />
       </FormProvider>
     </GoalFormContext.Provider>

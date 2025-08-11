@@ -126,6 +126,14 @@ export default function Routes({
           )}
         />
         <Route
+          path="/activity-reports/submitted/:activityReportId([0-9]*)"
+          render={({ match, location }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <ApprovedActivityReport location={location} match={match} user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
           path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>

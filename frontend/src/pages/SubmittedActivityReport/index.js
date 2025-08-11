@@ -14,13 +14,13 @@ import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
 } from '../../Constants';
-import './index.scss';
 import ApprovedReportV1 from '../../components/ReportView/ApprovedReportV1';
 import ApprovedReportV2 from '../../components/ReportView/ApprovedReportV2';
 import ApprovedReportV3 from '../../components/ReportView/ApprovedReportV3';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
+import './index.scss';
 
-export default function ApprovedActivityReport({ match, user }) {
+export default function SubmittedActivityReport({ match, user }) {
   const history = useHistory();
   const [justUnlocked, updatedJustUnlocked] = useState(false);
 
@@ -174,7 +174,8 @@ export default function ApprovedActivityReport({ match, user }) {
     </>
   );
 }
-ApprovedActivityReport.propTypes = {
+
+SubmittedActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,

@@ -1,14 +1,14 @@
 import React from 'react';
 import moment from 'moment-timezone';
-import Container from '../../../components/Container';
+import Container from '../Container';
 import ViewTable from './ViewTable';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
-} from '../../../Constants';
+} from '../../Constants';
 import {
   reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
-} from '../helpers';
+} from '../../pages/ApprovedActivityReport/helpers';
 
 /**
  *
