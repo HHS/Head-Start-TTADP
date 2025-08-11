@@ -15,9 +15,9 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
 } from '../../Constants';
 import './index.scss';
-import ApprovedReportV1 from './components/ApprovedReportV1';
-import ApprovedReportV2 from './components/ApprovedReportV2';
-import ApprovedReportV3 from './components/ApprovedReportV3';
+import ApprovedReportV1 from '../../components/ReportView/ApprovedReportV1';
+import ApprovedReportV2 from '../../components/ReportView/ApprovedReportV2';
+import ApprovedReportV3 from '../../components/ReportView/ApprovedReportV3';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 
 export default function ApprovedActivityReport({ match, user }) {

@@ -1,25 +1,24 @@
 import React from 'react';
 import moment from 'moment-timezone';
-import { v4 as uuidv4 } from 'uuid';
-import Container from '../../../components/Container';
+import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
-} from '../../../Constants';
+} from '../../Constants';
 import {
-  reportDataPropTypes, formatSimpleArray, mapAttachments,
-} from '../helpers';
-import ReadOnlyContent from '../../../components/ReadOnlyContent';
-import RenderReviewCitations from '../../ActivityReport/Pages/components/RenderReviewCitations';
+  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
+} from '../../pages/ApprovedActivityReport/helpers';
+import ReadOnlyContent from '../ReadOnlyContent';
+import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
 
-function formatNextSteps(nextSteps, heading) {
+function formatNextSteps(nextSteps, heading, striped) {
   return nextSteps.map((step, index) => ({
     heading: index === 0 ? heading : '',
     data: {
       [`Step ${index + 1}`]: step.note,
       'Anticipated completion': step.completeDate,
     },
-    striped: false,
+    striped,
   }));
 }
 
@@ -30,7 +29,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
         {resources.map((resource) => {
           const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
-            <li key={uuidv4()}>
+            <li key={resourceValue}>
               <a
                 href={resourceValue}
                 rel="noreferrer"
@@ -43,7 +42,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
       </ul>
     );
   }
-  return 'None provided';
+  return [];
 }
 
 function formatDelivery(method, virtualDeliveryType) {
@@ -80,11 +79,13 @@ function formatTtaType(ttaType) {
 function addObjectiveSectionsToArray(
   objectives,
   sections,
+  striped,
   activityRecipients,
   isOtherEntity = false,
 ) {
-  const isStriped = false;
+  let isStriped = striped;
   objectives.forEach((objective) => {
+    isStriped = !isStriped;
     const objectiveSection = {
       heading: 'Objective summary',
       data: {
@@ -92,8 +93,8 @@ function addObjectiveSectionsToArray(
         ...(objective.citations && objective.citations.length > 0
           ? { 'Citations addressed': <RenderReviewCitations citations={objective.citations} activityRecipients={activityRecipients} className="" /> } : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
-        'iPD courses': objective.courses.length ? formatSimpleArray(objective.courses.map(({ name }) => name)) : 'None provided',
-        'Resource links': objective.resources.length ? formatObjectiveLinks(objective.resources, isOtherEntity) : 'None provided',
+        'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
+        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
@@ -112,39 +113,46 @@ function addObjectiveSectionsToArray(
 }
 
 /**
- * @param {object[]} responses an array of FEI Goal response objects
- */
-function getResponses(responses) {
-  return responses[0].response.map((r) => r).join(', ');
-}
-
-/**
    *
    * @param {object} report an activity report object
    * @returns an array of two arrays, each of which contains strings
    */
 function calculateGoalsAndObjectives(report) {
   const sections = [];
-  const striped = false;
+  let striped = false;
 
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
-      const goalSection = {
+      striped = !striped;
+
+      let goalSection = {
         heading: 'Goal summary',
         data: {
-          'Recipient\'s goal': goal.name,
-          'Goal numbers': goal.goalNumbers.join(','),
+          'Recipient\'s goal': (
+            <>
+              <span className="text-bold">{goal.goalNumbers.join(',')}</span>
+              :
+              {' '}
+              {goal.name}
+            </>
+          ),
         },
         striped,
       };
 
-      // Adds "root cause" to the goal section if there are FEI responses
-      const { responses } = goal;
-      if (responses && responses.length) {
-        const rootCauseData = {
-          'Root cause': getResponses(responses),
+      if (goal.activityReportGoals && goal.activityReportGoals.length) {
+        goalSection = {
+          heading: goalSection.heading,
+          data: {
+            ...goalSection.data,
+            Source: (
+              <>
+                { goal.activityReportGoals[0].source}
+              </>
+            ),
+          },
+          striped: true,
         };
-        goalSection.data = { ...goalSection.data, ...rootCauseData };
       }
 
       const { prompts } = goal;
@@ -160,12 +168,13 @@ function calculateGoalsAndObjectives(report) {
 
       sections.push(goalSection);
 
-      addObjectiveSectionsToArray(goal.objectives, sections, report.activityRecipients);
+      addObjectiveSectionsToArray(goal.objectives, sections, striped, report.activityRecipients);
     });
   } else if (report.activityRecipientType === 'other-entity') {
     addObjectiveSectionsToArray(
       report.objectivesWithoutGoals,
       sections,
+      striped,
       report.activityRecipients,
       true,
     );
@@ -173,13 +182,19 @@ function calculateGoalsAndObjectives(report) {
 
   return sections;
 }
-export default function ApprovedReportV3({ data }) {
+
+export default function ApprovedReportV2({ data }) {
   const {
     reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
 
   // first table
   const isRecipient = data.activityRecipientType === 'recipient';
+  let recipientType = isRecipient ? 'Recipient' : 'Other entity';
+  if (data.activityRecipients.length > 1) {
+    recipientType = isRecipient ? 'Recipients' : 'Other entities';
+  }
+
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
@@ -189,17 +204,12 @@ export default function ApprovedReportV3({ data }) {
 
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
-  const participantCount = deliveryMethod === 'hybrid'
-    ? data.numberOfParticipantsInPerson.toString()
-    : data.numberOfParticipants.toString();
-
-  const participantVirtualCount = data.numberOfParticipantsVirtually
-    ? data.numberOfParticipantsVirtually.toString()
-    : null;
+  const participantCount = data.numberOfParticipants.toString();
+  const reasons = formatSimpleArray(data.reason);
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
   const duration = `${data.duration} hours`;
-  // const requester = formatRequester(data.requester);
+  const requester = formatRequester(data.requester);
 
   const goalSections = calculateGoalsAndObjectives(data);
 
@@ -207,11 +217,9 @@ export default function ApprovedReportV3({ data }) {
   const attachments = mapAttachments(data.files);
 
   // third table
-  let {
-    // eslint-disable-next-line prefer-const
+  const {
     context, displayId,
   } = data;
-  if (context === '') context = 'None provided';
 
   // next steps table
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
@@ -222,19 +230,6 @@ export default function ApprovedReportV3({ data }) {
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
-
-  const getNumberOfParticipants = () => {
-    const isHybrid = deliveryMethod === 'hybrid';
-    let numberOfParticipants = { [isHybrid ? 'Number of participants attending in person' : 'Number of participants attending']: participantCount };
-    if (deliveryMethod === 'hybrid') {
-      numberOfParticipants = {
-        ...numberOfParticipants,
-        'Number of participants attending virtually': participantVirtualCount,
-      };
-    }
-    return numberOfParticipants;
-  };
-
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
@@ -290,10 +285,17 @@ export default function ApprovedReportV3({ data }) {
           {
             heading: 'Who was the activity for?',
             data: {
-              Recipient: arRecipients,
-              'Recipient participants': attendees,
-              'Why activity requested': data.activityReason,
+              'Recipient or other entity': recipientType,
+              'Recipient names': arRecipients,
               'Target populations': targetPopulations,
+            },
+            striped: true,
+          },
+          {
+            heading: 'Reason for activity',
+            data: {
+              'Who requested the activity': requester,
+              Reasons: reasons,
             },
             striped: false,
           },
@@ -304,7 +306,7 @@ export default function ApprovedReportV3({ data }) {
               'End date': endDate,
               Duration: duration,
             },
-            striped: false,
+            striped: true,
           },
           {
             heading: 'Context',
@@ -316,10 +318,17 @@ export default function ApprovedReportV3({ data }) {
           {
             heading: 'Training or technical assistance',
             data: {
-              'TTA type': formatTtaType(ttaType),
-              'Languages used': languages,
-              'Delivery method': formatDelivery(deliveryMethod, virtualDeliveryType),
-              ...getNumberOfParticipants(deliveryMethod),
+              'TTA provided': formatTtaType(ttaType),
+              'Language used': languages,
+              'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
+            },
+            striped: true,
+          },
+          {
+            heading: 'Participants',
+            data: {
+              Participants: attendees,
+              'Number of participants': participantCount,
             },
             striped: false,
           },
@@ -341,7 +350,7 @@ export default function ApprovedReportV3({ data }) {
               data: {
                 Attachments: attachments,
               },
-              striped: false,
+              striped: true,
             }]
           }
       />
@@ -358,4 +367,4 @@ export default function ApprovedReportV3({ data }) {
   );
 }
 
-ApprovedReportV3.propTypes = reportDataPropTypes;
+ApprovedReportV2.propTypes = reportDataPropTypes;

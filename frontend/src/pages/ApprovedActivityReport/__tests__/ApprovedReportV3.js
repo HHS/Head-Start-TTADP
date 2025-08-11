@@ -5,7 +5,7 @@ import {
   screen,
 } from '@testing-library/react';
 
-import ApprovedReportV3 from '../components/ApprovedReportV3';
+import ApprovedReportV3 from '../../../components/ReportView/ApprovedReportV3';
 
 describe('Approved Activity Report V3 component', () => {
   const mockObjectives = [
