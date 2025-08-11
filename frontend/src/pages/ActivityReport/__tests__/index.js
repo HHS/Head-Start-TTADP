@@ -1101,4 +1101,17 @@ describe('ActivityReport', () => {
       expect(screen.getByText('Recipient requested')).toBeVisible();
     });
   });
+
+  describe('creator, collaborator', () => {
+    it('report submitted', async () => {
+      const d = {
+        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      };
+
+      fetchMock.get('/api/activity-reports/1', d);
+      renderActivityReport('1', 'review', true, 1);
+
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
+    });
+  });
 });
