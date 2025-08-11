@@ -94,7 +94,6 @@ const ActivityReportNavigator = ({
   pages,
   onFormSubmit,
   onReview,
-  onResetToDraft,
   currentPage,
   additionalData,
   onSave,
@@ -599,7 +598,6 @@ const ActivityReportNavigator = ({
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSaveForm}
-          onResetToDraft={onResetToDraft}
           isApprover={isApprover}
           isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
           onReview={onReview}
@@ -612,7 +610,6 @@ const ActivityReportNavigator = ({
           showSavedDraft={showSavedDraft}
           updateShowSavedDraft={updateShowSavedDraft}
           shouldAutoSave={shouldAutoSave}
-          hideSideNav
         />
       </FormProvider>
     </GoalFormContext.Provider>
@@ -620,7 +617,6 @@ const ActivityReportNavigator = ({
 };
 
 ActivityReportNavigator.propTypes = {
-  onResetToDraft: PropTypes.func.isRequired,
   editable: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,

@@ -1,179 +1,22 @@
 import React from 'react';
 import moment from 'moment-timezone';
-import { v4 as uuidv4 } from 'uuid';
 import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import {
-  reportDataPropTypes, formatSimpleArray, mapAttachments,
+  formatTtaType,
+  formatDelivery,
+  formatSimpleArray,
+  calculateGoalsAndObjectives,
+  formatNextSteps,
+  reportDataPropTypes,
+  mapAttachments,
 } from './helpers';
 import ReadOnlyContent from '../ReadOnlyContent';
-import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
 
-function formatNextSteps(nextSteps, heading) {
-  return nextSteps.map((step, index) => ({
-    heading: index === 0 ? heading : '',
-    data: {
-      [`Step ${index + 1}`]: step.note,
-      'Anticipated completion': step.completeDate,
-    },
-    striped: false,
-  }));
-}
-
-function formatObjectiveLinks(resources, isOtherEntity = false) {
-  if (Array.isArray(resources) && resources.length > 0) {
-    return (
-      <ul>
-        {resources.map((resource) => {
-          const resourceValue = isOtherEntity ? resource.url : resource.value;
-          return (
-            <li key={uuidv4()}>
-              <a
-                href={resourceValue}
-                rel="noreferrer"
-              >
-                { resourceValue }
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-  return 'None provided';
-}
-
-function formatDelivery(method, virtualDeliveryType) {
-  if (method === 'in-person') {
-    return 'In Person';
-  }
-
-  if (method === 'virtual') {
-    return virtualDeliveryType ? `Virtual: ${virtualDeliveryType}` : 'Virtual';
-  }
-
-  if (method === 'hybrid') {
-    return 'Hybrid';
-  }
-
-  return '';
-}
-
-/**
- *
- * @param {String[]} ttaType
- * @returns String[]
- */
-
-function formatTtaType(ttaType) {
-  const dict = {
-    training: 'Training',
-    'technical-assistance': 'Technical assistance',
-  };
-
-  return ttaType.map((type) => dict[type]).join(', ');
-}
-
-function addObjectiveSectionsToArray(
-  objectives,
-  sections,
-  activityRecipients,
-  isOtherEntity = false,
-) {
-  const isStriped = false;
-  objectives.forEach((objective) => {
-    const objectiveSection = {
-      heading: 'Objective summary',
-      data: {
-        'TTA objective': objective.title,
-        ...(objective.citations && objective.citations.length > 0
-          ? { 'Citations addressed': <RenderReviewCitations citations={objective.citations} activityRecipients={activityRecipients} className="" /> } : {}),
-        Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
-        'iPD courses': objective.courses.length ? formatSimpleArray(objective.courses.map(({ name }) => name)) : 'None provided',
-        'Resource links': objective.resources.length ? formatObjectiveLinks(objective.resources, isOtherEntity) : 'None provided',
-        'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
-        'TTA provided': objective.ttaProvided,
-        'Support type': objective.supportType,
-        'Objective status': objective.status,
-        ...(objective.status === 'Suspended' ? {
-          'Reason suspended': (
-            objective.closeSuspendReason || ''
-          ) + (` - ${objective.closeSuspendContext}` || ''),
-        } : {}),
-      },
-      isStriped,
-    };
-
-    sections.push(objectiveSection);
-  });
-}
-
-/**
- * @param {object[]} responses an array of FEI Goal response objects
- */
-function getResponses(responses) {
-  return responses[0].response.map((r) => r).join(', ');
-}
-
-/**
-   *
-   * @param {object} report an activity report object
-   * @returns an array of two arrays, each of which contains strings
-   */
-function calculateGoalsAndObjectives(report) {
-  const sections = [];
-  const striped = false;
-
-  if (report.activityRecipientType === 'recipient') {
-    report.goalsAndObjectives.forEach((goal) => {
-      const goalSection = {
-        heading: 'Goal summary',
-        data: {
-          'Recipient\'s goal': goal.name,
-          'Goal numbers': goal.goalNumbers.join(','),
-        },
-        striped,
-      };
-
-      // Adds "root cause" to the goal section if there are FEI responses
-      const { responses } = goal;
-      if (responses && responses.length) {
-        const rootCauseData = {
-          'Root cause': getResponses(responses),
-        };
-        goalSection.data = { ...goalSection.data, ...rootCauseData };
-      }
-
-      const { prompts } = goal;
-      if (prompts && prompts.length) {
-        const promptData = {};
-        prompts.forEach((prompt) => {
-          if (prompt.reportResponse.length > 0) {
-            promptData[prompt.title] = prompt.reportResponse.join(', ');
-          }
-        });
-        goalSection.data = { ...goalSection.data, ...promptData };
-      }
-
-      sections.push(goalSection);
-
-      addObjectiveSectionsToArray(goal.objectives, sections, report.activityRecipients);
-    });
-  } else if (report.activityRecipientType === 'other-entity') {
-    addObjectiveSectionsToArray(
-      report.objectivesWithoutGoals,
-      sections,
-      report.activityRecipients,
-      true,
-    );
-  }
-
-  return sections;
-}
-export default function ApprovedReportV3({ data }) {
+export default function SubmittedReport({ data }) {
   const {
     reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
@@ -358,4 +201,4 @@ export default function ApprovedReportV3({ data }) {
   );
 }
 
-ApprovedReportV3.propTypes = reportDataPropTypes;
+SubmittedReport.propTypes = reportDataPropTypes;

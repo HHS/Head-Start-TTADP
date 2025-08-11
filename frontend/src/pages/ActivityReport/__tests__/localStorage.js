@@ -158,7 +158,7 @@ describe('Local storage fallbacks', () => {
     };
 
     fetchMock.get('/api/activity-reports/1', d);
-    renderActivityReport('1', 'review', true);
+    renderActivityReport('1', 'review', true, 3);
 
     await screen.findByRole('heading', { name: /Activity report for Region 1/i, timeout: 4000 });
     expect(mockWarn).toHaveBeenCalledWith('Local storage may not be available: ', e);

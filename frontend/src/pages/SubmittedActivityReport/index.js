@@ -1,28 +1,22 @@
 import React, {
-  useEffect, useState, useRef,
+  useEffect, useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Redirect, useHistory } from 'react-router-dom';
-import moment from 'moment-timezone';
+import { useHistory } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { getReport, unlockReport } from '../../fetchers/activityReports';
-import Modal from '../../components/Modal';
-import Container from '../../components/Container';
+import { getReport } from '../../fetchers/activityReports';
 import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
 } from '../../Constants';
-import ApprovedReportV1 from '../../components/ReportView/ApprovedReportV1';
-import ApprovedReportV2 from '../../components/ReportView/ApprovedReportV2';
-import ApprovedReportV3 from '../../components/ReportView/ApprovedReportV3';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import './index.scss';
+import SubmittedReport from '../../components/ReportView/SubmittedReport';
 
 export default function SubmittedActivityReport({ match, user }) {
   const history = useHistory();
-  const [justUnlocked, updatedJustUnlocked] = useState(false);
 
   const [report, setReport] = useState({
     version: 'loading',
@@ -59,8 +53,6 @@ export default function SubmittedActivityReport({ match, user }) {
     language: [],
   });
 
-  const modalRef = useRef();
-
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
     try {
@@ -94,69 +86,11 @@ export default function SubmittedActivityReport({ match, user }) {
   }, [match.params.activityReportId, user, history]);
 
   const {
-    id: reportId,
     displayId,
-    version,
   } = report;
-
-  const ReportComponent = () => {
-    // Map of report versions to their respective components
-    const reportsMap = {
-      1: <ApprovedReportV1 data={report} />,
-      2: <ApprovedReportV2 data={report} />,
-      3: <ApprovedReportV3 data={report} />,
-      loading: <Container className="ttahub-activity-report-view margin-top-2 minh-tablet">Loading...</Container>,
-    };
-
-    // If the version is not found, default to ApprovedReportV1
-    return reportsMap[version] || <ApprovedReportV1 data={report} />;
-  };
-
-  /* istanbul ignore next: hard to test modals */
-  const onUnlock = async () => {
-    await unlockReport(reportId);
-    modalRef.current.toggleModal(false);
-    updatedJustUnlocked(true);
-  };
-
-  const UnlockModal = () => (
-    <Modal
-      modalRef={modalRef}
-      onOk={/* istanbul ignore next: hard to test modals */ () => onUnlock()}
-      modalId="UnlockReportModal"
-      title="Unlock Activity Report"
-      okButtonText="Unlock"
-      okButtonAriaLabel="Unlock approved report will redirect to activity report page."
-    >
-      <>
-        Are you sure you want to unlock this activity report?
-        <br />
-        <br />
-        The report status will be set to
-        {' '}
-        <b>NEEDS ACTION</b>
-        {' '}
-        and
-        {' '}
-        <br />
-        must be re-submitted for approval.
-      </>
-    </Modal>
-  );
-
-  const timezone = moment.tz.guess();
-  const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
-  const message = {
-    time,
-    reportId,
-    displayId,
-    status: 'unlocked',
-  };
 
   return (
     <>
-
-      {justUnlocked && /* istanbul ignore next: can't test because of modals */ <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <Helmet>
         <title>
           TTA Activity Report
@@ -165,12 +99,10 @@ export default function SubmittedActivityReport({ match, user }) {
         </title>
       </Helmet>
       <ApprovedReportSpecialButtons
-        modalRef={modalRef}
-        UnlockModal={UnlockModal}
         user={user}
-        showUnlockReports
+        showUnlockReports={false}
       />
-      <ReportComponent />
+      <SubmittedReport data={report} />
     </>
   );
 }
