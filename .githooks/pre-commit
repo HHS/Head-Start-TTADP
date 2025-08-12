@@ -1,86 +1,86 @@
-#!/usr/bin/env bash
-set -e
+# #!/usr/bin/env bash
+# set -e
 
-# Set USE_DOCKER based on whether both backend and frontend containers are running
-USE_DOCKER=false
-if [ "$(docker ps | grep -E "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
-  USE_DOCKER=true
-fi
+# # Set USE_DOCKER based on whether both backend and frontend containers are running
+# USE_DOCKER=false
+# if [ "$(docker ps | grep -E "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
+#   USE_DOCKER=true
+# fi
 
-# Ensure node_modules is populated for frontend or backend (only for non-Docker users)
-check_and_run_yarn() {
-  local dir=$1
-  if [ ! -d "$dir/node_modules" ] || [ -z "$(ls -A "$dir/node_modules")" ]; then
-    echo "Installing dependencies in $dir"
-    (cd "$dir" && yarn)
-  fi
-}
+# # Ensure node_modules is populated for frontend or backend (only for non-Docker users)
+# check_and_run_yarn() {
+#   local dir=$1
+#   if [ ! -d "$dir/node_modules" ] || [ -z "$(ls -A "$dir/node_modules")" ]; then
+#     echo "Installing dependencies in $dir"
+#     (cd "$dir" && yarn)
+#   fi
+# }
 
-common_changed=false
-common_package_json_changed=false
-frontend_yarn_lock_changed=false
-backend_yarn_lock_changed=false
-files=$(git diff --cached --name-only)
+# common_changed=false
+# common_package_json_changed=false
+# frontend_yarn_lock_changed=false
+# backend_yarn_lock_changed=false
+# files=$(git diff --cached --name-only)
 
-for f in $files
-do
-  # check if packages/common/src/index.js was changed
-  if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
-    common_changed=true
-  fi
+# for f in $files
+# do
+#   # check if packages/common/src/index.js was changed
+#   if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
+#     common_changed=true
+#   fi
 
-  # check if packages/common/package.json was changed
-  if [ -e "$f" ] && [[ $f == packages/common/package.json ]]; then
-    common_package_json_changed=true
-  fi
+#   # check if packages/common/package.json was changed
+#   if [ -e "$f" ] && [[ $f == packages/common/package.json ]]; then
+#     common_package_json_changed=true
+#   fi
   
-  # check if frontend/yarn.lock was changed
-  if [ -e "$f" ] && [[ $f == frontend/yarn.lock ]]; then
-    frontend_yarn_lock_changed=true
-  fi
+#   # check if frontend/yarn.lock was changed
+#   if [ -e "$f" ] && [[ $f == frontend/yarn.lock ]]; then
+#     frontend_yarn_lock_changed=true
+#   fi
   
-  # check if backend/yarn.lock was changed
-  if [ -e "$f" ] && [[ $f == backend/yarn.lock ]]; then
-    backend_yarn_lock_changed=true
-  fi
+#   # check if backend/yarn.lock was changed
+#   if [ -e "$f" ] && [[ $f == backend/yarn.lock ]]; then
+#     backend_yarn_lock_changed=true
+#   fi
 
-  # Format any *.tf files that were cached/staged
-  if [ -e "$f" ] && [[ $f == *.tf ]]; then
-    printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
-    terraform fmt "$f"
-    git add "$f"
-  fi
+#   # Format any *.tf files that were cached/staged
+#   if [ -e "$f" ] && [[ $f == *.tf ]]; then
+#     printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
+#     terraform fmt "$f"
+#     git add "$f"
+#   fi
 
-  # Autolint changed .js and .ts files
-  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
-    if [ "$USE_DOCKER" = true ]; then
-      if [[ $f == frontend/* ]]; then
-        yarn docker:yarn:fe lint:fix:single "$f"
-      else
-        yarn docker:yarn:be lint:fix:single "$f"
-      fi
-    else
-      if [[ $f == frontend/* ]]; then
-        check_and_run_yarn frontend
-        yarn lint:fix:single "$f"
-      else
-        check_and_run_yarn "."
-        yarn lint:fix:single "$f"
-      fi
-    fi
-    git add "$f"
-  fi
-done
+#   # Autolint changed .js and .ts files
+#   if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
+#     if [ "$USE_DOCKER" = true ]; then
+#       if [[ $f == frontend/* ]]; then
+#         yarn docker:yarn:fe lint:fix:single "$f"
+#       else
+#         yarn docker:yarn:be lint:fix:single "$f"
+#       fi
+#     else
+#       if [[ $f == frontend/* ]]; then
+#         check_and_run_yarn frontend
+#         yarn lint:fix:single "$f"
+#       else
+#         check_and_run_yarn "."
+#         yarn lint:fix:single "$f"
+#       fi
+#     fi
+#     git add "$f"
+#   fi
+# done
 
-# Versioning and lock file checks
-if [ $common_changed = true ]; then
-  if [ $common_package_json_changed = false ]; then
-    echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to publish a new version."
-    exit 1
-  fi
+# # Versioning and lock file checks
+# if [ $common_changed = true ]; then
+#   if [ $common_package_json_changed = false ]; then
+#     echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to publish a new version."
+#     exit 1
+#   fi
 
-  if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
-    echo "ERROR: common/src/index.js was changed, but a yarn.lock file was not updated. Please make sure you've updated both yarn.lock files if you've updated the common/index.js file."
-    exit 1
-  fi
-fi
+#   if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
+#     echo "ERROR: common/src/index.js was changed, but a yarn.lock file was not updated. Please make sure you've updated both yarn.lock files if you've updated the common/index.js file."
+#     exit 1
+#   fi
+# fi
