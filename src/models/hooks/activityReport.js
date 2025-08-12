@@ -690,11 +690,9 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-
         await changeGoalStatus({
           goalId: goal.id,
-          userId,
+          userId: instance.userId,
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,

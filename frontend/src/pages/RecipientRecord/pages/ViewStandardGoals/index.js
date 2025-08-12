@@ -21,6 +21,47 @@ import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 import './index.scss';
 
+const StatusActionTag = ({ update, goalHistory, currentGoalIndex }) => {
+  const isReopened = update.reason === 'Goal created'
+    && goalHistory.some((goal, index) => index > currentGoalIndex && goal.status === 'Closed');
+
+  if (update.reason === 'Goal created') {
+    return <span>{isReopened ? 'Reopened on' : 'Added on'}</span>;
+  }
+
+  switch (update.newStatus) {
+    case 'Not Started':
+      return <span>Added on</span>;
+    case 'In Progress':
+      return <span>Started on</span>;
+    case 'Suspended':
+      return <span>Suspended on</span>;
+    case 'Closed':
+      return <span>Closed on</span>;
+    case 'Complete':
+      return <span>Completed on</span>;
+    default:
+      return (
+        <span>
+          {update.newStatus}
+          {' '}
+          on
+        </span>
+      );
+  }
+};
+
+StatusActionTag.propTypes = {
+  update: PropTypes.shape({
+    newStatus: PropTypes.string,
+    reason: PropTypes.string,
+  }).isRequired,
+  goalHistory: PropTypes.arrayOf(PropTypes.shape({
+    status: PropTypes.string,
+  })).isRequired,
+  currentGoalIndex: PropTypes.number.isRequired,
+};
+
 export default function ViewGoalDetails({
   recipient,
   regionId,
@@ -142,7 +183,6 @@ export default function ViewGoalDetails({
       handleToggle: () => { }, // Add dummy handler to satisfy prop-types
       className: 'view-standard-goals-accordion',
       content: (
-
         <div className="goal-history-content">
           <SummaryBox>
             <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
@@ -153,26 +193,15 @@ export default function ViewGoalDetails({
                   {statusUpdates.map((update) => (
                     <li key={update.id}>
                       <strong>
-                        {(() => {
-                          switch (update.newStatus) {
-                            case 'Not Started':
-                              return 'Added on';
-                            case 'In Progress':
-                              return 'Started on';
-                            case 'Suspended':
-                              return 'Suspended on';
-                            case 'Closed':
-                              return 'Closed on';
-                            case 'Complete':
-                              return 'Completed on';
-                            default:
-                              return `${update.newStatus} on`;
-                          }
-                        })()}
+                        <StatusActionTag
+                          update={update}
+                          goalHistory={sortedGoalHistory}
+                          currentGoalIndex={index}
+                        />
                       </strong>
                       {' '}
                       <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
-                      {update.user ? ` by ${update.user.name}` : ''}
+                      {update.user ? ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}` : ''}
                     </li>
                   ))}
                 </ul>
@@ -343,6 +372,7 @@ export default function ViewGoalDetails({
         </div>
 
         <Accordion
+          multiselectable
           bordered
           items={accordionItems}
         />
