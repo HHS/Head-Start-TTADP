@@ -1109,9 +1109,26 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/1', d);
-      renderActivityReport('1', 'review', true, 1);
+      act(() => {
+        renderActivityReport('1', 'review', true, 1);
+      });
 
       await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
+    });
+  });
+
+  describe('approved report', () => {
+    it('auto redirects', async () => {
+      const d = {
+        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+      };
+
+      fetchMock.get('/api/activity-reports/1', d);
+      act(() => {
+        renderActivityReport('1', 'review', true, 1);
+      });
+
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
     });
   });
 });

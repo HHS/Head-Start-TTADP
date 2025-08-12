@@ -154,7 +154,7 @@ describe('Local storage fallbacks', () => {
     const mockWarn = jest.spyOn(global.console, 'warn');
 
     const d = {
-      ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+      ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.SUBMITTED,
     };
 
     fetchMock.get('/api/activity-reports/1', d);

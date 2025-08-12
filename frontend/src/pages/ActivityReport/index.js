@@ -447,6 +447,12 @@ function ActivityReport({
     );
   }
 
+  if (formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    return (
+      <Redirect to={`/activity-reports/view/${activityReportId}`} />
+    );
+  }
+
   if (connectionActive
     && isCollaboratorOrCreator
     && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
