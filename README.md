@@ -359,6 +359,15 @@ Our project includes four deployed Postgres databases, one to interact with each
    You will need to have the pg/redis client installed locally and findable in your $PATH.
    Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
 
+   Note: This plugin will not work for connecting to a replica database.  
+   Instead, use the script `./bin/replica-connect.sh` from this repo.
+   ```
+   ./bin/replica-connect.sh tta-smarthub-dev-blue
+    Establishing SSH tunnel with PID: 38115
+    Connecting to db replica for tta-smarthub-dev-blue on port 5432...
+    cgawsbrokerprodbt584djy6n6cnuz=> 
+    ```
+
 ##### Option B: Run script as task
 
 1. Use [cf run-task][cf-run-task] command
