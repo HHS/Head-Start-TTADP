@@ -182,7 +182,6 @@ describe('Approver review page', () => {
     });
   });
 
-
   describe('when approver is creator', () => {
     it('does not show an alert', async () => {
       const calculatedStatus = REPORT_STATUSES.DRAFT;
