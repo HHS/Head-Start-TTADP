@@ -901,6 +901,17 @@ export async function standardGoalsForRecipient(
         )`),
         'latestStatusChangeDate',
       ],
+      [
+        sequelize.literal(`(
+          SELECT COUNT(*) > 0
+          FROM "Goals" g2
+          WHERE g2."goalTemplateId" = "Goal"."goalTemplateId"
+            AND g2."grantId" = "Goal"."grantId"
+            AND g2."status" = 'Closed'
+            AND g2."id" != "Goal"."id"
+        )`),
+        'isReopened',
+      ],
     ],
     where: {
       id: ids,

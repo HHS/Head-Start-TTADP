@@ -371,6 +371,12 @@ export async function getGoalHistory(req, res) {
               model: sequelize.models.User,
               as: 'user',
               attributes: ['name'],
+              include: [{
+                model: sequelize.models.Role,
+                as: 'roles',
+                attributes: ['name'],
+                through: [],
+              }],
             },
           ],
         },

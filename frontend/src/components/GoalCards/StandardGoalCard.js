@@ -49,6 +49,8 @@ export default function StandardGoalCard({
     onAR,
     grant = { number: 'N/A' },
     previousStatus,
+    statusChanges = [],
+    isReopened,
   } = goal;
 
   const isMonitoringGoal = goal.createdVia === 'monitoring';
@@ -195,6 +197,10 @@ export default function StandardGoalCard({
 
   // Determine the status change label based on current status
   const getStatusChangeLabel = () => {
+    if (statusChanges.length === 1 && isReopened) {
+      return 'Reopened on';
+    }
+
     switch (localStatus) {
       case 'Not Started':
         return 'Added on';
@@ -211,6 +217,10 @@ export default function StandardGoalCard({
 
   // Determine who changed the status
   const getStatusChangeBy = () => {
+    if (statusChanges.length === 1 && isReopened) {
+      return 'Reopened by';
+    }
+
     switch (localStatus) {
       case 'Not Started':
         return 'Added by';

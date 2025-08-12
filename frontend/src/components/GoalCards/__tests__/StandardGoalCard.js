@@ -29,6 +29,7 @@ describe('StandardGoalCard', () => {
     createdVia: 'rtr',
     onAR: true,
     responses: [],
+    statusChanges: [],
     objectives: [
       {
         id: 1,
