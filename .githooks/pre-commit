@@ -55,14 +55,14 @@ do
   if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.ts ]]); then
     if [ "$USE_DOCKER" = true ]; then
       if [[ $f == frontend/* ]]; then
-        yarn docker:yarn:fe lint:fix:single "$f"
+        docker compose run -T --rm frontend yarn lint:fix:single "${f#frontend/}"
       else
-        yarn docker:yarn:be lint:fix:single "$f"
+        docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "$f"
       fi
     else
       if [[ $f == frontend/* ]]; then
         check_and_run_yarn frontend
-        yarn lint:fix:single "$f"
+        (cd frontend && yarn lint:fix:single "${f#frontend/}")
       else
         check_and_run_yarn "."
         yarn lint:fix:single "$f"
