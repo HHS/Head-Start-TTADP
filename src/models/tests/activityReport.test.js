@@ -255,6 +255,8 @@ describe('Activity Reports model', () => {
       { where: { id: report.id }, individualHooks: true },
     );
 
+    console.log(preReport.userId);
+
     const goalsPre = await Goal.findAll({
       attributes: [
         'id',
@@ -271,7 +273,11 @@ describe('Activity Reports model', () => {
     });
 
     await preReport.update(
-      { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      {
+        userId: user.id,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      },
     );
     await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
