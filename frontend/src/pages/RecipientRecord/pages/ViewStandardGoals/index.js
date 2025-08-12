@@ -7,7 +7,9 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useLocation } from 'react-router-dom';
-import { Alert } from '@trussworks/react-uswds';
+import {
+  Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
+} from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../../components/Container';
@@ -140,58 +142,62 @@ export default function ViewGoalDetails({
       handleToggle: () => { }, // Add dummy handler to satisfy prop-types
       className: 'view-standard-goals-accordion',
       content: (
+
         <div className="goal-history-content">
-          <div className="goal-updates-section">
-            <h3 className="smart-hub-serif">Goal updates</h3>
-            {statusUpdates.length > 0 ? (
-              <ul className="usa-list" aria-label="Goal status updates">
-                {statusUpdates.map((update) => (
-                  <li key={update.id}>
+          <SummaryBox>
+            <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
+            <SummaryBoxContent>
+              {' '}
+              {statusUpdates.length > 0 ? (
+                <ul className="usa-list" aria-label="Goal status updates">
+                  {statusUpdates.map((update) => (
+                    <li key={update.id}>
+                      <strong>
+                        {(() => {
+                          switch (update.newStatus) {
+                            case 'Not Started':
+                              return 'Added on';
+                            case 'In Progress':
+                              return 'Started on';
+                            case 'Suspended':
+                              return 'Suspended on';
+                            case 'Closed':
+                              return 'Closed on';
+                            case 'Complete':
+                              return 'Completed on';
+                            default:
+                              return `${update.newStatus} on`;
+                          }
+                        })()}
+                      </strong>
+                      {' '}
+                      <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                      {update.user ? ` by ${update.user.name}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="usa-list" aria-label="Goal status updates">
+                  <li>
                     <strong>
-                      {(() => {
-                        switch (update.newStatus) {
-                          case 'Not Started':
-                            return 'Added on';
-                          case 'In Progress':
-                            return 'Started on';
-                          case 'Suspended':
-                            return 'Suspended on';
-                          case 'Closed':
-                            return 'Closed on';
-                          case 'Complete':
-                            return 'Completed on';
-                          default:
-                            return `${update.newStatus} on`;
-                        }
-                      })()}
+                      {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
                     </strong>
                     {' '}
-                    <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
-                    {update.user ? ` by ${update.user.name}` : ''}
+                    on
+                    {' '}
+                    <strong>{moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                    {goal.goalCollaborators && goal.goalCollaborators.some(
+                      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
+                    )
+                      ? ` by ${goal.goalCollaborators.find(
+                        (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
+                      ).user.name}`
+                      : ''}
                   </li>
-                ))}
-              </ul>
-            ) : (
-              <ul className="usa-list" aria-label="Goal status updates">
-                <li>
-                  <strong>
-                    {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
-                  </strong>
-                  {' '}
-                  on
-                  {' '}
-                  <strong>{moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
-                  {goal.goalCollaborators && goal.goalCollaborators.some(
-                    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
-                  )
-                    ? ` by ${goal.goalCollaborators.find(
-                      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
-                    ).user.name}`
-                    : ''}
-                </li>
-              </ul>
-            )}
-          </div>
+                </ul>
+              )}
+            </SummaryBoxContent>
+          </SummaryBox>
 
           {goal.responses && goal.responses.length > 0 && (
           <ReadOnlyField label="Root causes">
@@ -207,14 +213,14 @@ export default function ViewGoalDetails({
           </ReadOnlyField>
           )}
 
-          <div className="goal-status-section">
+          <div className="goal-status-section margin-bottom-3">
             <ReadOnlyField label="Goal status">
               {goal.status}
             </ReadOnlyField>
           </div>
 
           {objectives.length > 0 && (
-          <div className="objective-section">
+          <div className="objective-section margin-bottom-3">
             {objectives.map((objective) => (
               <div key={objective.id} className="margin-bottom-3">
                 <h3 className="smart-hub-serif">Objective summary</h3>
