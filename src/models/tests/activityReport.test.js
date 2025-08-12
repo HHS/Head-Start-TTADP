@@ -255,8 +255,6 @@ describe('Activity Reports model', () => {
       { where: { id: report.id }, individualHooks: true },
     );
 
-    console.log(preReport.userId);
-
     const goalsPre = await Goal.findAll({
       attributes: [
         'id',
