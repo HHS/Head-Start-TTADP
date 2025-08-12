@@ -41,5 +41,5 @@ echo "Establishing SSH tunnel with PID: $SSH_PID"
 sleep 3  # Wait for the SSH tunnel to establish
 
 echo "Connecting to db replica for ${APP_NAME} on port ${PORT}..."
-echo "Password: ${PASSWD}"
-PGPASSWORD=$PASSWD; psql -h localhost -p ${PORT} -U ${USER} -d ${DB_NAME}
+#echo "Password: ${PASSWD}" # Uncomment if password prompt is triggered
+export PGPASSWORD=$PASSWD; psql -h localhost -p ${PORT} -U ${USER} -d ${DB_NAME}
