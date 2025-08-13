@@ -2,12 +2,12 @@ import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
-import { Button, Textarea } from '@trussworks/react-uswds';
+import { Button, Label, Textarea } from '@trussworks/react-uswds';
 import FormItem from '../FormItem';
 import selectOptionsReset from '../selectOptionsReset';
 import { CREATE_A_NEW_OBJECTIVE } from './constants';
 
-const ObjectiveTextArea = ({ fieldName, index, fieldValue }) => {
+const ObjectiveTextArea = ({ fieldName, index, defaultValue }) => {
   const { register } = useFormContext();
   return (
     <Textarea
@@ -15,7 +15,7 @@ const ObjectiveTextArea = ({ fieldName, index, fieldValue }) => {
       id={`${fieldName}[${index}].value`}
       className="margin-bottom-1"
       inputRef={register()}
-      defaultValue={fieldValue}
+      defaultValue={defaultValue}
       required
     />
   );
@@ -24,11 +24,11 @@ const ObjectiveTextArea = ({ fieldName, index, fieldValue }) => {
 ObjectiveTextArea.propTypes = {
   fieldName: PropTypes.string.isRequired,
   index: PropTypes.number.isRequired,
-  fieldValue: PropTypes.string,
+  defaultValue: PropTypes.string,
 };
 
 ObjectiveTextArea.defaultProps = {
-  fieldValue: '',
+  defaultValue: '',
 };
 
 export default function ObjectiveSelection({
@@ -41,15 +41,24 @@ export default function ObjectiveSelection({
   const { setValue, register, watch } = useFormContext();
 
   const selectedObjectives = watch(fieldName);
-  const selectedObjectiveTitles = useMemo(() => (
-    selectedObjectives
-      .map((o) => o.label)
-      .filter((label) => label && label !== CREATE_A_NEW_OBJECTIVE)
-  ), [selectedObjectives]);
+  const selectedObjectiveTitles = useMemo(() => {
+    const titles = [];
+    selectedObjectives.forEach((obj, idx) => {
+      // Skip the current field to avoid self-filtering
+      if (idx === index) return;
+
+      // Only consider preset objectives that are actually selected (not "Create a new objective")
+      if (obj.label && obj.label !== CREATE_A_NEW_OBJECTIVE) {
+        titles.push(obj.label);
+      }
+    });
+    return titles;
+  }, [selectedObjectives, index]);
+
   const fieldLabel = watch(`${fieldName}[${index}].label`);
   const fieldValue = watch(`${fieldName}[${index}].value`);
 
-  const filteredOptions = objectiveOptions.filter((option) => {
+  const filteredOptions = useMemo(() => (objectiveOptions.filter((option) => {
     // Always show "Create a new objective"
     if (option.label === CREATE_A_NEW_OBJECTIVE) {
       return true;
@@ -62,26 +71,18 @@ export default function ObjectiveSelection({
 
     // Hide options that are selected in other fields
     return !selectedObjectiveTitles.includes(option.label);
-  });
+  })), [fieldLabel, objectiveOptions, selectedObjectiveTitles]);
 
-  useEffect(() => {
-    if (fieldLabel) {
-      if (fieldLabel === CREATE_A_NEW_OBJECTIVE) {
-        // eslint-disable-next-line max-len
-        const isExistingObjective = objectiveOptions.some((option) => option.label !== CREATE_A_NEW_OBJECTIVE && option.label === fieldValue);
-        if (isExistingObjective) {
-          setValue(`${fieldName}[${index}].value`, '');
-        }
-      } else {
-        setValue(`${fieldName}[${index}].value`, fieldLabel);
-      }
-    }
-  }, [fieldLabel, fieldName, index, setValue, objectiveOptions, fieldValue]);
-
-  const onlyCreateNew = (
+  const onlyCreateNew = useMemo(() => (
     filteredOptions.length === 1
     && filteredOptions[0].label === CREATE_A_NEW_OBJECTIVE
-  );
+  ), [filteredOptions]);
+
+  useEffect(() => {
+    if (onlyCreateNew) {
+      setValue(`${fieldName}[${index}].label`, CREATE_A_NEW_OBJECTIVE);
+    }
+  }, [fieldName, index, onlyCreateNew, setValue]);
 
   return (
     <div key={field.id}>
@@ -93,19 +94,11 @@ export default function ObjectiveSelection({
         {...register(`${fieldName}[${index}].objectiveId`)}
         defaultValue={field.objectiveId}
       />
-      <input
-        type="hidden"
-        name={`${fieldName}[${index}].value`}
-        id={`${fieldName}[${index}].value`}
-        // eslint-disable-next-line react/jsx-props-no-spreading
-        {...register(`${fieldName}[${index}].value`)}
-        defaultValue={field.value}
-      />
       <div>
-        {(!onlyCreateNew) && (
         <FormItem
           label="Select TTA objective"
           name={`${fieldName}[${index}].label`}
+          className={onlyCreateNew ? 'display-none' : ''}
         >
           <Controller
             name={`${fieldName}[${index}].label`}
@@ -126,25 +119,19 @@ export default function ObjectiveSelection({
             )}
           />
         </FormItem>
-        )}
-        {(fieldLabel === CREATE_A_NEW_OBJECTIVE && !onlyCreateNew) && (
-        <ObjectiveTextArea
-          index={index}
-          fieldName={fieldName}
-          fieldValue={field.value}
-        />
-        )}
-        {onlyCreateNew && (
-        <FormItem
-          label="TTA objective"
-          name={`${fieldName}[${index}].value`}
+        <Label
+          className={onlyCreateNew ? '' : 'usa-sr-only'}
+          htmlFor={`${fieldName}[${index}].value`}
         >
+          TTA objective
+        </Label>
+
+        {(fieldLabel === CREATE_A_NEW_OBJECTIVE || onlyCreateNew) && (
           <ObjectiveTextArea
             index={index}
             fieldName={fieldName}
-            fieldValue={field.value}
+            defaultValue={fieldValue || field.value}
           />
-        </FormItem>
         )}
         <Button
           type="button"
