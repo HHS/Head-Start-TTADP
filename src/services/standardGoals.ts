@@ -875,7 +875,6 @@ export async function standardGoalsForRecipient(
       ],
     }
     : {};
-
   const goalRows = await Goal.findAll({
     attributes: [
       'id',
@@ -883,6 +882,17 @@ export async function standardGoalsForRecipient(
       'status',
       'createdAt',
       'goalTemplateId',
+      // The underlying sort expect the status_sort column to be the first column _0.
+      [sequelize.literal(`
+        CASE
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
+          WHEN "Goal"."status" = 'Draft' THEN 2
+          WHEN "Goal"."status" = 'Not Started' THEN 3
+          WHEN "Goal"."status" = 'In Progress' THEN 4
+          WHEN "Goal"."status" = 'Suspended' THEN 5
+          WHEN "Goal"."status" = 'Closed' THEN 6
+          ELSE 7 END`),
+      'status_sort'],
       [
         sequelize.literal(`(
           SELECT MAX("createdAt")
@@ -891,16 +901,6 @@ export async function standardGoalsForRecipient(
         )`),
         'latestStatusChangeDate',
       ],
-      [sequelize.literal(`
-        CASE
-          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
-          WHEN "Goal"."status" = 'Draft' THEN 2
-          WHEN "Goal"."status" = 'Not Started' THEN 3
-          WHEN "Goal"."status" = 'In Progress' THEN 4
-          WHEN "Goal"."status" = 'Closed' THEN 5
-          WHEN "Goal"."status" = 'Suspended' THEN 6
-          ELSE 7 END`),
-      'status_sort'],
     ],
     where: {
       id: ids,
@@ -1120,9 +1120,12 @@ export async function standardGoalsForRecipient(
     };
   });
 
+  const offsetNum = parseInt(String(offset), 10);
+  const limitNum = parseInt(String(limit), 10);
+
   return {
     count: goalRows.length,
-    goalRows: processedRows,
+    goalRows: limitNum ? processedRows.slice(offsetNum, offsetNum + limitNum) : processedRows,
     statuses,
     allGoalIds: ids,
   };
