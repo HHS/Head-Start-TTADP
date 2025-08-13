@@ -1036,6 +1036,88 @@ describe('standardGoal service', () => {
       // Verify the statuses object is returned
       expect(result.statuses).toBeDefined();
     });
+
+    it('paginates standard goals correctly using limit and offset', async () => {
+      // Get all goals for reference
+      const allGoals = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+        },
+      );
+
+      // There should be 2 goals total
+      expect(allGoals.count).toBe(2);
+      expect(allGoals.goalRows.length).toBe(2);
+
+      // Test with limit of 1 and offset of 0 (first page)
+      const firstPage = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 1,
+          offset: 0,
+        },
+      );
+
+      // Should return the count of all goals, but only include 1 goal in goalRows
+      expect(firstPage.count).toBe(2); // Total count remains the same
+      expect(firstPage.goalRows.length).toBe(1); // But only 1 goal returned
+      expect(firstPage.goalRows[0].id).toBe(allGoals.goalRows[0].id); // First goal should match
+
+      // Test with limit of 1 and offset of 1 (second page)
+      const secondPage = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 1,
+          offset: 1,
+        },
+      );
+
+      // Should return the count of all goals, but only include 1 goal in goalRows
+      expect(secondPage.count).toBe(2); // Total count remains the same
+      expect(secondPage.goalRows.length).toBe(1); // But only 1 goal returned
+      expect(secondPage.goalRows[0].id).toBe(allGoals.goalRows[1].id); // Second goal should match
+
+      // Test with limit larger than available goals
+      const largeLimit = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 10,
+          offset: 0,
+        },
+      );
+
+      // Should return all goals
+      expect(largeLimit.count).toBe(2);
+      expect(largeLimit.goalRows.length).toBe(2);
+
+      // Test with offset beyond available goals
+      const largeOffset = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 10,
+          offset: 10,
+        },
+      );
+
+      // Should return empty result set but correct count
+      expect(largeOffset.count).toBe(2);
+      expect(largeOffset.goalRows.length).toBe(0);
+    });
   });
 
   describe('standardGoalsForRecipient Only Approved Objectives Param', () => {

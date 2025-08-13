@@ -163,6 +163,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     || o.files?.length).map(async (objective, index) => {
     const {
       id,
+      ids,
       isNew,
       ttaProvided,
       ActivityReportObjective: aro,
@@ -182,17 +183,26 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
 
     // If the goal set on the objective does not match
     // the goals passed we need to save the objectives.
-    const createNewObjectives = objective.goalId !== goal.id;
+    const objectiveMatchesGoal = objective.goalId === goal.id;
     const updatedObjective = {
       ...updatedFields, title, goalId: goal.id,
     };
-
     // Check if objective exists.
     let savedObjective;
-    if (!isNew && id && !createNewObjectives) {
-      savedObjective = await Objective.findByPk(id);
+    if (!isNew && id) {
+      // If the goal on this objective matches look it up by ID.
+      if (objectiveMatchesGoal) {
+        savedObjective = await Objective.findByPk(id);
+      } else if (ids && ids.length) {
+        // If the goal on this objective doesn't match, look it up by IDs and Goal ID.
+        savedObjective = await Objective.findOne({
+          where: {
+            id: Array.isArray(ids) ? ids : [ids],
+            goalId: goal.id,
+          },
+        });
+      }
     }
-
     if (savedObjective) {
       // We should only allow the title to change if we are not on a approved AR.
       if (!savedObjective.onApprovedAR) {
@@ -889,8 +899,8 @@ export async function standardGoalsForRecipient(
           WHEN "Goal"."status" = 'Draft' THEN 2
           WHEN "Goal"."status" = 'Not Started' THEN 3
           WHEN "Goal"."status" = 'In Progress' THEN 4
-          WHEN "Goal"."status" = 'Closed' THEN 5
-          WHEN "Goal"."status" = 'Suspended' THEN 6
+          WHEN "Goal"."status" = 'Suspended' THEN 5
+          WHEN "Goal"."status" = 'Closed' THEN 6
           ELSE 7 END`),
       'status_sort'],
       [
@@ -1120,9 +1130,12 @@ export async function standardGoalsForRecipient(
     };
   });
 
+  const offsetNum = parseInt(String(offset), 10);
+  const limitNum = parseInt(String(limit), 10);
+
   return {
     count: goalRows.length,
-    goalRows: processedRows,
+    goalRows: limitNum ? processedRows.slice(offsetNum, offsetNum + limitNum) : processedRows,
     statuses,
     allGoalIds: ids,
   };

@@ -10,6 +10,7 @@ const {
   GoalCollaborator,
   User,
   Grant,
+  ValidFor,
 } = db;
 
 describe('standardGoalsForRecipient sorting tests', () => {
@@ -59,10 +60,27 @@ describe('standardGoalsForRecipient sorting tests', () => {
       throw new Error('No user found for test');
     }
 
+    // Find the ValidFor record for 'Goals'
+    let goalsValidFor = await ValidFor.findOne({
+      where: {
+        name: 'Goals',
+      },
+    });
+
+    if (!goalsValidFor) {
+      // Create the ValidFor record for 'Goals' if it doesn't exist
+      goalsValidFor = await ValidFor.create({
+        name: 'Goals',
+      });
+    }
+
     // Create collaborator type for 'Creator'
     const [creatorTypeFound] = await CollaboratorType.findOrCreate({
       where: { name: 'Creator' },
-      defaults: { name: 'Creator' },
+      defaults: {
+        name: 'Creator',
+        validForId: goalsValidFor.id,
+      },
     });
     creatorType = creatorTypeFound;
 
@@ -185,8 +203,8 @@ describe('standardGoalsForRecipient sorting tests', () => {
     const expectedOrder = [
       GOAL_STATUS.NOT_STARTED,
       GOAL_STATUS.IN_PROGRESS,
-      GOAL_STATUS.CLOSED,
       GOAL_STATUS.SUSPENDED,
+      GOAL_STATUS.CLOSED,
     ];
     const actualOrder = result.goalRows.map((goal) => goal.status);
     expect(actualOrder).toEqual(expectedOrder);
