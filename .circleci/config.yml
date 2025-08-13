@@ -451,7 +451,7 @@ jobs:
         command: ./bin/ping-server 8080
     - run:
         name: Pull OWASP ZAP docker image
-        command: docker pull softwaresecurityproject/zap-stable:2.16.0
+        command: docker pull zaproxy/zap-stable:latest
     - run:
         name: Run OWASP ZAP scan for Node.js server
         command: ./bin/run-owasp-scan --target http://server:8080 --full
