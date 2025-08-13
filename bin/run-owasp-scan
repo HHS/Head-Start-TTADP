@@ -83,7 +83,7 @@ if $do_baseline; then
     --user zap:$(id -g) \
     --network=$network \
     --platform linux/amd64 \
-    -t softwaresecurityproject/zap-stable:latest zap-baseline.py \
+    -t zaproxy/zap-stable:latest zap-baseline.py \
     -t $target_url \
     -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_baseline_report.html"
   echo "-----------------------------------------------------------------------"
@@ -101,7 +101,7 @@ if $do_full; then
     --user zap:$(id -g) \
     --network=$network \
     --platform linux/amd64 \
-    -t softwaresecurityproject/zap-stable:latest zap-full-scan.py \
+    -t zaproxy/zap-stable:latest zap-full-scan.py \
     -t $target_url \
     -c /zap/wrk/zap.conf -I -i -r "${clean_target}/owasp_full_scan_report.html"
   echo "-----------------------------------------------------------------------"
@@ -118,7 +118,7 @@ if $do_api; then
     --user zap:$(id -g) \
     --network=$network \
     --platform linux/amd64 \
-    -t softwaresecurityproject/zap-stable:latest zap-api-scan.py \
+    -t zaproxy/zap-stable:latest zap-api-scan.py \
     -t ${target_url}/openapi.json \
     -f openapi -I -i -r "${clean_target}/owasp_api_report.html"
   echo "-----------------------------------------------------------------------"
