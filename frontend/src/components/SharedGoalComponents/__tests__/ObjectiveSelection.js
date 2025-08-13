@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render, screen, fireEvent, waitFor,
+} from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import ObjectiveSelection from '../ObjectiveSelection';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
@@ -168,29 +170,36 @@ describe('ObjectiveSelection', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
-  it('renders only textarea when only "Create a new objective" option is available', () => {
+  it('renders only textarea when only "Create a new objective" option is available', async () => {
     const formData = {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [
-        { label: 'Objective 1', value: 'objective-1', objectiveId: 1 },
-        { label: 'Objective 2', value: 'objective-2', objectiveId: 2 },
-        { label: 'Objective 3', value: 'objective-3', objectiveId: 3 },
-        { label: '', value: '', objectiveId: null },
+        { label: CREATE_A_NEW_OBJECTIVE, value: '', objectiveId: null },
       ],
     };
 
     renderWithFormProvider(
       <ObjectiveSelection
-        field={{ ...mockField, label: '', value: '' }}
-        index={3}
+        field={{ value: '', objectiveId: null }}
+        index={0}
         remove={mockRemove}
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
-        objectiveOptions={mockObjectiveOptions}
+        objectiveOptions={[{
+          value: CREATE_A_NEW_OBJECTIVE,
+          label: CREATE_A_NEW_OBJECTIVE,
+          objectiveId: null,
+        }]}
       />,
       formData,
     );
 
-    expect(screen.getByText('TTA objective')).toBeInTheDocument();
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.queryByText('Select TTA objective')).not.toBeInTheDocument();
+    expect(await screen.findByText('TTA objective')).toBeInTheDocument();
+    expect(await screen.findByRole('textbox')).toBeInTheDocument();
+
+    // Wait for the component to process form state and apply conditional styling
+    await waitFor(() => {
+      const formGroup = screen.getByTestId('formGroup');
+      const label = formGroup.querySelector('label');
+      expect(label).toHaveClass('display-none');
+    });
   });
 });
