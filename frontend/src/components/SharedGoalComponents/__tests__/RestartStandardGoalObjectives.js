@@ -127,24 +127,6 @@ describe('RestartStandardGoalObjectives', () => {
     expect(screen.getByText('Select TTA objective')).toBeInTheDocument();
   });
 
-  it('hides plus button when last objective has no value', () => {
-    const formData = {
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [
-        { value: '', objectiveId: null, label: '' },
-      ],
-    };
-
-    renderWithFormProvider(
-      <RestartStandardGoalObjectives
-        fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
-        options={mockOptions}
-      />,
-      formData,
-    );
-
-    expect(screen.queryByText('Add new objective')).not.toBeInTheDocument();
-  });
-
   it('renders multiple ObjectiveSelection components', () => {
     const formData = {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [

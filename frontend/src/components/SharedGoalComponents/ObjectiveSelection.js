@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
@@ -42,17 +42,41 @@ export default function ObjectiveSelection({
 
   const selectedObjectives = watch(fieldName);
   const selectedObjectiveTitles = useMemo(() => (
-    selectedObjectives.map((o) => o.label)
+    selectedObjectives
+      .map((o) => o.label)
+      .filter((label) => label && label !== CREATE_A_NEW_OBJECTIVE)
   ), [selectedObjectives]);
   const fieldLabel = watch(`${fieldName}[${index}].label`);
+  const fieldValue = watch(`${fieldName}[${index}].value`);
 
   const filteredOptions = objectiveOptions.filter((option) => {
+    // Always show "Create a new objective"
+    if (option.label === CREATE_A_NEW_OBJECTIVE) {
+      return true;
+    }
+
+    // Always show the currently selected option for this field
     if (option.label === fieldLabel) {
       return true;
     }
 
-    return !(selectedObjectiveTitles.includes(option.label));
+    // Hide options that are selected in other fields
+    return !selectedObjectiveTitles.includes(option.label);
   });
+
+  useEffect(() => {
+    if (fieldLabel) {
+      if (fieldLabel === CREATE_A_NEW_OBJECTIVE) {
+        // eslint-disable-next-line max-len
+        const isExistingObjective = objectiveOptions.some((option) => option.label !== CREATE_A_NEW_OBJECTIVE && option.label === fieldValue);
+        if (isExistingObjective) {
+          setValue(`${fieldName}[${index}].value`, '');
+        }
+      } else {
+        setValue(`${fieldName}[${index}].value`, fieldLabel);
+      }
+    }
+  }, [fieldLabel, fieldName, index, setValue, objectiveOptions, fieldValue]);
 
   const onlyCreateNew = (
     filteredOptions.length === 1
@@ -63,15 +87,19 @@ export default function ObjectiveSelection({
     <div key={field.id}>
       <input
         type="hidden"
+        name={`${fieldName}[${index}].objectiveId`}
+        id={`${fieldName}[${index}].objectiveId`}
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...register(`${fieldName}[${index}].objectiveId`)}
         defaultValue={field.objectiveId}
       />
       <input
         type="hidden"
+        name={`${fieldName}[${index}].value`}
+        id={`${fieldName}[${index}].value`}
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...register(`${fieldName}[${index}].value`)}
-        defaultValue={field.objectiveId}
+        defaultValue={field.value}
       />
       <div>
         {(!onlyCreateNew) && (
@@ -90,7 +118,6 @@ export default function ObjectiveSelection({
                 styles={selectOptionsReset}
                 value={value ? { label: value, value } : null}
                 onChange={(v) => {
-                  setValue(`${fieldName}[${index}].value`, v.value);
                   setValue(`${fieldName}[${index}].objectiveId`, v.objectiveId);
                   onChange(v.label);
                 }}
