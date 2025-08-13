@@ -71,18 +71,13 @@ function GoalDataController({
   const [logsLoaded, setLogsLoaded] = useState(false);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
   const [currentFilters, setCurrentFilters] = useState(filtersToQueryString(filters));
+  const [cardsAreLoaded, setCardsAreLoaded] = useState(false);
 
   useEffect(() => {
-    let isLoaded = false;
-
-    if (logsLoaded) {
-      isLoaded = true;
+    if (logsLoaded && cardsAreLoaded && isAppLoading) {
+      setIsAppLoading(false);
     }
-
-    if (!isLoaded !== isAppLoading) {
-      setIsAppLoading(!isLoaded);
-    }
-  }, [isAppLoading, logsLoaded, setIsAppLoading]);
+  }, [logsLoaded, setIsAppLoading, cardsAreLoaded, isAppLoading]);
 
   const history = useHistory();
 
@@ -103,10 +98,39 @@ function GoalDataController({
     offset: 0,
   }, `goalsTable/${recipientId}/${regionId}`);
 
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        setIsAppLoading(true);
+        setError(null);
+        const { rows } = await getCommunicationLogsByRecipientId(
+          String(regionId),
+          String(recipientId),
+          COMMUNCATION_SORT.sortBy,
+          COMMUNCATION_SORT.direction,
+          COMMUNCATION_SORT.offset,
+          COMMUNCATION_SORT.limit,
+          LOG_FILTERS,
+        );
+
+        setLogs(rows);
+      } catch (err) {
+        setError('Error fetching communication logs');
+      } finally {
+        setLogsLoaded(true);
+      }
+    }
+    fetchLogs();
+  }, [
+    recipientId,
+    regionId,
+    setIsAppLoading,
+  ]);
+
   useDeepCompareEffect(() => {
     async function fetchGoals(query) {
       try {
-        setIsAppLoading(true);
+        setCardsAreLoaded(false);
 
         const { sortBy } = sortConfig;
         const response = await getRecipientGoals(
@@ -127,7 +151,7 @@ function GoalDataController({
       } catch (e) {
         setError('Unable to fetch goals');
       } finally {
-        setIsAppLoading(false);
+        setCardsAreLoaded(true);
       }
     }
     const filterQuery = filtersToQueryString(filters);
@@ -155,46 +179,22 @@ function GoalDataController({
     history.location,
   ]);
 
-  useEffect(() => {
-    async function fetchLogs() {
-      try {
-        setError(null);
-        const { rows } = await getCommunicationLogsByRecipientId(
-          String(regionId),
-          String(recipientId),
-          COMMUNCATION_SORT.sortBy,
-          COMMUNCATION_SORT.direction,
-          COMMUNCATION_SORT.offset,
-          COMMUNCATION_SORT.limit,
-          LOG_FILTERS,
-        );
-
-        setLogs(rows);
-      } catch (err) {
-        setError('Error fetching communication logs');
-      } finally {
-        setLogsLoaded(true);
-      }
-    }
-    fetchLogs();
-  }, [
-    recipientId,
-    regionId,
-  ]);
-
   const handlePageChange = (pageNumber) => {
+    setCardsAreLoaded(true);
     setSortConfig({
       ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * goalsPerPage,
     });
   };
 
   const requestSort = (sortBy, direction) => {
+    setCardsAreLoaded(true);
     setSortConfig({
       ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
     });
   };
 
   const perPageChange = (e) => {
+    setCardsAreLoaded(true);
     const perPageValue = parseInt(e.target.value, DECIMAL_BASE);
     setSortConfig({
       ...sortConfig,
@@ -239,6 +239,7 @@ function GoalDataController({
           sortConfig={sortConfig}
           perPage={goalsPerPage}
           perPageChange={perPageChange}
+          loading={!cardsAreLoaded}
         />
       </FilterContext.Provider>
     </div>
