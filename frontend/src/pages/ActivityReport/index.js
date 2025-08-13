@@ -110,7 +110,7 @@ export const formatReportWithSaveBeforeConversion = async (
     : await saveReport(
       reportId.current, {
         ...updatedFields,
-        version: 2,
+        version: 3,
         approverUserIds: approverIds,
         pageState: data.pageState,
         activityRecipientType: 'recipient',
@@ -274,7 +274,7 @@ function ActivityReport({
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
-            version: 2,
+            version: 3,
           };
         }
 
@@ -507,7 +507,7 @@ function ActivityReport({
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             regionId: formData.regionId,
             approverUserIds: approverIds,
-            version: 2,
+            version: 3,
             activityRecipientType: 'recipient',
           },
         );

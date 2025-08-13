@@ -151,7 +151,7 @@ function calculateGoalsAndObjectives(report) {
               </>
             ),
           },
-          striped: true,
+          striped: false,
         };
       }
 
@@ -289,7 +289,7 @@ export default function ApprovedReportV2({ data }) {
               'Recipient names': arRecipients,
               'Target populations': targetPopulations,
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Reason for activity',
@@ -306,7 +306,7 @@ export default function ApprovedReportV2({ data }) {
               'End date': endDate,
               Duration: duration,
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Context',
@@ -322,7 +322,7 @@ export default function ApprovedReportV2({ data }) {
               'Language used': languages,
               'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Participants',
@@ -350,7 +350,7 @@ export default function ApprovedReportV2({ data }) {
               data: {
                 Attachments: attachments,
               },
-              striped: true,
+              striped: false,
             }]
           }
       />

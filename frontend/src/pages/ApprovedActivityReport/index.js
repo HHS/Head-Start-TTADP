@@ -1,5 +1,6 @@
 import React, {
-  useState, useRef,
+  useState,
+  useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -9,12 +10,12 @@ import { Helmet } from 'react-helmet';
 import { unlockReport } from '../../fetchers/activityReports';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
-import './index.scss';
 import ApprovedReportV1 from '../../components/ReportView/ApprovedReportV1';
 import ApprovedReportV2 from '../../components/ReportView/ApprovedReportV2';
-import ApprovedReportV3 from '../../components/ReportView/ApprovedReportV3';
+import SubmittedReport from '../../components/ReportView/SubmittedReport';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import useReadOnlyReportFetch from '../../hooks/useReadOnlyReportFetch';
+import './index.scss';
 
 export default function ApprovedActivityReport({ match, user }) {
   const report = useReadOnlyReportFetch(match, user);
@@ -32,7 +33,7 @@ export default function ApprovedActivityReport({ match, user }) {
     const reportsMap = {
       1: <ApprovedReportV1 data={report} />,
       2: <ApprovedReportV2 data={report} />,
-      3: <ApprovedReportV3 data={report} />,
+      3: <SubmittedReport data={report} />,
       loading: <Container className="ttahub-activity-report-view margin-top-2 minh-tablet">Loading...</Container>,
     };
 
