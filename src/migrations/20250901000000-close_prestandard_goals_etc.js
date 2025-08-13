@@ -137,7 +137,7 @@ module.exports = {
         -- 5: Add the prestandard boolean column
         ALTER TABLE "Goals" ADD COLUMN prestandard BOOLEAN NOT NULL DEFAULT TRUE;
         UPDATE "Goals" SET prestandard = FALSE FROM retained_goals WHERE id = gid;
-        ALTER TABLE "Goals" ALTER COLUMN prestandard DEFAULT FALSE;
+        ALTER TABLE "Goals" ALTER COLUMN prestandard SET DEFAULT FALSE;
 
         -- Final query for validation convenience
         DROP TABLE IF EXISTS afterstats;
