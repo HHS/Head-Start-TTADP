@@ -90,13 +90,19 @@ describe('ObjectiveSelection', () => {
   it('allows current field selection even if already selected', () => {
     const formData = {
       [GOAL_FORM_FIELDS.OBJECTIVES]: [
-        { label: 'Objective 1', value: 'objective-1', objectiveId: 1 },
+        { label: 'Objective 1', value: 'Objective 1', objectiveId: 1 },
       ],
+    };
+
+    const fieldWithMatchingData = {
+      ...mockField,
+      label: 'Objective 1',
+      value: 'Objective 1',
     };
 
     renderWithFormProvider(
       <ObjectiveSelection
-        field={mockField}
+        field={fieldWithMatchingData}
         index={0}
         remove={mockRemove}
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
@@ -110,12 +116,18 @@ describe('ObjectiveSelection', () => {
 
   it('calls remove function when remove button is clicked', () => {
     const formData = {
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ label: 'Objective 1', value: 'objective-1', objectiveId: 1 }],
+      [GOAL_FORM_FIELDS.OBJECTIVES]: [{ label: 'Objective 1', value: 'Objective 1', objectiveId: 1 }],
+    };
+
+    const fieldWithMatchingData = {
+      ...mockField,
+      label: 'Objective 1',
+      value: 'Objective 1',
     };
 
     renderWithFormProvider(
       <ObjectiveSelection
-        field={mockField}
+        field={fieldWithMatchingData}
         index={0}
         remove={mockRemove}
         fieldName={GOAL_FORM_FIELDS.OBJECTIVES}

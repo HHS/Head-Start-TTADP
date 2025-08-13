@@ -11,7 +11,7 @@ export default function RestartStandardGoalObjectives({
   fieldName,
   options,
 }) {
-  const { control, watch } = useFormContext();
+  const { control } = useFormContext();
 
   const {
     fields: objectives,
@@ -28,10 +28,6 @@ export default function RestartStandardGoalObjectives({
 
   const hasReportedObjectives = objectives.some((objective) => objective.onAR === true);
 
-  const objectivesObserver = watch(fieldName);
-  const lastObjective = objectivesObserver[objectives.length - 1] || null;
-  const hidePlusButton = objectivesObserver.length && lastObjective && !lastObjective.value;
-
   const objectiveOptions = [
     ...options.map(({ title, id }) => ({
       value: title,
@@ -46,7 +42,7 @@ export default function RestartStandardGoalObjectives({
   ];
 
   return (
-    <div className={hidePlusButton ? 'margin-top-4 padding-bottom-3' : 'margin-top-4'} data-testid="restart-standard-goal-objectives">
+    <div className="margin-top-4" data-testid="restart-standard-goal-objectives">
       {(objectives.length > 0)
         && <h2>Objectives</h2>}
       {hasReportedObjectives
@@ -69,11 +65,9 @@ export default function RestartStandardGoalObjectives({
           objectiveOptions={objectiveOptions}
         />
       ))}
-      {!(hidePlusButton) && (
       <div className="margin-y-4">
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>
-      )}
     </div>
   );
 }
