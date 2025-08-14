@@ -69,7 +69,7 @@ services:
       - "node_modules-backend:/app/node_modules:rw"
       - "yarn-cache:/home/node/.cache/yarn:rw"
   owasp_zap_backend:
-    image: softwaresecurityproject/zap-stable:latest
+    image: zaproxy/zap-stable:latest
     profiles:
       - full_stack_zap
     platform: linux/amd64
