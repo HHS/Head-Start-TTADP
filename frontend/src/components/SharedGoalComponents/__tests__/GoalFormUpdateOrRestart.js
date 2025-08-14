@@ -52,7 +52,7 @@ const mockGoalTemplatePrompts = [
 const mockOnSubmit = jest.fn();
 
 describe('GoalFormUpdateOrRestart', () => {
-  const RenderTest = ({ goalTemplatePrompts = null }) => {
+  const RenderTest = ({ goalTemplatePrompts = null, isRestart = false }) => {
     const hookForm = useForm();
     return (
       <MemoryRouter>
@@ -65,6 +65,7 @@ describe('GoalFormUpdateOrRestart', () => {
             standardGoalFormButtons={mockButtons}
             onSubmit={mockOnSubmit}
             goalTemplatePrompts={goalTemplatePrompts}
+            isRestart={isRestart}
           />
         </FormProvider>
       </MemoryRouter>
@@ -82,5 +83,15 @@ describe('GoalFormUpdateOrRestart', () => {
   it('renders goal template prompts when provided', () => {
     render(<RenderTest goalTemplatePrompts={mockGoalTemplatePrompts} />);
     expect(screen.getByLabelText(/Prompts/i)).toBeInTheDocument();
+  });
+
+  it('renders ObjectivesSection when isRestart is false', () => {
+    render(<RenderTest isRestart={false} />);
+    expect(screen.getByTestId('objectives-section')).toBeInTheDocument();
+  });
+
+  it('renders RestartStandardGoalObjectives when isRestart is true', () => {
+    render(<RenderTest isRestart />);
+    expect(screen.getByTestId('restart-standard-goal-objectives')).toBeInTheDocument();
   });
 });

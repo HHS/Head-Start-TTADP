@@ -117,6 +117,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       prompts: g.prompts || [],
       objectives: g.objectives.map((objective) => ({
         id: objective.id,
+        ids: objective.ids,
         isNew: objective.isNew,
         ttaProvided: objective.ttaProvided,
         title: objective.title,
@@ -148,6 +149,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       goalTemplateId: goal.goalTemplateId,
       objectives: goal.objectives.map((objective) => ({
         id: objective.id,
+        ids: objective.ids,
         isNew: objective.isNew,
         ttaProvided: objective.ttaProvided,
         title: objective.title,

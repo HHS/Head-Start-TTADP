@@ -49,9 +49,10 @@ export default function StandardGoalCard({
     onAR,
     grant = { number: 'N/A' },
     previousStatus,
+    standard,
   } = goal;
 
-  const isMonitoringGoal = goal.createdVia === 'monitoring';
+  const isMonitoringGoal = standard === 'Monitoring';
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [localStatus, setLocalStatus] = useState(status);

@@ -180,8 +180,8 @@ const ActivityReportNavigator = ({
   const recalculatePageState = () => {
     const newPageState = { ...pageState };
     const currentGoalsObjectivesPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
-    // eslint-disable-next-line max-len
-    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage.isPageComplete(getValues(), formState);
+    const pageCompleteFunc = goalsAndObjectivesPage.isPageComplete;
+    const isGoalsObjectivesPageComplete = pageCompleteFunc(getValues(), formState);
     const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
 
     if (isGoalsObjectivesPageComplete) {
@@ -230,6 +230,31 @@ const ActivityReportNavigator = ({
       // Always clear the previous error message before a save.
       updateErrorMessage();
       await onSave(data, forceUpdate);
+
+      // After save, always re-validate the goals & objectives page state
+      // This ensures that after any API call (like recipient changes that remove goals)
+      // we update the page state appropriately
+      if (goalsAndObjectivesPage) {
+        // Force re-validation of the goals and objectives page
+        const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
+          .isPageComplete(getValues(), formState);
+        // If the page is not complete, ensure it's marked as IN_PROGRESS
+        const isNotInProgress = pageState[GOALS_AND_OBJECTIVES_POSITION] !== IN_PROGRESS;
+        if (!isGoalsObjectivesPageComplete && isNotInProgress) {
+          // Update both the form state and the formData object that will be used for rendering
+          const currentPageState = { ...pageState };
+          currentPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+          // Update the formData directly to ensure UI updates
+          const updatedFormData = {
+            ...formData,
+            ...getValues(),
+            pageState: currentPageState,
+          };
+          // Force an update of the form data to ensure navigator receives the changes
+          updateFormData(updatedFormData, false);
+        }
+      }
+
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
