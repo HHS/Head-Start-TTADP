@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import CollabReports from '../components/CollabReports';
-import * as fetchers from '../../../fetchers/collaboratorReports.ts';
+import * as fetchers from '../../../fetchers/collaboratorReports';
 
-jest.mock('../../../fetchers/collaboratorReports.ts');
+jest.mock('../../../fetchers/collaboratorReports');
 
 describe('CollabReports', () => {
   const mockReports = [
