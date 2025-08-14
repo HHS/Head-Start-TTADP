@@ -89,7 +89,7 @@ const ActivitySummary = ({
   const goalsAndObjectives = watch('goalsAndObjectives');
 
   const hasMonitoringGoals = (goalsAndObjectives || []).some(
-    (g) => g.name?.trim().toLowerCase().startsWith('(monitoring)')
+    (g) => g.name?.trim().toLowerCase().startsWith('(monitoring)'),
   );
 
   const {
