@@ -28,7 +28,7 @@ export default function ObjectivesSection({
   const hasReportedObjectives = objectives.some((objective) => objective.onAR === true);
 
   return (
-    <div className="margin-top-4">
+    <div className="margin-top-4" data-testid="objectives-section">
       {(objectives.length > 0)
         && <h2>Objectives</h2>}
       {hasReportedObjectives
