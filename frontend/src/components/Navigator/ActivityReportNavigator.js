@@ -243,8 +243,6 @@ const ActivityReportNavigator = ({
           // Update both the form state and the formData object that will be used for rendering
           const currentPageState = { ...pageState };
           currentPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-          // Update the form value
-          setValue('pageState', currentPageState);
           // Update the formData directly to ensure UI updates
           const updatedFormData = {
             ...formData,
