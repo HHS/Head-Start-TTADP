@@ -53,7 +53,7 @@ export default function ReadOnlyContent({
         const headingFontClass = HEADING_CLASSES[section.headingLevel] || HEADING_CLASSES.default;
         return (
           <div
-            className={`ttahub-read-only-content-section padding-bottom-3 margin-0 ${section.striped ? 'ttahub-read-only-content-section__striped' : ''}`}
+            className="ttahub-read-only-content-section padding-bottom-3 margin-0"
             key={uuidv4()}
           >
             {section.heading ? createElement(headingTag, {
@@ -89,7 +89,6 @@ ReadOnlyContent.propTypes = {
   sections: PropTypes.arrayOf(PropTypes.shape({
     heading: PropTypes.string,
     data: PropTypes.shape().isRequired,
-    striped: PropTypes.bool,
     goalSection: PropTypes.bool,
   })).isRequired,
   displayStatus: PropTypes.string,
