@@ -910,11 +910,21 @@ export async function standardGoalsForRecipient(
         )`),
         'latestStatusChangeDate',
       ],
+      [
+        sequelize.literal('"goalTemplate"."standard"'),
+        'standard',
+      ],
     ],
     where: {
       id: ids,
     },
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: true,
+      },
       {
         model: GoalStatusChange,
         as: 'statusChanges',
