@@ -310,10 +310,10 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 #### First, log into Cloud Foundry instance
 
-1. Install **Version 7** of the Cloud Foundry CLI tool
+1. Install the lastest version (**Version 8** as of this writing) of the Cloud Foundry CLI tool
 
-   - On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
-   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
+   - On MacOS: `brew install cloudfoundry/tap/cf-cli@8`
+   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 8.x
 
 1. Login to cloud.gov account
 
