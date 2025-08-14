@@ -21,12 +21,12 @@ import ActivityReportNavigator from '../../components/Navigator/ActivityReportNa
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  LOCAL_STORAGE_DATA_KEY,
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
+  LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
-import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   submitReport,
@@ -135,22 +135,22 @@ export function cleanupLocalStorage(id, replacementKey) {
   try {
     if (replacementKey) {
       window.localStorage.setItem(
-        LOCAL_STORAGE_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_DATA_KEY(id)),
+        LOCAL_STORAGE_AR_DATA_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_AR_DATA_KEY(id)),
       );
       window.localStorage.setItem(
-        LOCAL_STORAGE_EDITABLE_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_EDITABLE_KEY(id)),
+        LOCAL_STORAGE_AR_EDITABLE_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_AR_EDITABLE_KEY(id)),
       );
       window.localStorage.setItem(
-        LOCAL_STORAGE_ADDITIONAL_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id)),
+        LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(id)),
       );
     }
 
-    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_AR_DATA_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(id));
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('Local storage may not be available: ', e);
@@ -175,15 +175,15 @@ function ActivityReport({
   });
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
 
-  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
+  const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
+    LOCAL_STORAGE_AR_DATA_KEY(activityReportId), null,
   );
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {
+    LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId), {
       recipients: {
         grants: [],
         otherEntities: [],
@@ -197,7 +197,7 @@ function ActivityReport({
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
+    LOCAL_STORAGE_AR_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online

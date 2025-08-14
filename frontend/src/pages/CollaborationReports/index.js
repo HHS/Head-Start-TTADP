@@ -63,7 +63,7 @@ export const CollabReportsLanding = () => {
         </h1>
         <div>
           <Link
-            to="/collaboration-report/new"
+            to="/collaboration-reports/new/activity-summary"
             className="usa-button smart-hub--new-report-btn"
           >
             <span className="smart-hub--plus">+</span>
