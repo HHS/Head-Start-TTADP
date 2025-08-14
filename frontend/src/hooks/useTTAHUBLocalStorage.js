@@ -9,7 +9,7 @@ import useLocalStorage from './useLocalStorage';
  * @param {string} defaultValue
  * @returns [getter, setter, boolean: isLocalStorageAvailable]
  */
-export default function useARLocalStorage(key, defaultValue) {
+export default function useTTAHUBLocalStorage(key, defaultValue) {
   const [saveReport, setSaveReport] = useState(true);
   const [
     storedValue, setStoredValue, localStorageAvailable,
