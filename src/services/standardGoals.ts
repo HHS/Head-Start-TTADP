@@ -1148,7 +1148,9 @@ export async function standardGoalsForRecipient(
     count: total,
     goalRows: limitNum ? processedRows.slice(offsetNum, offsetNum + limitNum) : processedRows,
     statuses: {
-      ...statuses,
+      total,
+      Suspended: statuses[GOAL_STATUS.SUSPENDED],
+      Closed: statuses[GOAL_STATUS.CLOSED],
       'Not started': statuses[GOAL_STATUS.NOT_STARTED],
       'In progress': statuses[GOAL_STATUS.IN_PROGRESS],
     },
