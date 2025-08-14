@@ -51,18 +51,18 @@ export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
 };
 
 export const checkRecipientsAndGoals = (data, hasMonitoringGoals) => {
-  const goals = data.goals || [];
+  const goalsAndObjectives = data.goalsAndObjectives || [];
   const recipients = data.activityRecipients || [];
   const goalTemplates = data.goalTemplates || [];
   const citationsByGrant = data.citationsByGrant || [];
 
-  if (recipients.length === 0 && goals.length > 0) {
+  if (recipients.length === 0 && goalsAndObjectives.length > 0) {
     return 'EMPTY_RECIPIENTS_WITH_GOALS';
   }
   if (hasMonitoringGoals && !goalTemplates.some((gt) => gt.standard === 'Monitoring')) {
     return 'MISSING_MONITORING_GOAL';
   }
-  if (hasMonitoringGoals && citationsDiffer(goals, citationsByGrant)) {
+  if (hasMonitoringGoals && citationsDiffer(goalsAndObjectives, citationsByGrant)) {
     return 'DIFFERENT_CITATIONS';
   }
 
@@ -86,9 +86,11 @@ const ActivitySummary = ({
     // clearErrors,
   } = useFormContext();
 
-  const goals = watch('goals') || [];
+  const goalsAndObjectives = watch('goalsAndObjectives');
 
-  const hasMonitoringGoals = goals.some((g) => g.standard === 'Monitoring');
+  const hasMonitoringGoals = (goalsAndObjectives || []).some(
+    (g) => g.name?.trim().toLowerCase().startsWith('(monitoring)')
+  );
 
   const {
     field: {
@@ -156,8 +158,7 @@ const ActivitySummary = ({
     }
 
     const data = {
-      // goals: getValues('goals'),
-      goals,
+      goalsAndObjectives,
       activityRecipients: newRecipient,
       goalTemplates: newGoalTemplates,
       citationsByGrant: citations,
