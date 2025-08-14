@@ -18,7 +18,7 @@ export const GOAL_FORM_BUTTON_LABELS = Object.freeze({
   SAVE: 'Save',
   GO_TO_EXISTING: 'Go to existing goal',
   ADD_GOAL: 'Add goal',
-  RESTART: 'Restart goal',
+  RESTART: 'Reopen goal',
 });
 
 export const NEW_GOAL_FORM_PAGES = Object.freeze({
@@ -26,3 +26,5 @@ export const NEW_GOAL_FORM_PAGES = Object.freeze({
   CONFIRMATION: 'confirmation',
   NEW_GOAL: 'new',
 });
+
+export const CREATE_A_NEW_OBJECTIVE = 'Create a new objective';

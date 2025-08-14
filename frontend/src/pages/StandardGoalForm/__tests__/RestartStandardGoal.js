@@ -84,7 +84,7 @@ describe('RestartStandardGoal', () => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
     });
 
-    expect(await screen.findByRole('button', { name: /Restart/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Reopen/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Cancel/i })).toBeInTheDocument();
   });
 
@@ -108,7 +108,7 @@ describe('RestartStandardGoal', () => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
     });
 
-    const submitButton = await screen.findByRole('button', { name: /Restart/i });
+    const submitButton = await screen.findByRole('button', { name: /Reopen/i });
     await act(async () => {
       userEvent.click(submitButton);
     });
@@ -127,7 +127,7 @@ describe('RestartStandardGoal', () => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
     });
 
-    const submitButton = await screen.findByRole('button', { name: /Restart/i });
+    const submitButton = await screen.findByRole('button', { name: /Reopen/i });
     await act(async () => {
       userEvent.click(submitButton);
     });

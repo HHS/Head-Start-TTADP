@@ -119,6 +119,7 @@ export default function RestartStandardGoal({ recipient }) {
       goal={goal}
       goalTemplatePrompts={goalTemplatePrompts}
       standardGoalFormButtons={standardGoalFormButtons}
+      isRestart
     />
   );
 }
