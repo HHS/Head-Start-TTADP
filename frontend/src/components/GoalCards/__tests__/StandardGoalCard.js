@@ -136,7 +136,7 @@ describe('StandardGoalCard', () => {
   });
 
   it('shows the monitoring flag when the goal createdVia is monitoring', () => {
-    renderStandardGoalCard({ }, { ...goal, createdVia: 'monitoring' });
+    renderStandardGoalCard({ }, { ...goal, standard: 'Monitoring' });
     const monitoringToolTip = screen.getByRole('button', {
       name: /reason for flag on goal g-1 is monitoring\. click button to visually reveal this information\./i,
     });
