@@ -1,18 +1,33 @@
 /* eslint-disable import/first */
-const mockQueueConstructor = jest.fn(() => ({
-  on: jest.fn(), // Mock the `.on` method
-  close: jest.fn().mockResolvedValue(undefined), // Mock the `.close` method
+jest.mock('bull', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    on: jest.fn(),
+    close: jest.fn().mockResolvedValue(undefined),
+    client: {
+      getMaxListeners: jest.fn(() => 10),
+      setMaxListeners: jest.fn(),
+      call: jest.fn().mockResolvedValue(undefined),
+    },
+    eventNames: jest.fn(() => ['error']),
+    listenerCount: jest.fn(() => 1),
+    removeListener: jest.fn(),
+  })),
 }));
-jest.mock('bull', () => jest.fn((...args) => mockQueueConstructor(...args)));
 
 import { auditLogger } from '../logger';
 import {
   generateRedisConfig,
   increaseListeners,
   setRedisConnectionName,
-  // eslint-disable-next-line import/no-named-default
-  default as newQueue,
 } from './queue';
+
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
 
 describe('increaseListeners', () => {
   const MAX_LISTENERS = 20;
@@ -20,7 +35,7 @@ describe('increaseListeners', () => {
   let redisClient;
 
   beforeEach(() => {
-    mockQueueConstructor.mockClear();
+    // ////mockQueueConstructor.mockClear();
     redisClient = {
       getMaxListeners: jest.fn().mockReturnValue(10),
       setMaxListeners: jest.fn(),
@@ -62,7 +77,7 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    mockQueueConstructor.mockClear();
+    // ////mockQueueConstructor.mockClear();
     jest.resetModules();
     process.env = { ...originalEnv };
   });
@@ -136,7 +151,7 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 
 describe('setRedisConnectionName', () => {
   beforeEach(() => {
-    mockQueueConstructor.mockClear();
+    // ////mockQueueConstructor.mockClear();
   });
 
   it('logs an error if setting the Redis connection name fails', async () => {
@@ -155,7 +170,6 @@ describe('newQueue', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    mockQueueConstructor.mockClear();
     jest.resetModules();
     process.env = { ...originalEnv };
   });
@@ -164,29 +178,90 @@ describe('newQueue', () => {
     process.env = originalEnv;
   });
 
-  it('creates a queue with default timeout when none is provided', () => {
-    const queue = newQueue('test-queue');
-    expect(mockQueueConstructor).toHaveBeenCalledWith(
+  it('creates a queue with default timeout when none is provided', async () => {
+    const mockQueue = jest.fn().mockReturnValue({
+      on: jest.fn(),
+      close: jest.fn(),
+      client: {
+        call: jest.fn().mockResolvedValue(undefined),
+      },
+    });
+
+    jest.doMock('bull', () => ({
+      __esModule: true,
+      default: mockQueue,
+    }));
+
+    // eslint-disable-next-line global-require
+    const { default: Queue } = require('bull');
+    const newQueue = (await import('./queue')).default;
+
+    newQueue('test-queue');
+
+    expect(Queue).toHaveBeenCalledWith(
       'test-queue',
       expect.stringMatching(/^redis:\/\/.+$/),
       expect.objectContaining({
-        settings: {
-          stalledInterval: 30000, // Default timeout
-        },
+        settings: expect.objectContaining({
+          stalledInterval: 30000,
+        }),
       }),
     );
   });
 
-  it('creates a queue with custom timeout when specified', () => {
-    const queue = newQueue('test-queue', 60000); // Custom timeout
-    expect(mockQueueConstructor).toHaveBeenCalledWith(
+  it('creates a queue with custom timeout when specified', async () => {
+    const mockQueue = jest.fn().mockReturnValue({
+      on: jest.fn(),
+      close: jest.fn(),
+      client: {
+        call: jest.fn().mockResolvedValue(undefined),
+      },
+    });
+
+    jest.doMock('bull', () => ({
+      __esModule: true,
+      default: mockQueue,
+    }));
+
+    // eslint-disable-next-line global-require
+    const { default: Queue } = require('bull');
+    const newQueue = (await import('./queue')).default;
+
+    newQueue('test-queue', 60000);
+
+    expect(Queue).toHaveBeenCalledWith(
       'test-queue',
       expect.stringMatching(/^redis:\/\/.+$/),
       expect.objectContaining({
-        settings: {
-          stalledInterval: 60000, // Custom timeout
-        },
+        settings: expect.objectContaining({
+          stalledInterval: 60000,
+        }),
       }),
     );
+  });
+});
+
+describe('removeQueueEventHandlers', () => {
+  it('safely handles removing event listeners when some are undefined', () => {
+    const mockQueue = {
+      removeListener: jest.fn(),
+    };
+
+    const originalProcessRemoveListener = process.removeListener;
+    process.removeListener = jest.fn();
+
+    // eslint-disable-next-line global-require
+    const { removeQueueEventHandlers } = require('./queue');
+
+    const errorListener = jest.fn();
+
+    // Call with some undefined listeners
+    removeQueueEventHandlers(mockQueue, errorListener, undefined, undefined, undefined);
+
+    // Verify it removes the defined listener but doesn't try to remove undefined ones
+    expect(mockQueue.removeListener).toHaveBeenCalledWith('error', errorListener);
+    expect(process.removeListener).not.toHaveBeenCalled();
+
+    process.removeListener = originalProcessRemoveListener;
   });
 });

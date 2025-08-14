@@ -26,6 +26,9 @@ import GoalNameForm from '../../components/GoalNameForm';
 import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
 import AppLoadingContext from '../../AppLoadingContext';
+import StandardGoalForm from '../StandardGoalForm';
+import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
+import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
 
 export function PageWithHeading({
   children,
@@ -304,6 +307,36 @@ export default function RecipientRecord({ match, hasAlerts }) {
           }}
         />
         <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId/restart"
+          render={() => (
+            <FeatureFlag flag="standard_goals_update" renderNotFound>
+              <RestartStandardGoal
+                recipient={recipientData}
+              />
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId"
+          render={() => (
+            <FeatureFlag flag="standard_goals_update" renderNotFound>
+              <UpdateStandardGoal
+                recipient={recipientData}
+              />
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals"
+          render={() => (
+            <FeatureFlag flag="standard_goals_update" renderNotFound>
+              <StandardGoalForm
+                recipient={recipientData}
+              />
+            </FeatureFlag>
+          )}
+        />
+        <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals"
           render={({ location }) => {
             const goalIds = getIdParamArray(location.search);
@@ -339,27 +372,26 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication"
           render={() => (
-            <PageWithHeading
-              regionId={regionId}
-              recipientId={recipientId}
-              recipientNameWithRegion={recipientNameWithRegion}
-              hasAlerts={hasAlerts}
-              inlineHeadingChildren={(
-                <Link
-                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
-                  className="usa-button smart-hub--new-report-btn margin-left-4"
-                >
-                  <span className="smart-hub--plus">+</span>
-                  <span className="smart-hub--new-report">Add communication</span>
-                </Link>
-              )}
-            >
+            <>
+              <RecipientTabs region={regionId} recipientId={recipientId} />
+              <div className="recipient-comm-log-header">
+                <h1 className="page-heading">{recipientNameWithRegion}</h1>
+                <div>
+                  <Link
+                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
+                    className="usa-button smart-hub--new-report-btn"
+                  >
+                    <span className="smart-hub--plus">+</span>
+                    <span className="smart-hub--new-report">Add communication</span>
+                  </Link>
+                </div>
+              </div>
               <CommunicationLog
                 regionId={regionId}
                 recipientName={recipientName}
                 recipientId={recipientId}
               />
-            </PageWithHeading>
+            </>
           )}
         />
         <Route

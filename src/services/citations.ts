@@ -48,7 +48,50 @@ export async function getCitationsByGrantIds(
   // Query to get the citations by grant id.
   const grantsByCitations = await sequelize.query(
     /* sql */
-    `WITH 
+    `WITH
+      -- find active status citations
+      active_citations AS (
+      SELECT mf."findingId" fid
+      FROM "MonitoringFindings" mf
+      JOIN "MonitoringFindingStatuses" mfs
+        ON mf."statusId" = mfs."statusId"
+      WHERE mfs.name IN ('Active', 'Elevated Deficiency')
+        AND mf."sourceDeletedAt" IS NULL
+      ),
+      -- get the order and status of reviews associated with citations
+      ordered_citation_reviews AS (
+      SELECT
+        mfh."findingId" fid,
+        mfh."reviewId" rid,
+        mrs.name review_status,
+        mr."reportDeliveryDate" rdd,
+        ROW_NUMBER() OVER (
+          PARTITION BY mfh."findingId"
+          ORDER BY mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
+        ) recency_rank
+      FROM "MonitoringFindingHistories" mfh
+      JOIN "MonitoringReviews" mr
+        ON mfh."reviewId" = mr."reviewId"
+      JOIN "MonitoringReviewStatuses" mrs
+        ON mr."statusId" = mrs."statusId"
+      -- This works without bringing in MonitoringFindings because when MonitoringFindings
+      -- are deleted in IT-AMS data, so are all linking MonitoringFindingHistories records
+      WHERE mfh."sourceDeletedAt" IS NULL
+      ),
+      -- union together active citations with those whose most recent linked
+      -- review is not complete, yielding the list of citations on which TTA
+      -- might still be in progress
+      open_citations AS (
+      SELECT fid FROM active_citations
+      UNION
+      SELECT fid FROM ordered_citation_reviews
+      WHERE recency_rank = 1
+        AND (
+          review_status != 'Complete'
+          OR
+          '${reportStartDate}'::date BETWEEN '${cutOffStartDate}' AND rdd
+        )
+      ),
       -- Subquery ensures only the most recent history for each finding-grant combination
       "RecentMonitoring" AS ( 
         SELECT DISTINCT ON (mfh."findingId", gr.id)
@@ -73,8 +116,8 @@ export async function getCitationsByGrantIds(
       JSONB_AGG( DISTINCT
         JSONB_BUILD_OBJECT(
           'findingId', mf."findingId",
-          'grantId', grta."activeGrantId",
-          'originalGrantId', grta."grantId",
+          'grantId', gr.id,
+          'originalGrantId', grta."grantId", -- this is not used anywhere
           'grantNumber', gr.number,
           'reviewName', rm."name",
           'reportDeliveryDate', rm."reportDeliveryDate",
@@ -98,7 +141,7 @@ export async function getCitationsByGrantIds(
     JOIN "Grants" gr
       ON  grta."grantId" = gr.id
     JOIN "Goals" g
-      ON grta."activeGrantId" = g."grantId"
+      ON (grta."grantId" = g."grantId" OR grta."activeGrantId" = g."grantId")
       AND g."status" NOT IN ('Closed', 'Suspended')
     JOIN "GoalTemplates" gt
       ON g."goalTemplateId" = gt."id"
@@ -106,7 +149,9 @@ export async function getCitationsByGrantIds(
     JOIN "MonitoringReviewGrantees" mrg
       ON gr.number = mrg."grantNumber"
     JOIN "RecentMonitoring" rm 
-    ON rm."grantId" = gr.id
+      ON rm."grantId" = gr.id
+    JOIN open_citations oc
+      ON rm."findingId" = oc.fid
     JOIN "MonitoringFindings" mf
       ON rm."findingId" = mf."findingId"
     JOIN "MonitoringFindingStatuses" mfs
@@ -119,8 +164,10 @@ export async function getCitationsByGrantIds(
       ON mf."findingId" = mfg."findingId"
       AND mrg."granteeId" = mfg."granteeId"
     WHERE 1 = 1
-      AND grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
-      AND mfs.name = 'Active'
+      AND (
+        grta."activeGrantId" IN (${grantIds.join(',')}) -- :grantIds
+        OR gr.id IN (${grantIds.join(',')})
+      )
     GROUP BY 1,2
     ORDER BY 2,1;
     `,

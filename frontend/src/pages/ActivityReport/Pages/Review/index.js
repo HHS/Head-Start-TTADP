@@ -20,7 +20,6 @@ const ReviewSubmit = ({
   isPendingApprover,
   reportCreator,
   formData,
-  onResetToDraft,
   onSaveForm,
   pages,
   lastSaveTime,
@@ -64,15 +63,6 @@ const ReviewSubmit = ({
     }
   };
 
-  const onReset = async () => {
-    try {
-      await onResetToDraft();
-      updateError();
-    } catch (e) {
-      updateError('Unable to reset Activity Report to draft');
-    }
-  };
-
   const editing = calculatedStatus === REPORT_STATUSES.DRAFT
     || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const items = editing ? reviewItems.map((ri) => ({
@@ -95,14 +85,13 @@ const ReviewSubmit = ({
             availableApprovers={availableApprovers}
             pages={pages}
             onFormSubmit={onFormSubmit}
-            onResetToDraft={onReset}
             formData={formData}
             error={error}
             onSaveForm={onSaveForm}
             lastSaveTime={lastSaveTime}
           >
             <>
-              <Accordion bordered={false} items={items} multiselectable />
+              <Accordion bordered={false} items={items} pages={pages} multiselectable />
             </>
           </Submitter>
         )}
@@ -117,11 +106,10 @@ const ReviewSubmit = ({
             error={error}
             formData={formData}
             isPendingApprover={isPendingApprover}
-            onResetToDraft={onReset}
             onFormSubmit={onFormSubmit}
           >
             <>
-              <Accordion bordered={false} items={items} />
+              <Accordion bordered={false} items={items} pages={pages} canEdit />
             </>
           </Approver>
         )}
@@ -139,7 +127,6 @@ ReviewSubmit.propTypes = {
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
   isApprover: PropTypes.bool.isRequired,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
@@ -153,7 +140,7 @@ ReviewSubmit.propTypes = {
   }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    role: PropTypes.arrayOf(PropTypes.string).isRequired,
+    role: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({

@@ -21,8 +21,10 @@ const createOverviewFieldArray = (data) => ([
     route: 'qa-dashboard/recipients-with-no-tta',
     filterApplicable: data.recipientsWithNoTTA.filterApplicable,
     showNoResults: true,
+    ariaLabel: 'Display details about recipients without TTA',
   },
   {
+    key: 'recipients-with-standard-fei-goals',
     icon: faBus,
     showTooltip: false,
     label1: 'Recipients with OHS standard FEI goal',
@@ -34,6 +36,7 @@ const createOverviewFieldArray = (data) => ([
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
     showNoResults: true,
+    ariaLabel: 'Display details about recipients with OHS standard FEI goals',
   },
   {
     key: 'recipients-with-ohs-standard-class-goals',
@@ -48,6 +51,7 @@ const createOverviewFieldArray = (data) => ([
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
     showNoResults: true,
+    ariaLabel: 'Display details about recipients with OHS standard CLASS goals',
   },
 ]);
 
@@ -69,13 +73,13 @@ export function QualityAssuranceDashboardOverview({
 QualityAssuranceDashboardOverview.propTypes = {
   data: PropTypes.shape({
     recipientsWithNoTTA: PropTypes.shape({
-      pct: PropTypes.number,
+      pct: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
     recipientsWithOhsStandardFeiGoals: PropTypes.shape({
-      pct: PropTypes.number,
+      pct: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
     recipientsWithOhsStandardClass: PropTypes.shape({
-      pct: PropTypes.number,
+      pct: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     }),
   }),
   loading: PropTypes.bool,

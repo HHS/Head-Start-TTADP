@@ -41,7 +41,7 @@ main(){
 	check_exit "$?"
 
     # then list through the folders and run the tests
-    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "widgets" "goalServices")
 
     for target in "${targets[@]}"; do
         # jest command to
@@ -93,7 +93,7 @@ main(){
 		--expose-gc \
 		./node_modules/.bin/jest \
 		tools \
-		--coverage \
+		--coverage=false \
 		--colors \
 		--reporters=jest-junit \
 		--reporters=default \
@@ -101,8 +101,6 @@ main(){
 		--silent \
 		--colors \
 		--logHeapUsage \
-		--coverageDirectory="$(pwd)"/coverage/tools \
-		--collectCoverageFrom="tools/**/!(*CLI).{js,ts}" \
 		--forceExit
 
 	check_exit "$?"

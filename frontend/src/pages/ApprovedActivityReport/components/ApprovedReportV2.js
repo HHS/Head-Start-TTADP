@@ -140,17 +140,11 @@ function calculateGoalsAndObjectives(report) {
         striped,
       };
 
-      // Add anticipated close date if we have it.
       if (goal.activityReportGoals && goal.activityReportGoals.length) {
         goalSection = {
-          ...goalSection.heading,
+          heading: goalSection.heading,
           data: {
             ...goalSection.data,
-            'Anticipated close date': (
-              <>
-                { goal.activityReportGoals[0].endDate}
-              </>
-            ),
             Source: (
               <>
                 { goal.activityReportGoals[0].source}

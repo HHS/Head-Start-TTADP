@@ -44,6 +44,8 @@ import {
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 import { formatDeliveryMethod } from './deliveryMethod';
+import { myReportsScopes } from './myReports';
+import * as utils from '../utils';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -120,6 +122,8 @@ const approverRejected = {
   note: 'change x, y, z',
 };
 
+const validTopics = new Set(['Topic 1', 'Topic 2', 'Topic 3', 'Topic 4', 'another topic']);
+
 describe('filtersToScopes', () => {
   let globallyExcludedReport;
   let includedUser1;
@@ -176,6 +180,9 @@ describe('filtersToScopes', () => {
     if (!grantsSpecialist) {
       await Role.create({ name: 'GS', fullName: 'Grants Specialist', isSpecialist: true });
     }
+
+    jest.spyOn(utils, 'getValidTopicsSet')
+      .mockResolvedValue(validTopics);
   });
 
   afterAll(async () => {
@@ -796,6 +803,7 @@ describe('filtersToScopes', () => {
           multiRecipientGrant2.id,
           singleRecipientGrant.id,
           singleRecipientGrant2.id,
+          excludedGrant.id,
         ];
 
         // Reports.
@@ -1375,6 +1383,29 @@ describe('filtersToScopes', () => {
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
     });
+
+    it('excludes invalid topics from filter', async () => {
+      const filters = { 'topic.in': ['BAD_TOPIC', 'Topic 3'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport2.id]));
+    });
+
+    it('returns no reports if all topics are invalid', async () => {
+      const filters = { 'topic.in': ['BAD_TOPIC_1', 'BAD_TOPIC_2'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+
+      expect(found.length).toBe(0);
+    });
   });
 
   describe('collaborators', () => {
@@ -1485,7 +1516,6 @@ describe('filtersToScopes', () => {
       goal = await Goal.create({
         name: 'Goal Response Test',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -1495,7 +1525,6 @@ describe('filtersToScopes', () => {
       goalTwo = await Goal.create({
         name: 'Goal Response Test Two',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -1505,7 +1534,6 @@ describe('filtersToScopes', () => {
       goalThree = await Goal.create({
         name: 'Goal Response Test Three',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -1600,6 +1628,8 @@ describe('filtersToScopes', () => {
       // Destroy Goal.
       await Goal.destroy({
         where: { id: [goal.id, goalTwo.id, goalThree.id] },
+        individualHooks: true,
+        force: true,
       });
 
       // Destroy Grant.
@@ -2628,6 +2658,33 @@ describe('filtersToScopes', () => {
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([globallyExcludedReport.id]));
     });
+
+    it('should return an empty object for invalid roles and log a warning', () => {
+      jest.spyOn(auditLogger, 'info').mockImplementation(() => { });
+      const result = myReportsScopes(mockUser.id, ['InvalidRole'], false);
+      expect(result).toEqual({});
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `User: ${mockUser.id} attempting to filter reports with a role: InvalidRole `,
+      );
+    });
+
+    it('should return an empty object and log a warning when roles are empty', () => {
+      jest.spyOn(auditLogger, 'info').mockImplementation(() => { });
+      const result = myReportsScopes(mockUser.id, [], false);
+      expect(result).toEqual({});
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `User: ${mockUser.id} attempting to filter reports with a role:  `,
+      );
+    });
+
+    it('should return an empty object when roles are undefined', () => {
+      jest.spyOn(auditLogger, 'info').mockImplementation(() => { });
+      const result = myReportsScopes(mockUser.id, undefined, false);
+      expect(result).toEqual({});
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        `User: ${mockUser.id} attempting to filter reports with a role:  `,
+      );
+    });
   });
 
   describe('reportText', () => {
@@ -3258,31 +3315,6 @@ describe('filtersToScopes', () => {
     });
   });
 
-  describe('region id', () => {
-    let includedReport1;
-    let includedReport2;
-    let excludedReport;
-    let possibleIds;
-
-    beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      includedReport2 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      excludedReport = await ActivityReport.create({ ...draftReport, regionId: 3 });
-      possibleIds = [
-        includedReport1.id,
-        includedReport2.id,
-        excludedReport.id,
-        globallyExcludedReport.id,
-      ];
-    });
-
-    afterAll(async () => {
-      await ActivityReport.destroy({
-        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
-      });
-    });
-  });
-
   describe('delivery method', () => {
     let includedReport1;
     let includedReport2;
@@ -3461,6 +3493,7 @@ describe('filtersToScopes', () => {
     const excludedGoalName = `${faker.lorem.sentence(10)}hams`;
 
     beforeAll(async () => {
+      // try {
       recipient = await createRecipient();
       grant = await createGrant({ recipientId: recipient.id });
 
@@ -3504,14 +3537,20 @@ describe('filtersToScopes', () => {
         includedReport.id,
         excludedReport.id,
       ];
+      // } catch (error) {
+      //   console.error('Failed on beforeAll - goalName:', error);
+      // }
     });
 
     afterAll(async () => {
-      await ActivityReportGoal.destroy({
-        where: {
-          activityReportId: [includedReport.id, excludedReport.id],
-        },
-      });
+      // try {
+      if (includedReport && excludedReport) {
+        await ActivityReportGoal.destroy({
+          where: {
+            activityReportId: [includedReport.id, excludedReport.id],
+          },
+        });
+      }
 
       // Delete reports.
       await ActivityReport.destroy({
@@ -3531,6 +3570,9 @@ describe('filtersToScopes', () => {
       await Recipient.destroy({
         where: { id: recipient.id },
       });
+      // } catch (error) {
+      //   console.error('Failed on afterAll - goalName:', error);
+      // }
     });
 
     it('return correct goal name filter search results', async () => {
@@ -3665,7 +3707,15 @@ describe('filtersToScopes', () => {
 
       // Clean up Grants.
       await Grant.destroy({
-        where: { id: reportIds },
+        where: {
+          id: [
+            activeCdiGrant.id,
+            inactiveCdiGrant.id,
+            nonCdiGrantActive.id,
+            nonCdiGrantInactive.id,
+          ],
+        },
+        individualHooks: true, // if your model has `onDelete` hooks
       });
 
       // Clean up Recipients.

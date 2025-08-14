@@ -36,7 +36,7 @@ export const isValidURL = (url) => {
 export const isInternalGovernmentLink = (url) => {
   const newUrl = new URL(url);
   return newUrl.host.endsWith(ECLKC_GOVERNMENT_HOSTNAME_EXTENSION)
-  || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
+    || newUrl.host.endsWith(HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION);
 };
 
 /**
@@ -277,3 +277,62 @@ export const parseFeedIntoDom = (feed) => {
 
   return parsedDom;
 };
+
+export const checkboxesToIds = (checkboxes) => {
+  const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
+  // Loop all selected rows and parseInt to an array of integers.
+  // If the ID isn't a number, keep it as a string.
+  return selectedRowsStrings.map((s) => {
+    const parsedInt = parseInt(s, DECIMAL_BASE);
+    return s.includes('-') ? s : parsedInt;
+  });
+};
+
+export const blobToCsvDownload = (blob, fileName) => {
+  let url;
+  try {
+    // Check if url exists with the attribute of download
+    // and remove it if it does.
+    if (document.getElementsByName('download').length > 0) {
+      Array.from(document.getElementsByName('download')).forEach((el) => el.remove());
+    }
+
+    url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', fileName);
+    document.body.appendChild(a);
+    a.click();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  } finally {
+    window.URL.revokeObjectURL(url);
+  }
+};
+export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
+  const from = offset >= totalCount ? 0 : offset + 1;
+  const offsetTo = perPage * currentPage;
+  let to;
+  if (offsetTo > totalCount) {
+    to = totalCount;
+  } else {
+    to = offsetTo;
+  }
+  return `${from.toLocaleString()}-${to.toLocaleString()} of ${totalCount.toLocaleString()}`;
+};
+
+export const SUPPORTED_DATE_FORMATS = [
+  'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
+  'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+  'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
+  'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
+  'M.D.YY', 'MM.DD.YY',
+];
+
+export function isValidDate(value) {
+  if (!value) return null;
+  const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
+  return parsed ? moment(value, parsed, true) : null;
+}

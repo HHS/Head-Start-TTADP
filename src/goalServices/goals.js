@@ -120,7 +120,6 @@ export function mapGrantsWithReplacements(grants) {
 export async function goalsByIdsAndActivityReport(id, activityReportId) {
   const goals = await Goal.findAll({
     attributes: [
-      'endDate',
       'status',
       ['id', 'value'],
       ['name', 'label'],
@@ -194,7 +193,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               {
                 model: Topic,
                 as: 'topics',
-                attributes: ['name'],
+                attributes: ['id', 'name'],
                 through: {
                   attributes: [],
                 },
@@ -337,7 +336,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
 export function goalByIdAndActivityReport(goalId, activityReportId) {
   return Goal.findOne({
     attributes: [
-      'endDate',
       'status',
       ['id', 'value'],
       ['name', 'label'],
@@ -502,7 +500,6 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
     grants,
     name,
     status,
-    endDate,
     regionId,
     recipientId,
 
@@ -512,7 +509,6 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
     status,
     timeframe,
     isFromSmartsheetTtaPlan
-    endDate,
 
  * @param {Object} goals
  * @returns created or updated goal with grant goals
@@ -529,7 +525,6 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       createdVia,
-      endDate,
       status,
       prompts,
       isCurated,
@@ -581,12 +576,6 @@ export async function createOrUpdateGoals(goals) {
       if (status && newGoal.status !== status) {
         newGoal.set({ status });
       }
-    }
-
-    // end date and source can be updated if the goal is not closed
-    // which it won't be at this point (refer to above where we check for closed goals)
-    if (endDate && newGoal.endDate !== endDate) {
-      newGoal.set({ endDate });
     }
 
     if (source && newGoal.source !== source) {
@@ -777,14 +766,12 @@ export async function goalsForGrants(grantIds) {
       'name',
       'status',
       'onApprovedAR',
-      'endDate',
       'source',
       'createdVia',
     ],
     group: [
       '"Goal"."name"',
       '"Goal"."status"',
-      '"Goal"."endDate"',
       '"Goal"."onApprovedAR"',
       '"Goal"."source"',
       '"Goal"."createdVia"',
@@ -1331,7 +1318,6 @@ export async function saveGoalsForReport(goals, report) {
     }
 
     const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
-    const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
@@ -1355,7 +1341,6 @@ export async function saveGoalsForReport(goals, report) {
         goalTemplateId,
         grantId: discardedGrantId,
         id, // we can't be trying to set this
-        endDate: discardedEndDate, // get this outta here
         ...fields
       } = goal;
 
@@ -1421,10 +1406,6 @@ export async function saveGoalsForReport(goals, report) {
         if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
-      }
-
-      if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
-        newOrUpdatedGoal.set({ endDate });
       }
 
       if (prompts && !isMultiRecipientReport) {
@@ -2054,7 +2035,6 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
     name: finalGoal.name,
     goalTemplateId: finalGoal.goalTemplateId,
     createdAt: finalCreatedAt,
-    endDate: finalGoal.endDate,
     createdVia: 'merge',
     onAR,
     rtrOrder: finalGoal.rtrOrder,
@@ -2432,12 +2412,6 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     };
   }
 
-  let endDate = null;
-
-  if (data.goalDate) {
-    endDate = data.goalDate;
-  }
-
   const grantsToCreateGoalsFor = grantIds.filter(
     (g) => !grantsForWhomGoalAlreadyExists.includes(g),
   );
@@ -2446,7 +2420,6 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     name,
     grantId,
     source: data.goalSource || null,
-    endDate,
     status: GOAL_STATUS.NOT_STARTED,
     createdVia: 'admin',
     goalTemplateId: template ? template.id : null,
@@ -2537,7 +2510,6 @@ Exampled request body, the data param:
   "closeSuspendReason": "Duplicate goal",
   "closeSuspendReasonContext": "sdf",
   "selectedGoal": {
-    "endDate": "03/17/2023",
     "grantIds": [
       10839
     ],

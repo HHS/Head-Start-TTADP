@@ -45,7 +45,10 @@ CourseList.propTypes = {
   courses: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     id: PropTypes.number,
-  })).isRequired,
+  })),
+};
+CourseList.defaultProps = {
+  courses: undefined,
 };
 
 export default CourseList;

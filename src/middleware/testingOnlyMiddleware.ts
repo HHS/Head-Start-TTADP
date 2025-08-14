@@ -7,7 +7,7 @@ export const isTestingOrCI = () => {
   return isLocal || isCI;
 };
 
-export default function testingOnly(req, res, next) {
+export function testingOnly(req, res, next) {
   if (isTestingOrCI()) {
     // Allow access for local development or CI only
     next();

@@ -43,6 +43,7 @@ import {
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
+import parseDate from '../lib/date';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -211,9 +212,10 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where });
 }
 
-async function saveNotes(activityReportId, notes, isRecipientNotes) {
+export async function saveNotes(activityReportId, notes, isRecipientNotes) {
   const noteType = isRecipientNotes ? 'RECIPIENT' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
+
   const where = {
     activityReportId,
     noteType,
@@ -221,24 +223,29 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       [Op.notIn]: ids,
     },
   };
+
   // Remove any notes that are no longer relevant
   await NextStep.destroy({
     where,
     individualHooks: true,
   });
 
-  if (notes.length > 0) {
-    // If a note has an id, and its content has changed, update to the newer content
-    // If no id, then assume its a new entry
-    const newNotes = notes.map((note) => ({
-      id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
-      note: note.note,
-      completeDate: !note.completeDate ? null : moment(note.completeDate, 'MM/DD/YYYY').toDate(),
-      activityReportId,
-      noteType,
-    }))
-      .filter(({ id, note, completeDate }) => id || (note && note.length > 0) || completeDate);
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
+  // If a note has an id, preserve it for update
+  // If no id, and note or completeDate is provided, treat as a new entry
+  const newNotes = notes.map((note) => ({
+    id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
+    note: note.note,
+    completeDate: parseDate(note.completeDate),
+    activityReportId,
+    noteType,
+  })).filter(({ id, note, completeDate }) => (
+    id || (note && note.length > 0) || completeDate
+  ));
+
+  if (newNotes.length > 0) {
+    await NextStep.bulkCreate(newNotes, {
+      updateOnDuplicate: ['note', 'completeDate', 'updatedAt'],
+    });
   }
 }
 
@@ -384,7 +391,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
               'id',
               'name',
               'status',
-              'endDate',
               'goalNumber',
             ],
           },
@@ -521,7 +527,7 @@ export async function activityReports(
     where.legacyId = { [Op.eq]: null };
   }
 
-  if (ids && ids.length) {
+  if (ids?.length) {
     where.id = { [Op.in]: ids };
   }
 
@@ -978,7 +984,7 @@ export async function createOrUpdate(newActivityReport, report) {
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
-  const previousActivityRecipientType = report && report.activityRecipientType;
+  const previousActivityRecipientType = report?.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
@@ -1027,10 +1033,10 @@ export async function createOrUpdate(newActivityReport, report) {
      */
 
   const recipientType = () => {
-    if (allFields && allFields.activityRecipientType) {
+    if (allFields?.activityRecipientType) {
       return allFields.activityRecipientType;
     }
-    if (report && report.activityRecipientType) {
+    if (report?.activityRecipientType) {
       return report.activityRecipientType;
     }
 
@@ -1040,8 +1046,7 @@ export async function createOrUpdate(newActivityReport, report) {
   const activityRecipientType = recipientType();
 
   if (
-    recipientsWhoHaveGoalsThatShouldBeRemoved
-    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+    recipientsWhoHaveGoalsThatShouldBeRemoved?.length
   ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
@@ -1078,6 +1083,39 @@ export async function setStatus(report, status) {
   return activityReportAndRecipientsById(report.id);
 }
 
+export async function handleSoftDeleteReport(report) {
+  const goalsToCleanup = (await Goal.findAll({
+    attributes: ['id'],
+    where: {
+      createdVia: 'activityReport',
+      id: {
+        [Op.in]: sequelize.literal(`(SELECT "goalId" FROM "ActivityReportGoals" args WHERE args."activityReportId" = ${report.id})`),
+      },
+    },
+    include: [{
+      model: ActivityReportGoal,
+      as: 'activityReportGoals',
+      attributes: ['id', 'goalId'],
+    }],
+  })).filter((goal) => goal.activityReportGoals.length === 1).map((goal) => goal.id);
+
+  if (goalsToCleanup.length) {
+    // these goals and objectives will also be soft-deleted
+    await Objective.destroy({
+      where: {
+        goalId: goalsToCleanup,
+      },
+    });
+
+    await Goal.destroy({
+      where: {
+        id: goalsToCleanup,
+      },
+    });
+  }
+  return setStatus(report, REPORT_STATUSES.DELETED);
+}
+
 /*
  * Queries the db for relevant recipients depending on the region id.
  * If no region id is passed, then default to returning all available recipients.
@@ -1087,7 +1125,7 @@ export async function setStatus(report, status) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId, activityReportId = null) {
-  const inactiveDayDuration = 61;
+  const inactiveDayDuration = 365;
   const grants = await Recipient.findAll({
     attributes: [
       'id',
@@ -1098,7 +1136,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['number', ['id', 'activityRecipientId'], 'name'],
+        attributes: ['number', ['id', 'activityRecipientId'], 'name', 'status'],
         required: true,
         include: [
           {

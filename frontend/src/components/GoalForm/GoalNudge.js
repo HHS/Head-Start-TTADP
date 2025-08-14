@@ -6,15 +6,16 @@ import {
   Checkbox,
   Button,
 } from '@trussworks/react-uswds';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form';
 import { similiarGoalsByText } from '../../fetchers/goals';
-import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useAsyncDebounceEffect from '../../hooks/useAsyncDebounceEffect';
 import GoalNudgeText from './GoalNudgeText';
 import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
+import useGoalTemplates from '../../hooks/useGoalTemplates';
 
 const MINIMUM_GOAL_NAME_LENGTH = 15;
+
+// TODO: remove this file after launching standard goals
 
 export default function GoalNudge({
   recipientId,
@@ -33,9 +34,8 @@ export default function GoalNudge({
 
   const [similar, setSimilarGoals] = useState([]);
   const [dismissSimilar, setDismissSimilar] = useState(false);
-  const [goalTemplates, setGoalTemplates] = useState(null);
-
   const selectedGrants = useMemo(() => [selectedGrant], [selectedGrant]);
+  const goalTemplates = useGoalTemplates(selectedGrants);
 
   useEffect(() => {
     if (dismissSimilar) {
@@ -53,23 +53,6 @@ export default function GoalNudge({
     // we should clear out any errors when useOhsInitiativeGoal is toggled
     clearErrors();
   }, [clearErrors, setValue, useOhsInitiativeGoal]);
-
-  // using DeepCompareEffect to avoid unnecessary fetches
-  // as we have an object (selectedGrant) in the dependency array
-  useDeepCompareEffect(() => {
-    async function fetchGoalTemplates() {
-      try {
-        const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
-        setGoalTemplates(templates);
-      } catch (err) {
-        setGoalTemplates([]);
-      }
-    }
-
-    if (selectedGrants[0] && selectedGrants[0].id) {
-      fetchGoalTemplates();
-    }
-  }, [selectedGrants]);
 
   useAsyncDebounceEffect(async () => {
     // we need all of these to populate the query

@@ -3,6 +3,8 @@ import moment from 'moment';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
+  IS,
+  IS_NOT,
   SELECT_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
@@ -12,6 +14,12 @@ import FilterCommunicationMethod from './FilterCommunicationMethod';
 import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
+import FilterRegionalSelect from './FilterRegionSelect';
+
+const EMPTY_SINGLE_SELECT = {
+  is: '',
+  'is not': '',
+};
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -104,6 +112,20 @@ export const communicationDateFilter = {
       query={query}
       updateSingleDate={onApplyQuery}
       onApplyDateRange={onApplyQuery}
+    />
+  ),
+};
+
+export const regionFilter = {
+  id: 'region',
+  display: 'Region',
+  conditions: [IS, IS_NOT],
+  defaultValues: EMPTY_SINGLE_SELECT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterRegionalSelect
+      appliedRegion={query}
+      onApply={onApplyQuery}
     />
   ),
 };

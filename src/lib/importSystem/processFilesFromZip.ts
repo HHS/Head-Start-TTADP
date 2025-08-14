@@ -37,7 +37,7 @@ const processFilesFromZip = async (
       .find(({ name }) => name === nextToProcess.fileName);
 
     if (fileInfoToProcess) { // If the file to process is found
-      setImportDataFileStatusByPath(
+      await setImportDataFileStatusByPath(
         importFileId,
         fileInfoToProcess,
         IMPORT_DATA_STATUSES.PROCESSING,

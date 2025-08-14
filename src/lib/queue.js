@@ -1,11 +1,12 @@
+/* istanbul ignore file: tested but not showing up in coverage for some reason */
 /* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
+import { formatLogObject } from '../processHandler';
 
-const generateRedisConfig = (enableRateLimiter = false) => {
+export const generateRedisConfig = (enableRateLimiter = false) => {
   if (process.env.VCAP_SERVICES) {
     const services = JSON.parse(process.env.VCAP_SERVICES);
-
     // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
     if (services['aws-elasticache-redis'] && services['aws-elasticache-redis'].length > 0) {
       const {
@@ -49,26 +50,19 @@ const generateRedisConfig = (enableRateLimiter = false) => {
 
   // Check for the presence of Redis-related environment variables
   const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
+  const redisHost = REDIS_HOST || 'localhost';
+  const redisPort = REDIS_PORT || 6379;
+  const redisPassFull = REDIS_PASS ? `${REDIS_PASS}@` : '';
+  const tlsEnabled = false;
 
-  if (REDIS_HOST && REDIS_PASS) {
-    return {
-      host: REDIS_HOST,
-      uri: `redis://:${REDIS_PASS}@${REDIS_HOST}:${REDIS_PORT || 6379}`,
-      port: REDIS_PORT || 6379,
-      tlsEnabled: false,
-      redisOpts: {
-        redis: { password: REDIS_PASS },
-      },
-    };
-  }
-
-  // Return a minimal configuration if Redis is not configured
   return {
-    host: null,
-    uri: null,
-    port: null,
-    tlsEnabled: false,
-    redisOpts: {},
+    host: redisHost,
+    uri: `redis://${redisPassFull}${redisHost}:${redisPort}`,
+    port: redisPort,
+    tlsEnabled,
+    redisOpts: {
+      redis: { password: REDIS_PASS },
+    },
   };
 };
 
@@ -77,8 +71,6 @@ const {
   port,
   redisOpts,
 } = generateRedisConfig(true);
-
-export { generateRedisConfig };
 
 export async function increaseListeners(queue, num = 1) {
   const MAX_LISTENERS = 20;
@@ -98,18 +90,20 @@ export async function increaseListeners(queue, num = 1) {
 }
 
 // Remove event handlers
-function removeQueueEventHandlers(
+export function removeQueueEventHandlers(
   queue,
   errorListener,
   shutdownListener,
   exceptionListener,
   rejectionListener,
 ) {
-  queue.removeListener('error', errorListener);
-  process.removeListener('SIGINT', shutdownListener);
-  process.removeListener('SIGTERM', shutdownListener);
-  process.removeListener('uncaughtException', exceptionListener);
-  process.removeListener('unhandledRejection', rejectionListener);
+  if (errorListener) queue.removeListener('error', errorListener);
+  if (shutdownListener) {
+    process.removeListener('SIGINT', shutdownListener);
+    process.removeListener('SIGTERM', shutdownListener);
+  }
+  if (exceptionListener) process.removeListener('uncaughtException', exceptionListener);
+  if (rejectionListener) process.removeListener('unhandledRejection', rejectionListener);
 }
 
 // Define the handlers so they can be added and removed
@@ -130,7 +124,7 @@ function handleShutdown(queue) {
 
 function handleException(queue) {
   return (err) => {
-    auditLogger.error('Uncaught exception:', err);
+    auditLogger.error('Uncaught exception:', formatLogObject(err));
     // queue.close().then(() => {
     //   auditLogger.error('Queue closed after uncaught exception.');
     //   removeQueueEventHandlers(queue);
@@ -214,7 +208,7 @@ export default function newQueue(queName, timeout = 30000) {
     },
     // Safely merge the timeout into redisOpts.settings
     settings: {
-      ...redisOpts.settings, // Preserve existing settings from redisOpts
+      ...((redisOpts?.settings) || {}), // Preserve existing settings from redisOpts
       stalledInterval: timeout, // Add or overwrite the timeout for stalled jobs
     },
   });

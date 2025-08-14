@@ -1,14 +1,19 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
-import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import NoResultsFound from '../components/NoResultsFound';
 import colors from '../colors';
 import './BarGraph.css';
 
-const Plot = createPlotlyComponent(Plotly);
-const BottomAxis = createPlotlyComponent(Plotly);
+let Plot = null;
+let BottomAxis = null;
+
+import('plotly.js-basic-dist')
+  .then((Plotly) => {
+    Plot = createPlotlyComponent(Plotly);
+    BottomAxis = createPlotlyComponent(Plotly);
+  });
 
 function BarGraph({
   data,
@@ -52,7 +57,8 @@ function BarGraph({
     counts.push(dataPoint.count);
   });
 
-  const range = [Math.min(...counts), Math.max(...counts)];
+  // Always start the bar at 0 so smaller values aren't hidden.
+  const range = [0, Math.max(...counts) + 2];
 
   const trace = {
     type: 'bar',
@@ -121,7 +127,7 @@ function BarGraph({
       <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
         <div className="ttahub-bar-graph--bars-top" style={{ height: barGraphTopHeight }} tabIndex={0}>
-          <span className="sr-only">Use the arrow keys to scroll graph</span>
+          <span className="usa-sr-only">Use the arrow keys to scroll graph</span>
           <Plot
             data={[trace]}
             layout={layout}

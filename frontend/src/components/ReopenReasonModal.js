@@ -108,9 +108,12 @@ ReopenReasonModal.propTypes = {
     PropTypes.func,
     PropTypes.shape(),
   ]).isRequired,
-  goalId: PropTypes.number.isRequired,
+  goalId: PropTypes.number,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
+};
+ReopenReasonModal.defaultProps = {
+  goalId: null,
 };
 
 export default ReopenReasonModal;

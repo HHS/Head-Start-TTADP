@@ -2,7 +2,7 @@
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in their examples
 import React, {
-  useState, useContext,
+  useState, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -28,6 +28,7 @@ import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import { NOOP } from '../../../Constants';
 import useFormGrantData, { calculateFormGrantData } from '../../../hooks/useFormGrantData';
+import Modal from '../../../components/Modal';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -88,6 +89,16 @@ Buttons.propTypes = {
 const GoalsObjectives = ({
   reportId,
 }) => {
+  // NOTE: Temporary fix until we can figure out why mesh-kit is duplicating data
+  // Check if this is the first time the user has opened the page,
+  // if so, we need to refresh the page to ensure mesh-kit doesn't have duplicated data.
+  const isFirstLoad = window.localStorage.getItem(`goals-${reportId}-loaded`) === null;
+  if (isFirstLoad) {
+    window.localStorage.setItem(`goals-${reportId}-loaded`, 'true');
+    window.location.reload();
+  }
+
+  const modalRef = useRef(null);
   const {
     watch, setValue, getValues, setError, trigger,
   } = useFormContext();
@@ -119,6 +130,7 @@ const GoalsObjectives = ({
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
   const [goalTemplates, setGoalTemplates] = useState([]);
+  const [goalToRemove, setGoalToRemove] = useState(null);
 
   const {
     field: {
@@ -201,8 +213,8 @@ const GoalsObjectives = ({
     // so 'create a new goal' will still be an option.
   };
 
-  const onRemove = (goal) => {
-    const goalId = goal.id;
+  const onRemove = () => {
+    const goalId = goalToRemove.id;
     const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     const index = copyOfSelectedGoals.findIndex((g) => g.id === goalId);
 
@@ -359,6 +371,21 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and Objectives</title>
       </Helmet>
+      <Modal
+        modalRef={modalRef}
+        title="Are you sure you want to delete this goal?"
+        modalId="remove-goal-modal"
+        onOk={() => {
+          onRemove(modalRef.current.goal);
+          if (modalRef.current.modalIsOpen) {
+            modalRef.current.toggleModal();
+          }
+        }}
+        okButtonText="Remove"
+        okButtonAriaLabel="remove goal"
+      >
+        <p>If you remove the goal, the objectives and TTA provided content will also be deleted.</p>
+      </Modal>
       { isFormOpen && !alertIsDisplayed && (
       <IndicatesRequiredField />
       ) }
@@ -398,7 +425,10 @@ const GoalsObjectives = ({
       { goalsForReview.length ? (
         <ReadOnly
           onEdit={onEdit}
-          onRemove={onRemove}
+          onRemove={(goal) => {
+            setGoalToRemove(goal);
+            modalRef.current.toggleModal();
+          }}
           createdGoals={goalsForReview}
         />
       ) : null }

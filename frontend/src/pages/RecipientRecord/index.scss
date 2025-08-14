@@ -12,3 +12,35 @@
     overflow-y: scroll;
     max-height: 440px;
 }
+
+.recipient-comm-log-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    h1 {
+        margin-bottom: 1rem;
+    }
+
+    div {
+        margin-bottom: 1rem;
+
+        .smart-hub--new-report-btn {
+            margin-right: 1rem;
+        }
+    }
+
+    @media (min-width: 84em) {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+
+        h1 {
+            margin: .67em 0;
+        }
+
+        div {
+            margin: 0;
+        }
+    }
+}

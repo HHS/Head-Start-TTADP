@@ -41,9 +41,13 @@ import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import QADashboard from './pages/QADashboard';
 import SomethingWentWrong from './components/SomethingWentWrong';
+import NewVersionAvailable from './components/NewVersionAvailable';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
+import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
+import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
+import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 
 export default function Routes({
   alert,
@@ -75,6 +79,14 @@ export default function Routes({
   const renderAuthenticatedRoutes = () => (
     <>
       <Switch>
+        <Route
+          path="/activity-reports/revision-change"
+          render={() => (
+            <AppWrapper hasAlerts={false} authenticated logout={logout}>
+              <NewVersionAvailable />
+            </AppWrapper>
+          )}
+        />
         <Route
           path="/something-went-wrong/:errorResponseCode([0-9]*)"
           render={({ match }) => (
@@ -303,7 +315,15 @@ export default function Routes({
             </AppWrapper>
           )}
         />
-
+        <Route
+          exact
+          path="/communication-log"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <RegionalCommunicationLogDashboard />
+            </AppWrapper>
+          )}
+        />
         <Route
           exact
           path="/account"
@@ -350,6 +370,24 @@ export default function Routes({
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/communication-log/region/:regionId/log/:logId/view"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <ViewRegionalCommunicationLog match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/communication-log/region/:regionId/log/:logId/:currentPage?"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <RegionalCommunicationLog />
             </AppWrapper>
           )}
         />
@@ -432,11 +470,16 @@ Routes.propTypes = {
   loggedOut: PropTypes.bool,
   timedOut: PropTypes.bool,
   notifications: PropTypes.shape({
-    whatsNew: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number,
-      title: PropTypes.string,
-      message: PropTypes.string,
-    })),
+    whatsNew: PropTypes.oneOfType([
+      PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.number,
+          title: PropTypes.string,
+          message: PropTypes.string,
+        }),
+      ),
+      PropTypes.string, // Sometimes an HTML string
+    ]),
   }),
 };
 

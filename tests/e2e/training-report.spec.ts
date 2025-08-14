@@ -35,7 +35,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByRole('button', { name: 'Yes, continue' }).click();
 
   // Back on the TR page click create session.
-  await page.getByTestId('ellipsis-button').click();
+  await page.getByTestId('context-menu-actions-btn').click();
   await page.getByRole('button', { name: 'Create session' }).click();
 
   // IST/Creator session summary
@@ -58,7 +58,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
 
   await page.locator('#ttaProvided').fill('TTA');
 
-  await page.getByTestId('dropdown').selectOption('Introducing');
+  await page.locator('select.usa-select').selectOption('Introducing');
   await blur(page);
   await page.waitForTimeout(2000); // wait for first post to complete
   // Click Save and continue.
@@ -123,9 +123,9 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByLabel('View sessions for event R01-PD-23-').click();
   await page.getByText('Status Complete').click();
 
-  // view event
-  await page.getByTestId('ellipsis-button').click();
-  await page.getByTestId('menu').getByText('View event').click();
+  // view/print event
+  await page.getByTestId('context-menu-actions-btn').click();
+  await page.getByTestId('menu').getByText('View/Print event').click();
 
   await page.waitForTimeout(2000); // waiting for navigation
 

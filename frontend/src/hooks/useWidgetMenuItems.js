@@ -26,14 +26,14 @@ export default function useWidgetMenuItems(
     if (showTabularData) {
       menu.push({
         label: 'Export table',
-        onClick: () => exportRows(),
+        onClick: async () => exportRows(),
       });
     }
 
     if (showTabularData && atLeastOneRowIsSelected) {
       menu.push({
         label: 'Export selected rows',
-        onClick: () => exportRows('selected'),
+        onClick: async () => exportRows('selected'),
       });
     }
 
