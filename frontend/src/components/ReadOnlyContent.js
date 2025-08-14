@@ -64,14 +64,14 @@ export default function ReadOnlyContent({
                 {subheading !== 'Recipient\'s goal' ? (
                   /* Normal data section */
                   <>
-                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold usa-prose margin-0 font-sans-3xs">{subheading}</div>
-                    <div className="ttahub-read-only-content-section--heading--section-row-data usa-prose margin-0 margin-bottom-2 font-sans-3xs">{renderData(subheading, section.data[subheading])}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold margin-0">{subheading}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-2">{renderData(subheading, section.data[subheading])}</div>
                   </>
                 ) : (
                   /* Recipient's Goal section */
                   <div className="ttahub-read-only-content-section--goal-summary border-left border-width-05 padding-left-2">
-                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold usa-prose margin-0 font-sans-3xs">{subheading}</div>
-                    <div className="ttahub-read-only-content-section--heading--section-row-data usa-prose margin-0 margin-bottom-2 font-sans-lg">{renderData(subheading, section.data[subheading])}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold margin-0">{subheading}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-2 font-sans-lg">{renderData(subheading, section.data[subheading])}</div>
                   </div>
                 )}
               </div>
