@@ -6,7 +6,6 @@ import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import filtersToScopes from '../scopes';
 import { reduceObjectivesForRecipientRecord } from './recipient';
-import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { cacheGoalMetadata, cacheObjectiveMetadata, destroyActivityReportObjectiveMetadata } from './reportCache';
@@ -163,6 +162,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     || o.files?.length).map(async (objective, index) => {
     const {
       id,
+      ids,
       isNew,
       ttaProvided,
       ActivityReportObjective: aro,
@@ -182,17 +182,26 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
 
     // If the goal set on the objective does not match
     // the goals passed we need to save the objectives.
-    const createNewObjectives = objective.goalId !== goal.id;
+    const objectiveMatchesGoal = objective.goalId === goal.id;
     const updatedObjective = {
       ...updatedFields, title, goalId: goal.id,
     };
-
     // Check if objective exists.
     let savedObjective;
-    if (!isNew && id && !createNewObjectives) {
-      savedObjective = await Objective.findByPk(id);
+    if (!isNew && id) {
+      // If the goal on this objective matches look it up by ID.
+      if (objectiveMatchesGoal) {
+        savedObjective = await Objective.findByPk(id);
+      } else if (ids && ids.length) {
+        // If the goal on this objective doesn't match, look it up by IDs and Goal ID.
+        savedObjective = await Objective.findOne({
+          where: {
+            id: Array.isArray(ids) ? ids : [ids],
+            goalId: goal.id,
+          },
+        });
+      }
     }
-
     if (savedObjective) {
       // We should only allow the title to change if we are not on a approved AR.
       if (!savedObjective.onApprovedAR) {
@@ -912,11 +921,21 @@ export async function standardGoalsForRecipient(
         )`),
         'isReopened',
       ],
+      [
+        sequelize.literal('"goalTemplate"."standard"'),
+        'standard',
+      ],
     ],
     where: {
       id: ids,
     },
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: true,
+      },
       {
         model: GoalStatusChange,
         as: 'statusChanges',
@@ -927,7 +946,7 @@ export async function standardGoalsForRecipient(
         model: GoalCollaborator,
         as: 'goalCollaborators',
         attributes: ['id'],
-        required: true,
+        required: false,
         include: [
           {
             model: CollaboratorType,
@@ -1095,12 +1114,6 @@ export async function standardGoalsForRecipient(
     }
   });
 
-  const statuses = await goalStatusByGoalName({
-    goal: {
-      id: ids,
-    },
-  });
-
   // Process each goal to format objectives properly with endDate (Last TTA in the UI)
   const processedRows = goalRows.map((current) => {
     // Create a goal object similar to what getGoalsByActivityRecipient does
@@ -1134,10 +1147,34 @@ export async function standardGoalsForRecipient(
   const offsetNum = parseInt(String(offset), 10);
   const limitNum = parseInt(String(limit), 10);
 
+  const total = goalRows.length;
+
+  const statuses = processedRows.reduce((accumulator: {
+    key: number
+  }, current: { status: string }) => {
+    if (current.status in accumulator) {
+      accumulator[current.status] += 1;
+    }
+
+    return accumulator;
+  }, {
+    total,
+    [GOAL_STATUS.NOT_STARTED]: 0,
+    [GOAL_STATUS.IN_PROGRESS]: 0,
+    [GOAL_STATUS.CLOSED]: 0,
+    [GOAL_STATUS.SUSPENDED]: 0,
+  });
+
   return {
-    count: goalRows.length,
+    count: total,
     goalRows: limitNum ? processedRows.slice(offsetNum, offsetNum + limitNum) : processedRows,
-    statuses,
+    statuses: {
+      total,
+      Suspended: statuses[GOAL_STATUS.SUSPENDED],
+      Closed: statuses[GOAL_STATUS.CLOSED],
+      'Not started': statuses[GOAL_STATUS.NOT_STARTED],
+      'In progress': statuses[GOAL_STATUS.IN_PROGRESS],
+    },
     allGoalIds: ids,
   };
 }
