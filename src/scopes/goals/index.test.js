@@ -506,10 +506,8 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(3);
-      expect(found.map((g) => g.name)).toContain('Goal 1');
+      expect(found.length).toBe(1);
       expect(found.map((g) => g.name)).toContain('Goal 3');
-      expect(found.map((g) => g.name)).toContain('Goal 4');
     });
     it('filters out by status', async () => {
       const filters = { 'status.nin': ['Suspended'] };

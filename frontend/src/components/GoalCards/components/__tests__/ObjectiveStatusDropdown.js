@@ -24,6 +24,7 @@ describe('ObjectiveStatusDropdown', () => {
     currentStatus,
     onUpdate = jest.fn(),
     forceReadOnly = false,
+    onApprovedAR = false,
   ) => {
     render((
       <UserContext.Provider value={{ user }}>
@@ -35,6 +36,7 @@ describe('ObjectiveStatusDropdown', () => {
           objectiveTitle={345345}
           goalStatus="In Progress"
           className="test-class"
+          onApprovedAR={onApprovedAR}
         />
       </UserContext.Provider>
     ));
@@ -170,5 +172,62 @@ describe('ObjectiveStatusDropdown', () => {
     userEvent.click(option);
 
     expect(onUpdate).toHaveBeenCalledWith('Suspended');
+  });
+
+  it('hides the not started option when onApprovedAR is true', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('In Progress', onUpdate, false, true);
+
+    let options = await screen.findAllByRole('button');
+    expect(options.length).toBe(1);
+
+    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    userEvent.click(select);
+
+    options = await screen.findAllByRole('button');
+    expect(options.length).toBe(4);
+    const labels = options.map((option) => option.textContent);
+    expect(labels).not.toContain('Not Started');
+    expect(labels).toContain('In Progress');
+    expect(labels).toContain('Suspended');
+    expect(labels).toContain('Complete');
+  });
+
+  it('shows the not started option when onApprovedAR is false', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('In Progress', onUpdate, false, false);
+
+    let options = await screen.findAllByRole('button');
+    expect(options.length).toBe(1);
+
+    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    userEvent.click(select);
+
+    options = await screen.findAllByRole('button');
+    expect(options.length).toBe(5);
+    const labels = options.map((option) => option.textContent);
+    expect(labels).toContain('Not Started');
+    expect(labels).toContain('In Progress');
+    expect(labels).toContain('Suspended');
+    expect(labels).toContain('Complete');
+  });
+
+  it('shows the not started option when onApprovedAR is true and currentStatus is "Not Started"', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('Not Started', onUpdate, false, true);
+
+    let options = await screen.findAllByRole('button');
+    expect(options.length).toBe(1);
+
+    const select = await screen.findByRole('button', { name: /change status for objective 345345/i });
+    userEvent.click(select);
+
+    options = await screen.findAllByRole('button');
+    expect(options.length).toBe(5);
+    const labels = options.map((option) => option.textContent);
+    expect(labels).toContain('Not Started');
+    expect(labels).toContain('In Progress');
+    expect(labels).toContain('Suspended');
+    expect(labels).toContain('Complete');
   });
 });

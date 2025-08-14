@@ -369,6 +369,85 @@ describe('ActivityReportNavigator', () => {
     jest.advanceTimersByTime(800);
     expect(onSave).not.toHaveBeenCalled();
   });
+
+  it('navigates between pages and preserves form data', async () => {
+    const updatePage = jest.fn();
+    const onSave = jest.fn();
+    const updateForm = jest.fn();
+
+    await renderNavigator({
+      currentPage: 'first',
+      onSave,
+      updatePage,
+      updateForm,
+    });
+
+    // Fill out the first page
+    const firstInput = screen.getByTestId('first');
+    userEvent.click(firstInput);
+
+    // Click continue to go to the second page
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    // Verify updatePage was called to go to page 2
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
+
+    // Verify onSave was called with the correct data
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState, 1: IN_PROGRESS,
+        },
+        first: 'on',
+      },
+      false,
+    ));
+
+    // Reset mocks for further testing
+    onSave.mockClear();
+    updatePage.mockClear();
+
+    // Render the second page
+    await renderNavigator({
+      currentPage: 'second',
+      onSave,
+      updatePage,
+      updateForm,
+      formData: {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState, 1: IN_PROGRESS,
+        },
+        first: 'on',
+      },
+    });
+
+    // Fill out the second page
+    const secondInput = screen.getByTestId('second');
+    userEvent.click(secondInput);
+
+    // Navigate back to the first page
+    userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    // Verify updatePage was called to go to page 1
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+
+    // Verify onSave was called with the correct data including both pages
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState,
+          1: IN_PROGRESS,
+          2: IN_PROGRESS,
+        },
+        first: 'on',
+        second: 'on',
+      },
+      false,
+    ));
+  });
 });
 
 describe('shouldUpdateFormData', () => {

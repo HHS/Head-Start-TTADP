@@ -1,4 +1,4 @@
-import { formatSimpleArray } from '../helpers';
+import { formatSimpleArray } from '../../../components/ReportView/helpers';
 
 describe('formatSimpleArray', () => {
   it('return an empty string if passed undefined', () => {
