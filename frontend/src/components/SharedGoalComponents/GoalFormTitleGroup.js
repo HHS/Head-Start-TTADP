@@ -24,7 +24,7 @@ export default function GoalFormTitleGroup({
         {' '}
         indicates required field
       </div>
-      <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
+      <h2 className="margin-top-4 margin-bottom-3">Goal summary</h2>
     </>
   );
 }

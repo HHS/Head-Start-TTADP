@@ -63,7 +63,6 @@ export default function ViewGoals({
 }) {
   const goalDefaults = {
     name: '',
-    endDate: null,
     status: 'Draft',
     grants: [],
     objectives: [],
@@ -146,7 +145,6 @@ export default function ViewGoals({
     goalNumbers,
     source,
     objectives,
-    endDate,
     name: goalName,
     grants,
   } = goal;
@@ -203,10 +201,6 @@ export default function ViewGoals({
 
           <ReadOnlyField label="Goal source">
             {uniq(Object.values(source || {})).join(', ') || ''}
-          </ReadOnlyField>
-
-          <ReadOnlyField label="Anticipated close date (mm/dd/yyyy)">
-            {endDate}
           </ReadOnlyField>
         </div>
 

@@ -896,8 +896,8 @@ describe('trainingReportTaskDueNotifications', () => {
     const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
 
     expect(emails).toEqual([null, null]);
-    expect(userById).toHaveBeenCalledWith(1);
-    expect(userById).toHaveBeenCalledWith(3);
+    expect(userById).toHaveBeenCalledWith(1, true);
+    expect(userById).toHaveBeenCalledWith(3, true);
   });
 
   it('return null if the user email is not found', async () => {
@@ -923,7 +923,7 @@ describe('trainingReportTaskDueNotifications', () => {
     const emails = await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
 
     expect(emails).toEqual([null, null]);
-    expect(userById).toHaveBeenCalledWith(1);
-    expect(userById).toHaveBeenCalledWith(3);
+    expect(userById).toHaveBeenCalledWith(1, true);
+    expect(userById).toHaveBeenCalledWith(3, true);
   });
 });

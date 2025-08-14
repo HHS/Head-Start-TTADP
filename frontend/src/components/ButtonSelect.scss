@@ -1,6 +1,6 @@
 @use '../colors.scss' as *;
 
-.smart-hub--button-select-menu-label:not(.sr-only) {
+.smart-hub--button-select-menu-label:not(.usa-sr-only) {
     display: block;
     margin-top: 1em;
     max-width: 240px;
@@ -13,13 +13,13 @@
     display: block;
     outline: 0.25rem transparent;
     outline-offset: 0;
-    padding: 1rem;    
-    text-align: left;    
+    padding: 1rem;
+    text-align: left;
     width: 100%;
 }
 
 .smart-hub--button-select-range-button:hover{
-    background: $gray-two; 
+    background: $gray-two;
 }
 
 .smart-hub--button-select-range-button[aria-pressed="true"] {

@@ -6,7 +6,6 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
@@ -147,7 +146,11 @@ export function TopicFrequencyGraphWidget({
     };
 
     // draw the plot
-    Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
+    import('plotly.js-basic-dist').then((Plotly) => {
+      if (bars.current) {
+        Plotly.newPlot(bars.current, [trace], layout, { displayModeBar: false, responsive: true });
+      }
+    });
   }, [data, order, setOrder, showAccessibleData]);
 
   /**

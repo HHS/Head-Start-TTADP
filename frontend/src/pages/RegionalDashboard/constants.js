@@ -48,7 +48,6 @@ const DASHBOARD_FILTER_CONFIG = [
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
-  regionFilter,
   grantStatusFilter,
 ];
 

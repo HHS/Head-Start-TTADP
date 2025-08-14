@@ -127,8 +127,10 @@ export default async function getGoalsForReport(reportId: number) {
                 required: false,
                 include: [
                   {
+                    attributes: ['id', 'name', 'mapsTo'],
                     model: Topic,
                     as: 'topic',
+                    paranoid: false,
                   },
                 ],
               },

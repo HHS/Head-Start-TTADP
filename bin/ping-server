@@ -1,11 +1,10 @@
 #!/bin/bash
-
-# Usage: ./bin/ping-server <port> [hostname]
+# Usage: ./bin/ping-server <port> [hostname] [urlpath] [max_attempts]
 
 # Ensure port is provided
 if [ -z "$1" ]; then
   echo "Error: Port is required."
-  echo "Usage: $0 <port> [hostname]"
+  echo "Usage: $0 <port> [hostname] [urlpath] [max_attempts]"
   exit 1
 fi
 
@@ -16,7 +15,6 @@ URLPATH=${3}
 # Retry configuration
 attempt_counter=0
 max_attempts=${4:-10}
-
 
 echo "Pinging server at http://${HOSTNAME}:${PORT}${URLPATH}..."
 
@@ -30,5 +28,8 @@ until $(curl --output /dev/null --max-time 10 --silent --head --fail http://${HO
     echo "Attempt ${attempt_counter}/${max_attempts}: Retrying in 30 seconds..."
     sleep 30
 done
+
+# log the response for tracking
+curl --silent --head --fail http://${HOSTNAME}:${PORT}${URLPATH}
 
 echo "Success: Server at ${HOSTNAME}:${PORT}${URLPATH} is responding."

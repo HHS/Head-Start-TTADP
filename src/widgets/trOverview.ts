@@ -107,7 +107,7 @@ export default async function trOverview(
 
       if (deliveryMethod === 'hybrid') {
         sessionParticipants += numberOfParticipantsInPerson + numberOfParticipantsVirtually;
-      } else {
+      } else if (Number(numberOfParticipants)) {
         sessionParticipants += numberOfParticipants;
       }
     });

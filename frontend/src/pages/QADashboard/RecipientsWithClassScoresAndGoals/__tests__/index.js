@@ -8,6 +8,7 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import RecipientsWithClassScoresAndGoals from '../index';
 import UserContext from '../../../../UserContext';
+import { mockRSSData } from '../../../../testHelpers';
 
 const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=with_class_widget&dataSetSelection[]=with_class_page';
 
@@ -18,7 +19,7 @@ const recipientsWithClassScoresAndGoalsData = [
     data: [
       {
         total: 2,
-        'recipients with class': 1,
+        'recipients with class': 2,
         '% recipients with class': 50,
         'grants with class': 3,
       },
@@ -26,7 +27,7 @@ const recipientsWithClassScoresAndGoalsData = [
   },
   {
     data_set: 'with_class_page',
-    records: 2,
+    records: 3,
     data: [
       {
         classroomOrganization: 5.0430,
@@ -73,6 +74,42 @@ const recipientsWithClassScoresAndGoalsData = [
         goalId: 68745,
         goalStatus: 'Complete',
       },
+      {
+        classroomOrganization: 8.459,
+        emotionalSupport: 5.256,
+        grantNumber: '90CI010074',
+        instructionalSupport: 1.215,
+        lastARStartDate: null,
+        recipientId: 2,
+        recipientName: 'Recipient 2',
+        reportDeliveryDate: '2022-05-01T04:00:00+00:00',
+        collaborators: 'Jill Jones',
+        creator: 'Nadia Parks',
+        goalCreatedAt: '2021-04-02T18:41:32.028+00:00',
+        goalId: 68746,
+        goalStatus: 'Not Started',
+      },
+    ],
+  },
+  {
+    data_set: 'with_class_page',
+    records: 1,
+    data: [
+      {
+        classroomOrganization: 7.123,
+        emotionalSupport: 6.789,
+        grantNumber: '90CI010074',
+        instructionalSupport: 5.678,
+        lastARStartDate: '2021-05-03',
+        recipientId: 3,
+        recipientName: 'Smith, Johnson and Lee',
+        reportDeliveryDate: '2022-06-01T04:00:00+00:00',
+        collaborators: 'Alice Brown',
+        creator: 'Charlie Davis',
+        goalCreatedAt: '2021-05-03T18:41:32.028+00:00',
+        goalId: 78901,
+        goalStatus: 'In progress',
+      },
     ],
   },
 ];
@@ -91,6 +128,12 @@ const renderRecipientsWithClassScoresAndGoals = () => {
 describe('Recipients With Class and Scores and Goals', () => {
   afterEach(() => {
     fetchMock.restore();
+  });
+
+  beforeEach(() => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-qa-dash-class-filters', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-class-thresholds', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-class-goal', mockRSSData());
   });
 
   it('renders correctly with data', async () => {

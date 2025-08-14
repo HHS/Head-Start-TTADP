@@ -10,7 +10,3 @@ applications:
     - ((buildpack))
   command: ((command))
   services: ((bound_services))
-  processes:
-    - type: web               # Explicitly define only the web process
-      instances: ((instances)) # Number of instances for the web process
-      memory: ((memory))       # Memory allocation for the web process

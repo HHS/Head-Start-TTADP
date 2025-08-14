@@ -110,7 +110,6 @@ describe('goalFieldResponseHooks', () => {
       goal = await Goal.create({
         name: 'Goal 1',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -120,7 +119,6 @@ describe('goalFieldResponseHooks', () => {
       goalNotToUpdate = await Goal.create({
         name: 'Goal 1 Not to Update',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grantNotToUpdate.id,
@@ -130,7 +128,6 @@ describe('goalFieldResponseHooks', () => {
       goalMissingResponse = await Goal.create({
         name: 'Goal Missing Response',
         status: 'Draft',
-        endDate: null,
         isFromSmartsheetTtaPlan: false,
         onApprovedAR: false,
         grantId: grant.id,
@@ -270,7 +267,7 @@ describe('goalFieldResponseHooks', () => {
     });
 
     afterAll(async () => {
-      // Get all activity report goals to delete.
+      // Collect all relevant activity report goal IDs
       const activityReportGoals = await ActivityReportGoal.findAll({
         where: {
           activityReportId: [
@@ -284,33 +281,32 @@ describe('goalFieldResponseHooks', () => {
       });
       const activityReportGoalIds = activityReportGoals.map((item) => item.id);
 
-      // Delete activity report goal field response.
+      // 1. Delete ActivityReportGoalFieldResponse
       await ActivityReportGoalFieldResponse.destroy({
         where: {
           activityReportGoalId: activityReportGoalIds,
         },
       });
 
-      // Delete goal field response.
+      // 2. Delete GoalFieldResponses (removed invalid ID)
       await GoalFieldResponse.destroy({
         where: {
           id: [
             goalFieldResponse.id,
             goalFieldResponseDiffGoalNotToUpdate.id,
             missingGoalFieldResponse.id,
-            activityReportAlreadyUsingFeiRootCauses.id,
           ],
         },
       });
 
-      // Delete activity report goals.
+      // 3. Delete ActivityReportGoals
       await ActivityReportGoal.destroy({
         where: {
           id: activityReportGoalIds,
         },
       });
 
-      // Delete activity report.
+      // 4. Delete ActivityReports
       await ActivityReport.destroy({
         where: {
           id: [
@@ -318,31 +314,40 @@ describe('goalFieldResponseHooks', () => {
             differentGoalReportNotToUpdate.id,
             approvedReport.id,
             activityReportUsingSameFeiGoal.id,
+            activityReportAlreadyUsingFeiRootCauses.id,
           ],
         },
       });
 
-      // Delete goal.
+      // 5. Delete Goals
       await Goal.destroy({
-        where: { id: [goal.id, goalNotToUpdate.id, goalMissingResponse.id] },
+        where: {
+          id: [goal.id, goalNotToUpdate.id, goalMissingResponse.id],
+        },
         force: true,
       });
 
-      // Delete grant.
+      // 6. Delete Grants
       await Grant.destroy({
-        where: { id: [grant.id, grantNotToUpdate.id] },
+        where: {
+          id: [grant.id, grantNotToUpdate.id],
+        },
         individualHooks: true,
         force: true,
       });
 
-      // Delete recipient.
+      // 7. Delete Recipients
       await Recipient.destroy({
-        where: { id: [recipient.id, recipientToNotUpdate.id] },
+        where: {
+          id: [recipient.id, recipientToNotUpdate.id],
+        },
       });
 
-      // Delete mock user.
+      // 8. Delete mock user
       await User.destroy({
-        where: { id: mockUser.id },
+        where: {
+          id: mockUser.id,
+        },
       });
     });
 

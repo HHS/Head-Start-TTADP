@@ -228,7 +228,6 @@ const MAINTENANCE_TYPE = {
   REINDEX_TABLES: 'REINDEX TABLES',
   DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
-  IMPORT_SCHEDULE: 'IMPORT_SCHEDULE',
   IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
   IMPORT_PROCESS: 'IMPORT_PROCESS',
 };
@@ -241,6 +240,8 @@ const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'manual_mark_goals_similar',
   'monitoring_integration',
+  'multirecipient_communication_log',
+  'standard_goals_update',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -255,6 +256,22 @@ const CURRENT_GOAL_SIMILARITY_VERSION = 5;
 
 const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
 const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;
+
+const COMMUNICATION_LOG_LIMIT_MAX = 1000;
+
+const SORT_DIR = {
+  ASC: 'ASC',
+  DESC: 'DESC',
+};
+
+const REGIONS = [
+  'Northeast',
+  'Midwest',
+  'West',
+  'AIAN',
+  'Southeast',
+  'Southwest',
+];
 
 module.exports = {
   CURRENT_GOAL_SIMILARITY_VERSION,
@@ -292,4 +309,7 @@ module.exports = {
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
+  SORT_DIR,
+  COMMUNICATION_LOG_LIMIT_MAX,
+  REGIONS,
 };

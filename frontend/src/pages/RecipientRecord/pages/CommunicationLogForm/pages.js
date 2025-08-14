@@ -1,6 +1,6 @@
-import log from './pages/log';
-import nextSteps from './pages/nextSteps';
-import supportingAttachments from './pages/supportingAttachments';
+import log from '../../../../components/CommunicationLog/pages/log';
+import nextSteps from '../../../../components/CommunicationLog/pages/nextSteps';
+import supportingAttachments from '../../../../components/CommunicationLog/pages/supportingAttachments';
 
 const pages = [
   log,

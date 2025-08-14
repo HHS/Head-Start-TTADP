@@ -1,27 +1,25 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, Controller } from 'react-hook-form';
+import { FormProvider } from 'react-hook-form';
 import { Redirect, useHistory } from 'react-router';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { GOAL_STATUS, DECIMAL_BASE } from '@ttahub/common';
-import Select from 'react-select';
 import useGoalState from '../../hooks/useGoalState';
 import Container from '../Container';
-import FormFieldThatIsSometimesReadOnly from '../GoalForm/FormFieldThatIsSometimesReadOnly';
 import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
 import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLink';
 import GoalFormTitleGroup from '../SharedGoalComponents/GoalFormTitleGroup';
 import GoalNudge from '../GoalForm/GoalNudge';
-import GoalFormButton from '../SharedGoalComponents/GoalFormButton';
 import GoalFormError from '../SharedGoalComponents/GoalFormError';
 import GoalFormAlert from '../SharedGoalComponents/GoalFormAlert';
 import ReopenReasonModal from '../ReopenReasonModal';
-import FormItem from '../FormItem';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 import { canEditOrCreateGoals } from '../../permissions';
-import selectOptionsReset from '../selectOptionsReset';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
+import GoalGrantSingleSelect from '../SharedGoalComponents/GoalGrantSingleSelect';
+import GoalFormButtonIterator from '../SharedGoalComponents/GoalFormButtonIterator';
+import usePossibleGrants from '../../hooks/usePossibleGrants';
 
 export default function GoalNameForm({
   recipient,
@@ -42,7 +40,7 @@ export default function GoalNameForm({
   const history = useHistory();
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
-  const possibleGrants = useMemo(() => (recipient.grants || []).filter(((g) => g.status === 'Active')), [recipient.grants]);
+  const possibleGrants = usePossibleGrants(recipient);
 
   // watch the selected grants
   const { selectedGrant, isGoalNameEditable, goalIds } = hookForm.watch();
@@ -85,6 +83,7 @@ export default function GoalNameForm({
           hookForm.setValue('goalName', goal.name);
           hookForm.setValue('goalStatus', goal.status);
           hookForm.setValue('goalIds', goal.goalIds);
+          hookForm.setValue('selectedGrant', goal.grant);
         }
       } catch (err) {
         history.push('/something-went-wrong/500');
@@ -126,45 +125,16 @@ export default function GoalNameForm({
         <GoalFormTitleGroup />
         <form onSubmit={hookForm.handleSubmit(onSubmit)}>
           <GoalFormError error={error} />
-          <Controller
+          <GoalGrantSingleSelect
+            permissions={[
+              userCanEdit,
+              isGoalNameEditable,
+              possibleGrants.length > 1,
+              !isExistingGoal,
+            ]}
             control={hookForm.control}
-            name="selectedGrant"
-            rules={{ required: 'Please select a grant' }}
-            render={({ onChange, value, onBlur }) => (
-              <FormFieldThatIsSometimesReadOnly
-                permissions={[
-                  userCanEdit,
-                  isGoalNameEditable,
-                  possibleGrants.length > 1,
-                  !isExistingGoal,
-                ]}
-                label="Recipient grant numbers"
-                value={value ? value.numberWithProgramTypes : ''}
-              >
-                <FormItem
-                  label="Recipient grant numbers"
-                  name="selectedGrant"
-                  required
-                >
-                  <Select
-                    placeholder=""
-                    inputId="selectedGrant"
-                    onChange={onChange}
-                    options={possibleGrants}
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    className="usa-select"
-                    closeMenuOnSelect={false}
-                    value={selectedGrant}
-                    onBlur={onBlur}
-                    getOptionLabel={(option) => option.numberWithProgramTypes}
-                    getOptionValue={(option) => option.id}
-                  />
-                </FormItem>
-              </FormFieldThatIsSometimesReadOnly>
-            )}
+            selectedGrant={selectedGrant}
+            possibleGrants={possibleGrants}
           />
           <GoalFormAlert alert={alert} />
           <GoalNudge
@@ -172,17 +142,7 @@ export default function GoalNameForm({
             regionId={regionId}
             selectedGrant={selectedGrant}
           />
-          {buttons.map((button) => (
-            <GoalFormButton
-              key={button.id}
-              onClick={button.onClick}
-              label={button.label}
-              variant={button.variant}
-              type={button.type}
-              to={button.to}
-              modalRef={modalRef}
-            />
-          ))}
+          <GoalFormButtonIterator buttons={buttons} modalRef={modalRef} />
         </form>
         {/*
           this is not the ideal position for accessibility,

@@ -1,6 +1,6 @@
 #!/bin/bash
-set -x
-# set -e
+
+set -e
 set -u
 set -o pipefail
 set -o noglob
@@ -412,7 +412,7 @@ function unbind_all_services() {
 
     # Get the list of services bound to the application
     local services
-    services=$(cf services | grep "$app_name" | awk '{print $1}') >&2
+    services=$(cf services | grep "$app_name" | awk '{print $1}') >&2 || true
 
     if [[ -z "$services" ]]; then
         return 0
@@ -727,6 +727,5 @@ main() {
   # Currently only turning off to aid in speeding up cycle time
   # delete_app "tta-automation"
 }
-
 
 main "$@"

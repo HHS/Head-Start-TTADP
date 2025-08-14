@@ -8,7 +8,6 @@ import {
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
-import GoalDate from './GoalDate';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -33,10 +32,7 @@ export default function Form({
   goalName,
   prompts,
   setPrompts,
-  endDate,
-  setEndDate,
   errors,
-  validateEndDate,
   validateGrantNumbers,
   validateGoalNameAndRecipients,
   objectives,
@@ -47,7 +43,6 @@ export default function Form({
   isCurated,
   isSourceEditable,
   status,
-  datePickerKey,
   fetchError,
   goalNumbers,
   clearEmptyObjectiveError,
@@ -184,18 +179,6 @@ export default function Form({
         />
       </FormFieldThatIsSometimesReadOnly>
 
-      <GoalDate
-        error={errors[FORM_FIELD_INDEXES.END_DATE]}
-        isOnApprovedReport={isOnApprovedReport}
-        setEndDate={setEndDate}
-        endDate={endDate}
-        validateEndDate={validateEndDate}
-        key={datePickerKey}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
-      />
-
       { objectives.map((objective, i) => (
         <ObjectiveForm
           index={i}
@@ -233,7 +216,6 @@ Form.propTypes = {
       PropTypes.node,
     ]),
   ).isRequired,
-  validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
@@ -250,8 +232,6 @@ Form.propTypes = {
   ).isRequired,
   setSelectedGrants: PropTypes.func.isRequired,
   goalName: PropTypes.string.isRequired,
-  endDate: PropTypes.string,
-  setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
@@ -266,7 +246,6 @@ Form.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   })).isRequired,
   status: PropTypes.string.isRequired,
-  datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
   goalNumbers: PropTypes.oneOfType(
     [PropTypes.string, PropTypes.arrayOf(PropTypes.string)],
@@ -301,7 +280,6 @@ Form.propTypes = {
 };
 
 Form.defaultProps = {
-  endDate: null,
   userCanEdit: false,
   isCurated: false,
   isSourceEditable: true,

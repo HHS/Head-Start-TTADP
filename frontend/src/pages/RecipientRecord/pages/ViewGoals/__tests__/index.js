@@ -204,7 +204,6 @@ describe('ViewGoals', () => {
 
     // assert goal data
     expect(await screen.findByText('A goal')).toBeInTheDocument();
-    expect(await screen.findByText('1/1/1915')).toBeInTheDocument();
     expect(await screen.findByText('Example course')).toBeInTheDocument();
     expect(await screen.findByText('Example topic')).toBeInTheDocument();
     expect(await screen.findByText('Example resource')).toBeInTheDocument();

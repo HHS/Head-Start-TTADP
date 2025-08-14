@@ -72,7 +72,7 @@ export default async function goalsFromTemplate(
   const newGoals = missingGrants.map((grant) => Goal.create({
     goalTemplateId,
     grantId: grant,
-    status: GOAL_STATUS.IN_PROGRESS,
+    status: GOAL_STATUS.NOT_STARTED,
     source: template.source,
     name: template.templateName,
     createdVia: 'rtr',

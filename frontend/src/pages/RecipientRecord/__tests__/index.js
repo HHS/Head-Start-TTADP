@@ -10,7 +10,6 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
-
 import AppLoadingContext from '../../../AppLoadingContext';
 import { GrantDataProvider } from '../pages/GrantDataContext';
 
@@ -269,6 +268,100 @@ describe('recipient record page', () => {
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/You haven't logged any communication yet./i);
+  });
+
+  it('renders communication log header with correct structure', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
+    memoryHistory.push('/recipient-tta-records/45/region/1/communication');
+    act(() => renderRecipientRecord());
+
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+
+    const header = screen.getByRole('heading', { level: 1 });
+    expect(header).toHaveClass('page-heading');
+    expect(header.textContent).toBe('the Mighty Recipient - Region 45');
+
+    const addButton = screen.getByRole('link', { name: /add communication/i });
+    expect(addButton).toHaveClass('usa-button', 'smart-hub--new-report-btn');
+    expect(addButton.getAttribute('href')).toBe('/recipient-tta-records/1/region/45/communication/new');
+  });
+
+  it('navigates to the merge goals page', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/recipient/1/region/45/group/1', { goalRows: [] });
+    memoryHistory.push('/recipient-tta-records/1/region/45/goals/merge/1');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/These goals might be duplicates/i)).toBeInTheDocument();
+  });
+
+  it('navigates to the goal name form', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/goal-templates?grantIds=10', []);
+    memoryHistory.push('/recipient-tta-records/1/region/45/goals/new');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
+  });
+
+  it('navigates to the restart standard goal', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/goal-templates?grantIds=10', []);
+    fetchMock.get('/api/goal-templates/standard/10/grant/10?status=Closed', {
+      goalTemplateId: 10,
+      grantId: 10,
+      responses: [],
+      id: 1234,
+      objectives: [],
+      name: 'a goal name',
+      grant: {
+        id: 1234,
+        numberWithProgramTypes: '1234 EHS',
+      },
+    });
+    fetchMock.get('/api/goal-templates/10/prompts', []);
+    memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10/restart');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/Goal G-1234/i)).toBeInTheDocument();
+  });
+
+  it('navigates to the update standard goal', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/goal-templates?grantIds=10', []);
+    fetchMock.get('/api/goal-templates/standard/10/grant/10', {
+      goalTemplateId: 10,
+      grantId: 10,
+      responses: [],
+      id: 1234,
+      objectives: [],
+      name: 'a goal name',
+      grant: {
+        id: 1234,
+        numberWithProgramTypes: '1234 EHS',
+      },
+    });
+    fetchMock.get('/api/goal-templates/10/prompts', []);
+    memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/Goal G-1234/i)).toBeInTheDocument();
+  });
+
+  it('navigates to the standard goal form', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: true });
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    fetchMock.get('/api/goal-templates?grantIds=10', []);
+    memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals');
+    act(() => renderRecipientRecord());
+    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
+    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
   });
 
   describe('PageWithHeading', () => {

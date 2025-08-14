@@ -158,7 +158,6 @@ interface IActivityReportGoal {
   updatedAt: Date;
   name: string;
   status: string;
-  endDate: string;
   isActivelyEdited: boolean;
   source: string | {
     [key: string]: string;
@@ -228,7 +227,6 @@ interface IGoalCollaborator {
 interface IGoal {
   id: number;
   name: string;
-  endDate: string;
   isCurated: boolean;
   grantId: number;
   createdVia: string;
@@ -263,7 +261,6 @@ interface IGoal {
 interface IReducedGoal {
   id: number;
   name: string;
-  endDate: string;
   status: string;
   regionId: number;
   recipientId: number;

@@ -55,7 +55,12 @@ describe('ViewCommunicationForm', () => {
   it('should render the view', async () => {
     const formData = {
       id: 1,
-      recipientId: RECIPIENT_ID,
+      recipients: [
+        {
+          id: 1,
+          name: 'Little Lord Wigglytoes',
+        },
+      ],
       userId: '1',
       updatedAt: new Date(),
       author: {
@@ -109,7 +114,80 @@ describe('ViewCommunicationForm', () => {
     }));
 
     expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
+    const edit = await screen.findByRole('link', { name: 'Edit' });
+    expect(edit).toBeInTheDocument();
+    expect(edit).toHaveAttribute('href', `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/communication/1/log`);
+  });
+
+  it('should render the view & edit button for regional logs', async () => {
+    const formData = {
+      id: 1,
+      recipients: [
+        {
+          id: 1,
+          name: 'Little Lord Wigglytoes',
+        },
+        {
+          id: 2,
+          name: 'Recipient Two',
+        },
+      ],
+      userId: '1',
+      updatedAt: new Date(),
+      author: {
+        id: 1,
+        name: 'Ted User',
+      },
+      data: {
+        communicationDate: '11/01/2023',
+        result: 'Next Steps identified',
+        method: 'Phone',
+        purpose: 'Monitoring',
+        duration: '1',
+        notes: 'This is a note',
+        specialistNextSteps: [
+          {
+            note: 'next step 1',
+            completeDate: '11/23/2023',
+          },
+        ],
+        recipientNextSteps: [
+          {
+            note: 'next step 2',
+            completeDate: '11/16/2023',
+          },
+        ],
+        pageState: {
+          1: COMPLETE,
+          2: NOT_STARTED,
+          3: NOT_STARTED,
+        },
+        otherStaff: [{ label: 'Me', value: 1 }],
+        goals: [{ label: 'Goal', value: 1 }],
+      },
+      files: [
+        {
+          id: 1,
+          originalFileName: 'cat.png',
+          url: {
+            url: 'https://wikipedia.com/cats',
+            error: null,
+          },
+        },
+      ],
+    };
+
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    fetchMock.get(url, formData);
+
+    await act(() => waitFor(() => {
+      renderTest();
+    }));
+
+    expect(await screen.findByText('Little Lord Wigglytoes')).toBeInTheDocument();
+    const edit = await screen.findByRole('link', { name: 'Edit' });
+    expect(edit).toBeInTheDocument();
+    expect(edit).toHaveAttribute('href', '/communication-log/region/1/log/1/log');
   });
 
   it('shows error message', async () => {
@@ -126,7 +204,12 @@ describe('ViewCommunicationForm', () => {
   it('should render the view without edit button', async () => {
     const formData = {
       id: 1,
-      recipientId: RECIPIENT_ID,
+      recipients: [
+        {
+          id: 1,
+          name: 'Little Lord Wigglytoes',
+        },
+      ],
       userId: '1',
       updatedAt: new Date(),
       files: [],

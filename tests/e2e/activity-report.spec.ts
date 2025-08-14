@@ -110,7 +110,7 @@ async function activitySummary(
   if (recipients) {
   // select recipients
     for (let i = 0; i < recipients; i++) {
-      await page.keyboard.press('Enter'); 
+      await page.keyboard.press('Enter');
     }
   } else {
     await page.keyboard.press('Enter');
@@ -218,7 +218,6 @@ test.describe('Activity Report', () => {
     await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.waitForTimeout(5000);
 
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();
@@ -250,8 +249,8 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-    await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');  
-    await page.getByText('Topics *').click()
+    await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');
+    await page.getByText('Topics *').click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -263,18 +262,13 @@ test.describe('Activity Report', () => {
     await page.getByRole('combobox', { name: /Support type/i }).selectOption('Implementing');
     await blur(page);
 
-    await page.waitForTimeout(10000);
-
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.waitForTimeout(10000);
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.waitForTimeout(10000);
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
-   
-    await page.waitForTimeout(10000);
+
 
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
@@ -297,7 +291,7 @@ test.describe('Activity Report', () => {
     sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
 
     expect(sideNavTextContent?.match(/in progress/i)).toBeTruthy();
-    
+
     // save the first goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
@@ -319,7 +313,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label');
+    const approverDropdown = page.getByLabel("Approving manager");
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -363,7 +357,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('these are my manager notes');
 
     // set status to approved
-    await page.getByTestId('dropdown').selectOption('approved');
+    await page.locator('select.usa-select').selectOption('approved');
 
     // submit approval
     await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
@@ -513,7 +507,7 @@ test.describe('Activity Report', () => {
     // enter goal name
     await page.getByLabel('Recipient\'s goal *').fill('This is a goal for multiple grants');
     await page.getByRole('button', { name: 'Save and continue' }).click();
-  
+
     await page.waitForTimeout(5000);
 
     // select recipients
@@ -522,9 +516,6 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-
-    // goal end date
-    await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
 
     // goal source
     await page.getByLabel(/Goal source/i).selectOption('Recipient request');
@@ -552,17 +543,14 @@ test.describe('Activity Report', () => {
 
     const regionNumber = await getRegionNumber(page);
 
-    await page.waitForTimeout(10000);
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     await blur(page);
-    await page.waitForTimeout(10000);
     // fill out the goals page
     await page.getByLabel(/Select recipient's goal/i).focus();
     await page.keyboard.type('This is a goal for multiple grants');
     await page.keyboard.press('Enter');
 
-    await page.waitForTimeout(10000);
     await page.getByLabel(/select tta objective/i).focus();
     await page.keyboard.type('A new objective');
     await page.keyboard.press('ArrowDown');
@@ -576,9 +564,9 @@ test.describe('Activity Report', () => {
 
     await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');    
+    await page.keyboard.press('Enter');
     await blur(page);
-    
+
     const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
 
@@ -595,7 +583,7 @@ test.describe('Activity Report', () => {
     await nextSteps(page);
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label');
+    const approverDropdown = page.getByLabel("Approving manager");
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -616,7 +604,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // set status to approved
-    await page.getByTestId('dropdown').selectOption('approved');
+    await page.locator('select.usa-select').selectOption('approved');
 
     // submit approval
     await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
@@ -650,12 +638,12 @@ test.describe('Activity Report', () => {
     // create a new report
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
-      
+
     const heading = page.getByRole('heading', { name: /activity report for region \d/i });
-    const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]); 
+    const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
     await activitySummary(page, { recipients: 2, ttaType: 'Training' });
-    
+
     // select two recipients
     await page.locator('label').filter({ hasText: 'Other entity' }).click();
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
@@ -666,7 +654,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Goals and objectives Not started' }).click();
     await page.getByRole('button', { name: 'Supporting attachments Not started' }).click();
     await page.getByRole('button', { name: 'Next steps Not started' }).click();
-    await page.getByRole('button', { name: 'Review and submit' }).click();    
+    await page.getByRole('button', { name: 'Review and submit' }).click();
     await page.getByRole('button', { name: 'Activity summary Complete' }).click();
 
     // select participants
@@ -713,7 +701,7 @@ test.describe('Activity Report', () => {
 
     // skip supporting attachments
     await page.getByRole('button', { name: 'Save and continue' }).click();
-   
+
     // fill out next steps
     const isOtherEntity = true;
     await nextSteps(page, isOtherEntity);
@@ -723,7 +711,7 @@ test.describe('Activity Report', () => {
     await page.getByLabel(/Approving manager/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    
+
     // extract the AR number from the URL:
     const url = page.url();
     const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
@@ -755,18 +743,18 @@ test.describe('Activity Report', () => {
     await page.getByLabel('Topics  *').press('ArrowDown');
     await page.getByLabel('Topics  *').press('Enter');
     await page.getByLabel('Topics  *').press('Tab');
-  
+
     await blur(page);
 
     await page.getByText('TTA provided *Normal').click();
     await page.getByRole('textbox', { name: 'TTA provided for objective, required' }).press('Enter');
     await page.getByText('Support type *').click();
     await page.getByRole('combobox', { name: 'Support type' }).selectOption('Introducing');
-  
+
     await page.getByRole('button', { name: 'Save objectives' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Goals and objectives Complete' }).click();
-    await page.getByTestId('ellipsis-button').click();
+    await page.getByTestId('context-menu-actions-btn').click();
     await page.getByTestId('menu').getByTestId('button').click();
     await page.getByRole('button', { name: 'Remove this objective' }).click();
     await page.getByRole('button', { name: 'This button will remove the objective from the activity report' }).click();
@@ -804,7 +792,6 @@ test.describe('Activity Report', () => {
 
     const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
-    await page.waitForTimeout(10000);
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1 o1 title');
@@ -827,9 +814,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-    await page.waitForTimeout(10000);
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
-    await page.waitForTimeout(10000);
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
     await page.keyboard.type('g1 o2 tta');
     await blur(page);
@@ -888,11 +873,11 @@ test.describe('Activity Report', () => {
     await activitySummary(page);
 
     const p = page.waitForURL('**/goals-objectives');
- 
+
     // visit the goals & objectives page
     await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
 
-    await p;    
+    await p;
 
     // create the goal
     await page.waitForTimeout(5000);
@@ -904,14 +889,14 @@ test.describe('Activity Report', () => {
     // create the objective
     await page.getByText('Select TTA objective *- Select -').click();
     await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');  
-    
+    await page.keyboard.press('Enter');
+
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await blur(page);
 
     await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');    
+    await page.keyboard.press('Enter');
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('An unlikely statement');

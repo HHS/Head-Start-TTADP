@@ -1,0 +1,259 @@
+@startuml
+
+' avoid problems with angled crows feet
+  skinparam linetype ortho
+  skinparam class {
+    BorderColor #336A90
+    BorderThickness 2
+  }
+  ' Classes
+class MonitoringClassSummaries{
+ * id : integer : <generated>
+ * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ classroomOrganization : decimal(5,4)
+ deletedAt : timestamp with time zone
+ emotionalSupport : decimal(5,4)
+ hash : text
+ instructionalSupport : decimal(5,4)
+ reportDeliveryDate : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingGrants{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * findingType : text
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
+ deletedAt : timestamp with time zone
+ reportedDate : timestamp with time zone
+ source : text
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistories{
+ * id : integer : <generated>
+ findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ statusId : integer : REFERENCES "MonitoringFindingHistoryStatusLinks"."statusId"
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * createdAt : timestamp with time zone
+ * findingHistoryId : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ determination : text
+ hash : text
+ narrative : text
+ ordinal : integer
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistoryStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistoryStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringFindingHistoryStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * findingId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStandards{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * standardId : integer : REFERENCES "MonitoringStandardLinks"."standardId"
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindings{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * findingType : text
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
+ deletedAt : timestamp with time zone
+ reportedDate : timestamp with time zone
+ source : text
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringGranteeLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * granteeId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviewGrantees{
+ * id : integer : <generated>
+ * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
+ * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * createdAt : timestamp with time zone
+ * createTime : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updateBy : text
+ * updatedAt : timestamp with time zone
+ * updateTime : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringReviewLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * reviewId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviewStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviewStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringReviewStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringReviews{
+ * id : integer : <generated>
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * statusId : integer : REFERENCES "MonitoringReviewStatusLinks"."statusId"
+ * contentId : text
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ endDate : date
+ hash : text
+ name : text
+ outcome : text
+ reportAttachmentId : text
+ reportDeliveryDate : timestamp with time zone
+ reviewType : text
+ sourceDeletedAt : timestamp with time zone
+ startDate : date
+}
+
+class MonitoringStandardLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * standardId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringStandards{
+ * id : integer : <generated>
+ * standardId : integer : REFERENCES "MonitoringStandardLinks"."standardId"
+ * citable : integer
+ * contentId : text
+ * createdAt : timestamp with time zone
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ citation : text
+ deletedAt : timestamp with time zone
+ guidance : text
+ sourceDeletedAt : timestamp with time zone
+ text : text
+}
+MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingStatusLink, monitoringFindingHistories
+MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistoryStatuses : monitoringFindingHistoryStatuses, statusLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : findingLink, monitoringFindingGrants
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingLink, monitoringFindingHistories
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : monitoringFindingStandards, findingLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, findingLink
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : statusLink, monitoringFindingGrants
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStatuses : monitoringFindingStatuses, statusLink
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, statusLink
+MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : granteeLink, monitoringFindingGrants
+MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, monitoringGranteeLink
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReviewLink, monitoringClassSummaries
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReviewLink, monitoringFindingHistories
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewLink, monitoringReviewGrantees
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
+MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
+MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : standardLink, monitoringFindingStandards
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandards, standardLink
+
+@enduml

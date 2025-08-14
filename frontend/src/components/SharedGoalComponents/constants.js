@@ -15,7 +15,10 @@ export const GOAL_FORM_BUTTON_LABELS = Object.freeze({
   CANCEL: 'Cancel',
   BACK: 'Back',
   SAVE_AND_CONTINUE: 'Save and continue',
+  SAVE: 'Save',
   GO_TO_EXISTING: 'Go to existing goal',
+  ADD_GOAL: 'Add goal',
+  RESTART: 'Restart goal',
 });
 
 export const NEW_GOAL_FORM_PAGES = Object.freeze({

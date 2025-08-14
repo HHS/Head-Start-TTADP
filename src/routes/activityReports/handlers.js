@@ -24,6 +24,7 @@ import {
   createOrUpdate,
   activityReports,
   setStatus,
+  handleSoftDeleteReport,
   activityReportAlerts,
   activityReportByLegacyId,
   getDownloadableActivityReportsByIds,
@@ -588,7 +589,7 @@ export async function softDeleteReport(req, res) {
       return;
     }
 
-    await setStatus(report, REPORT_STATUSES.DELETED);
+    await handleSoftDeleteReport(report);
     res.sendStatus(204);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

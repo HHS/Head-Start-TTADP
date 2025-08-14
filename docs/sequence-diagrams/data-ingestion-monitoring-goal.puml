@@ -1,0 +1,48 @@
+@startuml
+
+title "Data Flow: HSES & TTA Hub Download from IT-AMS with Monitoring Goal Creation"
+
+participant "IT-AMS" as ITAMS
+participant "HSES" as HSES
+participant "TTA Hub" as TTAHub
+database "TTA Hub Database" as DB
+actor "Engineer" as Engineer
+participant "Manual Script" as ManualScript
+
+group 8:00 AM - HSES Downloads Data via SFTP
+    HSES -> ITAMS: Request Data via SFTP
+    HSES <-- ITAMS: Download Data
+end
+
+group 8:30 AM - TTA Hub Downloads Data via SFTP
+    TTAHub -> ITAMS: Request Data via SFTP
+    TTAHub <-- ITAMS: Download Data
+    alt Download Fails
+        Engineer -> TTAHub: Manually Check Job Status
+        Engineer -> ManualScript: Run Manual Download & Processing Script
+        ManualScript -> ITAMS: Request Data via SFTP
+        ManualScript <-- ITAMS: Download Data
+        ManualScript -> TTAHub: Process Data
+    end
+end
+
+group Data Processing
+    TTAHub -> TTAHub: Process Data
+    alt Processing Fails
+        Engineer -> TTAHub: Manually Check Job Status
+        Engineer -> ManualScript: Run Manual Processing Script
+        ManualScript -> TTAHub: Process Data
+    end
+end
+
+TTAHub -> DB: Insert/Update Database Tables
+
+group Monitoring Goal Creation
+    alt Review Status = "Complete" AND Review Delivery Date is Present
+        TTAHub -> DB: Create Monitoring Goal
+    else
+        TTAHub -> TTAHub: No Monitoring Goal Created
+    end
+end
+
+@enduml

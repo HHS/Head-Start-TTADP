@@ -28,7 +28,6 @@ import { Controller } from 'react-hook-form';
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
-import useSpellCheck from '../hooks/useSpellCheck';
 import colors from '../colors';
 
 export const DropdownIndicator = (props) => (
@@ -86,6 +85,12 @@ export const styles = (singleRowInput = null) => ({
     ...provided,
     zIndex: 2,
   }),
+  multiValueRemove: (provided) => ({
+    ...provided,
+    '&:hover': {
+      color: '#1B1B1B',
+    },
+  }),
 });
 function MultiSelect({
   name,
@@ -108,14 +113,6 @@ function MultiSelect({
 }) {
   const inputId = `select-${uuidv4()}`;
   const selectorRef = useRef(null);
-
-  /**
-   * unfortunately, given our support for ie11, we can't
-   * upgrade to react-select v5, which support a spellcheck
-   * attribute. Here is an awkward solution I've concocted
-   * in it's stead.
-  */
-  useSpellCheck(inputId);
 
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -278,6 +275,7 @@ MultiSelect.propTypes = {
 };
 
 MultiSelect.defaultProps = {
+
   canCreate: false,
   disabled: false,
   singleRowInput: false,

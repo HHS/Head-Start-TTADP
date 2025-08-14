@@ -116,7 +116,6 @@ describe('Goals DB service', () => {
           id: mockGoalId,
           name: 'This is a test goal',
           status: 'Draft',
-          endDate: '2023-12-31',
           objectives: [{
             id: 1,
             title: 'This is a test objective',
@@ -144,7 +143,6 @@ describe('Goals DB service', () => {
 
       expect(Goal.findAll).toHaveBeenCalledWith({
         attributes: [
-          'endDate',
           'status',
           ['id', 'value'],
           ['name', 'label'],
@@ -166,6 +164,50 @@ describe('Goals DB service', () => {
 
       expect(result).toEqual([
         { id: mockGoalId, name: 'This is a test goal', rtrOrder: 1 },
+      ]);
+    });
+
+    it('includes topic id and name in objective topics', async () => {
+      Goal.findAll = jest.fn().mockResolvedValue([
+        {
+          id: mockGoalId,
+          name: 'This is a test goal',
+          status: 'Draft',
+          objectives: [{
+            id: 1,
+            title: 'Test objective with topics',
+            status: GOAL_STATUS.IN_PROGRESS,
+            goalId: mockGoalId,
+            activityReportObjectives: [],
+            toJSON: jest.fn().mockReturnValue({
+              id: 1,
+              title: 'Test objective with topics',
+              status: GOAL_STATUS.IN_PROGRESS,
+              goalId: mockGoalId,
+            }),
+          }],
+        },
+      ]);
+
+      wasGoalPreviouslyClosed.mockReturnValue(false);
+
+      const mockTopics = [
+        { id: 100, name: 'Family Engagement' },
+        { id: 200, name: 'Health & Safety' },
+      ];
+
+      extractObjectiveAssociationsFromActivityReportObjectives.mockImplementation((_, field) => {
+        if (field === 'topics') return mockTopics;
+        return [];
+      });
+
+      reduceGoals.mockImplementation((goals) => goals);
+
+      const result = await goalsByIdsAndActivityReport(mockGoalId, mockActivityReportId);
+
+      expect(result[0].objectives[0].topics).toEqual([
+        { id: 100, name: 'Family Engagement' },
+        { id: 200, name: 'Health & Safety' },
       ]);
     });
 
@@ -228,7 +270,6 @@ describe('Goals DB service', () => {
         id: mockGoalId,
         name: 'This is a test goal',
         status: GOAL_STATUS.IN_PROGRESS,
-        endDate: '2023-12-31',
         objectives: [{
           id: 1,
           title: 'This is a test objective',
@@ -248,7 +289,6 @@ describe('Goals DB service', () => {
 
       expect(Goal.findOne).toHaveBeenCalledWith({
         attributes: [
-          'endDate',
           'status',
           ['id', 'value'],
           ['name', 'label'],
@@ -780,7 +820,6 @@ describe('Goals DB service', () => {
           name: 'This is a test goal',
           prompts: [{ promptId: 1, response: 'Test Response' }],
           status: 'In Progress',
-          endDate: '2023-12-31',
           isActivelyBeingEditing: true,
         },
       ];
@@ -795,7 +834,6 @@ describe('Goals DB service', () => {
         name: 'This is a test goal',
         onApprovedAR: false,
         source: null,
-        endDate: '2023-12-31',
         save: jest.fn().mockResolvedValue({}),
         set: jest.fn(),
       }];
@@ -814,7 +852,6 @@ describe('Goals DB service', () => {
           grantIds: [1],
           name: 'New Goal',
           status: 'In Progress',
-          endDate: '2023-12-31',
           isActivelyBeingEditing: true,
           goalTemplateId: null,
         },
@@ -852,7 +889,6 @@ describe('Goals DB service', () => {
           grantIds: [1],
           name: 'New Curated Goal',
           status: 'In Progress',
-          endDate: '2023-12-31',
           isActivelyBeingEditing: true,
         },
       ];
@@ -1327,7 +1363,6 @@ describe('Goals DB service', () => {
           grantId: 10,
           name: 'Goal 1',
           startDate: new Date(),
-          endDate: new Date(),
           createdAt: new Date(),
           responses: [
             { id: 1, goalTemplateFieldPromptId: 1, response: 'Response 1' },
@@ -1343,7 +1378,6 @@ describe('Goals DB service', () => {
           grantId: 11,
           name: 'Goal 2',
           startDate: new Date(),
-          endDate: new Date(),
           createdAt: new Date(),
           responses: [],
           activityReportGoals: [],
@@ -1356,7 +1390,6 @@ describe('Goals DB service', () => {
           grantId: 12,
           name: 'Goal 3',
           startDate: new Date(),
-          endDate: new Date(),
           createdAt: new Date(),
           responses: [],
           activityReportGoals: [],
@@ -1413,7 +1446,6 @@ describe('Goals DB service', () => {
           grantId: 10,
           name: 'Goal 1',
           startDate: new Date(),
-          endDate: new Date(),
           createdAt: new Date(),
           responses: [],
           activityReportGoals: [],
@@ -1442,7 +1474,6 @@ describe('Goals DB service', () => {
           grantId: 11,
           name: 'Goal 2',
           startDate: new Date(),
-          endDate: new Date(),
           createdAt: new Date(),
           responses: [],
           activityReportGoals: [],
@@ -1454,7 +1485,6 @@ describe('Goals DB service', () => {
           grantId: 12,
           name: 'Goal 3',
           startDate: new Date(),
-          endDate: new Date(),
           createdAt: new Date(),
           responses: [],
           activityReportGoals: [],
@@ -1596,7 +1626,6 @@ describe('Goals DB service', () => {
             name: 'This is a test goal',
             grantId: 1,
             source: null,
-            endDate: null,
             status: 'Not Started',
             createdVia: 'admin',
             goalTemplateId: null,
@@ -1605,7 +1634,7 @@ describe('Goals DB service', () => {
             name: 'This is a test goal',
             grantId: 2,
             source: null,
-            endDate: null,
+
             status: 'Not Started',
             createdVia: 'admin',
             goalTemplateId: null,
@@ -1657,34 +1686,6 @@ describe('Goals DB service', () => {
       }));
       expect(ActivityReportGoal.bulkCreate).toHaveBeenCalled();
       expect(ActivityRecipient.bulkCreate).toHaveBeenCalled();
-    });
-
-    it('should set endDate if goalDate is provided', async () => {
-      const data = {
-        selectedGrants: JSON.stringify([{ id: 1 }]),
-        goalText: 'This is a test goal',
-        goalDate: '2023-12-31', // Provide a goalDate to cover this condition
-      };
-
-      Goal.findAll = jest.fn().mockResolvedValue([]); // No existing goals
-      Goal.bulkCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
-
-      await createMultiRecipientGoalsFromAdmin(data);
-
-      expect(Goal.bulkCreate).toHaveBeenCalledWith(
-        [
-          {
-            name: 'This is a test goal',
-            grantId: 1,
-            source: null,
-            endDate: '2023-12-31',
-            status: 'Not Started',
-            createdVia: 'admin',
-            goalTemplateId: null,
-          },
-        ],
-        { individualHooks: true },
-      );
     });
 
     it('should map through goalsForNameCheck and retrieve goal ids correctly', async () => {
@@ -1990,39 +1991,6 @@ describe('Goals DB service', () => {
       await createOrUpdateGoals(goals);
 
       expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Test Response' }]);
-    });
-
-    it('should set the endDate if a different endDate is provided', async () => {
-      const goals = [{
-        ids: [1],
-        grantId: 1,
-        recipientId: 1,
-        regionId: 14,
-        objectives: [
-          {
-            id: 2,
-            title: 'This is a test objective',
-            status: OBJECTIVE_STATUS.NOT_STARTED,
-          },
-        ],
-        name: 'Test Goal Name',
-        endDate: '2024-12-31',
-      }];
-
-      const mockGoal = {
-        id: 1,
-        endDate: '2023-12-31',
-        set: jest.fn(),
-        save: jest.fn().mockResolvedValue({}),
-      };
-
-      Goal.findOne = jest.fn().mockResolvedValue(mockGoal);
-
-      await createOrUpdateGoals(goals);
-
-      expect(mockGoal.set).toHaveBeenCalledWith({ endDate: '2024-12-31' });
-
-      expect(mockGoal.save).toHaveBeenCalled();
     });
   });
 

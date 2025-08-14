@@ -57,7 +57,6 @@ describe('objective model hooks', () => {
     goal = await Goal.create({
       name: 'Goal 1',
       status: 'Draft',
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grant.id,

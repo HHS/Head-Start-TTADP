@@ -368,33 +368,30 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
-  describe('resetToDraft', () => {
-    it('navigates to the correct page', async () => {
-      fetchMock.get('/api/activity-reports/3/activity-recipients', recipients);
-      const data = formData();
-      // load the report
-      fetchMock.get('/api/activity-reports/3', {
-        ...data,
-        goalsAndObjectives: [],
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-      });
-      // reset to draft
-      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
-      renderActivityReport(3, 'review');
-      const button = await screen.findByRole('button', { name: /reset to draft/i });
-      userEvent.click(button);
-      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
-      expect(notes).toBeVisible();
-      expect(notes.getAttribute('contenteditable')).toBe('true');
-    });
-  });
-
   describe('updatePage', () => {
-    it('navigates to the correct page', async () => {
+    it("does not update the page if the form hasn't changed", async () => {
+      const spy = jest.spyOn(history, 'push');
+      renderActivityReport('new');
+
+      // Navigate to the next page
+      const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
+      userEvent.click(button);
+
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/new/supporting-attachments', {}));
+    });
+
+    it('updates the page when a change is made and then navigation occurs', async () => {
       const spy = jest.spyOn(history, 'push');
       fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
+
+      // Click the recipient radio button ("dirties" the form)
+      const whoForRadios = await screen.findAllByTestId('radio');
+      const whoForEl = within(whoForRadios[0]).getByText(/recipient/i);
+      expect(whoForEl).toBeVisible();
+      fireEvent.click(whoForEl);
+
+      // Navigate to the next page
       const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
 
@@ -425,6 +422,13 @@ describe('ActivityReport', () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
+
+      // Click the "recipient" radio button ("dirties" the form)
+      const whoForRadios = await screen.findAllByTestId('radio');
+      const whoForEl = within(whoForRadios[0]).getByText(/recipient/i);
+      expect(whoForEl).toBeVisible();
+      act(() => userEvent.click(whoForEl));
+
       const button = await screen.findByRole('button', { name: 'Save draft' });
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
@@ -588,6 +592,13 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
       fetchMock.put('/api/activity-reports/1', {});
       act(() => renderActivityReport(1));
+
+      // Click the "other entity" radio button ("dirties" the form)
+      const whoForRadios = await screen.findAllByTestId('radio');
+      const whoForEl = within(whoForRadios[1]).getByText(/other entity/i);
+      expect(whoForEl).toBeVisible();
+      act(() => userEvent.click(whoForEl));
+
       const button = await screen.findByRole('button', { name: 'Save draft' });
       act(() => userEvent.click(button));
       const lastOptions = fetchMock.lastOptions();

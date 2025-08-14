@@ -109,7 +109,7 @@ describe('Approver review page', () => {
     it('allows the approver to submit a review and redirects them after', async () => {
       const mockSubmit = jest.fn();
       const history = renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true);
-      const dropdown = await screen.findByTestId('dropdown');
+      const dropdown = document.querySelector('.usa-select');
       userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);

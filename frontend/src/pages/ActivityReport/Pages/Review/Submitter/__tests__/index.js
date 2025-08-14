@@ -72,6 +72,8 @@ const renderReview = (
   hasGrantsMissingMonitoring = false,
   goalsAndObjectives = [],
   additionalCitations = [],
+  grantIds = [2],
+  additionalObjectives = [],
 ) => {
   const formData = {
     approvers,
@@ -114,6 +116,7 @@ const renderReview = (
         }],
         standard: 'Monitoring',
         objectives: [
+          ...additionalObjectives,
           {
             id: 1,
             citations: [
@@ -129,7 +132,7 @@ const renderReview = (
           },
         ],
         goalIds: [1, 2],
-        grantIds: [2],
+        grantIds,
       }];
   }
 
@@ -158,7 +161,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Submit Report')).toBeVisible();
+      expect(await screen.findByText('Review and Submit')).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {
@@ -220,9 +223,75 @@ describe('Submitter review page', () => {
         null,
         false,
         true,
+        [],
+        [],
+        [1, 2],
       );
       expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
-      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(2);
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error if some of the objectives are missing citations', async () => {
+      const objectiveMissingCitation = [
+        {
+          id: 2,
+          citations: [],
+        },
+      ];
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [2],
+        objectiveMissingCitation,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error if missing citations with multiple goals', async () => {
+      const additionalGoals = [
+        {
+          isCurated: false,
+          prompts: [],
+          standard: 'normal',
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [3],
+          grantIds: [3],
+        },
+      ];
+
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        additionalGoals,
+        [],
+        [1],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
     });
 
     it('hides an error if some of the grants are missing citations', async () => {
@@ -374,14 +443,6 @@ describe('Submitter review page', () => {
       expect(successAlert).toBeVisible();
     });
 
-    it('the reset to draft button works', async () => {
-      const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, onReset);
-      const button = await screen.findByRole('button', { name: 'Reset to Draft' });
-      userEvent.click(button);
-      await waitFor(() => expect(onReset).toHaveBeenCalled());
-    });
-
     it('shows manager notes', async () => {
       const approvers = [
         { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
@@ -508,6 +569,85 @@ describe('Submitter review page', () => {
       const reSubmit = await screen.findByRole('button', { name: /Update/i });
       userEvent.click(reSubmit);
       await waitFor(() => expect(mockSubmit).toHaveBeenCalled());
+    });
+
+    it('shows an error if some of the objectives are missing citations', async () => {
+      const mockSubmit = jest.fn();
+      const objectiveMissingCitation = [
+        {
+          id: 2,
+          citations: [],
+        },
+      ];
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [2],
+        objectiveMissingCitation,
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+
+      // Get the 'Update report' button.
+      const button = await screen.findByRole('button', { name: 'Update report' });
+      userEvent.click(button);
+
+      // Expect submit not to be called.
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
+    });
+
+    it('shows an error if missing citations with multiple goals', async () => {
+      const mockSubmit = jest.fn();
+      const additionalGoals = [
+        {
+          isCurated: false,
+          prompts: [],
+          standard: 'normal',
+          objectives: [
+            {
+              id: 1,
+              citations: null,
+            },
+          ],
+          goalIds: [3],
+          grantIds: [3],
+        },
+      ];
+
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        additionalGoals,
+        [],
+        [1],
+      );
+      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+
+      // Get the 'Update report' button.
+      const button = await screen.findByRole('button', { name: 'Update report' });
+      userEvent.click(button);
+
+      // Expect submit not to be called.
+      await waitFor(() => expect(mockSubmit).not.toHaveBeenCalled());
     });
   });
 

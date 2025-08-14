@@ -1,6 +1,6 @@
 import { format, transports, createLogger } from 'winston';
 import expressWinston from 'express-winston';
-import env from './env';
+import { isTrue } from './envParser';
 
 const formatFunc = ({
   level, message, label, timestamp, meta = {},
@@ -18,7 +18,7 @@ const jsonFormatter = format.combine(
   format.json(),
 );
 
-const formatter = env.bool('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter;
+const formatter = isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter;
 const level = process.env.LOG_LEVEL || 'info';
 
 const logger = createLogger({

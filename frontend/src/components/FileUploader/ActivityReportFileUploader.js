@@ -27,13 +27,10 @@ const ActivityReportFileUploader = ({
 
 ActivityReportFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  files: PropTypes.arrayOf(PropTypes.object),
-  reportId: PropTypes.number.isRequired,
-  id: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  files: PropTypes.arrayOf(PropTypes.shape()),
+  reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    .isRequired, // JSON parser sometimes gives a string, sometimes a number
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   setErrorMessage: PropTypes.func.isRequired,
 };
 

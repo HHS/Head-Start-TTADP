@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { uniq, uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
 import ConditionalFields from '../ConditionalFields';
-import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { combinePrompts } from '../condtionalFieldConstants';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
+import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
 
 const PromptProps = {
   value: PropTypes.shape({
@@ -103,21 +103,7 @@ export default function RTRGoalPrompts({
     onChange,
   );
 
-  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
-
-  useEffect(() => {
-    async function fetchGoalTemplatePrompts() {
-      try {
-        const prompts = await getGoalTemplatePrompts(goalTemplateId);
-        setGoalTemplatePrompts(prompts);
-      } catch (error) {
-        setGoalTemplatePrompts([]);
-      }
-    }
-    if (goalTemplateId) {
-      fetchGoalTemplatePrompts();
-    }
-  }, [goalTemplateId]);
+  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
 
   if (!selectedGrants.length || !isCurated || !goalTemplateId) {
     return null;

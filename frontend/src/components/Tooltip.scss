@@ -7,10 +7,11 @@
 
 .smart-hub-tooltip .ttahub-tooltip-underline {
     position: absolute;
-    max-width: 100%;
+    width: 100%;
     left: 0;
     bottom: 0;
     right: 0;
+    overflow: visible;
 }
 
 .smart-hub-tooltip .usa-button,
@@ -24,9 +25,9 @@
     display: inline-block;
     overflow-x: hidden;
     overflow-y: visible;
-    max-width: 175px;
     text-overflow: ellipsis;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .smart-hub--ellipsis > span {
@@ -48,8 +49,12 @@
     display: inline-block;
     line-height: 1;
     position: absolute;
-    transform: translateX(-25%);
+    transform: translateX(-50%);
+    left: 50%;
     white-space: normal;
+    min-width: 120px;
+    max-width: 300px;
+    width: max-content;
 
     &.usa-tooltip__body--top {
         bottom: 2.25rem;

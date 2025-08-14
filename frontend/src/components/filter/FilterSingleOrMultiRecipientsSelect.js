@@ -28,7 +28,7 @@ export default function FilterSingleOrMultiRecipientsSelect({
   return (
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-      <label className="sr-only" htmlFor={inputId}>Select single or multiple recipients to filter by</label>
+      <label className="usa-sr-only" htmlFor={inputId}>Select single or multiple recipients to filter by</label>
       <Dropdown name={inputId} id={inputId} value={query} onChange={onApplySingleOrMulti}>
         <option value="single-recipient">
           Single recipient reports

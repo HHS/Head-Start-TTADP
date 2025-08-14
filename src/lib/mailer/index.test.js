@@ -28,6 +28,7 @@ import {
   trEventComplete,
   sendEmailVerificationRequestWithToken,
   recipientApprovedDigest,
+  frequencyToInterval,
 } from '.';
 import {
   EMAIL_ACTIONS,
@@ -1653,6 +1654,14 @@ describe('mailer tests', () => {
       await programSpecialistRecipientReportApprovedNotification(mockProgramSpecialist, mockReport);
       expect(auditLogger.error).toHaveBeenCalledTimes(1);
       expect(auditLogger.error.mock.calls[0][0].message).toContain('Error adding to queue');
+    });
+  });
+
+  describe('frequencyToInterval', () => {
+    it('returns the correct interval for every frequency', () => {
+      expect(frequencyToInterval(EMAIL_DIGEST_FREQ.DAILY)).toBe('NOW() - INTERVAL \'1 DAY\'');
+      expect(frequencyToInterval(EMAIL_DIGEST_FREQ.WEEKLY)).toBe('NOW() - INTERVAL \'1 WEEK\'');
+      expect(frequencyToInterval(EMAIL_DIGEST_FREQ.MONTHLY)).toBe('NOW() - INTERVAL \'1 MONTH\'');
     });
   });
 });

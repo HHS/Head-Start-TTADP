@@ -4,6 +4,7 @@ import React, {
   useState,
   useRef,
   useMemo,
+  useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -20,6 +21,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
 import { expandFilters } from '../../utils';
+import AppLoadingContext from '../../AppLoadingContext';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -48,7 +50,7 @@ function RecipientSearch({ user }) {
   });
 
   const [results, setResults] = useState({ count: 0, rows: [] });
-  const [loading, setLoading] = useState(false);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const { query, activePage, sortConfig } = queryAndSort;
 
@@ -108,7 +110,7 @@ function RecipientSearch({ user }) {
         return;
       }
 
-      setLoading(true);
+      setIsAppLoading(true);
 
       try {
         const response = await searchRecipients(
@@ -120,12 +122,22 @@ function RecipientSearch({ user }) {
       } catch (err) {
         setResults({ count: 0, rows: [] });
       } finally {
-        setLoading(false);
+        setIsAppLoading(false);
       }
     }
 
     fetchRecipients();
-  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters, defaultSort]);
+  }, [
+    offset,
+    sortConfig,
+    user,
+    queryAndSort,
+    query,
+    setQueryAndSort,
+    filters,
+    defaultSort,
+    setIsAppLoading,
+  ]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
@@ -166,12 +178,12 @@ function RecipientSearch({ user }) {
         <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-3">
           <form role="search" className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
             { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-            <label htmlFor="recipientRecordSearch" className="sr-only">Search recipient records by name or grant id</label>
-            <input defaultValue={query} id="recipientRecordSearch" type="search" name="search" className="ttahub-recipient-search--search-input" ref={inputRef} disabled={loading} />
-            <button type="submit" className="ttahub-recipient-search--submit-button usa-button" disabled={loading}>
+            <label htmlFor="recipientRecordSearch" className="usa-sr-only">Search recipient records by name or grant id</label>
+            <input defaultValue={query} id="recipientRecordSearch" type="search" name="search" className="ttahub-recipient-search--search-input" ref={inputRef} />
+            <button type="submit" className="ttahub-recipient-search--submit-button usa-button">
               <FontAwesomeIcon color="white" icon={faSearch} />
               {' '}
-              <span className="sr-only">Search for matching recipients</span>
+              <span className="usa-sr-only">Search for matching recipients</span>
             </button>
           </form>
         </Grid>
@@ -187,7 +199,6 @@ function RecipientSearch({ user }) {
         </Grid>
         <RecipientResults
           recipients={rows}
-          loading={loading}
           activePage={activePage}
           offset={offset}
           perPage={RECIPIENTS_PER_PAGE}

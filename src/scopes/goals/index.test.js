@@ -543,11 +543,13 @@ describe('goal filtersToScopes', () => {
       const out = withoutStatus(['Needs status']);
       expect(out).toMatchObject({
         [Op.or]: [
-          { status: { [Op.eq]: null } },
           {
-            [Op.and]: [{
-              status: { [Op.notILike]: '%sNeeds status%s' },
-            }],
+            [Op.and]: [
+              { status: { [Op.notILike]: '%Needs status%' } },
+            ],
+          },
+          {
+            status: { [Op.not]: null },
           },
         ],
       });
@@ -982,7 +984,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToInclude.id,
         name: goalToInclude.name,
         status: goalToInclude.status,
-        endDate: null,
       });
 
       const arResource = await Resource.create({
@@ -1055,7 +1056,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToExclude.id,
         name: goalToExclude.name,
         status: goalToExclude.status,
-        endDate: null,
       });
 
       const arResourceExcluded = await Resource.create({
@@ -1142,13 +1142,13 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      await ActivityReportGoalResource.create({
+      await ActivityReportGoalResource.destroy({
         where: {
           resourceId: resources.map((r) => r.id),
         },
       });
 
-      await ActivityReportObjectiveResource.create({
+      await ActivityReportObjectiveResource.destroy({
         where: {
           resourceId: resources.map((r) => r.id),
         },
@@ -1514,11 +1514,11 @@ describe('goal filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await GoalFieldResponse.destroy({
-        where: {
-          id: [response1.id, response2.id, response3.id],
-        },
-      });
+      const idsToDelete = [response1?.id, response2?.id, response3?.id].filter(Boolean);
+
+      if (idsToDelete.length > 0) {
+        await GoalFieldResponse.destroy({ where: { id: idsToDelete } });
+      }
 
       await Goal.destroy({
         where: {
@@ -1587,7 +1587,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToInclude.id,
         name: goalToInclude.name,
         status: goalToInclude.status,
-        endDate: null,
       });
 
       const arResource = await File.create({
@@ -1642,7 +1641,6 @@ describe('goal filtersToScopes', () => {
         goalId: goalToExclude.id,
         name: goalToExclude.name,
         status: goalToExclude.status,
-        endDate: null,
       });
 
       const arResourceExcluded = await File.create({
@@ -1706,7 +1704,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      await ActivityReportObjectiveFile.create({
+      await ActivityReportObjectiveFile.destroy({
         where: {
           fileId: resources.map((r) => r.id),
         },
@@ -1886,7 +1884,6 @@ describe('goal filtersToScopes', () => {
         goalId: nextStepsGoal.id,
         name: nextStepsGoal.name,
         status: nextStepsGoal.status,
-        endDate: null,
       });
 
       argNameReport = await createReport({
@@ -1905,7 +1902,6 @@ describe('goal filtersToScopes', () => {
         goalId: argNameGoal.id,
         name: argNameGoal.name,
         status: argNameGoal.status,
-        endDate: null,
       });
 
       objectiveTitleReport = await createReport({
@@ -1928,7 +1924,6 @@ describe('goal filtersToScopes', () => {
         goalId: objectiveTitleGoal.id,
         name: objectiveTitleGoal.name,
         status: objectiveTitleGoal.status,
-        endDate: null,
       });
       await ActivityReportObjective.create({
         activityReportId: objectiveTitleReport.id,
@@ -1957,7 +1952,6 @@ describe('goal filtersToScopes', () => {
         goalId: objectiveTTAProvidedGoal.id,
         name: objectiveTTAProvidedGoal.name,
         status: objectiveTTAProvidedGoal.status,
-        endDate: null,
       });
       await ActivityReportObjective.create({
         activityReportId: objectiveTTAProvidedReport.id,

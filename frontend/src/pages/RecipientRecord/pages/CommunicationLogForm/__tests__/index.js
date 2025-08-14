@@ -9,11 +9,12 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import CommunicationLogForm from '../index';
-import LogContext from '../LogContext';
+import { LogProvider } from '../../../../../components/CommunicationLog/components/LogContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -35,7 +36,7 @@ describe('CommunicationLogForm', () => {
     render(
       <Router history={history}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <LogContext.Provider value={{ regionalUsers: [], regionalGoals: [] }}>
+          <LogProvider regionId={REGION_ID}>
             <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
               <CommunicationLogForm
                 recipientName={RECIPIENT_NAME}
@@ -51,7 +52,7 @@ describe('CommunicationLogForm', () => {
                 }}
               />
             </UserContext.Provider>
-          </LogContext.Provider>
+          </LogProvider>
         </AppLoadingContext.Provider>
       </Router>,
     );
@@ -60,10 +61,12 @@ describe('CommunicationLogForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     fetchMock.reset();
-    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
+    const url = `${communicationLogUrl}/region/${REGION_ID}/additional-data`;
     fetchMock.get(url, {
       regionalUsers: [{ value: 1, label: 'One' }],
       standardGoals: [{ value: 1, label: 'One' }],
+      recipients: [],
+      groups: [],
     });
   });
 
@@ -84,7 +87,7 @@ describe('CommunicationLogForm', () => {
   });
 
   it('fetches additional data', async () => {
-    const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}/additional-data`;
+    const url = `${communicationLogUrl}/region/${REGION_ID}/additional-data`;
 
     await act(() => waitFor(() => {
       renderTest('new', 'log');
@@ -180,14 +183,16 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'General Check-In');
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
+    const purposeDropdown = within(purposeView).getByRole('combobox');
+    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const result = await screen.findByLabelText(/result/i);
-    userEvent.selectOptions(result, 'Next Steps identified');
+    const resultView = screen.getAllByText(/result/i)[0];
+    const resultDropdown = within(resultView).getByRole('combobox');
+    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, {
@@ -234,14 +239,16 @@ describe('CommunicationLogForm', () => {
     const method = await screen.findByLabelText(/How was the communication conducted/i);
     userEvent.selectOptions(method, 'Phone');
 
-    const purpose = await screen.findByLabelText(/purpose of communication/i);
-    userEvent.selectOptions(purpose, 'General Check-In');
+    const purposeView = screen.getAllByText(/purpose of communication/i)[0];
+    const purposeDropdown = within(purposeView).getByRole('combobox');
+    userEvent.selectOptions(purposeDropdown, COMMUNICATION_PURPOSES[0]);
 
     const notes = await screen.findByLabelText(/notes/i);
     userEvent.type(notes, 'This is a note');
 
-    const result = await screen.findByLabelText(/result/i);
-    userEvent.selectOptions(result, 'Next Steps identified');
+    const resultView = screen.getAllByText(/result/i)[0];
+    const resultDropdown = within(resultView).getByRole('combobox');
+    userEvent.selectOptions(resultDropdown, COMMUNICATION_RESULTS[0]);
 
     const url = `${communicationLogUrl}/region/${REGION_ID}/recipient/${RECIPIENT_ID}`;
     fetchMock.post(url, 500);
@@ -312,7 +319,9 @@ describe('CommunicationLogForm', () => {
   it('can submit the form', async () => {
     const formData = {
       id: 1,
-      recipientId: RECIPIENT_ID,
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],
@@ -370,7 +379,9 @@ describe('CommunicationLogForm', () => {
   it('handles error submitting the form', async () => {
     const formData = {
       id: 1,
-      recipientId: RECIPIENT_ID,
+      recipients: [{
+        id: RECIPIENT_ID,
+      }],
       userId: '1',
       updatedAt: new Date(),
       files: [],

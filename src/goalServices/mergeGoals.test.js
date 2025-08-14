@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import db, {
   Recipient,
@@ -155,7 +156,6 @@ describe('mergeGoals', () => {
     oldGoal = await Goal.create({
       name: `old goal${faker.animal.dog() + faker.datatype.string(100)}}`,
       status: GOAL_STATUS.IN_PROGRESS,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantOne.id,
@@ -165,7 +165,6 @@ describe('mergeGoals', () => {
     goalZero = await Goal.create({
       name: `Selected goal 0${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantZero.id,
@@ -175,7 +174,7 @@ describe('mergeGoals', () => {
     goalOne = await Goal.create({
       name: `Selected goal 1${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
-      endDate: null,
+
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantOne.id,
@@ -185,7 +184,6 @@ describe('mergeGoals', () => {
     goalTwo = await Goal.create({
       name: `Selected goal 2${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.NOT_STARTED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantOne.id,
@@ -196,7 +194,6 @@ describe('mergeGoals', () => {
     goalThree = await Goal.create({
       name: `Selected goal 3${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.SUSPENDED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantTwo.id,
@@ -207,7 +204,6 @@ describe('mergeGoals', () => {
     dummyGoal = await Goal.create({
       name: dummyGoalName,
       status: GOAL_STATUS.CLOSED,
-      endDate: null,
       isFromSmartsheetTtaPlan: false,
       onApprovedAR: false,
       grantId: grantTwo.id,
@@ -657,14 +653,16 @@ describe('mergeGoals', () => {
 
     await GoalSimilarityGroupGoal.destroy({
       where: {
-        goalId: allGoalIds,
+        // goalId: allGoalIds,
       },
+      force: true,
     });
 
     await GoalSimilarityGroup.destroy({
       where: {
         id: similarityGroup.id,
       },
+      force: true,
     });
 
     await ActivityReportObjective.destroy({
@@ -681,9 +679,13 @@ describe('mergeGoals', () => {
 
     await Objective.destroy({
       where: {
-        id: allObjectiveIds,
+        [Op.or]: [
+          { id: allObjectiveIds },
+          { goalId: allGoalIds },
+        ],
       },
       force: true,
+      individualHooks: true,
     });
 
     await destroyReport(report);
@@ -700,11 +702,20 @@ describe('mergeGoals', () => {
       },
     });
 
-    await Goal.unscoped().destroy({
+    await Goal.destroy({
+      where: {
+        mapsToParentGoalId: allGoalIds,
+      },
+      force: true,
+      individualHooks: true,
+    });
+
+    await Goal.destroy({
       where: {
         id: allGoalIds,
       },
       force: true,
+      individualHooks: true,
     });
 
     await GoalTemplateFieldPrompt.destroy({
@@ -725,9 +736,17 @@ describe('mergeGoals', () => {
       },
     });
 
+    await GrantReplacements.destroy({
+      where: { replacingGrantId: [grantZero.id, grantTwo.id, grantThree.id] },
+      force: true,
+      individualHooks: true,
+    });
     await Grant.destroy({
       where: {
-        id: [grantOne.id, grantTwo.id, grantThree.id],
+        [Op.or]: [
+          { id: [grantOne.id, grantTwo.id, grantThree.id] },
+          { recipientId: recipient.id },
+        ],
       },
       force: true,
       individualHooks: true,

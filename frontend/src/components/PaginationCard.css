@@ -1,0 +1,12 @@
+.smart-hub--pagination-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
+@media (min-width: 800px) {
+    .smart-hub--pagination-card {
+        flex-direction: row;
+    }
+}

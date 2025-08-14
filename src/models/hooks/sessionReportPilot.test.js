@@ -133,7 +133,7 @@ describe('sessionReportPilot hooks', () => {
       }, { transaction: mockOptions.transaction });
     });
 
-    it('sets the SessionReportPilot status to complete if both owner and poc are complete', async () => {
+    it('does not set status to complete if only ownerComplete is true', async () => {
       const mockSessionUpdate = jest.fn();
       const mockSequelize = {
         models: {
@@ -143,36 +143,115 @@ describe('sessionReportPilot hooks', () => {
             })),
           },
           SessionReportPilot: {
-            // add a mock for update.
             update: mockSessionUpdate,
           },
         },
       };
       const instance = {
+        id: 123,
         eventId: 1,
         changed: jest.fn(() => ['data']),
         previous: jest.fn(() => ({
-          ownerComplete: true,
+          ownerComplete: false,
           pocComplete: false,
         })),
         data: {
           val: JSON.stringify({
             ownerComplete: true,
-            pocComplete: true,
+            pocComplete: false,
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           }),
         },
       };
 
       await checkIfBothIstAndPocAreComplete(mockSequelize, instance, mockOptions);
 
-      // Assert the data portion of the update call contains the correct status.
+      // Assert that update was not called since only ownerComplete is true
+      expect(mockSessionUpdate).not.toHaveBeenCalled();
+    });
+
+    it('does not set status to complete if already complete', async () => {
+      const mockSessionUpdate = jest.fn();
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => ({
+              update: mockUpdate,
+            })),
+          },
+          SessionReportPilot: {
+            update: mockSessionUpdate,
+          },
+        },
+      };
+      const instance = {
+        id: 123,
+        eventId: 1,
+        changed: jest.fn(() => ['data']),
+        // In this case, previous data is irrelevant, because...
+        previous: jest.fn(() => ({
+          ownerComplete: true,
+          pocComplete: false,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        })),
+        // ...the current data is authoritative.
+        data: {
+          val: JSON.stringify({
+            ownerComplete: true,
+            pocComplete: true,
+            status: TRAINING_REPORT_STATUSES.COMPLETE, // Already complete
+          }),
+        },
+      };
+
+      await checkIfBothIstAndPocAreComplete(mockSequelize, instance, mockOptions);
+
+      // Assert that update was not called since status is already COMPLETE
+      expect(mockSessionUpdate).not.toHaveBeenCalled();
+    });
+
+    it('sets status to complete when both conditions are met and status is not complete', async () => {
+      const mockSessionUpdate = jest.fn();
+      const mockSequelize = {
+        models: {
+          EventReportPilot: {
+            findOne: jest.fn(() => ({
+              update: mockUpdate,
+            })),
+          },
+          SessionReportPilot: {
+            update: mockSessionUpdate,
+          },
+        },
+      };
+      const instance = {
+        id: 123,
+        eventId: 1,
+        changed: jest.fn(() => ['data']),
+        previous: jest.fn(() => ({
+          ownerComplete: false,
+          pocComplete: true,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        })),
+        data: {
+          val: JSON.stringify({
+            ownerComplete: true,
+            pocComplete: true,
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS, // Not complete yet
+          }),
+        },
+      };
+
+      await checkIfBothIstAndPocAreComplete(mockSequelize, instance, mockOptions);
+
+      // Assert that update was called to set status to COMPLETE
       expect(mockSessionUpdate).toHaveBeenCalledWith({
         data: {
           ownerComplete: true,
           pocComplete: true,
           status: TRAINING_REPORT_STATUSES.COMPLETE,
         },
-      }, { transaction: {}, where: { id: undefined } });
+      }, { transaction: {}, where: { id: 123 } });
     });
   });
 

@@ -162,14 +162,10 @@ export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, optio
       const previous = instance.previous('data') || null;
       const current = JSON.parse(instance.data.val) || null;
 
-      // Get vars in case they are not present.
       const currentOwnerComplete = current.ownerComplete || false;
       const currentPocComplete = current.pocComplete || false;
-      const previousOwnerComplete = previous.ownerComplete || false;
-      const previousPocComplete = previous.pocComplete || false;
 
-      if ((currentOwnerComplete && currentPocComplete)
-        && (!previousOwnerComplete || !previousPocComplete)) {
+      if (currentOwnerComplete && currentPocComplete && current.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
         sequelize.models.SessionReportPilot.update({
           data: {
             ...current,

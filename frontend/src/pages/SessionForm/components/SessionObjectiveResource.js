@@ -28,7 +28,7 @@ export default function SessionObjectiveResource({
 
   return (
     <FormGroup error={fieldErrors} className={`ttahub-session-form--objective-form-group ${fieldErrors ? 'margin-top-2' : ''}`}>
-      <Label htmlFor={`objectiveResources.${index}.value`} className="sr-only">
+      <Label htmlFor={`objectiveResources.${index}.value`} className="usa-sr-only">
         Resource
         {' '}
         { index + 1 }
@@ -57,7 +57,7 @@ export default function SessionObjectiveResource({
         { showRemoveButton ? (
           <Button className="ttahub-resource-repeater--remove-resource" unstyled type="button" onClick={() => removeResource(index)}>
             <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
-            <span className="sr-only">
+            <span className="usa-sr-only">
               remove resource
               {' '}
               { index + 1 }

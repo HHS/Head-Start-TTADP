@@ -42,7 +42,7 @@ const hsesUsers = [
     name: 'Krys Wisnaskas', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krystyna@adhocteam.us',
   },
   {
-    name: 'Matt Bevilacqua', hsesUsername: 'test.tta.mattb', hsesUserId: '50832', email: 'matt.bevilacqua@adhocteam.us',
+    name: 'Tom Smith', hsesUsername: 'test.tta.tom', hsesUserId: '56789', email: 'tom.meagher@adhocteam.us',
   },
   {
     name: 'Kelly Born', hsesUsername: 'test.tta.kelly', hsesUserId: '51113', email: 'kelly.born@adhocteam.us',
@@ -57,7 +57,7 @@ const hsesUsers = [
     name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
   },
   {
-    name: 'Garrett Hill', hsesUsername: 'test.tta.garrett', hsesUserId: '51548', email: 'garrett.hill@adhocteam.us',
+    name: 'Andrew Smith', hsesUsername: 'test.tta.andrew', hsesUserId: '59644', email: 'andrew.steele@adhocteam.us',
   },
   {
     name: 'C\'era Oliveira-Norris', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
@@ -66,7 +66,7 @@ const hsesUsers = [
     name: 'Crystal George', hsesUsername: 'test.tta.crystal', hsesUserId: '52057', email: 'crystal.george@adhocteam.us',
   },
   {
-    name: 'Jon Pyers', hsesUsername: 'test.tta.jon', hsesUserId: '52829', email: 'jon.pyers@adhocteam.us',
+    name: 'Matt Smith', hsesUsername: 'test.tta.matt', hsesUserId: '50832', email: 'matt.bevilacqua@adhocteam.us',
   },
   {
     name: 'Heather Smith', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',

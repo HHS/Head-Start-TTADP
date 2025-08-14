@@ -7,23 +7,24 @@ import { auditLogger } from '../logger';
 import { changeGoalStatusWithSystemUser } from '../goalServices/changeGoalStatus';
 
 const createMonitoringGoals = async () => {
-  const cutOffDate = '2025-01-21';
-  // Verify that the monitoring goal template exists.
-  const monitoringGoalTemplate = await GoalTemplate.findOne({
-    where: {
-      standard: 'Monitoring',
-    },
-  });
+  try {
+    const cutOffDate = '2025-01-21';
+    // Verify that the monitoring goal template exists.
+    const monitoringGoalTemplate = await GoalTemplate.findOne({
+      where: {
+        standard: 'Monitoring',
+      },
+    });
 
-  // If the monitoring goal template does not exist, throw an error.
-  if (!monitoringGoalTemplate) {
-    auditLogger.error('Monitoring Goal template not found');
-    return;
-  }
+    // If the monitoring goal template does not exist, throw an error.
+    if (!monitoringGoalTemplate) {
+      auditLogger.error('Monitoring Goal template not found');
+      return;
+    }
 
-  // 1. Create monitoring goals for grants that need them.
-  await sequelize.transaction(async (transaction) => {
-    await sequelize.query(`
+    // 1. Create monitoring goals for grants that need them.
+    await sequelize.transaction(async (transaction) => {
+      await sequelize.query(`
       WITH
       grants_needing_goal AS (
         SELECT
@@ -95,8 +96,8 @@ const createMonitoringGoals = async () => {
       FROM new_goals;
     `, { transaction });
 
-    // 2. Reopen monitoring goals for grants that need them.
-    const goalsToOpen = await sequelize.query(`
+      // 2. Reopen monitoring goals for grants that need them.
+      const goalsToOpen = await sequelize.query(`
       WITH
         grants_needing_goal_reopend AS (
           SELECT
@@ -140,27 +141,30 @@ const createMonitoringGoals = async () => {
               'Special'
             )
             AND g.status IN ('Closed', 'Suspended')
+            AND g."createdVia" = 'monitoring'
           GROUP BY 1
         )
       SELECT "goalId"
       FROM grants_needing_goal_reopend;
     `, { transaction });
 
-    // Set reopened goals via Sequelize so we ensure the hooks fire.
-    if (goalsToOpen[0].length > 0) {
-      const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
-      // This function also updates the status of the goal via the hook.
-      // No need to explicitly update the goal status.
-      await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatusWithSystemUser({
-        goalId: goal.goalId,
-        newStatus: 'Not Started',
-        reason: 'Active monitoring citations',
-        context: null,
-      })));
-    }
+      // Set reopened goals via Sequelize so we ensure the hooks fire.
+      if (goalsToOpen[0].length > 0) {
+        const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
+        // This function also updates the status of the goal via the hook.
+        // No need to explicitly update the goal status.
+        await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatusWithSystemUser({
+          goalId: goal.goalId,
+          newStatus: 'Not Started',
+          reason: 'Active monitoring citations',
+          context: null,
+        })));
+      }
 
-    // 3. Close monitoring goals that no longer have any active citations and un-approved reports.
-    const goalsToClose = await sequelize.query(`
+      // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
+      // or open Objectives
+      /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
+      const goalsToClose = await sequelize.query(`
       WITH
     grants_with_monitoring_goal AS (
       SELECT
@@ -174,8 +178,9 @@ const createMonitoringGoals = async () => {
       ON g."grantId" = gr.id
       WHERE gt.standard = 'Monitoring'
       AND g.status != 'Closed'
+      AND g."createdVia" = 'monitoring'
     ),
-    with_no_active_reports AS (
+    with_no_active_ars_or_objectives AS (
       SELECT
         gwmg."grantId",
         gwmg.number,
@@ -186,14 +191,19 @@ const createMonitoringGoals = async () => {
       LEFT JOIN "ActivityReports" a
       ON arg."activityReportId" = a.id
       AND a."calculatedStatus" NOT IN ('deleted', 'approved')
+      LEFT JOIN "Objectives" o
+      ON gwmg."goalId" = o."goalId"
+      AND o.status NOT IN ('Complete','Suspended')
+      AND o."deletedAt" IS NULL
       WHERE a.id IS NULL
+      AND o.id IS NULL
     ),
     with_active_citations AS (
       SELECT
         wnar."grantId",
         wnar.number,
         wnar."goalId"
-      FROM with_no_active_reports wnar
+      FROM with_no_active_ars_or_objectives wnar
       JOIN "GrantRelationshipToActive" grta
       ON wnar."grantId" = grta."grantId"
       OR wnar."grantId" = grta."activeGrantId"
@@ -213,7 +223,7 @@ const createMonitoringGoals = async () => {
       ON mfh."findingId" = mf."findingId"
       JOIN "MonitoringFindingStatuses" mfs
       ON mf."statusId" = mfs."statusId"
-      AND mfs.name = 'Active'
+      AND mfs.name in ('Active', 'Elevated Deficiency')
       JOIN "MonitoringFindingGrants" mfg
       ON mf."findingId" = mfg."findingId"
       AND mrg."granteeId" = mfg."granteeId"
@@ -225,7 +235,7 @@ const createMonitoringGoals = async () => {
         wnar."grantId",
         wnar.number,
         wnar."goalId"
-      FROM with_no_active_reports wnar
+      FROM with_no_active_ars_or_objectives wnar
       EXCEPT
       SELECT
         wac."grantId",
@@ -237,19 +247,62 @@ const createMonitoringGoals = async () => {
       FROM without_active_citations_and_reports;
     `, { transaction });
 
-    // Set closed goals via Sequelize so we ensure the hooks fire.
-    if (goalsToClose[0].length > 0) {
-      const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
-      // This function also updates the status of the goal via the hook.
-      // No need to explicitly update the goal status.
-      await Promise.all(goalsToClose[0].map((goal) => changeGoalStatusWithSystemUser({
-        goalId: goal.goalId,
-        newStatus: 'Closed',
-        reason: 'No active monitoring citations',
-        context: null,
-      })));
-    }
-  });
+      // Set closed goals via Sequelize so we ensure the hooks fire.
+      if (goalsToClose[0].length > 0) {
+        const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
+        // This function also updates the status of the goal via the hook.
+        // No need to explicitly update the goal status.
+        await Promise.all(goalsToClose[0].map((goal) => changeGoalStatusWithSystemUser({
+          goalId: goal.goalId,
+          newStatus: 'Closed',
+          reason: 'No active monitoring citations',
+          context: null,
+        })));
+      }
+      */
+
+      // 4. Mark eligible AR-duped or RTR monitoring Goals so they can be used for follow-up TTA.
+      //    This checks to make sure the unmarked monitoring goals are on grants that replace
+      //    grants that already have properly marked Goals. This is intended to address cases
+      //    where follow-up TTA is being performed beyond the initial review, which will usually
+      //    be recorded on the currently active grant anyway.
+      await sequelize.query(`
+      WITH eligible_grants AS (
+      SELECT DISTINCT
+        gr."replacingGrantId" grid
+      FROM "Goals" g
+      JOIN "GoalTemplates" gt
+        ON g."goalTemplateId" = gt.id
+      JOIN "GrantReplacements" gr
+        ON gr."replacedGrantId" = g."grantId"
+      WHERE gt."creationMethod" = 'Curated'
+        AND gt.standard = 'Monitoring'
+        AND EXTRACT(DAY FROM NOW() - g."createdAt") < 365
+      ),
+      goals_to_update AS (
+      SELECT DISTINCT
+        g.id gid
+      FROM eligible_grants eg
+      JOIN "Goals" g
+        ON g."grantId" = grid
+      JOIN "GoalTemplates" gt
+        ON g."goalTemplateId" = gt.id
+      WHERE g."createdVia" IN ('rtr','activityReport')
+        AND gt.standard = 'Monitoring'
+      )
+      UPDATE "Goals"
+      SET "createdVia" = 'monitoring'
+      FROM goals_to_update
+      WHERE id = gid
+      ;
+    `, { transaction });
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
+    auditLogger.error(`Error creating monitoring: ${error.message} | Stack Trace: ${error.stack}`);
+    throw error;
+  }
 };
 
 export default createMonitoringGoals;

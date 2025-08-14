@@ -184,14 +184,11 @@ ActivityReportsTable.propTypes = {
   ).isRequired,
   tableCaption: PropTypes.string.isRequired,
   resetPagination: PropTypes.bool,
-  setResetPagination: PropTypes.func,
+  setResetPagination: PropTypes.func.isRequired,
 };
 
 ActivityReportsTable.defaultProps = {
   resetPagination: false,
-  setResetPagination: () => {
-    // do nothing
-  },
 };
 
 export default ActivityReportsTable;

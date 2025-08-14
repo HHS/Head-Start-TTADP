@@ -50,6 +50,12 @@ const selectOptionsReset = {
   valueContainer: (provided) => ({
     ...provided,
   }),
+  multiValueRemove: (provided) => ({
+    ...provided,
+    '&:hover': {
+      color: '#1B1B1B',
+    },
+  }),
 };
 
 export default selectOptionsReset;

@@ -24,12 +24,12 @@ export default function ObjectiveSupportType({
         <Label htmlFor={inputName}>
           Support type
           <Req />
-          {error}
         </Label>
         <DrawerTriggerButton drawerTriggerRef={supportTypeDrawerTriggerRef}>
           Get help choosing a support type
         </DrawerTriggerButton>
       </div>
+      {error}
       <Dropdown
         onChange={(e) => onChangeSupportType(e.target.value)}
         id={inputName}

@@ -15,7 +15,6 @@ interface ISimilarGoal {
   name: string;
   status: string;
   goalTemplateId: number;
-  endDate: string;
   source: string;
   isCuratedTemplate?: boolean;
   reason: string;
@@ -148,7 +147,6 @@ export default async function nudge(
         status: GOAL_STATUS.NOT_STARTED,
         goalTemplateId: template.id,
         isCuratedTemplate: true,
-        endDate: '',
         source: template.source,
         reason: '',
       });

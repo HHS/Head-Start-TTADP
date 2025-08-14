@@ -10,6 +10,8 @@ import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import { EMPTY_ARRAY } from '../Constants';
 import VBarGraph from './VBarGraph';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
 
 const FIRST_COLUMN = 'Specialist role';
 
@@ -138,16 +140,27 @@ export default function PercentageActivityReportByRole({ data }) {
     exportRows,
   );
 
+  if (!data) return null;
+
+  const subtitle = (
+    <div className="margin-bottom-3">
+      <WidgetContainerSubtitle marginY={0}>
+        Activity report by specialist role
+      </WidgetContainerSubtitle>
+      <SecondarySubtitleWithFilterWarning showFiltersNotApplicable={showFiltersNotApplicable}>
+        {`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
+      </SecondarySubtitleWithFilterWarning>
+    </div>
+  );
+
   return (
     <div>
-
       <WidgetContainer
         loading={false}
         title="Percentage of activity reports by role"
-        subtitle="Activity report by specialist role"
-        subtitle2={`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
+        subtitle={subtitle}
         menuItems={menuItems}
-        showFiltersNotApplicable={showFiltersNotApplicable}
+        titleMargin={{ bottom: 1 }}
       >
         {showTabularData ? (
           <HorizontalTableWidget
@@ -191,10 +204,15 @@ PercentageActivityReportByRole.propTypes = {
     totalNumberOfReports: PropTypes.number,
     totalPercentage: PropTypes.number,
     filteredReports: PropTypes.number,
-    records: PropTypes.arrayOf(PropTypes.shape({
-      role_name: PropTypes.string,
-      role_count: PropTypes.number,
-      percentage: PropTypes.number,
-    })),
-  }).isRequired,
+    records: PropTypes.arrayOf(
+      PropTypes.shape({
+        role_name: PropTypes.string,
+        role_count: PropTypes.number,
+        percentage: PropTypes.number,
+      }),
+    ),
+  }),
+};
+PercentageActivityReportByRole.defaultProps = {
+  data: undefined,
 };

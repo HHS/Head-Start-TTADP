@@ -1,7 +1,9 @@
 import { Op, WhereOptions } from 'sequelize';
 import { map, pickBy } from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
+import db from '../models';
 
+const { Topic } = db;
 /**
  * Takes an array of string date ranges (2020/09/01-2021/10/02, for example)
  * and attempts to turn them into something sequelize can understand
@@ -53,7 +55,7 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
   }, []);
 }
 
-export function createFiltersToScopes(filters, topicToQuery, options, userId) {
+export function createFiltersToScopes(filters, topicToQuery, options, userId, validTopics) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
     if (!(topic in topicToQuery)) {
@@ -64,7 +66,7 @@ export function createFiltersToScopes(filters, topicToQuery, options, userId) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition]([query].flat(), options, userId);
+    return topicToQuery[topic][condition]([query].flat(), options, userId, validTopics);
   });
 }
 
@@ -112,7 +114,9 @@ export function filterAssociation(baseQuery, searchTerms, exclude, callback, com
   };
 }
 
-export const idClause = (query: string[]) => query.filter((id: string) => !Number.isNaN(parseInt(id, DECIMAL_BASE))).join(',');
+export const validatedIdArray = (query: string[]): number[] => query
+  .map((id) => Number(id))
+  .filter((id) => Number.isInteger(id));
 
 /**
  * Extracts the WHERE clause from a Sequelize model's findAll query and replaces the model name
@@ -143,3 +147,8 @@ export const scopeToWhere = async (
 
   return where;
 };
+
+export async function getValidTopicsSet() {
+  const rows = await Topic.findAll({ attributes: ['name'], raw: true });
+  return new Set(rows.map((r) => r.name));
+}

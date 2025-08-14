@@ -70,6 +70,37 @@ function transformRelatedModelProp(field, prop) {
  * Generates a function that can transform values of a related model
  * @param {string} field The field of the related model
  * @param {string} prop The key on the related model to transform
+ * @param {string} nestedProp The key on the related model to transform
+ * @returns {function} A function that will perform the transformation
+ */
+function transformRelatedModelPropNested(field, prop, nestedProp = 'label') {
+  function transformer(instance) {
+    const obj = {};
+    let records = instance[field];
+    if (records) {
+      if (!Array.isArray(records)) {
+        records = [records];
+      }
+      const value = records.map((r) => {
+        if (!r[prop]) {
+          return '';
+        }
+        return r[prop].map((p) => (p[nestedProp] || '')).sort().join('\n');
+      }).sort().join('\n');
+      Object.defineProperty(obj, prop, {
+        value,
+        enumerable: true,
+      });
+    }
+    return obj;
+  }
+  return transformer;
+}
+
+/*
+ * Generates a function that can transform values of a related model
+ * @param {string} field The field of the related model
+ * @param {string} prop The key on the related model to transform
  * @returns {function} A function that will perform the transformation
  */
 function transformRelatedModel(field, prop) {
@@ -532,6 +563,8 @@ const arTransformers = [
 
 const logTransformers = [
   'id',
+  transformRelatedModelProp('data', 'regionId'),
+  transformRelatedModel('recipients', 'name'),
   transformRelatedModel('author', 'name'),
   transformRelatedModelProp('data', 'communicationDate'),
   transformRelatedModelProp('data', 'duration'),
@@ -539,9 +572,11 @@ const logTransformers = [
   transformRelatedModelProp('data', 'purpose'),
   transformRelatedModelProp('data', 'notes'),
   transformRelatedModelProp('data', 'result'),
+  transformRelatedModelPropNested('data', 'goals'),
+  transformRelatedModelPropNested('data', 'otherStaff'),
   transformRelatedModel('files', 'originalFileName'),
-  transformRelatedModel('recipientNextSteps', 'note'),
-  transformRelatedModel('specialistNextSteps', 'note'),
+  transformRelatedModelPropNested('data', 'recipientNextSteps', 'note'),
+  transformRelatedModelPropNested('data', 'specialistNextSteps', 'note'),
 ];
 
 /**

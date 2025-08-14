@@ -70,6 +70,7 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
   activityReportsForCleanup: jest.fn(),
+  handleSoftDeleteReport: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -694,6 +695,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canDelete: () => true,
       }));
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       await softDeleteReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -702,6 +704,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canDelete: () => false,
       }));
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       await softDeleteReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });

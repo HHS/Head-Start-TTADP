@@ -61,7 +61,6 @@ const mockGrant = {
 const mockGoal = {
   name: 'Goal 1',
   status: 'Draft',
-  endDate: null,
   isFromSmartsheetTtaPlan: false,
   onApprovedAR: false,
   onAR: false,

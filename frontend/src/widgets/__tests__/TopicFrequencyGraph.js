@@ -5,6 +5,7 @@ import {
   render,
   screen,
   act,
+  fireEvent,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -145,6 +146,17 @@ describe('Topic & Frequency Graph Widget', () => {
     ].reverse());
   });
 
+  it('shows accessibility/tabular data', async () => {
+    const data = [...TEST_DATA];
+    renderArGraphOverview({ data });
+
+    const tableButton = await screen.findByText('Display table');
+    expect(tableButton).toBeInTheDocument();
+    fireEvent.click(tableButton);
+    const graphButton = await screen.findByText('Display graph');
+    expect(graphButton).toBeInTheDocument();
+  });
+
   it('handles undefined data', async () => {
     const data = undefined;
     renderArGraphOverview({ data });
@@ -160,6 +172,9 @@ describe('Topic & Frequency Graph Widget', () => {
     act(() => userEvent.click(aZ));
     const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
+    // Wait for graph to render (takes a sec because of dynamic imports)
+    await screen.findByText('Human Resources');
+
     // this won't change because we sort count and then alphabetically
     // and this is always last in that case
     const firstPoint = document.querySelector('g.ytick');
@@ -171,6 +186,9 @@ describe('Topic & Frequency Graph Widget', () => {
     expect(point1.__data__.text).toBe('Community and Self-Assessment');
 
     act(() => userEvent.click(apply));
+
+    // Waits for screen to load
+    await screen.findByText('CLASS: Instructional Support');
 
     const point2 = Array.from(document.querySelectorAll('g.ytick')).pop();
     // eslint-disable-next-line no-underscore-dangle

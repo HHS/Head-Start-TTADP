@@ -18,6 +18,7 @@ const {
   GoalTemplateFieldPrompt,
   Objective,
   sequelize,
+  Topic,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
@@ -63,7 +64,7 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
 
   const resourceIds = resources
     .map((r) => {
-      if (r.resource && r.resource.id) return r.resource.id;
+      if (r.resource?.id) return r.resource.id;
       if (r.resourceId) return r.resourceId;
       return null;
     })
@@ -108,27 +109,50 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => {
-    if (!topic.id) {
-      auditLogger.error(`Error saving ARO topics: ${JSON.stringify(topics)} for objectiveId: ${objectiveId} and activityReportObjectiveId: ${activityReportObjectiveId}`);
+  // Find all topics with missing ids
+  const topicsNeedingLookup = topics.filter((t) => !t.id && t.name);
+  let resolvedTopics = [];
+  if (topicsNeedingLookup.length > 0) {
+    auditLogger.info(
+      'Some topics were missing IDs and required a lookup. '
+      + `ObjectiveId: ${objectiveId}, AROId: ${activityReportObjectiveId}, `
+      + `Raw topics: ${JSON.stringify(topicsNeedingLookup)}`,
+    );
+    const topicNames = topicsNeedingLookup.map((t) => t.name);
+    const foundTopics = await Topic.findAll({
+      where: { name: topicNames },
+    });
+
+    // Log any that weren't found
+    const foundNames = new Set(foundTopics.map((t) => t.name));
+    const missing = topicNames.filter((n) => !foundNames.has(n));
+    if (missing.length) {
+      auditLogger.error(`Could not resolve topic names: ${missing.join(', ')} for objectiveId: ${objectiveId}`);
     }
-    return topic.id;
-  });
+
+    resolvedTopics = foundTopics.map((t) => ({ id: t.id, name: t.name }));
+  }
+
+  const enrichedTopics = topics.map((t) => {
+    if (t.id) return t;
+    const resolved = resolvedTopics.find((rt) => rt.name === t.name);
+    return resolved ? { ...t, id: resolved.id } : null;
+  }).filter(Boolean);
+
+  const topicIds = enrichedTopics.map((t) => t.id);
 
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
   });
-  const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
-    || [];
-  // Get topics for ARO we need to delete.
-  const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
-  // Get topics to keep.
-  const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
-  const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
+  const originalTopicIds = originalAROTopics.map((t) => t.topicId);
+
+  const removedTopicIds = originalTopicIds.filter((id) => !topicsSet.has(id));
+  const currentTopicIds = new Set(originalTopicIds.filter((id) => topicsSet.has(id)));
+  const newTopicIds = topicIds.filter((id) => !currentTopicIds.has(id));
 
   return Promise.all([
-    ...newTopicsIds.map(async (topicId) => ActivityReportObjectiveTopic.create({
+    ...newTopicIds.map((topicId) => ActivityReportObjectiveTopic.create({
       activityReportObjectiveId,
       topicId,
     })),
@@ -162,35 +186,45 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
     hookMetadata: { objectiveId },
   });
 
+  // Get the goal for this objective.
+  const goal = await Goal.findOne({
+    attributes: ['grantId', 'createdVia'],
+    include: [
+      {
+        model: Objective,
+        as: 'objectives',
+        where: { id: objectiveId },
+        required: true,
+      },
+    ],
+  });
+
+  if (!goal) {
+    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
+    return [];
+  }
+
+  if (goal.createdVia !== 'monitoring') {
+    // If this is no longer a monitoring goal associated with this objective,
+    // we don't (and shouldn't) save any citations.
+    return [];
+  }
+
   // Create citations to save.
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
-    const goal = await Goal.findOne({
-      attributes: ['grantId'],
-      include: [
-        {
-          model: Objective,
-          as: 'objectives',
-          where: { id: objectiveId },
-          required: true,
-        },
-      ],
-    });
-
     const grantForThisCitation = goal.grantId;
-
     // Get all the citations for the grant.
     const citationsToSave = citations.reduce((acc, citation) => {
       const { monitoringReferences } = citation;
       monitoringReferences.forEach((ref) => {
         const { grantId } = ref;
-        if (grantId === grantForThisCitation) {
+        if (grantId === grantForThisCitation && !acc.find((c) => c.standardId === ref.standardId)) {
           acc.push(citation);
         }
       });
       return acc;
     }, []);
-
     newCitations = citationsToSave.map((citation) => (
       {
         activityReportObjectiveId,
@@ -200,7 +234,6 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           (ref) => ref.grantId === grantForThisCitation,
         ),
       }));
-
     // If we have citations to save, create them.
     if (newCitations.length > 0) {
       return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });
@@ -375,7 +408,6 @@ const cacheGoalMetadata = async (
       timeframe: goal.timeframe,
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
-      endDate: goal.endDate,
       isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,
       source: goal.source,
@@ -393,7 +425,6 @@ const cacheGoalMetadata = async (
       timeframe: goal.timeframe,
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
-      endDate: goal.endDate,
       source: goal.source,
       isRttapa: null,
       isActivelyEdited: isActivelyBeingEditing || false,

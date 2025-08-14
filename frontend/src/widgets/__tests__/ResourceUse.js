@@ -105,10 +105,16 @@ describe('Resource Use Widget', () => {
     const data = { headers, resources: [] };
     renderResourceUse(data);
 
-    const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
+    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i });
 
     act(() => {
       userEvent.click(button);
+    });
+
+    const viewAsTable = await screen.findByRole('button', { name: /view as table/i });
+
+    act(() => {
+      userEvent.click(viewAsTable);
     });
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
@@ -123,9 +129,16 @@ describe('Resource Use Widget', () => {
   it('renders correctly with data', async () => {
     renderResourceUse(testData);
 
-    const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
+    const button = await screen.findByRole('button', { name: /Open Actions for Resource use/i });
+
     act(() => {
       userEvent.click(button);
+    });
+
+    const viewAsTable = await screen.findByRole('button', { name: /view as table/i });
+
+    act(() => {
+      userEvent.click(viewAsTable);
     });
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
