@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { createElement } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import renderData from './renderReadOnlyContentData';
 import STATUSES from './GoalCards/components/StatusDropdownStatuses';
 import './ReadOnlyContent.scss';
+
+const HEADING_CLASSES = {
+  4: 'font-serif-md',
+  default: 'font-sans-lg',
+};
 
 const Status = ({ statusKey }) => {
   const statusData = STATUSES[statusKey];
@@ -44,25 +49,29 @@ export default function ReadOnlyContent({
       </div>
       {sections.map((section) => {
         const subheadings = Object.keys(section.data);
+        const headingTag = `h${section.headingLevel || 3}`;
+        const headingFontClass = HEADING_CLASSES[section.headingLevel] || HEADING_CLASSES.default;
         return (
           <div
-            className={`ttahub-read-only-content-section padding-bottom-3 margin-0 ${section.striped ? 'ttahub-read-only-content-section__striped' : ''}`}
+            className="ttahub-read-only-content-section padding-bottom-3 margin-0"
             key={uuidv4()}
           >
-            {section.heading ? <h3 className="ttahub-read-only-content-section--heading font-sans-lg margin-0 margin-bottom-2">{section.heading}</h3> : null}
+            {section.heading ? createElement(headingTag, {
+              className: `ttahub-read-only-content-section--heading ${headingFontClass} margin-0 margin-bottom-2`,
+            }, section.heading) : null}
             {subheadings.map((subheading) => (
               <div className="ttahub-read-only-content-section--heading--section-row" key={uuidv4()}>
                 {subheading !== 'Recipient\'s goal' ? (
                   /* Normal data section */
                   <>
-                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold usa-prose margin-0 font-sans-3xs">{subheading}</div>
-                    <div className="ttahub-read-only-content-section--heading--section-row-data usa-prose margin-0 margin-bottom-2 font-sans-3xs">{renderData(subheading, section.data[subheading])}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold margin-0">{subheading}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-2">{renderData(subheading, section.data[subheading])}</div>
                   </>
                 ) : (
                   /* Recipient's Goal section */
                   <div className="ttahub-read-only-content-section--goal-summary border-left border-width-05 padding-left-2">
-                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold usa-prose margin-0 font-sans-3xs">{subheading}</div>
-                    <div className="ttahub-read-only-content-section--heading--section-row-data usa-prose margin-0 margin-bottom-2 font-sans-lg">{renderData(subheading, section.data[subheading])}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-title text-bold margin-0">{subheading}</div>
+                    <div className="ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-2 font-sans-lg">{renderData(subheading, section.data[subheading])}</div>
                   </div>
                 )}
               </div>
@@ -80,7 +89,6 @@ ReadOnlyContent.propTypes = {
   sections: PropTypes.arrayOf(PropTypes.shape({
     heading: PropTypes.string,
     data: PropTypes.shape().isRequired,
-    striped: PropTypes.bool,
     goalSection: PropTypes.bool,
   })).isRequired,
   displayStatus: PropTypes.string,
