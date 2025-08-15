@@ -310,10 +310,10 @@ Our project includes four deployed Postgres databases, one to interact with each
 
 #### First, log into Cloud Foundry instance
 
-1. Install **Version 7** of the Cloud Foundry CLI tool
+1. Install the lastest version (**Version 8** as of this writing) of the Cloud Foundry CLI tool
 
-   - On MacOS: `brew install cloudfoundry/tap/cf-cli@7`
-   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 7.x
+   - On MacOS: `brew install cloudfoundry/tap/cf-cli@8`
+   - On other platforms: [Download and install cf][cf-install]. Be sure to get version 8.x
 
 1. Login to cloud.gov account
 
@@ -358,6 +358,15 @@ Our project includes four deployed Postgres databases, one to interact with each
    This indicates you are in an open psql session, the command-line interface to PostgreSQL.
    You will need to have the pg/redis client installed locally and findable in your $PATH.
    Production instances are generally inaccessible for direct connection, although this can be disabled when necessary.
+
+   Note: This plugin will not work for connecting to a replica database.  
+   Instead, use the script `./bin/replica-connect.sh` from this repo.
+   ```
+   ./bin/replica-connect.sh tta-smarthub-dev-blue
+    Establishing SSH tunnel with PID: 38115
+    Connecting to db replica for tta-smarthub-dev-blue on port 5432...
+    cgawsbrokerprodbt584djy6n6cnuz=> 
+    ```
 
 ##### Option B: Run script as task
 
