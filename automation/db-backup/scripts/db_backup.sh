@@ -295,7 +295,8 @@ function rds_prep() {
   server_data=$(find_json_object "${rds_data}" "name" "${db_server}")
   parameters_validate "${server_data}"
   local db_host
-  db_host=$(process_json "${server_data}" ".credentials.host" "-r")
+  db_host=$(process_json "${server_data}" ".credentials.replica_host" "-r") ||\ 
+    $(process_json "${server_data}" ".credentials.host" "-r")
   parameters_validate "${db_host}"
   local db_port
   db_port=$(process_json "${server_data}" ".credentials.port" "-r")

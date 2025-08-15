@@ -36,7 +36,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, restore_db ]
+    enum: [ build_test_deploy, deploy_only, import_data, backup_db, restore_db ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
@@ -218,13 +218,19 @@ workflows:
         requires:
         - backup_temp_db
 
+  backup_db_manual:
+    # backup db in the given environment to S3
+    when: pipeline.parameters.action == "backup_db" and pipeline.trigger_source == "api"
+    jobs:
+    - backup_db:
+        serial-group: "tta-automation-lock"
+        target_env: "<< pipeline.parameters.target_env >>"
+
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
     when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
     jobs:
-    - backup_prod_db:
-        serial-group: "tta-automation-lock"
     - restore_prod_to_temp:
         serial-group: "tta-automation-lock"
         requires:
@@ -242,6 +248,8 @@ workflows:
         requires:
         - backup_temp_db
         target_env: "<< pipeline.parameters.target_env >>"
+      
+
 
 # ----------------- Jobs -----------------
 
@@ -608,6 +616,19 @@ jobs:
         rds_service_name: ttahub-prod
         s3_service_name: ttahub-db-backups
         backup_prefix: production
+
+  backup_db:
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - cf_backup:
+        target_env: << parameters.target_env >>
+        rds_service_name: ttahub-<< parameters.target_env >>
+        s3_service_name: ttahub-db-backups
+        backup_prefix: << parameters.target_env >>
 
   restore_prod_to_temp:
     executor: docker-executor
