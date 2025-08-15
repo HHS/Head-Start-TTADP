@@ -126,7 +126,7 @@ const RecipientReviewSection = () => {
           basePath="goals-objectives"
           anchor="objectives-summary"
           title="Objective summary"
-          canEdit={canEdit}
+          canEdit={false} // always hide for objectives.
           isLastSection={isLastGoal && objectives.length - 1 === index}
         >
           {objectiveSections.map((section) => section.items.map((item) => {
@@ -182,7 +182,7 @@ const RecipientReviewSection = () => {
               basePath="goals-objectives"
               anchor="goal-summary"
               title="Goal summary"
-              canEdit={canEdit}
+              canEdit={canEdit} // Simply use canEdit without additional conditions for goals.
               isLastSection={false}
             >
               <div className="smart-hub-review-section margin-top-2 desktop:margin-top-0 margin-bottom-3">
