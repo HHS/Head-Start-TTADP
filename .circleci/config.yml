@@ -222,9 +222,8 @@ workflows:
     # backup db in the given environment to S3
     when: pipeline.parameters.action == "backup_db" and pipeline.trigger_source == "api"
     jobs:
-    - backup_db:
+    - backup_prod_db:
         serial-group: "tta-automation-lock"
-        target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_manual:
     # restore the anonymized db snapshot to a lower env db and run migrations
