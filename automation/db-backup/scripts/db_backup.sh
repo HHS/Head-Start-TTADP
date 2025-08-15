@@ -317,6 +317,7 @@ function rds_prep() {
   export PGUSER="${db_username}"
   export PGPASSWORD="${db_password}"
   export PGDATABASE="${db_name}"
+  log "INFO" "Environment configured for ${PGHOST}:${PGPORT} as ${PGUSER} on database ${PGDATABASE}"
 
   rds_validate
 }
