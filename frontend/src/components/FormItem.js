@@ -81,6 +81,7 @@ function FormItem({
   name,
   fieldSetWrapper,
   className,
+  formGroupClassName,
   htmlFor,
   toolTipText,
 }) {
@@ -102,7 +103,7 @@ function FormItem({
   const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper;
 
   return (
-    <FormGroup error={fieldErrors}>
+    <FormGroup className={formGroupClassName} error={fieldErrors}>
       <LabelType
         htmlFor={htmlFor}
         label={labelWithRequiredTag}
@@ -137,6 +138,7 @@ FormItem.propTypes = {
   htmlFor: PropTypes.string,
   hint: PropTypes.string,
   toolTipText: PropTypes.string,
+  formGroupClassName: PropTypes.string,
 };
 
 FormItem.defaultProps = {
@@ -146,6 +148,7 @@ FormItem.defaultProps = {
   htmlFor: '',
   hint: '',
   toolTipText: null,
+  formGroupClassName: '',
 };
 
 export default FormItem;
