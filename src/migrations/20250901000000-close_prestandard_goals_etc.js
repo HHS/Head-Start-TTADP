@@ -25,12 +25,14 @@ module.exports = {
           COUNT(*) FILTER (WHERE status = 'Closed') closed,
           COUNT(*) FILTER (WHERE status != 'Closed') open
         FROM "Goals"
+        WHERE "deletedAt" IS NULL
         UNION
         SELECT
           'objectives',
           COUNT(*) FILTER (WHERE status = 'Complete'),
           COUNT(*) FILTER (WHERE status != 'Complete')
         FROM "Objectives"
+        WHERE "deletedAt" IS NULL
         UNION
         SELECT
           'ARs',
@@ -51,6 +53,7 @@ module.exports = {
         WHERE gt."creationMethod" = 'Curated'
           AND gt.standard IN ('Monitoring','FEI','CLASS Monitoring')
           AND g.status != 'Closed'
+          AND g."deletedAt" IS NULL
         ;
 
         -- 2: Complete any In Progress Objectives not on those Goals
@@ -65,10 +68,13 @@ module.exports = {
           ON o."goalId" = gid
         WHERE gid IS NULL
           AND o.status = 'In Progress'
+          AND o."deletedAt" IS NULL
         ;
         
         UPDATE "Objectives" o
-        SET status = 'Complete'
+        SET
+          status = 'Complete',
+          "updatedAt" = NOW()
         FROM obj_to_complete
         WHERE id = oid
         ;
@@ -84,6 +90,7 @@ module.exports = {
           ON g.id = gid
         WHERE gid IS NULL
           AND g.status != 'Closed'
+          AND g."deletedAt" IS NULL
         ;
 
         DROP TABLE IF EXISTS inserted_goal_closures;
@@ -150,6 +157,7 @@ module.exports = {
           (SELECT COUNT(*) FROM goals_to_close) AS close_updates,
           (SELECT COUNT(*) FROM inserted_goal_closures) AS closures_inserted
         FROM "Goals"
+        WHERE "deletedAt" IS NULL
         UNION
         SELECT
           'objectives',
@@ -158,6 +166,7 @@ module.exports = {
           (SELECT COUNT(*) FROM obj_to_complete),
           NULL
         FROM "Objectives"
+        WHERE "deletedAt" IS NULL
         UNION
         SELECT
           'ARs',
