@@ -59,7 +59,10 @@ export const checkRecipientsAndGoals = (data, hasMonitoringGoals) => {
   if (recipients.length === 0 && goalsAndObjectives.length > 0) {
     return 'EMPTY_RECIPIENTS_WITH_GOALS';
   }
-  if (hasMonitoringGoals && !goalTemplates.some((gt) => gt.standard === 'Monitoring')) {
+  // Only show modal if none of the selected grants have Monitoring goals
+  const hasAtLeastOneMonitoringGoal = goalTemplates.some((gt) => gt.standard === 'Monitoring');
+
+  if (hasMonitoringGoals && !hasAtLeastOneMonitoringGoal) {
     return 'MISSING_MONITORING_GOAL';
   }
   if (hasMonitoringGoals && citationsDiffer(goalsAndObjectives, citationsByGrant)) {
@@ -114,10 +117,11 @@ const ActivitySummary = ({
   const deliveryMethod = watch('deliveryMethod');
 
   const modalRef = useRef();
+  const recipientSelectRef = useRef(null);
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
   const [modalScenario, setModalScenario] = useState(null);
   const [currentRecipient, setCurrentRecipient] = useState(null);
-  const [selectedGrantCheckboxes, setSelectedGrantCheckboxes] = useState([]);
+  const [selectedGrantCheckboxes] = useState([]);
 
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
@@ -141,16 +145,17 @@ const ActivitySummary = ({
     setCurrentRecipient(activityRecipients);
     onChangeActivityRecipients(newRecipient);
 
-    const newRecipientGrantId = newRecipient?.[0]?.value;
+    const newRecipientGrantIds = newRecipient?.map((r) => r?.value).filter(Boolean);
 
     let newGoalTemplates = [];
     let citations = [];
     try {
-      newGoalTemplates = newRecipientGrantId ? await getGoalTemplates([newRecipientGrantId])
+      newGoalTemplates = newRecipientGrantIds.length > 0
+        ? await getGoalTemplates(newRecipientGrantIds)
         : [];
 
-      citations = newRecipientGrantId ? await fetchCitationsByGrant(formData.regionId,
-        [newRecipientGrantId], startDate)
+      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(formData.regionId,
+        newRecipientGrantIds, startDate)
         : [];
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -179,6 +184,10 @@ const ActivitySummary = ({
     modalRef.current?.toggleModal();
     setModalScenario(null);
     setShouldAutoSave(true);
+    setTimeout(() => {
+      recipientSelectRef.current?.blur();
+      recipientSelectRef.current?.focus();
+    }, 10);
   };
 
   // User clicks NO (revert back)
@@ -186,6 +195,10 @@ const ActivitySummary = ({
     onChangeActivityRecipients(currentRecipient);
     setModalScenario(null);
     setShouldAutoSave(true);
+    setTimeout(() => {
+      recipientSelectRef.current?.blur();
+      recipientSelectRef.current?.focus();
+    }, 10);
   };
 
   const setEndDate = (newEnd) => {
@@ -284,7 +297,7 @@ const ActivitySummary = ({
             onChangeActivityRecipients={handleRecipientChange}
             onBlurActivityRecipients={onBlurActivityRecipients}
             selectedGrantCheckboxes={selectedGrantCheckboxes}
-            setSelectedGrantCheckboxes={setSelectedGrantCheckboxes}
+            selectRef={recipientSelectRef}
           />
         </div>
         <div id="other-participants" />

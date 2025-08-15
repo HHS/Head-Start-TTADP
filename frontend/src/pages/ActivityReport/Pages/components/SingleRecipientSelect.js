@@ -14,6 +14,7 @@ export default function SingleRecipientSelect(
     possibleRecipients,
     onChangeActivityRecipients,
     onBlurActivityRecipients,
+    selectRef,
   },
 ) {
   const [showRecipientGrants, setShowRecipientGrants] = useState(false);
@@ -149,6 +150,7 @@ export default function SingleRecipientSelect(
           placeholder="- Select -"
           inputId="selectedRecipient"
           onChange={onRecipientChange}
+          ref={selectRef}
           options={possibleRecipients.map((recipient) => ({
             label: recipient.label,
             value: recipient.id,
@@ -213,4 +215,9 @@ SingleRecipientSelect.propTypes = {
   possibleRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,
   onChangeActivityRecipients: PropTypes.func.isRequired,
   onBlurActivityRecipients: PropTypes.func.isRequired,
+  selectRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+};
+
+SingleRecipientSelect.defaultProps = {
+  selectRef: null,
 };
