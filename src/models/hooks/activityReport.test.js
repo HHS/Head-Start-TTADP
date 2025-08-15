@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
 import moment from 'moment';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportGoal,
@@ -677,7 +677,7 @@ describe('activity report model hooks', () => {
         where: {
           goalTemplateId: submittedReportClosedGoal.goalTemplateId,
           grantId: submittedReportClosedGoal.grantId,
-          status: 'In Progress',
+          status: GOAL_STATUS.NOT_STARTED,
         },
       });
 
@@ -692,7 +692,7 @@ describe('activity report model hooks', () => {
       // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(newGoal.id);
-      expect(activityReportGoals[0].status).toBe('In Progress');
+      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
 
       // Get the objective for the new goal.
       newObjective = await Objective.findOne({
@@ -734,7 +734,7 @@ describe('activity report model hooks', () => {
         where: {
           goalTemplateId: closedGoal.goalTemplateId,
           grantId: closedGoal.grantId,
-          status: 'In Progress',
+          status: GOAL_STATUS.NOT_STARTED,
         },
       });
       expect(newGoal).toBeDefined();
@@ -748,7 +748,7 @@ describe('activity report model hooks', () => {
         // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(newGoal.id);
-      expect(activityReportGoals[0].status).toBe('In Progress');
+      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
 
       // Get the objective for the new goal.
       newObjective = await Objective.findOne({
@@ -798,7 +798,7 @@ describe('activity report model hooks', () => {
         where: {
           goalTemplateId: approvedReportClosedGoal.goalTemplateId,
           grantId: approvedReportClosedGoal.grantId,
-          status: 'In Progress',
+          status: GOAL_STATUS.NOT_STARTED,
         },
       });
 
@@ -812,7 +812,7 @@ describe('activity report model hooks', () => {
         // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(approvedNewGoal.id);
-      expect(activityReportGoals[0].status).toBe('In Progress');
+      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
 
       // Get the objective for the new goal.
       approvedNewObjective = await Objective.findOne({

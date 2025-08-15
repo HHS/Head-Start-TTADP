@@ -655,8 +655,10 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
-  const changed = instance.changed();
-  if (Array.isArray(changed)
+
+  try {
+    const changed = instance.changed();
+    if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
     && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
@@ -666,43 +668,46 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     // so we start with finding all the goals that *could* be changed
     // (goals in draft or not started)
     // Standard Goals: We need to keep this for not started moved to in progress.
-    const goals = await sequelize.models.Goal.findAll(
-      {
-        where: {
-          status: [
-            GOAL_STATUS.NOT_STARTED,
-          ],
-        },
-        include: [
-          {
-            model: sequelize.models.ActivityReport,
-            as: 'activityReports',
-            required: true,
-            where: { id: instance.id },
+      const goals = await sequelize.models.Goal.findAll(
+        {
+          where: {
+            status: [
+              GOAL_STATUS.NOT_STARTED,
+            ],
           },
-        ],
-        transaction: options.transaction,
-      },
-    );
+          include: [
+            {
+              model: sequelize.models.ActivityReport,
+              as: 'activityReports',
+              required: true,
+              where: { id: instance.id },
+            },
+          ],
+          transaction: options.transaction,
+        },
+      );
 
-    return Promise.all((goals.map(async (goal) => {
-      const status = GOAL_STATUS.IN_PROGRESS;
+      return await Promise.all((goals.map(async (goal) => {
+        const status = GOAL_STATUS.IN_PROGRESS;
 
-      // if the goal should be in a different state, we will update it
-      if (goal.status !== status) {
-        await changeGoalStatus({
-          goalId: goal.id,
-          userId: instance.userId,
-          newStatus: status,
-          reason: 'Activity Report approved',
-          context: null,
-          overrideCreatedAt: instance.startDate,
-        });
-      }
-      // removing hooks because we don't want to trigger the automatic status change
-      // (i.e. last in progress at will be overwritten)
-      return goal.save({ transaction: options.transaction, hooks: false });
-    })));
+        // if the goal should be in a different state, we will update it
+        if (goal.status !== status) {
+          await changeGoalStatus({
+            goalId: goal.id,
+            userId: instance.userId,
+            newStatus: status,
+            reason: 'Activity Report approved',
+            context: null,
+            overrideCreatedAt: instance.startDate,
+          });
+        }
+        // removing hooks because we don't want to trigger the automatic status change
+        // (i.e. last in progress at will be overwritten)
+        return goal.save({ transaction: options.transaction, hooks: false });
+      })));
+    }
+  } catch (err) {
+    console.log(err);
   }
 
   return Promise.resolve();
