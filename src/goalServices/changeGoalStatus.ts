@@ -7,6 +7,7 @@ interface GoalStatusChangeParams {
   newStatus: string;
   reason: string;
   context: string;
+  overrideCreatedAt?: string,
   transaction?: Sequelize.Transaction;
 }
 
@@ -49,6 +50,7 @@ export default async function changeGoalStatus({
   newStatus,
   reason,
   context,
+  overrideCreatedAt,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
     db.User.findOne({
@@ -75,7 +77,7 @@ export default async function changeGoalStatus({
   const oldStatus = goal.status;
 
   if (oldStatus !== newStatus) {
-    await db.GoalStatusChange.create({
+    const statusChange = await db.GoalStatusChange.create({
       goalId,
       userId,
       userName: user.name,
@@ -85,6 +87,16 @@ export default async function changeGoalStatus({
       reason,
       context,
     });
+
+    if (statusChange && overrideCreatedAt) {
+      await db.GoalStatusChange.update({
+        createdAt: overrideCreatedAt,
+      }, {
+        where: {
+          id: statusChange.id,
+        },
+      });
+    }
 
     await goal.reload();
   }

@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import { uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
@@ -28,10 +29,7 @@ const {
   Topic,
   GoalStatusChange,
   User,
-  UserRole,
   Role,
-  CollaboratorType,
-  GoalCollaborator,
 } = db;
 
 interface IObjective {
@@ -73,9 +71,6 @@ export async function removeObjectivesFromReport(objectivesToRemove, reportId) {
   if (!objectivesToDefinitelyDestroy.length) {
     return Promise.resolve();
   }
-
-  // Objectives to destroy.
-  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
 
   // Delete objective.
   return Objective.destroy({
@@ -338,7 +333,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId, report, createInProgress = false) {
+export async function saveStandardGoalsForReport(goals, userId, report) {
   // Loop goal templates.
   let currentObjectives = [];
 
@@ -387,13 +382,14 @@ export async function saveStandardGoalsForReport(goals, userId, report, createIn
       }
 
       // If there is no existing goal, or its closed, create a new one in 'Not started'.
+      // this should always be not started to capture a status change when the report is approved
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           goalTemplateId: goalTemplate.id,
           createdVia: 'activityReport',
           name: goalTemplate.templateName,
           grantId,
-          status: createInProgress ? GOAL_STATUS.IN_PROGRESS : GOAL_STATUS.NOT_STARTED,
+          status: GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
       }
 
@@ -941,40 +937,17 @@ export async function standardGoalsForRecipient(
         as: 'statusChanges',
         attributes: ['oldStatus', 'newStatus'],
         required: false,
-      },
-      {
-        model: GoalCollaborator,
-        as: 'goalCollaborators',
-        attributes: ['id'],
-        required: false,
         include: [
-          {
-            model: CollaboratorType,
-            as: 'collaboratorType',
-            where: {
-              name: 'Creator',
-            },
-            attributes: ['name'],
-          },
           {
             model: User,
             as: 'user',
             attributes: ['name'],
-            required: true,
-            include: [
-              {
-                model: UserRole,
-                as: 'userRoles',
-                include: [
-                  {
-                    model: Role,
-                    as: 'role',
-                    attributes: ['name'],
-                  },
-                ],
-                attributes: ['id'],
-              },
-            ],
+            include: [{
+              model: Role,
+              as: 'roles',
+              attributes: ['name'],
+              through: [],
+            }],
           },
         ],
       },

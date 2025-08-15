@@ -45,14 +45,14 @@ export default function StandardGoalCard({
     latestStatusChangeDate,
     name,
     objectives = [],
-    goalCollaborators = [],
     onAR,
     grant = { number: 'N/A' },
-    previousStatus,
     statusChanges = [],
     isReopened,
     standard,
   } = goal;
+
+  const previousStatus = statusChanges[0] ? statusChanges[0].oldStatus : 'Not Started';
 
   const isMonitoringGoal = standard === 'Monitoring';
   const { user } = useContext(UserContext);
@@ -247,16 +247,19 @@ export default function StandardGoalCard({
         />
       );
     }
-    return (
-      <SpecialistTags
-        specialists={goalCollaborators
-          .filter((c) => ((c.user && c.user.name) || c.goalCreatorName))
-          .map((c) => ({
-            name: (c.user && c.user.name) || c.goalCreatorName,
-            roles: [(c.user && c.user.userRoles) || c.goalCreatorRoles].flat(),
-          }))}
-      />
-    );
+
+    if (statusChanges && statusChanges[0] && statusChanges[0].user) {
+      return (
+        <SpecialistTags
+          specialists={[{
+            name: statusChanges[0].user.name,
+            roles: statusChanges[0].user.roles.map((r) => r.name),
+          }]}
+        />
+      );
+    }
+
+    return null;
   };
 
   const getResponses = () => {
@@ -290,7 +293,7 @@ export default function StandardGoalCard({
                   goalId={id}
                   status={localStatus}
                   onUpdateGoalStatus={onUpdateGoalStatus}
-                  previousStatus={previousStatus || 'Not Started'}
+                  previousStatus={previousStatus}
                   regionId={regionId}
                 />
                 {!readonly && (
