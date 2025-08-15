@@ -171,7 +171,7 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
         // This will create a new life cycle for the goal
         // if its currently closed and all related tables.
         // This is the same function as if they had saved on the AR goals and objectives page.
-        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id }, true);
+        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id });
       }
     }
   } catch (e) {
@@ -655,6 +655,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -690,14 +691,13 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-
         await changeGoalStatus({
           goalId: goal.id,
-          userId,
+          userId: instance.userId,
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,
+          overrideCreatedAt: instance.startDate,
         });
       }
       // removing hooks because we don't want to trigger the automatic status change
@@ -705,7 +705,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       return goal.save({ transaction: options.transaction, hooks: false });
     })));
   }
-
   return Promise.resolve();
 };
 

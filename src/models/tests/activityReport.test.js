@@ -271,7 +271,11 @@ describe('Activity Reports model', () => {
     });
 
     await preReport.update(
-      { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      {
+        userId: user.id,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      },
     );
     await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
