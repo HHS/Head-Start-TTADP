@@ -41,7 +41,7 @@ const approversToPass = [{ id: 1, status: null, user: { id: 1, fullName: 'approv
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, onResetToDraft, isApprover, isPendingApprover, pages,
+  allComplete, formData, onSubmit, onReview, isApprover, isPendingApprover, pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -60,7 +60,6 @@ const RenderReview = ({
         availableApprovers={availableApprovers}
         formData={formData}
         onReview={onReview}
-        onResetToDraft={onResetToDraft}
         onSaveForm={() => { }}
         isApprover={isApprover}
         isPendingApprover={isPendingApprover}
