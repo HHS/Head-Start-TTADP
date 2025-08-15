@@ -486,6 +486,7 @@ const getSections = (formData) => {
     {
       title: 'Who was the activity for?',
       anchor: 'activity-for',
+      isEditSection: true,
       items: [
         { label: 'Recipient', name: 'activityRecipients', path: 'name' },
         { label: 'Recipient participants', name: 'participants', sort: true },

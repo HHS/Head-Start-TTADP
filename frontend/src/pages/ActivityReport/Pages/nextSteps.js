@@ -96,6 +96,7 @@ const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
   return [
     {
       title: "Specialist's next steps",
+      isEditSection: true,
       anchor: 'specialist-next-steps',
       items: [...specialistItems.flatMap((item) => item)],
     },
