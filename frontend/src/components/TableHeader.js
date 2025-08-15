@@ -13,6 +13,7 @@ export default function TableHeader({
   numberOfSelected,
   toggleSelectAll,
   hideMenu,
+  hideCountHeaderOnEmpty,
   menuAriaLabel,
   handleDownloadAll,
   handleDownloadClick,
@@ -90,6 +91,7 @@ export default function TableHeader({
             totalCount={count}
             offset={offset}
             perPage={perPage}
+            hideCountHeaderOnEmpty={hideCountHeaderOnEmpty}
             handlePageChange={handlePageChange}
             accessibleLandmarkName="Pagination, top"
             paginationClassName="padding-x-1 margin-0"
@@ -113,6 +115,7 @@ TableHeader.propTypes = {
   perPage: PropTypes.number.isRequired,
   handlePageChange: PropTypes.func,
   hideMenu: PropTypes.bool,
+  hideCountHeaderOnEmpty: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
   setDownloadError: PropTypes.func,
   downloadError: PropTypes.bool,
@@ -136,6 +139,7 @@ TableHeader.defaultProps = {
   count: 0,
   handlePageChange: undefined,
   hideMenu: false,
+  hideCountHeaderOnEmpty: false,
   menuAriaLabel: 'Reports menu',
   downloadError: false,
   setDownloadError: null,
