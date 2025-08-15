@@ -16,7 +16,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 
-const formatDate = (date) => moment(date).format(DATE_DISPLAY_FORMAT);
+const formatDate = (date) => moment.utc(date).format(DATE_DISPLAY_FORMAT);
 
 const mockGoalHistory = [
   {

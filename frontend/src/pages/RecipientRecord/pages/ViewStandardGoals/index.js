@@ -12,6 +12,7 @@ import {
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Container from '../../../../components/Container';
 import colors from '../../../../colors';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -190,7 +191,7 @@ export default function ViewGoalDetails({
               {' '}
               {statusUpdates.length > 0 ? (
                 <ul className="usa-list" aria-label="Goal status updates">
-                  {statusUpdates.map((update) => (
+                  {statusUpdates.map((update, updateIndex) => (
                     <li key={update.id}>
                       <strong>
                         <StatusActionTag
@@ -200,8 +201,19 @@ export default function ViewGoalDetails({
                         />
                       </strong>
                       {' '}
-                      <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                      <strong>{moment.utc(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
                       {update.user ? ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}` : ''}
+                      {(update.newStatus === GOAL_STATUS.SUSPENDED
+                      && updateIndex !== statusUpdates.length - 1)
+                        ? (
+                          <>
+                            <br />
+                            Reason:
+                            {' '}
+                            {update.reason}
+                          </>
+                        )
+                        : <></>}
                     </li>
                   ))}
                 </ul>
@@ -214,7 +226,7 @@ export default function ViewGoalDetails({
                     {' '}
                     on
                     {' '}
-                    <strong>{moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                    <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
                     {goal.goalCollaborators && goal.goalCollaborators.some(
                       (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
                     )
@@ -245,6 +257,16 @@ export default function ViewGoalDetails({
           <div className="goal-status-section margin-bottom-3">
             <ReadOnlyField label="Goal status">
               {goal.status}
+              {goal.status === GOAL_STATUS.SUSPENDED
+                ? (
+                  <>
+                    {' '}
+                    -
+                    {' '}
+                    {goal.reason}
+                  </>
+                )
+                : <></>}
             </ReadOnlyField>
           </div>
 
