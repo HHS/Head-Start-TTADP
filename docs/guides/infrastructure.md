@@ -1,6 +1,12 @@
 ### CI/CD with CircleCI
 # Infrastructure
 
+## Overview
+
+- The TTA Hub application(s) are run on the [cloud.gov](https://login.fr.cloud.gov/login) platform
+- cloud.gov uses AWS and leverages [Cloud Foundry](https://docs.cloudfoundry.org/) tools to provide a hosted platform
+- CircleCI is used for automated build/test/deploy jobs, the project can be found [here](https://app.circleci.com/pipelines/github/HHS/Head-Start-TTADP).
+
 ## Continuous Integration (CI)
 
 The bulk of CD configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file, the [application manifest](manifest.yml) and the environment specific [deployment_config](deployment_config/) variable files.  Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).

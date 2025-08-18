@@ -26,25 +26,19 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 - [Testing](./docs/guides/testing.md)
 - [Infrastructure](./docs/guides/infrastructure.md)
 
-## Infrastructure
-
-- The TTA Hub application(s) are run on the [cloud.gov](https://login.fr.cloud.gov/login) platform
-- cloud.gov uses AWS and leverages [Cloud Foundry](https://docs.cloudfoundry.org/) tools to provide a hosted platform
-- CircleCI is used for automated build/test/deploy jobs, the project can be found [here](https://app.circleci.com/pipelines/github/HHS/Head-Start-TTADP).
-
-### Environments
+### Environment Reference
 
 This application consists of multiple deployed environments:
 
-| Environment | URL                                           | Notes
-| :---------- | :-------------------------------------------- | :----------
-| prod        | https://ttahub.ohs.acf.hhs.gov                | autodeployed from `production`, live site
-| staging     | https://tta-smarthub-staging.app.cloud.gov/   | autodeployed from `main`, pre-prod stable
-| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/   | 
-| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/  | 
-| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/ | 
-| dev-gold    | https://tta-smarthub-dev-gold.app.cloud.gov/  | 
-| dev-pink    | https://tta-smarthub-dev-pink.app.cloud.gov/  | 
+| Environment | URL                                           
+| :---------- | :--------------------------------------------  
+| prod        | https://ttahub.ohs.acf.hhs.gov                 
+| staging     | https://tta-smarthub-staging.app.cloud.gov/    
+| dev-red     | https://tta-smarthub-dev-red.app.cloud.gov/    
+| dev-blue    | https://tta-smarthub-dev-blue.app.cloud.gov/   
+| dev-green   | https://tta-smarthub-dev-green.app.cloud.gov/  
+| dev-gold    | https://tta-smarthub-dev-gold.app.cloud.gov/   
+| dev-pink    | https://tta-smarthub-dev-pink.app.cloud.gov/   
 
 
 <!-- Links -->
