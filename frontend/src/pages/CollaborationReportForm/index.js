@@ -25,57 +25,14 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
-// import {
-//   submitReport,
-//   saveReport,
-//   getReport,
-//   getRecipientsForExistingAR,
-//   createReport,
-//   getCollaborators,
-//   getApprovers,
-//   reviewReport,
-//   resetToDraft,
-//   getGroupsForActivityReport,
-//   getRecipients,
-// } from '../../fetchers/activityReports';
-import { getCollaborators } from '../../fetchers/collaboratorReports';
+import { getCollaborators } from '../../fetchers/collaborators';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 
 const defaultValues = {
-  ECLKCResourcesUsed: [],
-  activityRecipientType: '',
-  activityRecipients: [],
-  activityType: [],
-  additionalNotes: null,
-  files: [],
-  collaborators: [],
-  activityReportCollaborators: [],
-  context: '',
-  deliveryMethod: null,
-  duration: '',
-  endDate: null,
-  goals: [],
-  recipientNextSteps: [{ id: null, note: '' }],
-  recipients: [],
-  nonECLKCResourcesUsed: [],
-  numberOfParticipants: null,
-  objectivesWithoutGoals: [],
-  otherResources: [],
-  participantCategory: '',
-  participants: [],
-  reason: [],
-  requester: '',
-  specialistNextSteps: [{ id: null, note: '' }],
-  startDate: null,
-  calculatedStatus: REPORT_STATUSES.DRAFT,
-  targetPopulations: [],
-  topics: [],
-  approvers: [],
-  recipientGroup: null,
-  language: [],
+  // Default values for a new collaboration report go here
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -217,15 +174,12 @@ function CollaborationReport({ match, location, region }) {
         // }
 
         const apiCalls = [
-          // getRecips(),
           getCollaborators(report.regionId),
-          // getApprovers(report.regionId),
-          // getGroupsForActivityReport(report.regionId),
         ];
 
         const [collaborators] = await Promise.all(apiCalls);
-        const isCollaborator = report.activityReportCollaborators
-          && report.activityReportCollaborators.find((u) => u.userId === user.id);
+        const isCollaborator = report.collabReportCollaborators
+          && report.collabReportCollaborators.find((u) => u.userId === user.id);
 
         const isAuthor = report.userId === user.id;
 
