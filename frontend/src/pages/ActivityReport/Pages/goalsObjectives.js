@@ -79,7 +79,6 @@ Buttons.propTypes = {
 
 const GoalsObjectives = ({
   reportId,
-  onSaveForm,
 }) => {
   // NOTE: Temporary fix until we can figure out why mesh-kit is duplicating data
   // Check if this is the first time the user has opened the page,
@@ -194,8 +193,6 @@ const GoalsObjectives = ({
       currentPageState[GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER] = IN_PROGRESS;
       setValue('pageState', currentPageState);
     }
-
-    onSaveForm(false, true); // isAutoSave=false, forceUpdate=true
 
     if (modalRef.current.modalIsOpen) {
       modalRef.current.toggleModal();
@@ -392,7 +389,6 @@ const GoalsObjectives = ({
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  onSaveForm: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => (
@@ -433,7 +429,6 @@ export default {
     <>
       <GoalsObjectives
         reportId={reportId}
-        onSaveForm={onSaveDraft}
       />
       <DraftAlert />
       <Buttons
