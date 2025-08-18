@@ -41,8 +41,6 @@ export default function StandardGoalCard({
     id,
     ids = [id],
     status,
-    createdAt,
-    latestStatusChangeDate,
     name,
     objectives = [],
     onAR,
@@ -50,9 +48,11 @@ export default function StandardGoalCard({
     statusChanges = [],
     isReopened,
     standard,
+    createdAt,
   } = goal;
 
-  const previousStatus = statusChanges[0] ? statusChanges[0].oldStatus : 'Not Started';
+  const lastStatusChange = statusChanges[statusChanges.length - 1] || { oldStatus: 'Not Started' };
+  const previousStatus = lastStatusChange.oldStatus;
 
   const isMonitoringGoal = standard === 'Monitoring';
   const { user } = useContext(UserContext);
@@ -248,12 +248,12 @@ export default function StandardGoalCard({
       );
     }
 
-    if (statusChanges && statusChanges[0] && statusChanges[0].user) {
+    if (lastStatusChange && lastStatusChange.user) {
       return (
         <SpecialistTags
           specialists={[{
-            name: statusChanges[0].user.name,
-            roles: statusChanges[0].user.roles.map((r) => r.name),
+            name: lastStatusChange.user.name,
+            roles: lastStatusChange.user.roles.map((r) => r.name),
           }]}
         />
       );
@@ -359,7 +359,9 @@ export default function StandardGoalCard({
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeLabel()}</p>
-                    <p className="usa-prose margin-y-0">{moment(latestStatusChangeDate || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+                    <p className="usa-prose margin-y-0">
+                      {moment(lastStatusChange.performedAt || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}
+                    </p>
                   </div>
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">

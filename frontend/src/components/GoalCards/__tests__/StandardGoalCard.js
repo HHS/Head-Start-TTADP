@@ -509,13 +509,4 @@ describe('StandardGoalCard', () => {
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
   });
-
-  it('uses latestStatusChangeDate when available', () => {
-    const goalWithLatestDate = {
-      ...goal,
-      latestStatusChangeDate: '2023-12-01',
-    };
-    renderStandardGoalCard({}, goalWithLatestDate);
-    expect(screen.getByText(/12\/01\/2023/i)).toBeInTheDocument();
-  });
 });

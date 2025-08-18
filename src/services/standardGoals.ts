@@ -364,21 +364,9 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
         return null;
       }
 
-      if (newOrUpdatedGoal) {
-        // If the goal is 'Suspended' move to 'In progress'.
-        if (newOrUpdatedGoal.status === GOAL_STATUS.SUSPENDED) {
-          await changeGoalStatus({
-            goalId: newOrUpdatedGoal.id,
-            userId,
-            newStatus: GOAL_STATUS.IN_PROGRESS,
-            reason: 'Goal moved to In Progress from Suspended',
-            context: 'saveStandardGoalsForReport',
-          });
-          newOrUpdatedGoal.status = GOAL_STATUS.IN_PROGRESS;
-        } else if (newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
-          // If the goal is 'Closed' create a new goal.
-          newOrUpdatedGoal = null;
-        }
+      if (newOrUpdatedGoal && newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
+        // If the goal is 'Closed' create a new goal.
+        newOrUpdatedGoal = null;
       }
 
       // If there is no existing goal, or its closed, create a new one in 'Not started'.
@@ -900,14 +888,6 @@ export async function standardGoalsForRecipient(
       'status_sort'],
       [
         sequelize.literal(`(
-          SELECT MAX("createdAt")
-          FROM "GoalStatusChanges"
-          WHERE "goalId" = "Goal"."id"
-        )`),
-        'latestStatusChangeDate',
-      ],
-      [
-        sequelize.literal(`(
           SELECT COUNT(*) > 0
           FROM "Goals" g2
           WHERE g2."goalTemplateId" = "Goal"."goalTemplateId"
@@ -935,7 +915,6 @@ export async function standardGoalsForRecipient(
       {
         model: GoalStatusChange,
         as: 'statusChanges',
-        attributes: ['oldStatus', 'newStatus'],
         required: false,
         include: [
           {

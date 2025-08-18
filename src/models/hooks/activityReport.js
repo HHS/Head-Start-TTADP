@@ -144,7 +144,7 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
  */
 const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) => {
   try {
-    // If the report is being approved, unlocked, or submitted,
+  // If the report is being approved, unlocked, or submitted,
     if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
       && instance.calculatedStatus === REPORT_STATUSES.APPROVED)
      || (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
@@ -697,13 +697,50 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,
-          overrideCreatedAt: instance.startDate,
+          performedAt: instance.startDate,
         });
       }
       // removing hooks because we don't want to trigger the automatic status change
       // (i.e. last in progress at will be overwritten)
       return goal.save({ transaction: options.transaction, hooks: false });
     })));
+  }
+  return Promise.resolve();
+};
+
+const automaticUnsuspendGoalOnApproval = async (instance) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+    const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+    const reportGoals = await getGoalsForReport(instance.id);
+
+    if (reportGoals.length) {
+      // eslint-disable-next-line global-require
+      // eslint-disable-next-line global-require
+
+      const updateStatusGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.SUSPENDED);
+
+      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+      // since we can't unsuspend goals in this way, this logic will
+      // handle the unsuspension
+      await Promise.all(updateStatusGoals.map((s) => changeGoalStatus({
+        goalId: s.id,
+        userId,
+        newStatus: GOAL_STATUS.IN_PROGRESS,
+        reason: 'Goal moved to In Progress from Suspended',
+        context: 'saveStandardGoalsForReport',
+        performedAt: instance.startDate,
+      })));
+    }
   }
   return Promise.resolve();
 };
@@ -967,6 +1004,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await checkForNewGoalCycleOnApproval(sequelize, instance, options);
+  await automaticUnsuspendGoalOnApproval(instance);
   await revisionBumpBroadcast(sequelize, instance);
 };
 
