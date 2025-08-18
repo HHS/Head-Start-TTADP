@@ -121,9 +121,9 @@ describe('validateGoals', () => {
         ];
 
         const setError = jest.fn();
-        const result = unfinishedObjectives(objectives, setError);
+        const result = unfinishedObjectives(objectives, setError, 'goalForEditing.objectives', true);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].citations`, { message: OBJECTIVE_CITATIONS });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].citations`, { message: OBJECTIVE_CITATIONS });
       });
 
       it('if one objective has no "supportType"', () => {
