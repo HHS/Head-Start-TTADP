@@ -215,7 +215,11 @@ export default function ViewGoalDetails({
                         />
                       </strong>
                       {' '}
-                      <strong>{moment.utc(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                      <strong>
+                        {moment.utc(
+                          update.performedAt || update.createdAt,
+                        ).format(DATE_DISPLAY_FORMAT)}
+                      </strong>
                       {update.user ? ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}` : ''}
                       {(update.newStatus === GOAL_STATUS.SUSPENDED
                       && updateIndex !== statusUpdates.length - 1)
