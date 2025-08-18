@@ -455,7 +455,7 @@ jobs:
         name: Audit checksums of color files
         command: |
           chmod 744 ./bin/checkcolorhash.sh
-          ./bin/checkcolorhash.sh;
+          cd bin && ./checkcolorhash.sh;
     - run:
         name: Add GitHub to known_hosts
         command: |
