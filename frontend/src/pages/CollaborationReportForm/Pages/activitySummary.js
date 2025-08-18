@@ -29,9 +29,8 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
-// import './activitySummary.scss';
 
-const ActivitySummary = ({ collaborators }) => {
+const ActivitySummary = ({ collaborators = [] }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
   const {
