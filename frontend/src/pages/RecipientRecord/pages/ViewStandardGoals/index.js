@@ -22,6 +22,20 @@ import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 import './index.scss';
 
+const GoalUserIdentifier = ({ goal }) => {
+  if (goal.standard === 'Monitoring') {
+    return ' by OHS';
+  }
+
+  return goal.goalCollaborators && goal.goalCollaborators.some(
+    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
+  )
+    ? ` by ${goal.goalCollaborators.find(
+      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
+    ).user.name}`
+    : '';
+};
+
 const StatusActionTag = ({ update, goalHistory, currentGoalIndex }) => {
   const isReopened = update.reason === 'Goal created'
     && goalHistory.some((goal, index) => index > currentGoalIndex && goal.status === 'Closed');
@@ -227,13 +241,7 @@ export default function ViewGoalDetails({
                     on
                     {' '}
                     <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
-                    {goal.goalCollaborators && goal.goalCollaborators.some(
-                      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
-                    )
-                      ? ` by ${goal.goalCollaborators.find(
-                        (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
-                      ).user.name}`
-                      : ''}
+                    <GoalUserIdentifier goal={goal} />
                   </li>
                 </ul>
               )}

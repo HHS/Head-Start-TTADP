@@ -367,6 +367,10 @@ export async function getGoalHistory(req, res) {
           [
             sequelize.literal('(SELECT "reason" FROM "GoalStatusChanges" WHERE "GoalStatusChanges"."goalId" = "Goal"."id" ORDER BY "createdAt" DESC LIMIT 1)'), 'reason',
           ],
+          [
+            sequelize.literal('"goalTemplate"."standard"'),
+            'standard',
+          ],
         ],
       },
       include: [
