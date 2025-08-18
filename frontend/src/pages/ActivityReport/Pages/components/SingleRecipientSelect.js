@@ -215,7 +215,17 @@ SingleRecipientSelect.propTypes = {
   possibleRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,
   onChangeActivityRecipients: PropTypes.func.isRequired,
   onBlurActivityRecipients: PropTypes.func.isRequired,
-  selectRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  selectRef: PropTypes.shape({
+    current: PropTypes.oneOfType([
+      PropTypes.shape({
+        focus: PropTypes.func,
+        blur: PropTypes.func,
+      }),
+      // DOM element
+      typeof Element !== 'undefined' ? PropTypes.instanceOf(Element) : PropTypes.any,
+      PropTypes.oneOf([null]),
+    ]),
+  }),
 };
 
 SingleRecipientSelect.defaultProps = {

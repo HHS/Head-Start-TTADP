@@ -23,7 +23,7 @@ const RenderActivitySummary = ({
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
-      goals: passedGoals,
+      goalsAndObjectives: passedGoals,
       objectivesWithoutGoals: [],
       participants: [],
       activityRecipients: [],
@@ -85,7 +85,7 @@ const RenderActivitySummary = ({
 const passedGoalsWithCitations = [
   {
     id: 1,
-    name: 'goal 1',
+    name: '(monitoring) goal 1',
     standard: 'Monitoring',
     objectives: [
       {
