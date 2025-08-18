@@ -49,6 +49,7 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
   }
 
   // Check for the presence of Redis-related environment variables
+  // Full URI fmt: redis://[[username][:password]@][host][:port]
   const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
   const redisHost = REDIS_HOST || 'localhost';
   const redisPort = REDIS_PORT || 6379;
