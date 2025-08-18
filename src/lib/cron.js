@@ -15,19 +15,19 @@ import { logger, auditLogger } from '../logger';
 import { isTrue } from '../envParser';
 
 // Set timing parameters.
-// Run at 4 am ET
-const schedule = '0 4 * * *';
-// Run daily at 4 pm
-const dailySched = '1 16 * * 1-5';
+// Run daily at 4 AM
+const updateGrantSched = '0 4 * * *';
+// Run daily at 4 PM
+const dailyEmailSched = '1 16 * * 1-5';
 // Run at 4 pm every Friday
-const weeklySched = '5 16 * * 5';
+const weeklyEmailSched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '10 16 28-31 * *';
+const monthlyEmailSched = '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
-const runUpdateJob = () => {
+const runUpdateGrantsJob = () => {
   try {
-    logger.info('Starting update job');
+    logger.info('Starting job to update grant recipients');
     return updateGrantsRecipients();
   } /* istanbul ignore next: can't force an error here */ catch (error) {
     auditLogger.error(`Error processing HSES file: ${error}`);
@@ -101,17 +101,13 @@ const runMonthlyEmailJob = () => (async () => {
 export default function runCronJobs() {
   // Run only on one instance
   if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || isTrue('FORCE_CRON')) {
-    // disable updates for non-production environments
+    // disable grant updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
-      const job = new CronJob(schedule, () => runUpdateJob(), null, true, timezone);
-      job.start();
+      new CronJob(updateGrantSched, () => runUpdateGrantsJob(), null, true, timezone).start();
     }
-    logger.info('Scheduling cron jobs');
-    const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
-    dailyJob.start();
-    const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
-    weeklyJob.start();
-    const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
-    monthlyJob.start();
+    logger.info('Scheduling email cron jobs');
+    new CronJob(dailyEmailSched, () => runDailyEmailJob(), null, true, timezone).start();
+    new CronJob(weeklyEmailSched, () => runWeeklyEmailJob(), null, true, timezone).start();
+    new CronJob(monthlyEmailSched, () => runMonthlyEmailJob(), null, true, timezone).start();
   }
 }
