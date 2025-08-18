@@ -34,13 +34,13 @@ import {
   getReport,
   getRecipientsForExistingAR,
   createReport,
-  getCollaborators,
   getApprovers,
   reviewReport,
   resetToDraft,
   getGroupsForActivityReport,
   getRecipients,
 } from '../../fetchers/activityReports';
+import { getCollaborators } from '../../fetchers/collaborators';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
