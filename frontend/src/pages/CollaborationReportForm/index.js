@@ -31,8 +31,9 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 
+// Default values for a new collaboration report go here
 const defaultValues = {
-  // Default values for a new collaboration report go here
+  collaborators: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
