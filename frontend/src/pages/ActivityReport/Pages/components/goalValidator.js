@@ -40,7 +40,7 @@ export const unfinishedObjectives = (
   objectives,
   setError = () => {},
   fieldArrayName = 'goalForEditing.objectives',
-  isMonitoringGoal,
+  isMonitoringGoal = false,
 ) => {
   const unfinished = objectives.some(
     (objective, index) => {
@@ -61,8 +61,8 @@ export const unfinishedObjectives = (
       }
 
       // We only validate citations if they exist (they are not always required).
-      if ((isMonitoringGoal && !objective.citations)
-        || (objective.citations && !objective.citations.length)) {
+      if (isMonitoringGoal && (!objective.citations
+        || (objective.citations && !objective.citations.length))) {
         setError(`${fieldArrayName}[${index}].citations`, { message: OBJECTIVE_CITATIONS });
         incomplete = true;
       }
