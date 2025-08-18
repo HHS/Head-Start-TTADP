@@ -1,26 +1,21 @@
 import React from 'react';
 import moment from 'moment-timezone';
-import Container from '../../../components/Container';
+import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
-} from '../../../Constants';
+} from '../../Constants';
 import {
-  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
-} from '../helpers';
-import ReadOnlyContent from '../../../components/ReadOnlyContent';
-import RenderReviewCitations from '../../ActivityReport/Pages/components/RenderReviewCitations';
-
-function formatNextSteps(nextSteps, heading, striped) {
-  return nextSteps.map((step, index) => ({
-    heading: index === 0 ? heading : '',
-    data: {
-      [`Step ${index + 1}`]: step.note,
-      'Anticipated completion': step.completeDate,
-    },
-    striped,
-  }));
-}
+  reportDataPropTypes,
+  formatSimpleArray,
+  mapAttachments,
+  formatRequester,
+  formatNextSteps,
+  formatDelivery,
+  formatTtaType,
+} from './helpers';
+import ReadOnlyContent from '../ReadOnlyContent';
+import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
 
 function formatObjectiveLinks(resources, isOtherEntity = false) {
   if (Array.isArray(resources) && resources.length > 0) {
@@ -43,37 +38,6 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
     );
   }
   return [];
-}
-
-function formatDelivery(method, virtualDeliveryType) {
-  if (method === 'in-person') {
-    return 'In Person';
-  }
-
-  if (method === 'virtual') {
-    return virtualDeliveryType ? `Virtual: ${virtualDeliveryType}` : 'Virtual';
-  }
-
-  if (method === 'hybrid') {
-    return 'Hybrid';
-  }
-
-  return '';
-}
-
-/**
- *
- * @param {String[]} ttaType
- * @returns String[]
- */
-
-function formatTtaType(ttaType) {
-  const dict = {
-    training: 'Training',
-    'technical-assistance': 'Technical assistance',
-  };
-
-  return ttaType.map((type) => dict[type]).join(', ');
 }
 
 function addObjectiveSectionsToArray(
@@ -119,12 +83,9 @@ function addObjectiveSectionsToArray(
    */
 function calculateGoalsAndObjectives(report) {
   const sections = [];
-  let striped = false;
 
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
-      striped = !striped;
-
       let goalSection = {
         heading: 'Goal summary',
         data: {
@@ -137,7 +98,7 @@ function calculateGoalsAndObjectives(report) {
             </>
           ),
         },
-        striped,
+        striped: false,
       };
 
       if (goal.activityReportGoals && goal.activityReportGoals.length) {
@@ -151,7 +112,7 @@ function calculateGoalsAndObjectives(report) {
               </>
             ),
           },
-          striped: true,
+          striped: false,
         };
       }
 
@@ -168,13 +129,13 @@ function calculateGoalsAndObjectives(report) {
 
       sections.push(goalSection);
 
-      addObjectiveSectionsToArray(goal.objectives, sections, striped, report.activityRecipients);
+      addObjectiveSectionsToArray(goal.objectives, sections, false, report.activityRecipients);
     });
   } else if (report.activityRecipientType === 'other-entity') {
     addObjectiveSectionsToArray(
       report.objectivesWithoutGoals,
       sections,
-      striped,
+      false,
       report.activityRecipients,
       true,
     );
@@ -289,7 +250,7 @@ export default function ApprovedReportV2({ data }) {
               'Recipient names': arRecipients,
               'Target populations': targetPopulations,
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Reason for activity',
@@ -306,7 +267,7 @@ export default function ApprovedReportV2({ data }) {
               'End date': endDate,
               Duration: duration,
             },
-            striped: true,
+            striped: false,
           },
           {
             heading: 'Context',
@@ -350,7 +311,7 @@ export default function ApprovedReportV2({ data }) {
               data: {
                 Attachments: attachments,
               },
-              striped: true,
+              striped: false,
             }]
           }
       />
