@@ -1,10 +1,9 @@
-### CI/CD with CircleCI
 # Infrastructure
 
 ## Overview
 
 - The TTA Hub application(s) are run on the [cloud.gov](https://login.fr.cloud.gov/login) platform
-- cloud.gov uses AWS and leverages [Cloud Foundry](https://docs.cloudfoundry.org/) tools to provide a hosted platform
+- cloud.gov uses AWS and leverages [Cloud Foundry](https://docs.cloudfoundry.org/) tools
 - CircleCI is used for automated build/test/deploy jobs, the project can be found [here](https://app.circleci.com/pipelines/github/HHS/Head-Start-TTADP).
 
 ## Continuous Integration (CI)
@@ -236,9 +235,65 @@ Ex.
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
 
+## Creating a new environment
+
+```
+cf login -a api.fr.cloud.gov --sso
+cf create-service aws-rds [size] [name] // ex micro-psql, ttahub-dev-green
+cf create-service aws-elasticache-redis [size] [name] // ex redis-dev ttahub-redis-dev-green
+cf create-service s3 [size] [name] // ex basic ttahub-document-upload-dev-green
+```
+
+Update the contentSecurityPolicy in app.js with the new full hostname.
+Contact cloud.gov to allow the new routing
+
+If you need to bind an identity provider:
+
+```
+# a provider can be reused within the same space
+ cf create-service cloud-gov-identity-provider oauth-client oauth-provider-dev
+
+ # create a service key for each env
+ cf create-service-key \
+     oauth-provider-dev \
+     oauth-key-dev-green \
+     -c '{
+         "redirect_uri": [
+             "https://tta-smarthub-dev-green.app.cloud.gov/authenticated",
+             "https://tta-smarthub-dev-green.app.cloud.gov/logout"
+         ]
+     }'
+
+ # retrieve created id & secret
+ cf service-key oauth-provider-dev oauth-key-dev-green
+
+```
+
+## Shared Services
+
+In order to access a service from multiple 'spaces', run the following command:
+`cf share-service SERVICE-INSTANCE -s OTHER-SPACE`
+
+Currently, database restore is done by sharing lower-env db access into the prod environment, where the s3 db backups are located.
+An automated script will run in that environment and run updates and migrations on the lower-env databases.
+
+<!-- Links -->
+
+[aws-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-config
+[aws-install]: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
+[cloudgov-bind]: https://cloud.gov/docs/deployment/managed-services/#bind-the-service-instance
+[cloudgov-deployer]: https://cloud.gov/docs/services/cloud-gov-service-account/
+[cloudgov-service-keys]: https://cloud.gov/docs/services/s3/#interacting-with-your-s3-bucket-from-outside-cloudgov
+[cf-install]: https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
+[PR#71]: https://github.com/adhocteam/Head-Start-TTADP/pull/71
+[tf]: https://www.terraform.io/downloads.html
+[tf-vars]: https://www.terraform.io/docs/configuration/variables.html#variable-definitions-tfvars-files
+
+
+
 ## Creating and Applying a Deploy Key
 
-In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
+In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.  This has already been done for existing environments but documented here for future reference
 
 The following links outline the steps to take:
 https://circleci.com/docs/github-integration/#create-a-github-deploy-key

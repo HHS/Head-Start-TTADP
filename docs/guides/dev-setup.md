@@ -70,7 +70,7 @@ If you are not using your own custom pre-commit hooks:
 
 If you are already using git hooks, add the [.githooks/pre-commit](.githooks/pre-commit) contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
-### Import Current Production Data
+### Import Production Data
 
 Make sure you have access to all the necessary spaces on Cloud.gov
 

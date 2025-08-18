@@ -25,6 +25,7 @@ For the latest on our product mission, goals, initiatives, and KPIs, see the [Pr
 - [Dev Setup](./docs/guides/dev-setup.md)
 - [Testing](./docs/guides/testing.md)
 - [Infrastructure](./docs/guides/infrastructure.md)
+- [Architecture Decisions](./docs/adr)
 
 ### Environment Reference
 
