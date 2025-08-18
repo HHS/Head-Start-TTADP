@@ -14,7 +14,6 @@ import {
 import { OBJECTIVE_RESOURCES, validateGoals, validatePrompts } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
-import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
@@ -141,22 +140,12 @@ const ActivityReportNavigator = ({
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
-  const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   // if we have a goal in the form, we want to say "goal form is not closed"
   const [isGoalFormClosed, toggleGoalForm] = useState(
     !(goalForEditing) && selectedGoals && selectedGoals.length > 0,
-  );
-
-  // Toggle objectives readonly only if all objectives are saved and pass validation.
-  const areInitialObjectivesValid = validateObjectives(selectedObjectivesWithoutGoals);
-  const hasUnsavedObjectives = selectedObjectivesWithoutGoals.filter((u) => !u.id);
-  const [isObjectivesFormClosed, toggleObjectiveForm] = useState(
-    selectedObjectivesWithoutGoals.length > 0
-      && areInitialObjectivesValid === true
-      && hasUnsavedObjectives.length === 0,
   );
 
   const setSavingLoadScreen = (isAutoSave = false) => {
@@ -194,6 +183,34 @@ const ActivityReportNavigator = ({
     return newPageState;
   };
 
+  /**
+ * Updates the goals & objectives page state based on current form values
+ * This ensures that after any API call (like recipient changes that remove goals)
+ * we update the page state appropriately
+ * @param {Object} currentFormData - The current form data
+ */
+  const updateGoalsObjectivesPageState = (currentFormData) => {
+    if (goalsAndObjectivesPage) {
+      // Force re-validation of the goals and objectives page
+      const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
+        .isPageComplete(getValues(), formState);
+      // If the page is not complete, ensure it's marked as IN_PROGRESS
+      const isNotInProgress = pageState[GOALS_AND_OBJECTIVES_POSITION] !== IN_PROGRESS;
+      if (!isGoalsObjectivesPageComplete && isNotInProgress) {
+        // Update both the form state and the formData object that will be used for rendering
+        const currentPageState = { ...pageState };
+        currentPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+        // Update the formData directly to ensure UI updates
+        const updatedFormData = {
+          ...currentFormData,
+          pageState: currentPageState,
+        };
+        // Force an update of the form data to ensure navigator receives the changes
+        updateFormData(updatedFormData, false);
+      }
+    }
+  };
+
   const newNavigatorState = () => {
     const newPageState = recalculatePageState();
 
@@ -229,29 +246,8 @@ const ActivityReportNavigator = ({
       updateErrorMessage();
       await onSave(data, forceUpdate);
 
-      // After save, always re-validate the goals & objectives page state
-      // This ensures that after any API call (like recipient changes that remove goals)
-      // we update the page state appropriately
-      if (goalsAndObjectivesPage) {
-        // Force re-validation of the goals and objectives page
-        const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-          .isPageComplete(getValues(), formState);
-        // If the page is not complete, ensure it's marked as IN_PROGRESS
-        const isNotInProgress = pageState[GOALS_AND_OBJECTIVES_POSITION] !== IN_PROGRESS;
-        if (!isGoalsObjectivesPageComplete && isNotInProgress) {
-          // Update both the form state and the formData object that will be used for rendering
-          const currentPageState = { ...pageState };
-          currentPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-          // Update the formData directly to ensure UI updates
-          const updatedFormData = {
-            ...formData,
-            ...getValues(),
-            pageState: currentPageState,
-          };
-          // Force an update of the form data to ensure navigator receives the changes
-          updateFormData(updatedFormData, false);
-        }
-      }
+      // After save, check and update the goals & objectives page state
+      updateGoalsObjectivesPageState(data);
 
       updateLastSaveTime(moment());
     } catch (error) {
@@ -262,8 +258,7 @@ const ActivityReportNavigator = ({
   };
 
   const showSaveGoalsAndObjButton = isGoalsObjectivesPage
-  && !isGoalFormClosed
-  && !isObjectivesFormClosed;
+  && !isGoalFormClosed;
 
   /**
      * @summary This function is called when a page is navigated and is somewhat
@@ -521,8 +516,7 @@ const ActivityReportNavigator = ({
       const data = {
         ...formData,
         ...values,
-        pageState:
-          newNavigatorState(),
+        pageState: newNavigatorState(),
       };
       await onSave(data);
 
@@ -600,9 +594,7 @@ const ActivityReportNavigator = ({
   return (
     <GoalFormContext.Provider value={{
       isGoalFormClosed,
-      isObjectivesFormClosed,
       toggleGoalForm,
-      toggleObjectiveForm,
       isAppLoading,
       setIsAppLoading,
     }}

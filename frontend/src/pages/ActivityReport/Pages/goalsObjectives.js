@@ -38,12 +38,10 @@ const Buttons = ({
 }) => {
   const {
     isGoalFormClosed,
-    isObjectivesFormClosed,
   } = useContext(GoalFormContext);
 
   const showSaveGoalsAndObjButton = (
     !isGoalFormClosed
-    && !isObjectivesFormClosed
   );
 
   if (showSaveGoalsAndObjButton) {
@@ -81,6 +79,7 @@ Buttons.propTypes = {
 
 const GoalsObjectives = ({
   reportId,
+  onSaveForm,
 }) => {
   // NOTE: Temporary fix until we can figure out why mesh-kit is duplicating data
   // Check if this is the first time the user has opened the page,
@@ -98,7 +97,6 @@ const GoalsObjectives = ({
 
   const {
     isGoalFormClosed,
-    isObjectivesFormClosed,
     toggleGoalForm,
   } = useContext(GoalFormContext);
 
@@ -189,6 +187,18 @@ const GoalsObjectives = ({
       setValue('goalName', '');
       setValue('goalEndDate', '');
       toggleGoalForm(false);
+
+      // Update the page state to reflect that there are no goals
+      // This ensures the UI correctly shows the "In progress" state
+      const currentPageState = { ...pageState };
+      currentPageState[GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER] = IN_PROGRESS;
+      setValue('pageState', currentPageState);
+    }
+
+    onSaveForm(false, true); // isAutoSave=false, forceUpdate=true
+
+    if (modalRef.current.modalIsOpen) {
+      modalRef.current.toggleModal();
     }
   };
 
@@ -265,8 +275,6 @@ const GoalsObjectives = ({
     grants: [],
   }));
 
-  const isFormOpen = !isGoalFormClosed || !isObjectivesFormClosed;
-
   // Add a variable to determine if a recipient has been selected.
   const hasRecipient = activityRecipients && activityRecipients.length > 0;
 
@@ -314,18 +322,13 @@ const GoalsObjectives = ({
         modalRef={modalRef}
         title="Are you sure you want to delete this goal?"
         modalId="remove-goal-modal"
-        onOk={() => {
-          onRemove(modalRef.current.goal);
-          if (modalRef.current.modalIsOpen) {
-            modalRef.current.toggleModal();
-          }
-        }}
+        onOk={onRemove}
         okButtonText="Remove"
         okButtonAriaLabel="remove goal"
       >
         <p>If you remove the goal, the objectives and TTA provided content will also be deleted.</p>
       </Modal>
-      { isFormOpen && !alertIsDisplayed && (
+      { !isGoalFormClosed && !alertIsDisplayed && (
       <IndicatesRequiredField />
       ) }
 
@@ -389,6 +392,7 @@ const GoalsObjectives = ({
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  onSaveForm: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => (
@@ -429,6 +433,7 @@ export default {
     <>
       <GoalsObjectives
         reportId={reportId}
+        onSaveForm={onSaveDraft}
       />
       <DraftAlert />
       <Buttons
