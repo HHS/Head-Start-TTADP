@@ -427,6 +427,7 @@ class Goals{
  source : enum
  status : varchar(255)
  timeframe : text
+ * prestandard : boolean : false
 }
 
 class GrantNumberLinks{

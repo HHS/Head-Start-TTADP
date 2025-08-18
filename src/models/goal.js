@@ -154,6 +154,11 @@ export default (sequelize, DataTypes) => {
         return true;
       },
     },
+    prestandard: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
