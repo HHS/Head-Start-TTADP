@@ -16,7 +16,7 @@ import {
   pageComplete,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
-import ParticipantsNumberOfParticipants from '../components/ParticipantsNumberOfParticipants';
+import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
 

@@ -23,7 +23,6 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues: {
-      similarGoals: null, // the IDS of a goal from the similarity API
       goalIds: [], // the goal ids that the user has selected
       selectedGrant: null, // the grant that the user has selected
       goalName: '', // the goal name in the textbox

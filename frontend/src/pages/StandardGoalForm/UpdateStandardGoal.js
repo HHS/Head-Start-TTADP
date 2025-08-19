@@ -29,7 +29,7 @@ export default function UpdateStandardGoal({ recipient }) {
     },
   });
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   useEffect(() => {
     const fetchStandardGoal = async () => {
@@ -46,7 +46,9 @@ export default function UpdateStandardGoal({ recipient }) {
 
         const resetFormData = {
           // eslint-disable-next-line max-len
-          [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({ value: o.title, objectiveId: o.id, onAR: o.onAR })),
+          [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({
+            value: o.title, objectiveId: o.id, onAR: o.onAR, status: o.status,
+          })),
           [GOAL_FORM_FIELDS.ROOT_CAUSES]: g.responses.flatMap((responses) => (
             responses.response.map((r) => ({ id: r, name: r }))
           )),
