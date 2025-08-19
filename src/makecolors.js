@@ -1,5 +1,6 @@
 /* eslint-disable indent */
-/* eslint-disable no-console */
+import { auditLogger } from './logger';
+
 const fs = require('fs');
 const crypto = require('crypto');
 const colors = require('../frontend/src/colors');
@@ -12,11 +13,11 @@ function generateHashes() {
   const scsshex = scsshash.digest('hex');
   fs.writeFile('./colorsscsschecksum', scsshex, (err) => {
     if (err) {
-      console.error('cannot generate colors.scss hash');
+      auditLogger.log('cannot generate colors.scss hash');
       return;
     }
 
-    console.log('colors.scss hash created');
+    auditLogger.log('colors.scss hash created');
   }); // end fs call
 
   const jsFileBuffer = fs.readFileSync('./frontend/src/colors.js');
@@ -26,11 +27,11 @@ function generateHashes() {
   const jshex = jsHash.digest('hex');
   fs.writeFile('./colorsjschecksum', jshex, (err) => {
     if (err) {
-      console.error('cannot generate colors.js hash');
+      auditLogger.log('cannot generate colors.js hash');
       return;
     }
 
-    console.log('colors.js hash created');
+    auditLogger.log('colors.js hash created');
   }); // end fs call
 }
 
@@ -73,11 +74,11 @@ ${keys.map((key, index) => {
 
   fs.writeFile('./frontend/src/colors.scss', contents, (err) => {
     if (err) {
-      console.error('cannot generate colors.scss');
+      auditLogger.error('cannot generate colors.scss');
       return;
     }
 
-    console.log('colors.scss created');
+    auditLogger.log('colors.scss created');
 
     generateHashes();
   }); // end fs call

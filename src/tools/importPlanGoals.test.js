@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
 import importGoals from './importPlanGoals';
 import { downloadFile } from '../lib/s3';
+import { auditLogger, logger } from '../logger';
 import db, {
   Goal, Grant,
 } from '../models';
-import { logger } from '../logger';
 
 jest.mock('../logger');
 
@@ -46,7 +46,7 @@ describe('Import TTA plan goals', () => {
         await importGoals(fileName, regionId);
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.log(`Unable to setup Import Plan Goals test ${error}`);
+        auditLogger.log(`Unable to setup Import Plan Goals test ${error}`);
       }
     });
 

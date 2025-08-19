@@ -1,3 +1,5 @@
+import { auditLogger } from '../logger';
+
 const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
@@ -16,12 +18,10 @@ export default (sequelize, DataTypes) => {
       try {
         await sequelize.query('REFRESH MATERIALIZED VIEW "GrantRelationshipToActive";');
         if (!suppressSuccessMessage) {
-          // eslint-disable-next-line no-console
-          console.log('Materialized view refreshed successfully');
+          auditLogger.log('Materialized view refreshed successfully');
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error refreshing materialized view:', error);
+        auditLogger.error('Error refreshing materialized view:', error);
         throw error;
       }
     }
