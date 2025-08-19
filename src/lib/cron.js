@@ -101,11 +101,9 @@ const runMonthlyEmailJob = () => (async () => {
 export default function runCronJobs() {
   // Run only on one instance
   if (process.env.CF_INSTANCE_INDEX === '0') {
-    logger.info('Scheduling cron jobs');
-    if (isTrue('ENABLE_GRANTS_CRON')) {
+    if (isTrue('ENABLE_CRON_JOBS')) {
+      logger.info('Scheduling cron jobs');
       new CronJob(updateGrantSched, () => runUpdateGrantsJob(), null, true, timezone).start();
-    }
-    if (isTrue('ENABLE_EMAIL_CRON')) {
       new CronJob(dailyEmailSched, () => runDailyEmailJob(), null, true, timezone).start();
       new CronJob(weeklyEmailSched, () => runWeeklyEmailJob(), null, true, timezone).start();
       new CronJob(monthlyEmailSched, () => runMonthlyEmailJob(), null, true, timezone).start();

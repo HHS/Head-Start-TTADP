@@ -349,6 +349,7 @@ jobs:
     - run:
         name: Test backend
         command: |
+          echo ${ENABLE_CRON_JOBS}
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:

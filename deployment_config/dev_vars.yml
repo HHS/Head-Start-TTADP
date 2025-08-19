@@ -20,8 +20,7 @@ new_relic_app_id: 867221900
 LOG_LEVEL: debug
 SUPPRESS_ERROR_LOGGING: "false"
 SEND_NOTIFICATIONS: "true"
-ENABLE_GRANTS_CRON: "true"
-ENABLE_EMAIL_CRON: "false"
+ENABLE_CRON_JOBS: "true"
 
 AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://tta-smarthub-${full_env}.app.cloud.gov
