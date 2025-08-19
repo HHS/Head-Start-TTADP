@@ -172,10 +172,13 @@ export const objectivePropTypes = PropTypes.shape({
     id: PropTypes.number,
     endDate: PropTypes.string,
   })),
-  topics: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-  })),
+  topics: PropTypes.oneOfType([
+    PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+    })),
+    PropTypes.arrayOf(PropTypes.string),
+  ]),
   citations: PropTypes.arrayOf(PropTypes.string),
   supportType: PropTypes.string,
   ids: PropTypes.arrayOf(PropTypes.number).isRequired,

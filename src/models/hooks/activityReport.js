@@ -144,7 +144,7 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
  */
 const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) => {
   try {
-    // If the report is being approved, unlocked, or submitted,
+  // If the report is being approved, unlocked, or submitted,
     if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
       && instance.calculatedStatus === REPORT_STATUSES.APPROVED)
      || (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
@@ -171,7 +171,7 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
         // This will create a new life cycle for the goal
         // if its currently closed and all related tables.
         // This is the same function as if they had saved on the AR goals and objectives page.
-        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id }, true);
+        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id });
       }
     }
   } catch (e) {
@@ -655,6 +655,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -690,14 +691,13 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-
         await changeGoalStatus({
           goalId: goal.id,
-          userId,
+          userId: instance.userId,
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,
+          performedAt: instance.startDate,
         });
       }
       // removing hooks because we don't want to trigger the automatic status change
@@ -705,7 +705,41 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       return goal.save({ transaction: options.transaction, hooks: false });
     })));
   }
+  return Promise.resolve();
+};
 
+const automaticUnsuspendGoalOnApproval = async (instance) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+    const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+    const reportGoals = await getGoalsForReport(instance.id);
+
+    if (reportGoals.length) {
+      // eslint-disable-next-line global-require
+      // eslint-disable-next-line global-require
+
+      const updateStatusGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.SUSPENDED);
+
+      // since we can't unsuspend goals in this way, this logic will
+      // handle the unsuspension
+      await Promise.all(updateStatusGoals.map((s) => changeGoalStatus({
+        goalId: s.id,
+        userId: instance.userId,
+        newStatus: GOAL_STATUS.IN_PROGRESS,
+        reason: 'Goal moved to In Progress from Suspended',
+        context: 'saveStandardGoalsForReport',
+        performedAt: instance.startDate,
+      })));
+    }
+  }
   return Promise.resolve();
 };
 
@@ -968,6 +1002,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await checkForNewGoalCycleOnApproval(sequelize, instance, options);
+  await automaticUnsuspendGoalOnApproval(instance);
   await revisionBumpBroadcast(sequelize, instance);
 };
 
