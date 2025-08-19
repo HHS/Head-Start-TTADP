@@ -1,3 +1,11 @@
+const setPerformedAt = (instance) => {
+  const { performedAt } = instance;
+
+  if (!performedAt) {
+    instance.set('performedAt', new Date());
+  }
+};
+
 const updateGoalStatus = async (sequelize, instance) => {
   // Get the GoalStatusChange instance, and the current values of oldStatus and newStatus.
   const { oldStatus, newStatus } = instance;
@@ -16,11 +24,15 @@ const updateGoalStatus = async (sequelize, instance) => {
   }
 };
 
-/* eslint-disable import/prefer-default-export */
+const beforeCreate = async (sequelize, instance) => {
+  setPerformedAt(instance);
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await updateGoalStatus(sequelize, instance);
 };
 
 export {
   afterCreate,
+  beforeCreate,
 };
