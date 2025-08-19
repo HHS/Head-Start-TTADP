@@ -41,16 +41,18 @@ export default function StandardGoalCard({
     id,
     ids = [id],
     status,
-    createdAt,
-    latestStatusChangeDate,
     name,
     objectives = [],
-    goalCollaborators = [],
     onAR,
     grant = { number: 'N/A' },
-    previousStatus,
+    statusChanges = [],
+    isReopened,
     standard,
+    createdAt,
   } = goal;
+
+  const lastStatusChange = statusChanges[statusChanges.length - 1] || { oldStatus: 'Not Started' };
+  const previousStatus = lastStatusChange.oldStatus;
 
   const isMonitoringGoal = standard === 'Monitoring';
   const { user } = useContext(UserContext);
@@ -196,6 +198,10 @@ export default function StandardGoalCard({
 
   // Determine the status change label based on current status
   const getStatusChangeLabel = () => {
+    if (statusChanges.length === 1 && isReopened) {
+      return 'Reopened on';
+    }
+
     switch (localStatus) {
       case 'Not Started':
         return 'Added on';
@@ -212,6 +218,10 @@ export default function StandardGoalCard({
 
   // Determine who changed the status
   const getStatusChangeBy = () => {
+    if (statusChanges.length === 1 && isReopened) {
+      return 'Reopened by';
+    }
+
     switch (localStatus) {
       case 'Not Started':
         return 'Added by';
@@ -237,16 +247,19 @@ export default function StandardGoalCard({
         />
       );
     }
-    return (
-      <SpecialistTags
-        specialists={goalCollaborators
-          .filter((c) => ((c.user && c.user.name) || c.goalCreatorName))
-          .map((c) => ({
-            name: (c.user && c.user.name) || c.goalCreatorName,
-            roles: [(c.user && c.user.userRoles) || c.goalCreatorRoles].flat(),
-          }))}
-      />
-    );
+
+    if (lastStatusChange && lastStatusChange.user) {
+      return (
+        <SpecialistTags
+          specialists={[{
+            name: lastStatusChange.user.name,
+            roles: lastStatusChange.user.roles.map((r) => r.name),
+          }]}
+        />
+      );
+    }
+
+    return null;
   };
 
   const getResponses = () => {
@@ -280,7 +293,7 @@ export default function StandardGoalCard({
                   goalId={id}
                   status={localStatus}
                   onUpdateGoalStatus={onUpdateGoalStatus}
-                  previousStatus={previousStatus || 'Not Started'}
+                  previousStatus={previousStatus}
                   regionId={regionId}
                 />
                 {!readonly && (
@@ -346,7 +359,9 @@ export default function StandardGoalCard({
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeLabel()}</p>
-                    <p className="usa-prose margin-y-0">{moment(latestStatusChangeDate || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+                    <p className="usa-prose margin-y-0">
+                      {moment(lastStatusChange.performedAt || createdAt, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}
+                    </p>
                   </div>
 
                   <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">

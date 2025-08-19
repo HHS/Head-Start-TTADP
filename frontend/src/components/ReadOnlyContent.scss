@@ -19,6 +19,10 @@
 }
 }
 
+.ttahub-read-only-content-section--heading--section-row {
+  line-height: 1.4; // otherwise too squishy
+}
+
 // these next two style blocks will only apply on desktop
 .ttahub-read-only-content-section--heading--section-row-data  {
   flex-basis: max(300px, 75%)

@@ -349,6 +349,7 @@ class GoalStatusChanges{
  context : text
  newStatus : varchar(255)
  oldStatus : varchar(255)
+ performedAt : timestamp with time zone
  reason : text
  userName : varchar(255)
  userRoles : varchar(255)[]
@@ -416,6 +417,7 @@ class Goals{
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
  * onAR : boolean : false
+ * prestandard : boolean : false
  * updatedAt : timestamp with time zone
  createdVia : enum
  deletedAt : timestamp with time zone

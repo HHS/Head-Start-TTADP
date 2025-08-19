@@ -13,7 +13,6 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { useHistory } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
-import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
@@ -24,6 +23,7 @@ import useSessionSort from '../../hooks/useSessionSort';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../../pages/RecipientRecord/pages/constants';
 import RttapaUpdates from '../../widgets/RttapaUpdates';
+import GoalCards from './GoalCards';
 
 const COMMUNICATION_PURPOSES = ['RTTAPA updates', 'RTTAPA Initial Plan / New Recipient'];
 const COMMUNCATION_SORT = {
@@ -147,6 +147,7 @@ function GoalDataController({
         const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
         const goalBuckets = response.allGoalIds;
         setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
+
         setError('');
       } catch (e) {
         setError('Unable to fetch goals');
@@ -223,7 +224,7 @@ function GoalDataController({
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
-        <GoalsTable
+        <GoalCards
           recipientId={recipientId}
           regionId={regionId}
           filters={filters}

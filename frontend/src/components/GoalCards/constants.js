@@ -27,4 +27,5 @@ export const goalPropTypes = PropTypes.shape({
     oldStatus: PropTypes.string,
     newStatus: PropTypes.string,
   })),
+  isReopened: PropTypes.bool,
 });

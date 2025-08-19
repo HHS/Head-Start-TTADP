@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import { renderData } from '../helpers';
+import { renderData } from './helpers';
 import './ViewTable.scss';
 
 export default function ViewTable({
