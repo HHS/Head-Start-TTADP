@@ -29,6 +29,7 @@ describe('StandardGoalCard', () => {
     createdVia: 'rtr',
     onAR: true,
     responses: [],
+    statusChanges: [],
     objectives: [
       {
         id: 1,
@@ -60,14 +61,7 @@ describe('StandardGoalCard', () => {
       },
     ],
     previousStatus: null,
-    goalCollaborators: [
-      {
-        user: {
-          name: 'Test User',
-          userRoles: ['ECS'],
-        },
-      },
-    ],
+    goalTemplateId: 123,
     grant: {
       number: 'G-1',
     },
@@ -143,19 +137,23 @@ describe('StandardGoalCard', () => {
     expect(monitoringToolTip).toBeInTheDocument();
   });
 
-  it('shows started by with multiple roles as separate tags', () => {
-    const goalWithMultipleRoles = {
+  it('shows started by with user from statusChanges', () => {
+    const goalWithStatusChanges = {
       ...goal,
-      goalCollaborators: [
+      statusChanges: [
         {
-          goalNumber: 'G-1',
-          goalCreatorRoles: ['ECS', 'GS'],
-          goalCreatorName: 'Test User',
+          user: {
+            name: 'Test User',
+            roles: [
+              { name: 'ECS' },
+              { name: 'GS' },
+            ],
+          },
         },
       ],
     };
 
-    renderStandardGoalCard({}, goalWithMultipleRoles);
+    renderStandardGoalCard({}, goalWithStatusChanges);
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
 
     expect(screen.getByText(/ECS/i)).toBeInTheDocument();
@@ -168,82 +166,70 @@ describe('StandardGoalCard', () => {
     });
   });
 
-  it('shows started by with multiple roles as separate tags when roles are a comma-separated string', () => {
-    const goalWithMultipleRolesAsString = {
+  it('shows system-generated tag for monitoring goals', () => {
+    const monitoringGoal = {
       ...goal,
-      goalCollaborators: [
-        {
-          goalNumber: 'G-1',
-          goalCreatorRoles: 'ECS, GS',
-          goalCreatorName: 'Test User',
-        },
-      ],
+      standard: 'Monitoring',
     };
 
-    renderStandardGoalCard({}, goalWithMultipleRolesAsString);
+    renderStandardGoalCard({}, monitoringGoal);
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
-    expect(screen.getByText(/GS/i)).toBeInTheDocument();
+    expect(screen.getByText(/System-generated/i)).toBeInTheDocument();
+    expect(screen.getByText(/OHS/i)).toBeInTheDocument();
 
     const tooltips = screen.getAllByTestId('tooltip');
-    expect(tooltips.length).toBe(2);
-    tooltips.forEach((tooltip) => {
-      expect(tooltip.textContent).toContain('Test User');
-    });
-  });
-
-  it('shows "Unavailable" when goal creator has no roles', () => {
-    const goalWithNoRoles = {
-      ...goal,
-      goalCollaborators: [
-        {
-          goalNumber: 'G-1',
-          goalCreatorRoles: [],
-          goalCreatorName: 'Test User',
-        },
-      ],
-    };
-
-    renderStandardGoalCard({}, goalWithNoRoles);
-    expect(screen.getByText(/started by/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
-
-    const tooltip = screen.getByTestId('tooltip');
+    const tooltip = tooltips.find((t) => t.classList.contains('ttahub-goal-card__entered-by-tooltip'));
     expect(tooltip).toBeInTheDocument();
-    expect(tooltip.textContent).toContain('Test User');
+    expect(tooltip.textContent).toContain('System-generated');
   });
 
-  it('shows "Unavailable" for legacy goal with no creator data', () => {
+  it('renders nothing when statusChanges has no user data', () => {
+    const goalWithEmptyStatusChanges = {
+      ...goal,
+      statusChanges: [{}],
+    };
+
+    renderStandardGoalCard({}, goalWithEmptyStatusChanges);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+
+    // Should not render any specialist tags
+    expect(screen.queryByTestId('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('renders nothing when statusChanges is empty', () => {
     const legacyGoal = {
       ...goal,
-      goalCollaborators: [],
+      statusChanges: [],
     };
 
     renderStandardGoalCard({}, legacyGoal);
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
 
-    const tooltip = screen.getByTestId('tooltip');
-    expect(tooltip).toBeInTheDocument();
-    expect(tooltip.textContent).toContain('Unknown');
+    // Should not render any specialist tags
+    expect(screen.queryByTestId('tooltip')).not.toBeInTheDocument();
   });
 
-  it('shows "Unavailable" for goal with collaborators but no creator name', () => {
-    const goalWithNoCreatorName = {
+  it('renders nothing when statusChanges has user but no roles', () => {
+    const goalWithUserNoRoles = {
       ...goal,
-      goalCollaborators: [
+      statusChanges: [
         {
-          goalNumber: 'G-1',
-          goalCreatorRoles: 'ECS',
-          goalCreatorName: '',
+          user: {
+            name: 'Test User',
+            roles: [],
+          },
         },
       ],
     };
 
-    renderStandardGoalCard({}, goalWithNoCreatorName);
+    renderStandardGoalCard({}, goalWithUserNoRoles);
     expect(screen.getByText(/started by/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
+
+    // Should still render specialist tags even with empty roles
+    const tooltip = screen.getByTestId('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Test User');
   });
 
   it('shows the goal options by default', () => {
@@ -479,5 +465,48 @@ describe('StandardGoalCard', () => {
 
     const objectives = document.querySelectorAll('.ttahub-goal-card__objective-list');
     expect(objectives.length).toBe(2);
+  });
+
+  it('shows different status change labels based on current status', () => {
+    const closedGoal = { ...goal, status: 'Closed' };
+    renderStandardGoalCard({}, closedGoal);
+    expect(screen.getByText(/closed on/i)).toBeInTheDocument();
+
+    const suspendedGoal = { ...goal, status: 'Suspended' };
+    renderStandardGoalCard({}, suspendedGoal);
+    expect(screen.getByText(/suspended on/i)).toBeInTheDocument();
+
+    const notStartedGoal = { ...goal, status: 'Not Started' };
+    renderStandardGoalCard({}, notStartedGoal);
+    expect(screen.getByText(/added on/i)).toBeInTheDocument();
+  });
+
+  it('shows reopened label when goal is reopened', () => {
+    const reopenedGoal = {
+      ...goal,
+      statusChanges: [{ oldStatus: 'Closed' }],
+      isReopened: true,
+    };
+    renderStandardGoalCard({}, reopenedGoal);
+    expect(screen.getByText(/reopened on/i)).toBeInTheDocument();
+    expect(screen.getByText(/reopened by/i)).toBeInTheDocument();
+  });
+
+  it('renders reopen button for closed goals with edit permissions', async () => {
+    const closedGoal = { ...goal, status: 'Closed' };
+    renderStandardGoalCard({}, closedGoal);
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const reopenButton = await screen.findByText(/Reopen/i);
+    expect(reopenButton).toBeInTheDocument();
+    expect(screen.queryByText(/Edit/i)).not.toBeInTheDocument();
+  });
+
+  it('always shows view details option in context menu', async () => {
+    renderStandardGoalCard();
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const viewButton = await screen.findByText(/View details/i);
+    expect(viewButton).toBeInTheDocument();
   });
 });

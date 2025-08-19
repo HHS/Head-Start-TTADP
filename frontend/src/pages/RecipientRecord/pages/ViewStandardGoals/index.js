@@ -7,9 +7,12 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useLocation } from 'react-router-dom';
-import { Alert } from '@trussworks/react-uswds';
+import {
+  Alert, SummaryBox, SummaryBoxContent, SummaryBoxHeading,
+} from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import Container from '../../../../components/Container';
 import colors from '../../../../colors';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -18,6 +21,61 @@ import ReadOnlyField from '../../../../components/ReadOnlyField';
 import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 import './index.scss';
+
+const GoalUserIdentifier = ({ goal }) => {
+  if (goal.standard === 'Monitoring') {
+    return ' by OHS';
+  }
+
+  return goal.goalCollaborators && goal.goalCollaborators.some(
+    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
+  )
+    ? ` by ${goal.goalCollaborators.find(
+      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
+    ).user.name}`
+    : '';
+};
+
+const StatusActionTag = ({ update, goalHistory, currentGoalIndex }) => {
+  const isReopened = update.reason === 'Goal created'
+    && goalHistory.some((goal, index) => index > currentGoalIndex && goal.status === 'Closed');
+
+  if (update.reason === 'Goal created') {
+    return <span>{isReopened ? 'Reopened on' : 'Added on'}</span>;
+  }
+
+  switch (update.newStatus) {
+    case 'Not Started':
+      return <span>Added on</span>;
+    case 'In Progress':
+      return <span>Started on</span>;
+    case 'Suspended':
+      return <span>Suspended on</span>;
+    case 'Closed':
+      return <span>Closed on</span>;
+    case 'Complete':
+      return <span>Completed on</span>;
+    default:
+      return (
+        <span>
+          {update.newStatus}
+          {' '}
+          on
+        </span>
+      );
+  }
+};
+
+StatusActionTag.propTypes = {
+  update: PropTypes.shape({
+    newStatus: PropTypes.string,
+    reason: PropTypes.string,
+  }).isRequired,
+  goalHistory: PropTypes.arrayOf(PropTypes.shape({
+    status: PropTypes.string,
+  })).isRequired,
+  currentGoalIndex: PropTypes.number.isRequired,
+};
 
 export default function ViewGoalDetails({
   recipient,
@@ -141,57 +199,58 @@ export default function ViewGoalDetails({
       className: 'view-standard-goals-accordion',
       content: (
         <div className="goal-history-content">
-          <div className="goal-updates-section">
-            <h3 className="smart-hub-serif">Goal updates</h3>
-            {statusUpdates.length > 0 ? (
-              <ul className="usa-list" aria-label="Goal status updates">
-                {statusUpdates.map((update) => (
-                  <li key={update.id}>
+          <SummaryBox>
+            <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
+            <SummaryBoxContent>
+              {' '}
+              {statusUpdates.length > 0 ? (
+                <ul className="usa-list" aria-label="Goal status updates">
+                  {statusUpdates.map((update, updateIndex) => (
+                    <li key={update.id}>
+                      <strong>
+                        <StatusActionTag
+                          update={update}
+                          goalHistory={sortedGoalHistory}
+                          currentGoalIndex={index}
+                        />
+                      </strong>
+                      {' '}
+                      <strong>
+                        {moment.utc(
+                          update.performedAt || update.createdAt,
+                        ).format(DATE_DISPLAY_FORMAT)}
+                      </strong>
+                      {update.user ? ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}` : ''}
+                      {(update.newStatus === GOAL_STATUS.SUSPENDED
+                      && updateIndex !== statusUpdates.length - 1)
+                        ? (
+                          <>
+                            <br />
+                            Reason:
+                            {' '}
+                            {update.reason}
+                          </>
+                        )
+                        : <></>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="usa-list" aria-label="Goal status updates">
+                  <li>
                     <strong>
-                      {(() => {
-                        switch (update.newStatus) {
-                          case 'Not Started':
-                            return 'Added on';
-                          case 'In Progress':
-                            return 'Started on';
-                          case 'Suspended':
-                            return 'Suspended on';
-                          case 'Closed':
-                            return 'Closed on';
-                          case 'Complete':
-                            return 'Completed on';
-                          default:
-                            return `${update.newStatus} on`;
-                        }
-                      })()}
+                      {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
                     </strong>
                     {' '}
-                    <strong>{moment(update.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
-                    {update.user ? ` by ${update.user.name}` : ''}
+                    on
+                    {' '}
+                    <strong>{moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
+                    <GoalUserIdentifier goal={goal} />
                   </li>
-                ))}
-              </ul>
-            ) : (
-              <ul className="usa-list" aria-label="Goal status updates">
-                <li>
-                  <strong>
-                    {goal.status === 'Not Started' ? 'Added' : `${goal.status}`}
-                  </strong>
-                  {' '}
-                  on
-                  {' '}
-                  <strong>{moment(goal.createdAt).format(DATE_DISPLAY_FORMAT)}</strong>
-                  {goal.goalCollaborators && goal.goalCollaborators.some(
-                    (c) => c.collaboratorType && c.collaboratorType.name === 'Creator' && c.user,
-                  )
-                    ? ` by ${goal.goalCollaborators.find(
-                      (c) => c.collaboratorType && c.collaboratorType.name === 'Creator',
-                    ).user.name}`
-                    : ''}
-                </li>
-              </ul>
-            )}
-          </div>
+                </ul>
+              )}
+            </SummaryBoxContent>
+          </SummaryBox>
 
           {goal.responses && goal.responses.length > 0 && (
           <ReadOnlyField label="Root causes">
@@ -207,14 +266,24 @@ export default function ViewGoalDetails({
           </ReadOnlyField>
           )}
 
-          <div className="goal-status-section">
+          <div className="goal-status-section margin-bottom-3">
             <ReadOnlyField label="Goal status">
               {goal.status}
+              {goal.status === GOAL_STATUS.SUSPENDED
+                ? (
+                  <>
+                    {' '}
+                    -
+                    {' '}
+                    {goal.reason}
+                  </>
+                )
+                : <></>}
             </ReadOnlyField>
           </div>
 
           {objectives.length > 0 && (
-          <div className="objective-section">
+          <div className="objective-section margin-bottom-3">
             {objectives.map((objective) => (
               <div key={objective.id} className="margin-bottom-3">
                 <h3 className="smart-hub-serif">Objective summary</h3>
@@ -337,6 +406,7 @@ export default function ViewGoalDetails({
         </div>
 
         <Accordion
+          multiselectable
           bordered
           items={accordionItems}
         />
