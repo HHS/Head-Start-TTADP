@@ -5,7 +5,6 @@ import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import Review from './Review';
-import Approved from '../Approved';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
@@ -18,6 +17,7 @@ const Approver = ({
   pages,
   onFormSubmit,
   availableApprovers,
+  reviewItems,
 }) => {
   const {
     additionalNotes,
@@ -84,11 +84,6 @@ const Approver = ({
           Please review all information in each section before submitting.
         </>
         )}
-        {approved && (
-        <>
-          This report has been approved and is no longer editable
-        </>
-        )}
       </Alert>
     );
   };
@@ -126,13 +121,7 @@ const Approver = ({
               pages={pages}
               showDraftViewForApproverAndCreator={showDraftViewForApproverAndCreator}
               availableApprovers={availableApprovers}
-            />
-          )}
-        {approved
-          && (
-            <Approved
-              additionalNotes={additionalNotes}
-              approverStatusList={approvers}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
@@ -174,6 +163,13 @@ Approver.propTypes = {
     label: PropTypes.string,
   })).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+      content: PropTypes.node.isRequired,
+    }),
+  ).isRequired,
 };
 
 Approver.defaultProps = {

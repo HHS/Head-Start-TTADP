@@ -77,14 +77,18 @@ const ReviewSection = () => {
         title="Attachments"
         canEdit={canEdit}
       >
-        {files.map((file) => (
-          <FileReviewItem
-            key={file.url.url}
-            filename={file.originalFileName}
-            url={file.url.url}
-            status={file.status}
-          />
-        ))}
+        {hasAttachments ? (
+          files.map((file) => (
+            <FileReviewItem
+              key={file.url.url}
+              filename={file.originalFileName}
+              url={file.url.url}
+              status={file.status}
+            />
+          ))
+        ) : (
+          <p className="margin-0">None provided</p>
+        )}
       </Section>
     </>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Button, Textarea } from '@trussworks/react-uswds';
+import { Button, Textarea, Alert } from '@trussworks/react-uswds';
 import PlusButton from '../GoalForm/PlusButton';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
 import FormItem from '../FormItem';
@@ -22,46 +22,82 @@ export default function ObjectivesSection({
   });
 
   const onAddNewObjectiveClick = () => {
-    append({ value: '' });
+    append({ value: '', objectiveId: null });
   };
 
+  const hasReportedObjectives = objectives.some((objective) => objective.onAR === true);
+
   return (
-    <div className="margin-top-4">
-      {(objectives.length > 0) && <h2>Objectives</h2>}
-      {objectives.map((field, index) => (
-        <div key={field.id}>
-          <div hidden={!field.onAR}>
-            <ReadOnlyField
-              label="TTA objective"
-            >
-              {field.value}
-            </ReadOnlyField>
-          </div>
-          <div hidden={field.onAR}>
-            <FormItem
-              label="TTA objective"
-              name={`${fieldName}[${index}].value`}
-            >
-              <Textarea
+    <div className="margin-top-4" data-testid="objectives-section">
+      {(objectives.length > 0)
+        && <h2>Objectives</h2>}
+      {hasReportedObjectives
+        && (
+        <Alert
+          type="info"
+          slim
+          className="margin-top-3 margin-bottom-2"
+        >
+          Objectives used on reports cannot be edited.
+        </Alert>
+        )}
+      {objectives.map((field, index) => {
+        const isReadOnly = field.onAR === true;
+        return (
+          <div key={field.id}>
+            <div hidden={!isReadOnly}>
+              <ReadOnlyField
+                label="TTA objective"
+              >
+                {field.value}
+              </ReadOnlyField>
+              {
+              (field.onAR === false) && (
+                <Button
+                  type="button"
+                  className="margin-top-1"
+                  unstyled
+                  onClick={() => {
+                    remove(index);
+                  }}
+                >
+                  Remove this objective
+                </Button>
+              )
+              }
+            </div>
+            <div hidden={isReadOnly}>
+              <FormItem
+                label="TTA objective"
                 name={`${fieldName}[${index}].value`}
-                id={`${fieldName}[${index}].value`}
-                className="margin-bottom-1"
-                inputRef={register()}
-                defaultValue={field.value}
-              />
-            </FormItem>
-            <Button
-              type="button"
-              unstyled
-              onClick={() => {
-                remove(index);
-              }}
-            >
-              Remove this objective
-            </Button>
+              >
+                <input
+                  type="hidden"
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...register(`${fieldName}[${index}].objectiveId`)}
+                  defaultValue={field.objectiveId}
+                />
+                <Textarea
+                  name={`${fieldName}[${index}].value`}
+                  id={`${fieldName}[${index}].value`}
+                  className="margin-bottom-1"
+                  inputRef={register()}
+                  defaultValue={field.value}
+                />
+              </FormItem>
+              <Button
+                type="button"
+                unstyled
+                onClick={() => {
+                  remove(index);
+                }}
+              >
+                Remove this objective
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <div className="margin-y-4">
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>

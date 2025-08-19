@@ -12,6 +12,7 @@ import GoalFormTemplatePrompts from './GoalFormTemplatePrompts';
 import ObjectivesSection from './ObjectivesSection';
 import GoalFormButtonIterator from './GoalFormButtonIterator';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
+import RestartStandardGoalObjectives from './RestartStandardGoalObjectives';
 
 export default function GoalFormUpdateOrRestart({
   hookForm,
@@ -21,7 +22,10 @@ export default function GoalFormUpdateOrRestart({
   standardGoalFormButtons,
   onSubmit,
   goalTemplatePrompts,
+  isRestart,
 }) {
+  const Objectives = isRestart ? RestartStandardGoalObjectives : ObjectivesSection;
+
   return (
     <FormProvider {...hookForm}>
       <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
@@ -40,8 +44,9 @@ export default function GoalFormUpdateOrRestart({
           <GoalFormTemplatePrompts
             goalTemplatePrompts={goalTemplatePrompts}
           />
-          <ObjectivesSection
+          <Objectives
             fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
+            options={goal.objectives}
           />
           <GoalFormButtonIterator buttons={standardGoalFormButtons} />
         </form>
@@ -70,6 +75,12 @@ GoalFormUpdateOrRestart.propTypes = {
     grant: PropTypes.shape({
       numberWithProgramTypes: PropTypes.string,
     }),
+    objectives: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+        title: PropTypes.string,
+      }),
+    ),
   }).isRequired,
   standardGoalFormButtons: PropTypes.arrayOf(
     PropTypes.shape({
@@ -93,8 +104,10 @@ GoalFormUpdateOrRestart.propTypes = {
       ),
     }),
   ),
+  isRestart: PropTypes.bool,
 };
 
 GoalFormUpdateOrRestart.defaultProps = {
   goalTemplatePrompts: null,
+  isRestart: false,
 };

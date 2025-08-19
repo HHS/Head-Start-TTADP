@@ -157,7 +157,7 @@ describe('getFeiGoalsForReport', () => {
     await GoalFieldResponse.create({
       goalTemplateFieldPromptId: prompt.id,
       goalId: goalTwo.id,
-      response: ['response 1', 'response 2'],
+      response: ['response 3', 'response 4'],
       onAR: true,
       onApprovedAR: false,
     });
@@ -165,7 +165,7 @@ describe('getFeiGoalsForReport', () => {
     await GoalFieldResponse.create({
       goalTemplateFieldPromptId: prompt.id,
       goalId: goalThree.id,
-      response: ['response 4'],
+      response: ['response 5'],
       onAR: true,
       onApprovedAR: false,
     });
@@ -300,47 +300,52 @@ describe('getFeiGoalsForReport', () => {
     await sequelize.close();
   });
 
-  it('returns the correct number of goals and objectives', async () => {
+  it('returns the correct number of goals, prompts, and objectives', async () => {
     const goalsForReport = await getGoalsForReport(report.id);
     expect(goalsForReport).toHaveLength(1);
-    expect(goalsForReport[0].promptsForReview).toHaveLength(3);
-
-    // Check if the recipients are in the correct grant.
-    const assertRecipients = goalsForReport[0].promptsForReview.filter((g) => g.responses.includes('response 1') && g.responses.includes('response 2'));
-    expect(assertRecipients.length).toBe(1);
-    expect(assertRecipients[0].recipients.length).toBe(2);
+    // We expect one prompt per grant.
+    expect(goalsForReport[0].promptsForReview).toHaveLength(5);
 
     // Recipient 1.
-    const recipient1 = assertRecipients[0].recipients.filter((r) => r.id === recipientOne.id);
+    const recipient1 = goalsForReport[0].promptsForReview.filter(
+      (p) => p.grantId === activeGrantOne.id,
+    );
     expect(recipient1.length).toBe(1);
-    expect(recipient1[0].name).toBe(`${recipientOne.name} - ${activeGrantOne.number}`);
+    expect(recipient1[0].grantDisplayName).toBe(`${recipientOne.name} - ${activeGrantOne.number}`);
+    expect(recipient1[0].responses).toEqual(['response 1', 'response 2']);
 
     // Recipient 2.
-    const recipient2 = assertRecipients[0].recipients.filter((r) => r.id === recipientTwo.id);
+    const recipient2 = goalsForReport[0].promptsForReview.filter(
+      (p) => p.grantId === activeGrantTwo.id,
+    );
     expect(recipient2.length).toBe(1);
-    expect(recipient2[0].name).toBe(`${recipientTwo.name} - ${activeGrantTwo.number}`);
-
-    // Check if the recipients are in the correct grant.
-    const assertRecipients2 = goalsForReport[0].promptsForReview.filter((g) => g.responses.includes('response 4'));
-    expect(assertRecipients2.length).toBe(1);
+    expect(recipient2[0].grantDisplayName).toBe(`${recipientTwo.name} - ${activeGrantTwo.number}`);
+    expect(recipient2[0].responses).toEqual(['response 3', 'response 4']);
 
     // Recipient 3.
-    const recipient3 = assertRecipients2[0].recipients.filter((r) => r.id === recipientThree.id);
+    const recipient3 = goalsForReport[0].promptsForReview.filter(
+      (p) => p.grantId === activeGrantThree.id,
+    );
     expect(recipient3.length).toBe(1);
-    expect(recipient3[0].name).toBe(`${recipientThree.name} - ${activeGrantThree.number}`);
+    expect(recipient3[0].grantDisplayName).toBe(`${recipientThree.name} - ${activeGrantThree.number}`);
+    expect(recipient3[0].responses).toEqual(['response 5']);
 
     // Recipients missing responses.
-    const assertRecipients3 = goalsForReport[0].promptsForReview.filter(
+    const assertRecipientsMissingResponses = goalsForReport[0].promptsForReview.filter(
       (g) => g.responses.length === 0,
     );
-
+    expect(assertRecipientsMissingResponses.length).toBe(2);
     // Recipient 4 and Recipient 5 (no responses).
-    const recipient4 = assertRecipients3[0].recipients.filter((r) => r.id === recipientFour.id);
+    const recipient4 = assertRecipientsMissingResponses.filter(
+      (r) => r.grantId === activeGrantFour.id,
+    );
     expect(recipient4.length).toBe(1);
-    expect(recipient4[0].name).toBe(`${recipientFour.name} - ${activeGrantFour.number}`);
+    expect(recipient4[0].grantDisplayName).toBe(`${recipientFour.name} - ${activeGrantFour.number}`);
 
-    const recipient5 = assertRecipients3[0].recipients.filter((r) => r.id === recipientFive.id);
+    const recipient5 = assertRecipientsMissingResponses.filter(
+      (r) => r.grantId === activeGrantFive.id,
+    );
     expect(recipient5.length).toBe(1);
-    expect(recipient5[0].name).toBe(`${recipientFive.name} - ${activeGrantFive.number}`);
+    expect(recipient5[0].grantDisplayName).toBe(`${recipientFive.name} - ${activeGrantFive.number}`);
   });
 });

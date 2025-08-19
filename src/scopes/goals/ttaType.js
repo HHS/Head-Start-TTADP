@@ -20,7 +20,7 @@ const calculateTtaType = (query) => [uniq(query.filter((ttaType) => VALID_TTA_TY
 export function withTtaType(query) {
   const ttaTypes = calculateTtaType(query);
 
-  if (!ttaTypes.length) {
+  if (!ttaTypes[0]) {
     return {};
   }
 
@@ -30,7 +30,7 @@ export function withTtaType(query) {
 export function withoutTtaType(query) {
   const ttaTypes = calculateTtaType(query);
 
-  if (!ttaTypes.length) {
+  if (!ttaTypes[0]) {
     return {};
   }
 

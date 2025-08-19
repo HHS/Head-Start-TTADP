@@ -31,6 +31,8 @@ import GoalFormTemplatePrompts from '../../components/SharedGoalComponents/GoalF
 import { ROUTES } from '../../Constants';
 import usePossibleGrants from '../../hooks/usePossibleGrants';
 
+const missingStandardGoalToolTip = 'Goals listed haven’t been used by the recipient. To restart a goal, go to the Recipient TTA Record RTTAPA tab.';
+
 export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
 
@@ -75,8 +77,9 @@ export default function StandardGoalForm({ recipient }) {
   // eslint-disable-next-line max-len
   const userCanEdit = useMemo(() => canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE)), [regionId, user]);
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(selectedGoal ? selectedGoal.id : null);
-
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(
+    selectedGoal ? selectedGoal.id : null,
+  );
   useDeepCompareEffect(() => {
     // if there is only one possible grant, set it as the selected grants
     if (possibleGrants.length === 1) {
@@ -128,7 +131,14 @@ export default function StandardGoalForm({ recipient }) {
           />
           <Controller
             render={({ value, onChange, onBlur }) => (
-              <FormItem label="Select recipient's goal" name={GOAL_FORM_FIELDS.SELECTED_GOAL} required>
+              <FormItem
+                label="Recipient's goal"
+                name={GOAL_FORM_FIELDS.SELECTED_GOAL}
+                toolTipText={missingStandardGoalToolTip}
+                htmlFor={GOAL_FORM_FIELDS.SELECTED_GOAL}
+                required
+              >
+
                 <Select
                   aria-label="Select recipient's goal"
                   inputId={GOAL_FORM_FIELDS.SELECTED_GOAL}
