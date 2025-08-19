@@ -417,6 +417,7 @@ class Goals{
  * createdAt : timestamp with time zone
  * onApprovedAR : boolean : false
  * onAR : boolean : false
+ * prestandard : boolean : false
  * updatedAt : timestamp with time zone
  createdVia : enum
  deletedAt : timestamp with time zone
