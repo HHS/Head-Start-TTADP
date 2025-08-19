@@ -92,7 +92,7 @@ const Approver = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2 padding-bottom-1" skipBottomPadding>
+      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
