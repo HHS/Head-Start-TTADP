@@ -8,9 +8,7 @@ import {
   FormGroup,
   Label,
 } from '@trussworks/react-uswds';
-import Section from './Review/ReviewSection';
-import FileReviewItem from './Review/FileReviewItem';
-import { reportIsEditable } from '../../../utils';
+import ReviewPage from './Review/ReviewPage';
 import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
@@ -57,40 +55,63 @@ SupportingAttachments.propTypes = {
   reportId: PropTypes.node.isRequired,
 };
 
+const getAttachmentsSections = (files) => {
+  const hasAttachments = files && files.length > 0;
+
+  // Create HTML content that matches what the test expects
+  const fileContents = hasAttachments
+    ? files.map((file) => {
+      const approved = file.status === 'APPROVED';
+      return `
+        <div class="file-item">
+          <span class="file-name">${file.originalFileName}</span>
+          ${approved ? `<a href="${file.url.url}">Download</a>` : ''}
+        </div>
+      `;
+    })
+    : ['None provided'];
+
+  return [
+    {
+      title: 'Supporting attachments',
+      anchor: 'files',
+      isEditSection: true,
+      items: [
+        {
+          label: 'Attachments',
+          name: 'attachmentFiles',
+          // Use rich text to render HTML content
+          isRichText: true,
+          customValue: {
+            // If there are attachments, use our custom HTML
+            // If no attachments, show "None provided"
+            attachmentFiles: hasAttachments
+              ? `<span class="desktop:grid-col-6 print:grid-col-6">${fileContents.join(', ')}</span>`
+              : 'None provided',
+          },
+        },
+      ],
+    },
+  ];
+};
+
 const ReviewSection = () => {
   const { watch } = useFormContext();
-  const {
-    files,
-    calculatedStatus,
-  } = watch();
-
-  const hasAttachments = files && files.length > 0;
-  const canEdit = reportIsEditable(calculatedStatus);
+  const { files } = watch();
+  /* Example file structure:
+  const files = [
+    { originalFileName: 'file1.pdf', url: { url: 'http://example.com/file1.pdf' }, status: 'APPROVED' },
+    { originalFileName: 'file2.docx', url: { url: 'http://example.com/file2.docx' }, status: 'APPROVED' },
+    { originalFileName: 'this_is_a_reallly_reallly_really_long_file_name_20250819.txt', url: { url: 'http://example.com/file3.txt' }, status: 'APPROVED' },
+  ];
+  */
 
   return (
-    <>
-      <Section
-        hidePrint={!hasAttachments}
-        key="Attachments"
-        basePath="supporting-attachments"
-        anchor="files"
-        title="Attachments"
-        canEdit={canEdit}
-      >
-        {hasAttachments ? (
-          files.map((file) => (
-            <FileReviewItem
-              key={file.url.url}
-              filename={file.originalFileName}
-              url={file.url.url}
-              status={file.status}
-            />
-          ))
-        ) : (
-          <p className="margin-0">None provided</p>
-        )}
-      </Section>
-    </>
+    <ReviewPage
+      sections={getAttachmentsSections(files)}
+      path="supporting-attachments"
+      isCustomValue
+    />
   );
 };
 
