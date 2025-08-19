@@ -10,9 +10,9 @@ import { getReport, unlockReport } from '../../fetchers/activityReports';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import {
-  LOCAL_STORAGE_DATA_KEY,
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
+  LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import './index.scss';
 import ApprovedReportV1 from './components/ApprovedReportV1';
@@ -63,9 +63,9 @@ export default function ApprovedActivityReport({ match, user }) {
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
     try {
-      window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
-      window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
-      window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_AR_DATA_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(report.id));
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn('Local storage may not be available: ', e);
