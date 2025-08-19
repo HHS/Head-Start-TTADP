@@ -929,7 +929,6 @@ export async function standardGoalsForRecipient(
             }],
           },
         ],
-        order: [['createdAt', 'DESC']],
       },
       {
         model: GoalFieldResponse,
@@ -985,7 +984,10 @@ export async function standardGoalsForRecipient(
         ],
       },
     ],
-    order: orderGoalsBy(sortBy, sortDir),
+    order: [
+      ...orderGoalsBy(sortBy, sortDir),
+      [{ model: GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
+    ],
   });
 
   // Get all objective IDs from the query results
