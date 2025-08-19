@@ -16,7 +16,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 
-const formatDate = (date) => moment(date).format(DATE_DISPLAY_FORMAT);
+const formatDate = (date) => moment.utc(date).format(DATE_DISPLAY_FORMAT);
 
 const mockGoalHistory = [
   {
@@ -81,22 +81,22 @@ const mockGoalHistory = [
     // status changes out of order to test sorting, added 'Closed' status
     statusChanges: [
       {
-        id: 2, goalId: 1, userId: 1, oldStatus: 'Not Started', newStatus: 'In Progress', createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User' },
+        id: 2, goalId: 1, userId: 1, oldStatus: 'Not Started', newStatus: 'In Progress', createdAt: '2025-01-02T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: 'Not Started', createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User' },
+        id: 1, goalId: 1, userId: 1, oldStatus: null, newStatus: 'Not Started', createdAt: '2025-01-01T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
       {
-        id: 3, goalId: 1, userId: 2, oldStatus: 'In Progress', newStatus: 'Suspended', createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User' },
+        id: 3, goalId: 1, userId: 2, oldStatus: 'In Progress', newStatus: 'Suspended', createdAt: '2025-01-10T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
         id: 4, goalId: 1, userId: 1, oldStatus: 'Suspended', newStatus: 'Complete', createdAt: '2025-01-12T00:00:00.000Z', user: null,
       },
       {
-        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: 'Closed', createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User' },
+        id: 6, goalId: 1, userId: 2, oldStatus: 'Complete', newStatus: 'Closed', createdAt: '2025-01-13T00:00:00.000Z', user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
       },
       {
-        id: 5, goalId: 1, userId: 1, oldStatus: 'Closed', newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User' },
+        id: 5, goalId: 1, userId: 1, oldStatus: 'Closed', newStatus: 'Unknown Status', createdAt: '2025-01-14T00:00:00.000Z', user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
       },
     ],
     responses: [
