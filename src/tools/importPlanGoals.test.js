@@ -23,7 +23,7 @@ describe('Import TTA plan goals', () => {
 
     beforeAll(async () => {
       try {
-        const fileName = './data/GranteeTTAPlanTest.csv';
+        const fileName = 'GranteeTTAPlanTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
         const goals = await Goal.findAll({
           include: [
@@ -93,7 +93,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should update status if it is newer', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const goalInProgress = await Goal.findOne({
@@ -143,7 +143,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should not update status if it is older', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
       // Find a goal that was imported as 'Not Started', change to 'Suspended' and update
       const goalNotStarted = await Goal.findOne({
@@ -185,7 +185,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should update timeframe', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
       // Find a goal that was imported, change the timeframe and update by running the import script
       const goalWithTimeframe = await Goal.findOne({
@@ -226,7 +226,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should set createdVia when creating a new goal', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -275,7 +275,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should not set createdVia when updating an existing goal', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -324,7 +324,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should set isRttapa when creating a new goal', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -365,7 +365,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should set isRttapa when updating goal', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const aGoal = await Goal.findOne({
@@ -413,7 +413,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('is idempotent', async () => {
-      const fileName = './data/GranteeTTAPlanTest.csv';
+      const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       const allGoals = await Goal.findAll({
@@ -445,7 +445,7 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should import goals from another region', async () => {
-      const fileName = './data/R9GranteeTTAPlanTest.csv';
+      const fileName = 'R9GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
       await importGoals(fileName, 9);
