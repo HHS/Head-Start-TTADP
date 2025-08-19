@@ -60,7 +60,7 @@ const getAttachmentsSections = (files) => {
 
   // Create HTML content that matches what the test expects
   const fileContents = hasAttachments
-    ? files.map((file) => `<span class="file-item"><a href="${file.url.url}" class="file-name">${file.originalFileName}</a></span>`)
+    ? files.map((file) => `<span class="file-item"><a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a></span>`)
     : ['None provided'];
 
   return [
