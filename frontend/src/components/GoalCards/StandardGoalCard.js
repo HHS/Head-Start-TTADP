@@ -11,6 +11,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { Checkbox, Alert } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { goalPropTypes } from './constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -58,13 +59,14 @@ export default function StandardGoalCard({
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [localStatus, setLocalStatus] = useState(status);
+  const [localObjectives, setLocalObjectives] = useState(objectives);
   const [targetStatusForModal, setTargetStatusForModal] = useState('');
   const [statusChangeError, setStatusChangeError] = useState(false);
   const closeSuspendModalRef = useRef();
   const [resetModalValues, setResetModalValues] = useState(false);
 
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
-  const sortedObjectives = [...objectives];
+  const sortedObjectives = [...localObjectives];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const {
@@ -76,6 +78,25 @@ export default function StandardGoalCard({
   useEffect(() => {
     setLocalStatus(status);
   }, [status]);
+
+  useEffect(() => {
+    if (localStatus === GOAL_STATUS.SUSPENDED) {
+      const statusesNeedUpdatin = [
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.IN_PROGRESS,
+      ];
+      setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
+        if (statusesNeedUpdatin.includes(objective.status)) {
+          return {
+            ...objective,
+            status: GOAL_STATUS.SUSPENDED,
+          };
+        }
+
+        return objective;
+      }));
+    }
+  }, [localStatus]);
 
   useEffect(() => {
     if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
@@ -386,7 +407,7 @@ export default function StandardGoalCard({
           type="objective"
           ariaLabel={`objectives for goal ${goalNumber}`}
           closeOrOpen={closeOrOpenObjectives}
-          count={objectives.length}
+          count={localObjectives.length}
           expanded={objectivesExpanded}
         />
       </div>
