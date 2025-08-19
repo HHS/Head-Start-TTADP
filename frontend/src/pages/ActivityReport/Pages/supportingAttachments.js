@@ -73,7 +73,6 @@ const getAttachmentsSections = (files) => {
 
   return [
     {
-      title: 'Supporting attachments',
       anchor: 'files',
       isEditSection: true,
       items: [
