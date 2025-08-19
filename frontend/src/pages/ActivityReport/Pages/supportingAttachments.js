@@ -60,15 +60,7 @@ const getAttachmentsSections = (files) => {
 
   // Create HTML content that matches what the test expects
   const fileContents = hasAttachments
-    ? files.map((file) => {
-      const approved = file.status === 'APPROVED';
-      return `
-        <div class="file-item">
-          <span class="file-name">${file.originalFileName}</span>
-          ${approved ? `<a href="${file.url.url}">Download</a>` : ''}
-        </div>
-      `;
-    })
+    ? files.map((file) => `<span class="file-item"><a href="${file.url.url}" class="file-name">${file.originalFileName}</a></span>`)
     : ['None provided'];
 
   return [
@@ -97,13 +89,6 @@ const getAttachmentsSections = (files) => {
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const { files } = watch();
-  /* Example file structure:
-  const files = [
-    { originalFileName: 'file1.pdf', url: { url: 'http://example.com/file1.pdf' }, status: 'APPROVED' },
-    { originalFileName: 'file2.docx', url: { url: 'http://example.com/file2.docx' }, status: 'APPROVED' },
-    { originalFileName: 'this_is_a_reallly_reallly_really_long_file_name_20250819.txt', url: { url: 'http://example.com/file3.txt' }, status: 'APPROVED' },
-  ];
-  */
 
   return (
     <ReviewPage
