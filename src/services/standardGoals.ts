@@ -929,6 +929,7 @@ export async function standardGoalsForRecipient(
             }],
           },
         ],
+        order: [['createdAt', 'DESC']],
       },
       {
         model: GoalFieldResponse,
