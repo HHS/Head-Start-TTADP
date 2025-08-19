@@ -728,13 +728,11 @@ const automaticUnsuspendGoalOnApproval = async (instance) => {
 
       const updateStatusGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.SUSPENDED);
 
-      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-
       // since we can't unsuspend goals in this way, this logic will
       // handle the unsuspension
       await Promise.all(updateStatusGoals.map((s) => changeGoalStatus({
         goalId: s.id,
-        userId,
+        userId: instance.userId,
         newStatus: GOAL_STATUS.IN_PROGRESS,
         reason: 'Goal moved to In Progress from Suspended',
         context: 'saveStandardGoalsForReport',
