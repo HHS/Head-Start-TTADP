@@ -172,7 +172,8 @@
       "playwright.config.js",
       "tests/*",
       "packages/*",
-      "frontend/public/*"
+      "frontend/public/*",
+      "ops/*"
     ],
     "rules": {
       "linebreak-style": 0,
