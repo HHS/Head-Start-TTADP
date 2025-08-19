@@ -165,6 +165,8 @@ export default function StateMultiSelect({
         return 0;
       });
 
+      codes = Array.from(new Set(codes));
+
       // return list sorted alphabetically
       setStateCodes(codes);
     }
