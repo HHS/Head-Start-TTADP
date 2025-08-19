@@ -1,10 +1,11 @@
-import AWS from 'aws-sdk';
+import { Upload } from '@aws-sdk/lib-storage';
+import { GetObjectCommandOutput, ListObjectsV2CommandOutput, S3 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 import { generateS3Config } from '../s3';
 import { auditLogger } from '../../logger';
 
 class S3Client {
-  private s3: AWS.S3; // Private property to store the AWS.S3 instance
+  private s3: S3; // Private property to store the AWS.S3 instance
 
   private bucketName: string; // Private property to store the bucket name
 
@@ -23,7 +24,7 @@ class S3Client {
     } = generateS3Config(), // Default configuration generator function
   ) {
     // Create an instance of AWS.S3 using the provided configuration
-    this.s3 = new AWS.S3(config.s3Config);
+    this.s3 = new S3(config.s3Config);
     // Store the bucket name
     this.bucketName = config.bucketName;
   }
@@ -35,13 +36,16 @@ class S3Client {
    */
   async uploadFileAsStream(key: string, stream: Readable): Promise<void> {
     try {
-      await this.s3
-        .upload({
+      await new Upload({
+        client: this.s3,
+
+        params: {
           Bucket: this.bucketName,
           Key: key,
           Body: stream,
-        })
-        .promise();
+        },
+      })
+        .done();
     } catch (error) {
       auditLogger.error('Error uploading file:', error);
       throw error;
@@ -59,8 +63,7 @@ class S3Client {
         .getObject({
           Bucket: this.bucketName,
           Key: key,
-        })
-        .promise();
+        });
       return Readable.from(response.Body as Buffer);
     } catch (error) {
       auditLogger.error('Error downloading file:', error);
@@ -73,14 +76,13 @@ class S3Client {
    * @param key - The key (filename) of the file in the bucket.
    * @returns The metadata object of the file.
    */
-  async getFileMetadata(key: string): Promise<AWS.S3.GetObjectOutput> {
+  async getFileMetadata(key: string): Promise<GetObjectCommandOutput> {
     try {
       const response = await this.s3
         .headObject({
           Bucket: this.bucketName,
           Key: key,
-        })
-        .promise();
+        });
       return response;
     } catch (error) {
       auditLogger.error('Error getting file metadata:', error);
@@ -98,8 +100,7 @@ class S3Client {
         .deleteObject({
           Bucket: this.bucketName,
           Key: key,
-        })
-        .promise();
+        });
     } catch (error) {
       auditLogger.error('Error deleting file:', error);
       throw error;
@@ -110,13 +111,12 @@ class S3Client {
    * Lists all files in the S3 bucket.
    * @returns The list of objects in the bucket.
    */
-  async listFiles(): Promise<AWS.S3.ListObjectsV2Output> {
+  async listFiles(): Promise<ListObjectsV2CommandOutput> {
     try {
       const response = await this.s3
         .listObjectsV2({
           Bucket: this.bucketName,
-        })
-        .promise();
+        });
       return response;
     } catch (error) {
       auditLogger.error('Error listing files:', error);

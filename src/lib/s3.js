@@ -1,4 +1,4 @@
-import { S3 } from 'aws-sdk';
+import { S3 } from '@aws-sdk/client-s3';
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
@@ -62,7 +62,13 @@ const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
     Bucket: bucket,
     Key: key,
   };
-  return s3Client.deleteObject(params).promise();
+  return (
+    // The `.promise()` call might be on an JS SDK v2 client API.
+    // If yes, please remove .promise(). If not, remove this comment.
+    // The `.promise()` call might be on an JS SDK v2 client API.
+    // If yes, please remove .promise(). If not, remove this comment.
+    (s3Client.deleteObject(params).promise())
+  );
 };
 
 const deleteFileFromS3Job = async (job, s3Client = s3) => {
@@ -109,7 +115,13 @@ const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
     Bucket,
     Key: key,
   };
-  return s3Client.getObject(params).promise();
+  return (
+    // The `.promise()` call might be on an JS SDK v2 client API.
+    // If yes, please remove .promise(). If not, remove this comment.
+    // The `.promise()` call might be on an JS SDK v2 client API.
+    // If yes, please remove .promise(). If not, remove this comment.
+    (s3Client.getObject(params).promise())
+  );
 };
 
 const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
@@ -146,7 +158,13 @@ const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName
     await verifyVersioning(Bucket, s3Client);
   }
 
-  return s3Client.upload(params).promise();
+  return (
+    // The `.promise()` call might be on an JS SDK v2 client API.
+    // If yes, please remove .promise(). If not, remove this comment.
+    // The `.promise()` call might be on an JS SDK v2 client API.
+    // If yes, please remove .promise(). If not, remove this comment.
+    (s3Client.upload(params).promise())
+  );
 };
 
 export {
