@@ -7,7 +7,6 @@ import Container from '../../../../../components/Container';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from '../Approved';
-import Submitted from './Submitted';
 
 const Submitter = ({
   availableApprovers,
@@ -189,16 +188,6 @@ const Submitter = ({
               creatorRole={creatorRole}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
-              reviewItems={reviewItems}
-            />
-          )}
-        {submitted
-          && (
-            <Submitted
-              additionalNotes={additionalNotes}
-              reportId={id}
-              displayId={displayId}
-              approverStatusList={approverStatusList}
               reviewItems={reviewItems}
             />
           )}

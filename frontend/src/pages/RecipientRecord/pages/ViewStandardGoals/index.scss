@@ -1,24 +1,6 @@
 @use '../../../../colors.scss' as *;
 
 .goal-history-content {
-  margin-bottom: 2rem;
-
-  .goal-status-section {
-    margin-bottom: 1.5rem;
-  }
-
-  .goal-updates-section {
-    background-color: $ttahub-blue-light;
-    padding: 0.25rem 1.5rem 1.5rem;
-    border-radius: 4px;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid #C0E5EE;
-  }
-
-  .objective-section {
-    margin-bottom: 1.5rem;
-  }
 
   .responses-section {
     margin-bottom: 1.5rem;
@@ -30,14 +12,4 @@
   }
 }
 
-.view-standard-goals-accordion {
-  .usa-accordion__button {
-    background-color: $base-lightest;
-    box-shadow: none !important;
-    padding-left: 1em;
-  }
-}
 
-.usa-accordion--bordered .view-standard-goals-accordion + .usa-accordion__content {
-  box-shadow: none !important;
-}
