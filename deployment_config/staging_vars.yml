@@ -18,7 +18,8 @@ SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
 SIMILARITY_ENDPOINT: https://tta-similarity-api-staging.app.cloud.gov/compute
 SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
-FORCE_CRON: "false"
+ENABLE_GRANTS_CRON: "true"
+ENABLE_EMAIL_CRON: "false"
 
 app_name: tta-smarthub-staging
 app_url: https://tta-smarthub-staging.app.cloud.gov/

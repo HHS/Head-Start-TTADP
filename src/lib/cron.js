@@ -100,14 +100,15 @@ const runMonthlyEmailJob = () => (async () => {
  */
 export default function runCronJobs() {
   // Run only on one instance
-  if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || isTrue('FORCE_CRON')) {
-    // disable grant updates for non-production environments
-    if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
+  if (process.env.CF_INSTANCE_INDEX === '0') {
+    logger.info('Scheduling cron jobs');
+    if (isTrue('ENABLE_GRANTS_CRON')) {
       new CronJob(updateGrantSched, () => runUpdateGrantsJob(), null, true, timezone).start();
     }
-    logger.info('Scheduling email cron jobs');
-    new CronJob(dailyEmailSched, () => runDailyEmailJob(), null, true, timezone).start();
-    new CronJob(weeklyEmailSched, () => runWeeklyEmailJob(), null, true, timezone).start();
-    new CronJob(monthlyEmailSched, () => runMonthlyEmailJob(), null, true, timezone).start();
+    if (isTrue('ENABLE_EMAIL_CRON')) {
+      new CronJob(dailyEmailSched, () => runDailyEmailJob(), null, true, timezone).start();
+      new CronJob(weeklyEmailSched, () => runWeeklyEmailJob(), null, true, timezone).start();
+      new CronJob(monthlyEmailSched, () => runMonthlyEmailJob(), null, true, timezone).start();
+    }
   }
 }
