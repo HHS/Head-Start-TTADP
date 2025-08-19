@@ -11,6 +11,7 @@ import {
 import ReviewPage from './Review/ReviewPage';
 import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import './supportingAttachments.scss';
 
 const SupportingAttachments = ({
   reportId,
@@ -60,7 +61,7 @@ const getAttachmentsSections = (files) => {
 
   // Create HTML content that matches what the test expects
   const fileContents = hasAttachments
-    ? files.map((file) => `<span class="file-item"><a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a></span>`)
+    ? files.map((file) => `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`)
     : ['None provided'];
 
   return [
@@ -77,7 +78,7 @@ const getAttachmentsSections = (files) => {
             // If there are attachments, use our custom HTML
             // If no attachments, show "None provided"
             attachmentFiles: hasAttachments
-              ? `<span class="desktop:grid-col-6 print:grid-col-6">${fileContents.join(', ')}</span>`
+              ? `${fileContents.join(', ')}`
               : 'None provided',
           },
         },
