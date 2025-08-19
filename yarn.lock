@@ -2828,6 +2828,13 @@
   dependencies:
     type-detect "4.0.8"
 
+"@sinonjs/fake-timers@11.2.2":
+  version "11.2.2"
+  resolved "https://registry.yarnpkg.com/@sinonjs/fake-timers/-/fake-timers-11.2.2.tgz#50063cc3574f4a27bd8453180a04171c85cc9699"
+  integrity sha512-G2piCSxQ7oWOxwGSAyFHfPIsyeJGXYtc6mFbnFA+kRXkiEnTl8c/8jul2S329iFBnDI9HGoeWWAZvuvOkZccgw==
+  dependencies:
+    "@sinonjs/commons" "^3.0.0"
+
 "@sinonjs/fake-timers@^10.0.2", "@sinonjs/fake-timers@^10.3.0":
   version "10.3.0"
   resolved "https://registry.yarnpkg.com/@sinonjs/fake-timers/-/fake-timers-10.3.0.tgz#55fdff1ecab9f354019129daf4df0dd4d923ea66"
@@ -2842,6 +2849,13 @@
   dependencies:
     "@sinonjs/commons" "^3.0.1"
 
+"@sinonjs/fake-timers@^13.0.1":
+  version "13.0.5"
+  resolved "https://registry.yarnpkg.com/@sinonjs/fake-timers/-/fake-timers-13.0.5.tgz#36b9dbc21ad5546486ea9173d6bea063eb1717d5"
+  integrity sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+
 "@sinonjs/samsam@^8.0.0":
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@sinonjs/samsam/-/samsam-8.0.2.tgz#e4386bf668ff36c95949e55a38dc5f5892fc2689"
@@ -2851,7 +2865,7 @@
     lodash.get "^4.4.2"
     type-detect "^4.1.0"
 
-"@sinonjs/text-encoding@^0.7.2":
+"@sinonjs/text-encoding@^0.7.2", "@sinonjs/text-encoding@^0.7.3":
   version "0.7.3"
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.3.tgz#282046f03e886e352b2d5f5da5eb755e01457f3f"
   integrity sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==
@@ -3645,6 +3659,18 @@
     "@types/node" "*"
     "@types/send" "*"
 
+"@types/sinon@^17.0.3":
+  version "17.0.4"
+  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-17.0.4.tgz#fd9a3e8e07eea1a3f4a6f82a972c899e5778f369"
+  integrity sha512-RHnIrhfPO3+tJT0s7cFaXGZvsL4bbR3/k7z3P312qMS4JaS2Tk+KiwiLx1S0rQ56ERj00u1/BtdyVd0FY+Pdew==
+  dependencies:
+    "@types/sinonjs__fake-timers" "*"
+
+"@types/sinonjs__fake-timers@*":
+  version "8.1.5"
+  resolved "https://registry.yarnpkg.com/@types/sinonjs__fake-timers/-/sinonjs__fake-timers-8.1.5.tgz#5fd3592ff10c1e9695d377020c033116cc2889f2"
+  integrity sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==
+
 "@types/stack-utils@^2.0.0":
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.3.tgz#6209321eb2c1712a7e7466422b8cb1fc0d9dd5d8"
@@ -4295,6 +4321,15 @@ available-typed-arrays@^1.0.7:
   integrity sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==
   dependencies:
     possible-typed-array-names "^1.0.0"
+
+aws-sdk-client-mock@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk-client-mock/-/aws-sdk-client-mock-4.1.0.tgz#ae1950b2277f8e65f9a039975d79ff9fffab39e3"
+  integrity sha512-h/tOYTkXEsAcV3//6C1/7U4ifSpKyJvb6auveAepqqNJl6TdZaPFEtKjBQNf8UxQdDP850knB2i/whq4zlsxJw==
+  dependencies:
+    "@types/sinon" "^17.0.3"
+    sinon "^18.0.1"
+    tslib "^2.1.0"
 
 aws4@^1.11.0:
   version "1.13.2"
@@ -5932,7 +5967,7 @@ diff@^4.0.1:
   resolved "https://registry.yarnpkg.com/diff/-/diff-4.0.2.tgz#60f3aecb89d5fae520c11aa19efc2bb982aade7d"
   integrity sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==
 
-diff@^5.1.0:
+diff@^5.1.0, diff@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-5.2.0.tgz#26ded047cd1179b78b9537d5ef725503ce1ae531"
   integrity sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==
@@ -10062,6 +10097,17 @@ nise@^5.1.4:
     just-extend "^6.2.0"
     path-to-regexp "^6.2.1"
 
+nise@^6.0.0:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/nise/-/nise-6.1.1.tgz#78ea93cc49be122e44cb7c8fdf597b0e8778b64a"
+  integrity sha512-aMSAzLVY7LyeM60gvBS423nBmIPP+Wy7St7hsb+8/fc1HmeoHJfLO8CKse4u3BtOZvQLJghYPI2i/1WZrEj5/g==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+    "@sinonjs/fake-timers" "^13.0.1"
+    "@sinonjs/text-encoding" "^0.7.3"
+    just-extend "^6.2.0"
+    path-to-regexp "^8.1.0"
+
 no-case@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/no-case/-/no-case-3.0.4.tgz#d361fd5c9800f558551a8369fc0dcd4662b6124d"
@@ -10766,7 +10812,7 @@ path-scurry@^1.11.1:
     lru-cache "^10.2.0"
     minipass "^5.0.0 || ^6.0.2 || ^7.0.0"
 
-path-to-regexp@0.1.12, path-to-regexp@^0.1.12, path-to-regexp@^6.2.1:
+path-to-regexp@0.1.12, path-to-regexp@^0.1.12, path-to-regexp@^6.2.1, path-to-regexp@^8.1.0:
   version "0.1.12"
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.12.tgz#d5e1a12e478a976d432ef3c58d534b9923164bb7"
   integrity sha512-RA1GjUVMnvYFxuqovrEqZoxxW5NUZqbwKtYz/Tt7nXerk0LbLblQmrsgdeOxV5SFHf0UDggjS/bSeOZwt1pmEQ==
@@ -12385,6 +12431,18 @@ sinon@^15.0.0:
     nise "^5.1.4"
     supports-color "^7.2.0"
 
+sinon@^18.0.1:
+  version "18.0.1"
+  resolved "https://registry.yarnpkg.com/sinon/-/sinon-18.0.1.tgz#464334cdfea2cddc5eda9a4ea7e2e3f0c7a91c5e"
+  integrity sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==
+  dependencies:
+    "@sinonjs/commons" "^3.0.1"
+    "@sinonjs/fake-timers" "11.2.2"
+    "@sinonjs/samsam" "^8.0.0"
+    diff "^5.2.0"
+    nise "^6.0.0"
+    supports-color "^7"
+
 sisteransi@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/sisteransi/-/sisteransi-1.0.5.tgz#134d681297756437cc05ca01370d3a7a571075ed"
@@ -12924,7 +12982,7 @@ supports-color@^5.3.0, supports-color@^5.5.0:
   dependencies:
     has-flag "^3.0.0"
 
-supports-color@^7.1.0, supports-color@^7.2.0:
+supports-color@^7, supports-color@^7.1.0, supports-color@^7.2.0:
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-7.2.0.tgz#1b7dcdcb32b8138801b3e478ba6a51caa89648da"
   integrity sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==

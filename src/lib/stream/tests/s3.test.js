@@ -1,10 +1,8 @@
-import AWS from 'aws-sdk';
 import { Readable } from 'stream';
+import { mockClient } from 'aws-sdk-client-mock';
 import { auditLogger } from '../../../logger';
 import S3Client from '../s3';
 import { generateS3Config } from '../../s3';
-
-jest.mock('aws-sdk');
 
 jest.mock('../../../logger', () => ({
   auditLogger: {
@@ -13,7 +11,6 @@ jest.mock('../../../logger', () => ({
 }));
 
 describe('S3Client', () => {
-  let s3Client;
   let mockS3;
 
   beforeAll(() => {
@@ -21,28 +18,19 @@ describe('S3Client', () => {
   });
 
   beforeEach(() => {
-    mockS3 = {
-      upload: jest.fn().mockReturnThis(),
-      promise: jest.fn(),
-      getObject: jest.fn().mockReturnThis(),
-      headObject: jest.fn().mockReturnThis(),
-      deleteObject: jest.fn().mockReturnThis(),
-      listObjectsV2: jest.fn().mockReturnThis(),
-    };
-    AWS.S3.mockImplementation(() => mockS3);
-
-    s3Client = new S3Client({ bucketName: 'test-bucket', s3Config: { signatureVersion: 'v4', s3ForcePathStyle: true } });
+    mockS3 = mockClient(S3Client);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockS3.reset();
   });
 
   describe('constructor', () => {
     it('should create an S3 client with default configuration', () => {
       const s3Config = generateS3Config();
       const client = new S3Client();
-      expect(AWS.S3).toHaveBeenCalledWith(s3Config.s3Config);
+      expect(mockS3).toHaveBeenCalledWith(s3Config.s3Config);
     });
 
     it('should create an S3 client with custom configuration', () => {
@@ -58,7 +46,7 @@ describe('S3Client', () => {
         },
       };
       const client = new S3Client(customConfig);
-      expect(AWS.S3).toHaveBeenCalledWith(customConfig.s3Config);
+      expect(mockS3).toHaveBeenCalledWith(customConfig.s3Config);
     });
   });
 
@@ -67,7 +55,7 @@ describe('S3Client', () => {
       const key = 'test-key';
       const stream = new Readable();
 
-      await s3Client.uploadFileAsStream(key, stream);
+      await mockS3.uploadFileAsStream(key, stream);
 
       expect(mockS3.upload).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key, Body: stream });
       expect(mockS3.promise).toHaveBeenCalled();
@@ -79,7 +67,7 @@ describe('S3Client', () => {
       const error = new Error('Upload failed');
       mockS3.promise.mockRejectedValue(error);
 
-      await expect(s3Client.uploadFileAsStream(key, stream)).rejects.toThrowError(error);
+      await expect(mockS3.uploadFileAsStream(key, stream)).rejects.toThrowError(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error uploading file:', error);
     });
   });
@@ -90,7 +78,7 @@ describe('S3Client', () => {
       const response = { Body: Buffer.from('test-data') };
       mockS3.getObject.mockReturnValueOnce({ promise: jest.fn().mockResolvedValue(response) });
 
-      const result = await s3Client.downloadFileAsStream(key);
+      const result = await mockS3.downloadFileAsStream(key);
 
       expect(mockS3.getObject).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key });
       expect(result).toBeInstanceOf(Readable);
@@ -101,7 +89,7 @@ describe('S3Client', () => {
       const error = new Error('Download failed');
       mockS3.getObject.mockReturnValueOnce({ promise: jest.fn().mockRejectedValue(error) });
 
-      await expect(s3Client.downloadFileAsStream(key)).rejects.toThrowError(error);
+      await expect(mockS3.downloadFileAsStream(key)).rejects.toThrowError(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error downloading file:', error);
     });
   });
@@ -112,7 +100,7 @@ describe('S3Client', () => {
       const response = { Metadata: { size: '1024' } };
       mockS3.headObject.mockReturnValueOnce({ promise: jest.fn().mockResolvedValue(response) });
 
-      const result = await s3Client.getFileMetadata(key);
+      const result = await mockS3.getFileMetadata(key);
 
       expect(mockS3.headObject).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key });
       expect(result).toEqual(response);
@@ -123,7 +111,7 @@ describe('S3Client', () => {
       const error = new Error('Failed to get file metadata');
       mockS3.headObject.mockReturnValueOnce({ promise: jest.fn().mockRejectedValue(error) });
 
-      await expect(s3Client.getFileMetadata(key)).rejects.toThrowError(error);
+      await expect(mockS3.getFileMetadata(key)).rejects.toThrowError(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error getting file metadata:', error);
     });
   });
@@ -132,7 +120,7 @@ describe('S3Client', () => {
     it('should delete file', async () => {
       const key = 'test-key';
 
-      await s3Client.deleteFile(key);
+      await mockS3.deleteFile(key);
 
       expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket: 'test-bucket', Key: key });
       expect(mockS3.promise).toHaveBeenCalled();
@@ -143,7 +131,7 @@ describe('S3Client', () => {
       const error = new Error('Failed to delete file');
       mockS3.promise.mockRejectedValue(error);
 
-      await expect(s3Client.deleteFile(key)).rejects.toThrowError(error);
+      await expect(mockS3.deleteFile(key)).rejects.toThrowError(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error deleting file:', error);
     });
   });
@@ -153,7 +141,7 @@ describe('S3Client', () => {
       const response = { Contents: [{ Key: 'file1.txt' }, { Key: 'file2.txt' }] };
       mockS3.listObjectsV2.mockReturnValueOnce({ promise: jest.fn().mockResolvedValue(response) });
 
-      const result = await s3Client.listFiles();
+      const result = await mockS3.listFiles();
 
       expect(mockS3.listObjectsV2).toHaveBeenCalledWith({ Bucket: 'test-bucket' });
       expect(result).toEqual(response);
@@ -163,7 +151,7 @@ describe('S3Client', () => {
       const error = new Error('Failed to list files');
       mockS3.listObjectsV2.mockReturnValueOnce({ promise: jest.fn().mockRejectedValue(error) });
 
-      await expect(s3Client.listFiles()).rejects.toThrowError(error);
+      await expect(mockS3.listFiles()).rejects.toThrowError(error);
       expect(auditLogger.error).toHaveBeenCalledWith('Error listing files:', error);
     });
   });

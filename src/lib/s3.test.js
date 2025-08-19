@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { S3 } from 'aws-sdk';
+import { S3 } from '@aws-sdk/client-s3';
 import {
   s3,
   downloadFile,
