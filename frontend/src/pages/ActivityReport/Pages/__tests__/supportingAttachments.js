@@ -70,7 +70,7 @@ describe('Supporting Attachments', () => {
   describe('review page', () => {
     it('displays attachments and other resources', async () => {
       render(<RenderSupportingAttachmentsReview data={data} />);
-      expect(await screen.findByRole('link', { name: /download/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: data.files[0].originalFileName })).toBeVisible();
     });
   });
 });
