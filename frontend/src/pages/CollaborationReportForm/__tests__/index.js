@@ -9,6 +9,7 @@ import { Router } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
+import { mockWindowProperty } from '../../../testHelpers';
 import CollaborationReportForm from '..';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
@@ -46,8 +47,23 @@ const ReportComponent = ({
 );
 
 describe('CollaborationReportForm', () => {
+  const setItem = jest.fn();
+  const getItem = jest.fn();
+  const removeItem = jest.fn();
+
+  mockWindowProperty('localStorage', {
+    setItem,
+    getItem,
+    removeItem,
+  });
+
   beforeEach(() => {
     fetchMock.get('/api/users/collaborators?region=1', []);
+  });
+
+  afterEach(() => {
+    fetchMock.restore();
+    jest.clearAllMocks();
   });
 
   it('renders', async () => {

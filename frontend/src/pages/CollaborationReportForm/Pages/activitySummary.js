@@ -29,6 +29,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
+import './activitySummary.scss';
 
 const ActivitySummary = ({ collaborators = [] }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
@@ -72,25 +73,24 @@ const ActivitySummary = ({ collaborators = [] }) => {
       <Helmet>
         <title>Activity Summary</title>
       </Helmet>
-      <IndicatesRequiredField />
-      <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4">
-        <div className="margin-top-2">
-          <FormItem
-            label="Activity name"
+      <div className="cr-activity-summary-required">
+        <IndicatesRequiredField />
+      </div>
+      <Fieldset className="smart-hub-activity-summary smart-hub--report-legend">
+        <FormItem
+          label="Activity name"
+          name="activityName"
+          fieldSetWrapper
+        >
+          <TextInput
+            id="activityName"
             name="activityName"
-            fieldSetWrapper
-          >
-            <TextInput
-              id="activityName"
-              name="activityName"
-              type="text"
-              placeholder="Input text"
-              inputRef={register({
-                required: 'Enter activity name',
-              })}
-            />
-          </FormItem>
-        </div>
+            type="text"
+            inputRef={register({
+              required: 'Enter activity name',
+            })}
+          />
+        </FormItem>
         <div className="margin-y-2">
           {!connectionActive ? <ConnectionError /> : null }
           <FormItem
@@ -103,8 +103,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
               name="collabReportCollaborators"
               control={control}
               required={false}
-              valueProperty="user.id"
-              labelProperty="user.fullName"
               simple={false}
               placeholderText={placeholderText}
               options={collaborators.map((user) => ({
