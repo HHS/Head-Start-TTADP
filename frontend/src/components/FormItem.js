@@ -6,7 +6,7 @@ import {
   Label, FormGroup, ErrorMessage, Fieldset, Tooltip,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import Req from './Req';
 
@@ -34,7 +34,7 @@ function LabelWrapper({
 }) {
   /**
    * The date picker component renders two inputs. This seemed to create
-   * inconstent behavior as far as which input was being referenced by the enclosing label
+   * inconsistent behavior as far as which input was being referenced by the enclosing label
    * especially in user testing library, so we're now adding the explicit
    * "for" attribute
    */
@@ -94,7 +94,7 @@ function FormItem({
       )}
       {tooltipText && (
       <Tooltip asCustom={CustomTooltip} label={tooltipText}>
-        <FontAwesomeIcon className="margin-right-1 no-print" data-testid="info-tooltip-icon" color={colors.ttahubBlue} icon={faInfoCircle} />
+        <FontAwesomeIcon className="margin-right-1 no-print" data-testid="info-tooltip-icon" color={colors.ttahubMediumBlue} icon={faQuestionCircle} />
       </Tooltip>
       )}
     </>

@@ -154,9 +154,6 @@ export default function StateMultiSelect({
         ),
       )];
 
-      // de-dupe state codes
-      codes = Array.from(new Set(codes));
-
       codes = codes.sort((firstCode, secondCode) => {
         if (firstCode.value < secondCode.value) {
           return -1;
