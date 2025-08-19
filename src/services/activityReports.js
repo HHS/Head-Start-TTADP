@@ -1041,8 +1041,6 @@ export async function createOrUpdate(newActivityReport, report, userId) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
   if (goals) {
-    // change me also
-    // await saveGoalsForReport(goals, savedReport);
     await saveStandardGoalsForReport(goals, userId, savedReport);
   }
 

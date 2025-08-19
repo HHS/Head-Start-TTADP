@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import { uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
@@ -28,10 +29,7 @@ const {
   Topic,
   GoalStatusChange,
   User,
-  UserRole,
   Role,
-  CollaboratorType,
-  GoalCollaborator,
 } = db;
 
 interface IObjective {
@@ -73,9 +71,6 @@ export async function removeObjectivesFromReport(objectivesToRemove, reportId) {
   if (!objectivesToDefinitelyDestroy.length) {
     return Promise.resolve();
   }
-
-  // Objectives to destroy.
-  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
 
   // Delete objective.
   return Objective.destroy({
@@ -338,7 +333,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId, report, createInProgress = false) {
+export async function saveStandardGoalsForReport(goals, userId, report) {
   // Loop goal templates.
   let currentObjectives = [];
 
@@ -369,31 +364,20 @@ export async function saveStandardGoalsForReport(goals, userId, report, createIn
         return null;
       }
 
-      if (newOrUpdatedGoal) {
-        // If the goal is 'Suspended' move to 'In progress'.
-        if (newOrUpdatedGoal.status === GOAL_STATUS.SUSPENDED) {
-          await changeGoalStatus({
-            goalId: newOrUpdatedGoal.id,
-            userId,
-            newStatus: GOAL_STATUS.IN_PROGRESS,
-            reason: 'Goal moved to In Progress from Suspended',
-            context: 'saveStandardGoalsForReport',
-          });
-          newOrUpdatedGoal.status = GOAL_STATUS.IN_PROGRESS;
-        } else if (newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
-          // If the goal is 'Closed' create a new goal.
-          newOrUpdatedGoal = null;
-        }
+      if (newOrUpdatedGoal && newOrUpdatedGoal.status === GOAL_STATUS.CLOSED) {
+        // If the goal is 'Closed' create a new goal.
+        newOrUpdatedGoal = null;
       }
 
       // If there is no existing goal, or its closed, create a new one in 'Not started'.
+      // this should always be not started to capture a status change when the report is approved
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           goalTemplateId: goalTemplate.id,
           createdVia: 'activityReport',
           name: goalTemplate.templateName,
           grantId,
-          status: createInProgress ? GOAL_STATUS.IN_PROGRESS : GOAL_STATUS.NOT_STARTED,
+          status: GOAL_STATUS.NOT_STARTED,
         }, { individualHooks: true });
       }
 
@@ -904,11 +888,14 @@ export async function standardGoalsForRecipient(
       'status_sort'],
       [
         sequelize.literal(`(
-          SELECT MAX("createdAt")
-          FROM "GoalStatusChanges"
-          WHERE "goalId" = "Goal"."id"
+          SELECT COUNT(*) > 0
+          FROM "Goals" g2
+          WHERE g2."goalTemplateId" = "Goal"."goalTemplateId"
+            AND g2."grantId" = "Goal"."grantId"
+            AND g2."status" = 'Closed'
+            AND g2."id" != "Goal"."id"
         )`),
-        'latestStatusChangeDate',
+        'isReopened',
       ],
       [
         sequelize.literal('"goalTemplate"."standard"'),
@@ -928,42 +915,18 @@ export async function standardGoalsForRecipient(
       {
         model: GoalStatusChange,
         as: 'statusChanges',
-        attributes: ['oldStatus', 'newStatus'],
-        required: false,
-      },
-      {
-        model: GoalCollaborator,
-        as: 'goalCollaborators',
-        attributes: ['id'],
         required: false,
         include: [
-          {
-            model: CollaboratorType,
-            as: 'collaboratorType',
-            where: {
-              name: 'Creator',
-            },
-            attributes: ['name'],
-          },
           {
             model: User,
             as: 'user',
             attributes: ['name'],
-            required: true,
-            include: [
-              {
-                model: UserRole,
-                as: 'userRoles',
-                include: [
-                  {
-                    model: Role,
-                    as: 'role',
-                    attributes: ['name'],
-                  },
-                ],
-                attributes: ['id'],
-              },
-            ],
+            include: [{
+              model: Role,
+              as: 'roles',
+              attributes: ['name'],
+              through: [],
+            }],
           },
         ],
       },
@@ -1021,7 +984,10 @@ export async function standardGoalsForRecipient(
         ],
       },
     ],
-    order: orderGoalsBy(sortBy, sortDir),
+    order: [
+      ...orderGoalsBy(sortBy, sortDir),
+      [{ model: GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
+    ],
   });
 
   // Get all objective IDs from the query results

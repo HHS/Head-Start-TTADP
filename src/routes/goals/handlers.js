@@ -362,6 +362,17 @@ export async function getGoalHistory(req, res) {
         goalTemplateId: goal.goalTemplateId,
         grantId: goal.grantId,
       },
+      attributes: {
+        include: [
+          [
+            sequelize.literal('(SELECT "reason" FROM "GoalStatusChanges" WHERE "GoalStatusChanges"."goalId" = "Goal"."id" ORDER BY "createdAt" DESC LIMIT 1)'), 'reason',
+          ],
+          [
+            sequelize.literal('"goalTemplate"."standard"'),
+            'standard',
+          ],
+        ],
+      },
       include: [
         {
           model: sequelize.models.GoalStatusChange,
@@ -371,6 +382,12 @@ export async function getGoalHistory(req, res) {
               model: sequelize.models.User,
               as: 'user',
               attributes: ['name'],
+              include: [{
+                model: sequelize.models.Role,
+                as: 'roles',
+                attributes: ['name'],
+                through: [],
+              }],
             },
           ],
         },
