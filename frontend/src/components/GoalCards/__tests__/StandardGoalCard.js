@@ -509,4 +509,45 @@ describe('StandardGoalCard', () => {
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
   });
+
+  it('shows objectives as suspended when goal status is suspended', async () => {
+    const suspendedGoal = {
+      ...goal,
+      status: 'Suspended',
+      objectives: [
+        {
+          id: 1,
+          ids: [1],
+          endDate: '2022-01-01',
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'In Progress',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+        {
+          id: 2,
+          ids: [2],
+          endDate: '2022-01-01',
+          title: 'Objective 2',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'Not Started',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, suspendedGoal);
+    const suspendedLabels = await screen.findAllByText(/Suspended/i);
+    expect(suspendedLabels.length).toBe(5);
+  });
 });
