@@ -62,7 +62,7 @@ describe('CollabReportsLanding', () => {
     renderComponent();
     const newReportButton = screen.getByRole('link', { name: /New Collaboration Report/i });
     expect(newReportButton).toBeInTheDocument();
-    expect(newReportButton).toHaveAttribute('href', '/collaboration-report/new');
+    expect(newReportButton).toHaveAttribute('href', '/collaboration-reports/new/activity-summary');
   });
 
   it('renders the filter panel', () => {
