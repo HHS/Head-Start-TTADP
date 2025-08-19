@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
 import moment from 'moment';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportGoal,
@@ -677,7 +677,7 @@ describe('activity report model hooks', () => {
         where: {
           goalTemplateId: submittedReportClosedGoal.goalTemplateId,
           grantId: submittedReportClosedGoal.grantId,
-          status: 'In Progress',
+          status: GOAL_STATUS.NOT_STARTED,
         },
       });
 
@@ -692,7 +692,7 @@ describe('activity report model hooks', () => {
       // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(newGoal.id);
-      expect(activityReportGoals[0].status).toBe('In Progress');
+      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
 
       // Get the objective for the new goal.
       newObjective = await Objective.findOne({
@@ -734,7 +734,7 @@ describe('activity report model hooks', () => {
         where: {
           goalTemplateId: closedGoal.goalTemplateId,
           grantId: closedGoal.grantId,
-          status: 'In Progress',
+          status: GOAL_STATUS.NOT_STARTED,
         },
       });
       expect(newGoal).toBeDefined();
@@ -748,7 +748,7 @@ describe('activity report model hooks', () => {
         // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(newGoal.id);
-      expect(activityReportGoals[0].status).toBe('In Progress');
+      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
 
       // Get the objective for the new goal.
       newObjective = await Objective.findOne({
@@ -798,7 +798,7 @@ describe('activity report model hooks', () => {
         where: {
           goalTemplateId: approvedReportClosedGoal.goalTemplateId,
           grantId: approvedReportClosedGoal.grantId,
-          status: 'In Progress',
+          status: GOAL_STATUS.NOT_STARTED,
         },
       });
 
@@ -812,7 +812,7 @@ describe('activity report model hooks', () => {
         // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(approvedNewGoal.id);
-      expect(activityReportGoals[0].status).toBe('In Progress');
+      expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
 
       // Get the objective for the new goal.
       approvedNewObjective = await Objective.findOne({
@@ -1015,6 +1015,89 @@ describe('activity report model hooks', () => {
         inProgressObjectiveForClosedGoalTest.id,
       );
       expect(inProgressObjective.status).toEqual('Not Started');
+    });
+
+    it('automatically unsuspends goals on approval', async () => {
+      // Create a suspended goal for testing
+      const suspendedGoal = await Goal.create({
+        name: 'Suspended Goal to Test Unsuspend',
+        status: 'Suspended',
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      // Create a report that will be approved
+      const testReportForSuspended = await ActivityReport.create({
+        userId: mockUser.id,
+        regionId: 1,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        numberOfParticipants: 1,
+        deliveryMethod: 'virtual',
+        duration: 10,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        creatorRole: 'TTAC',
+        version: 2,
+        language: ['English'],
+        activityReason: 'recipient reason',
+      });
+
+      // Link the suspended goal to the report
+      await ActivityReportGoal.create({
+        activityReportId: testReportForSuspended.id,
+        goalId: suspendedGoal.id,
+        status: 'Suspended',
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: testReportForSuspended.id,
+        grantId: grant.id,
+      });
+
+      // Verify initial state - goal is suspended
+      let testGoal = await Goal.findByPk(suspendedGoal.id);
+      expect(testGoal.status).toEqual('Suspended');
+
+      // Approve the report - this should trigger automaticUnsuspendGoalOnApproval
+      await ActivityReportApprover.create({
+        activityReportId: testReportForSuspended.id,
+        userId: mockApprover.id,
+        status: APPROVER_STATUSES.APPROVED,
+        note: 'approver notes',
+      });
+
+      // Verify that the goal is now in progress
+      testGoal = await Goal.findByPk(suspendedGoal.id);
+      expect(testGoal.status).toEqual('In Progress');
+
+      // Clean up test data
+      await ActivityReportApprover.destroy({
+        where: { activityReportId: testReportForSuspended.id },
+        force: true,
+      });
+      await ActivityRecipient.destroy({
+        where: { activityReportId: testReportForSuspended.id },
+      });
+      await ActivityReportGoal.destroy({
+        where: { activityReportId: testReportForSuspended.id },
+      });
+      await ActivityReport.destroy({
+        where: { id: testReportForSuspended.id },
+      });
+      await Goal.destroy({
+        where: { id: suspendedGoal.id },
+        force: true,
+      });
     });
 
     describe('sets the correct objective status', () => {
