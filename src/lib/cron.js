@@ -23,9 +23,9 @@ const dailyEmailSched = '1 16 * * 1-5';
 const weeklyEmailSched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
 const monthlyEmailSched = '10 16 28-31 * *';
-const timezone = 'America/New_York';
+const tz = 'America/New_York';
 
-const runUpdateGrantsJob = () => {
+const runGrantsUpdate = () => {
   try {
     logger.info('Starting job to update grant recipients');
     return updateGrantsRecipients();
@@ -100,13 +100,17 @@ const runMonthlyEmailJob = () => (async () => {
  */
 export default function runCronJobs() {
   // Run only on one instance
-  if (process.env.CF_INSTANCE_INDEX === '0') {
+  if (process.env.NODE_ENV === 'production' && process.env.CF_INSTANCE_INDEX === '0') {
     if (isTrue('ENABLE_CRON_JOBS')) {
       logger.info('Scheduling cron jobs');
-      new CronJob(updateGrantSched, () => runUpdateGrantsJob(), null, true, timezone).start();
-      new CronJob(dailyEmailSched, () => runDailyEmailJob(), null, true, timezone).start();
-      new CronJob(weeklyEmailSched, () => runWeeklyEmailJob(), null, true, timezone).start();
-      new CronJob(monthlyEmailSched, () => runMonthlyEmailJob(), null, true, timezone).start();
+      const grants = new CronJob(updateGrantSched, () => runGrantsUpdate(), null, true, tz);
+      grants.start();
+      const daily = new CronJob(dailyEmailSched, () => runDailyEmailJob(), null, true, tz);
+      daily.start();
+      const weekly = new CronJob(weeklyEmailSched, () => runWeeklyEmailJob(), null, true, tz);
+      weekly.start();
+      const monthly = new CronJob(monthlyEmailSched, () => runMonthlyEmailJob(), null, true, tz);
+      monthly.start();
     }
   }
 }
