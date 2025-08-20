@@ -9,6 +9,7 @@ interface GoalStatusChangeParams {
   reason: string;
   context: string;
   performedAt?: string,
+  forceStatusChange?: boolean;
   transaction?: Sequelize.Transaction;
 }
 
@@ -53,6 +54,7 @@ export default async function changeGoalStatus({
   reason,
   context,
   performedAt,
+  forceStatusChange = false,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
     db.User.findOne({
@@ -90,7 +92,7 @@ export default async function changeGoalStatus({
     performedAt: performedAt ? moment.utc(performedAt).toDate() : new Date(),
   };
 
-  if (oldStatus !== newStatus) {
+  if (oldStatus !== newStatus || forceStatusChange) {
     await db.GoalStatusChange.create(change);
     await goal.reload();
   }
