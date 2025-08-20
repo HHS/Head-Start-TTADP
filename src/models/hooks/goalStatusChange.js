@@ -28,9 +28,9 @@ const updateGoalStatus = async (sequelize, instance) => {
 };
 
 const updateObjectiveStatusIfSuspended = async (sequelize, instance) => {
-  const { oldStatus, newStatus } = instance;
+  const { oldStatus, newStatus, reason } = instance;
 
-  if (oldStatus === newStatus || newStatus !== GOAL_STATUS.SUSPENDED) {
+  if (reason === 'Goal created' || oldStatus === newStatus || newStatus !== GOAL_STATUS.SUSPENDED) {
     return;
   }
 
