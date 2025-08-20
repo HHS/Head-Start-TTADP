@@ -39,6 +39,10 @@ import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNu
 import { fetchCitationsByGrant } from '../../../fetchers/citations';
 import ModalWithCancel from '../../../components/ModalWithCancel';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
+import Drawer from '../../../components/Drawer';
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Req from '../../../components/Req';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -117,6 +121,7 @@ const ActivitySummary = ({
   const deliveryMethod = watch('deliveryMethod');
 
   const modalRef = useRef();
+  const activityReasonRef = useRef(null);
   const recipientSelectRef = useRef(null);
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
   const [modalScenario, setModalScenario] = useState(null);
@@ -341,8 +346,29 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
+          <Drawer
+            triggerRef={activityReasonRef}
+            stickyHeader
+            stickyFooter
+            title="Why was this activity requested?"
+          >
+            <ContentFromFeedByTag tagName="ttahub-tta-request-option" contentSelector="table" />
+          </Drawer>
           <FormItem
-            label="Why was this activity requested? "
+            label={(
+              <>
+                Who was the activity for?
+                {' '}
+                <Req />
+                <button
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-left-1"
+                  ref={activityReasonRef}
+                >
+                  Get help choosing an option
+                </button>
+              </>
+          )}
             name="activityReason"
             required
           >
