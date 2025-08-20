@@ -93,6 +93,7 @@ const ReviewSection = () => {
 
   return (
     <ReviewPage
+      className="smart-hub--supporting-attachments-review"
       sections={getAttachmentsSections(files)}
       path="supporting-attachments"
       isCustomValue
