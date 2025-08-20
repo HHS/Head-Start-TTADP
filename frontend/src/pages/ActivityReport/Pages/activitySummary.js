@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext, useController, Controller } from 'react-hook-form';
+import { useFormContext, useController } from 'react-hook-form';
 import {
   Fieldset,
   Radio,
@@ -17,9 +17,7 @@ import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
   LANGUAGES,
-  ACTIVITY_REASONS,
 } from '@ttahub/common';
-import Select from 'react-select';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -34,15 +32,11 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
 import SingleRecipientSelect from './components/SingleRecipientSelect';
-import selectOptionsReset from '../../../components/selectOptionsReset';
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
 import { fetchCitationsByGrant } from '../../../fetchers/citations';
 import ModalWithCancel from '../../../components/ModalWithCancel';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
-import Drawer from '../../../components/Drawer';
-import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
-import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import Req from '../../../components/Req';
+import ActivityReason from './components/ActivityReason';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -121,7 +115,6 @@ const ActivitySummary = ({
   const deliveryMethod = watch('deliveryMethod');
 
   const modalRef = useRef();
-  const activityReasonRef = useRef(null);
   const recipientSelectRef = useRef(null);
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
   const [modalScenario, setModalScenario] = useState(null);
@@ -346,78 +339,7 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
-          <Drawer
-            triggerRef={activityReasonRef}
-            stickyHeader
-            stickyFooter
-            title="Why was this activity requested?"
-          >
-            <ContentFromFeedByTag tagName="ttahub-tta-request-option" contentSelector="table" />
-          </Drawer>
-          <FormItem
-            label={(
-              <>
-                Who was the activity for?
-                {' '}
-                <Req />
-                <button
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-left-1"
-                  ref={activityReasonRef}
-                >
-                  Get help choosing an option
-                </button>
-              </>
-          )}
-            name="activityReason"
-            required
-          >
-            <Controller
-              render={({ onChange: controllerOnChange, value, onBlur }) => (
-                <Select
-                  value={value ? { value, label: value } : null}
-                  inputId="activityReason"
-                  name="activityReason"
-                  className="usa-select"
-                  placeholder="- Select -"
-                  styles={{
-                    ...selectOptionsReset,
-                    placeholder: (baseStyles) => ({
-                      ...baseStyles,
-                      color: 'black',
-                      fontSize: '1rem',
-                      fontWeight: '400',
-                      lineHeight: '1.3',
-                    }),
-                  }}
-                  components={{
-                    DropdownIndicator: null,
-                  }}
-                  onChange={(selected) => {
-                    controllerOnChange(selected ? selected.value : null);
-                  }}
-                  inputRef={register({ required: 'Select at least one reason for activity' })}
-                  options={ACTIVITY_REASONS.map((reason) => ({
-                    value: reason, label: reason,
-                  }))}
-                  onBlur={onBlur}
-                  required
-                  isMulti={false}
-                />
-              )}
-              control={control}
-              rules={{
-                validate: (value) => {
-                  if (!value || value.length === 0) {
-                    return 'Select a reason for activity';
-                  }
-                  return true;
-                },
-              }}
-              name="activityReason"
-              defaultValue={null}
-            />
-          </FormItem>
+          <ActivityReason />
         </div>
         <div className="margin-top-2">
           <FormItem
