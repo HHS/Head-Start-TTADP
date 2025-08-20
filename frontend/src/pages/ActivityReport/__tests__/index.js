@@ -1094,7 +1094,7 @@ describe('ActivityReport', () => {
       renderActivityReport(1);
 
       // We can select an activity reason.
-      const reasonSelect = await screen.findByLabelText(/why was this activity requested?/i);
+      const reasonSelect = await screen.findByLabelText(/why was this activity requested?/i, { selector: 'input' });
       act(() => userEvent.click(reasonSelect));
       const reasonOption = await screen.findByText('Recipient requested');
       act(() => userEvent.click(reasonOption));

@@ -7,7 +7,6 @@ import {
 } from '@trussworks/react-uswds';
 import Req from './Req';
 import QuestionTooltip from './QuestionTooltip';
-
 import './FormItem.scss';
 
 const labelPropTypes = {
@@ -84,6 +83,7 @@ function FormItem({
   formGroupClassName,
   htmlFor,
   toolTipText,
+  customLabel,
 }) {
   const { formState: { errors } } = useFormContext();
 
@@ -104,33 +104,52 @@ function FormItem({
 
   return (
     <FormGroup className={formGroupClassName} error={fieldErrors}>
-      <LabelType
-        htmlFor={htmlFor}
-        label={labelWithRequiredTag}
-        className={className}
-        toolTipText={toolTipText}
-      >
-
-        {hint && (
-          <>
-            <br />
-            <span className="usa-hint">{hint}</span>
-            <br />
-          </>
-        )}
-        <ReactHookFormError
-          errors={errors}
-          name={name}
-          render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
-        />
-        {children}
-      </LabelType>
+      { customLabel }
+      {label && (
+        <LabelType
+          htmlFor={htmlFor}
+          label={labelWithRequiredTag}
+          className={className}
+          toolTipText={toolTipText}
+        >
+          {hint && (
+            <>
+              <br />
+              <span className="usa-hint">{hint}</span>
+              <br />
+            </>
+          )}
+          <ReactHookFormError
+            errors={errors}
+            name={name}
+            render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
+          />
+          {children}
+        </LabelType>
+      )}
+      {!label && (
+        <>
+          {hint && (
+            <>
+              <span className="usa-hint">{hint}</span>
+              <br />
+            </>
+          )}
+          <ReactHookFormError
+            errors={errors}
+            name={name}
+            render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
+          />
+          {children}
+        </>
+      )}
     </FormGroup>
   );
 }
 
 FormItem.propTypes = {
   label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
+  customLabel: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,
