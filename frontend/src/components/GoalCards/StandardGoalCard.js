@@ -80,25 +80,6 @@ export default function StandardGoalCard({
   }, [status]);
 
   useEffect(() => {
-    if (localStatus === GOAL_STATUS.SUSPENDED) {
-      const statusesNeedUpdatin = [
-        GOAL_STATUS.NOT_STARTED,
-        GOAL_STATUS.IN_PROGRESS,
-      ];
-      setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
-        if (statusesNeedUpdatin.includes(objective.status)) {
-          return {
-            ...objective,
-            status: GOAL_STATUS.SUSPENDED,
-          };
-        }
-
-        return objective;
-      }));
-    }
-  }, [localStatus]);
-
-  useEffect(() => {
     if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
       setInvalidStatusChangeAttempted(false);
     }
@@ -123,6 +104,22 @@ export default function StandardGoalCard({
       // API expects: goalIds (array), newStatus, oldStatus, closeSuspendReason, closeSuspendContext
       await updateGoalStatus(ids, newStatus, localStatus, reason, context);
       setLocalStatus(newStatus);
+      if (newStatus === GOAL_STATUS.SUSPENDED) {
+        const statusesNeedUpdatin = [
+          GOAL_STATUS.NOT_STARTED,
+          GOAL_STATUS.IN_PROGRESS,
+        ];
+        setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
+          if (statusesNeedUpdatin.includes(objective.status)) {
+            return {
+              ...objective,
+              status: GOAL_STATUS.SUSPENDED,
+            };
+          }
+
+          return objective;
+        }));
+      }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error updating goal status:', err);
