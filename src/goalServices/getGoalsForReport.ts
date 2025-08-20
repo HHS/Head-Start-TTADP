@@ -45,6 +45,7 @@ export default async function getGoalsForReport(reportId: number) {
         'deletedAt',
       ],
       include: [
+
         [sequelize.col('grant.regionId'), 'regionId'],
         [sequelize.col('grant.recipient.id'), 'recipientId'],
         [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
@@ -75,13 +76,36 @@ export default async function getGoalsForReport(reportId: number) {
           WHERE "goalTemplate".id = gtfp."goalTemplateId"
           GROUP BY 1=1
         )`), 'prompts'],
+        [
+          sequelize.literal(`(
+          SELECT COUNT(*) > 0
+          FROM "Goals" g2
+          WHERE g2."goalTemplateId" = "Goal"."goalTemplateId"
+            AND g2."grantId" = "Goal"."grantId"
+            AND g2."status" = 'Closed'
+            AND g2."id" != "Goal"."id"
+        )`),
+          'isReopened',
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*) = 1 AND EXISTS(
+              SELECT 1 FROM "GoalStatusChanges" gsc 
+              WHERE gsc."goalId" = "Goal".id 
+              AND gsc.reason = 'Goal created'
+            )
+            FROM "GoalStatusChanges" gsc2 
+            WHERE gsc2."goalId" = "Goal".id
+          )`),
+          'firstUsage',
+        ],
       ],
     },
     include: [
       {
         model: GoalStatusChange,
         as: 'statusChanges',
-        attributes: ['oldStatus'],
+        attributes: ['oldStatus', 'newStatus', 'reason'],
         required: false,
       },
       {
