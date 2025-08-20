@@ -349,9 +349,9 @@ const ActivitySummary = ({
             triggerRef={activityReasonRef}
             stickyHeader
             stickyFooter
-            title="Why was this activity requested"
+            title="Why was this activity requested?"
           >
-            <ContentFromFeedByTag tagName="ttahub-tta-request-option" contentSelector="table" />
+            <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
           </Drawer>
           <FormItem
             customLabel={(
