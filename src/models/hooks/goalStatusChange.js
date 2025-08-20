@@ -1,4 +1,5 @@
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import { CLOSE_SUSPEND_REASONS, GOAL_STATUS } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../../constants';
 
 const setPerformedAt = (instance) => {
   const { performedAt } = instance;
@@ -36,7 +37,7 @@ const updateObjectiveStatusIfSuspended = async (sequelize, instance) => {
   const { Objective } = sequelize.models;
   await Objective.update({
     status: OBJECTIVE_STATUS.SUSPENDED,
-    closeSuspendReason: instance.reason,
+    closeSuspendReason: CLOSE_SUSPEND_REASONS.includes(instance.reason) ? instance.reason : null,
   }, {
     where: {
       goalId: instance.goalId,

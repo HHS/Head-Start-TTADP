@@ -142,6 +142,39 @@ describe('GoalStatusChange hooks', () => {
         expect(objective1.status).toBe(GOAL_STATUS.SUSPENDED);
         expect(objective2.status).toBe(GOAL_STATUS.SUSPENDED);
         expect(objective3.status).toBe(OBJECTIVE_STATUS.COMPLETE); // Should remain unchanged
+
+        expect(objective1.closeSuspendReason).toBe(CLOSE_SUSPEND_REASONS[0]);
+        expect(objective2.closeSuspendReason).toBe(CLOSE_SUSPEND_REASONS[0]);
+        expect(objective3.closeSuspendReason).toBeNull();
+      });
+
+      it('should not update reason with invalid text', async () => {
+        // Reset objectives to original states
+        await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
+        await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
+
+        goalStatusChange = await GoalStatusChange.create({
+          goalId: goal.id,
+          userId: user.id,
+          userName: user.name,
+          userRoles: ['a', 'b'],
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'random reason',
+          context: 'Testing',
+        });
+
+        await objective1.reload();
+        await objective2.reload();
+        await objective3.reload();
+
+        expect(objective1.status).toBe(GOAL_STATUS.SUSPENDED);
+        expect(objective2.status).toBe(GOAL_STATUS.SUSPENDED);
+        expect(objective3.status).toBe(OBJECTIVE_STATUS.COMPLETE); // Should remain unchanged
+
+        expect(objective1.closeSuspendReason).toBeNull();
+        expect(objective2.closeSuspendReason).toBeNull();
+        expect(objective3.closeSuspendReason).toBeNull();
       });
 
       it('should not update objectives when status is not changing to suspended', async () => {
