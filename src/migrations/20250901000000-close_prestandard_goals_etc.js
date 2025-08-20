@@ -132,6 +132,7 @@ module.exports = {
         UPDATE "ActivityReports"
         SET
           "calculatedStatus" = 'deleted',
+          "submissionStatus" = 'deleted',
           "updatedAt" = NOW()
         WHERE "calculatedStatus" IS NULL
           OR "calculatedStatus" NOT IN ('deleted','approved')
