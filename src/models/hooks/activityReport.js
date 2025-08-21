@@ -756,21 +756,19 @@ const forceStatusEventOnReopenedGoal = async (instance) => {
     const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
     const reportGoals = await getGoalsForReport(instance.id);
 
-    if (reportGoals.length) {
-      const inProgressGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.IN_PROGRESS
+    const inProgressGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.IN_PROGRESS
         && goal.isReopened
         && goal.firstUsage);
 
-      await Promise.all(inProgressGoals.map((s) => changeGoalStatus({
-        goalId: s.id,
-        userId: instance.userId,
-        newStatus: GOAL_STATUS.IN_PROGRESS,
-        reason: 'Reopened previously and first usage on activity report',
-        context: 'saveStandardGoalsForReport',
-        performedAt: instance.startDate,
-        forceStatusChange: true,
-      })));
-    }
+    await Promise.all(inProgressGoals.map((s) => changeGoalStatus({
+      goalId: s.id,
+      userId: instance.userId,
+      newStatus: GOAL_STATUS.IN_PROGRESS,
+      reason: 'Reopened previously and first usage on activity report',
+      context: 'saveStandardGoalsForReport',
+      performedAt: instance.startDate,
+      forceStatusChange: true,
+    })));
   }
 };
 
@@ -1053,4 +1051,5 @@ export {
   moveDraftGoalsToNotStartedOnSubmission,
   revisionBump,
   revisionBumpBroadcast,
+  forceStatusEventOnReopenedGoal,
 };
