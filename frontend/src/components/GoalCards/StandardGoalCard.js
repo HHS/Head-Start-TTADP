@@ -333,7 +333,6 @@ export default function StandardGoalCard({
           {/* Alert for invalid status change attempt */}
           <GoalStatusChangeAlert
             internalLeftMargin="3rem"
-            editLink={editLink}
             invalidStatusChangeAttempted={invalidStatusChangeAttempted}
           />
           <div className="grid-row mobile-tablet-space-y-2">
