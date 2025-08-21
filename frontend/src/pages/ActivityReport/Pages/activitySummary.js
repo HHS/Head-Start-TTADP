@@ -1,5 +1,5 @@
 import React, {
-  useState, useContext,
+  useState, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -11,6 +11,7 @@ import {
   TextInput,
   Checkbox,
   Label,
+  Alert as USWDSAlert,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
@@ -22,7 +23,7 @@ import Select from 'react-select';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
-  recipientParticipants,
+  recipientParticipants, MODAL_CONFIG,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
@@ -35,10 +36,47 @@ import './activitySummary.scss';
 import SingleRecipientSelect from './components/SingleRecipientSelect';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
+import { fetchCitationsByGrant } from '../../../fetchers/citations';
+import ModalWithCancel from '../../../components/ModalWithCancel';
+import { getGoalTemplates } from '../../../fetchers/goalTemplates';
+
+export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
+  const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
+
+  return existingGoals.some((goal) => (goal.objectives || [])
+    .some((obj) => (obj.citations || []).some((c) => {
+      const citationText = c.citation?.trim();
+      return !fetchedCitationStrings.has(citationText);
+    })));
+};
+
+export const checkRecipientsAndGoals = (data, hasMonitoringGoals) => {
+  const goalsAndObjectives = data.goalsAndObjectives || [];
+  const recipients = data.activityRecipients || [];
+  const goalTemplates = data.goalTemplates || [];
+  const citationsByGrant = data.citationsByGrant || [];
+
+  if (recipients.length === 0 && goalsAndObjectives.length > 0) {
+    return 'EMPTY_RECIPIENTS_WITH_GOALS';
+  }
+  // Only show modal if none of the selected grants have Monitoring goals
+  const hasAtLeastOneMonitoringGoal = goalTemplates.some((gt) => gt.standard === 'Monitoring');
+
+  if (hasMonitoringGoals && !hasAtLeastOneMonitoringGoal) {
+    return 'MISSING_MONITORING_GOAL';
+  }
+  if (hasMonitoringGoals && citationsDiffer(goalsAndObjectives, citationsByGrant)) {
+    return 'DIFFERENT_CITATIONS';
+  }
+
+  return null; // no modal needed
+};
 
 const ActivitySummary = ({
   recipients,
   collaborators,
+  setShouldAutoSave,
+  formData,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
@@ -51,6 +89,12 @@ const ActivitySummary = ({
     // clearErrors,
   } = useFormContext();
 
+  const goalsAndObjectives = watch('goalsAndObjectives');
+
+  const hasMonitoringGoals = (goalsAndObjectives || []).some(
+    (g) => g.name?.trim().toLowerCase().startsWith('(monitoring)'),
+  );
+
   const {
     field: {
       onChange: onChangeActivityRecipients,
@@ -60,7 +104,7 @@ const ActivitySummary = ({
     },
   } = useController({
     name: 'activityRecipients',
-    defaultValue: false,
+    defaultValue: [],
     rules: {
       validate: {
         notEmpty: (value) => (value && value.length) || 'Please select a recipient and grant',
@@ -72,7 +116,12 @@ const ActivitySummary = ({
   const endDate = watch('endDate');
   const deliveryMethod = watch('deliveryMethod');
 
+  const modalRef = useRef();
+  const recipientSelectRef = useRef(null);
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
+  const [modalScenario, setModalScenario] = useState(null);
+  const [currentRecipient, setCurrentRecipient] = useState(null);
+  const [selectedGrantCheckboxes] = useState([]);
 
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
@@ -80,7 +129,6 @@ const ActivitySummary = ({
   const { grants: rawGrants } = recipients;
 
   const { connectionActive } = useContext(NetworkContext);
-
   const grants = rawGrants.map((recipient) => ({
     id: recipient.id,
     label: recipient.name,
@@ -92,6 +140,66 @@ const ActivitySummary = ({
   }));
   const selectedRecipients = grants;
   const placeholderText = '- Select -';
+
+  const handleRecipientChange = async (newRecipient) => {
+    setCurrentRecipient(activityRecipients);
+    onChangeActivityRecipients(newRecipient);
+
+    const newRecipientGrantIds = newRecipient?.map((r) => r?.value).filter(Boolean);
+
+    let newGoalTemplates = [];
+    let citations = [];
+    try {
+      newGoalTemplates = newRecipientGrantIds.length > 0
+        ? await getGoalTemplates(newRecipientGrantIds)
+        : [];
+
+      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(formData.regionId,
+        newRecipientGrantIds, startDate)
+        : [];
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to fetch goal templates or citations:', err);
+    }
+
+    const data = {
+      goalsAndObjectives,
+      activityRecipients: newRecipient,
+      goalTemplates: newGoalTemplates,
+      citationsByGrant: citations,
+    };
+    const scenario = checkRecipientsAndGoals(data, hasMonitoringGoals);
+
+    if (scenario) {
+      setShouldAutoSave(false);
+      setModalScenario(scenario);
+      setTimeout(() => {
+        modalRef.current?.toggleModal();
+      }, 0);
+    }
+  };
+
+  // User clicks YES (keep new recipient)
+  const handleConfirmChange = () => {
+    modalRef.current?.toggleModal();
+    setModalScenario(null);
+    setShouldAutoSave(true);
+    setTimeout(() => {
+      recipientSelectRef.current?.blur();
+      recipientSelectRef.current?.focus();
+    }, 10);
+  };
+
+  // User clicks NO (revert back)
+  const handleCancelChange = () => {
+    onChangeActivityRecipients(currentRecipient);
+    setModalScenario(null);
+    setShouldAutoSave(true);
+    setTimeout(() => {
+      recipientSelectRef.current?.blur();
+      recipientSelectRef.current?.focus();
+    }, 10);
+  };
 
   const setEndDate = (newEnd) => {
     setValue('endDate', newEnd);
@@ -154,6 +262,22 @@ const ActivitySummary = ({
       <Helmet>
         <title>Activity Summary</title>
       </Helmet>
+      {modalScenario && (
+        <ModalWithCancel
+          modalRef={modalRef}
+          modalId="recipient-change-warning"
+          title={MODAL_CONFIG[modalScenario].title}
+          okButtonText={MODAL_CONFIG[modalScenario].confirmLabel}
+          cancelButtonText={MODAL_CONFIG[modalScenario].cancelLabel}
+          onOk={handleConfirmChange}
+          onCancel={handleCancelChange}
+          showCloseX={false}
+          forceAction
+          hideCancelButton
+        >
+          {MODAL_CONFIG[modalScenario].body}
+        </ModalWithCancel>
+      )}
       <IndicatesRequiredField />
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div className="margin-top-2 margin-bottom-0">
@@ -161,11 +285,19 @@ const ActivitySummary = ({
          && !selectedRecipients.length
             ? <ConnectionError />
             : null}
+          {hasMonitoringGoals && (
+            <USWDSAlert type="info" className="margin-bottom-2">
+              Changing the recipient after selecting the Monitoring goal
+              may cause unintended loss of goal and objective data.
+            </USWDSAlert>
+          )}
           <SingleRecipientSelect
             selectedRecipients={activityRecipients}
             possibleRecipients={selectedRecipients || []}
-            onChangeActivityRecipients={onChangeActivityRecipients}
+            onChangeActivityRecipients={handleRecipientChange}
             onBlurActivityRecipients={onBlurActivityRecipients}
+            selectedGrantCheckboxes={selectedGrantCheckboxes}
+            selectRef={recipientSelectRef}
           />
         </div>
         <div id="other-participants" />
@@ -349,7 +481,7 @@ const ActivitySummary = ({
                     register({
                       required: 'Enter duration',
                       valueAsNumber: true,
-                      pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
+                      pattern: { value: /^\d+(\.0|\.5)?$/, message: 'Duration must be rounded to the nearest half hour' },
                       min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
                       max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                     })
@@ -465,6 +597,12 @@ ActivitySummary.propTypes = {
       }),
     ),
   }).isRequired,
+  setShouldAutoSave: PropTypes.func.isRequired,
+  formData: PropTypes.shape({
+    calculatedStatus: PropTypes.string,
+    pageState: PropTypes.shape({}),
+    regionId: PropTypes.number.isRequired,
+  }).isRequired,
 };
 
 const getNumberOfParticipants = (deliveryMethod) => {
@@ -486,6 +624,7 @@ const getSections = (formData) => {
     {
       title: 'Who was the activity for?',
       anchor: 'activity-for',
+      isEditSection: true,
       items: [
         { label: 'Recipient', name: 'activityRecipients', path: 'name' },
         { label: 'Recipient participants', name: 'participants', sort: true },
@@ -539,9 +678,7 @@ const ReviewSection = () => {
   } = watch();
 
   return (
-    <>
-      <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
-    </>
+    <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
   );
 };
 
@@ -567,6 +704,8 @@ export const isPageComplete = (formData, formState) => {
     // numbers
     duration,
     numberOfParticipants,
+    numberOfParticipantsInPerson,
+    numberOfParticipantsVirtually,
 
     // dates
     startDate,
@@ -602,17 +741,28 @@ export const isPageComplete = (formData, formState) => {
 
   const numbersToValidate = [
     duration,
-    numberOfParticipants,
   ];
 
   if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
     return false;
   }
 
-  if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
+  // Handle custom validation for number of participants.
+  let participantsToValidate = [];
+  if (deliveryMethod === 'hybrid') {
+    participantsToValidate = [
+      numberOfParticipantsInPerson,
+      numberOfParticipantsVirtually,
+    ];
+  } else {
+    participantsToValidate = [numberOfParticipants];
+  }
+
+  if (!participantsToValidate.every((num) => num && Number.isNaN(num) === false)) {
     return false;
   }
-  return true;
+
+  return [startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid());
 };
 
 export default {
@@ -623,7 +773,7 @@ export default {
   review: false,
   render: (
     additionalData,
-    _formData,
+    formData,
     _reportId,
     isAppLoading,
     onContinue,
@@ -633,6 +783,7 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     Alert,
+    setShouldAutoSave,
   ) => {
     const { recipients, collaborators, groups } = additionalData;
     return (
@@ -641,6 +792,8 @@ export default {
           recipients={recipients}
           collaborators={collaborators}
           groups={groups}
+          setShouldAutoSave={setShouldAutoSave}
+          formData={formData}
         />
         <Alert />
         <NavigatorButtons

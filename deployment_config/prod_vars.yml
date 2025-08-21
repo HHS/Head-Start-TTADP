@@ -3,9 +3,7 @@ web_instances: 3
 web_memory: 4GB
 worker_instances: 2
 worker_memory: 1GB
-similarity_api_instances: 1
-similarity_api_memory: 1GB
-similarity_api_disk_quota: 6GB
+app_disk_quota: 4GB
 
 app_name: tta-smarthub-prod
 app_url: https://tta-smarthub-prod.app.cloud.gov/
@@ -18,7 +16,7 @@ AUTH_BASE: https://hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-prod.apps.internal:9443
-SIMILARITY_ENDPOINT: https://tta-similarity-api-prod.app.cloud.gov/compute
+
 SMARTSHEET_ENDPOINT: ""
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
@@ -39,7 +37,7 @@ SMTP_HOST: "${SMTP_HOST}"
 SMTP_PORT: "${SMTP_PORT}"
 SMTP_HOST_TEST: "${SMTP_HOST_TEST}"
 SMTP_PORT_TEST: "${SMTP_PORT_TEST}"
-SMTP__SECURE: "${SMTP_SECURE}"
+SMTP_SECURE: "${SMTP_SECURE}"
 SMTP_IGNORE_TLS: "${SMTP_IGNORE_TLS}"
 FROM_EMAIL_ADDRESS: "${FROM_EMAIL_ADDRESS}"
 SMTP_USER: "${SMTP_USER}"
@@ -53,9 +51,9 @@ SMARTSHEET_ACCESS_TOKEN: "${SMARTSHEET_ACCESS_TOKEN}"
 new_relic_app_id: "877570491"
 new_relic_license: ${NEW_RELIC_LICENSE_KEY}
 
-REACT_APP_GTM_ENABLED: ${$PROD_GTM_ENABLED}
+REACT_APP_GTM_ENABLED: ${PROD_GTM_ENABLED}
 REACT_APP_GTM_ID: ${GLOBAL_GTM_ID}
 REACT_APP_GTM_AUTH: ${PROD_GTM_AUTH}
 REACT_APP_GTM_PREVIEW: ${PROD_GTM_PREVIEW}
-REACT_APP_WEBSOCKET_URL: ${WEBSOCKET_URL}
+REACT_APP_WEBSOCKET_URL: "wss://ttahub.ohs.acf.hhs.gov"
 REACT_APP_INCLUDE_ACCESSIBILITY_CSS: "false"

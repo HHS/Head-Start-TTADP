@@ -1,3 +1,4 @@
+/* istanbul ignore file: hard to test due to rich editor */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
@@ -9,6 +10,7 @@ import { getEditorState } from '../../../../utils';
  * Reasoning for another component is to not overload `ReviewItem`
  */
 
+/* istanbul ignore next: hard to test without setting up a form context */
 const HtmlReviewItem = ({ label, name }) => {
   const { watch } = useFormContext();
   const value = watch(name);
@@ -19,7 +21,9 @@ const HtmlReviewItem = ({ label, name }) => {
   }
 
   values = values.map((v) => {
-    const defaultEditorState = getEditorState(v || '');
+    // eslint-disable-next-line no-param-reassign
+    if (v === '<p></p>' || v === '') v = 'None provided';
+    const defaultEditorState = getEditorState(v || 'None provided');
     return (
       <Editor
         readOnly
@@ -51,7 +55,6 @@ const HtmlReviewItem = ({ label, name }) => {
 HtmlReviewItem.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-
 };
 
 export default HtmlReviewItem;

@@ -6,6 +6,7 @@ import {
   Label, FormGroup, ErrorMessage, Fieldset,
 } from '@trussworks/react-uswds';
 import Req from './Req';
+import QuestionTooltip from './QuestionTooltip';
 
 import './FormItem.scss';
 
@@ -27,7 +28,7 @@ function FieldSetWrapper({ label, children, className }) {
 FieldSetWrapper.propTypes = labelPropTypes;
 
 function LabelWrapper({
-  label, children, className, htmlFor,
+  label, children, className, htmlFor, toolTipText = null,
 }) {
   /**
    * The date picker component renders two inputs. This seemed to create
@@ -39,7 +40,17 @@ function LabelWrapper({
   if (htmlFor) {
     return (
       <Label className={className} htmlFor={htmlFor}>
-        {label}
+        <div>
+          {label}
+          {toolTipText && (
+
+          <QuestionTooltip
+            text={toolTipText}
+            className="margin-left-0"
+          />
+
+          )}
+        </div>
         {children}
       </Label>
     );
@@ -70,7 +81,9 @@ function FormItem({
   name,
   fieldSetWrapper,
   className,
+  formGroupClassName,
   htmlFor,
+  toolTipText,
 }) {
   const { formState: { errors } } = useFormContext();
 
@@ -90,14 +103,19 @@ function FormItem({
   const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper;
 
   return (
-    <FormGroup error={fieldErrors}>
-      <LabelType htmlFor={htmlFor} label={labelWithRequiredTag} className={className}>
+    <FormGroup className={formGroupClassName} error={fieldErrors}>
+      <LabelType
+        htmlFor={htmlFor}
+        label={labelWithRequiredTag}
+        className={className}
+        toolTipText={toolTipText}
+      >
         {hint && (
-        <>
-          <br />
-          <span className="usa-hint">{hint}</span>
-          <br />
-        </>
+          <>
+            <br />
+            <span className="usa-hint">{hint}</span>
+            <br />
+          </>
         )}
         <ReactHookFormError
           errors={errors}
@@ -119,6 +137,8 @@ FormItem.propTypes = {
   className: PropTypes.string,
   htmlFor: PropTypes.string,
   hint: PropTypes.string,
+  toolTipText: PropTypes.string,
+  formGroupClassName: PropTypes.string,
 };
 
 FormItem.defaultProps = {
@@ -127,6 +147,8 @@ FormItem.defaultProps = {
   className: '',
   htmlFor: '',
   hint: '',
+  toolTipText: null,
+  formGroupClassName: '',
 };
 
 export default FormItem;

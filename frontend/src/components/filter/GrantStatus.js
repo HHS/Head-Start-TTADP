@@ -27,7 +27,7 @@ export default function GrantStatus({ onApply, query, inputId }) {
   return (
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-      <label className="sr-only" htmlFor={inputId}>Select grant status to filter by</label>
+      <label className="usa-sr-only" htmlFor={inputId}>Select grant status to filter by</label>
       <Dropdown name={inputId} id={inputId} value={query} onChange={onApplyTTAType}>
         <option value="active">
           Active

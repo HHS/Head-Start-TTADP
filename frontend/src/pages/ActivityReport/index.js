@@ -13,7 +13,6 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
@@ -28,7 +27,6 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
-import useSocket, { publishLocation } from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   submitReport,
@@ -39,13 +37,13 @@ import {
   getCollaborators,
   getApprovers,
   reviewReport,
-  resetToDraft,
   getGroupsForActivityReport,
   getRecipients,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
+import MeshPresenceManager from '../../components/MeshPresenceManager';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -107,13 +105,12 @@ export const formatReportWithSaveBeforeConversion = async (
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
-
   const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(
       reportId.current, {
         ...updatedFields,
-        version: 2,
+        version: 3,
         approverUserIds: approverIds,
         pageState: data.pageState,
         activityRecipientType: 'recipient',
@@ -161,8 +158,6 @@ export function cleanupLocalStorage(id, replacementKey) {
   }
 }
 
-const INTERVAL_DELAY = 10000; // TEN SECONDS
-
 function ActivityReport({
   match, location, region,
 }) {
@@ -173,6 +168,13 @@ function ActivityReport({
   const [loading, updateLoading] = useState(true);
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
+
+  const [presenceData, setPresenceData] = useState({
+    hasMultipleUsers: false,
+    otherUsers: [],
+    tabCount: 0,
+  });
+  const [shouldAutoSave, setShouldAutoSave] = useState(true);
 
   const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
     LOCAL_STORAGE_DATA_KEY(activityReportId), null,
@@ -198,6 +200,9 @@ function ActivityReport({
   const [editable, updateEditable] = useLocalStorage(
     LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
+
+  const [isCollaboratorOrCreator, setIsCollaboratorOrCreator] = useState(false);
+
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
@@ -206,13 +211,6 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
-
-  const {
-    socket,
-    setSocketPath,
-    socketPath,
-    messageStore,
-  } = useSocket(user);
 
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
@@ -224,6 +222,22 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
+  // If there are multiple users working on the same report, we need to suspend auto-saving
+  useEffect(() => {
+    if (presenceData.hasMultipleUsers || presenceData.tabCount > 1) {
+      const otherUsernames = presenceData.otherUsers
+        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
+        .filter((username, index, self) => self.indexOf(username) === index);
+      if (otherUsernames.length > 0 || presenceData.tabCount > 1) {
+        setShouldAutoSave(false);
+      } else {
+        setShouldAutoSave(true);
+      }
+    } else {
+      setShouldAutoSave(true);
+    }
+  }, [presenceData]);
+
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
     if (formData
@@ -234,22 +248,7 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
-  useEffect(() => {
-    if (activityReportId === 'new' || !currentPage) {
-      return;
-    }
-    const newPath = `/activity-reports/${activityReportId}/${currentPage}`;
-    setSocketPath(newPath);
-  }, [activityReportId, currentPage, setSocketPath]);
-
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
-
-  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
-
-  // we also have to publish our location when we enter a channel
-  useEffect(() => {
-    publishLocation(socket, socketPath, user, lastSaveTime);
-  }, [socket, socketPath, user, lastSaveTime]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -275,7 +274,7 @@ function ActivityReport({
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
-            version: 2,
+            version: 3,
           };
         }
 
@@ -307,6 +306,8 @@ function ActivityReport({
         // The report can be edited if its in draft OR needs_action state.
 
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
+
+        setIsCollaboratorOrCreator(isCollaborator || isAuthor);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
@@ -446,6 +447,22 @@ function ActivityReport({
     );
   }
 
+  if (formData.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    return (
+      <Redirect to={`/activity-reports/view/${activityReportId}`} />
+    );
+  }
+
+  if (connectionActive
+    && isCollaboratorOrCreator
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    && !isPendingApprover
+  ) {
+    return (
+      <Redirect to={`/activity-reports/submitted/${activityReportId}`} />
+    );
+  }
+
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
       <Redirect to={`/activity-reports/${activityReportId}/review`} />
@@ -490,7 +507,7 @@ function ActivityReport({
             nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             regionId: formData.regionId,
             approverUserIds: approverIds,
-            version: 2,
+            version: 3,
             activityRecipientType: 'recipient',
           },
         );
@@ -568,13 +585,6 @@ function ActivityReport({
     await reviewReport(reportId.current, { note: data.note, status: data.status });
   };
 
-  const onResetToDraft = async () => {
-    const fetchedReport = await resetToDraft(reportId.current);
-    const report = convertReportToFormData(fetchedReport);
-    updateFormData(report, true);
-    updateEditable(true);
-  };
-
   const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
@@ -590,6 +600,64 @@ function ActivityReport({
     </>
   ) : null;
 
+  /* istanbul ignore next: hard to test websocket functionality */
+  // receives presence updates from the Mesh component
+  const handlePresenceUpdate = (data) => {
+    setPresenceData(data);
+  };
+
+  /* istanbul ignore next: hard to test websocket functionality */
+  // eslint-disable-next-line no-shadow, no-unused-vars
+  const handleRevisionUpdate = (revision, { userId, timestamp, reportId }) => {
+    // If the user is not the one who made the revision, redirect them to the revision change page.
+    if (user.id !== userId) {
+      history.push('/activity-reports/revision-change');
+    }
+  };
+
+  /* istanbul ignore next: hard to test websocket functionality */
+  const renderMultiUserAlert = () => {
+    if (presenceData.hasMultipleUsers) {
+      const otherUsernames = presenceData.otherUsers
+        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
+        .filter((username, index, self) => self.indexOf(username) === index);
+
+      let usersText = 'There are other users currently working on this report.';
+
+      if (otherUsernames.length > 0) {
+        if (otherUsernames.length === 1) {
+          usersText = `${otherUsernames[0]} is also working on this report. Your changes may not be saved. Check with them before working on this report.`;
+        } else if (otherUsernames.length === 2) {
+          usersText = `${otherUsernames[0]} and ${otherUsernames[1]} are also working on this report. Your changes may not be saved. Check with them before working on this report.`;
+        } else {
+          const lastUser = otherUsernames.pop();
+          usersText = `${otherUsernames.join(', ')}, and ${lastUser} are also working on this report. Your changes may not be saved. Check with them before working on this report.`;
+        }
+      }
+
+      return (
+        <Alert type="warning">
+          {usersText}
+        </Alert>
+      );
+    }
+    return null;
+  };
+
+  /* istanbul ignore next: hard to test websocket functionality */
+  const renderMultipleTabAlert = () => {
+    if (presenceData.tabCount > 1) {
+      return (
+        <Alert type="warning">
+          You have this report open in multiple browser tabs.
+          {' '}
+          To prevent losing your work, please close the other tabs before continuing.
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="smart-hub-activity-report">
       { error
@@ -598,6 +666,9 @@ function ActivityReport({
         {error}
       </Alert>
       )}
+      {renderMultiUserAlert() || renderMultipleTabAlert()}
+      {/* Don't render the Mesh component unless working on a saved report */}
+      { activityReportId !== 'new' && (<MeshPresenceManager room={`ar-${activityReportId}`} onPresenceUpdate={handlePresenceUpdate} onRevisionUpdate={handleRevisionUpdate} />)}
       <Helmet titleTemplate="%s - Activity Report | TTA Hub" defaultTitle="Activity Report | TTA Hub" />
       <Grid row>
         <Grid col="auto">
@@ -610,9 +681,9 @@ function ActivityReport({
             {author}
           </div>
         </Grid>
-        <Grid col="auto" className="flex-align-self-center margin-left-2">
+        <Grid col="auto" className="flex-align-self-center">
           {formData.calculatedStatus && (
-            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2`}>{startCase(formData.calculatedStatus)}</div>
+            <div className={`${tagClass} smart-hub-status-label smart-hub--status-draft bg-gray-5 padding-x-2 padding-y-105 font-sans-md text-bold margin-bottom-2 margin-left-2`}>{startCase(formData.calculatedStatus)}</div>
           )}
         </Grid>
       </Grid>
@@ -624,7 +695,6 @@ function ActivityReport({
       }
       >
         <ActivityReportNavigator
-          socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
@@ -639,13 +709,14 @@ function ActivityReport({
           pages={pages}
           onFormSubmit={onFormSubmit}
           onSave={onSave}
-          onResetToDraft={onResetToDraft}
           isApprover={isApprover}
           isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
           onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}
+          shouldAutoSave={shouldAutoSave}
+          setShouldAutoSave={setShouldAutoSave}
         />
       </NetworkContext.Provider>
     </div>

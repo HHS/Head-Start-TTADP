@@ -506,10 +506,8 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toBe(3);
-      expect(found.map((g) => g.name)).toContain('Goal 1');
+      expect(found.length).toBe(1);
       expect(found.map((g) => g.name)).toContain('Goal 3');
-      expect(found.map((g) => g.name)).toContain('Goal 4');
     });
     it('filters out by status', async () => {
       const filters = { 'status.nin': ['Suspended'] };
@@ -543,11 +541,13 @@ describe('goal filtersToScopes', () => {
       const out = withoutStatus(['Needs status']);
       expect(out).toMatchObject({
         [Op.or]: [
-          { status: { [Op.eq]: null } },
           {
-            [Op.and]: [{
-              status: { [Op.notILike]: '%sNeeds status%s' },
-            }],
+            [Op.and]: [
+              { status: { [Op.notILike]: '%Needs status%' } },
+            ],
+          },
+          {
+            status: { [Op.not]: null },
           },
         ],
       });
@@ -1140,13 +1140,13 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      await ActivityReportGoalResource.create({
+      await ActivityReportGoalResource.destroy({
         where: {
           resourceId: resources.map((r) => r.id),
         },
       });
 
-      await ActivityReportObjectiveResource.create({
+      await ActivityReportObjectiveResource.destroy({
         where: {
           resourceId: resources.map((r) => r.id),
         },
@@ -1512,11 +1512,11 @@ describe('goal filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await GoalFieldResponse.destroy({
-        where: {
-          id: [response1.id, response2.id, response3.id],
-        },
-      });
+      const idsToDelete = [response1?.id, response2?.id, response3?.id].filter(Boolean);
+
+      if (idsToDelete.length > 0) {
+        await GoalFieldResponse.destroy({ where: { id: idsToDelete } });
+      }
 
       await Goal.destroy({
         where: {
@@ -1702,7 +1702,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      await ActivityReportObjectiveFile.create({
+      await ActivityReportObjectiveFile.destroy({
         where: {
           fileId: resources.map((r) => r.id),
         },

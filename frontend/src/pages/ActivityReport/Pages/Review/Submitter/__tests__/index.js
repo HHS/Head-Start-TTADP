@@ -89,7 +89,6 @@ const renderReview = (
     formData.goalsAndObjectives = [{
       isCurated: true,
       prompts: [{
-        allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
       goalIds: [1, 2],
@@ -119,7 +118,6 @@ const renderReview = (
       {
         isCurated: true,
         prompts: [{
-          allGoalsHavePromptResponse: false,
           title: 'FEI Goal',
         }],
         standard: 'Monitoring',
@@ -173,7 +171,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Review and submit')).toBeVisible();
+      expect(await screen.findByText(/review and submit/i)).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {
@@ -375,7 +373,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [
@@ -414,7 +411,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [
@@ -498,35 +494,6 @@ describe('Submitter review page', () => {
     it('displays the approved component', async () => {
       renderReview(REPORT_STATUSES.APPROVED, () => { });
       expect(await screen.findByText('Report approved')).toBeVisible();
-    });
-  });
-
-  describe('when the report has been submitted', () => {
-    it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
-      const allAlerts = await screen.findAllByTestId('alert');
-      const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
-      expect(successAlert).toBeVisible();
-    });
-
-    it('the reset to draft button works', async () => {
-      const onReset = jest.fn();
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, onReset);
-      const button = await screen.findByRole('button', { name: 'Reset to Draft' });
-      userEvent.click(button);
-      await waitFor(() => expect(onReset).toHaveBeenCalled());
-    });
-
-    it('shows manager notes', async () => {
-      const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', user: { fullName: 'Approved User 1' } },
-        { status: REPORT_STATUSES.APPROVED, user: { fullName: 'Approved User 2' } },
-      ];
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText(/report needs action\./i)).toBeVisible();
-      expect(await screen.findByText(/report is approved 1\./i)).toBeVisible();
-      expect(await screen.findByText(/no manager notes/i)).toBeVisible();
     });
   });
 

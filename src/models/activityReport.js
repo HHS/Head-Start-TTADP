@@ -27,6 +27,7 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.hasMany(models.Objective, { foreignKey: 'createdViaActivityReportId', as: 'createdViaActivityReportObjectives' });
       ActivityReport.belongsToMany(models.Grant, {
         through: models.ActivityRecipient,
         foreignKey: 'activityReportId',
@@ -169,6 +170,11 @@ export default (sequelize, DataTypes) => {
       // changed in coordination
       defaultValue: 2,
     },
+    revision: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
     },
@@ -219,8 +225,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
-          const requiredForSubmission = [
-            this.numberOfParticipants,
+          let requiredForSubmission = [
             this.deliveryMethod,
             this.duration,
             this.endDate,
@@ -235,6 +240,19 @@ export default (sequelize, DataTypes) => {
             this.activityReason,
             this.language,
           ];
+
+          if (this.deliveryMethod === 'hybrid') {
+            requiredForSubmission = [
+              this.numberOfParticipantsInPerson,
+              this.numberOfParticipantsVirtually,
+              ...requiredForSubmission,
+            ];
+          } else {
+            requiredForSubmission = [
+              this.numberOfParticipants,
+              ...requiredForSubmission,
+            ];
+          }
           const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
           if (!draftStatuses.includes(this.submissionStatus)) {
             // Require fields when report is not a draft
@@ -323,7 +341,6 @@ export default (sequelize, DataTypes) => {
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
     sequelize,
     modelName: 'ActivityReport',

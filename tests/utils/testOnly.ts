@@ -6,7 +6,7 @@ export const calledFromTestFileOrDirectory = (): boolean => (new Error().stack?.
     return (
       trimmedLine.includes('.test.js') ||
       trimmedLine.includes('.test.ts') ||
-      trimmedLine.includes('/test/') ||
+      trimmedLine.includes('/tests/') ||
       trimmedLine.includes('/testingOnly/')
     );
   });

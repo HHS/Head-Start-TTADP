@@ -9,6 +9,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@hookform/error-message": "^0.0.5",
+    "@mesh-kit/core": "^1.0.0",
     "@react-hook/resize-observer": "^1.2.6",
     "@silevis/reactgrid": "3.1",
     "@trussworks/react-uswds": "5.1.0",
@@ -27,7 +28,7 @@
     "html-react-parser": "^5.1.1",
     "html-to-draftjs": "^1.5.0",
     "html2canvas": "^1.4.1",
-    "http-proxy-middleware": "^2.0.9",
+    "http-proxy-middleware": "^3.0.5",
     "lodash": "^4.17.20",
     "micromatch": "^4.0.8",
     "minimist": "^1.2.6",
@@ -64,15 +65,15 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "20.18.2"
+    "node": "20.19.3"
   },
   "scripts": {
-    "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
-    "build:local": "INLINE_RUNTIME_CHUNK=false react-scripts build",
-    "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client",
-    "eject": "react-scripts eject",
-    "test": "cross-env TZ=America/New_York react-scripts test",
-    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
+    "start": "cross-env DISABLE_ESLINT_PLUGIN=true craco start --verbose",
+    "build:local": "INLINE_RUNTIME_CHUNK=false craco build",
+    "build": "INLINE_RUNTIME_CHUNK=false FAST_REFRESH=false craco build && mv build/ ../build/server/client",
+    "eject": "craco eject",
+    "test": "cross-env TZ=America/New_York craco test",
+    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
     "lint:fix:single": "eslint --fix",
@@ -112,6 +113,9 @@
   },
   "eslintConfig": {
     "root": true,
+    "parserOptions": {
+      "ecmaVersion": "latest"
+    },
     "plugins": [
       "testing-library"
     ],
@@ -174,6 +178,7 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",

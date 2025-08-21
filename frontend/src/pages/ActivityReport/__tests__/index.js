@@ -187,37 +187,16 @@ describe('ActivityReport', () => {
     await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
-  describe('resetToDraft', () => {
-    it('navigates to the correct page', async () => {
-      fetchMock.get('/api/activity-reports/3/activity-recipients', recipients);
-      const data = formData();
-      // load the report
-      fetchMock.get('/api/activity-reports/3', {
-        ...data,
-        goalsAndObjectives: [],
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-      });
-      // reset to draft
-      fetchMock.put('/api/activity-reports/3/reset', { ...data, goals: [] });
-      renderActivityReport(3, 'review');
-      const button = await screen.findByRole('button', { name: /reset to draft/i });
-      userEvent.click(button);
-      const notes = await screen.findByRole('textbox', { name: /Additional notes/i });
-      expect(notes).toBeVisible();
-      expect(notes.getAttribute('contenteditable')).toBe('true');
-    });
-  });
-
   describe('updatePage', () => {
-    it('navigates to the correct page', async () => {
+    it("does not update the page if the form hasn't changed", async () => {
       const spy = jest.spyOn(history, 'push');
-      fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
+
+      // Navigate to the next page
       const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
 
-      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/1/supporting-attachments', { showLastUpdatedTime: true }));
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/new/supporting-attachments', {}));
     });
   });
 
@@ -241,6 +220,11 @@ describe('ActivityReport', () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
+      await screen.findByRole('group', { name: 'Who was the activity for?' });
+      const recipientName = await screen.findByText('Recipient');
+      const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
+      await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
+
       const button = await screen.findByRole('button', { name: 'Save draft' });
       act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
@@ -302,14 +286,13 @@ describe('ActivityReport', () => {
           name: 'goal 3',
           activityReportGoals: [{ isActivelyEdited: true }],
           prompts: [],
-          source: '',
         },
         goals: [
           {
-            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], source: '', prompts: [],
+            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], prompts: [],
           },
           {
-            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [], source: '',
+            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [],
           },
         ],
       };
@@ -342,7 +325,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: true,
           name: 'goal 3',
           prompts: [],
-          source: '',
         },
         {
           activityReportGoals: [
@@ -357,7 +339,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: false,
           name: 'goal 1',
           prompts: [],
-          source: '',
         },
         {
           activityReportGoals: [
@@ -372,7 +353,6 @@ describe('ActivityReport', () => {
           isActivelyEdited: false,
           name: 'goal 2',
           prompts: [],
-          source: '',
         },
       ]);
     });
@@ -398,18 +378,6 @@ describe('ActivityReport', () => {
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
-
-    it('automatically sets creator role on existing report', async () => {
-      const data = formData();
-      fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
-      fetchMock.put('/api/activity-reports/1', {});
-      act(() => renderActivityReport(1));
-      const button = await screen.findByRole('button', { name: 'Save draft' });
-      act(() => userEvent.click(button));
-      const lastOptions = fetchMock.lastOptions();
-      const bodyObj = JSON.parse(lastOptions.body);
-      expect(bodyObj.creatorRole).toEqual('Reporter');
-    });
   });
 
   describe('recipient select', () => {
@@ -429,7 +397,7 @@ describe('ActivityReport', () => {
         fetchMock.get('/api/topic', []);
         fetchMock.get('/api/goal-templates?grantIds=12539', []);
         fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
-        fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+        fetchMock.get('/api/goals?reportId=1&goalTemplateId=24727', []);
         fetchMock.get('/api/activity-reports/1', {
           ...data,
           activityRecipientType: 'recipient',
@@ -516,21 +484,40 @@ describe('ActivityReport', () => {
         originalFileName: name, id, fileSize: 2000, status: 'Uploaded',
       });
 
+      fetchMock.get('/api/goal-templates/24727/prompts?goalIds=92852', []);
+
       fetchMock.get('/api/topic', [{ id: 64, name: 'Communication' }]);
-      fetchMock.get('/api/activity-reports/goals?grantIds=10431', [{
-        endDate: null,
-        grantIds: [10431],
-        goalIds: [37502],
-        oldGrantIds: [7764],
-        created: '2023-07-05T17:56:14.755Z',
-        goalTemplateId: 13500,
-        name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-        status: 'In Progress',
-        onApprovedAR: false,
-        source: null,
-        isCurated: false,
-      }]);
-      fetchMock.get('/api/goal-templates?grantIds=10431&reportStartDate=2012-05-20', []);
+      fetchMock.get('/api/goal-templates?grantIds=10431',
+        [
+          {
+            isSourceEditable: true,
+            id: 24727,
+            source: null,
+            standard: 'Child Safety',
+            label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+            value: 24727,
+            name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+            goalTemplateId: 13500,
+            goalIds: [37502],
+            isRttapa: null,
+            status: 'In Progress',
+            grantIds: [10431],
+            oldGrantIds: [7764],
+            isCurated: false,
+            isNew: false,
+            goals: [
+              {
+                id: 37502,
+                name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
+                source: null,
+                status: 'In Progress',
+                grantId: 10431,
+                goalTemplateId: 13500,
+              },
+            ],
+          },
+        ]);
+
       fetchMock.get('/api/activity-reports/1', {
         ...formData(),
         activityRecipientType: 'recipient',
@@ -545,134 +532,60 @@ describe('ActivityReport', () => {
         goalsAndObjectives: [],
       });
 
-      fetchMock.get('/api/goals?reportId=1&goalIds=37502', [{
-        endDate: '',
-        status: 'In Progress',
-        value: 37502,
-        label: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-        id: 37502,
-        name: 'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
-        grant: {
-          programTypes: [],
-          name: 'Barrows Inc - 08bear010431 ',
-          numberWithProgramTypes: '08bear010431 ',
-          recipientInfo: 'Barrows Inc - 08bear010431 - 359',
-          id: 10431,
-          number: '08bear010431',
-          annualFundingMonth: 'November',
-          cdi: false,
-          status: 'Active',
-          grantSpecialistName: 'Marian Daugherty',
-          grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-          programSpecialistName: 'Eddie Denesik DDS',
-          programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-          stateCode: 'RI',
-          startDate: '2018-11-01T00:00:00.000Z',
-          endDate: '2023-10-31T00:00:00.000Z',
-          inactivationDate: null,
-          inactivationReason: null,
-          recipientId: 359,
-          oldGrantId: 7764,
-          deleted: false,
-          createdAt: '2021-03-16T01:20:44.754Z',
-          updatedAt: '2022-09-28T15:03:28.432Z',
-          regionId: 1,
-          recipient: {
-            id: 359, uei: 'LS73E9BEHVZ4', name: 'Barrows Inc', recipientType: 'Community Action Agency (CAA)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.284Z',
-          },
-        },
-        objectives: [{
-          id: 95297,
-          label: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-          title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
-          status: 'Not Started',
-          goalId: 37502,
-          resources: [],
-          activityReportObjectives: [],
-          files: [],
+      fetchMock.get('/api/goals?reportId=1&goalTemplateId=24727', [{
+        id: 95297,
+        label: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
+        title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.',
+        status: 'Not Started',
+        goalId: 37502,
+        resources: [],
+        activityReportObjectives: [],
+        files: [],
+        topics: [],
+        activityReports: [{
+          displayId: 'R01-AR-23786',
+          endDate: null,
+          startDate: null,
+          submittedDate: null,
+          lastSaved: '07/05/2023',
+          creatorNameWithRole: ', CO',
+          sortedTopics: [],
+          creatorName: ', CO',
+          id: 23786,
+          legacyId: null,
+          userId: 355,
+          lastUpdatedById: 355,
+          ECLKCResourcesUsed: [],
+          nonECLKCResourcesUsed: [],
+          additionalNotes: null,
+          numberOfParticipants: null,
+          deliveryMethod: null,
+          version: 2,
+          duration: null,
+          activityRecipientType: 'recipient',
+          requester: null,
+          targetPopulations: [],
+          virtualDeliveryType: null,
+          participants: [],
           topics: [],
-          activityReports: [{
-            displayId: 'R01-AR-23786',
-            endDate: null,
-            startDate: null,
-            submittedDate: null,
-            lastSaved: '07/05/2023',
-            creatorNameWithRole: ', CO',
-            sortedTopics: [],
-            creatorName: ', CO',
-            id: 23786,
-            legacyId: null,
-            userId: 355,
-            lastUpdatedById: 355,
-            ECLKCResourcesUsed: [],
-            nonECLKCResourcesUsed: [],
-            additionalNotes: null,
-            numberOfParticipants: null,
-            deliveryMethod: null,
-            version: 2,
-            duration: null,
-            activityRecipientType: 'recipient',
-            requester: null,
-            targetPopulations: [],
-            virtualDeliveryType: null,
-            participants: [],
-            topics: [],
-            programTypes: null,
-            context: '',
-            pageState: {
-              1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
-            },
-            regionId: 1,
-            submissionStatus: 'draft',
-            calculatedStatus: 'draft',
-            ttaType: [],
-            updatedAt: '2023-07-05T17:54:13.082Z',
-            approvedAt: null,
-            imported: null,
-            creatorRole: 'Central Office',
-            createdAt: '2023-07-05T17:54:13.082Z',
-            ActivityReportObjective: {
-              id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: 'In Progress', ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
-            },
-          }],
-          value: 95297,
-          ids: [95297],
-          recipientIds: [],
-          isNew: false,
-        }],
-        prompts: [],
-        goalNumbers: ['G-37502'],
-        goalIds: [37502],
-        grants: [{
-          id: 10431,
-          number: '08bear010431',
-          annualFundingMonth: 'November',
-          cdi: false,
-          status: 'Active',
-          grantSpecialistName: 'Marian Daugherty',
-          grantSpecialistEmail: 'Effie.McCullough@gmail.com',
-          programSpecialistName: 'Eddie Denesik DDS',
-          programSpecialistEmail: 'Darryl_Kunde7@yahoo.com',
-          stateCode: 'RI',
-          startDate: '2018-11-01T00:00:00.000Z',
-          endDate: '2023-10-31T00:00:00.000Z',
-          inactivationDate: null,
-          inactivationReason: null,
-          recipientId: 359,
-          oldGrantId: 7764,
-          deleted: false,
-          createdAt: '2021-03-16T01:20:44.754Z',
-          updatedAt: '2022-09-28T15:03:28.432Z',
-          regionId: 1,
-          recipient: {
-            id: 359, uei: 'LS73E9BEHVZ4', name: 'Barrows Inc', recipientType: 'Community Action Agency (CAA)', deleted: false, createdAt: '2021-03-16T01:20:43.530Z', updatedAt: '2022-09-28T15:03:26.284Z',
+          programTypes: null,
+          context: '',
+          pageState: {
+            1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
           },
-          numberWithProgramTypes: '08bear010431 ',
-          name: 'Barrows Inc - 08bear010431 ',
-          goalId: 37502,
+          regionId: 1,
+          submissionStatus: 'draft',
+          calculatedStatus: 'draft',
+          ttaType: [],
+          updatedAt: '2023-07-05T17:54:13.082Z',
+          approvedAt: null,
+          imported: null,
+          creatorRole: 'Central Office',
+          createdAt: '2023-07-05T17:54:13.082Z',
+          ActivityReportObjective: {
+            id: 104904, activityReportId: 23786, objectiveId: 95297, arOrder: 1, title: 'The Grantee Specialists will support the Grant Recipient in reviewing the Planning Alternative Tomorrows with Hope (PATH) 30-Day action items to identify recruitment and retention progress made and celebrate successes.', status: 'In Progress', ttaProvided: '', createdAt: '2023-07-05T17:56:15.562Z', updatedAt: '2023-07-05T17:56:15.588Z',
+          },
         }],
-        grantIds: [10431],
-        isNew: false,
       }]);
 
       const { container } = render(
@@ -687,7 +600,7 @@ describe('ActivityReport', () => {
 
       await screen.findByRole('heading', { name: 'Goals and objectives' });
       await act(() => reactSelectEvent.select(
-        screen.getByLabelText(/Recipient's goal/i),
+        screen.getByText(/- select -/i),
         'The Grant Recipient will develop a comprehensive plan for staff recruitment, retention and leadership development for all positions',
       ));
 
@@ -776,7 +689,6 @@ describe('ActivityReport', () => {
           status: 'Draft',
           isRttapa: null,
           isCurated: false,
-          source: 'Source',
         }],
       });
 
@@ -867,13 +779,12 @@ describe('ActivityReport', () => {
           lastCompletedAt: null,
           createdVia: 'activityReport',
           rtrOrder: 1,
-          source: null,
           createdAt: '2023-06-21T17:54:16.543Z',
           updatedAt: '2023-06-21T17:54:16.812Z',
           isCurated: null,
           prompts: [],
           activityReportGoals: [{
-            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, source: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
+            endDate: null, id: 76212, activityReportId: 23786, goalId: 37504, isRttapa: null, name: 'New goal', status: 'Draft', timeframe: null, closeSuspendReason: null, closeSuspendContext: null, isActivelyEdited: false, createdAt: '2023-06-21T17:54:16.699Z', updatedAt: '2023-06-21T17:54:16.699Z',
           }],
           grant: {},
           objectives: [{
@@ -1188,6 +1099,36 @@ describe('ActivityReport', () => {
       const reasonOption = await screen.findByText('Recipient requested');
       act(() => userEvent.click(reasonOption));
       expect(screen.getByText('Recipient requested')).toBeVisible();
+    });
+  });
+
+  describe('creator, collaborator', () => {
+    it('report submitted', async () => {
+      const d = {
+        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      };
+
+      fetchMock.get('/api/activity-reports/1', d);
+      act(() => {
+        renderActivityReport('1', 'review', true, 1);
+      });
+
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
+    });
+  });
+
+  describe('approved report', () => {
+    it('auto redirects', async () => {
+      const d = {
+        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+      };
+
+      fetchMock.get('/api/activity-reports/1', d);
+      act(() => {
+        renderActivityReport('1', 'review', true, 1);
+      });
+
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
     });
   });
 });

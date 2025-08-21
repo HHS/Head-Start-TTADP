@@ -37,12 +37,12 @@ import {
   Course,
 } from '../models';
 import {
-  saveGoalsForReport,
   removeRemovedRecipientsGoals,
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
-import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
-import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
+import { getObjectivesByReportId } from './objectives';
+import parseDate from '../lib/date';
+import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } from './standardGoals';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -211,9 +211,10 @@ async function saveReportRecipients(
   await ActivityRecipient.destroy({ where });
 }
 
-async function saveNotes(activityReportId, notes, isRecipientNotes) {
+export async function saveNotes(activityReportId, notes, isRecipientNotes) {
   const noteType = isRecipientNotes ? 'RECIPIENT' : 'SPECIALIST';
   const ids = notes.map((n) => n.id).filter((id) => !!id);
+
   const where = {
     activityReportId,
     noteType,
@@ -221,24 +222,29 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       [Op.notIn]: ids,
     },
   };
+
   // Remove any notes that are no longer relevant
   await NextStep.destroy({
     where,
     individualHooks: true,
   });
 
-  if (notes.length > 0) {
-    // If a note has an id, and its content has changed, update to the newer content
-    // If no id, then assume its a new entry
-    const newNotes = notes.map((note) => ({
-      id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
-      note: note.note,
-      completeDate: !note.completeDate ? null : moment(note.completeDate, 'MM/DD/YYYY').toDate(),
-      activityReportId,
-      noteType,
-    }))
-      .filter(({ id, note, completeDate }) => id || (note && note.length > 0) || completeDate);
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
+  // If a note has an id, preserve it for update
+  // If no id, and note or completeDate is provided, treat as a new entry
+  const newNotes = notes.map((note) => ({
+    id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
+    note: note.note,
+    completeDate: parseDate(note.completeDate),
+    activityReportId,
+    noteType,
+  })).filter(({ id, note, completeDate }) => (
+    id || (note && note.length > 0) || completeDate
+  ));
+
+  if (newNotes.length > 0) {
+    await NextStep.bulkCreate(newNotes, {
+      updateOnDuplicate: ['note', 'completeDate', 'updatedAt'],
+    });
   }
 }
 
@@ -523,7 +529,7 @@ export async function activityReports(
     where.legacyId = { [Op.eq]: null };
   }
 
-  if (ids && ids.length) {
+  if (ids?.length) {
     where.id = { [Op.in]: ids };
   }
 
@@ -960,7 +966,7 @@ export function formatResources(resources) {
   }, []);
 }
 
-export async function createOrUpdate(newActivityReport, report) {
+export async function createOrUpdate(newActivityReport, report, userId) {
   let savedReport;
   const {
     approvers,
@@ -980,7 +986,7 @@ export async function createOrUpdate(newActivityReport, report) {
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
-  const previousActivityRecipientType = report && report.activityRecipientType;
+  const previousActivityRecipientType = report?.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
@@ -992,7 +998,6 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   const updatedFields = { ...allFields, ...resources };
-
   if (report) {
     savedReport = await update(updatedFields, report);
   } else {
@@ -1025,27 +1030,8 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveNotes(id, specialistNextSteps, false);
   }
 
-  /**
-     * since on partial updates, a new value for activity recipient type may not be passed,
-     * we use the old one in that case
-     */
-
-  const recipientType = () => {
-    if (allFields && allFields.activityRecipientType) {
-      return allFields.activityRecipientType;
-    }
-    if (report && report.activityRecipientType) {
-      return report.activityRecipientType;
-    }
-
-    return '';
-  };
-
-  const activityRecipientType = recipientType();
-
   if (
-    recipientsWhoHaveGoalsThatShouldBeRemoved
-    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+    recipientsWhoHaveGoalsThatShouldBeRemoved?.length
   ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
@@ -1054,11 +1040,8 @@ export async function createOrUpdate(newActivityReport, report) {
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
-
-  if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
-    await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
-  } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
+  if (goals) {
+    await saveStandardGoalsForReport(goals, userId, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
@@ -1124,7 +1107,7 @@ export async function handleSoftDeleteReport(report) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId, activityReportId = null) {
-  const inactiveDayDuration = 61;
+  const inactiveDayDuration = 365;
   const grants = await Recipient.findAll({
     attributes: [
       'id',
@@ -1135,7 +1118,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['number', ['id', 'activityRecipientId'], 'name'],
+        attributes: ['number', ['id', 'activityRecipientId'], 'name', 'status'],
         required: true,
         include: [
           {

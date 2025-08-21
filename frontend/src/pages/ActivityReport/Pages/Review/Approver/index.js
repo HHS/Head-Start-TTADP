@@ -1,12 +1,10 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
-import UserContext from '../../../../../UserContext';
 import Review from './Review';
-import Approved from '../Approved';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
@@ -17,7 +15,6 @@ const Approver = ({
   error,
   isPendingApprover,
   pages,
-  onResetToDraft,
   onFormSubmit,
   availableApprovers,
   reviewItems,
@@ -48,7 +45,6 @@ const Approver = ({
     displayId: formData.displayId,
   };
   const { author } = formData;
-  const { user } = useContext(UserContext);
 
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
@@ -88,11 +84,6 @@ const Approver = ({
           Please review all information in each section before submitting.
         </>
         )}
-        {approved && (
-        <>
-          This report has been approved and is no longer editable
-        </>
-        )}
       </Alert>
     );
   };
@@ -101,7 +92,7 @@ const Approver = ({
     <>
       {renderTopAlert()}
       {children}
-      <Container skipTopPadding className="margin-top-2 padding-top-2 padding-bottom-1" skipBottomPadding>
+      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -129,18 +120,7 @@ const Approver = ({
               approverStatusList={approvers}
               pages={pages}
               showDraftViewForApproverAndCreator={showDraftViewForApproverAndCreator}
-              creatorIsApprover={author.id === user.id}
-              onResetToDraft={onResetToDraft}
-              calculatedStatus={calculatedStatus}
               availableApprovers={availableApprovers}
-              reviewItems={reviewItems}
-            />
-          )}
-        {approved
-          && (
-            <Approved
-              additionalNotes={additionalNotes}
-              approverStatusList={approvers}
               reviewItems={reviewItems}
             />
           )}
@@ -182,7 +162,6 @@ Approver.propTypes = {
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
-  onResetToDraft: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({

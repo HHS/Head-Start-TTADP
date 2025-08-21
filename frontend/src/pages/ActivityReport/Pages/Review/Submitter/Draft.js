@@ -6,8 +6,8 @@ import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
-import { Accordion } from '../../../../../components/Accordion';
 import UserContext from '../../../../../UserContext';
+import { Accordion } from '../../../../../components/Accordion';
 import IncompletePages from '../../../../../components/IncompletePages';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import FormItem from '../../../../../components/FormItem';
@@ -17,8 +17,9 @@ import DismissingComponentWrapper from '../../../../../components/DismissingComp
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 import MissingCitationAlerts from '../../components/MissingCitationAlerts';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import './Draft.scss';
 
 const Draft = ({
   availableApprovers,
@@ -51,18 +52,19 @@ const Draft = ({
 
   const allGoalsHavePromptResponses = (() => {
     const goalsAndObjectives = getValues('goalsAndObjectives');
-    const curatedGoals = (goalsAndObjectives || []).filter((goal) => goal.isCurated);
-
+    const curatedGoals = (goalsAndObjectives || []).filter(
+      (goal) => goal.prompts && goal.prompts.length > 0,
+    );
     if (!curatedGoals.length) return true;
 
     return curatedGoals.every((goal) => goal.prompts
       .every((prompt) => {
-        if (!prompt.allGoalsHavePromptResponse) {
+        if (!prompt.response || !prompt.response.length) {
           promptsMissingResponses.push(prompt.title);
           goalsMissingResponses.push(goal);
         }
 
-        return prompt.allGoalsHavePromptResponse;
+        return prompt.response && prompt.response.length > 0;
       }));
   })();
 
@@ -112,9 +114,9 @@ const Draft = ({
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
-      <h2>Review and submit</h2>
-      <IndicatesRequiredField />
-      <p className="usa-prose margin-top-2 margin-bottom-3">
+      <h2 className="font-family-serif">Review and submit</h2>
+      <IndicatesRequiredField className="margin-bottom-0 margin-top-0" />
+      <p className="usa-prose margin-top-2 margin-bottom-5">
         Review the information in each section before submitting for approval.
         <br />
         Once submitted, you will no longer be able to edit the report.
@@ -147,29 +149,26 @@ const Draft = ({
             )
             : null
         }
-        <Fieldset className={`smart-hub--report-legend margin-top-4 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`}>
+        <Fieldset className={`smart-hub--report-legend margin-top-0 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`}>
           <FormItem
             label="Creator notes"
             name="additionalNotes"
             required={false}
+            formGroupClassName="margin-top-4"
           >
             <div className={`margin-top-1 ${textAreaClass}`}>
               <HookFormRichEditor ariaLabel="Additional notes" name="additionalNotes" id="additionalNotes" />
             </div>
           </FormItem>
         </Fieldset>
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
-          <p className="margin-top-4">
-            Submitting this form for approval means that you will no longer be in draft
-            mode. Please review all information in each section before submitting to your
-            manager(s) for approval.
-          </p>
+        <Fieldset className="smart-hub--report-legend">
           { !connectionActive && (
             <ConnectionError />
           )}
           <FormItem
             label="Approving manager"
             name="approvers"
+            formGroupClassName="margin-top-4"
           >
             <ApproverSelect
               name="approvers"
@@ -193,10 +192,10 @@ const Draft = ({
           onSaveDraft={onSaveForm}
         />
         )}
-        <div className="margin-top-3">
+        <div className={approverStatusList && approverStatusList.length > 0 ? 'margin-top-3' : 'margin-top-0'}>
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button disabled={!connectionActive} id="draft-review-submit" type="submit">Submit for approval</Button>
+        <Button className="draft-button-margin" disabled={!connectionActive} id="draft-review-submit" type="submit">Submit for approval</Button>
         { !connectionActive && (
         <Alert type="warning" noIcon>
           There&#39;s an issue with your connection.
@@ -214,6 +213,7 @@ const Draft = ({
           id="draft-review-save-draft"
           outline
           type="button"
+          className="draft-button-margin"
           onClick={async () => {
             await onSaveForm(false);
             updateShowSavedDraft(true);

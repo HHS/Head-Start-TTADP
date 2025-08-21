@@ -7,13 +7,16 @@ import Section from './ReviewSection';
 import ReviewItem from './ReviewItem';
 import { reportIsEditable } from '../../../../utils';
 
-const ReviewPage = ({ sections, path, isCustomValue }) => {
+const ReviewPage = ({
+  sections, path, isCustomValue,
+}) => {
   const { getValues } = useFormContext();
   const canEdit = reportIsEditable(getValues('calculatedStatus'));
   return (
     <>
       {sections.map((section) => {
         const names = section.items.map((item) => item.name);
+        const isEditSection = section.isEditSection || false;
         const values = isCustomValue
           ? section.items.map((item) => item.customValue[item.name])
           : getValues(names);
@@ -26,7 +29,7 @@ const ReviewPage = ({ sections, path, isCustomValue }) => {
             basePath={path}
             anchor={section.anchor}
             title={section.title}
-            canEdit={canEdit}
+            canEdit={canEdit && isEditSection}
           >
             {section.items.map((item) => (
               <ReviewItem
