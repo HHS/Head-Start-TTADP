@@ -105,7 +105,7 @@ export default function StandardGoalCard({
       await updateGoalStatus(ids, newStatus, localStatus, reason, context);
       setLocalStatus(newStatus);
       if (newStatus === GOAL_STATUS.SUSPENDED) {
-        const statusesNeedUpdatin = [
+        const statusesNeedUpdating = [
           GOAL_STATUS.NOT_STARTED,
           GOAL_STATUS.IN_PROGRESS,
         ];
