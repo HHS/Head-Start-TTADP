@@ -89,13 +89,9 @@ export default async function getGoalsForReport(reportId: number) {
         ],
         [
           sequelize.literal(`(
-            SELECT COUNT(*) = 1 AND EXISTS(
-              SELECT 1 FROM "GoalStatusChanges" gsc 
-              WHERE gsc."goalId" = "Goal".id 
-              AND gsc.reason = 'Goal created'
-            )
-            FROM "GoalStatusChanges" gsc2 
-            WHERE gsc2."goalId" = "Goal".id
+            SELECT COUNT(*) = 1
+            FROM "ActivityReportGoals" arg
+            WHERE arg."goalId" = "Goal".id
           )`),
           'firstUsage',
         ],
