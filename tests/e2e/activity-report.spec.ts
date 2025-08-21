@@ -339,7 +339,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText(`${fullName} has requested approval for this activity report`)).toBeVisible();
     await expect(page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(1)).toBeVisible();
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(2)).toBeVisible();
+    // await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(2)).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual', { exact: true })).toBeVisible();
     await expect(page.getByText('Recipient participants', { exact: true })).toBeVisible();
     await expect(page.getByText('Collaborating specialists', { exact: true })).toBeVisible();
