@@ -356,7 +356,8 @@ const ActivitySummary = ({
           <FormItem
             className="margin-0"
             customLabel={(
-              <Label className="margin-bottom-0" htmlFor="activityReason">
+              <>
+                <Label className="margin-bottom-0" htmlFor="activityReason" />
                 Why was this activity requested?
                 {' '}
                 <Req />
@@ -367,7 +368,7 @@ const ActivitySummary = ({
                 >
                   Get help choosing an option
                 </button>
-              </Label>
+              </>
           )}
             name="activityReason"
             required

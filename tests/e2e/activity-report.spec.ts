@@ -119,7 +119,10 @@ async function activitySummary(
 
   // Why as the activity requested?
   await page.getByText('Why was this activity requested? *Get help choosing an option- Select -').click();
-  await page.locator('#react-select-9-option-1').click();
+  // await page.getByText('Why was this activity requested?').click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
 
   // Target  populations addressed.
   await page.getByText('Target populations addressed *- Select -').click();
