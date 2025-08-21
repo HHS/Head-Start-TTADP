@@ -60,6 +60,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
           goalStatus="In Progress"
           reportId={12}
           onSaveDraft={jest.fn()}
+          objectiveOptionsLoaded
         />
         <button type="button">blur me</button>
       </FormProvider>
@@ -84,9 +85,6 @@ describe('Objectives', () => {
     const objectiveOptions = [];
     const collabs = [{ role: 'Snake charmer' }, { role: 'lion tamer' }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} collaborators={collabs} />);
-    const select = await screen.findByLabelText(/Select TTA objective/i);
-    expect(screen.queryByText(/objective status/i)).toBeNull();
-    await selectEvent.select(select, ['Create a new objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
   it('allows for the selection and changing of an objective', async () => {
@@ -258,6 +256,51 @@ describe('Objectives', () => {
     expect(screen.queryByText(/objective status/i)).toBeNull();
     const select = await screen.findByLabelText(/Select TTA objective/i);
     await selectEvent.select(select, ['Test objective']);
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+  });
+
+  it('suspends without setting a reason and displays an error', async () => {
+    const objectiveOptions = [{
+      value: 3,
+      label: 'Test objective',
+      title: 'Test objective',
+      ttaProvided: '<p>hello</p>',
+      onAR: false,
+      onApprovedAR: false,
+      resources: [],
+      topics: [],
+      status: 'Not Started',
+      id: 3,
+      objectiveCreatedHere: false,
+    }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+
+    // Find the label 'Objective status' and select the suspend option.
+    const statusLabel = await screen.findByText(/objective status/i);
+    const statusSelect = statusLabel.parentElement.querySelector('select');
+    expect(statusSelect).toBeInTheDocument();
+    await selectEvent.select(statusSelect, ['Suspended']);
+
+    // Wait for the modal to appear.
+    const modal = await screen.findByRole('dialog', { name: /why are you suspending this objective/i });
+    expect(modal).toBeVisible();
+
+    // Click the submit button without selecting a reason.
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    userEvent.click(submitButton);
+
+    // Expect to see the error message "Reason for suspension is required".
+    const errorMessage = await screen.findByText(/reason for suspension is required/i);
+    expect(errorMessage).toBeVisible();
+  });
+
+  it('automatically selects the create a new objecitve option when there are no objective options', async () => {
+    const objectiveOptions = [];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    expect(screen.getByText(/create a new objective/i)).toBeVisible();
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
 });

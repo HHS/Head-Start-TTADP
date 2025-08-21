@@ -12,40 +12,22 @@ import {
 const noneProvided = 'None provided';
 
 export const mapUrlValue = (v) => {
-  let result = v;
-  switch (v) {
-    case 'recipient':
-      result = 'Recipient';
-      break;
-    case 'regionalOffice':
-      result = 'Regional Office';
-      break;
-    case 'other-entity':
-      result = 'Other entity';
-      break;
-    case 'technical-assistance':
-      result = 'Technical assistance';
-      break;
-    case 'training':
-      result = 'Training';
-      break;
-    case 'in-person':
-      result = 'In Person';
-      break;
-    case 'virtual':
-      result = 'Virtual';
-      break;
-    case 'hybrid':
-      result = 'Hybrid';
-      break;
-    default:
-      break;
-  }
+  const labelMap = {
+    recipient: 'Recipient',
+    regionalOffice: 'Regional Office',
+    'other-entity': 'Other entity',
+    'technical-assistance': 'Technical assistance',
+    training: 'Training',
+    'in-person': 'In Person',
+    virtual: 'Virtual',
+    hybrid: 'Hybrid',
+  };
+  const result = labelMap[v] || v;
   return result;
 };
 
 const ReviewItem = ({
-  label, name, path, sortValues, customValue, linkNamePath, isFile, isRichText,
+  label, name, path, sortValues, customValue, linkNamePath, isFile, isRichText, commaSeparateArray,
 }) => {
   const { watch } = useFormContext();
   let value = null;
@@ -94,6 +76,10 @@ const ReviewItem = ({
     values.sort();
   }
 
+  if (values.length === 0 || values[0] === undefined) {
+    values[0] = 'None provided';
+  }
+
   values = values.map((v, index) => {
     // If not a valid url, then its most likely just text, so leave it as is
     // except for several values
@@ -139,11 +125,17 @@ const ReviewItem = ({
         {label}
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
-        {values.map((v, index) => (
-          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
-            {Number.isNaN(v) ? '' : v}
+        {commaSeparateArray ? (
+          <div aria-label={label} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+            {values.map((v) => (Number.isNaN(v) ? '' : v)).join(', ')}
           </div>
-        ))}
+        ) : (
+          values.map((v, index) => (
+            <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+              {Number.isNaN(v) ? '' : v}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -158,6 +150,7 @@ ReviewItem.propTypes = {
   linkNamePath: PropTypes.string,
   isFile: PropTypes.bool,
   isRichText: PropTypes.bool,
+  commaSeparateArray: PropTypes.bool,
 };
 
 ReviewItem.defaultProps = {
@@ -167,6 +160,7 @@ ReviewItem.defaultProps = {
   linkNamePath: null,
   isFile: false,
   isRichText: false,
+  commaSeparateArray: false,
 };
 
 export default ReviewItem;

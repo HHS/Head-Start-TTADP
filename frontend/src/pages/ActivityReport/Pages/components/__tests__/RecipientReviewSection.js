@@ -352,8 +352,8 @@ describe('RecipientReviewSection', () => {
     expect(screen.queryAllByText(/Goal summary/i).length).toBe(1);
     expect(screen.getByText(/this is my 1st goal title/i)).toBeInTheDocument();
 
-    // Expect the text 'Root cause' to be displayed 3 times.
-    expect(screen.queryAllByText(/Root cause/i).length).toBe(3);
+    // Expect the text 'Root cause' to be displayed once.
+    expect(screen.queryAllByText(/Root cause/i).length).toBe(1);
 
     // Assert Response 1 and Response 2 are displayed.
     expect(screen.getByText(/response 1, response 2/i)).toBeInTheDocument();

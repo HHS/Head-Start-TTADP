@@ -41,12 +41,14 @@ import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import QADashboard from './pages/QADashboard';
 import SomethingWentWrong from './components/SomethingWentWrong';
+import NewVersionAvailable from './components/NewVersionAvailable';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
+import SubmittedActivityReport from './pages/SubmittedActivityReport';
 
 export default function Routes({
   alert,
@@ -78,6 +80,14 @@ export default function Routes({
   const renderAuthenticatedRoutes = () => (
     <>
       <Switch>
+        <Route
+          path="/activity-reports/revision-change"
+          render={() => (
+            <AppWrapper hasAlerts={false} authenticated logout={logout}>
+              <NewVersionAvailable />
+            </AppWrapper>
+          )}
+        />
         <Route
           path="/something-went-wrong/:errorResponseCode([0-9]*)"
           render={({ match }) => (
@@ -113,6 +123,14 @@ export default function Routes({
           render={() => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <Home />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/activity-reports/submitted/:activityReportId([0-9]*)"
+          render={({ match, location }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <SubmittedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
         />

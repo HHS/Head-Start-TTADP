@@ -67,8 +67,18 @@ export const topicToQuery = {
     nctn: (query) => withoutAuthor(query),
   },
   topic: {
-    in: (query) => withTopics(query),
-    nin: (query) => withoutTopics(query),
+    in: (query, _options, _userId, validTopics) => withTopics(
+      query,
+      _options,
+      _userId,
+      validTopics,
+    ),
+    nin: (query, _options, _userId, validTopics) => withoutTopics(
+      query,
+      _options,
+      _userId,
+      validTopics,
+    ),
   },
   collaborators: {
     ctn: (query) => withCollaborators(query),
@@ -174,6 +184,6 @@ export const topicToQuery = {
   },
 };
 
-export function activityReportsFiltersToScopes(filters, options, userId) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId);
+export function activityReportsFiltersToScopes(filters, options, userId, validTopics) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
 }

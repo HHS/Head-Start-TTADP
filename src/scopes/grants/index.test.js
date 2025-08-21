@@ -423,6 +423,9 @@ describe('grant filtersToScopes', () => {
       },
     });
 
+    await GoalFieldResponse.destroy({ where: {}, force: true });
+    await Goal.destroy({ where: {}, force: true });
+
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
@@ -725,6 +728,19 @@ describe('grant filtersToScopes', () => {
         expect(foundGrants).not.toContain(grant);
       });
     });
+
+    it('ignores invalid group.in IDs', async () => {
+      const filters = { 'group.in': ['abc', '1; DROP TABLE users', String(group.id)] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+      });
+
+      expect(found.map((f) => f.id)).toContain(grantGroupOne.grantId);
+      expect(found.map((f) => f.id)).toContain(grantGroupTwo.grantId);
+      expect(found.length).toBe(2);
+    });
   });
 
   describe('goalResponse', () => {
@@ -791,11 +807,11 @@ describe('grant filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await GoalFieldResponse.destroy({
-        where: {
-          id: [response1.id, response2.id, response3.id],
-        },
-      });
+      const idsToDelete = [response1?.id, response2?.id, response3?.id].filter(Boolean);
+
+      if (idsToDelete.length > 0) {
+        await GoalFieldResponse.destroy({ where: { id: idsToDelete } });
+      }
 
       await Goal.destroy({
         where: {
@@ -825,6 +841,20 @@ describe('grant filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([grants[1].id, grants[3].id]));
+    });
+
+    it('prevents SQL injection via goalResponse.in parameter', async () => {
+      const injectedInput = ['Workforce', "' OR 1=1 --"];
+
+      const filters = { 'goalResponse.in': injectedInput };
+      const { grant: scope } = await filtersToScopes(filters, 'goal');
+
+      const found = await Grant.findAll({
+        where: { [Op.and]: [scope.where, { id: [grants[1].id, grants[2].id, grants[3].id] }] },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([grants[2].id]));
     });
   });
 
@@ -883,6 +913,7 @@ describe('grant filtersToScopes', () => {
         where: {
           id: grantIds,
         },
+        individualHooks: true,
       });
 
       // Clean up recipients.

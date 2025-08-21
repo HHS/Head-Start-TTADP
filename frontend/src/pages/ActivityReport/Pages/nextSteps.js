@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
@@ -8,6 +7,7 @@ import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from './Review/ReviewPage';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import { isValidDate } from '../../../utils';
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -24,11 +24,9 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
-    return false;
-  }
-
-  return true;
+  return [...specialistNextSteps, ...recipientNextSteps].every(
+    (step) => step.note && Boolean(isValidDate(step.completeDate)),
+  );
 };
 
 const NextSteps = ({ activityRecipientType }) => {
@@ -98,6 +96,7 @@ const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
   return [
     {
       title: "Specialist's next steps",
+      isEditSection: true,
       anchor: 'specialist-next-steps',
       items: [...specialistItems.flatMap((item) => item)],
     },

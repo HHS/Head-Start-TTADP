@@ -79,7 +79,7 @@ function ButtonSelect(props) {
       applyButtonAria={`Apply filters for the ${ariaName}`}
     >
       <div role="group" aria-describedby={labelId}>
-        <span className="smart-hub--button-select-menu-label sr-only" id={labelId}>
+        <span className="smart-hub--button-select-menu-label usa-sr-only" id={labelId}>
           <strong>{labelText}</strong>
         </span>
         <fieldset className="margin-0 border-0 padding-0" data-testid="button-select-button-group">

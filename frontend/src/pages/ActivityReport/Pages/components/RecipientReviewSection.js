@@ -26,7 +26,7 @@ const RecipientReviewSection = () => {
       anchor: 'goal-summary',
       items: [
         { label: 'Recipient\'s goal', name: 'name' },
-        { label: 'Goal numbers', name: 'goalNumber' },
+        { label: 'Goal numbers', name: 'goalNumbers' },
         { label: 'Root cause', name: 'promptsForReview' },
       ],
     },
@@ -43,6 +43,9 @@ const RecipientReviewSection = () => {
         },
         {
           label: 'Topics', name: 'topics', path: 'name', sort: true,
+        },
+        {
+          label: 'iPD Courses', name: 'courses', path: 'name', sort: true,
         },
         {
           label: 'Resource links', name: 'resources', path: 'value', sort: true,
@@ -64,12 +67,12 @@ const RecipientReviewSection = () => {
     const promptsForReview = goal.promptsForReview || [];
     return (promptsForReview.length > 0 && (
       <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-1">
-        {promptsForReview.map((v) => (
+        {promptsForReview.map((v, index) => (
           <>
-            <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
-              {item.label}
+            <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6 font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
+              {index === 0 ? <b>{item.label}</b> : ''}
             </div>
-            <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
+            <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6 padding-x-2">
               <div key={`${item.label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
                 {
                   v.responses.length
@@ -94,8 +97,7 @@ const RecipientReviewSection = () => {
           </>
         ))}
       </div>
-    )
-    );
+    ));
   };
 
   const buildGoalReview = (goal) => goalSection[0].items.map((item) => {
@@ -111,6 +113,7 @@ const RecipientReviewSection = () => {
         name={item.name}
         sortValues={item.sort}
         customValue={goal}
+        commaSeparateArray={item.label === 'Goal numbers'}
       />
     );
   });
@@ -123,7 +126,7 @@ const RecipientReviewSection = () => {
           basePath="goals-objectives"
           anchor="objectives-summary"
           title="Objective summary"
-          canEdit={canEdit}
+          canEdit={false} // always hide for objectives.
           isLastSection={isLastGoal && objectives.length - 1 === index}
         >
           {objectiveSections.map((section) => section.items.map((item) => {
@@ -179,7 +182,7 @@ const RecipientReviewSection = () => {
               basePath="goals-objectives"
               anchor="goal-summary"
               title="Goal summary"
-              canEdit={canEdit}
+              canEdit={canEdit} // Simply use canEdit without additional conditions for goals.
               isLastSection={false}
             >
               <div className="smart-hub-review-section margin-top-2 desktop:margin-top-0 margin-bottom-3">

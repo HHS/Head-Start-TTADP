@@ -3,9 +3,7 @@ web_instances: 1
 web_memory: 2GB
 worker_instances: 1
 worker_memory: 512M
-similarity_api_instances: 1
-similarity_api_memory: 1GB
-similarity_api_disk_quota: 6GB
+app_disk_quota: 4GB
 
 app_name: tta-smarthub-${full_env}
 app_url: https://tta-smarthub-${full_env}.app.cloud.gov/
@@ -25,7 +23,8 @@ AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://tta-smarthub-${full_env}.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-${full_env}.app.cloud.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
-SIMILARITY_ENDPOINT: https://tta-similarity-api-${full_env}.app.cloud.gov/compute
+SEND_NOTIFICATIONS: "true"
+SUPPRESS_ERROR_LOGGING: "false"
 SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
 
 AUTH_CLIENT_ID: "${DEV_AUTH_CLIENT_ID}"
@@ -50,9 +49,9 @@ ITAMS_MD_USERNAME: "${ITAMS_MD_USERNAME}"
 ITAMS_MD_PASSWORD: "${ITAMS_MD_PASSWORD}"
 SMARTSHEET_ACCESS_TOKEN: "${SMARTSHEET_ACCESS_TOKEN}"
 
-REACT_APP_GTM_ENABLED: "${$DEV_GTM_ENABLED}"
+REACT_APP_GTM_ENABLED: "${DEV_GTM_ENABLED}"
 REACT_APP_GTM_ID: "${GLOBAL_GTM_ID}"
 REACT_APP_GTM_AUTH: "${DEV_GTM_AUTH}"
 REACT_APP_GTM_PREVIEW: "${PROD_GTM_PREVIEW}"
-REACT_APP_WEBSOCKET_URL: "${WEBSOCKET_URL}"
+REACT_APP_WEBSOCKET_URL: ws://tta-smarthub-${full_env}.app.cloud.gov
 REACT_APP_INCLUDE_ACCESSIBILITY_CSS: "false"

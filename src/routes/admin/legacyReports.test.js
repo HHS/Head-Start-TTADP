@@ -8,7 +8,9 @@ import {
   createReport, createGrant, createUser, destroyReport,
 } from '../../testUtils';
 import { updateLegacyReportUsers } from './legacyReports';
+import { handleError } from '../../lib/apiErrorHandler';
 
+jest.mock('../../lib/apiErrorHandler');
 describe('LegacyReports, admin routes', () => {
   describe('updateLegacyReportUsers', () => {
     let grant;
@@ -61,6 +63,7 @@ describe('LegacyReports, admin routes', () => {
         },
       };
 
+      const mockJson = jest.fn();
       const mockResponse = {
         attachment: jest.fn(),
         json: jest.fn(),
@@ -68,7 +71,7 @@ describe('LegacyReports, admin routes', () => {
         sendStatus: jest.fn(),
         status: jest.fn(() => ({
           end: jest.fn(),
-          json: jest.fn(),
+          json: mockJson,
         })),
       };
 
@@ -127,7 +130,105 @@ describe('LegacyReports, admin routes', () => {
       expect(thirdUpdatedReport.approvers).toHaveLength(2);
       const approverIds = thirdUpdatedReport.approvers.map((a) => a.userId);
       expect(approverIds).toContain(user.id);
+      expect(approverIds).toContain(user.id);
       expect(approverIds).toContain(userTwo.id);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully'] });
+    });
+
+    it('handles report not found', async () => {
+      const request = {
+        params: {
+          reportId: report.id + 100, // non-existent id
+        },
+        body: {
+          createdBy: user.email,
+          modifiedBy: '',
+          manager: '',
+        },
+      };
+      const mockJson = jest.fn();
+      const mockResponse = {
+        status: jest.fn(() => ({
+          end: jest.fn(),
+          json: mockJson,
+        })),
+        json: jest.fn(),
+      };
+      await updateLegacyReportUsers(request, mockResponse);
+      expect(handleError).toHaveBeenCalled();
+    });
+
+    it('handles creator not found', async () => {
+      const request = {
+        params: {
+          reportId: report.id,
+        },
+        body: {
+          createdBy: 'nonexistent@test.com',
+          modifiedBy: '',
+          manager: '',
+        },
+      };
+      const mockJson = jest.fn();
+      const mockResponse = {
+        status: jest.fn(() => ({
+          end: jest.fn(),
+          json: mockJson,
+        })),
+        json: jest.fn(),
+      };
+      await updateLegacyReportUsers(request, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully', 'User with email nonexistent@test.com not found. Report author not updated.'] });
+    });
+
+    it('handles collaborator not found', async () => {
+      const request = {
+        params: {
+          reportId: report.id,
+        },
+        body: {
+          createdBy: '',
+          modifiedBy: 'nonexistent@test.com',
+          manager: '',
+        },
+      };
+      const mockJson = jest.fn();
+      const mockResponse = {
+        status: jest.fn(() => ({
+          end: jest.fn(),
+          json: mockJson,
+        })),
+        json: jest.fn(),
+      };
+      await updateLegacyReportUsers(request, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully', 'User with email nonexistent@test.com not found. Report collaborator not added.'] });
+    });
+
+    it('handles manager not found', async () => {
+      const request = {
+        params: {
+          reportId: report.id,
+        },
+        body: {
+          createdBy: '',
+          modifiedBy: '',
+          manager: 'nonexistent@test.com; another@test.com',
+        },
+      };
+      const mockJson = jest.fn();
+      const mockResponse = {
+        status: jest.fn(() => ({
+          end: jest.fn(),
+          json: mockJson,
+        })),
+        json: jest.fn(),
+      };
+      await updateLegacyReportUsers(request, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully', 'User with email nonexistent@test.com not found. Report approver not added.', 'User with email  another@test.com not found. Report approver not added.'] });
     });
   });
 });

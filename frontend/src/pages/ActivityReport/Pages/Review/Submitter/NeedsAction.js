@@ -77,7 +77,7 @@ const NeedsAction = ({
 
   return (
     <>
-      <h2>Review and submit</h2>
+      <h2 className="font-family-serif">Review and submit</h2>
       <IndicatesRequiredField />
       {reviewItems && reviewItems.length > 0 && (
       <Accordion bordered items={reviewItems} multiselectable />

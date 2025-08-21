@@ -3,6 +3,7 @@ import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
+import { SORT_DIR, COMMUNICATION_LOG_LIMIT_MAX } from '../constants';
 
 const { sequelize, CommunicationLog, CommunicationLogRecipient } = db;
 
@@ -61,11 +62,19 @@ export const COMMUNICATION_LOG_SORT_KEYS = {
 };
 
 export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
+  const direction = [SORT_DIR.ASC, SORT_DIR.DESC].includes(sortDir.toUpperCase())
+    ? sortDir.toUpperCase()
+    : SORT_DIR.DESC; // default fallback
+  const ALLOWED_SORT_FIELDS = Object.values(COMMUNICATION_LOG_SORT_KEYS);
+
+  const safeSortBy = ALLOWED_SORT_FIELDS.includes(sortBy)
+    ? sortBy
+    : COMMUNICATION_LOG_SORT_KEYS.DATE;
   let result = [];
-  switch (sortBy) {
+  switch (safeSortBy) {
     case COMMUNICATION_LOG_SORT_KEYS.ID:
       result = [[
-        sequelize.literal(`CONCAT('R', LPAD(CAST((data->>'regionId') AS TEXT), 2, '0'), '-CL-', LPAD(CAST("CommunicationLog".id AS TEXT), 5, '0')) ${sortDir}`),
+        sequelize.literal(`CONCAT('R', LPAD(CAST((data->>'regionId') AS TEXT), 2, '0'), '-CL-', LPAD(CAST("CommunicationLog".id AS TEXT), 5, '0')) ${direction}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RECIPIENT:
@@ -75,7 +84,7 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
           FROM "Recipients" r
           JOIN "CommunicationLogRecipients" clr ON r.id = clr."recipientId"
           WHERE clr."communicationLogId" = "CommunicationLog".id
-        ) ${sortDir}`),
+        ) ${direction}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.GOALS:
@@ -83,30 +92,30 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         sequelize.literal(`(
           SELECT MIN(g->>'label')
           FROM jsonb_array_elements(data->'goals') g
-        ) ${sortDir}`),
+        ) ${direction}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.AUTHOR:
       result = [[
-        sequelize.literal(`author.name ${sortDir}`),
+        sequelize.literal(`author.name ${direction}`),
       ], [
-        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
+        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.PURPOSE:
       result = [[
-        sequelize.literal(`data->>'purpose' ${sortDir}`),
+        sequelize.literal(`data->>'purpose' ${direction}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.RESULT:
       result = [[
-        sequelize.literal(`data->>'result' ${sortDir}`),
+        sequelize.literal(`data->>'result' ${direction}`),
       ]];
       break;
     case COMMUNICATION_LOG_SORT_KEYS.DATE:
     default:
       result = [[
-        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${sortDir}`),
+        sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`),
       ]];
       break;
   }
@@ -205,9 +214,13 @@ const logsByScopes = async (
     limit?: number;
   };
 
+  const validatedLimit = (Number.isInteger(limit) && limit > 0 && limit <= 100)
+    ? limit
+    : COMMUNICATION_LOGS_PER_PAGE;
+
   if (format === 'json') {
     queryParams.offset = offset;
-    queryParams.limit = limit;
+    queryParams.limit = validatedLimit;
   }
 
   const scopedLogs = await CommunicationLog.findAndCountAll(queryParams);

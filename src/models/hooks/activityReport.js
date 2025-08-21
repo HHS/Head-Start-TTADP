@@ -7,14 +7,12 @@ const {
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
 const { auditLogger } = require('../../logger');
-const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
-const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
@@ -45,8 +43,6 @@ const copyStatus = (instance) => {
   }
 };
 
-// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-// We should never have a goal in draft with templates.
 const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
@@ -132,62 +128,74 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
   }
 };
 
+/**
+ * When a report is approved and a goal referenced by this report is closed,
+ * we need to create a new iteration of the goal's life-cycle.
+ * Because we already have the code written to create a new iteration
+ * and update all linked tables, lets call it like it was a save.
+ * This should handle two edge cases:
+ * 1. When a reports goal is closed after the report is created or submitted.
+ * 2. When a reports goal is closed and the report is unlocked (re-opened).
+ *  Note: That if the user happens to save the AR goals and objectives
+ *  page before submitting this will have already occurred through a normal save.
+ * @param {*} _sequelize
+ * @param {*} instance
+ * @param {*} _options
+ */
+const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) => {
+  try {
+  // If the report is being approved, unlocked, or submitted,
+    if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)
+     || (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION)
+     || (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+      const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+      const reportGoals = await getGoalsForReport(instance.id);
+      // If we have at least one closed goal,
+      // lets call the save standard goals for report to ensure its all up to snuff.
+      // We need to re-save all goals not just the closed ones.
+      if (reportGoals.length) {
+        // eslint-disable-next-line global-require
+        const { saveStandardGoalsForReport } = require('../../services/standardGoals');
+        // Set the status of each closed goal to 'In Progress'.
+        const updateStatusGoals = reportGoals.map((g) => ({
+          ...g,
+          status: GOAL_STATUS.IN_PROGRESS,
+        }));
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        // We pass the reduced goals to be saved.
+        // This will create a new life cycle for the goal
+        // if its currently closed and all related tables.
+        // This is the same function as if they had saved on the AR goals and objectives page.
+        await saveStandardGoalsForReport(updateStatusGoals, userId, { id: instance.id });
+      }
+    }
+  } catch (e) {
+    auditLogger.error(`checkForNewGoalCycleOnApproval: ${e}`);
+  }
+};
+
+const revisionBump = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed) && changed.length > 0) {
+    const currentRevision = instance.revision || 0;
+    instance.set('revision', currentRevision + 1);
+
+    if (!options.fields.includes('revision')) {
+      options.fields.push('revision');
+    }
+  }
+};
+
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
     && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    let goals;
-    try {
-      goals = await sequelize.models.Goal.findAll({
-        where: { goalTemplateId: null },
-        include: [
-          {
-            attributes: [],
-            through: { attributes: [] },
-            model: sequelize.models.ActivityReport,
-            as: 'activityReports',
-            required: true,
-            where: {
-              id: instance.id,
-            },
-          },
-        ],
-        includeIgnoreAttributes: false,
-        transaction: options.transaction,
-        raw: true,
-      });
-      // Generate a distinct list of goal names.
-      const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
-      // Find or create templates for each of the distinct names.
-      // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-      const distinctTemplates = await Promise.all(distinctlyNamedGoals
-        .map(async (goal) => findOrCreateGoalTemplate(
-          sequelize,
-          options.transaction,
-          instance.regionId,
-          goal.name,
-          goal.createdAt,
-          goal.updatedAt,
-        )));
-      // Add the corresponding template id to each of the goals.
-      goals = goals.map((goal) => {
-        const goalTemplateId = distinctTemplates.find((dt) => dt.name === goal.name).id;
-        return { ...goal, goalTemplateId };
-      });
-      // Update all the goals with their template id.
-      await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
-        { goalTemplateId: goal.goalTemplateId },
-        {
-          where: { id: goal.id },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      )));
-    } catch (e) {
-      auditLogger.error(`propagateSubmissionStatus > updating goal: ${e}}`);
-    }
-
     let objectives;
     try {
       objectives = await sequelize.models.Objective.findAll({
@@ -216,6 +224,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       // Probably we don't want to create an objective template every time.
       // But have a finite list of hardcoded objective templates for each goal template.
       // We need to check this with ohs. findOrCreateObjectiveTemplate().
+      // NOTE: lets address this when we make the objective changes.
       const distinctTemplates = await Promise.all(distinctlyTitledObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
@@ -246,7 +255,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
 };
 
 const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked) => {
-  // Get all AR Objective Id's.
+  // 1. Get all the objectives for this activity report.
   const objectives = await sequelize.models.ActivityReportObjective.findAll(
     {
       attributes: [
@@ -256,9 +265,11 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       where: { activityReportId },
     },
   );
+
+  // 2. Get all the objective ids from this activity report.
   const objectiveIds = objectives.map((o) => o.objectiveId);
 
-  // Get all the reports that use the objectives
+  // 3. Get all the activity reports that use these objectives.
   const allReports = await sequelize.models.ActivityReport.findAll({
     attributes: ['id', 'calculatedStatus', 'endDate'],
     include: [
@@ -285,22 +296,45 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     ],
   });
 
+  // 4. Of all the activity reports that use these objectives,
+  //    filter out the ones that are approved using these objectives.
   const approvedReports = allReports.filter((report) => (
     report.calculatedStatus === REPORT_STATUSES.APPROVED
   ));
 
+  // 5. If we don't have any approved activity reports using these objectives,
+  //    we want to reset the status of the objectives
+  //    that are ONLY used by this activity report to NOT_STARTED.
   if (isUnlocked && !approvedReports.length) {
     const report = allReports.find((r) => r.id === activityReportId);
     const objectivesToReset = report && report.activityReportObjectives
       ? report.activityReportObjectives.map((a) => a.objectiveId)
       : [];
 
+    // Filter out objectives that are linked to closed goals.
+    // If we are unlocking a report that is linked to closed goals,
+    // we should keep the objectives closed. And start a new goal cycle,
+    // with new objectives in the hook on re-submission.
+    const goalsThatAreNotClosed = await sequelize.models.Goal.findAll({
+      where: { status: { [Op.ne]: GOAL_STATUS.CLOSED } },
+      include: [{
+        model: sequelize.models.Objective,
+        as: 'objectives',
+        required: true,
+        where: { id: objectivesToReset },
+      }],
+    });
+
+    const objectiveIdsForNotClosedGoals = goalsThatAreNotClosed.map(
+      (g) => g.objectives.map((o) => o.id),
+    ).flat();
     // we don't need to run this query with an empty array I don't think
-    if (objectivesToReset.length) {
+    // We also don't want to update the status of objectives that are linked to closed goals.
+    if (objectiveIdsForNotClosedGoals.length) {
       return sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
-        where: { id: objectivesToReset },
+        where: { id: objectiveIdsForNotClosedGoals },
         individualHooks: true,
       });
     }
@@ -308,20 +342,29 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     return Promise.resolve();
   }
 
+  // 6. If we have approved activity reports using these objectives,
+  //    Then we loop each objective on the activity report.
   return Promise.all(objectiveIds.map((objectiveId) => {
-    // Get reports that use this objective.
+    // 7. From all the approved activity reports,
+    //    Get the ones that use this particular objective we are looping.
     const relevantARs = approvedReports.filter(
       (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === objectiveId),
     );
 
+    // 8. Get all the ARO objectives that are used by these approved activity reports.
     const objectivesToUpdate = relevantARs.map((a) => a.activityReportObjectives
       .filter((aro) => aro.objectiveId === objectiveId).map((aro) => aro.objective)).flat();
 
+    // 9. If we don't have any relevant activity reports for this objective,
+    //    we don't need to do anything and can go to the next one.
     if (!relevantARs && !relevantARs.length) {
       return Promise.resolve();
     }
 
-    // Get latest report by end date.
+    // 10. Of the activity reports that use this objective,
+    //     we want to find the one with the latest end date.
+    //     If there are no end dates, we will use the first one.
+    //     If there are no activity reports, we will return an empty object.
     const latestAR = relevantARs.reduce((r, a) => {
       if (r && r.endDate) {
         return new Date(r.endDate) > new Date(a.endDate) ? r : a;
@@ -332,16 +375,36 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       activityReportObjectives: [],
     });
 
-    // // Get Objective to take status from.
+    //  11. From the latest activity report,
+    //      find the ARO that corresponds to the objective we are looping.
     const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === objectiveId));
+    // 12. Get the end date of the latest activity report.
     const latestEndDate = latestAR.endDate;
 
+    // 13. If we don't have an ARO, we don't need to do anything and can go to the next objective.
     if (!aro) {
       return Promise.resolve();
     }
-
+    // 14. Loop all the objectives that we want to update.
     return Promise.all((objectivesToUpdate.map(async (objectiveToUpdate) => {
-      const newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+      let newStatus = aro.status || OBJECTIVE_STATUS.NOT_STARTED;
+      // See TTAHUB-4138 for standard goals objective status logic.
+      if (objectiveToUpdate.status === OBJECTIVE_STATUS.IN_PROGRESS
+        && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
+        newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
+      } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.COMPLETE
+        && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
+        newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
+      } else if (objectiveToUpdate.status === OBJECTIVE_STATUS.SUSPENDED
+        && newStatus === OBJECTIVE_STATUS.NOT_STARTED) {
+        // We need to determine if the objective to update has ever been in progress.
+        if (objectiveToUpdate.firstInProgressAt) {
+          newStatus = OBJECTIVE_STATUS.IN_PROGRESS;
+        } else {
+          newStatus = OBJECTIVE_STATUS.SUSPENDED;
+        }
+      }
+
       // status is the same, no need to update
       if (newStatus === objectiveToUpdate.status) {
         return Promise.resolve();
@@ -592,6 +655,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -602,13 +666,11 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     // and 2) goals that are "In Progress" are not moved backward
     // so we start with finding all the goals that *could* be changed
     // (goals in draft or not started)
-    // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
-    // We can prob drop the draft check.
+    // Standard Goals: We need to keep this for not started moved to in progress.
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
           status: [
-            GOAL_STATUS.DRAFT,
             GOAL_STATUS.NOT_STARTED,
           ],
         },
@@ -629,14 +691,13 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-
         await changeGoalStatus({
           goalId: goal.id,
-          userId,
+          userId: instance.userId,
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,
+          performedAt: instance.startDate,
         });
       }
       // removing hooks because we don't want to trigger the automatic status change
@@ -644,7 +705,41 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       return goal.save({ transaction: options.transaction, hooks: false });
     })));
   }
+  return Promise.resolve();
+};
 
+const automaticUnsuspendGoalOnApproval = async (instance) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+    const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+    const reportGoals = await getGoalsForReport(instance.id);
+
+    if (reportGoals.length) {
+      // eslint-disable-next-line global-require
+      // eslint-disable-next-line global-require
+
+      const updateStatusGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.SUSPENDED);
+
+      // since we can't unsuspend goals in this way, this logic will
+      // handle the unsuspension
+      await Promise.all(updateStatusGoals.map((s) => changeGoalStatus({
+        goalId: s.id,
+        userId: instance.userId,
+        newStatus: GOAL_STATUS.IN_PROGRESS,
+        reason: 'Goal moved to In Progress from Suspended',
+        context: 'saveStandardGoalsForReport',
+        performedAt: instance.startDate,
+      })));
+    }
+  }
   return Promise.resolve();
 };
 
@@ -829,6 +924,55 @@ const autoCleanupUtilizer = async (sequelize, instance, options) => {
   }
 };
 
+/**
+ * This hook is called after a transaction is committed.
+ * It broadcasts the revision update to all users in the activity report room
+ * only if the revision was changed during the transaction.
+ *
+ * @param {*} sequelize - The Sequelize instance
+ * @param {*} instance - The ActivityReport instance
+ */
+const revisionBumpBroadcast = async (sequelize, instance) => {
+  try {
+    // Only proceed if the revision was changed
+    const changed = instance.previous && instance.previous();
+    const previousRevision = changed ? instance.previous('revision') : null;
+    const currentRevision = instance.revision;
+
+    // Check if revision was actually changed
+    if (previousRevision !== null && previousRevision !== currentRevision) {
+      // Only attempt to broadcast if we're not in a test environment
+      if (process.env.NODE_ENV !== 'test') {
+        // Get the current user ID
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+        // Dynamically import the mesh server to avoid circular dependencies
+        // eslint-disable-next-line global-require
+        const { getMeshServer } = require('../../index');
+        const mesh = getMeshServer();
+
+        if (mesh) {
+          const roomName = `ar-${instance.id}`;
+          await mesh.broadcastRoom(
+            roomName,
+            'revision-updated',
+            {
+              reportId: instance.id,
+              revision: currentRevision,
+              userId: userId || null, // Include the user ID who made the change
+              timestamp: new Date().toISOString(), // Add a timestamp
+            },
+          );
+          auditLogger.info(`Broadcasted revision update (${currentRevision}) to room ${roomName}`);
+        }
+      }
+    }
+  } catch (error) {
+    // Log the error but don't fail the process
+    auditLogger.error(`Failed to broadcast revision update: ${error}`);
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -841,34 +985,7 @@ const beforeUpdate = async (sequelize, instance, options) => {
   purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);
-};
-
-const afterDestroy = async (sequelize, instance, options) => {
-  try {
-    if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
-      return;
-    }
-    auditLogger.info(`Destroying linked similarity groups for AR-${instance.id}`);
-    const { id: activityReportId, calculatedStatus } = instance;
-
-    const arGoals = await sequelize.models.ActivityReportGoal.findAll({
-      attributes: ['goalId'],
-      where: { activityReportId },
-      transaction: options.transaction,
-    });
-
-    await Promise.all((arGoals.map(async (arGoal) => {
-      const i = {
-        calculatedStatus,
-        goalId: arGoal.goalId,
-      };
-      // regen similarity groups
-      return destroyLinkedSimilarityGroups(sequelize, i, options);
-    })));
-  } catch (e) {
-    // we do not want to surface these errors to the UI
-    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
-  }
+  await revisionBump(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -881,10 +998,12 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await autoPopulateUtilizer(sequelize, instance, options);
-  await autoCleanupUtilizer(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
+  await autoCleanupUtilizer(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await afterDestroy(sequelize, instance, options);
+  await checkForNewGoalCycleOnApproval(sequelize, instance, options);
+  await automaticUnsuspendGoalOnApproval(instance);
+  await revisionBumpBroadcast(sequelize, instance);
 };
 
 export {
@@ -898,7 +1017,8 @@ export {
   beforeUpdate,
   afterCreate,
   afterUpdate,
-  moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,
-  afterDestroy,
+  moveDraftGoalsToNotStartedOnSubmission,
+  revisionBump,
+  revisionBumpBroadcast,
 };

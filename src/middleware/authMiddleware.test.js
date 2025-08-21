@@ -1,8 +1,30 @@
-import {} from 'dotenv/config';
+import { } from 'dotenv/config';
 import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
 import db, { User, Permission } from '../models';
 import authMiddleware, { login } from './authMiddleware';
 import SCOPES from './scopeConstants';
+
+const mockUser = {
+  id: 66349,
+  name: 'Auth Middleware',
+  hsesUserId: '66349',
+  hsesUsername: 'auth.middleware',
+  permissions: [{
+    userId: 66349,
+    regionId: 14,
+    scopeId: SCOPES.SITE_ACCESS,
+  }],
+  lastLogin: new Date(),
+};
+
+const unAuthdUser = {
+  id: 663491,
+  name: 'unAuth Middleware',
+  hsesUserId: '663491',
+  hsesUsername: 'unauth.middleware',
+  permissions: [],
+  lastLogin: new Date(),
+};
 
 describe('authMiddleware', () => {
   const ORIGINAL_ENV = process.env;
@@ -14,34 +36,18 @@ describe('authMiddleware', () => {
 
   afterAll(async () => {
     process.env = ORIGINAL_ENV; // restore original env
+    await User.destroy({
+      where: {
+        id: [mockUser.id, unAuthdUser.id],
+      },
+      individualHooks: true,
+    });
     await db.sequelize.close();
   });
 
   afterEach(() => {
     jest.resetAllMocks();
   });
-
-  const mockUser = {
-    id: 66349,
-    name: 'Auth Middleware',
-    hsesUserId: '66349',
-    hsesUsername: 'auth.middleware',
-    permissions: [{
-      userId: 66349,
-      regionId: 14,
-      scopeId: SCOPES.SITE_ACCESS,
-    }],
-    lastLogin: new Date(),
-  };
-
-  const unAuthdUser = {
-    id: 663491,
-    name: 'unAuth Middleware',
-    hsesUserId: '663491',
-    hsesUsername: 'unauth.middleware',
-    permissions: [],
-    lastLogin: new Date(),
-  };
 
   const setupUser = async (user) => {
     await User.destroy({ where: { id: user.id } });
@@ -53,17 +59,6 @@ describe('authMiddleware', () => {
   const destroyUser = async (user) => (
     User.destroy({ where: { id: user.id } })
   );
-
-  afterAll(async () => {
-    await User.destroy({
-      where: {
-        id: [mockUser.id, unAuthdUser.id],
-      },
-      individualHooks: true,
-    });
-
-    await db.sequelize.close();
-  });
 
   it('should allow access if user data is present', async () => {
     await setupUser(mockUser);

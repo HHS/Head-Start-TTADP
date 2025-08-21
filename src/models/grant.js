@@ -70,6 +70,14 @@ export default (sequelize, DataTypes) => {
     endDate: DataTypes.DATE,
     inactivationDate: DataTypes.DATE,
     inactivationReason: DataTypes.ENUM(inactivationReasons),
+    geographicRegion: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    geographicRegionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -91,17 +99,20 @@ export default (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
+        const statusText = this.status === 'Inactive' ? ' (inactive)' : '';
+
         if (this.recipient) {
-          return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+          return `${this.recipient.name} - ${this.numberWithProgramTypes}${statusText}`;
         }
-        return `${this.numberWithProgramTypes}`;
+
+        return `${this.numberWithProgramTypes}${statusText}`;
       },
     },
     numberWithProgramTypes: {
       type: DataTypes.VIRTUAL,
       get() {
         const programTypes = this.programTypes.length > 0 ? ` - ${this.programTypes.join(', ')}` : '';
-        return `${this.number} ${programTypes}`;
+        return `${this.number}${programTypes}`;
       },
     },
     recipientInfo: {

@@ -75,7 +75,7 @@ export default function FilterDateRange({
     case 'is':
       return (
         <>
-          <label htmlFor="filter-date-range" className="sr-only">
+          <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
           <Dropdown
@@ -107,7 +107,7 @@ export default function FilterDateRange({
     case 'is on or before':
       return (
         <span ref={container}>
-          <label htmlFor="filter-date-range" className="sr-only">
+          <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
           <DatePicker
@@ -124,7 +124,7 @@ export default function FilterDateRange({
     case 'is on or after':
       return (
         <span ref={container}>
-          <label htmlFor="filter-date-range" className="sr-only">
+          <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
           <DatePicker

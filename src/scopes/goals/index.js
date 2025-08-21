@@ -56,8 +56,13 @@ export const topicToQuery = {
     nin: (query) => withoutStatus(query),
   },
   topic: {
-    in: (query, options) => withTopics(query, options),
-    nin: (query, options) => withoutTopics(query, options),
+    in: (query, options, _userId, validTopics) => withTopics(query, options, _userId, validTopics),
+    nin: (query, options, _userId, validTopics) => withoutTopics(
+      query,
+      options,
+      _userId,
+      validTopics,
+    ),
   },
   reason: {
     in: (query, options) => withReasons(query, options),
@@ -141,6 +146,6 @@ export const topicToQuery = {
   },
 };
 
-export function goalsFiltersToScopes(filters, options, userId) {
-  return createFiltersToScopes(filters, topicToQuery, options, userId);
+export function goalsFiltersToScopes(filters, options, userId, validTopics) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId, validTopics);
 }

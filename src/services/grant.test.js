@@ -1,6 +1,6 @@
 import db, { Grant, Region, Recipient } from '../models';
 import {
-  cdiGrants, grantById, assignCDIGrant, statesByGrantRegion,
+  grantById, statesByGrantRegion,
 } from './grant';
 
 const grants = [
@@ -109,31 +109,6 @@ describe('Grant DB service', () => {
     it('returns the grant', async () => {
       const grant = await grantById(90);
       expect(grant.number).toEqual('zz123');
-    });
-  });
-
-  describe('assignCDIGrant', () => {
-    it('assigns recipient and regionId', async () => {
-      const grant = await Grant.findOne({ where: { id: 92 } });
-      const newGrant = await assignCDIGrant(grant, 5, 1);
-      expect(newGrant.regionId).toEqual(5);
-      expect(newGrant.recipientId).toEqual(1);
-    });
-  });
-
-  describe('cdiGrants', () => {
-    it('returns all CDI grants', async () => {
-      const foundRecipients = await cdiGrants();
-      const foundIds = foundRecipients.map((g) => g.id);
-      expect(foundIds).toContain(90);
-      expect(foundIds).toContain(91);
-      expect(foundIds).not.toContain(92);
-    });
-
-    it('can return unassigned grants', async () => {
-      const foundRecipients = await cdiGrants('true');
-      const foundIds = foundRecipients.map((g) => g.id);
-      expect(foundIds.length).toBe(5);
     });
   });
 

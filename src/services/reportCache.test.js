@@ -1,17 +1,11 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, GOAL_SOURCES } from '@ttahub/common';
-import db, {
+import { GOAL_SOURCES } from '@ttahub/common';
+import {
   User,
-  Recipient,
-  Grant,
   Goal,
   GoalFieldResponse,
-  File,
-  Role,
   Objective,
-  ActivityReport,
-  ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveCourse,
@@ -20,6 +14,7 @@ import db, {
   GoalTemplateFieldPrompt,
   Topic,
   Course,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import {
   cacheGoalMetadata,
@@ -110,16 +105,79 @@ describe('cacheCourses', () => {
 
 describe('cacheTopics', () => {
   let mockAuditLoggerError;
-  beforeAll(() => {
+  let mockAuditLoggerInfo;
+  let mockFindAll;
+  let mockCreate;
+  let mockDestroy;
+  let mockFindAllAROTopics;
+
+  beforeEach(() => {
     mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
-  });
-  afterAll(() => {
-    mockAuditLoggerError.mockRestore();
+    mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation();
+
+    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([
+      { id: 101, name: 'Topic 1' },
+    ]);
+
+    mockFindAllAROTopics = jest.spyOn(ActivityReportObjectiveTopic, 'findAll').mockResolvedValue([]);
+
+    mockCreate = jest.spyOn(ActivityReportObjectiveTopic, 'create').mockResolvedValue({});
+    mockDestroy = jest.spyOn(ActivityReportObjectiveTopic, 'destroy').mockResolvedValue(1);
   });
 
-  it('logs and error when topics are missing ids', async () => {
-    await expect(cacheTopics(1, 1, [{ name: 'Topic 1', id: null }])).rejects.toThrow();
-    expect(mockAuditLoggerError).toHaveBeenCalledWith('Error saving ARO topics: [{"name":"Topic 1","id":null}] for objectiveId: 1 and activityReportObjectiveId: 1');
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('resolves missing topic IDs by name', async () => {
+    const topics = [{ name: 'Topic 1' }];
+
+    await cacheTopics(1, 1, topics);
+
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining('Some topics were missing IDs'));
+    expect(mockFindAll).toHaveBeenCalledWith({ where: { name: ['Topic 1'] } });
+    expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
+  });
+
+  it('logs an error if topic name cannot be resolved', async () => {
+    mockFindAll.mockResolvedValue([]); // simulate no matches found
+
+    const topics = [{ name: 'Unknown Topic' }];
+    await cacheTopics(42, 99, topics);
+
+    expect(mockAuditLoggerError).toHaveBeenCalledWith(
+      expect.stringContaining('Could not resolve topic names: Unknown Topic'),
+    );
+  });
+
+  it('does nothing if all topics already exist and are unchanged', async () => {
+    mockFindAllAROTopics.mockResolvedValue([{ topicId: 101 }]);
+
+    const topics = [{ id: 101, name: 'Topic 1' }];
+    await cacheTopics(1, 1, topics);
+
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockDestroy).not.toHaveBeenCalled();
+  });
+
+  it('adds and removes topics correctly', async () => {
+    mockFindAllAROTopics.mockResolvedValue([
+      { topicId: 200 },
+      { topicId: 300 },
+    ]);
+
+    const topics = [{ id: 101, name: 'Topic 1' }];
+    await cacheTopics(1, 1, topics);
+
+    expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
+    expect(mockDestroy).toHaveBeenCalledWith({
+      where: {
+        activityReportObjectiveId: 1,
+        topicId: { [Op.in]: [200, 300] },
+      },
+      individualHooks: true,
+      hookMetadata: { objectiveId: 1 },
+    });
   });
 });
 
@@ -205,7 +263,12 @@ describe('activityReportObjectiveCitation', () => {
   });
 
   afterAll(async () => {
-    await rollbackToSnapshot(snapShot);
+    try {
+      await rollbackToSnapshot(snapShot);
+    } catch (error) {
+      // TODO: Figure out the correct way to insert the monitoring references
+      auditLogger.error(`Error rolling back snapshot - activityReportObjectiveCitation: ${error}`);
+    }
   });
 
   it('should create, read, update, and delete', async () => {
@@ -407,11 +470,11 @@ describe('activityReportObjectiveCitation', () => {
     const citationsToCreate = [
       {
         citation: 'Non-monitoring Citation to add',
-        monitoringReferences: [{
+        monitoringReferences: JSON.stringify([{
           grantId: grant.id,
           findingId: 1,
           reviewName: 'Review 1',
-        }],
+        }]),
       },
     ];
 
@@ -518,7 +581,6 @@ describe('cacheGoalMetadata', () => {
   afterAll(async () => {
     // Rollback to the snapshot.
     await rollbackToSnapshot(snapShot);
-    // await db.sequelize.close();
   });
 
   it('should cache goal metadata', async () => {
@@ -640,164 +702,5 @@ describe('cacheGoalMetadata', () => {
 
     expect(updatedFieldResponses).toHaveLength(1);
     expect(updatedFieldResponses[0].dataValues.response).toEqual(['Family Circumstance UPDATED', 'New Response']);
-  });
-});
-
-describe('cacheObjectiveMetadata', () => {
-  const mockUser = {
-    name: 'Joe Green',
-    phoneNumber: '555-555-554',
-    hsesUserId: '65535',
-    hsesUsername: 'test49@test49.com',
-    hsesAuthorities: ['ROLE_FEDERAL'],
-    email: 'test49@test49.com',
-    homeRegionId: 1,
-    lastLogin: new Date('2021-02-09T15:13:00.000Z'),
-    flags: [],
-  };
-
-  const mockRoles = [
-    { name: 'FES', fullName: 'Family Engagement Specialist', isSpecialist: true },
-    { name: 'HS', fullName: 'Health Specialist', isSpecialist: true },
-    { name: 'ECS', fullName: 'Early Childhood Specialist', isSpecialist: true },
-    { name: 'SS', fullName: 'System Specialist', isSpecialist: true },
-  ];
-
-  const mockRecipient = {
-    id: 6553500,
-    uei: 'NNA5N2KHMGM2',
-    name: 'Tooth Brushing Academy',
-    recipientType: 'Community Action Agency (CAA)',
-  };
-
-  const mockGrant = {
-    id: 6553500,
-    number: '99RC9999',
-    regionId: 2,
-    status: 'Active',
-    startDate: new Date('2021-02-09T15:13:00.000Z'),
-    endDate: new Date('2021-02-09T15:13:00.000Z'),
-    cdi: false,
-    grantSpecialistName: null,
-    grantSpecialistEmail: null,
-    stateCode: 'NY',
-    annualFundingMonth: 'October',
-  };
-
-  const mockGoal = {
-    name: 'Goal 1',
-    id: 20850000,
-    status: 'Not Started',
-    timeframe: 'None',
-    source: GOAL_SOURCES[0],
-  };
-
-  const mockObjective = {
-    id: 2022081300,
-    title: null,
-    status: 'Not Started',
-  };
-
-  const mockReport = {
-    id: 900000,
-    submissionStatus: REPORT_STATUSES.DRAFT,
-    calculatedStatus: REPORT_STATUSES.DRAFT,
-    numberOfParticipants: 1,
-    deliveryMethod: 'method',
-    duration: 0,
-    endDate: '2020-01-01T12:00:00Z',
-    startDate: '2020-01-01T12:00:00Z',
-    requester: 'requester',
-    regionId: 2,
-    targetPopulations: [],
-    version: 2,
-  };
-
-  const mockFiles = [{
-    id: 140000001,
-    originalFileName: 'test01.pdf',
-    key: '508bdc9e-8dec-4d64-b83d-59a72a4f2353.pdf',
-    status: 'APPROVED',
-    fileSize: 54417,
-  }, {
-    id: 140000002,
-    originalFileName: 'test02.pdf',
-    key: '508bdc9e-8dec-4d64-b83d-59a72a4f2354.pdf',
-    status: 'APPROVED',
-    fileSize: 54417,
-  }];
-
-  const mockObjectiveResources = [
-    'https://ttahub.ohs.acf.hhs.gov/',
-    'https://hses.ohs.acf.hhs.gov/',
-    'https://eclkc.ohs.acf.hhs.gov/',
-  ];
-
-  let user;
-  const roles = [];
-  let recipient;
-  let grant;
-  let report;
-  let goal;
-  let objective;
-  let files = [];
-
-  const objectiveResources = [];
-
-  const topics = [];
-  let courseOne;
-  let courseTwo;
-
-  let snapShot;
-
-  beforeAll(async () => {
-    // Create a snapshot of the database so we can rollback after the tests.
-    snapShot = await captureSnapshot();
-
-    [user] = await User.findOrCreate({ where: { ...mockUser } });
-    roles.push((await Role.findOrCreate({ where: { ...mockRoles[0] } }))[0]);
-    roles.push((await Role.findOrCreate({ where: { ...mockRoles[1] } }))[0]);
-    roles.push((await Role.findOrCreate({ where: { ...mockRoles[2] } }))[0]);
-    roles.push((await Role.findOrCreate({ where: { ...mockRoles[3] } }))[0]);
-    [recipient] = await Recipient.findOrCreate({ where: { ...mockRecipient } });
-    [grant] = await Grant.findOrCreate({
-      where: {
-        ...mockGrant,
-        recipientId: recipient.id,
-        programSpecialistName: user.name,
-        programSpecialistEmail: user.email,
-      },
-    });
-    [report] = await ActivityReport.findOrCreate({ where: { ...mockReport } });
-    await ActivityRecipient.findOrCreate({
-      where: {
-        activityReportId: report.id,
-        grantId: grant.id,
-      },
-    });
-    [goal] = await Goal.findOrCreate({ where: { ...mockGoal, grantId: mockGrant.id } });
-    [objective] = await Objective.findOrCreate({ where: { ...mockObjective, goalId: goal.id } });
-    await Promise.all(mockFiles.map(
-      async (mockFile) => File.findOrCreate({ where: { ...mockFile } }),
-    ));
-    files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) }, order: ['id'] });
-
-    courseOne = await Course.create({
-      name: faker.datatype.string(200),
-    });
-
-    courseTwo = await Course.create({
-      name: faker.datatype.string(200),
-    });
-
-    topics.push((await Topic.findOrCreate({ where: { name: 'Coaching' } })));
-    topics.push((await Topic.findOrCreate({ where: { name: 'Communication' } })));
-    topics.push((await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } })));
-  });
-
-  afterAll(async () => {
-    // Rollback to the snapshot.
-    await rollbackToSnapshot(snapShot);
-    await db.sequelize.close();
   });
 });

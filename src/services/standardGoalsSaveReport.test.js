@@ -113,7 +113,10 @@ describe('save standard goals for report', () => {
     // Destroy the objectives.
     await Objective.destroy({
       where: {
-        goalId: goalIds,
+        [Op.or]: [
+          { goalId: goalIds },
+          { createdViaActivityReportId: reportIdToClean },
+        ],
       },
       force: true,
     });
@@ -494,7 +497,7 @@ describe('save standard goals for report', () => {
       /*
       Tests that if we have a suspended standard goal for this grant we unsuspend and uses it.
       */
-      it('un-suspends a suspended goal and uses it', async () => {
+      it('does not un-suspend a suspended goal when using it', async () => {
         const goals = [
           {
             goalIds: [],
@@ -533,14 +536,14 @@ describe('save standard goals for report', () => {
           where: {
             name: goalTemplate.templateName,
             grantId: grantWithSuspendedGoal.id,
-            status: GOAL_STATUS.IN_PROGRESS,
+            status: GOAL_STATUS.SUSPENDED,
           },
         });
 
         // Assert the goals were created.
         expect(savedGoals.length).toBe(1);
 
-        await assertStandardGoal(savedGoals[0], 'objective for a suspended goal', 'tta for a suspended goal objective', GOAL_STATUS.IN_PROGRESS);
+        await assertStandardGoal(savedGoals[0], 'objective for a suspended goal', 'tta for a suspended goal objective', GOAL_STATUS.SUSPENDED);
       });
     });
   });
@@ -602,6 +605,7 @@ describe('save standard goals for report', () => {
           prompts: [
             {
               promptId: prompt.id,
+              grantId: grant.id,
               response: ['option 2', 'option 3'],
             },
           ],
@@ -678,6 +682,7 @@ describe('save standard goals for report', () => {
           source: [],
           prompts: [
             {
+              grantId: grant.id,
               promptId: prompt.id,
               response: ['option 1'],
             },

@@ -4,17 +4,22 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.3-browsers
   docker-postgres-executor:
     docker:
-    - image: cimg/node:20.18.2-browsers
+    - image: cimg/node:20.19.3-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+        REDIS_HOST: localhost
+        REDIS_PASS: secretpass
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: secretpass
         POSTGRES_DB: ttasmarthub
+    - image: cimg/redis:6.2.17
+      environment:
+        REDIS_PASSWORD: secretpass
   docker-python-executor:
     docker:
     - image: cimg/python:3.9.21
@@ -36,8 +41,8 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ dev, dev-blue, dev-green, dev-red, sandbox, staging ]
-    default: dev
+    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
+    default: '-'
 
 # ----------------- Workflows -----------------
 
@@ -49,19 +54,14 @@ workflows:
     when: pipeline.parameters.action == "build_test_deploy"
     jobs:
     - build_and_lint
-    - build_similarity_api
     - checkpoint:
         name: build_done
         requires:
         - build_and_lint
-        - build_similarity_api
     - test_frontend:
         requires:
         - build_done
     - test_backend:
-        requires:
-        - build_done
-    - test_similarity_api:
         requires:
         - build_done
     - test_e2e_app:
@@ -84,7 +84,6 @@ workflows:
         requires:
         - test_frontend
         - test_backend
-        - test_similarity_api
         - test_e2e_app
         - test_e2e_api
         - test_e2e_utils
@@ -116,43 +115,32 @@ workflows:
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
-    - build_similarity_api
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
         target_env: "<< pipeline.parameters.target_env >>"
         requires:
         - build_and_lint
-        - build_similarity_api
 
   import_data_cron:
     # scheduled job to download and process monitoring data
-    when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
         cron: "0 13 * * *" # 1PM UTC = 9AM EST
         filters:
           branches:
             only:
-            - main
+            - production
     jobs:
     - run_import_job:
-        target_env: prod
+        target_env: "prod"
+        slack_channel: acf-ohs-ttahub--contractor-customer-team
 
   import_data_manual:
     # for manual testing of the data import workflow
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
-        target_env: "<< pipeline.parameters.target_env >>"
-
-  restore_db_manual:
-    # restore the anonymized db snapshot to a lower env db and run migrations
-    # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
-    jobs:
-    - restore_db_job:
-        serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
 
   restore_db_cron:
@@ -163,7 +151,6 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
-    when: pipeline.trigger_source == "scheduled_pipeline"
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
@@ -187,46 +174,70 @@ workflows:
         requires:
         - process_temp_db
     - restore_db_job:
-        name: restore (dev)
-        serial-group: "tta-automation-lock-dev"
-        target_env: "dev"
-        requires:
-        - backup_temp_db
-    - restore_db_job:
         name: restore (dev-green)
-        serial-group: "tta-automation-lock-dev-green"
+        serial-group: "tta-automation-lock"
         target_env: "dev-green"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-blue)
-        serial-group: "tta-automation-lock-dev-blue"
+        serial-group: "tta-automation-lock"
         target_env: "dev-blue"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (dev-red)
-        serial-group: "tta-automation-lock-dev-red"
+        serial-group: "tta-automation-lock"
         target_env: "dev-red"
         requires:
         - backup_temp_db
     - restore_db_job:
-        name: restore (sandbox)
-        serial-group: "tta-automation-lock-sandbox"
-        target_env: "sandbox"
+        name: restore (dev-gold)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-gold"
+        requires:
+        - backup_temp_db
+    - restore_db_job:
+        name: restore (dev-pink)
+        serial-group: "tta-automation-lock"
+        target_env: "dev-pink"
         requires:
         - backup_temp_db
     - restore_db_job:
         name: restore (staging)
-        serial-group: "tta-automation-lock-staging"
+        serial-group: "tta-automation-lock"
         target_env: "staging"
         requires:
         - backup_temp_db
 
+  restore_db_manual:
+    # restore the anonymized db snapshot to a lower env db and run migrations
+    # uses the last production backup, does not interact with prod or modify snapshots
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
+    - backup_prod_db:
+        serial-group: "tta-automation-lock"
+    - restore_prod_to_temp:
+        serial-group: "tta-automation-lock"
+        requires:
+        - backup_prod_db
+    - process_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - restore_prod_to_temp
+    - backup_temp_db:
+        serial-group: "tta-automation-lock"
+        requires:
+        - process_temp_db
+    - restore_db_job:
+        serial-group: tta-automation-lock
+        requires:
+        - backup_temp_db
+        target_env: "<< pipeline.parameters.target_env >>"
+
 # ----------------- Jobs -----------------
 
 jobs:
-
   build_and_lint:
     executor: docker-executor
     resource_class: large
@@ -236,16 +247,16 @@ jobs:
     - restore_cache:
         keys:
         # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v15-yarn-deps-
+        - v16-yarn-deps-
     - run: yarn deps
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -256,8 +267,8 @@ jobs:
     - run:
         name: Audit vulnerability of backend node_modules
         command: |
-          chmod 744 ./run-yarn-audit.sh
-          ./run-yarn-audit.sh;
+          chmod 744 ./tools/run-yarn-audit.js
+          ./tools/run-yarn-audit.js;
     - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
@@ -265,8 +276,8 @@ jobs:
         name: Audit vulnerability of frontend node_modules
         command: |
           cd frontend
-          chmod 744 ./run-yarn-audit.sh
-          ./run-yarn-audit.sh;
+          chmod 744 ../tools/run-yarn-audit.js
+          ../tools/run-yarn-audit.js;
     - store_artifacts:
         path: reports
         destination: backend-lint.xml
@@ -277,35 +288,6 @@ jobs:
         root: .
         paths:
         - .
-
-  build_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - checkout
-    - create_combined_pipfreeze
-    - restore_cache:
-        keys:
-        # To manually bust the cache, increment the version e.g. v7-pip...
-        - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
-        # If checksum is new, restore partial cache
-        - v2-pip-deps-
-    - run:
-        name: Install python dependencies
-        command: |
-          cd similarity_api/src
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install -U pip setuptools wheel
-          pip install -U --use-pep517 -r requirements.txt
-    - save_cache:
-        paths:
-        - similarity_api/src/venv
-        key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-
-    - persist_to_workspace:
-        root: .
-        paths:
-        - similarity_api
 
   test_backend:
     executor: docker-postgres-executor
@@ -333,7 +315,25 @@ jobs:
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:
+        name: Merge coverage & generate report
+        when: always
+        command: |
+          temp_dir="coverage-temp"
+          report_dir="coverage-report"
+          mkdir -p ${temp_dir}
+
+          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
+            relative_path="${file#./}"
+            new_name="${relative_path//\//-}"
+            new_path="${temp_dir}/${new_name}"
+            cp "$file" "${new_path}"
+          done
+          npx nyc merge ${temp_dir} ${temp_dir}/merged-coverage.json
+          npx nyc report --temp-dir ${temp_dir} --report-dir ${report_dir} --reporter=html --reporter=json-summary
+          echo "Coverage report: https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}/coverage-report/index.html"
+    - run:
         name: Check coverage for modified lines
+        when: always
         command: |
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
@@ -344,66 +344,26 @@ jobs:
           else
             echo "Not a PR build. Skipping coverage check."
           fi
-        when: always
     - run:
         name: Summarize coverage
+        when: always
         command: |
           chmod +x ./tools/summarize-coverageCLI.js
           node ./tools/summarize-coverageCLI.js \
             ./coverage/coverage-final.json \
             90
-        when: always
     - run:
         name: Compress coverage artifacts
-        command: tar -cvzf backend-coverage-artifacts.tar coverage/
+        command: zip backend-coverage-artifacts.zip coverage/
+        when: always
     - store_artifacts:
-        path: coverage/
+        path: backend-coverage-artifacts.zip
     - store_artifacts:
-        path: backend-coverage-artifacts.tar
-    - store_test_results:
-        path: reports/
+        path: coverage-report/
     - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
-
-  test_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: Syft SBOM
-        environment:
-          SYFT_VERSION: v1.5.0
-          IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
-          OUTPUT_FORMAT: json
-          OUTPUT_FILE: reports/syft_sbom.json
-        command: |
-          mkdir -p reports/
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
-          ./syft similarity_api/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Grype Docker image
-        environment:
-          GRYPE_VERSION: v0.78.0
-          OUTPUT_FORMAT: sarif
-          OUTPUT_FILE: reports/grype.json
-        command: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-          ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Test similarity
-        command: |
-          mkdir -p coverage/similarity
-          cd similarity_api/src
-          source venv/bin/activate
-          pip install pytest pytest-cov
-          pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
-          coverage report --show-missing --skip-covered
-          coverage html -d ~/project/coverage/similarity --skip-covered
-    - store_artifacts:
+    - store_test_results:
         path: reports/
 
   test_frontend:
@@ -490,17 +450,11 @@ jobs:
         name: Wait for Node.js server to start
         command: ./bin/ping-server 8080
     - run:
-        name: Wait for similarity_api to start
-        command: ./bin/ping-server 9100 localhost /openapi.json
-    - run:
         name: Pull OWASP ZAP docker image
-        command: docker pull softwaresecurityproject/zap-stable:latest
+        command: docker pull zaproxy/zap-stable:latest
     - run:
         name: Run OWASP ZAP scan for Node.js server
         command: ./bin/run-owasp-scan --target http://server:8080 --full
-    - run:
-        name: Run OWASP ZAP scan for similarity_api
-        command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
     - store_artifacts:
         path: reports
 
@@ -511,6 +465,7 @@ jobs:
       target_env:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -537,7 +492,17 @@ jobs:
         name: Run database migrations
         command: |
           set -x
-          cf run-task tta-smarthub-${cfg_env} --command "yarn db:migrate:prod" --name migrate
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
+          cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
+    - run:
+        name: Alert on migration failure
+        when: on_fail
+        command: |
+            msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
+            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
+              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
+            fi
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
@@ -547,6 +512,7 @@ jobs:
         - notify_slack_deploy:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+            target_env: << parameters.target_env >>
 
   backup_prod_db:
     executor: docker-executor
@@ -575,8 +541,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v15-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v15-yarn-deps-
+        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - v16-yarn-deps-
     - run: |
         yarn deps
         yarn build
@@ -618,7 +584,7 @@ jobs:
       target_env:
         type: string
     steps:
-    - cf_cmd:
+    - cf_task:
         the_command: << parameters.command >>
         target_env: "<< parameters.target_env >>"
 
@@ -633,32 +599,38 @@ jobs:
     parameters:
       target_env:
         type: string
+      slack_channel:
+        type: string
+        default: acf-head-start-alerts-lower
     steps:
     - checkout
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js download 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/importSystemCLI.js process 1"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "yarn createMonitoringGoalsCLI"
-        target_env: << parameters.target_env >>
-    - cf_cmd:
-        the_command: "node ./build/server/src/tools/queryMonitoringDataCLI.js"
+    - cf_task:
+        the_command: |
+          node ./build/server/src/tools/importSystemCLI.js download 1
+          node ./build/server/src/tools/importSystemCLI.js process 1
+          yarn createMonitoringGoalsCLI
+          node ./build/server/src/tools/queryMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
         command: |
-          results=$(grep -o "Recent Monitoring Goals.*" cmd_log.txt | tail -n 1)
-          echo $results > monitoring-goals.txt
-          cat monitoring-goals.txt
+          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
+            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
+          else
+            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
+            delim=":"
+            json_data=${results#*"$delim"}
+            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
+            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+          fi
+          cat monitoring-updates.txt
     - when:
         condition:
           equal: [ << parameters.target_env >>, "prod" ]
         steps:
         - notify_slack:
-            message_text_file: monitoring-goals.txt
+            message_text_file: monitoring-updates.txt
+            slack_channel: << parameters.slack_channel >>
 
 # ----------------- Commands -----------------
 
@@ -694,7 +666,7 @@ commands:
           ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
           # substitute actual values from circle into env.vars file
           circleci env subst < ./temp.vars > env.vars
-          # iterate through ci.vars file and export each line, 
+          # iterate through ci.vars file and export each line,
           while read line; do
             if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
               echo "export ${line}">>"$BASH_ENV"
@@ -725,12 +697,31 @@ commands:
     - attach_workspace:
         at: .
     - run:
-        name: Start server
+        name: Start backend (8080) & watch logs
         command: |
-          yarn playwright install
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
-          yarn start:ci
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:web
+        background: true
+    - run:
+        name: Start frontend (3000) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          export BYPASS_AUTH=true
+          export CURRENT_USER_ID=5
+          export TTA_SMART_HUB_URI="http://localhost:3000"
+          yarn playwright install
+          yarn client
+        background: true
+    - run:
+        name: Start testing server (9999) & watch logs
+        command: |
+          export POSTGRES_USERNAME="postgres"
+          export POSTGRES_DB="ttasmarthub"
+          yarn start:testingonly
         background: true
     - run:
         name: Run migrations ci
@@ -740,11 +731,15 @@ commands:
         command: yarn db:seed:ci
     - run:
         name: Wait for server to start
-        command: ./bin/ping-server 3000
+        command: |
+          ./bin/ping-server 3000 # frontend
+          ./bin/ping-server 9999 localhost "/testingonly" # testonly
+          #./bin/ping-server 8080 localhost "/health" # backend
+          sleep 30s # there is no way to check backend health without auth
     - run:
         name: << parameters.cmd >>
         command: |
-          export TTA_SMART_HUB_URI=http://localhost:3000
+          export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
           << parameters.cmd >>
     - store_artifacts:
@@ -762,17 +757,6 @@ commands:
     - run:
         name: Combine package-lock.json files to single file
         command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
-
-  create_combined_pipfreeze:
-    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
-    parameters:
-      filename:
-        type: string
-        default: "combined-requirements.txt"
-    steps:
-    - run:
-        name: Combine requirements.txt files to single file
-        command: cat similarity_api/src/requirements.txt > << parameters.filename >>
 
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."
@@ -884,8 +868,8 @@ commands:
           mkdir -p environments
           current_env="<< parameters.target_env >>"
           touch msg.txt
-          if [ "${current_env}" == 'main' ] || [ "${current_env}" == 'prod' ]; then 
-            exit 0; 
+          if [ "${current_env}" == 'staging' ] || [ "${current_env}" == 'prod' ]; then
+            exit 0;
           fi
           if [ -f ./environments/${current_env} ]; then
             old_owner=$(cat ./environments/${current_env})
@@ -895,25 +879,28 @@ commands:
               echo "${new_owner}" > environments/${current_env}
               msg = ""
               cd environments
-              for file in *; do 
-                if [ ! -d ${file} ]; then 
+              for file in *; do
+                if [ ! -d ${file} ]; then
                   msg="${file}: $(cat ${file})\n${msg}"
-                fi; 
+                fi;
               done
               cd ..
-              printf ${msg} > msg.txt
+              ./bin/notify-slack.sh \
+                "Environment owner changed: \`\`\`${msg}\`\`\`" \
+                "tm-test"
+                ${SLACK_BOT_TOKEN}
             else
               echo "owner not changed: ${old_owner}=${new_owner}"
             fi
+          else
+            echo "${CIRCLE_USERNAME}" >  environments/${current_env}
           fi
     - save_cache:
         key: 'environment-owners'
         paths:
         - environments
-    - notify_slack:
-        message_text_file: msg.txt
 
-  cf_cmd:
+  cf_task:
     description: "Login, run task, send notification"
     parameters:
       the_command:
@@ -937,38 +924,41 @@ commands:
           -u ${cg_username} \
           -p ${cg_password} \
           -o ${cg_org} \
-          -s ${cg_space}            
+          -s ${cg_space}
+    - run:
+        name: Set task name
+        command: |
+          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
-        command: |+
-          set +e
-          TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
+        background: true
+        command: |
           cf run-task \
             tta-smarthub-<< parameters.target_env >> \
             --command "<< parameters.the_command >>" \
             --name ${TASK_NAME} \
             -m 2GB \
-            -k 2GB \
-            --wait && true
+            -k 2GB
 
-          rc=$?
-          echo "waiting for logs...."
-          sleep 15 # wait for logs
+          echo "Watching logs..."
+          cf logs tta-smarthub-<< parameters.target_env >> | grep ${TASK_NAME}
+
+    - run:
+        name: "Wait for task to complete"
+        no_output_timeout: 30m
+        command: |
+          set +e
+          sleep 15
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          sleep 30
           cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | grep -i "error" 
-          echo "script exited with code:$rc"
-          exit ${rc}
-            
+
     - run:
         name: Logout of service account
         command: |
-          # Signal the log monitoring to stop
-          CONTROL_FILE="/tmp/stop_tail"
-          touch $CONTROL_FILE
-
           # Wait for the log monitoring process to terminate
           sleep 5
-
           # Logout from Cloud Foundry
           cf logout
 
@@ -1024,13 +1014,14 @@ commands:
         task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
         task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
         config: "<< parameters.backup_prefix >>-restore"
-        success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+        success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
         timeout: "1800"
     - run:
         when: on_fail
-        command: echo "Failed db restore to << parameters.target_env >>" > message.txt
-    - notify_slack:
-        message_text_file: message.txt
+        command: |
+          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
+
 
   cf_retention:
     description: "Delete Backup from S3 based on retention"
@@ -1093,7 +1084,7 @@ commands:
           sudo apt-get update
           # Install uuid-runtime to have access to uuidgen
           # Install pv wget
-          sudo apt-get install -y pv uuid-runtime wget coreutils jq
+          sudo apt-get install -y pv uuid-runtime wget coreutils jq apt-utils
 
           # Install Cloud Foundry CLI
           wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
@@ -1101,7 +1092,7 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"
@@ -1196,7 +1187,7 @@ commands:
           echo "cf logs command for tta-automation has been terminated."
     - run:
         name: |
-          "Running cmd: << parameters.task_name >> 
+          "Running cmd: << parameters.task_name >>
               in << parameters.target_env >>
               args:<< parameters.task_args >>
               cmd: << parameters.task_command >>"
@@ -1258,20 +1249,16 @@ commands:
     - run:
         name: Notify Slack
         command: |
-          set -x
-
-          # Evaluate message_text_script if provided
-          if [ -n "<< parameters.message_text_file >>" ]; then
-            MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+          if [[ -n "<< parameters.message_text >>" ]]; then
+            MESSAGE="<< parameters.message_text >>"
           else
-            MESSAGE_TEXT="<< parameters.message_text >>"
+            MESSAGE=$(cat "<< parameters.message_text_file >>")
           fi
 
-          echo $MESSAGE_TEXT
-
+          echo "Sending: ${MESSAGE}"
           # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
-            echo "Missing required parameters. Notification will not be sent."
+          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE" ]; then
+            echo "Missing required parameter. Notification will not be sent."
             exit 0
           fi
 
@@ -1280,13 +1267,11 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
+              \"text\": \"$MESSAGE\"
             }" \
             https://slack.com/api/chat.postMessage)
-
           ok=$(echo $response | jq -r '.ok')
           error=$(echo $response | jq -r '.error')
-
           if [ "$ok" != "true" ]; then
             echo "Slack notification failed: $error"
             exit 1
@@ -1294,55 +1279,84 @@ commands:
             echo "Slack notification sent successfully"
           fi
 
+
   notify_slack_deploy:
     parameters:
       slack_bot_token:
         description: "Slack bot token"
         type: string
+        default: $SLACK_BOT_TOKEN
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      target_env:
+        type: string
     steps:
     - checkout
+    - set_env_vars:
+        target_env: << parameters.target_env >>
     - run:
-        name: Generate Message
+        name: Generate Slack Message JSON
         command: |
-          source ci.vars
-          env_name="$full_env"
+          env_name=<< parameters.target_env >>
+
           if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-
-              PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g" | sed -e 's/"/\\"/g')
-
-              if [ ! -z "${PR_TITLE}" ]; then
-                  JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-
-                  MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
-                  if [ -n "${JIRA_URLS}" ]; then
-                      MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                  fi
-              else
-                  MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
-              fi
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
           else
-              COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-              if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
-                PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
-                MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
-                if [ ! -z "${JIRA_URLS}" ]; then
-                    MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                fi
-              else
-                  MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
-              fi
+            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+              PR_NUMBER=$(echo "$COMMIT_MESSAGE" | grep -oP '(?<=Merge pull request #)\d+')
+            else
+              echo "No PR number found."
+              exit 0
+            fi
           fi
-          echo -e "${MESSAGE_TEXT}" > /tmp/message_file
 
-    - notify_slack:
-        slack_bot_token: << parameters.slack_bot_token >>
-        slack_channel: << parameters.slack_channel >>
-        message_text_file: "/tmp/message_file"
+          PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+
+          PR_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/pulls/${PR_NUMBER}")
+
+          PR_BODY=$(echo "$PR_DATA" | jq -r .body)
+          PR_TITLE=$(echo "$PR_DATA" | jq -r .title)
+
+          extract_section() {
+            echo "$PR_BODY" | awk -v section="## $1" '
+              BEGIN {found=0}
+              $0 ~ section {found=1; next}
+              /^## / && found {exit}
+              found {print}
+            ' | head -c 600 | sed 's/^/> /'
+          }
+
+          DESC=$(extract_section "Description of change")
+          ISSUES=$(extract_section "Issue")
+
+          jq -n \
+            --arg channel "<< parameters.slack_channel >>" \
+            --arg pr_number "#$PR_NUMBER" \
+            --arg pr_link "$PR_LINK" \
+            --arg title "$PR_TITLE" \
+            --arg desc "$DESC" \
+            --arg issues "$ISSUES" \
+            --arg env "$env_name" \
+            '{
+              channel: $channel,
+              blocks: [
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: Deployment of production PR <\($pr_link)|\($pr_number)> was successful!" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
+                { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
+                { type: "section", text: { type: "mrkdwn", text: ":link: <\($pr_link)|View PR on GitHub>" } }
+              ]
+            }' > /tmp/message_file.json
+    - run:
+        name: Post Slack Message
+        command: |
+          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "@/tmp/message_file.json" https://slack.com/api/chat.postMessage
 
   no-op:
     # placeholder command for no-op jobs

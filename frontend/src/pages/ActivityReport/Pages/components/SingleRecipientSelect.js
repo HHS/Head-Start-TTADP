@@ -14,6 +14,7 @@ export default function SingleRecipientSelect(
     possibleRecipients,
     onChangeActivityRecipients,
     onBlurActivityRecipients,
+    selectRef,
   },
 ) {
   const [showRecipientGrants, setShowRecipientGrants] = useState(false);
@@ -50,6 +51,8 @@ export default function SingleRecipientSelect(
         setCheckedCheckBoxes([]);
         setShowRecipientGrants(false);
       }
+    } else {
+      setCheckedCheckBoxes([]);
     }
   }, [possibleRecipients, selectedRecipients]);
 
@@ -147,6 +150,7 @@ export default function SingleRecipientSelect(
           placeholder="- Select -"
           inputId="selectedRecipient"
           onChange={onRecipientChange}
+          ref={selectRef}
           options={possibleRecipients.map((recipient) => ({
             label: recipient.label,
             value: recipient.id,
@@ -199,16 +203,31 @@ const RecipientPropType = PropTypes.shape({
   grantIds: PropTypes.arrayOf(PropTypes.number),
 });
 
-const SelectedRecipientsPropType = {
+const SelectedRecipientsPropType = PropTypes.shape({
   id: PropTypes.number,
   recipientId: PropTypes.number,
   activityRecipientId: PropTypes.number,
   name: PropTypes.string,
-};
-
+  recipientIdForLookUp: PropTypes.number,
+});
 SingleRecipientSelect.propTypes = {
   selectedRecipients: PropTypes.arrayOf(SelectedRecipientsPropType).isRequired,
   possibleRecipients: PropTypes.arrayOf(RecipientPropType).isRequired,
   onChangeActivityRecipients: PropTypes.func.isRequired,
   onBlurActivityRecipients: PropTypes.func.isRequired,
+  selectRef: PropTypes.shape({
+    current: PropTypes.oneOfType([
+      PropTypes.shape({
+        focus: PropTypes.func,
+        blur: PropTypes.func,
+      }),
+      // DOM element
+      typeof Element !== 'undefined' ? PropTypes.instanceOf(Element) : PropTypes.any,
+      PropTypes.oneOf([null]),
+    ]),
+  }),
+};
+
+SingleRecipientSelect.defaultProps = {
+  selectRef: null,
 };

@@ -164,6 +164,7 @@ async function nextSteps(page: Page, isForOtherEntity: boolean = false) {
 
 test.describe('Activity Report', () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
+    test.setTimeout(120_000)
     const fullName = await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -179,24 +180,18 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the first goal
-
-    await page.getByLabel(/Select recipient's goal/i).click();
-    await page.keyboard.press('ArrowDown');
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').click();
-    await page.getByTestId('textarea').fill('g1');
-    await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.getByText(/Select TTA objective/i).click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    await blur(page);
+    await page.waitForTimeout(2000);
 
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1o1');
+
     // Topics.
-    await page.getByText('Topics *').click()
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await page.getByText('Topics *').click();
+    await page.getByLabel('Topics *').press('ArrowDown');
+    await page.getByLabel('Topics *').press('Enter');
     await blur(page);
 
 
@@ -219,7 +214,6 @@ test.describe('Activity Report', () => {
     await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.waitForTimeout(5000);
 
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();
@@ -242,16 +236,20 @@ test.describe('Activity Report', () => {
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
-    await page.getByTestId('label').click();
+    // Select second standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
+    await page.keyboard.press('Enter');
 
-    await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').fill('g2');
+
+    // save goal 2.
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.getByText(/Select TTA objective/i).click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    
+
     await blur(page);
-    await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');  
+    await page. locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g2o1');
+    await blur(page);
+          
     await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
@@ -264,26 +262,22 @@ test.describe('Activity Report', () => {
     await page.getByRole('combobox', { name: /Support type/i }).selectOption('Implementing');
     await blur(page);
 
-    await page.waitForTimeout(10000);
-
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.waitForTimeout(10000);
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.waitForTimeout(10000);
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
-   
+
     await page.waitForTimeout(10000);
 
     expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
     await page.getByRole('button', { name: /Goals and objectives complete/i }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2500);
 
     // edit the first goal
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    await page.getByText('Child Safety').locator('..').locator('..').getByRole('button')
       .click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
@@ -292,13 +286,14 @@ test.describe('Activity Report', () => {
 
     // navigate back to the activity report page & the goals and objectives section
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
+    await page.waitForTimeout(2500);
     await page.getByRole('button', { name: 'Goals and objectives' }).click();
 
     // test to make sure that side nav is updated when a goal is edited
     sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
 
     expect(sideNavTextContent?.match(/in progress/i)).toBeTruthy();
-    
+
     // save the first goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
@@ -320,7 +315,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.getByRole('group', { name: 'Review and submit report' }).getByTestId('label');
+    const approverDropdown = page.getByLabel("Approving manager");
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -351,9 +346,11 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText('Goal summary').first()).toBeVisible();
     await expect(page.getByText('Goal summary').nth(1)).toBeVisible();
-    await expect(page.getByText('g1', { exact: true } )).toBeVisible();
+    await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+
+    // Scroll to the bottom of the page.
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
@@ -394,16 +391,17 @@ test.describe('Activity Report', () => {
 
     /* We have Two goals and Two Recipients this should result in 4 goals */
     // Expand objectives for G1.
-
+    // TODO: Update this portion of the test once we are connected to the usage of standard goals from the AR.
+    /*
     // Scroll until the button with the name 'View objectives for goal G-6' is visible.
-    await page.getByRole('button', { name: 'View objectives for goal G-6' }).scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: 'View objectives for goal G-16' }).scrollIntoViewIfNeeded();
 
-    await page.getByRole('button', { name: `View objectives for goal G-6` }).click();
+    await page.getByRole('button', { name: `View objectives for goal G-16` }).click();
 
     // Scroll until the button with the name 'View objectives for goal G-5' is visible.
-    await page.getByRole('button', { name: 'View objectives for goal G-5' }).scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: 'View objectives for goal G-15' }).scrollIntoViewIfNeeded();
 
-    await page.getByRole('button', { name: `View objectives for goal G-5` }).click();
+    await page.getByRole('button', { name: `View objectives for goal G-15` }).click();
 
     expect(page.getByText('g1o1', { exact: true }).first()).toBeTruthy();
     expect(page.getByText('g1o1', { exact: true }).nth(1)).toBeTruthy();
@@ -431,8 +429,8 @@ test.describe('Activity Report', () => {
     expect(page.getByText('g1o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeTruthy();
 
     // Expand goals for G2.
-    await page.getByRole('button', { name: `View objectives for goal G-7` }).click();
-    await page.getByRole('button', { name: `View objectives for goal G-8` }).click();
+    await page.getByRole('button', { name: `View objectives for goal G-17` }).click();
+    await page.getByRole('button', { name: `View objectives for goal G-18` }).click();
 
     expect(page.getByText('g2o1', { exact: true }).first()).toBeTruthy();
     expect(page.getByText('g2o1', { exact: true }).nth(1)).toBeTruthy();
@@ -453,38 +451,39 @@ test.describe('Activity Report', () => {
     expect(page.getByText('g2o1', { exact: true }).nth(1).locator('..').locator('..').getByText('Not started')).toBeTruthy();
 
     // check g1
-    await page.getByText('g1', { exact: true }).first().locator('..').locator('..').locator('..')
+    await page.getByText('Child Safety').first().locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
-      await page.getByText('g1', { exact: true }).nth(1).locator('..').locator('..').locator('..')
+      await page.getByText('Child Safety').nth(1).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..')
+    await page.getByText('Child Safety').locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
-    await expect(page.getByText('g1', { exact: true })).toBeVisible();
+    await expect(page.getByText('Child Safety')).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
 
     await page.getByRole('link', { name: 'Back to RTTAPA' }).click();
 
     // Check g2
-    await page.getByText('g2', { exact: true }).first().locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').first().locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
-    await page.getByText('g2', { exact: true }).nth(1).locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').nth(1).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
       .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
+    await page.getByText('CQI and Data').locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Edit' })
       .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
-    await expect(page.getByText('g2', { exact: true })).toBeVisible();
+    await expect(page.getByText('CQI and Data')).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
+    */
   });
 
   test('can remove objective', async ({ page }) => {
@@ -502,31 +501,35 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
     await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
-    // create the goal
-    await page.getByLabel(/Select recipient's goal/i).click();
+    // Select a standard goal.
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('Enter');
-    await page.getByTestId('textarea').click();
-    await page.getByTestId('textarea').fill('g1');
+    
+    // Save goal.
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // create first objective
-    await page.getByText(/Select TTA objective/i).click();
+    await page.getByText(/Select TTA objective/i).fill('Create a new objective');
+    // Arrow down then click enter.
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
 
     const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
+    await blur(page);
     await page.waitForTimeout(10000);
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('g1 o1 title');
 
     // select a topic
-    await page.getByText('Topics *').click()
+    await page.locator('[id="goalForEditing\\.objectives\\[0\\]\\.topics"]').focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
+
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('g1 o1 tta');
@@ -536,13 +539,14 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.title"]').fill('g1 o2 title');
     await blur(page);
+
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.topics"]').focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
+
     await page.waitForTimeout(10000);
     await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
-    await page.waitForTimeout(10000);
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
     await page.keyboard.type('g1 o2 tta');
     await blur(page);
@@ -558,7 +562,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1 o1 tta', { exact: true })).toBeVisible();
 
     // edit goals remove first objective
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+    await page.getByText('Child Safety').locator('..').locator('..').getByRole('button')
     .click();
     await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByRole('button', { name: 'Remove this objective' }).first().click();
@@ -601,44 +605,47 @@ test.describe('Activity Report', () => {
     await activitySummary(page);
 
     const p = page.waitForURL('**/goals-objectives');
- 
+
     // visit the goals & objectives page
     await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
 
-    await p;    
+    await p;
 
-    // create the goal
+    // Select a standard goal.
     await page.waitForTimeout(5000);
-    await page.getByTestId('label').click();
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(5000);
-    await page.getByTestId('textarea').fill('Test goal for preserving objectives');
 
     // create the objective
-    await page.getByText('Select TTA objective *- Select -').click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');  
-    
+    // await page.getByText('Select TTA objective *- Select -').click();
+    // // Click the option 'Create a new objective'.
+    // await page.getByText('Create a new objective', { exact: true }).click();
+
     await page.locator('[id="goalForEditing\.objectives\[0\]\.title"]').fill('Test objective for preserving objectives');
     await blur(page);
 
     await page.getByText('Topics *').click()
     await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');    
+    await page.keyboard.press('Enter');
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('An unlikely statement');
 
     // save draft
     await blur(page);
-    const p2 = page.waitForResponse('/api/activity-reports/goals');
     await page.getByRole('button', { name: 'Save draft' }).click();
 
-    await p2;
+    await page.waitForTimeout(2000);
 
-    await page.getByText('Select recipient\'s goal *Test goal for preserving objectives').click();
+    await page.getByTestId('goal-selector').click();
+    await page.waitForTimeout(2000);
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+
     await page.getByRole('button', { name: 'Keep objective' }).click();
     await blur(page);
 

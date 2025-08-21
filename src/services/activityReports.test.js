@@ -418,7 +418,7 @@ describe('Activity report service', () => {
         inactivationDate: new Date(new Date().setDate(new Date().getDate() - 60)),
       });
 
-      // Create a inactive grant with a 'inactivationDate' date more than 60 days ago.
+      // Create a inactive grant with a 'inactivationDate' date more than 90 days ago.
       await Grant.create({
         id: INACTIVE_GRANT_ID_TWO,
         number: faker.datatype.number({ min: 9999 }),
@@ -427,7 +427,7 @@ describe('Activity report service', () => {
         status: 'Inactive',
         startDate: new Date(),
         endDate: new Date(),
-        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 62)),
+        inactivationDate: new Date(new Date().setDate(new Date().getDate() - 366)),
       });
 
       await Grant.create({
@@ -454,7 +454,7 @@ describe('Activity report service', () => {
         endDate: new Date(new Date().setDate(new Date().getDate() - 62)),
       });
 
-      // Create a ActivityReport outside of 60 days.
+      // Create a ActivityReport outside of 90 days.
       inactiveActivityReportTwo = await ActivityReport.create({
         ...submittedReport,
         userId: mockUser.id,
@@ -463,8 +463,8 @@ describe('Activity report service', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         activityRecipients: [],
         // Set a start date that will NOT return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() + 62)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 62)),
+        startDate: new Date(new Date().setDate(new Date().getDate() + 366)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 366)),
       });
 
       // Create a ActivityReport without start date.
@@ -489,30 +489,44 @@ describe('Activity report service', () => {
         alertsMockUserOne.id,
         alertsMockUserTwo.id,
         mockUserFour.id,
-        mockUserFive.id];
+        mockUserFive.id,
+      ];
+
+      // Get reports and their IDs
       const reports = await ActivityReport.findAll({ where: { userId: userIds } });
       const ids = reports.map((report) => report.id);
+
+      // Delete dependent entities FIRST (in the correct order)
       await NextStep.destroy({ where: { activityReportId: ids } });
       await ActivityRecipient.destroy({ where: { activityReportId: ids } });
       await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
       await ActivityReportCollaborator.destroy({ where: { activityReportId: ids }, force: true });
-      await ActivityReport.destroy({ where: { id: ids } });
+
+      await ActivityReport.destroy({ where: { id: ids }, force: true });
+
+      // User-related cleanup
       await UserRole.destroy({ where: { userId: userIds } });
-      await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
-      await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
+      await User.destroy({ where: { id: userIds }, force: true });
+
+      // Delete program dependencies
       await Program.destroy({ where: { id: [585, 586, 587] } });
-      await Grant.unscoped().destroy({
+
+      // Delete Grants BEFORE Recipients
+      await Grant.destroy({
         where: {
-          id: [
+          recipientId: [
             RECIPIENT_ID,
             RECIPIENT_ID_SORTING,
             RECIPIENT_WITH_PROGRAMS_ID,
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        force: true,
         individualHooks: true,
       });
+
+      // Only now delete the Recipients
       await Recipient.unscoped().destroy({
         where: {
           id: [
@@ -522,7 +536,12 @@ describe('Activity report service', () => {
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        force: true,
+        individualHooks: true,
       });
+
+      // Clean up any additional entities
+      await OtherEntity.destroy({ where: { id: RECIPIENT_ID }, force: true });
       await Region.destroy({ where: { id: 19 } });
     });
 
@@ -983,11 +1002,11 @@ describe('Activity report service', () => {
 
         expect(recipientWithProgram.name).toBe('recipient with program');
         const createdGrant = await Grant.findOne({ where: { number: 'recipgrantnumber695' } });
-        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695 ');
+        expect(createdGrant.name).toBe('recipient with program - recipgrantnumber695');
         const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
         expect(foundReport).not.toBeNull();
         expect(activityRecipients.length).toBe(1);
-        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695  - EHS, HS');
+        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695 - EHS, HS');
       });
       it('excludes soft deleted approvers', async () => {
         // To include deleted approvers in future add paranoid: false
@@ -1317,7 +1336,7 @@ describe('Activity report service', () => {
           (r) => r.id === approvedReport.id,
         );
         expect(foundApprovedReports.length).toBe(1);
-        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
+        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695 - DWN');
       });
 
       it('returns all approved reports when provided with IDs', async () => {
@@ -2057,7 +2076,8 @@ describe('Activity report service', () => {
       );
       await Objective.destroy({ where: { goalId: goals }, force: true });
       await Goal.destroy({ where: { id: goals }, force: true });
-      await ActivityReport.destroy({ where: { id: reports }, force: true });
+      await ActivityReport.unscoped().destroy({ where: { id: reports }, force: true });
+      // await ActivityReport.unscoped().destroy({ where: { userId: user.id }, force: true });
       await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, force: true });
       await User.destroy({ where: { id: user.id }, force: true });
