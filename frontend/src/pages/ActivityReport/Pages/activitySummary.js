@@ -354,6 +354,7 @@ const ActivitySummary = ({
             <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
           </Drawer>
           <FormItem
+            className="margin-0"
             customLabel={(
               <Label className="margin-bottom-0" htmlFor="activityReason">
                 Why was this activity requested?

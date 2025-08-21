@@ -63,8 +63,8 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page)
 
     // Why was the activity requested?
-    await page.getByText('Why was this activity').click();
-    await page.getByText('Recipient requested', { exact: true }).click();
+    await page.getByText('Why was this activity requested? *Get help choosing an option- Select -').click();
+    await page.locator('#react-select-9-option-1').click();
 
     // Target population.
     await page.locator('#targetPopulations div').filter({ hasText: '- Select -' }).nth(1).click();

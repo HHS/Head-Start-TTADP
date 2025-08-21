@@ -91,7 +91,7 @@ function FormItem({
   const labelWithRequiredTag = (
     <>
       {label}
-      {required && (
+      {label && required && (
         <>
           {' '}
           <Req announce />
@@ -105,44 +105,26 @@ function FormItem({
   return (
     <FormGroup className={formGroupClassName} error={fieldErrors}>
       { customLabel }
-      {label && (
-        <LabelType
-          htmlFor={htmlFor}
-          label={labelWithRequiredTag}
-          className={className}
-          toolTipText={toolTipText}
-        >
-          {hint && (
-            <>
-              <br />
-              <span className="usa-hint">{hint}</span>
-              <br />
-            </>
-          )}
-          <ReactHookFormError
-            errors={errors}
-            name={name}
-            render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
-          />
-          {children}
-        </LabelType>
-      )}
-      {!label && (
+      <LabelType
+        htmlFor={htmlFor}
+        label={labelWithRequiredTag}
+        className={className}
+        toolTipText={toolTipText}
+      >
+        {hint && (
         <>
-          {hint && (
-            <>
-              <span className="usa-hint">{hint}</span>
-              <br />
-            </>
-          )}
-          <ReactHookFormError
-            errors={errors}
-            name={name}
-            render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
-          />
-          {children}
+          <br />
+          <span className="usa-hint">{hint}</span>
+          <br />
         </>
-      )}
+        )}
+        <ReactHookFormError
+          errors={errors}
+          name={name}
+          render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
+        />
+        {children}
+      </LabelType>
     </FormGroup>
   );
 }
