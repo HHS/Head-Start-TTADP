@@ -8,12 +8,12 @@ import ReviewItem from './ReviewItem';
 import { reportIsEditable } from '../../../../utils';
 
 const ReviewPage = ({
-  sections, path, isCustomValue,
+  sections, path, isCustomValue, className,
 }) => {
   const { getValues } = useFormContext();
   const canEdit = reportIsEditable(getValues('calculatedStatus'));
   return (
-    <>
+    <div className={className}>
       {sections.map((section) => {
         const names = section.items.map((item) => item.name);
         const isEditSection = section.isEditSection || false;
@@ -45,7 +45,7 @@ const ReviewPage = ({
           </Section>
         );
       })}
-    </>
+    </div>
   );
 };
 
@@ -61,10 +61,12 @@ ReviewPage.propTypes = {
     })),
   })).isRequired,
   isCustomValue: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 ReviewPage.defaultProps = {
   isCustomValue: false,
+  className: '',
 };
 
 export default ReviewPage;
