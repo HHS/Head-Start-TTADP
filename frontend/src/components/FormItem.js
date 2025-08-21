@@ -104,7 +104,9 @@ function FormItem({
 
   return (
     <FormGroup className={formGroupClassName} error={fieldErrors}>
-      { customLabel }
+      {
+        !label && (customLabel)
+       }
       <LabelType
         htmlFor={htmlFor}
         label={labelWithRequiredTag}
