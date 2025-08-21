@@ -116,11 +116,10 @@ async function activitySummary(
   await page.getByText('Center Director / Site Director', { exact: true }).click();
   await page.getByText('Coach', { exact: true }).click();
   await blur(page);
-  // await page.getByLabel('Recipient participants *').press('Escape');
 
   // Why as the activity requested?
-  await page.getByText('Why was this activity').click();
-  await page.getByText('Recipient requested', { exact: true }).click();
+  await page.getByText('Why was this activity requested? *Get help choosing an option- Select -').click();
+  await page.locator('#react-select-9-option-1').click();
 
   // Target  populations addressed.
   await page.getByText('Target populations addressed *- Select -').click();
