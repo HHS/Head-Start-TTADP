@@ -7,7 +7,6 @@ import {
 } from '@trussworks/react-uswds';
 import Req from './Req';
 import QuestionTooltip from './QuestionTooltip';
-
 import './FormItem.scss';
 
 const labelPropTypes = {
@@ -84,6 +83,7 @@ function FormItem({
   formGroupClassName,
   htmlFor,
   toolTipText,
+  customLabel,
 }) {
   const { formState: { errors } } = useFormContext();
 
@@ -91,7 +91,7 @@ function FormItem({
   const labelWithRequiredTag = (
     <>
       {label}
-      {required && (
+      {label && required && (
         <>
           {' '}
           <Req announce />
@@ -104,6 +104,9 @@ function FormItem({
 
   return (
     <FormGroup className={formGroupClassName} error={fieldErrors}>
+      {
+        !label && (customLabel)
+       }
       <LabelType
         htmlFor={htmlFor}
         label={labelWithRequiredTag}
@@ -111,11 +114,11 @@ function FormItem({
         toolTipText={toolTipText}
       >
         {hint && (
-          <>
-            <br />
-            <span className="usa-hint">{hint}</span>
-            <br />
-          </>
+        <>
+          <br />
+          <span className="usa-hint">{hint}</span>
+          <br />
+        </>
         )}
         <ReactHookFormError
           errors={errors}
@@ -130,6 +133,7 @@ function FormItem({
 
 FormItem.propTypes = {
   label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
+  customLabel: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,
