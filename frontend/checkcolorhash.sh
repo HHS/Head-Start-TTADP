@@ -2,8 +2,8 @@
 
 currentJsHash=$(cat colorsjschecksum)
 currentScssHash=$(cat colorsscsschecksum)
-newJsChecksum="$(sha256sum frontend/src/colors.js | cut -f1 -d' ')"
-newScssChecksum="$(sha256sum frontend/src/colors.scss | cut -f1 -d' ')"
+newJsChecksum="$(sha256sum src/colors.js | cut -f1 -d' ')"
+newScssChecksum="$(sha256sum src/colors.scss | cut -f1 -d' ')"
 
 if [ "$currentJsHash" != "$newJsChecksum" ]; then
   echo 'Error. Javascript hash does not match \n'
