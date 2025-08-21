@@ -110,7 +110,7 @@ export default function StandardGoalCard({
           GOAL_STATUS.IN_PROGRESS,
         ];
         setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
-          if (statusesNeedUpdatin.includes(objective.status)) {
+          if (statusesNeedUpdating.includes(objective.status)) {
             return {
               ...objective,
               status: GOAL_STATUS.SUSPENDED,
