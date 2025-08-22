@@ -46,7 +46,7 @@ module.exports = {
         DROP TABLE IF EXISTS retained_goals;
         CREATE TEMP TABLE retained_goals
         AS
-        SELECT DISTINCT g.id gid
+        SELECT DISTINCT ON (g."grantId", g."goalTemplateId") g.id gid
         FROM "Goals" g
         JOIN "GoalTemplates" gt
           ON g."goalTemplateId" = gt.id
@@ -54,6 +54,8 @@ module.exports = {
           AND gt.standard IN ('Monitoring','FEI','CLASS Monitoring')
           AND g.status != 'Closed'
           AND g."deletedAt" IS NULL
+          AND g."mapsToParentGoalId" IS NULL
+        ORDER BY g."grantId", g."goalTemplateId", g.id DESC
         ;
 
         -- 2: Complete any In Progress Objectives not on those Goals
