@@ -54,6 +54,7 @@ module.exports = {
           AND gt.standard IN ('Monitoring','FEI','CLASS Monitoring')
           AND g.status != 'Closed'
           AND g."deletedAt" IS NULL
+          AND g."mapsToParentGoalId" IS NULL
         ;
 
         -- 2: Complete any In Progress Objectives not on those Goals
