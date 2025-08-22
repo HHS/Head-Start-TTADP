@@ -1698,6 +1698,47 @@ describe('Recipient DB service', () => {
       expect(result).toEqual([]);
     });
 
+    it('handles a null title', () => {
+      const currentModel = {
+        objectives: [
+          {
+            id: 3,
+            endDate: '2024-12-31',
+            status: 'Complete',
+          },
+          {
+            id: 2,
+            endDate: '2024-12-30',
+            title: 'Objective 2',
+            status: 'In Progress',
+          },
+        ],
+      };
+
+      const goal = {
+        objectives: [
+          {
+            id: 1,
+            endDate: '2024-12-29',
+            title: '',
+            status: 'In Progress',
+          },
+        ],
+        goalTopics: [],
+        reasons: [],
+      };
+
+      const grantNumbers = [];
+
+      const result = reduceObjectivesForRecipientRecord(
+        currentModel,
+        goal,
+        grantNumbers,
+      );
+
+      expect(result.map((obj) => obj.id)).toEqual([3, 2, 1]); // Sorted by endDate descending
+    });
+
     it('sorts objectives by endDate and id', () => {
       const currentModel = {
         grant: { number: 'G123' },
