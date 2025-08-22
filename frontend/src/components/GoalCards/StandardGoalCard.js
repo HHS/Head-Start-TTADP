@@ -147,7 +147,7 @@ export default function StandardGoalCard({
   const contextMenuLabel = `Actions for goal ${id}`;
   const menuItems = [];
   // For monitoring goals, only admins can delete
-  const canPerformMonitoringGoalOperations = isMonitoringGoal ? isAdmin(user) : true;
+  const hasAdminPermissions = isAdmin(user);
   if (localStatus !== 'Closed' && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
@@ -155,16 +155,14 @@ export default function StandardGoalCard({
         history.push(editLink);
       },
     });
-  } else if (localStatus === 'Closed' && hasEditButtonPermissions) {
+  } else if (localStatus === 'Closed' && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
     // For monitoring goals, only admins can reopen
-    if (canPerformMonitoringGoalOperations) {
-      menuItems.push({
-        label: 'Reopen',
-        onClick: () => {
-          history.push(reopenLink);
-        },
-      });
-    }
+    menuItems.push({
+      label: 'Reopen',
+      onClick: () => {
+        history.push(reopenLink);
+      },
+    });
   }
 
   menuItems.push({
@@ -179,10 +177,12 @@ export default function StandardGoalCard({
       return true;
     }
 
-    return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+    return (
+      !isMonitoringGoal
+      && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE)));
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(localStatus) && canPerformMonitoringGoalOperations) {
+  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(localStatus)) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
