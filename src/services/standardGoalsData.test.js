@@ -314,19 +314,21 @@ describe('standardGoals with Data', () => {
     let recipient;
     let grant;
     let goalTemplate;
+    let goalTemplate2;
     let goal1;
     let goal2;
     let objective;
     let creatorCollabType;
 
     beforeAll(async () => {
-      // Create test user
+      // Create test user with unique hsesUserId
+      const uniqueUserId = `Test Objective User ${Date.now()}`;
       user = await User.create({
         id: faker.datatype.number({ min: 3000 }),
         homeRegionId: 1,
-        name: 'Test Objective User',
-        hsesUsername: 'Test Objective User',
-        hsesUserId: 'Test Objective User',
+        name: uniqueUserId,
+        hsesUsername: uniqueUserId,
+        hsesUserId: uniqueUserId,
         lastLogin: new Date(),
       });
 
@@ -344,9 +346,14 @@ describe('standardGoals with Data', () => {
         regionId: 1,
       });
 
-      // Create goal template
+      // Create goal templates - one for each goal to avoid unique constraint violation
       goalTemplate = await createGoalTemplate({
-        name: 'Test Objectives Template',
+        name: 'Test Objectives Template 1',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      goalTemplate2 = await createGoalTemplate({
+        name: 'Test Objectives Template 2',
         creationMethod: CREATION_METHOD.CURATED,
       });
 
@@ -364,7 +371,7 @@ describe('standardGoals with Data', () => {
         name: 'Goal for Update',
         status: GOAL_STATUS.NOT_STARTED,
         createdAt: new Date(),
-        goalTemplateId: goalTemplate.id,
+        goalTemplateId: goalTemplate2.id,
         grantId: grant.id,
         createdVia: 'rtr',
       });
@@ -410,7 +417,7 @@ describe('standardGoals with Data', () => {
       });
 
       await GoalTemplate.destroy({
-        where: { id: goalTemplate.id },
+        where: { id: [goalTemplate.id, goalTemplate2.id] },
         force: true,
       });
 
