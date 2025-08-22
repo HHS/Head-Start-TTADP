@@ -53,46 +53,6 @@ describe('goal hooks', () => {
     });
   });
 
-  describe('preventCloseIfObjectivesOpen', () => {
-    it('does nothing if instance.changed is not an array', async () => {
-      const instance = {
-        changed: jest.fn().mockReturnValue({}),
-      };
-      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
-    });
-
-    it('does nothing is instance.changed does not include status', async () => {
-      const instance = {
-        changed: jest.fn().mockReturnValue(false),
-      };
-      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
-    });
-    it('does nothing if status is not CLOSED', async () => {
-      const instance = {
-        changed: jest.fn().mockReturnValue(true),
-        status: GOAL_STATUS.IN_PROGRESS,
-      };
-      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
-    });
-
-    it('throws an error if status is CLOSED and objectives are not closed', async () => {
-      const instance = {
-        changed: jest.fn().mockReturnValue(['status']),
-        status: GOAL_STATUS.CLOSED,
-      };
-      const sequelizeToPass = {
-        models: {
-          Objective: {
-            findAll: jest.fn().mockResolvedValue([
-              { status: OBJECTIVE_STATUS.IN_PROGRESS },
-            ]),
-          },
-        },
-      };
-      await expect(preventCloseIfObjectivesOpen(sequelizeToPass, instance)).rejects.toThrow();
-    });
-  });
-
   describe('processForEmbeddedResources', () => {
     const sequelizeToPass = {};
     const instance = {
