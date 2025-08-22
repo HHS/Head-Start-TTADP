@@ -99,4 +99,5 @@ const afterCreate = async (sequelize, instance, options) => {
 export {
   afterCreate,
   beforeCreate,
+  preventCloseIfObjectivesOpen,
 };
