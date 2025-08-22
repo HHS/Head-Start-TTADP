@@ -635,6 +635,7 @@ describe('StandardGoalCard', () => {
     // View details should still be available
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
+  });
 
   it('shows objectives as suspended when goal status is suspended', async () => {
     const suspendedGoal = {
