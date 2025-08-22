@@ -1,4 +1,5 @@
 import { CLOSE_SUSPEND_REASONS, GOAL_STATUS } from '@ttahub/common';
+import { Op } from 'sequelize';
 import { OBJECTIVE_STATUS } from '../../constants';
 
 const setPerformedAt = (instance) => {
@@ -6,6 +7,42 @@ const setPerformedAt = (instance) => {
 
   if (!performedAt) {
     instance.set('performedAt', new Date());
+  }
+};
+
+const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
+  if (instance.get('newStatus') === GOAL_STATUS.CLOSED) {
+    // Only check the objectives created via RTR or linked to approved activity reports.
+    const objectives = await sequelize.models.Objective.findAll({
+      where: {
+        goalId: instance.goalId,
+        status: {
+          [Op.not]: [OBJECTIVE_STATUS.COMPLETE],
+        },
+        [Op.or]: [
+          sequelize.literal('NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'),
+          { '$activityReportObjectives.activityReport.calculatedStatus$': 'approved' },
+        ],
+      },
+      include: [
+        {
+          model: sequelize.models.ActivityReportObjective,
+          as: 'activityReportObjectives',
+          required: false,
+          include: [
+            {
+              model: sequelize.models.ActivityReport,
+              as: 'activityReport',
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    if (objectives.length > 0) {
+      throw new Error(`Cannot close a goal ${instance.goalId} with open objectives. ${objectives[0].id} is open.`);
+    }
   }
 };
 
@@ -51,6 +88,7 @@ const updateObjectiveStatusIfSuspended = async (sequelize, instance) => {
 
 const beforeCreate = async (sequelize, instance) => {
   setPerformedAt(instance);
+  await preventCloseIfObjectivesOpen(sequelize, instance);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
