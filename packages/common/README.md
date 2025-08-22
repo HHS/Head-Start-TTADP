@@ -21,6 +21,9 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+# 2.2.10
+Change the values for "why was the activity conducted?".
+
 # 2.2.9
 Added activity report "why was the activity conducted?" values.
 
