@@ -635,5 +635,78 @@ describe('StandardGoalCard', () => {
     // View details should still be available
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
+
+  it('shows objectives as suspended when goal status is suspended', async () => {
+    const suspendedGoal = {
+      ...goal,
+      status: 'In progress',
+      objectives: [
+        {
+          id: 1,
+          ids: [1],
+          endDate: '2022-01-01',
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'In Progress',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+        {
+          id: 2,
+          ids: [2],
+          endDate: '2022-01-01',
+          title: 'Objective 2',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'Not Started',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, suspendedGoal);
+    const changeStatusBtn = await screen.findByRole('button', { name: /Change status for goal 1/i });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    const url = '/api/goals/changeStatus';
+    fetchMock.put(url, {
+      ...suspendedGoal,
+      status: 'Suspended',
+    });
+
+    const suspended = await screen.findByRole('button', { name: /suspended/i });
+    act(() => {
+      userEvent.click(suspended);
+    });
+
+    const regionalOfficeRequest = await screen.findByText(/regional office request/i, { selector: '[for=suspending-reason-3-modal_1]' });
+    const submit = await screen.findByRole('button', { name: /Change goal status/i });
+
+    act(() => {
+      userEvent.click(regionalOfficeRequest);
+    });
+
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called(url)).toBe(true);
+    });
+
+    const suspendedObjectives = (await screen.findAllByText('Suspended')).filter((v) => v.getAttribute('aria-label').includes('Change status for objective'));
+
+    expect(suspendedObjectives.length).toBe(2);
   });
 });
