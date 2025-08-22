@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import httpCodes from 'http-codes';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
@@ -415,7 +415,7 @@ export async function getGoalHistory(req, res) {
                   as: 'activityReport',
                   attributes: ['id', 'displayId'],
                   where: {
-                    calculatedStatus: 'approved',
+                    calculatedStatus: REPORT_STATUSES.APPROVED,
                   },
                 },
                 {

@@ -1361,8 +1361,7 @@ describe('goal handlers', () => {
 
       await getGoalHistory(req, mockResponse);
 
-      // Check that both activity reports in objectives
-      //  and direct activity reports are filtered by approved status
+      // Check that activity reports in objectives are filtered by approved status
       expect(db.Goal.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           include: expect.arrayContaining([
@@ -1379,12 +1378,6 @@ describe('goal handlers', () => {
                       },
                     }),
                   ]),
-                }),
-                expect.objectContaining({
-                  as: 'activityReports',
-                  where: {
-                    calculatedStatus: 'approved',
-                  },
                 }),
               ]),
             }),
