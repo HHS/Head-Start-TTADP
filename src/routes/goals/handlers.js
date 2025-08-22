@@ -365,7 +365,7 @@ export async function getGoalHistory(req, res) {
       attributes: {
         include: [
           [
-            sequelize.literal('(SELECT "reason" FROM "GoalStatusChanges" WHERE "GoalStatusChanges"."goalId" = "Goal"."id" ORDER BY "createdAt" DESC LIMIT 1)'), 'reason',
+            sequelize.literal('"statusChanges"."reason"'), 'reason',
           ],
           [
             sequelize.literal('"goalTemplate"."standard"'),
@@ -377,6 +377,7 @@ export async function getGoalHistory(req, res) {
         {
           model: sequelize.models.GoalStatusChange,
           as: 'statusChanges',
+          attributes: ['id', 'createdAt', 'newStatus', 'reason', 'performedAt'],
           include: [
             {
               model: sequelize.models.User,
@@ -386,7 +387,7 @@ export async function getGoalHistory(req, res) {
                 model: sequelize.models.Role,
                 as: 'roles',
                 attributes: ['name'],
-                through: [],
+                through: { attributes: [] },
               }],
             },
           ],
@@ -395,6 +396,7 @@ export async function getGoalHistory(req, res) {
           model: sequelize.models.Objective,
           as: 'objectives',
           required: false,
+          attributes: ['id', 'title', 'status'],
           where: {
             [Op.or]: [
               { createdVia: 'rtr' },
@@ -406,11 +408,12 @@ export async function getGoalHistory(req, res) {
               model: sequelize.models.ActivityReportObjective,
               as: 'activityReportObjectives',
               required: false,
+              attributes: ['id'],
               include: [
                 {
                   model: sequelize.models.ActivityReport,
                   as: 'activityReport',
-                  attributes: ['id', 'displayId', 'startDate', 'endDate', 'calculatedStatus'],
+                  attributes: ['id', 'displayId'],
                   where: {
                     calculatedStatus: 'approved',
                   },
@@ -427,32 +430,27 @@ export async function getGoalHistory(req, res) {
                 },
               ],
             },
-            {
-              model: sequelize.models.ActivityReport,
-              as: 'activityReports',
-              required: false,
-              attributes: ['id', 'displayId', 'startDate', 'endDate', 'calculatedStatus'],
-              where: {
-                calculatedStatus: 'approved',
-              },
-            },
           ],
         },
         {
           model: sequelize.models.Grant,
           as: 'grant',
+          attributes: ['number'],
         },
         {
           model: sequelize.models.GoalTemplate,
           as: 'goalTemplate',
+          attributes: ['templateName', 'standard'],
         },
         {
           model: sequelize.models.GoalFieldResponse,
           as: 'responses',
+          attributes: ['id', 'response'],
         },
         {
           model: sequelize.models.GoalCollaborator,
           as: 'goalCollaborators',
+          attributes: ['id'],
           include: [
             {
               model: sequelize.models.User,
@@ -467,7 +465,10 @@ export async function getGoalHistory(req, res) {
           ],
         },
       ],
-      order: [['createdAt', 'DESC']],
+      order: [
+        ['createdAt', 'DESC'],
+        [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'DESC'],
+      ],
     });
 
     if (!goalsWithDetails.length) {
