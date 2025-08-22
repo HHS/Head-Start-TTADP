@@ -1,11 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { Alert } from '@trussworks/react-uswds';
 
 export default function GoalStatusChangeAlert({
   invalidStatusChangeAttempted,
-  editLink,
   internalLeftMargin,
 }) {
   if (!invalidStatusChangeAttempted) {
@@ -22,15 +20,13 @@ export default function GoalStatusChangeAlert({
         {' '}
         all In progress objectives are complete or suspended.
         {' '}
-        <Link to={editLink}>Update the objective status</Link>
-        .
+        Update the objective status.
       </p>
     </Alert>
   );
 }
 
 GoalStatusChangeAlert.propTypes = {
-  editLink: PropTypes.string.isRequired,
   internalLeftMargin: PropTypes.string.isRequired,
   invalidStatusChangeAttempted: PropTypes.bool,
 };
