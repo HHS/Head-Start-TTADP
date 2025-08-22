@@ -397,7 +397,7 @@ const ActivitySummary = ({
                   onChange={(selected) => {
                     controllerOnChange(selected ? selected.value : null);
                   }}
-                  inputRef={register({ required: 'Select at least one reason for activity' })}
+                  inputRef={register({ required: 'Select a reason why this activity was requested' })}
                   options={ACTIVITY_REASONS.map((reason) => ({
                     value: reason, label: reason,
                   }))}
@@ -410,7 +410,7 @@ const ActivitySummary = ({
               rules={{
                 validate: (value) => {
                   if (!value || value.length === 0) {
-                    return 'Select a reason for activity';
+                    return 'Select a reason why this activity was requested';
                   }
                   return true;
                 },
