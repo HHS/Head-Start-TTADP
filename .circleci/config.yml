@@ -218,7 +218,7 @@ workflows:
         requires:
         - backup_temp_db
 
-  backup_db_manual:
+  backup_prod_manual:
     # backup prod db, process(anonymize) it, then backup the processed db
     when: pipeline.parameters.action == "backup_prod" and pipeline.trigger_source == "api"
     jobs:
@@ -241,10 +241,9 @@ workflows:
     # restore the anonymized db snapshot to a lower env db and run migrations
     # uses the last production backup, does not interact with prod or modify snapshots
     when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
     - restore_db_job:
         serial-group: tta-automation-lock
-        requires:
-        - backup_temp_db
         target_env: "<< pipeline.parameters.target_env >>"
 
 # ----------------- Jobs -----------------
