@@ -1,4 +1,4 @@
-# Analytics
+# Observability
 
 New Relic provides tools for application monitoring and web analytics. New Relic's [Application Performance Monitoring (APM)](https://docs.newrelic.com/docs/apm/) can monitor and measure application performance and activity on the backend. Their [Browser Agent](https://docs.newrelic.com/docs/browser/) can do the same for the frontend of the application.
 

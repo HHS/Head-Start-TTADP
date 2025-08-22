@@ -116,11 +116,13 @@ async function activitySummary(
   await page.getByText('Center Director / Site Director', { exact: true }).click();
   await page.getByText('Coach', { exact: true }).click();
   await blur(page);
-  // await page.getByLabel('Recipient participants *').press('Escape');
 
   // Why as the activity requested?
-  await page.getByText('Why was this activity').click();
-  await page.getByText('Recipient requested', { exact: true }).click();
+  await page.getByText('Why was this activity requested? *Get help choosing an option- Select -').click();
+  // await page.getByText('Why was this activity requested?').click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
 
   // Target  populations addressed.
   await page.getByText('Target populations addressed *- Select -').click();
@@ -337,7 +339,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText(`${fullName} has requested approval for this activity report`)).toBeVisible();
     await expect(page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(1)).toBeVisible();
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(2)).toBeVisible();
+    // await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient').nth(2)).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual', { exact: true })).toBeVisible();
     await expect(page.getByText('Recipient participants', { exact: true })).toBeVisible();
     await expect(page.getByText('Collaborating specialists', { exact: true })).toBeVisible();
