@@ -231,9 +231,9 @@ exports.GOAL_SOURCES = GOAL_SOURCES;
 
 const ACTIVITY_REASONS = [
   'Federal monitoring issues, including CLASS and RANs',
+  'Group event follow-up',
   'Recipient requested',
   'Regional Office requested',
-  'Training event follow-up',
 ];
 
 exports.ACTIVITY_REASONS = ACTIVITY_REASONS;
