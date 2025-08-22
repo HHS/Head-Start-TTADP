@@ -95,10 +95,12 @@ module.exports = {
         SELECT * FROM updater
         ;
 
-        -- Add the constraint
+        -- Update the hash column to guarantee an accurate hash of templateTitle and add the constraint 
+        ALTER TABLE "ObjectiveTemplates" DROP COLUMN hash;
+        ALTER TABLE "ObjectiveTemplates" ADD COLUMN hash TEXT GENERATED ALWAYS AS (MD5("templateTitle")) STORED;
         ALTER TABLE "ObjectiveTemplates"
         ADD CONSTRAINT objective_templates_template_title_region_id_uniq UNIQUE
-        ("templateTitle","regionId");
+        (hash,"regionId");
 
         -- convenience query for validation
         SELECT 1 ord, 'total dupes' item, (SELECT COUNT(*) FROM retarget_map) cnt
