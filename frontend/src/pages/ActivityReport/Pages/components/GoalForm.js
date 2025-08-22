@@ -148,6 +148,10 @@ export default function GoalForm({
         prompts={prompts}
         userCanEdit
         heading="Root cause"
+        drawerButtonText="Get help choosing root causes"
+        drawerTitle="Root causes"
+        drawerTagName="ttahub-fei-root-causes"
+        drawerClassName="ttahub-drawer--ttahub-fei-root-causes-guidance"
       />
 
       <Objectives
