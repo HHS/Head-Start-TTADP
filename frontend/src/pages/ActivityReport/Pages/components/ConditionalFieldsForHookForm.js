@@ -12,7 +12,16 @@ const formatPromptTitle = (field) => `${field.grantId}-${formatTitleForHtmlAttri
 
 export const FIELD_DICTIONARY = {
   multiselect: {
-    render: (field, validations, value, userCanEdit) => (
+    render: (
+      field,
+      validations,
+      value,
+      userCanEdit,
+      drawerButtonText,
+      drawerTitle,
+      drawerTagName,
+      drawerClassName,
+    ) => (
       <ConditionalMultiselectForHookForm
         validations={validations}
         fieldData={field}
@@ -20,6 +29,11 @@ export const FIELD_DICTIONARY = {
         defaultValue={value}
         key={`conditional-multiselect-${formatPromptTitle(field)}`}
         userCanEdit={userCanEdit}
+        // drawer props forwarded from parent (GoalForm)
+        drawerButtonText={drawerButtonText}
+        drawerTitle={drawerTitle}
+        drawerTagName={drawerTagName}
+        drawerClassName={drawerClassName}
       />
     ),
   },
@@ -29,6 +43,10 @@ export default function ConditionalFieldsForHookForm({
   prompts,
   userCanEdit,
   heading,
+  drawerButtonText,
+  drawerTitle,
+  drawerTagName,
+  drawerClassName,
 }) {
   const {
     field: {
@@ -65,6 +83,10 @@ export default function ConditionalFieldsForHookForm({
         prompt.validations,
         prompt.response,
         userCanEdit,
+        drawerButtonText,
+        drawerTitle,
+        drawerTagName,
+        drawerClassName,
       );
     }
 
@@ -93,9 +115,17 @@ ConditionalFieldsForHookForm.propTypes = {
   }.isRequired)).isRequired,
   userCanEdit: PropTypes.bool,
   heading: PropTypes.string,
+  drawerButtonText: PropTypes.string,
+  drawerTitle: PropTypes.string,
+  drawerTagName: PropTypes.string,
+  drawerClassName: PropTypes.string,
 };
 
 ConditionalFieldsForHookForm.defaultProps = {
   userCanEdit: false,
   heading: null,
+  drawerButtonText: '',
+  drawerTitle: '',
+  drawerTagName: '',
+  drawerClassName: '',
 };
