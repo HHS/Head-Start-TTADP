@@ -12,7 +12,6 @@ import db, {
   Grant,
   Recipient,
   CollaboratorType,
-  ActivityReportGoal,
   User,
 } from '../models';
 import {
@@ -85,6 +84,7 @@ describe('standardGoals with Data', () => {
         goalTemplateId: goalTemplate.id,
         grantId: grant.id,
         createdVia: 'rtr',
+        prestandard: false,
       });
 
       await GoalCollaborator.create({
@@ -365,6 +365,7 @@ describe('standardGoals with Data', () => {
         goalTemplateId: goalTemplate.id,
         grantId: grant.id,
         createdVia: 'rtr',
+        prestandard: false,
       });
 
       goal2 = await Goal.create({
@@ -374,6 +375,7 @@ describe('standardGoals with Data', () => {
         goalTemplateId: goalTemplate2.id,
         grantId: grant.id,
         createdVia: 'rtr',
+        prestandard: false,
       });
 
       await GoalCollaborator.create({
@@ -475,6 +477,80 @@ describe('standardGoals with Data', () => {
         where: { goalId: goal2.id },
       });
       expect(objectivesUnderGoal2).toHaveLength(0);
+    });
+  });
+
+  describe('standardGoalsForRecipient excludes prestandard goals', () => {
+    let recipient;
+    let grantOne;
+    let grantTwo;
+    let template;
+    let goalTrue;
+    let goalFalse;
+
+    beforeAll(async () => {
+      try {
+        recipient = await createRecipient({});
+        grantOne = await createGrant({ recipientId: recipient.id, regionId: 1 });
+        // Use a unique template to avoid collisions across tests
+        template = await createGoalTemplate({
+          creationMethod: CREATION_METHOD.CURATED,
+        });
+
+        grantTwo = await createGrant({ recipientId: recipient.id, regionId: 1 });
+
+        // An older prestandard goal (should be excluded)
+        goalTrue = await Goal.create({
+          name: 'Prestandard true',
+          status: GOAL_STATUS.NOT_STARTED,
+          createdAt: new Date(Date.now() - 1000 * 60),
+          goalTemplateId: template.id,
+          grantId: grantOne.id,
+          createdVia: 'rtr',
+          prestandard: true,
+        });
+
+        // A newer non-prestandard goal (should be returned)
+        goalFalse = await Goal.create({
+          name: 'Prestandard false',
+          status: GOAL_STATUS.NOT_STARTED,
+          createdAt: new Date(),
+          goalTemplateId: template.id,
+          grantId: grantTwo.id,
+          createdVia: 'rtr',
+          prestandard: false,
+        });
+      } catch (e) {
+        console.log('Error in beforeAll setup:', e);
+      }
+    });
+
+    afterAll(async () => {
+      try {
+        const goalIds = [goalTrue?.id, goalFalse?.id].filter(Boolean);
+        await Goal.destroy({ where: { id: goalIds }, force: true });
+
+        await GoalTemplate.destroy({ where: { id: template.id }, force: true });
+
+        await Grant.destroy({
+          where: {
+            id: [grantOne.id, grantTwo.id],
+          },
+          individualHooks: true,
+          force: true,
+        });
+        await Recipient.destroy({ where: { id: recipient.id }, force: true });
+      } catch (e) {
+        console.log('Error in afterAll cleanup:', e);
+      }
+    });
+
+    it('returns only non-prestandard goals for recipient', async () => {
+      const result = await standardGoalsForRecipient(recipient.id, 1, {});
+      // We expect exactly one goal in results for this template/grant pair
+      const names = result.goalRows.map((g) => g.name);
+      expect(names).toContain('Prestandard false');
+      expect(names).not.toContain('Prestandard true');
     });
   });
 });
