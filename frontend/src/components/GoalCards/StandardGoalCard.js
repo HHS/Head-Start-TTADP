@@ -11,6 +11,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { Checkbox, Alert } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { goalPropTypes } from './constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -58,13 +59,14 @@ export default function StandardGoalCard({
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [localStatus, setLocalStatus] = useState(status);
+  const [localObjectives, setLocalObjectives] = useState(objectives);
   const [targetStatusForModal, setTargetStatusForModal] = useState('');
   const [statusChangeError, setStatusChangeError] = useState(false);
   const closeSuspendModalRef = useRef();
   const [resetModalValues, setResetModalValues] = useState(false);
 
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
-  const sortedObjectives = [...objectives];
+  const sortedObjectives = [...localObjectives];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const {
@@ -102,6 +104,22 @@ export default function StandardGoalCard({
       // API expects: goalIds (array), newStatus, oldStatus, closeSuspendReason, closeSuspendContext
       await updateGoalStatus(ids, newStatus, localStatus, reason, context);
       setLocalStatus(newStatus);
+      if (newStatus === GOAL_STATUS.SUSPENDED) {
+        const statusesNeedUpdating = [
+          GOAL_STATUS.NOT_STARTED,
+          GOAL_STATUS.IN_PROGRESS,
+        ];
+        setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
+          if (statusesNeedUpdating.includes(objective.status)) {
+            return {
+              ...objective,
+              status: GOAL_STATUS.SUSPENDED,
+            };
+          }
+
+          return objective;
+        }));
+      }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error updating goal status:', err);
@@ -146,7 +164,8 @@ export default function StandardGoalCard({
 
   const contextMenuLabel = `Actions for goal ${id}`;
   const menuItems = [];
-
+  // For monitoring goals, only admins can delete
+  const hasAdminPermissions = isAdmin(user);
   if (localStatus !== 'Closed' && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
@@ -154,7 +173,8 @@ export default function StandardGoalCard({
         history.push(editLink);
       },
     });
-  } else if (localStatus === 'Closed' && hasEditButtonPermissions) {
+  } else if (localStatus === 'Closed' && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
+    // For monitoring goals, only admins can reopen
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
@@ -175,7 +195,9 @@ export default function StandardGoalCard({
       return true;
     }
 
-    return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+    return (
+      !isMonitoringGoal
+      && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE)));
   })();
 
   if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(localStatus)) {
@@ -385,7 +407,7 @@ export default function StandardGoalCard({
           type="objective"
           ariaLabel={`objectives for goal ${goalNumber}`}
           closeOrOpen={closeOrOpenObjectives}
-          count={objectives.length}
+          count={localObjectives.length}
           expanded={objectivesExpanded}
         />
       </div>

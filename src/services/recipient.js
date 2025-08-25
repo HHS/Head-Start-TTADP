@@ -524,7 +524,7 @@ export function reduceObjectivesForRecipientRecord(
         };
       }, { reportTopics: [], reportReasons: [], endDate: objective.endDate || null });
 
-      const objectiveTitle = objective.title.trim();
+      const objectiveTitle = (objective.title || '').trim();
       const objectiveStatus = objective.status;
 
       // get our objective topics
@@ -573,7 +573,7 @@ export function reduceObjectivesForRecipientRecord(
 
       const formattedObjective = {
         id: objective.id,
-        title: objective.title.trim(),
+        title: (objective.title || '').trim(),
         endDate: endDate || objective.endDate || null,
         status: objectiveStatus,
         grantNumbers: [grantNumberToUse],
