@@ -84,7 +84,7 @@ const renderStandardGoalForm = (user = mockUser) => {
 
 describe('StandardGoalForm', () => {
   beforeEach(() => {
-    fetchMock.get('/api/goal-templates?grantIds=1', mockGoalTemplates);
+    fetchMock.get('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true', mockGoalTemplates);
   });
 
   afterEach(() => {
@@ -125,7 +125,7 @@ describe('StandardGoalForm', () => {
     const { setIsAppLoading } = renderStandardGoalForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
+      expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
     });
 
     // Select a goal template
@@ -149,7 +149,7 @@ describe('StandardGoalForm', () => {
     const { setIsAppLoading, history } = renderStandardGoalForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
+      expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
     });
 
     // Select a goal template
