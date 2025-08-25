@@ -6,8 +6,11 @@ import {
 
 const goalTemplatesUrl = join('/', 'api', 'goal-templates');
 
-export async function getGoalTemplates(grantIds) {
+export async function getGoalTemplates(grantIds, includeClosedSuspended = false) {
   const params = grantIds.map((grantId) => `grantIds=${grantId}`);
+  if (includeClosedSuspended) {
+    params.push('includeClosedSuspendedGoals=true');
+  }
   const url = join(goalTemplatesUrl, `?${params.join('&')}`);
   const response = await get(url);
   return response.json();
