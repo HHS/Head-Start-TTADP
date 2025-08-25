@@ -1,5 +1,4 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
 import { uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
@@ -7,7 +6,6 @@ import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import filtersToScopes from '../scopes';
 import { reduceObjectivesForRecipientRecord } from './recipient';
-import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { cacheGoalMetadata, cacheObjectiveMetadata, destroyActivityReportObjectiveMetadata } from './reportCache';
 
