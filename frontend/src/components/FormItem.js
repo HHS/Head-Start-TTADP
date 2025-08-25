@@ -3,8 +3,11 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import {
-  Label, FormGroup, ErrorMessage, Fieldset,
+  Label, FormGroup, ErrorMessage, Fieldset, Tooltip,
 } from '@trussworks/react-uswds';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import colors from '../colors';
 import Req from './Req';
 
 import './FormItem.scss';
@@ -31,7 +34,7 @@ function LabelWrapper({
 }) {
   /**
    * The date picker component renders two inputs. This seemed to create
-   * inconstent behavior as far as which input was being referenced by the enclosing label
+   * inconsistent behavior as far as which input was being referenced by the enclosing label
    * especially in user testing library, so we're now adding the explicit
    * "for" attribute
    */
@@ -71,8 +74,13 @@ function FormItem({
   fieldSetWrapper,
   className,
   htmlFor,
+  tooltipText,
 }) {
   const { formState: { errors } } = useFormContext();
+
+  // eslint-disable-next-line max-len, no-shadow, react/jsx-props-no-spreading
+  const CustomTooltipElement = ({ children, ...tooltipProps }, ref) => (<span ref={ref} {...tooltipProps}>{children}</span>);
+  const CustomTooltip = React.forwardRef(CustomTooltipElement);
 
   const fieldErrors = errors[name];
   const labelWithRequiredTag = (
@@ -83,6 +91,11 @@ function FormItem({
           {' '}
           <Req announce />
         </>
+      )}
+      {tooltipText && (
+      <Tooltip asCustom={CustomTooltip} label={tooltipText}>
+        <FontAwesomeIcon className="margin-right-1 no-print" data-testid="info-tooltip-icon" color={colors.ttahubMediumBlue} icon={faQuestionCircle} />
+      </Tooltip>
       )}
     </>
   );
@@ -119,6 +132,7 @@ FormItem.propTypes = {
   className: PropTypes.string,
   htmlFor: PropTypes.string,
   hint: PropTypes.string,
+  tooltipText: PropTypes.string,
 };
 
 FormItem.defaultProps = {
@@ -127,6 +141,7 @@ FormItem.defaultProps = {
   className: '',
   htmlFor: '',
   hint: '',
+  tooltipText: undefined,
 };
 
 export default FormItem;

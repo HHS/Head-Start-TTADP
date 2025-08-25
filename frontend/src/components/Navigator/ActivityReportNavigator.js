@@ -137,7 +137,7 @@ const ActivityReportNavigator = ({
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
   const goalForEditing = watch('goalForEditing');
-  const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
+  const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals', []);
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);

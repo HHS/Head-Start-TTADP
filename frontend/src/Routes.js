@@ -25,6 +25,8 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
+import CollaborationReportsLanding from './pages/CollaborationReports';
+import CollaborationReport from './pages/CollaborationReportForm';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
@@ -113,6 +115,23 @@ export default function Routes({
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/collaboration-reports"
+          render={({ match }) => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <CollaborationReportsLanding match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/collaboration-reports/:collabReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match, location }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <CollaborationReport location={location} match={match} />
             </AppWrapper>
           )}
         />

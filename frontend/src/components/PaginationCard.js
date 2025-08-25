@@ -18,6 +18,7 @@ function PaginationCard({
   handlePageChange,
   perPageChange,
   hideInfo,
+  hideCountHeaderOnEmpty,
   accessibleLandmarkName,
   paginationClassName,
 }) {
@@ -90,14 +91,16 @@ function PaginationCard({
               <option value={totalCount}>all</option>
             </Dropdown>
           ) : null }
-          <span className={totalPages < 2 ? 'margin-right-1' : ''}>
-            {getPageInfo(
-              offset,
-              totalCount,
-              currentPage,
-              perPage,
-            )}
-          </span>
+          { (totalCount > 0 || !hideCountHeaderOnEmpty) && (
+            <span className={totalPages < 2 ? 'margin-right-1' : ''} data-testid="pagination-card-count-header">
+              {getPageInfo(
+                offset,
+                totalCount,
+                currentPage,
+                perPage,
+              )}
+            </span>
+          )}
         </div>
       )}
       {totalPages > 1 && (
@@ -125,6 +128,7 @@ PaginationCard.propTypes = {
   hideInfo: PropTypes.bool,
   accessibleLandmarkName: PropTypes.string,
   paginationClassName: PropTypes.string,
+  hideCountHeaderOnEmpty: PropTypes.bool,
 };
 
 PaginationCard.defaultProps = {
@@ -137,6 +141,7 @@ PaginationCard.defaultProps = {
   hideInfo: false,
   accessibleLandmarkName: 'Pagination',
   paginationClassName: 'margin-bottom-0 margin-top-0',
+  hideCountHeaderOnEmpty: false,
 };
 
 export default PaginationCard;
