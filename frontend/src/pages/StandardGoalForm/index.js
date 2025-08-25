@@ -31,7 +31,7 @@ import GoalFormTemplatePrompts from '../../components/SharedGoalComponents/GoalF
 import { ROUTES } from '../../Constants';
 import usePossibleGrants from '../../hooks/usePossibleGrants';
 
-const missingStandardGoalToolTip = 'Goals listed haven’t been used by the recipient. To restart a goal, go to the Recipient TTA Record RTTAPA tab.';
+const missingStandardGoalToolTip = 'Goals listed haven’t been used by the recipient. To reopen a goal, go to the Recipient TTA Record RTTAPA tab.';
 
 export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
@@ -70,7 +70,7 @@ export default function StandardGoalForm({ recipient }) {
   const { selectedGrant, selectedGoal } = hookForm.watch();
 
   const selectedGrants = useMemo(() => [selectedGrant], [selectedGrant]);
-  const goalTemplates = useGoalTemplates(selectedGrants, true);
+  const goalTemplates = useGoalTemplates(selectedGrants, true, true);
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);

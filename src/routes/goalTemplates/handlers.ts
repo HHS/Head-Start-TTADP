@@ -43,13 +43,13 @@ export async function getStandardGoal(req: Request, res: Response) {
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
-    const { grantIds } = req.query;
+    const { grantIds, includeClosedSuspendedGoals } = req.query;
 
     // ensure we only pass numbers to the service
     const parsedGrantIds = [grantIds].flat().map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const templates = await getCuratedTemplates(parsedGrantIds);
+    const templates = await getCuratedTemplates(parsedGrantIds, !!(includeClosedSuspendedGoals));
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');
