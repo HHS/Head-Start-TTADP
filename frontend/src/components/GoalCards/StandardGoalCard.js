@@ -71,7 +71,7 @@ export default function StandardGoalCard({
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const {
-    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    atLeastOneObjectiveIsNotCompleted,
     dispatchStatusChange,
   } = useObjectiveStatusMonitor(objectives);
 
@@ -81,10 +81,10 @@ export default function StandardGoalCard({
   }, [status]);
 
   useEffect(() => {
-    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompleted) {
       setInvalidStatusChangeAttempted(false);
     }
-  }, [atLeastOneObjectiveIsNotCompletedOrSuspended, invalidStatusChangeAttempted]);
+  }, [atLeastOneObjectiveIsNotCompleted, invalidStatusChangeAttempted]);
 
   const [deleteError, setDeleteError] = useState(false);
 
@@ -130,10 +130,11 @@ export default function StandardGoalCard({
 
   const onUpdateGoalStatus = (newStatus) => {
     // prevent closing if objectives aren't complete/suspended
-    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompleted) {
       setInvalidStatusChangeAttempted(true);
       return;
     }
+
     setInvalidStatusChangeAttempted(false);
 
     // check if the new status requires a reason modal

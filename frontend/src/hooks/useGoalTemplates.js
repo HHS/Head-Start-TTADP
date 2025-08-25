@@ -2,7 +2,10 @@ import { useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getGoalTemplates } from '../fetchers/goalTemplates';
 
-export default function useGoalTemplates(selectedGrants, filterOutUsedTemplates = false) {
+export default function useGoalTemplates(
+  selectedGrants, filterOutUsedTemplates = false,
+  includeClosedSuspended = false,
+) {
   const [goalTemplates, setGoalTemplates] = useState(null);
 
   // using DeepCompareEffect to avoid unnecessary fetches
@@ -10,7 +13,10 @@ export default function useGoalTemplates(selectedGrants, filterOutUsedTemplates 
   useDeepCompareEffect(() => {
     async function fetchGoalTemplates() {
       try {
-        const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
+        const templates = await getGoalTemplates(
+          selectedGrants.map((grant) => grant.id),
+          includeClosedSuspended,
+        );
 
         if (filterOutUsedTemplates) {
           setGoalTemplates(templates.filter((template) => !template.goals.length));
