@@ -169,7 +169,7 @@ export default function StandardGoalCard({
   const hasAdminPermissions = isAdmin(user);
 
   // eslint-disable-next-line max-len
-  if ([GOAL_STATUS.DRAFT, GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.IN_PROGRESS].includes(localStatus) && hasEditButtonPermissions) {
+  if ([GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS].includes(localStatus) && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
