@@ -167,7 +167,9 @@ export default function StandardGoalCard({
   const menuItems = [];
   // For monitoring goals, only admins can delete
   const hasAdminPermissions = isAdmin(user);
-  if (localStatus !== 'Closed' && hasEditButtonPermissions) {
+
+  // eslint-disable-next-line max-len
+  if ([GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS].includes(localStatus) && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
