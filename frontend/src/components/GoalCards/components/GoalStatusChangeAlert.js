@@ -18,7 +18,7 @@ export default function GoalStatusChangeAlert({
       <p className="usa-prose margin-0">
         The goal status cannot be changed until
         {' '}
-        all In progress objectives are complete or suspended.
+        all In progress objectives are complete.
         {' '}
         Update the objective status.
       </p>

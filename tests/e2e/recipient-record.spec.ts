@@ -86,7 +86,7 @@ test.describe('Recipient record', () => {
     await goal.getByText(/closed/i).click();
 
     // expect error
-    await expect(page.getByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i)).toBeVisible();
+    await expect(page.getByText(/The goal status cannot be changed until all In progress objectives are complete/i)).toBeVisible();
     await goal.getByTestId('expander-button').click();
     const objective = goal.getByTestId('objectiveList').first();
     await objective.getByLabel(/Change status for objective/i).click();

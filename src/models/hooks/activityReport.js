@@ -740,7 +740,36 @@ const automaticUnsuspendGoalOnApproval = async (instance) => {
       })));
     }
   }
-  return Promise.resolve();
+};
+
+const forceStatusEventOnReopenedGoal = async (instance) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // Get all the goals for this report.
+    // eslint-disable-next-line global-require
+    const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
+    const reportGoals = await getGoalsForReport(instance.id);
+
+    const inProgressGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.IN_PROGRESS
+        && goal.isReopened
+        && goal.firstUsage);
+
+    await Promise.all(inProgressGoals.map((s) => changeGoalStatus({
+      goalId: s.id,
+      userId: instance.userId,
+      newStatus: GOAL_STATUS.IN_PROGRESS,
+      reason: 'Reopened previously and first usage on activity report',
+      context: 'saveStandardGoalsForReport',
+      performedAt: instance.startDate,
+      forceStatusChange: true,
+    })));
+  }
 };
 
 const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance, options) => {
@@ -1003,6 +1032,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await checkForNewGoalCycleOnApproval(sequelize, instance, options);
   await automaticUnsuspendGoalOnApproval(instance);
+  await forceStatusEventOnReopenedGoal(instance);
   await revisionBumpBroadcast(sequelize, instance);
 };
 
@@ -1021,4 +1051,5 @@ export {
   moveDraftGoalsToNotStartedOnSubmission,
   revisionBump,
   revisionBumpBroadcast,
+  forceStatusEventOnReopenedGoal,
 };
