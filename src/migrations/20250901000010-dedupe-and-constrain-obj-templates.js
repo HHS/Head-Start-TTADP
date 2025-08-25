@@ -8,6 +8,8 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.sequelize.query(/* sql */`
         -------------------------------------------------------------------
+        -- 0 Correct all Objective template title hashes (one root cause of
+        --   the whole issue is some were not trimmed before hashing)
         -- 1 Find duplicate Objective templates and merge their properties
         -- 2 Create the map of dupes to targeted heirs so it can be used
         --   to update Objectives that are currently linked to the dupes
@@ -16,14 +18,28 @@ module.exports = {
         -- 5 Update target templates with merged use and modification times
         -- 6 Add the constraint
         -------------------------------------------------------------------
-        
+
+        -- Correct all Objective template title hashes
+        DROP TABLE IF EXISTS hash_fixes;
+        CREATE TEMP TABLE hash_fixes
+        AS
+        WITH updater AS (
+        UPDATE "ObjectiveTemplates"
+        SET
+          hash = MD5(TRIM("templateTitle"))
+        WHERE hash != MD5(TRIM("templateTitle"))
+        RETURNING *
+        )
+        SELECT * FROM updater
+        ;
+      
         -- Find duplicate Objective templates and merge their properties
         DROP TABLE IF EXISTS objtemplate_dupes;
         CREATE TEMP TABLE objtemplate_dupes
         AS
         SELECT
           "regionId" region,
-          "templateTitle" template_title,
+          hash titlehash,
           MIN(id) target_id,
           MAX("lastUsed") last_used,
           MAX("templateTitleModifiedAt") title_mod_at
@@ -43,7 +59,7 @@ module.exports = {
         FROM "ObjectiveTemplates"
         JOIN objtemplate_dupes
           ON "regionId" = region
-          AND "templateTitle" = template_title
+          AND hash = titlehash
         WHERE id != target_id
         ;
 
@@ -88,7 +104,7 @@ module.exports = {
           "templateTitleModifiedAt" = title_mod_at
         FROM objtemplate_dupes
         WHERE "regionId" = region
-          AND "templateTitle" = template_title
+          AND hash = titlehash
           AND ("lastUsed" != last_used OR "templateTitleModifiedAt" != title_mod_at)
         RETURNING *
         )
@@ -97,11 +113,13 @@ module.exports = {
 
         -- Add the constraint
         ALTER TABLE "ObjectiveTemplates"
-        ADD CONSTRAINT objective_templates_template_title_region_id_uniq UNIQUE
-        ("templateTitle","regionId");
+        ADD CONSTRAINT objective_templates_hash_region_id_uniq UNIQUE
+        (hash,"regionId");
 
         -- convenience query for validation
-        SELECT 1 ord, 'total dupes' item, (SELECT COUNT(*) FROM retarget_map) cnt
+        SELECT 0 ord,'corrected hashes' item, (SELECT COUNT(*) FROM hash_fixes) cnt
+        UNION
+        SELECT 1, 'total dupes', (SELECT COUNT(*) FROM retarget_map)
         UNION
         SELECT 2,'deleted dupes', (SELECT COUNT(*) FROM template_deletes)
         UNION

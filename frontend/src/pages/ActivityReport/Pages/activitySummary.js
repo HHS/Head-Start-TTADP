@@ -39,6 +39,9 @@ import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNu
 import { fetchCitationsByGrant } from '../../../fetchers/citations';
 import ModalWithCancel from '../../../components/ModalWithCancel';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
+import Drawer from '../../../components/Drawer';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Req from '../../../components/Req';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -117,6 +120,7 @@ const ActivitySummary = ({
   const deliveryMethod = watch('deliveryMethod');
 
   const modalRef = useRef();
+  const activityReasonRef = useRef(null);
   const recipientSelectRef = useRef(null);
   const [previousStartDate, setPreviousStartDate] = useState(startDate);
   const [modalScenario, setModalScenario] = useState(null);
@@ -341,8 +345,31 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
+          <Drawer
+            triggerRef={activityReasonRef}
+            stickyHeader
+            stickyFooter
+            title="Why was this activity requested?"
+          >
+            <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
+          </Drawer>
           <FormItem
-            label="Why was this activity requested? "
+            className="margin-0"
+            customLabel={(
+              <>
+                <Label className="margin-bottom-0" htmlFor="activityReason" />
+                Why was this activity requested?
+                {' '}
+                <Req />
+                <button
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-left-1 activity-summary-button-no-top-margin"
+                  ref={activityReasonRef}
+                >
+                  Get help choosing an option
+                </button>
+              </>
+          )}
             name="activityReason"
             required
           >
@@ -370,7 +397,7 @@ const ActivitySummary = ({
                   onChange={(selected) => {
                     controllerOnChange(selected ? selected.value : null);
                   }}
-                  inputRef={register({ required: 'Select at least one reason for activity' })}
+                  inputRef={register({ required: 'Select a reason why this activity was requested' })}
                   options={ACTIVITY_REASONS.map((reason) => ({
                     value: reason, label: reason,
                   }))}
@@ -383,7 +410,7 @@ const ActivitySummary = ({
               rules={{
                 validate: (value) => {
                   if (!value || value.length === 0) {
-                    return 'Select a reason for activity';
+                    return 'Select a reason why this activity was requested';
                   }
                   return true;
                 },

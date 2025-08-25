@@ -364,6 +364,71 @@ describe('StandardGoalCard', () => {
     expect(deleteButton).toBeInTheDocument();
   });
 
+  it('monitoring goal can be deleted by admin user', async () => {
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          regionId: 1,
+        },
+        {
+          scopeId: SCOPE_IDS.ADMIN,
+          regionId: 14,
+        },
+      ],
+    };
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      {
+        ...goal,
+        status: 'Draft',
+        onAR: false,
+        standard: 'Monitoring',
+      },
+      user,
+    );
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const button = await screen.findByText(/Edit/i);
+    expect(button).toBeInTheDocument();
+    const deleteButton = screen.queryByText(/Delete/i);
+    expect(deleteButton).toBeInTheDocument();
+  });
+
+  it('monitoring goal cannot be deleted by non-admin user with approver permissions', async () => {
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          regionId: 1,
+        },
+        {
+          scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+          regionId: 1,
+        },
+      ],
+    };
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      {
+        ...goal,
+        status: 'Draft',
+        onAR: false,
+        standard: 'Monitoring',
+      },
+      user,
+    );
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const button = await screen.findByText(/Edit/i);
+    expect(button).toBeInTheDocument();
+    // The Delete option should not be present for approvers with monitoring goals
+    const deleteButton = screen.queryByText(/Delete/i);
+    expect(deleteButton).not.toBeInTheDocument();
+  });
+
   it('calls delete function on click', async () => {
     const user = {
       name: 'test@test.com',
@@ -508,5 +573,141 @@ describe('StandardGoalCard', () => {
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
+  });
+
+  it('monitoring goal can be reopened by admin user', async () => {
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          regionId: 1,
+        },
+        {
+          scopeId: SCOPE_IDS.ADMIN,
+          regionId: 14,
+        },
+      ],
+    };
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      {
+        ...goal,
+        status: 'Closed',
+        onAR: false,
+        standard: 'Monitoring',
+      },
+      user,
+    );
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const reopenButton = await screen.findByText(/Reopen/i);
+    expect(reopenButton).toBeInTheDocument();
+    expect(screen.queryByText(/Edit/i)).not.toBeInTheDocument();
+  });
+
+  it('monitoring goal cannot be reopened by non-admin user with edit permissions', async () => {
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          regionId: 1,
+        },
+      ],
+    };
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      {
+        ...goal,
+        status: 'Closed',
+        onAR: false,
+        standard: 'Monitoring',
+      },
+      user,
+    );
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    // The Reopen option should not be present for non-admin users with monitoring goals
+    const reopenButton = screen.queryByText(/Reopen/i);
+    expect(reopenButton).not.toBeInTheDocument();
+
+    // View details should still be available
+    const viewButton = await screen.findByText(/View details/i);
+    expect(viewButton).toBeInTheDocument();
+  });
+
+  it('shows objectives as suspended when goal status is suspended', async () => {
+    const suspendedGoal = {
+      ...goal,
+      status: 'In progress',
+      objectives: [
+        {
+          id: 1,
+          ids: [1],
+          endDate: '2022-01-01',
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'In Progress',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+        {
+          id: 2,
+          ids: [2],
+          endDate: '2022-01-01',
+          title: 'Objective 2',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'Not Started',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [{ name: 'Topic 1' }],
+          citations: [],
+        },
+      ],
+    };
+
+    renderStandardGoalCard({}, suspendedGoal);
+    const changeStatusBtn = await screen.findByRole('button', { name: /Change status for goal 1/i });
+
+    act(() => {
+      userEvent.click(changeStatusBtn);
+    });
+
+    const url = '/api/goals/changeStatus';
+    fetchMock.put(url, {
+      ...suspendedGoal,
+      status: 'Suspended',
+    });
+
+    const suspended = await screen.findByRole('button', { name: /suspended/i });
+    act(() => {
+      userEvent.click(suspended);
+    });
+
+    const regionalOfficeRequest = await screen.findByText(/regional office request/i, { selector: '[for=suspending-reason-3-modal_1]' });
+    const submit = await screen.findByRole('button', { name: /Change goal status/i });
+
+    act(() => {
+      userEvent.click(regionalOfficeRequest);
+    });
+
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called(url)).toBe(true);
+    });
+
+    const suspendedObjectives = (await screen.findAllByText('Suspended')).filter((v) => v.getAttribute('aria-label').includes('Change status for objective'));
+
+    expect(suspendedObjectives.length).toBe(2);
   });
 });

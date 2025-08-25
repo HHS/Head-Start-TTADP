@@ -1094,8 +1094,15 @@ describe('ActivityReport', () => {
       renderActivityReport(1);
 
       // We can select an activity reason.
-      const reasonSelect = await screen.findByLabelText(/why was this activity requested?/i);
-      act(() => userEvent.click(reasonSelect));
+      // Find all form groups first
+      const formGroups = await screen.findAllByTestId('formGroup');
+      // Find the specific form group that contains both the text and a combobox
+      const formGroup = formGroups.find((group) => group.textContent.includes('Why was this activity requested?')
+               && within(group).queryByRole('combobox') !== null);
+      // Get the combobox within the found form group
+      const selectElement = within(formGroup).getByRole('combobox');
+
+      act(() => userEvent.click(selectElement));
       const reasonOption = await screen.findByText('Recipient requested');
       act(() => userEvent.click(reasonOption));
       expect(screen.getByText('Recipient requested')).toBeVisible();
