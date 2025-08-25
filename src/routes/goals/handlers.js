@@ -361,6 +361,7 @@ export async function getGoalHistory(req, res) {
       where: {
         goalTemplateId: goal.goalTemplateId,
         grantId: goal.grantId,
+        prestandard: goal.prestandard,
       },
       attributes: {
         include: [

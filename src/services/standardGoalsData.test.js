@@ -12,7 +12,6 @@ import db, {
   Grant,
   Recipient,
   CollaboratorType,
-  ActivityReportGoal,
   User,
 } from '../models';
 import {

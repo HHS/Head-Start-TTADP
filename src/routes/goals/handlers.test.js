@@ -1385,5 +1385,101 @@ describe('goal handlers', () => {
         }),
       );
     });
+
+    it('excludes prestandard goals from history queries', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+        prestandard: false,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findAll.mockResolvedValueOnce([]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(db.Goal.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            prestandard: false,
+          }),
+        }),
+      );
+    });
+
+    it('only retrieves prestandard goals when requested goal is prestandard', async () => {
+      const req = {
+        params: {
+          goalId: '1',
+        },
+        session: {
+          userId: 1,
+        },
+      };
+
+      const mockGoal = {
+        id: 1,
+        goalTemplateId: 10,
+        grantId: 100,
+        prestandard: true,
+      };
+
+      const mockGrant = {
+        id: 100,
+        regionId: 2,
+      };
+
+      currentUserId.mockResolvedValueOnce(1);
+      userById.mockResolvedValueOnce({
+        permissions: [
+          {
+            regionId: 2,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
+      });
+
+      db.Goal.findByPk.mockResolvedValueOnce(mockGoal);
+      db.Grant.findByPk.mockResolvedValueOnce(mockGrant);
+      db.Goal.findAll.mockResolvedValueOnce([]);
+
+      await getGoalHistory(req, mockResponse);
+
+      expect(db.Goal.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            goalTemplateId: 10,
+            grantId: 100,
+            prestandard: true,
+          }),
+        }),
+      );
+    });
   });
 });
