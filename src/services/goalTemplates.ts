@@ -1,4 +1,4 @@
-import { Sequelize, Op } from 'sequelize';
+import { Sequelize, Op, WhereOptions } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
 
@@ -59,7 +59,7 @@ specified region.
 */
 export async function getCuratedTemplates(
   grantIds: number[] | null,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  includeClosedAndSuspendedGoals = false,
 ): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
@@ -73,6 +73,24 @@ export async function getCuratedTemplates(
     },
   });
   monitoringGoalIds = monitoringGoals.map((goal) => goal.id);
+
+  const goalWhere = {
+    grantId: grantIds,
+  } as {
+    grantId: number[],
+    status?: {
+      [Op.notIn]: string[]
+    },
+  };
+
+  if (!includeClosedAndSuspendedGoals) {
+    goalWhere.status = {
+      [Op.notIn]: [
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.CLOSED,
+      ],
+    };
+  }
 
   return GoalTemplateModel.findAll({
     attributes: [
@@ -119,15 +137,7 @@ export async function getCuratedTemplates(
           'goalTemplateId',
         ],
         required: false,
-        where: {
-          grantId: grantIds,
-          status: {
-            [Op.notIn]: [
-              GOAL_STATUS.SUSPENDED,
-              GOAL_STATUS.CLOSED,
-            ],
-          },
-        },
+        where: goalWhere,
       },
     ],
     where: {
