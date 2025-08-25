@@ -605,7 +605,7 @@ describe('StandardGoalCard', () => {
     expect(viewDetails).toBeInTheDocument();
   });
 
-  it('pre-standard draft goal never shows Delete even with approver/admin', async () => {
+  it('pre-standard draft goal does not show Edit or Delete even with approver/admin', async () => {
     const user = {
       name: 'test@test.com',
       homeRegionId: 1,
@@ -632,12 +632,16 @@ describe('StandardGoalCard', () => {
       user,
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
-    const editBtn = await screen.findByText(/Edit/i);
-    expect(editBtn).toBeInTheDocument();
+    // Edit should not appear for pre-standard goals of any status
+    expect(screen.queryByText(/Edit/i)).not.toBeInTheDocument();
+    // Delete should also never appear for pre-standard goals
     expect(screen.queryByText(/Delete/i)).not.toBeInTheDocument();
+    // View details should always be available
+    const viewDetails1 = await screen.findByText(/View details/i);
+    expect(viewDetails1).toBeInTheDocument();
   });
 
-  it('pre-standard not started goal never shows Delete even with approver/admin', async () => {
+  it('pre-standard not started goal does not show Edit or Delete even with approver/admin', async () => {
     const user = {
       name: 'test@test.com',
       homeRegionId: 1,
@@ -664,9 +668,42 @@ describe('StandardGoalCard', () => {
       user,
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
-    const editBtn2 = await screen.findByText(/Edit/i);
-    expect(editBtn2).toBeInTheDocument();
+    // Edit should not appear for pre-standard goals of any status
+    expect(screen.queryByText(/Edit/i)).not.toBeInTheDocument();
+    // Delete should also never appear for pre-standard goals
     expect(screen.queryByText(/Delete/i)).not.toBeInTheDocument();
+    // View details should always be available
+    const viewDetails2 = await screen.findByText(/View details/i);
+    expect(viewDetails2).toBeInTheDocument();
+  });
+
+  it('pre-standard in progress goal does not show Edit (only View details)', async () => {
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 1,
+      permissions: [
+        {
+          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      {
+        ...goal,
+        status: 'In Progress',
+        onAR: true,
+        prestandard: true,
+      },
+      user,
+    );
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    expect(screen.queryByText(/Edit/i)).not.toBeInTheDocument();
+    const viewDetails = await screen.findByText(/View details/i);
+    expect(viewDetails).toBeInTheDocument();
   });
 
   it('always shows view details option in context menu', async () => {
