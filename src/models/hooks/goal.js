@@ -115,46 +115,6 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
   }
 };
 
-const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
-  const changed = instance.changed();
-  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED];
-  if (Array.isArray(changed)
-    && changed.includes('status')
-    && NO_GOOD_STATUSES.includes(instance.status)) {
-    // Only check the objectives created via RTR or linked to approved activity reports.
-    const objectives = await sequelize.models.Objective.findAll({
-      where: {
-        goalId: instance.id,
-        status: {
-          [Op.not]: [OBJECTIVE_STATUS.COMPLETE],
-        },
-        [Op.or]: [
-          sequelize.literal('NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'),
-          { '$activityReportObjectives.activityReport.calculatedStatus$': 'approved' },
-        ],
-      },
-      include: [
-        {
-          model: sequelize.models.ActivityReportObjective,
-          as: 'activityReportObjectives',
-          required: false,
-          include: [
-            {
-              model: sequelize.models.ActivityReport,
-              as: 'activityReport',
-              required: false,
-            },
-          ],
-        },
-      ],
-    });
-
-    if (objectives.length > 0) {
-      throw new Error(`Cannot close a goal ${instance.id} with open objectives. ${objectives[0].id} is open.`);
-    }
-  }
-};
-
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -166,9 +126,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 const beforeCreate = async (sequelize, instance, options) => {
 };
 
-const beforeUpdate = async (sequelize, instance, options) => {
-  await preventCloseIfObjectivesOpen(sequelize, instance, options);
-};
+const beforeUpdate = async (sequelize, instance, options) => {};
 
 /**
  * Creates a GoalStatusChange record for the initial status of a goal
@@ -234,7 +192,6 @@ const afterDestroy = async (sequelize, instance, options) => {
 export {
   processForEmbeddedResources,
   autoPopulateOnApprovedAR,
-  preventCloseIfObjectivesOpen,
   createInitialStatusChange,
   beforeValidate,
   beforeUpdate,
