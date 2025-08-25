@@ -13,6 +13,11 @@ export default function ConditionalMultiselectForHookForm({
   fieldName,
   defaultValue,
   userCanEdit,
+  // drawer props
+  drawerButtonText,
+  drawerTitle,
+  drawerTagName,
+  drawerClassName,
 }) {
   const rules = transformValidationsIntoRules(validations);
   const {
@@ -45,6 +50,11 @@ export default function ConditionalMultiselectForHookForm({
       error={error}
       userCanEdit={userCanEdit}
       onChange={onChange}
+      // drawer props
+      drawerButtonText={drawerButtonText}
+      drawerTitle={drawerTitle}
+      drawerTagName={drawerTagName}
+      drawerClassName={drawerClassName}
     />
   );
 }
@@ -62,8 +72,16 @@ ConditionalMultiselectForHookForm.propTypes = {
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
   userCanEdit: PropTypes.bool,
+  drawerButtonText: PropTypes.string,
+  drawerTitle: PropTypes.string,
+  drawerTagName: PropTypes.string,
+  drawerClassName: PropTypes.string,
 };
 
 ConditionalMultiselectForHookForm.defaultProps = {
   userCanEdit: false,
+  drawerButtonText: '',
+  drawerTitle: '',
+  drawerTagName: '',
+  drawerClassName: '',
 };
