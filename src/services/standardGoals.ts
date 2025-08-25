@@ -832,7 +832,6 @@ export async function standardGoalsForRecipient(
             INNER JOIN "GoalTemplates" gt2 ON g2."goalTemplateId" = gt2.id
             WHERE gr2."recipientId" = ${recipientId}
             AND gr2."regionId" = ${regionId}
-            AND g2."prestandard" = false
             AND (
               g2."createdVia" !='activityReport' 
               OR (g2."createdVia" = 'activityReport' AND g2."onApprovedAR" = true)
@@ -870,12 +869,7 @@ export async function standardGoalsForRecipient(
     }
     : {};
   const goalRows = await Goal.findAll({
-    attributes: [
-      'id',
-      'name',
-      'status',
-      'createdAt',
-      'goalTemplateId',
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalTemplateId', 'prestandard',
       // The underlying sort expect the status_sort column to be the first column _0.
       [sequelize.literal(`
         CASE
