@@ -1,3 +1,5 @@
+import React from 'react';
+
 export const reasonsToMonitor = [
   'Monitoring | Deficiency',
   'Monitoring | Noncompliance',
@@ -104,3 +106,47 @@ export const topics = [
   'Transition Practices',
   'Transportation',
 ];
+
+export const MODAL_CONFIG = {
+  EMPTY_RECIPIENTS_WITH_GOALS: {
+    title: 'You may lose data',
+    body: (
+      <>
+        <p>
+          If you do not select at least one grant, any goals, objectives and TTA provided content
+          will be lost.
+        </p>
+        <p>Do you want to proceed?</p>
+      </>
+    ),
+    confirmLabel: 'Yes, continue',
+    cancelLabel: 'No, cancel',
+  },
+  MISSING_MONITORING_GOAL: {
+    title: 'You may lose data',
+    body: (
+      <>
+        <p>The recipient you selected does not have the monitoring goal.</p>
+        <p>
+          If you change the recipient, the monitoring goal, its objectives and TTA provided content
+          will be lost.
+        </p>
+        <p>Do you want to proceed?</p>
+      </>
+    ),
+    confirmLabel: 'Yes, change recipient',
+    cancelLabel: 'No, cancel',
+  },
+  DIFFERENT_CITATIONS: {
+    title: 'You may lose data',
+    body: (
+      <>
+        <p>Monitoring goals and their citations are specific to each recipient.</p>
+        <p>Changing the recipient will clear all selected citations.</p>
+        <p>Do you want to proceed?</p>
+      </>
+    ),
+    confirmLabel: 'Yes, change recipient',
+    cancelLabel: 'No, cancel',
+  },
+};

@@ -256,8 +256,9 @@ export async function updateLegacyFields(req, res) {
     // no authorization here because the entire route is only available to admins
     const imported = { ...report.imported, ...req.body };
     logger.debug(`Saving new data: ${JSON.stringify(imported, null, 2)}`);
+    const userId = await currentUserId(req, res);
 
-    const savedReport = await createOrUpdate({ imported }, report);
+    const savedReport = await createOrUpdate({ imported }, report, userId);
     res.json(savedReport);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -651,7 +652,7 @@ export async function submitReport(req, res) {
       additionalNotes,
       creatorRole,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
-    }, report);
+    }, report, userId);
 
     // Create, restore or destroy this report's approvers
     const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
@@ -902,7 +903,7 @@ export async function saveReport(req, res) {
     // since we may not get all fields in the request body
     const savedReport = await createOrUpdate({
       ...existingReport, activityRecipients, ...newReport,
-    }, report);
+    }, report, userId);
 
     if (savedReport.activityReportCollaborators) {
       // only include collaborators that aren't already in the report
@@ -958,7 +959,7 @@ export async function createReport(req, res) {
       return;
     }
     // updateCollaboratorRoles(newReport);
-    const report = await createOrUpdate(newReport);
+    const report = await createOrUpdate(newReport, null, userId);
     if (report.activityReportCollaborators) {
       const collabs = report.activityReportCollaborators;
 

@@ -57,7 +57,7 @@ export default async function createGoal(fileKey) {
         },
       );
       if (grant) {
-        await Goal.findOrCreate({
+        await Goal.unscoped().findOrCreate({
           where: { name: goalName, grantId: grant.id },
           defaults: { ...goal, grantId: grant.id, goalTemplateId: dbGoalTemplate.id },
         });
