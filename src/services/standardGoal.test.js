@@ -1310,6 +1310,75 @@ describe('standardGoal service', () => {
     });
   });
 
+  describe('standardGoalsForRecipient includes Curated and Automatic templates', () => {
+    let localRecipient;
+    let localGrant;
+    let curatedTemplate;
+    let automaticTemplate;
+    let curatedGoal;
+    let automaticGoal;
+
+    beforeAll(async () => {
+      localRecipient = await createRecipient({});
+      localGrant = await createGrant({ recipientId: localRecipient.id, regionId: 1 });
+
+      curatedTemplate = await createGoalTemplate({
+        name: 'CM Curated Template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      automaticTemplate = await createGoalTemplate({
+        name: 'CM Automatic Template',
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+      });
+
+      curatedGoal = await Goal.create({
+        name: 'Curated Goal',
+        status: GOAL_STATUS.NOT_STARTED,
+        grantId: localGrant.id,
+        goalTemplateId: curatedTemplate.id,
+        createdVia: 'rtr',
+      });
+
+      automaticGoal = await Goal.create({
+        name: 'Automatic Goal',
+        status: GOAL_STATUS.NOT_STARTED,
+        grantId: localGrant.id,
+        goalTemplateId: automaticTemplate.id,
+        createdVia: 'rtr',
+      });
+    });
+
+    afterAll(async () => {
+      await Goal.destroy({
+        where: { id: [curatedGoal.id, automaticGoal.id] },
+        individualHooks: true,
+        force: true,
+      });
+      await GoalTemplate.destroy({
+        where: { id: [curatedTemplate.id, automaticTemplate.id] },
+        individualHooks: true,
+        force: true,
+      });
+      await Grant.destroy({ where: { id: localGrant.id }, individualHooks: true, force: true });
+      await Recipient.destroy({ where: { id: localRecipient.id }, force: true });
+    });
+
+    it('returns goals for both Curated and Automatic creation methods', async () => {
+      const result = await standardGoalsForRecipient(
+        localRecipient.id,
+        localGrant.regionId,
+        {},
+      );
+      expect(result.count).toBe(2);
+      const templateIds = result.goalRows.map((g) => g.goalTemplateId);
+      expect(templateIds).toEqual(expect.arrayContaining([
+        curatedTemplate.id,
+        automaticTemplate.id,
+      ]));
+    });
+  });
+
   describe('createObjectivesForGoal', () => {
     const goal = { id: 1 };
     const objectives = [
