@@ -1,28 +1,26 @@
 /* eslint-disable global-require */
-const { faker } = require('@faker-js/faker');
-const { REPORT_STATUSES } = require('@ttahub/common');
 const { sequelize } = require('..');
 const {
-  User,
-  Recipient,
-  Grant,
-  ActivityReport,
-  Goal,
-  Objective,
-  ActivityReportGoal,
-  ActivityReportObjective,
-} = require('..');
-const {
   processForEmbeddedResources,
-  findOrCreateGoalTemplate,
-  preventCloseIfObjectivesOpen,
   beforeCreate,
+  beforeUpdate,
 } = require('./goal');
 const { GOAL_STATUS, OBJECTIVE_STATUS } = require('../../constants');
 
 jest.mock('../../services/resource');
 
 describe('goal hooks', () => {
+  describe('beforeUpdate', () => {
+    it('throws when editing a pre-standard goal', async () => {
+      const instance = { id: 42, prestandard: true };
+      await expect(beforeUpdate({}, instance, {})).rejects.toThrow(/pre-standard/);
+    });
+
+    it('allows editing when goal is not pre-standard', async () => {
+      const instance = { id: 43, prestandard: false };
+      await expect(beforeUpdate({}, instance, {})).resolves.not.toThrow();
+    });
+  });
   describe('beforeCreate', () => {
     it('does nothing if instance already has goalTemplateId', async () => {
       const instanceSet = jest.fn();

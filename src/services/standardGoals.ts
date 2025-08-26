@@ -1,5 +1,4 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
 import { uniqBy } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
@@ -7,7 +6,6 @@ import db from '../models';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import filtersToScopes from '../scopes';
 import { reduceObjectivesForRecipientRecord } from './recipient';
-import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { setFieldPromptsForCuratedTemplate } from './goalTemplates';
 import { cacheGoalMetadata, cacheObjectiveMetadata, destroyActivityReportObjectiveMetadata } from './reportCache';
 
@@ -847,9 +845,6 @@ export async function standardGoalsForRecipient(
         as: 'goalTemplate',
         attributes: [],
         required: true,
-        where: {
-          creationMethod: CREATION_METHOD.CURATED,
-        },
       },
     ],
   });
@@ -869,12 +864,7 @@ export async function standardGoalsForRecipient(
     }
     : {};
   const goalRows = await Goal.findAll({
-    attributes: [
-      'id',
-      'name',
-      'status',
-      'createdAt',
-      'goalTemplateId',
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalTemplateId', 'prestandard',
       // The underlying sort expect the status_sort column to be the first column _0.
       [sequelize.literal(`
         CASE

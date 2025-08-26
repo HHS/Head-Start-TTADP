@@ -56,6 +56,7 @@ export default function StandardGoalCard({
   const previousStatus = lastStatusChange.oldStatus;
 
   const isMonitoringGoal = standard === 'Monitoring';
+  const isPreStandard = goal.prestandard === true;
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [localStatus, setLocalStatus] = useState(status);
@@ -70,7 +71,7 @@ export default function StandardGoalCard({
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const {
-    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    atLeastOneObjectiveIsNotCompleted,
     dispatchStatusChange,
   } = useObjectiveStatusMonitor(objectives);
 
@@ -80,10 +81,10 @@ export default function StandardGoalCard({
   }, [status]);
 
   useEffect(() => {
-    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompleted) {
       setInvalidStatusChangeAttempted(false);
     }
-  }, [atLeastOneObjectiveIsNotCompletedOrSuspended, invalidStatusChangeAttempted]);
+  }, [atLeastOneObjectiveIsNotCompleted, invalidStatusChangeAttempted]);
 
   const [deleteError, setDeleteError] = useState(false);
 
@@ -129,10 +130,11 @@ export default function StandardGoalCard({
 
   const onUpdateGoalStatus = (newStatus) => {
     // prevent closing if objectives aren't complete/suspended
-    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompleted) {
       setInvalidStatusChangeAttempted(true);
       return;
     }
+
     setInvalidStatusChangeAttempted(false);
 
     // check if the new status requires a reason modal
@@ -166,14 +168,15 @@ export default function StandardGoalCard({
   const menuItems = [];
   // For monitoring goals, only admins can delete
   const hasAdminPermissions = isAdmin(user);
-  if (localStatus !== 'Closed' && hasEditButtonPermissions) {
+  const editableStatuses = [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
+  if (editableStatuses.includes(localStatus) && !isPreStandard && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
         history.push(editLink);
       },
     });
-  } else if (localStatus === 'Closed' && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
+  } else if (localStatus === 'Closed' && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
     // For monitoring goals, only admins can reopen
     menuItems.push({
       label: 'Reopen',
@@ -200,7 +203,7 @@ export default function StandardGoalCard({
       && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE)));
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(localStatus)) {
+  if (canDeleteQualifiedGoals && !onAR && !isPreStandard && ['Draft', 'Not Started'].includes(localStatus)) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
