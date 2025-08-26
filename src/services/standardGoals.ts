@@ -834,7 +834,7 @@ export async function standardGoalsForRecipient(
               g2."createdVia" !='activityReport' 
               OR (g2."createdVia" = 'activityReport' AND g2."onApprovedAR" = true)
             )
-            GROUP BY g2."goalTemplateId", g2."grantId"
+            GROUP BY g2."goalTemplateId", g2."grantId", g2."prestandard"
           )`),
         ),
       ],
