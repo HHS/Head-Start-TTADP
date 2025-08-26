@@ -845,9 +845,6 @@ export async function standardGoalsForRecipient(
         as: 'goalTemplate',
         attributes: [],
         required: true,
-        where: {
-          creationMethod: [CREATION_METHOD.CURATED, CREATION_METHOD.AUTOMATIC],
-        },
       },
     ],
   });
