@@ -115,6 +115,14 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
   }
 };
 
+const preventPreStandardEditing = async (_sequelize, instance) => {
+  const isPreStandard = !!(instance.prestandard);
+
+  if (isPreStandard) {
+    throw new Error(`Cannot edit the goal ${instance.id} because it is marked as pre-standard`);
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -126,7 +134,9 @@ const beforeValidate = async (sequelize, instance, options) => {
 const beforeCreate = async (sequelize, instance, options) => {
 };
 
-const beforeUpdate = async (sequelize, instance, options) => {};
+const beforeUpdate = async (sequelize, instance, _options) => {
+  await preventPreStandardEditing(sequelize, instance);
+};
 
 /**
  * Creates a GoalStatusChange record for the initial status of a goal
