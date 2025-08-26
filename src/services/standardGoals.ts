@@ -846,7 +846,7 @@ export async function standardGoalsForRecipient(
         attributes: [],
         required: true,
         where: {
-          creationMethod: CREATION_METHOD.CURATED,
+          creationMethod: [CREATION_METHOD.CURATED, CREATION_METHOD.AUTOMATIC],
         },
       },
     ],
