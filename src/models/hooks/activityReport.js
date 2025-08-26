@@ -713,19 +713,18 @@ const automaticUnsuspendGoalOnApproval = async (instance) => {
   const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
 
   const changed = instance.changed();
-  if (Array.isArray(changed)
+  const reportHasBeenApproved = Array.isArray(changed)
     && changed.includes('calculatedStatus')
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED;
+
+  if (reportHasBeenApproved) {
     // Get all the goals for this report.
     // eslint-disable-next-line global-require
     const getGoalsForReport = require('../../goalServices/getGoalsForReport').default;
     const reportGoals = await getGoalsForReport(instance.id);
 
     if (reportGoals.length) {
-      // eslint-disable-next-line global-require
-      // eslint-disable-next-line global-require
-
       const updateStatusGoals = reportGoals.filter((goal) => goal.status === GOAL_STATUS.SUSPENDED);
 
       // since we can't unsuspend goals in this way, this logic will
