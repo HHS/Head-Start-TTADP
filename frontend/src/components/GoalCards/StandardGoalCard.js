@@ -56,6 +56,7 @@ export default function StandardGoalCard({
   const previousStatus = lastStatusChange.oldStatus;
 
   const isMonitoringGoal = standard === 'Monitoring';
+  const isPreStandard = goal.prestandard === true;
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [localStatus, setLocalStatus] = useState(status);
@@ -167,16 +168,15 @@ export default function StandardGoalCard({
   const menuItems = [];
   // For monitoring goals, only admins can delete
   const hasAdminPermissions = isAdmin(user);
-
-  // eslint-disable-next-line max-len
-  if ([GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS].includes(localStatus) && hasEditButtonPermissions) {
+  const editableStatuses = [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
+  if (editableStatuses.includes(localStatus) && !isPreStandard && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
         history.push(editLink);
       },
     });
-  } else if (localStatus === 'Closed' && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
+  } else if (localStatus === 'Closed' && !isPreStandard && ((hasEditButtonPermissions && !isMonitoringGoal) || hasAdminPermissions)) {
     // For monitoring goals, only admins can reopen
     menuItems.push({
       label: 'Reopen',
@@ -203,7 +203,7 @@ export default function StandardGoalCard({
       && hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE)));
   })();
 
-  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(localStatus)) {
+  if (canDeleteQualifiedGoals && !onAR && !isPreStandard && ['Draft', 'Not Started'].includes(localStatus)) {
     menuItems.push({
       label: 'Delete',
       onClick: async () => {
