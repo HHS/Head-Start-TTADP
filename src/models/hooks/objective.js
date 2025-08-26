@@ -177,58 +177,6 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   }
 };
 
-const propogateStatusToParentGoal = async (sequelize, instance, options) => {
-  const { goalId } = instance;
-
-  // some objectives will not have a goalId, they will be attached to an otherentity instead
-  if (goalId) {
-    // we need to get the goal, but we'll only be moving it from "not started" to "in progress"
-    // movement from draft is handled by the create goals form and the activity report hooks
-    // we do include the "on approved ar" thing here as well because it can't result in a goal
-    // moving backwards (all the below code can do is set a not started goal to in progress)
-    // but if we ever run into another race condition, this will serve as another layer of netting
-    // so that no apples fall through the cracks
-    const goal = await sequelize.models.Goal.findOne({
-      where: {
-        id: goalId,
-        [Op.or]: [
-          { status: 'Not Started' },
-          { onApprovedAR: true },
-        ],
-      },
-      include: [
-        {
-          model: sequelize.models.Objective,
-          as: 'objectives',
-        },
-      ],
-      transaction: options.transaction,
-    });
-
-    // because of that, there may not be a goal to update
-    if (goal && goal.objectives) {
-      // if there is, we then need to check to see if it needs to be moved to "in progress"
-      const atLeastOneInProgress = goal.objectives.some(
-        (o) => o.status === OBJECTIVE_STATUS.IN_PROGRESS,
-      );
-
-      // and if so, we update it (storing the previous status so we can revert if needed)
-      if (atLeastOneInProgress) {
-        // eslint-disable-next-line global-require
-        const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
-        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-        await changeGoalStatus({
-          goalId: goal.id,
-          userId,
-          newStatus: 'In Progress',
-          reason: 'Objective moved to In Progress',
-          context: null,
-        });
-      }
-    }
-  }
-};
-
 // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
 // If we move to standard objectives, we don't want to change the objective title.
 // We also shouldn't be creating an objective template every time.
@@ -323,7 +271,6 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
@@ -339,19 +286,16 @@ const beforeUpdate = async (sequelize, instance, options) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
-  await propogateStatusToParentGoal(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
   await propagateSupportTypeToActivityReportObjective(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  await propogateStatusToParentGoal(sequelize, instance, options);
   await autoPopulateCreator(sequelize, instance, options);
 };
 
 export {
   findOrCreateObjectiveTemplate,
-  // autoPopulateObjectiveTemplateId,
   autoPopulateOnApprovedAR,
   preventTitleChangeWhenOnApprovedAR,
   linkObjectiveGoalTemplates,
