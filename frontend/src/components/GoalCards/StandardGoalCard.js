@@ -168,7 +168,8 @@ export default function StandardGoalCard({
   const menuItems = [];
   // For monitoring goals, only admins can delete
   const hasAdminPermissions = isAdmin(user);
-  if (localStatus !== 'Closed' && !isPreStandard && hasEditButtonPermissions) {
+  const editableStatuses = [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS];
+  if (editableStatuses.includes(localStatus) && !isPreStandard && hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
