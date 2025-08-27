@@ -700,7 +700,7 @@ describe('ActivityReport', () => {
       let message = await screen.findByText('Add a TTA objective and save as draft to upload resources.');
       expect(message).toBeInTheDocument();
 
-      let radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
+      const radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
       expect(radios).toBeNull();
 
       fetchMock.put('/api/activity-reports/1', {
@@ -1024,9 +1024,7 @@ describe('ActivityReport', () => {
       didYouUse.forEach((el) => {
         expect(el).toBeVisible();
       });
-
-      radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
-      expect(radios).not.toBeNull();
+      expect(screen.getByRole('group', { name: /did you use an ipd course as a resource\?/i })).toBeVisible();
     });
   });
 

@@ -196,8 +196,8 @@ const ActivityReportNavigator = ({
       const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
         .isPageComplete(getValues(), formState);
       // If the page is not complete, ensure it's marked as IN_PROGRESS
-      const isNotInProgress = pageState[GOALS_AND_OBJECTIVES_POSITION] !== IN_PROGRESS;
-      if (!isGoalsObjectivesPageComplete && isNotInProgress) {
+      if (!isGoalsObjectivesPageComplete
+        && pageState[GOALS_AND_OBJECTIVES_POSITION] !== IN_PROGRESS) {
         // Update both the form state and the formData object that will be used for rendering
         const currentPageState = { ...pageState };
         currentPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
@@ -208,6 +208,14 @@ const ActivityReportNavigator = ({
         };
         // Force an update of the form data to ensure navigator receives the changes
         updateFormData(updatedFormData, false);
+      } else if (isGoalsObjectivesPageComplete
+        && pageState[GOALS_AND_OBJECTIVES_POSITION] !== COMPLETE) {
+        const currentPageState = { ...pageState };
+        currentPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
+        updateFormData({
+          ...currentFormData,
+          pageState: currentPageState,
+        }, false);
       }
     }
   };
@@ -520,6 +528,9 @@ const ActivityReportNavigator = ({
         pageState: newNavigatorState(),
       };
       await onSave(data);
+
+      // On save goal re-evaluate page status.
+      updateGoalsObjectivesPageState(data);
 
       updateErrorMessage('');
     } catch (error) {
