@@ -176,9 +176,20 @@ const ActivityReportNavigator = ({
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = COMPLETE;
     } else if (isCurrentPageGoalsObjectives && currentGoalsObjectivesPageState === COMPLETE) {
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-    } else if (isCurrentPageGoalsObjectives) {
-      // eslint-disable-next-line max-len
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
+    } else {
+      // When the page isn't complete, prefer marking it IN_PROGRESS if the user has started
+      // working on goals (has selected goals or has a goal open for editing), regardless of
+      // whether this page is currently active. This avoids showing "Not started" after saving
+      // and navigating away from the page.
+      const goals = getValues('goals') || [];
+      const hasStartedGoals = (goals.length > 0) || !!getValues('goalForEditing');
+
+      if (hasStartedGoals) {
+        newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
+      } else if (isCurrentPageGoalsObjectives) {
+        // eslint-disable-next-line max-len
+        newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
+      }
     }
 
     return newPageState;
@@ -308,6 +319,9 @@ const ActivityReportNavigator = ({
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
       await onSave(data);
+
+      // Ensure local navigator state reflects progress when navigating
+      updateGoalsObjectivesPageState(data);
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
@@ -520,6 +534,10 @@ const ActivityReportNavigator = ({
         pageState: newNavigatorState(),
       };
       await onSave(data);
+
+      // After saving the goal, update local page state so navigation
+      // shows IN_PROGRESS/COMPLETE correctly
+      updateGoalsObjectivesPageState(data);
 
       updateErrorMessage('');
     } catch (error) {
