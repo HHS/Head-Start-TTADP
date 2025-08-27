@@ -1095,6 +1095,7 @@ describe('goal handlers', () => {
         where: {
           goalTemplateId: 10,
           grantId: 100,
+          onApprovedAR: true,
         },
       }));
       expect(mockResponse.json).toHaveBeenCalledWith(mockGoalsWithDetails);
