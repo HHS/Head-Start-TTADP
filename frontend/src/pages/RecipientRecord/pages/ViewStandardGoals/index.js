@@ -185,9 +185,16 @@ export default function ViewGoalDetails({
 
   // Create accordion items from goal history
   const accordionItems = sortedGoalHistory.map((goal, index) => {
-    const statusUpdates = goal.statusChanges && goal.statusChanges.length > 0
+    // doing this moment/format transform here in order to make grouping by below
+    // a bit more readable
+    const statusUpdates = (goal.statusChanges && goal.statusChanges.length > 0
       ? goal.statusChanges.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      : [];
+      : []).map((gsc) => ({
+      ...gsc,
+      performedAt: moment.utc(
+        gsc.performedAt || gsc.createdAt,
+      ).format(DATE_DISPLAY_FORMAT),
+    }));
 
     const objectives = goal.objectives || [];
 
@@ -205,7 +212,21 @@ export default function ViewGoalDetails({
               {' '}
               {statusUpdates.length > 0 ? (
                 <ul className="usa-list" aria-label="Goal status updates">
-                  {statusUpdates.map((update, updateIndex) => (
+                  {statusUpdates.reduce((acc, curr) => {
+                    if (
+                      // this is just a way of grouping status updates that are nearly identical so
+                      // they don't double up in the UI. Specifically this case occurs when a goal
+                      // is reopened on an AR and used on an AR for the first time, which triggers
+                      // an extra status update intended to catch goals reopened on RTR and then
+                      // used on an AR for the first time
+                      !acc.find((gsc) => gsc.performedAt === curr.performedAt
+                      && gsc.newStatus === curr.newStatus
+                       && gsc.oldStatus === curr.oldStatus)
+                    ) {
+                      acc.push(curr);
+                    }
+                    return acc;
+                  }, []).map((update, updateIndex) => (
                     <li key={update.id}>
                       <strong>
                         <StatusActionTag
@@ -216,9 +237,7 @@ export default function ViewGoalDetails({
                       </strong>
                       {' '}
                       <strong>
-                        {moment.utc(
-                          update.performedAt || update.createdAt,
-                        ).format(DATE_DISPLAY_FORMAT)}
+                        {update.performedAt}
                       </strong>
                       {update.user ? ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}` : ''}
                       {(update.newStatus === GOAL_STATUS.SUSPENDED
