@@ -351,6 +351,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
     // eslint-disable-next-line implicit-arrow-linebreak
     const goalTemplate = await GoalTemplate.findByPk(goal.goalTemplateId);
     const isMonitoring = goalTemplate.standard === 'Monitoring';
+    const createdVia = isMonitoring ? 'monitoring' : 'activityReport';
     return Promise.all(goal.grantIds.map(async (grantId) => {
       let newOrUpdatedGoal = existingGoals.find((existingGoal) => (
         existingGoal.grantId === grantId && existingGoal.goalTemplateId === goal.goalTemplateId
@@ -372,7 +373,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
       if (!newOrUpdatedGoal) {
         newOrUpdatedGoal = await Goal.create({
           goalTemplateId: goalTemplate.id,
-          createdVia: 'activityReport',
+          createdVia,
           name: goalTemplate.templateName,
           grantId,
           status: GOAL_STATUS.NOT_STARTED,
@@ -643,12 +644,16 @@ export async function newStandardGoal(
     throw new Error('Standard goal has already been utilized');
   }
 
+  const isMonitoring = standard.standard === 'Monitoring';
+
+  const createdVia = isMonitoring ? 'monitoring' : 'rtr';
+
   const newGoal = await Goal.create({
     status,
     name: standard.templateName,
     grantId,
     goalTemplateId: standard.id,
-    createdVia: 'rtr',
+    createdVia,
   });
 
   // a new goal does not require objectives, but may include them
