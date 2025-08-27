@@ -15,16 +15,24 @@ describe('goalName', () => {
   const goalNameExcluded = `${faker.lorem.sentences(5)}_dog`;
 
   let recipientForGoalName;
+  let otherRecipient;
   let grantForGoalExcluded;
   let grantForGoalIncluded;
+  let grantForOtherRecipent;
 
   let goalNameFilterPossibleIds;
 
   beforeAll(async () => {
     recipientForGoalName = await createRecipient();
+    otherRecipient = await createRecipient();
+    grantForOtherRecipent = await createGrant({ recipientId: otherRecipient.id });
     grantForGoalExcluded = await createGrant({ recipientId: recipientForGoalName.id });
     grantForGoalIncluded = await createGrant({ recipientId: recipientForGoalName.id });
-    goalNameFilterPossibleIds = [grantForGoalIncluded.id, grantForGoalExcluded.id];
+    goalNameFilterPossibleIds = [
+      grantForGoalIncluded.id,
+      grantForGoalExcluded.id,
+      grantForOtherRecipent.id,
+    ];
     await createGoal({
       grantId: grantForGoalIncluded.id,
       name: goalNameIncluded,
@@ -36,26 +44,32 @@ describe('goalName', () => {
       name: goalNameExcluded,
       status: GOAL_STATUS.NOT_STARTED,
     });
+
+    await createGoal({
+      grantId: grantForOtherRecipent.id,
+      name: 'fiddler fiddly fiddloo',
+      status: GOAL_STATUS.NOT_STARTED,
+    });
   });
 
   afterAll(async () => {
     await Goal.destroy({
       where: {
-        grantId: [grantForGoalIncluded.id, grantForGoalExcluded.id],
+        grantId: [grantForGoalIncluded.id, grantForGoalExcluded.id, grantForOtherRecipent.id],
       },
       force: true,
     });
 
     await Grant.destroy({
       where: {
-        id: [grantForGoalIncluded.id, grantForGoalExcluded.id],
+        id: [grantForGoalIncluded.id, grantForGoalExcluded.id, grantForOtherRecipent.id],
       },
       individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
-        id: recipientForGoalName.id,
+        id: [recipientForGoalName.id, otherRecipient.id],
       },
     });
 
@@ -65,7 +79,7 @@ describe('goalName', () => {
   it('filters by', async () => {
     const filters = { 'goalName.ctn': '_pig' };
     const scope = await filtersToScopes(filters);
-    const found = await Recipient.findOne({
+    const found = await Recipient.findAll({
       include: [
         {
           attributes: ['id'],
@@ -78,15 +92,15 @@ describe('goalName', () => {
       ],
     });
 
-    expect(found).toBeTruthy();
-    expect(found.grants.length).toBe(1);
-    expect(found.grants.map((f) => f.id)).toContain(grantForGoalIncluded.id);
+    expect(found.length).toBe(1);
+    const [recip] = found;
+    expect(recip.id).toBe(recipientForGoalName.id);
   });
 
   it('filters out', async () => {
     const filters = { 'goalName.nctn': '_pig' };
     const scope = await filtersToScopes(filters);
-    const found = await Recipient.findOne({
+    const found = await Recipient.findAll({
       include: [
         {
           attributes: ['id'],
@@ -98,8 +112,8 @@ describe('goalName', () => {
         },
       ],
     });
-    expect(found).toBeTruthy();
-    expect(found.grants.length).toBe(1);
-    expect(found.grants.map((f) => f.id)).toContain(grantForGoalExcluded.id);
+    expect(found.length).toBe(1);
+    const [recip] = found;
+    expect(recip.id).toBe(otherRecipient.id);
   });
 });
