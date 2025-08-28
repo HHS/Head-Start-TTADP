@@ -194,8 +194,9 @@ const ActivityReportNavigator = ({
     if (!goalsAndObjectivesPage) return;
 
     // Re-validate the goals and objectives page using current form values
+    // Prefer the freshly saved data payload to avoid using stale form values
     const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-      .isPageComplete(getValues(), formState);
+      .isPageComplete(currentFormData || getValues(), formState);
 
     // Desired state for the goals/objectives page
     const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
