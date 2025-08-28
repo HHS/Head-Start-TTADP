@@ -10,7 +10,6 @@ import { useHistory } from 'react-router-dom';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Checkbox, Alert } from '@trussworks/react-uswds';
 import moment from 'moment';
-import { v4 as uuidv4 } from 'uuid';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { goalPropTypes } from './constants';
 import UserContext from '../../UserContext';
@@ -110,10 +109,8 @@ export default function StandardGoalCard({
           GOAL_STATUS.NOT_STARTED,
           GOAL_STATUS.IN_PROGRESS,
         ];
-        // Treat empty/undefined/null status as Not Started for suspension purposes
         setLocalObjectives((prevObjectives) => prevObjectives.map((objective) => {
-          const currentStatus = objective.status || GOAL_STATUS.NOT_STARTED;
-          if (statusesNeedUpdating.includes(currentStatus)) {
+          if (statusesNeedUpdating.includes(objective.status)) {
             return {
               ...objective,
               status: GOAL_STATUS.SUSPENDED,
@@ -418,7 +415,7 @@ export default function StandardGoalCard({
       </div>
       {sortedObjectives.map((obj) => (
         <ObjectiveSwitch
-          key={obj.id || (obj.ids ? obj.ids.join('-') : `objective_${uuidv4()}`)}
+          key={obj.id}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
           goalStatus={localStatus}
