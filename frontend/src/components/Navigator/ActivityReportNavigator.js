@@ -191,27 +191,32 @@ const ActivityReportNavigator = ({
  * @param {Object} currentFormData - The current form data
  */
   const updateGoalsObjectivesPageState = (currentFormData) => {
-    if (goalsAndObjectivesPage) {
-      // Force re-validation of the goals and objectives page
-      const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-        .isPageComplete(getValues(), formState);
-      // Determine the desired state based on completeness
-      const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+    if (!goalsAndObjectivesPage) return;
 
-      // Only trigger an update if the currently watched pageState for the goals page
-      // does not already match the desired state. Base the update on the currently
-      // watched pageState to avoid clobbering newer updates to other pages (e.g.,
-      // Next steps), and only change the goals/objectives entry.
-      if (pageState[GOALS_AND_OBJECTIVES_POSITION] !== desiredState) {
-        const currentPageState = {
-          ...pageState,
-          [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
-        };
-        updateFormData({
-          ...currentFormData,
-          pageState: currentPageState,
-        }, false);
-      }
+    // Re-validate the goals and objectives page using current form values
+    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
+      .isPageComplete(getValues(), formState);
+
+    // Desired state for the goals/objectives page
+    const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+
+    // IMPORTANT: Base our merge on the most up-to-date pageState coming from the
+    // data payload that just saved (currentFormData), not the watched pageState,
+    // to avoid reverting other pages (e.g., Next steps) to a stale state.
+    const basePageState = (currentFormData && currentFormData.pageState)
+      ? currentFormData.pageState
+      : (pageState || {});
+
+    if (basePageState[GOALS_AND_OBJECTIVES_POSITION] !== desiredState) {
+      const mergedPageState = {
+        ...basePageState,
+        [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
+      };
+
+      updateFormData({
+        ...currentFormData,
+        pageState: mergedPageState,
+      }, false);
     }
   };
 
