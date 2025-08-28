@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
@@ -34,6 +34,11 @@ function ObjectiveCard({
   const [localCloseSuspendContext, setLocalCloseSuspendContext] = useState('');
   const [suspendReasonError, setSuspendReasonError] = useState(null);
   const [statusChangeError, setStatusChangeError] = useState();
+
+  // keep local status in sync if the incoming prop changes (e.g., goal suspension cascades)
+  useEffect(() => {
+    setLocalStatus(status || 'Not Started');
+  }, [status]);
 
   // using deep compare as we have an array in the dependency list
   useDeepCompareEffect(() => {
