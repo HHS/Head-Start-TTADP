@@ -207,17 +207,18 @@ const ActivityReportNavigator = ({
       ? currentFormData.pageState
       : (pageState || {});
 
-    if (basePageState[GOALS_AND_OBJECTIVES_POSITION] !== desiredState) {
-      const mergedPageState = {
-        ...basePageState,
-        [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
-      };
+    // Always update the form data to ensure downstream consumers (and tests)
+    // see a post-save pageState that reflects the latest validation outcome.
+    // This is a no-op when the value is unchanged, but keeps behavior consistent.
+    const mergedPageState = {
+      ...basePageState,
+      [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
+    };
 
-      updateFormData({
-        ...currentFormData,
-        pageState: mergedPageState,
-      }, false);
-    }
+    updateFormData({
+      ...currentFormData,
+      pageState: mergedPageState,
+    }, false);
   };
 
   const newNavigatorState = () => {
