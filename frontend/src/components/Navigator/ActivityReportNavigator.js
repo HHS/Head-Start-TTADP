@@ -195,23 +195,18 @@ const ActivityReportNavigator = ({
       // Force re-validation of the goals and objectives page
       const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
         .isPageComplete(getValues(), formState);
-      // Always start from the freshest known pageState: prefer the one from the
-      // currentFormData (e.g., the result of newNavigatorState used in the caller),
-      // falling back to the watched pageState if absent. This prevents clobbering
-      // other page updates (e.g., Next Steps) with stale values.
-      const basePageState = (currentFormData && currentFormData.pageState)
-        ? currentFormData.pageState
-        : pageState;
-
       // Determine the desired state based on completeness
       const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
 
       // Only trigger an update if the currently watched pageState for the goals page
-      // does not already match the desired state. Use basePageState as the source to
-      // avoid overwriting newer updates to other pages.
+      // does not already match the desired state. Base the update on the currently
+      // watched pageState to avoid clobbering newer updates to other pages (e.g.,
+      // Next steps), and only change the goals/objectives entry.
       if (pageState[GOALS_AND_OBJECTIVES_POSITION] !== desiredState) {
-        const currentPageState = { ...basePageState };
-        currentPageState[GOALS_AND_OBJECTIVES_POSITION] = desiredState;
+        const currentPageState = {
+          ...pageState,
+          [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
+        };
         updateFormData({
           ...currentFormData,
           pageState: currentPageState,
