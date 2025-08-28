@@ -191,25 +191,35 @@ const ActivityReportNavigator = ({
  * @param {Object} currentFormData - The current form data
  */
   const updateGoalsObjectivesPageState = (currentFormData) => {
-    if (goalsAndObjectivesPage) {
-      // Force re-validation of the goals and objectives page
-      const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-        .isPageComplete(getValues(), formState);
-      // If the page is not complete, ensure it's marked as IN_PROGRESS
-      const isNotInProgress = pageState[GOALS_AND_OBJECTIVES_POSITION] !== IN_PROGRESS;
-      if (!isGoalsObjectivesPageComplete && isNotInProgress) {
-        // Update both the form state and the formData object that will be used for rendering
-        const currentPageState = { ...pageState };
-        currentPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
-        // Update the formData directly to ensure UI updates
-        const updatedFormData = {
-          ...currentFormData,
-          pageState: currentPageState,
-        };
-        // Force an update of the form data to ensure navigator receives the changes
-        updateFormData(updatedFormData, false);
-      }
-    }
+    if (!goalsAndObjectivesPage) return;
+
+    // Re-validate the goals and objectives page using current form values
+    // Prefer the freshly saved data payload to avoid using stale form values
+    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
+      .isPageComplete(currentFormData || getValues(), formState);
+
+    // Desired state for the goals/objectives page
+    const desiredState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+
+    // IMPORTANT: Base our merge on the most up-to-date pageState coming from the
+    // data payload that just saved (currentFormData), not the watched pageState,
+    // to avoid reverting other pages (e.g., Next steps) to a stale state.
+    const basePageState = (currentFormData && currentFormData.pageState)
+      ? currentFormData.pageState
+      : (pageState || {});
+
+    // Always update the form data to ensure downstream consumers (and tests)
+    // see a post-save pageState that reflects the latest validation outcome.
+    // This is a no-op when the value is unchanged, but keeps behavior consistent.
+    const mergedPageState = {
+      ...basePageState,
+      [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
+    };
+
+    updateFormData({
+      ...currentFormData,
+      pageState: mergedPageState,
+    }, false);
   };
 
   const newNavigatorState = () => {
@@ -520,6 +530,9 @@ const ActivityReportNavigator = ({
         pageState: newNavigatorState(),
       };
       await onSave(data);
+
+      // On save goal re-evaluate page status.
+      updateGoalsObjectivesPageState(data);
 
       updateErrorMessage('');
     } catch (error) {
