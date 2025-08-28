@@ -1,4 +1,4 @@
-import { Sequelize, Op, WhereOptions } from 'sequelize';
+import { Sequelize, Op } from 'sequelize';
 import db from '../models';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
 
@@ -68,7 +68,9 @@ export async function getCuratedTemplates(
   const monitoringGoals = await GoalModel.findAll({
     attributes: ['id'],
     where: {
-      createdVia: 'monitoring',
+      goalTemplateId: {
+        [Op.in]: sequelize.literal('(SELECT id FROM "GoalTemplates" WHERE standard = \'Monitoring\')'),
+      },
       grantId: grantIds,
     },
   });
