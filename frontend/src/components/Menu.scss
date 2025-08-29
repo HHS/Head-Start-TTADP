@@ -26,7 +26,8 @@
 }
 
 .smart-hub--menu__right {
+  top: calc(100% + 1rem);
   right: 0;
   left: auto;
-  top: calc(100% + 1rem);
+  position: absolute;
 }
