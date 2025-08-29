@@ -1,9 +1,47 @@
 import express from 'express';
-import { getCollaborationReportsHandler } from './handlers';
+import {
+  createReport,
+  getReport,
+  getReports,
+  resetToDraft,
+  reviewReport,
+  saveReport,
+  softDeleteReport,
+  submitReport,
+} from './handlers';
 import transactionWrapper from '../transactionWrapper';
+import { checkCollabReportIdParam } from '../../middleware/checkIdParamMiddleware';
+import { nameTransactionByBase } from '../../middleware/newRelicMiddleware';
 
 const router = express.Router();
 
-router.get('/', transactionWrapper(getCollaborationReportsHandler));
+/**
+ * API for collaboration reports
+ * Comment above each route matches the frontend method call
+ */
+
+// createReport
+router.post('/', transactionWrapper(createReport));
+
+// deleteReport
+router.delete('/:collabReportId', checkCollabReportIdParam, transactionWrapper(softDeleteReport));
+
+// getReport
+router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, transactionWrapper(getReport));
+
+// getReports
+router.get('/', transactionWrapper(getReports));
+
+// resetToDraft
+router.put('/:collabReportId/reset', checkCollabReportIdParam, transactionWrapper(resetToDraft));
+
+// reviewReport
+router.put('/:collabReportId/review', checkCollabReportIdParam, transactionWrapper(reviewReport));
+
+// saveReport
+router.put('/:collabReportId', checkCollabReportIdParam, transactionWrapper(saveReport));
+
+// submitReport
+router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapper(submitReport));
 
 export default router;

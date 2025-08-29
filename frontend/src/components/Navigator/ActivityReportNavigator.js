@@ -178,7 +178,7 @@ const ActivityReportNavigator = ({
     const newPageState = { ...pageState };
     const currentGoalsObjectivesPageState = pageState[GOALS_AND_OBJECTIVES_POSITION];
     // eslint-disable-next-line max-len
-    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage.isPageComplete(getValues(), formState);
+    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage && goalsAndObjectivesPage.isPageComplete(getValues(), formState);
     const isCurrentPageGoalsObjectives = page.position === GOALS_AND_OBJECTIVES_POSITION;
 
     if (isGoalsObjectivesPageComplete) {
