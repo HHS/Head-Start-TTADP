@@ -11,7 +11,7 @@ const MissingGoalDataList = ({ missingGoalData }) => (
       <li key={goal.id}>
         <Link
           aria-label={`Edit goal ${goal.id} in a new tab`}
-          to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id[]=${goal.id}`}
+          to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id=${goal.id}`}
           target="_blank"
           rel="noopener noreferrer"
         >
