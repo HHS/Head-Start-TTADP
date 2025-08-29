@@ -1,7 +1,5 @@
-import axios from 'axios';
 import httpCodes from 'http-codes';
 import httpContext from 'express-http-context';
-import isEmail from 'validator/lib/isEmail';
 import { v4 as uuidv4 } from 'uuid';
 
 import { logger, auditLogger } from '../logger';
@@ -113,40 +111,19 @@ export async function currentUserId(req, res) {
  *
  * This method retrieves the current user details from HSES and finds or creates the TTA Hub user
  */
-export async function retrieveUserDetails(accessToken) {
-  const requestObj = accessToken.sign({
-    method: 'get',
-    url: `${process.env.AUTH_BASE}/auth/user/me`,
-  });
-
-  const { url } = requestObj;
-  const { data } = await axios.get(url, requestObj);
-
+export async function retrieveUserDetails(data) {
   logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
 
-  let name; let username; let userId; let authorities;
-  if (data.principal.attributes) { // PIV card use response
-    name = data.name;
-    username = data.principal.attributes.user.username;
-    userId = data.principal.attributes.user.userId;
-    authorities = data.principal.attributes.user.authorities;
-  } else {
-    name = data.name;
-    username = data.principal.username;
-    userId = data.principal.userId;
-    authorities = data.principal.authorities;
-  }
-
-  let email = null;
-  if (isEmail(username)) {
-    email = username;
-  }
+  // WARNING: THIS IS HARDCODING THE USER ID !!!!!
+  // TODO: Call method to retrieve or create ID based on the data.sub
+  const TEST_USER_ID = 1;
+  logger.error(`The user ID for ${data.sub} is hardcoded to ${TEST_USER_ID}`);
 
   return findOrCreateUser({
-    name,
-    email,
-    hsesUsername: username,
-    hsesAuthorities: authorities.map(({ authority }) => authority),
-    hsesUserId: userId.toString(),
+    name: data.sub,
+    email: data.email,
+    hsesUsername: data.sub,
+    hsesAuthorities: data.roles,
+    hsesUserId: TEST_USER_ID.toString(),
   });
 }
