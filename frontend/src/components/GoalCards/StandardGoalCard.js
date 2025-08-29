@@ -10,7 +10,6 @@ import { useHistory } from 'react-router-dom';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { Checkbox, Alert } from '@trussworks/react-uswds';
 import moment from 'moment';
-import { v4 as uuidv4 } from 'uuid';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { goalPropTypes } from './constants';
 import UserContext from '../../UserContext';
@@ -416,7 +415,7 @@ export default function StandardGoalCard({
       </div>
       {sortedObjectives.map((obj) => (
         <ObjectiveSwitch
-          key={`objective_${uuidv4()}`}
+          key={obj.id}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
           goalStatus={localStatus}
