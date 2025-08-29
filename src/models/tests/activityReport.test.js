@@ -103,6 +103,7 @@ const sampleReport = {
   reason: ['reason'],
   ttaType: ['type'],
   regionId: 2,
+  activityReason: 'recipient request',
   targetPopulations: ['target pop'],
   author: {
     fullName: 'Kiwi, GS',
@@ -270,7 +271,11 @@ describe('Activity Reports model', () => {
     });
 
     await preReport.update(
-      { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      {
+        userId: user.id,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      },
     );
     await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },

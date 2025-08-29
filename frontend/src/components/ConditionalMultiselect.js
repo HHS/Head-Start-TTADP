@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { FormGroup, Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import selectOptionsReset from './selectOptionsReset';
+import Drawer from './Drawer';
+import DrawerTriggerButton from './DrawerTriggerButton';
+import ContentFromFeedByTag from './ContentFromFeedByTag';
 
 export default function ConditionalMultiselect({
   fieldData,
@@ -14,7 +17,13 @@ export default function ConditionalMultiselect({
   onChange,
   error,
   userCanEdit,
+  // drawer props
+  drawerButtonText,
+  drawerTitle,
+  drawerTagName,
+  drawerClassName,
 }) {
+  const drawerTriggerRef = useRef(null);
   const handleOnChange = (selections) => {
     onChange(selections.map((option) => option.label));
   };
@@ -31,6 +40,9 @@ export default function ConditionalMultiselect({
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-0">
+          {fieldData.displayName}
+        </p>
+        <p className="usa-prose text-bold margin-bottom-0">
           {fieldData.title}
         </p>
         <ul className="usa-list usa-list--unstyled">
@@ -43,36 +55,60 @@ export default function ConditionalMultiselect({
   }
 
   return (
-    <FormGroup error={error.props.children} key={fieldName}>
-      <Label htmlFor={fieldName}>
-        <>
-          { fieldData.prompt }
-          {' '}
-          {validations.required && (<span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>)}
-        </>
-      </Label>
-      { fieldData.hint && (<span className="usa-hint">{fieldData.hint}</span>)}
-      {error}
-      <Select
-        inputName={fieldName}
-        inputId={fieldName}
-        name={fieldName}
-        styles={selectOptionsReset}
-        components={{
-          DropdownIndicator: null,
-        }}
-        className="usa-select"
-        isMulti
-        options={options}
-        onBlur={() => {
-          onBlur(selectedOptions);
-        }}
-        value={selectedOptions}
-        onChange={handleOnChange}
-        closeMenuOnSelect={false}
-        isDisabled={false}
-      />
-    </FormGroup>
+    <>
+      {drawerTagName && (
+        <Drawer
+          triggerRef={drawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title={drawerTitle}
+        >
+          <ContentFromFeedByTag
+            className={drawerClassName}
+            tagName={drawerTagName}
+            openLinksInNewTab
+          />
+        </Drawer>
+      )}
+      <FormGroup className="margin-top-0" error={error.props.children} key={fieldName}>
+        <Label htmlFor={fieldName}>
+          <>
+            <p className="usa-prose text-bold margin-bottom-0">
+              {fieldData.displayName}
+            </p>
+            { fieldData.prompt }
+            {' '}
+            {validations.required && (<span className="smart-hub--form-required font-family-sans font-ui-xs margin-right-1">*</span>)}
+            {drawerTagName && drawerButtonText && (
+              <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+                {drawerButtonText}
+              </DrawerTriggerButton>
+            )}
+          </>
+        </Label>
+        { fieldData.hint && (<span className="usa-hint">{fieldData.hint}</span>)}
+        {error}
+        <Select
+          inputName={fieldName}
+          inputId={fieldName}
+          name={fieldName}
+          styles={selectOptionsReset}
+          components={{
+            DropdownIndicator: null,
+          }}
+          className="usa-select"
+          isMulti
+          options={options}
+          onBlur={() => {
+            onBlur(selectedOptions);
+          }}
+          value={selectedOptions}
+          onChange={handleOnChange}
+          closeMenuOnSelect={false}
+          isDisabled={false}
+        />
+      </FormGroup>
+    </>
   );
 }
 
@@ -83,6 +119,7 @@ ConditionalMultiselect.propTypes = {
     prompt: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(PropTypes.string).isRequired,
     hint: PropTypes.string,
+    displayName: PropTypes.string.isRequired,
   }).isRequired,
   validations: PropTypes.shape({
     required: PropTypes.bool,
@@ -93,8 +130,16 @@ ConditionalMultiselect.propTypes = {
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
+  drawerButtonText: PropTypes.string,
+  drawerTitle: PropTypes.string,
+  drawerTagName: PropTypes.string,
+  drawerClassName: PropTypes.string,
 };
 
 ConditionalMultiselect.defaultProps = {
   userCanEdit: false,
+  drawerButtonText: '',
+  drawerTitle: '',
+  drawerTagName: '',
+  drawerClassName: '',
 };

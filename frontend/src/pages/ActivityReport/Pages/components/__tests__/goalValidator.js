@@ -16,7 +16,6 @@ import {
 } from '../goalValidator';
 import {
   GOAL_NAME_ERROR,
-  GOAL_SOURCE_ERROR,
 } from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
@@ -76,16 +75,6 @@ const goalValid = {
   ],
 };
 
-const goalNoSource = {
-  name: 'Test goal',
-  endDate: '2021-01-01',
-  isRttapa: 'No',
-  objectives: [
-    { ...validObjective },
-    { ...validObjective },
-  ],
-};
-
 describe('validateGoals', () => {
   describe('unfinishedObjectives', () => {
     describe('returns invalid', () => {
@@ -132,9 +121,9 @@ describe('validateGoals', () => {
         ];
 
         const setError = jest.fn();
-        const result = unfinishedObjectives(objectives, setError);
+        const result = unfinishedObjectives(objectives, setError, 'goalForEditing.objectives', true);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].citations`, { message: OBJECTIVE_CITATIONS });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].citations`, { message: OBJECTIVE_CITATIONS });
       });
 
       it('if one objective has no "supportType"', () => {
@@ -288,16 +277,6 @@ describe('validateGoals', () => {
 
         const result = validateGoals(goals);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-      });
-
-      it('if no source', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalNoSource },
-        ];
-
-        const result = validateGoals(goals);
-        expect(result).toEqual(GOAL_SOURCE_ERROR);
       });
     });
 
