@@ -1,10 +1,10 @@
 import {} from 'dotenv/config';
 import { auditLogger } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
-import { hsesAuth } from './authMiddleware';
 import { currentUserId, retrieveUserDetails } from '../services/currentUser';
 import { unauthorized } from '../serializers/errorResponses';
 import handleErrors from '../lib/apiErrorHandler';
+import { getUserInfo } from './authMiddleware';
 
 const namespace = 'MIDDLEWARE:TOKEN';
 
@@ -12,10 +12,9 @@ const retrieveUserFromHSES = async (req) => {
   const { authorization } = req.headers;
 
   if (authorization) {
-    const [, bearerToken] = authorization.split(' ');
-    const accessToken = hsesAuth.createToken(bearerToken);
     try {
-      const dbUser = await retrieveUserDetails(accessToken);
+      const data = await getUserInfo(req.session.accessToken, req.session.claims.sub);
+      const dbUser = await retrieveUserDetails(data);
       return dbUser.id;
     } catch (error) {
       auditLogger.error(`Error when retrieving user details from HSES: ${error}`);
