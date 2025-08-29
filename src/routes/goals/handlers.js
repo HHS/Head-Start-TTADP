@@ -362,6 +362,14 @@ export async function getGoalHistory(req, res) {
         goalTemplateId: goal.goalTemplateId,
         grantId: goal.grantId,
         prestandard: goal.prestandard,
+        [Op.or]: [
+          {
+            createdVia: 'rtr',
+          },
+          {
+            onApprovedAR: true,
+          },
+        ],
       },
       attributes: {
         include: [
