@@ -5,7 +5,7 @@ import {
 } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import CollabReportsTable from './CollabReportsTable';
-import { getReports } from '../../../fetchers/collaboratorReports';
+import { getReports } from '../../../fetchers/collaborationReports';
 
 // TODO: Add filters as a dependency/prop in future
 const CollabReports = (props) => {

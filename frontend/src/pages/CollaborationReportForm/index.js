@@ -18,6 +18,7 @@ import pages from './Pages';
 import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
 import './index.scss';
 import { NOT_STARTED } from './constants';
+import { convertReportToFormData, convertGoalsToFormData } from './formDataHelpers';
 import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
@@ -25,11 +26,19 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
+import {
+  getReport,
+  createReport,
+  submitReport,
+  reviewReport,
+  resetToDraft,
+} from '../../fetchers/collaborationReports';
 import { getCollaborators } from '../../fetchers/collaborators';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
+import { formatReportWithSaveBeforeConversion } from '../ActivityReport';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -154,44 +163,40 @@ function CollaborationReport({ match, location, region }) {
         updateLoading(true);
         reportId.current = collabReportId;
 
-        // if (collabReportId !== 'new') {
-        //   let fetchedReport;
-        //   try {
-        //     fetchedReport = await getReport(collabReportId);
-        //   } catch (e) {
-        //     // If error retrieving the report show the "something went wrong" page.
-        //     history.push('/something-went-wrong/500');
-        //   }
-        //   report = convertReportToFormData(fetchedReport);
-        // } else {
-        report = {
-          ...defaultValues,
-          creatorRole: userHasOneRole ? user.roles[0].fullName : null,
-          pageState: defaultPageState,
-          userId: user.id,
-          regionId: region || getRegionWithReadWrite(user),
-          version: 2,
-        };
-        // }
+        if (collabReportId !== 'new') {
+          let fetchedReport;
+          try {
+            fetchedReport = await getReport(collabReportId);
+          } catch (e) {
+            // If error retrieving the report show the "something went wrong" page.
+            history.push('/something-went-wrong/500');
+          }
+          report = convertReportToFormData(fetchedReport);
+        } else {
+          report = {
+            ...defaultValues,
+            creatorRole: userHasOneRole ? user.roles[0].fullName : null,
+            pageState: defaultPageState,
+            userId: user.id,
+            regionId: region || getRegionWithReadWrite(user),
+            version: 2,
+          };
+        }
 
         const apiCalls = [
           getCollaborators(report.regionId),
         ];
 
         const [collaborators] = await Promise.all(apiCalls);
+
         const isCollaborator = report.collabReportCollaborators
           && report.collabReportCollaborators.find((u) => u.userId === user.id);
-
         const isAuthor = report.userId === user.id;
-
-        // The report can be edited if its in draft OR needs_action state.
-
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
         && (report.calculatedStatus === REPORT_STATUSES.DRAFT
           || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
-
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
@@ -345,7 +350,99 @@ function CollaborationReport({ match, location, region }) {
     history.push(newPath, state);
   };
 
-  // NOTE: onSave, onFormSubmit, onReview, and onResetToDraft go here eventually
+  const onSave = async (data, forceUpdate = false) => {
+    const approverIds = data.approvers.map((a) => a.user.id);
+
+    try {
+      if (reportId.current === 'new') {
+        const savedReport = await createReport({
+          ...data,
+          regionId: formData.regionId,
+          approverUserIds: approverIds,
+          version: 2,
+        });
+
+        if (!savedReport) {
+          throw new Error('Report not found');
+        }
+
+        reportId.current = savedReport.id;
+
+        cleanupLocalStorage('new', savedReport.id);
+
+        window.history.replaceState(null, null, `/collaboration-reports/${savedReport.id}/${currentPage}`);
+
+        setConnectionActive(true);
+        updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+      } else {
+        const updatedReport = await formatReportWithSaveBeforeConversion(
+          data,
+          formData,
+          user,
+          userHasOneRole,
+          reportId,
+          approverIds,
+          forceUpdate,
+        );
+
+        let reportData = updatedReport;
+
+        // if we are dealing with a recipient report, we need to do a little magic to
+        // format the goals and objectives appropriately, as well as divide them
+        // by which one is open and which one is not
+        if (updatedReport.activityRecipientType === 'recipient') {
+          const { goalForEditing, goals } = convertGoalsToFormData(
+            updatedReport.goalsAndObjectives,
+            updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+          );
+
+          reportData = {
+            ...updatedReport,
+            goalForEditing,
+            goals,
+          };
+        }
+        updateFormData(reportData, true);
+        setConnectionActive(true);
+        updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+      }
+    } catch (e) {
+      setConnectionActiveWithError(error, setConnectionActive);
+    }
+  };
+
+  const onFormSubmit = async (data) => {
+    const approverIds = data.approvers.map((a) => a.user.id);
+    const reportToSubmit = {
+      additionalNotes: data.additionalNotes,
+      approverUserIds: approverIds,
+      creatorRole: data.creatorRole,
+    };
+    const response = await submitReport(reportId.current, reportToSubmit);
+
+    updateFormData(
+      {
+        ...formData,
+        calculatedStatus: response.calculatedStatus,
+        approvers: response.approvers,
+      },
+      true,
+    );
+    updateEditable(false);
+
+    cleanupLocalStorage(collabReportId);
+  };
+
+  const onReview = async (data) => {
+    await reviewReport(reportId.current, { note: data.note, status: data.status });
+  };
+
+  const onResetToDraft = async () => {
+    const fetchedReport = await resetToDraft(reportId.current);
+    const report = convertReportToFormData(fetchedReport);
+    updateFormData(report, true);
+    updateEditable(true);
+  };
 
   const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
@@ -474,12 +571,12 @@ function CollaborationReport({ match, location, region }) {
           formData={formData}
           updateFormData={updateFormData}
           pages={pages}
-          // onFormSubmit={onFormSubmit}
-          // onSave={onSave}
-          // onResetToDraft={onResetToDraft}
+          onFormSubmit={onFormSubmit}
+          onSave={onSave}
+          onResetToDraft={onResetToDraft}
           isApprover={isApprover}
           isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
-          // onReview={onReview}
+          onReview={onReview}
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}

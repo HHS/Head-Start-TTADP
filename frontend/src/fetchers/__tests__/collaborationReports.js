@@ -1,6 +1,6 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
-import { getReports } from '../collaboratorReports';
+import { getReports } from '../collaborationReports';
 
 describe('CollaboratorReports Fetcher', () => {
   afterEach(() => fetchMock.restore());
