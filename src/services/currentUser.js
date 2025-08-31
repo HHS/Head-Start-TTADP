@@ -114,16 +114,13 @@ export async function currentUserId(req, res) {
 export async function retrieveUserDetails(data) {
   logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
 
-  // WARNING: THIS IS HARDCODING THE USER ID !!!!!
-  // TODO: Call method to retrieve or create ID based on the data.sub
-  const TEST_USER_ID = 1;
-  logger.error(`The user ID for ${data.sub} is hardcoded to ${TEST_USER_ID}`);
+  const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || '';
 
   return findOrCreateUser({
-    name: data.sub,
-    email: data.email,
-    hsesUsername: data.sub,
-    hsesAuthorities: data.roles,
-    hsesUserId: TEST_USER_ID.toString(),
+    name,
+    email: data?.email?.toString() || '',
+    hsesUsername: data?.sub?.toString() || '',
+    hsesAuthorities: data?.roles || [],
+    hsesUserId: data?.userId?.toString() || '',
   });
 }
