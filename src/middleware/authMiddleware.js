@@ -26,6 +26,10 @@ async function getOidcClient() {
     client_id: process.env.AUTH_CLIENT_ID,
     token_endpoint_auth_method: 'private_key_jwt',
     token_endpoint_auth_signing_alg: 'RS256',
+  };
+
+  const clientMetadataLocal = {
+    client_id: process.env.AUTH_CLIENT_ID,
     tlsOnly: issuerUrl.protocol === 'https:',
   };
 
@@ -38,11 +42,16 @@ async function getOidcClient() {
     ],
   };
 
+  // https://developers.login.gov/oidc/getting-started/#choosing-an-authentication-method
+  // Use private_key_jwt in cloud environment.
+  // Use PKCE in local development environment.
+  const localEnvironment = (process.env.AUTH_CLIENT_ID ?? '').endsWith('local');
+
   issuerConfig = await openidClient.discovery(
     issuerUrl,
     process.env.AUTH_CLIENT_ID,
-    clientMetadata,
-    openidClient.PrivateKeyJwt(await getPrivateJwk()),
+    localEnvironment ? clientMetadataLocal : clientMetadata,
+    localEnvironment ? undefined : openidClient.PrivateKeyJwt(await getPrivateJwk()),
     discoveryRequestOptions,
   );
 
@@ -124,6 +133,10 @@ export async function getAccessToken(req) {
     auditLogger.info('ID Token Claims', claims);
 
     req.session.claims = claims;
+    // store raw id_token for RP-initiated logout (id_token_hint)
+    if (tokens.id_token) {
+      req.session.id_token = tokens.id_token;
+    }
     const accessToken = tokens.access_token;
     return accessToken;
   } catch (err) {
@@ -188,5 +201,46 @@ export default async function authMiddleware(req, res, next) {
     // handleErrors returns a promise, and sends a 500 status to the client
     // it needs to be awaited before exiting the process here
     await handleErrors(req, res, error, namespace);
+  }
+}
+
+/**
+ * Initiates RP-Initiated Logout at the Authorization Server.
+ *
+ * Attempts to build an End Session URL using `buildEndSessionUrl` and
+ * redirects the user-agent there. Falls back to clearing the session and
+ * returning 204 if end-session is not available.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function logoutOidc(req, res) {
+  try {
+    const client = await getOidcClient();
+
+    const params = {
+      post_logout_redirect_uri: `${process.env.TTA_SMART_HUB_URI}/logout`,
+    };
+    if (req.session?.id_token) {
+      params.id_token_hint = req.session.id_token;
+    }
+
+    const redirectTo = client.buildEndSessionUrl(issuerConfig, params);
+
+    const { userId } = req.session || {};
+    req.session = null;
+    auditLogger.info(`User ${userId} logged out (RP-initiated)`);
+    res.redirect(redirectTo.href);
+  } catch (err) {
+    // If end-session is unavailable, fall back to local logout
+    auditLogger.warn(`${namespace} RP-initiated logout unavailable, falling back`, err);
+    if (!res.headersSent) {
+      res.redirect('/logout');
+    } else {
+      const { userId } = req.session || {};
+      auditLogger.info(`User ${userId} logged out (local only)`);
+      req.session = null;
+      res.sendStatus(204);
+    }
   }
 }
