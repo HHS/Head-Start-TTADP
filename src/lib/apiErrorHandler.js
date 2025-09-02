@@ -68,9 +68,9 @@ export const handleError = async (req, res, error, logContext) => {
   let operation;
   let label;
 
-  if (error instanceof Sequelize.Error) {
+  if (error instanceof Sequelize.BaseError) {
     operation = 'SequelizeError';
-    label = 'Sequelize error';
+    label = `${error.name}:${error.cause}`;
   } else {
     operation = 'UNEXPECTED_ERROR';
     label = 'UNEXPECTED ERROR';
@@ -88,7 +88,7 @@ export const handleError = async (req, res, error, logContext) => {
     : error;
 
   if (requestErrorId) {
-    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+    logger.error(`${logContext.namespace} - id: ${requestErrorId} - ${label} - ${errorMessage}`);
   } else {
     logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
   }

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -6,23 +6,20 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { Switch, Route, useHistory } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
+import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
-import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
-import { getIdParamArray, GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
-import MergeGoals from './pages/MergeGoals';
+import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
-import ViewGoals from './pages/ViewGoals';
-import GoalNameForm from '../../components/GoalNameForm';
+import ViewGoalDetails from './pages/ViewStandardGoals';
 import Monitoring from './pages/Monitoring';
 import FeatureFlag from '../../components/FeatureFlag';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -104,27 +101,8 @@ export default function RecipientRecord({ match, hasAlerts }) {
     recipientId,
     regionId,
     recipientName: '',
+    missingStandardGoals: [],
   });
-
-  const [canMergeGoals, setCanMergeGoals] = useState(false);
-
-  useEffect(() => {
-    async function fetchMergePermissions() {
-      try {
-        const { canMergeGoalsForRecipient } = await getMergeGoalPermissions(
-          String(recipientId),
-          String(regionId),
-        );
-        setCanMergeGoals(canMergeGoalsForRecipient);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(err);
-        setCanMergeGoals(false);
-      }
-    }
-
-    fetchMergePermissions();
-  }, [recipientId, regionId]);
 
   useDeepCompareEffect(() => {
     async function fetchRecipient() {
@@ -246,27 +224,8 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 regionId={regionId}
                 recipient={recipientData}
                 recipientName={recipientName}
-                canMergeGoals={canMergeGoals}
               />
             </PageWithHeading>
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
-          render={({ location, match: routeMatch }) => (
-            <>
-              <Helmet>
-                <title>These Goals Might Be Duplicates</title>
-              </Helmet>
-              <MergeGoals
-                regionId={regionId}
-                recipientId={recipientId}
-                match={routeMatch}
-                location={location}
-                recipientNameWithRegion={recipientNameWithRegion}
-                canMergeGoals={canMergeGoals}
-              />
-            </>
           )}
         />
         <Route
@@ -276,80 +235,36 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <Helmet>
                 <title>Create a New Goal</title>
               </Helmet>
-              <GoalNameForm
-                regionId={regionId}
+              <StandardGoalForm
                 recipient={recipientData}
               />
             </>
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/view"
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard"
           render={() => (
-            <ViewGoals
+            <ViewGoalDetails
               regionId={regionId}
               recipient={recipientData}
             />
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/edit"
-          render={({ location }) => {
-            const goalIds = getIdParamArray(location.search);
-
-            return (
-              <GoalForm
-                regionId={regionId}
-                recipient={recipientData}
-                goalIds={goalIds}
-              />
-            );
-          }}
-        />
-        <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId/restart"
           render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <RestartStandardGoal
-                recipient={recipientData}
-              />
-            </FeatureFlag>
+            <RestartStandardGoal
+              recipient={recipientData}
+            />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals/:goalTemplateId/grant/:grantId"
           render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <UpdateStandardGoal
-                recipient={recipientData}
-              />
-            </FeatureFlag>
+            <UpdateStandardGoal
+              recipient={recipientData}
+            />
           )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/standard-goals"
-          render={() => (
-            <FeatureFlag flag="standard_goals_update" renderNotFound>
-              <StandardGoalForm
-                recipient={recipientData}
-              />
-            </FeatureFlag>
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
-          render={({ location }) => {
-            const goalIds = getIdParamArray(location.search);
-
-            return (
-              <GoalNameForm
-                regionId={regionId}
-                recipient={recipientData}
-                ids={goalIds}
-                isExistingGoal
-              />
-            );
-          }}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"

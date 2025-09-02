@@ -6,6 +6,7 @@ import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
 import GenericSelectWithDrawer from '../GoalForm/GenericSelectWithDrawer';
 import { ERROR_FORMAT } from '../../pages/ActivityReport/Pages/components/constants';
 import { NO_ERROR } from '../../pages/SessionForm/constants';
+import ContentFromFeedByTag from '../ContentFromFeedByTag';
 
 export const validate = (value) => {
   if (value.length < 1) {
@@ -24,8 +25,18 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
   // eslint-disable-next-line max-len
   const prompt = useMemo(() => (goalTemplatePrompts ? goalTemplatePrompts[0] : null), [goalTemplatePrompts]);
   const promptId = useMemo(() => uniqueId('goal-form-prompt-'), []);
+
   // eslint-disable-next-line max-len
   const options = useMemo(() => (prompt ? prompt.options.map((option) => ({ name: option, id: option })) : []), [prompt]);
+
+  const drawerContent = useMemo(() => (
+    <ContentFromFeedByTag
+      className="ttahub-drawer--ttahub-fei-root-causes-guidance"
+      tagName="ttahub-fei-root-causes"
+      contentSelector="table"
+    />
+  ),
+  []);
 
   if (!prompt) {
     return null;
@@ -46,7 +57,7 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
           inputName={fieldName}
           isLoading={false}
           drawerButtonText="Get help choosing root causes"
-          drawerContent={<></>}
+          drawerContent={drawerContent}
           drawerTitle="Root causes"
         />
       )}

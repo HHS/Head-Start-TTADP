@@ -12,6 +12,7 @@ const sections = [
   {
     title: 'first',
     anchor: 'first',
+    isEditSection: true,
     items: [
       {
         label: 'array',
@@ -88,8 +89,7 @@ describe('ReviewPage', () => {
     it('properly sets the "Edit" links target', async () => {
       const linkOne = await screen.findByRole('link', { name: 'Edit form section "first"' });
       expect(linkOne).toHaveAttribute('href', '/id#first');
-      const linkTwo = await screen.findByRole('link', { name: 'Edit form section "second"' });
-      expect(linkTwo).toHaveAttribute('href', '/id#second');
+      expect(screen.queryByRole('link', { name: 'Edit form section "second"' })).toBeNull();
     });
 
     it('displays arrays of values', async () => {

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
 import ConditionalFields from '../ConditionalFields';
-import { combinePrompts } from '../condtionalFieldConstants';
+import { combineRtrPrompts } from '../condtionalFieldConstants';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
 
@@ -36,7 +36,7 @@ const DisplayFields = ({
   if (!divergence) {
     return (
       <ConditionalFields
-        prompts={combinePrompts(singleValue, goalTemplatePrompts)}
+        prompts={combineRtrPrompts(singleValue, goalTemplatePrompts)}
         setPrompts={updateAll}
         validatePrompts={validate}
         errors={errors}
@@ -55,7 +55,7 @@ const DisplayFields = ({
         {grantNumber}
       </h3>
       <ConditionalFields
-        prompts={combinePrompts(value[grantNumber], goalTemplatePrompts)}
+        prompts={combineRtrPrompts(value[grantNumber], goalTemplatePrompts)}
         setPrompts={(newValue) => {
           updateSingle(grantNumber, newValue);
         }}
@@ -103,19 +103,17 @@ export default function RTRGoalPrompts({
     onChange,
   );
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   if (!selectedGrants.length || !isCurated || !goalTemplateId) {
     return null;
   }
 
   const singleValue = data[0];
-  const fieldData = combinePrompts(singleValue, goalTemplatePrompts);
-
+  const fieldData = combineRtrPrompts(singleValue, goalTemplatePrompts);
   if (!fieldData || !fieldData.length) {
     return null;
   }
-
   const allResponses = uniq(Object.values(data || {}).flat().map(({ response }) => response).flat()).join(', ');
 
   return (

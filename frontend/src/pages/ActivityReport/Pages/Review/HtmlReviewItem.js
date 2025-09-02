@@ -21,7 +21,9 @@ const HtmlReviewItem = ({ label, name }) => {
   }
 
   values = values.map((v) => {
-    const defaultEditorState = getEditorState(v || '');
+    // eslint-disable-next-line no-param-reassign
+    if (v === '<p></p>' || v === '') v = 'None provided';
+    const defaultEditorState = getEditorState(v || 'None provided');
     return (
       <Editor
         readOnly
