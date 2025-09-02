@@ -1,6 +1,5 @@
 import request from 'supertest';
 import app from './app';
-import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 
 jest.mock('./middleware/authMiddleware');
@@ -15,7 +14,6 @@ describe('TTA Hub server', () => {
     jest.resetModules(); // clear the cache
     process.env = { ...ORIGINAL_ENV }; // make a copy
 
-    hsesAuth.code.getToken.mockResolvedValue({ sign: jest.fn().mockReturnValue({}) });
     retrieveUserDetails.mockResolvedValue({ id: 1 });
   });
 
