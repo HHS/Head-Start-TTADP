@@ -97,7 +97,7 @@ export async function saveReport(req: Request, res: Response) {
     // Merge the updated report with the old
     const savedReport = await createOrUpdateReport({
       ...existingReport, ...newReport,
-    });
+    }, existingReport);
 
     // Determine if notifications need to be sent out to collaborators
     if (savedReport.collabReportCollaborators) {

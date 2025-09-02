@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
 import filtersToScopes from '../scopes';
+import { syncCRApprovers } from './collabReportApprovers';
 
 const {
   CollabReport,
@@ -48,10 +49,6 @@ async function saveReportSpecialists(collabReportId, specialists) {
       },
     });
   }
-}
-
-async function syncCRApprovers() {
-  // DO stuff HERE
 }
 
 // Helper function to update a report using the model's built-in update
@@ -129,7 +126,7 @@ export async function createOrUpdateReport(newReport, oldReport) {
 
   // Sync the approvers, if an empty array they get removed
   if (newReport.approverUserIds) {
-    await syncCRApprovers();
+    await syncCRApprovers(savedReport.id, newReport.approverUserIds);
   }
 
   // Finally, fetch a new copy of the saved report from the DB
