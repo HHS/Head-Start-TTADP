@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE } from '@ttahub/common';
 import db from '../models';
+import { syncCRApprovers } from './collabReportApprovers';
 
 const {
   CollabReport,
   CollabReportApprover,
   CollabReportSpecialist,
-  Role,
   User,
 } = db;
 
@@ -46,10 +46,6 @@ async function saveReportSpecialists(collabReportId, specialists) {
       },
     });
   }
-}
-
-async function syncCRApprovers() {
-  // DO stuff HERE
 }
 
 // Helper function to update a report using the model's built-in update
