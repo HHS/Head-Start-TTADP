@@ -2,13 +2,17 @@ import { Request, Response } from 'express';
 import { getReports, getReport } from './handlers';
 import * as CRServices from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
 import { setReadRegions } from '../../services/accessValidation';
 import handleErrors from '../../lib/apiErrorHandler';
+import CollabReportPolicy from '../../policies/collabReport';
 
 jest.mock('../../services/collabReports');
 jest.mock('../../services/currentUser');
+jest.mock('../../services/users');
 jest.mock('../../services/accessValidation');
 jest.mock('../../lib/apiErrorHandler');
+jest.mock('../../policies/collabReport');
 
 describe('Collaboration Reports Handlers', () => {
   let mockRequest: Partial<Request>;
@@ -31,81 +35,81 @@ describe('Collaboration Reports Handlers', () => {
 
   describe('getReport', () => {
     beforeEach(() => {
-      mockRequest.params = { id: '1' };
+      mockRequest.params = { collabReportId: '1' };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canGet: jest.fn().mockReturnValue(true),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
     });
 
     it('should return HTTP 200 and payload when report is found by ID', async () => {
-      const mockReports = {
-        count: 2,
-        rows: [
-          { id: '1', name: 'Report 1' },
-          { id: '2', name: 'Report 2' },
-        ],
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        dataValues: { id: '1', name: 'Report 1' },
+        displayId: 'COLLAB-001',
       };
 
-      (getReports as jest.Mock).mockResolvedValue(mockReports);
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
 
       await getReport(mockRequest as Request, mockResponse as Response);
 
-      expect(getReports).toHaveBeenCalledTimes(1);
-      expect(mockJson).toHaveBeenCalledWith({ id: '1', name: 'Report 1' });
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(mockJson).toHaveBeenCalledWith({ id: '1', name: 'Report 1', displayId: 'COLLAB-001' });
       expect(mockSendStatus).not.toHaveBeenCalled();
     });
 
     it('should return HTTP 404 when report with specified ID is not found', async () => {
-      const mockReports = {
-        count: 1,
-        rows: [
-          { id: '2', name: 'Report 2' },
-        ],
-      };
-
-      (getReports as jest.Mock).mockResolvedValue(mockReports);
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
 
       await getReport(mockRequest as Request, mockResponse as Response);
 
-      expect(getReports).toHaveBeenCalledTimes(1);
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
       expect(mockSendStatus).toHaveBeenCalledWith(404);
       expect(mockJson).not.toHaveBeenCalled();
+      expect(currentUserId).not.toHaveBeenCalled();
     });
 
-    it('should return HTTP 404 when no reports exist', async () => {
-      const mockReports = {
-        count: 0,
-        rows: [],
+    it('should return HTTP 403 when user is not authorized', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        dataValues: { id: '1', name: 'Report 1' },
+        displayId: 'COLLAB-001',
       };
 
-      (getReports as jest.Mock).mockResolvedValue(mockReports);
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canGet: jest.fn().mockReturnValue(false),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
 
       await getReport(mockRequest as Request, mockResponse as Response);
 
-      expect(getReports).toHaveBeenCalledTimes(1);
-      expect(mockSendStatus).toHaveBeenCalledWith(404);
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
       expect(mockJson).not.toHaveBeenCalled();
     });
 
     it('should return HTTP 404 when service returns null', async () => {
-      (getReports as jest.Mock).mockResolvedValue(null);
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
 
       await getReport(mockRequest as Request, mockResponse as Response);
 
-      expect(getReports).toHaveBeenCalledTimes(1);
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
       expect(mockSendStatus).toHaveBeenCalledWith(404);
       expect(mockJson).not.toHaveBeenCalled();
     });
 
     it('should handle missing request params gracefully', async () => {
       mockRequest.params = {};
-      const mockReports = {
-        count: 1,
-        rows: [{ id: '1', name: 'Report 1' }],
-      };
-
-      (getReports as jest.Mock).mockResolvedValue(mockReports);
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
 
       await getReport(mockRequest as Request, mockResponse as Response);
 
-      expect(getReports).toHaveBeenCalledTimes(1);
+      expect(CRServices.collabReportById).toHaveBeenCalledWith(undefined);
       expect(mockSendStatus).toHaveBeenCalledWith(404);
       expect(mockJson).not.toHaveBeenCalled();
     });
