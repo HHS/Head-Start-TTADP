@@ -49,10 +49,18 @@ const mockGoalTemplates = [
   },
 ];
 
+// Make sure this path matches the exact import path in the StandardGoalForm component
 jest.mock('../../../hooks/useGoalTemplatePrompts', () => ({
   __esModule: true,
-  default: jest.fn(() => []),
+  default: jest.fn(() => [[], []]),
 }));
+
+// Add this to verify the mock is being used
+beforeEach(() => {
+  jest.clearAllMocks();
+  const useGoalTemplatePrompts = jest.requireMock('../../../hooks/useGoalTemplatePrompts').default;
+  useGoalTemplatePrompts.mockReturnValue([[], []]);
+});
 
 const renderStandardGoalForm = (user = mockUser) => {
   const history = createMemoryHistory();
@@ -76,7 +84,7 @@ const renderStandardGoalForm = (user = mockUser) => {
 
 describe('StandardGoalForm', () => {
   beforeEach(() => {
-    fetchMock.get('/api/goal-templates?grantIds=1', mockGoalTemplates);
+    fetchMock.get('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true', mockGoalTemplates);
   });
 
   afterEach(() => {
@@ -88,7 +96,7 @@ describe('StandardGoalForm', () => {
       renderStandardGoalForm();
     });
 
-    expect(await screen.findByText('Select recipient\'s goal')).toBeInTheDocument();
+    expect(await screen.findByText('Recipient\'s goal')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add goal/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Cancel/i })).toBeInTheDocument();
   });
@@ -117,7 +125,7 @@ describe('StandardGoalForm', () => {
     const { setIsAppLoading } = renderStandardGoalForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
+      expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
     });
 
     // Select a goal template
@@ -141,7 +149,7 @@ describe('StandardGoalForm', () => {
     const { setIsAppLoading, history } = renderStandardGoalForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
+      expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
     });
 
     // Select a goal template

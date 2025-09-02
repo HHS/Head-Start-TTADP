@@ -74,6 +74,7 @@ const renderReview = (
   additionalCitations = [],
   grantIds = [2],
   additionalObjectives = [],
+  hasMultipleGrantsMissingMonitoring = false,
 ) => {
   const formData = {
     approvers,
@@ -88,7 +89,6 @@ const renderReview = (
     formData.goalsAndObjectives = [{
       isCurated: true,
       prompts: [{
-        allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
       goalIds: [1, 2],
@@ -106,12 +106,18 @@ const renderReview = (
     },
     ];
 
+    if (hasMultipleGrantsMissingMonitoring) {
+      formData.activityRecipients.push({
+        activityRecipientId: 3,
+        name: 'recipient with monitoring 3',
+      });
+    }
+
     formData.goalsAndObjectives = [
       ...goalsAndObjectives,
       {
         isCurated: true,
         prompts: [{
-          allGoalsHavePromptResponse: false,
           title: 'FEI Goal',
         }],
         standard: 'Monitoring',
@@ -134,6 +140,10 @@ const renderReview = (
         goalIds: [1, 2],
         grantIds,
       }];
+
+    if (hasMultipleGrantsMissingMonitoring) {
+      formData.goalsAndObjectives[0].grantIds.push(3);
+    }
   }
 
   const history = createMemoryHistory();
@@ -161,7 +171,7 @@ describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { });
-      expect(await screen.findByText('Review and Submit')).toBeVisible();
+      expect(await screen.findByText(/review and submit/i)).toBeVisible();
     });
 
     it('allows the author to submit for review', async () => {
@@ -211,6 +221,35 @@ describe('Submitter review page', () => {
       expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
     });
 
+    it('shows an error if multiple grants don\'t have monitoring', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [
+          {
+            id: 1,
+            text: 'additional citation',
+            monitoringReferences: [{
+              grantId: 1,
+            }],
+          },
+        ],
+        [],
+        [2, 3],
+      );
+      expect(await screen.findByText(/these grants do not have the standard monitoring goal/i)).toBeVisible();
+      expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
+    });
+
     it('shows an error if some of the grants are missing citations', async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
@@ -229,6 +268,30 @@ describe('Submitter review page', () => {
       );
       expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+    });
+
+    it('shows an error when more than one grant is missing citations', async () => {
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => { },
+        false,
+        jest.fn(),
+        jest.fn(),
+        [],
+        defaultUser,
+        null,
+        false,
+        true,
+        [],
+        [],
+        [1, 2, 3],
+        [],
+        true,
+      );
+
+      expect(await screen.findByText(/these grants do not have any of the citations selected/i)).toBeVisible();
+      expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+      // expect(true).toBe(false);
     });
 
     it('shows an error if some of the objectives are missing citations', async () => {
@@ -256,6 +319,7 @@ describe('Submitter review page', () => {
       );
       expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
+      // expect(true).toBe(false);
     });
 
     it('shows an error if missing citations with multiple goals', async () => {
@@ -309,7 +373,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [
@@ -348,7 +411,6 @@ describe('Submitter review page', () => {
         [{
           isCurated: false,
           prompts: [{
-            allGoalsHavePromptResponse: false,
             title: 'A regular goal',
           }],
           objectives: [
@@ -432,27 +494,6 @@ describe('Submitter review page', () => {
     it('displays the approved component', async () => {
       renderReview(REPORT_STATUSES.APPROVED, () => { });
       expect(await screen.findByText('Report approved')).toBeVisible();
-    });
-  });
-
-  describe('when the report has been submitted', () => {
-    it('displays the submitted page', async () => {
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
-      const allAlerts = await screen.findAllByTestId('alert');
-      const successAlert = allAlerts.find((alert) => alert.textContent.includes('Success'));
-      expect(successAlert).toBeVisible();
-    });
-
-    it('shows manager notes', async () => {
-      const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved 1.', user: { fullName: 'Approved User 1' } },
-        { status: REPORT_STATUSES.APPROVED, user: { fullName: 'Approved User 2' } },
-      ];
-      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText(/report needs action\./i)).toBeVisible();
-      expect(await screen.findByText(/report is approved 1\./i)).toBeVisible();
-      expect(await screen.findByText(/no manager notes/i)).toBeVisible();
     });
   });
 

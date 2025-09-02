@@ -69,7 +69,7 @@ const renderRestartStandardGoal = () => {
 describe('RestartStandardGoal', () => {
   const goalTemplatesUrl = join('/', 'api', 'goal-templates');
   beforeEach(() => {
-    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), []);
+    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), [[], []]);
     fetchMock.get('/api/goal-templates/standard/1/grant/1?status=Closed', mockGoal);
   });
 
@@ -84,13 +84,13 @@ describe('RestartStandardGoal', () => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
     });
 
-    expect(await screen.findByRole('button', { name: /Restart/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Reopen/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Cancel/i })).toBeInTheDocument();
   });
 
   it('handles goal not found error', async () => {
     fetchMock.reset();
-    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), []);
+    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), [[], []]);
     fetchMock.get('/api/goal-templates/standard/1/grant/1?status=Closed', 404);
 
     const { history } = renderRestartStandardGoal();
@@ -108,7 +108,7 @@ describe('RestartStandardGoal', () => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
     });
 
-    const submitButton = await screen.findByRole('button', { name: /Restart/i });
+    const submitButton = await screen.findByRole('button', { name: /Reopen/i });
     await act(async () => {
       userEvent.click(submitButton);
     });
@@ -127,7 +127,7 @@ describe('RestartStandardGoal', () => {
       expect(fetchMock.called('/api/goal-templates/standard/1/grant/1?status=Closed')).toBe(true);
     });
 
-    const submitButton = await screen.findByRole('button', { name: /Restart/i });
+    const submitButton = await screen.findByRole('button', { name: /Reopen/i });
     await act(async () => {
       userEvent.click(submitButton);
     });

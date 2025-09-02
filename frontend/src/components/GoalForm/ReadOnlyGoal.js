@@ -10,7 +10,7 @@ const formatPrompts = (prompts) => {
   return ps.filter((prompt) => (
     prompt.response && prompt.response.length)).map((prompt) => ({
     key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
-    title: prompt.title,
+    title: prompt.grantDisplayName,
     response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
   }));
 };
@@ -65,13 +65,17 @@ export default function ReadOnlyGoal({
   return (
     <div key={`goal${goal.id}`}>
       <div className="ttahub-goal-form-goal-summary padding-3 position-relative margin-bottom-4">
-        <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
-        <div className="position-absolute pin-top pin-right padding-4">
-          <ContextMenu
-            label={`Actions for Goal ${goal.id}`}
-            menuItems={menuItems}
-            menuClassName="width-card"
-          />
+        <div className="display-flex flex-justify">
+          <div className="display-flex flex-align-start align-items-flex-start">
+            <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
+          </div>
+          <div className="margin-left-2">
+            <ContextMenu
+              label={`Actions for Goal ${goal.id}`}
+              menuItems={menuItems}
+              menuClassName="width-card"
+            />
+          </div>
         </div>
         <h3 className="margin-top-0 margin-bottom-2">Goal summary</h3>
         { goal.grants && goal.grants.length
@@ -82,7 +86,7 @@ export default function ReadOnlyGoal({
             </div>
           )
           : null }
-        <div className="margin-bottom-2">
+        <div className="margin-bottom-3">
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
@@ -92,13 +96,16 @@ export default function ReadOnlyGoal({
             <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
           </div>
         ) : null}
-        {(goal.prompts) && (
-          formatPrompts(goal.prompts).map((prompt) => (
-            <div className="margin-bottom-2" key={prompt.key}>
-              <h4 className="margin-0">{prompt.title}</h4>
-              <p className="usa-prose margin-0">{prompt.response}</p>
-            </div>
-          ))
+        {goal.prompts && goal.prompts.length > 0 && (
+          <>
+            <h3 className="margin-top-3 margin-bottom-2">Root cause</h3>
+            {formatPrompts(goal.prompts).map((prompt) => (
+              <div className="margin-bottom-2" key={prompt.key}>
+                <h4 className="margin-0">{prompt.title}</h4>
+                <p className="usa-prose margin-0">{prompt.response}</p>
+              </div>
+            ))}
+          </>
         )}
         { goal.objectives.map((objective) => (
           <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />

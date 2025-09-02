@@ -51,6 +51,7 @@ const Navigator = ({
   datePickerKey,
   formDataStatusProp,
   shouldAutoSave,
+  setShouldAutoSave,
   preFlightForNavigation,
   hideSideNav,
 }) => {
@@ -207,6 +208,7 @@ const Navigator = ({
                     datePickerKey,
                     onFormSubmit,
                     DraftAlert,
+                    setShouldAutoSave,
                   )}
                 </Form>
 
@@ -260,6 +262,7 @@ Navigator.propTypes = {
   datePickerKey: PropTypes.string,
   formDataStatusProp: PropTypes.string,
   shouldAutoSave: PropTypes.bool,
+  setShouldAutoSave: PropTypes.func,
   preFlightForNavigation: PropTypes.func,
   hideSideNav: PropTypes.bool,
 };
@@ -279,6 +282,7 @@ Navigator.defaultProps = {
   datePickerKey: '',
   formDataStatusProp: 'calculatedStatus',
   shouldAutoSave: true,
+  setShouldAutoSave: () => {},
   preFlightForNavigation: () => Promise.resolve(true),
   hideSideNav: false,
 };
