@@ -26,7 +26,7 @@ export default function RenderReviewCitations({ citations, activityRecipients, c
       <p data-testid="review-citation-label" className="margin-top-0 margin-bottom-1">{recipient}</p>
       <ul data-testid="review-citation-list" className="usa-list margin-top-0">
         {uniq(formattedCitations[recipient]).map((citation) => (
-          <li data-testid="review-citation-listitem" key={uniqueId('ar-citation-review-citation-name-')}>{citation}</li>
+          <li className="font-body-2xs" data-testid="review-citation-listitem" key={uniqueId('ar-citation-review-citation-name-')}>{citation}</li>
         ))}
       </ul>
     </div>

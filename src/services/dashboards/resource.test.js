@@ -181,11 +181,11 @@ describe('Resources dashboard', () => {
       },
     });
 
-    const { topicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
+    const [topic] = await Topic.findOrCreate({
       where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
+      defaults: { name: 'CLASS: Classroom Organization' },
     });
+    const topicId = topic.id;
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {

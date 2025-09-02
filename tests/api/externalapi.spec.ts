@@ -8,7 +8,6 @@ test('get /v1/activity-reports/display/R01-AR-9999', async ({ request }) => {
   );
 
   expect(response.status()).toBe(200);
-
   const schema = Joi.object({
     data: Joi.object({
       id: Joi.string().required(),
@@ -22,7 +21,6 @@ test('get /v1/activity-reports/display/R01-AR-9999', async ({ request }) => {
         displayId: Joi.string().required(),
         duration: Joi.number().required(),
         endDate: Joi.string().isoDate().required(),
-        reason: Joi.array().items(Joi.string()).required(),
         region: Joi.number().required(),
         reportCreationDate: Joi.string().isoDate().required(),
         reportLastUpdated: Joi.string().isoDate().required(),

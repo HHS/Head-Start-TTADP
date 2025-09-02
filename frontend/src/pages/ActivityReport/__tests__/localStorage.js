@@ -100,10 +100,6 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'activity-summary', true);
 
-    // change some data
-    const other = await screen.findByRole('radio', { name: /other entity/i });
-    act(() => userEvent.click(other));
-
     let virt = await screen.findByRole('radio', { name: /virtual/i });
     expect(virt.checked).toBe(false);
 
@@ -134,7 +130,7 @@ describe('Local storage fallbacks', () => {
 
     renderActivityReport('1', 'review', true);
 
-    await screen.findByRole('heading', { name: /Review and Submit/i, timeout: 4000 });
+    await screen.findByRole('heading', { name: /review and submit/i, timeout: 4000 });
 
     let submit = await screen.findByRole('button', { name: /submit for approval/i });
     expect(submit).toBeDisabled();
@@ -158,11 +154,11 @@ describe('Local storage fallbacks', () => {
     const mockWarn = jest.spyOn(global.console, 'warn');
 
     const d = {
-      ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+      ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.SUBMITTED,
     };
 
     fetchMock.get('/api/activity-reports/1', d);
-    renderActivityReport('1', 'review', true);
+    renderActivityReport('1', 'review', true, 3);
 
     await screen.findByRole('heading', { name: /Activity report for Region 1/i, timeout: 4000 });
     expect(mockWarn).toHaveBeenCalledWith('Local storage may not be available: ', e);

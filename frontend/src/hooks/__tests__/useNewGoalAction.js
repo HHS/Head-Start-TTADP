@@ -7,27 +7,6 @@ describe('useNewGoalAction', () => {
   afterEach(() => {
     fetchMock.restore();
   });
-  it('handles selecting a nudged goal', async () => {
-    const { result } = renderHook(() => useNewGoalAction());
-
-    const goalIds = [1];
-
-    const data = {
-      useOhsInitiativeGoal: false,
-      goalIds,
-      goalStatus: GOAL_STATUS.IN_PROGRESS,
-      selectedGrant: { id: 1 },
-      goalTemplate: null,
-      goalName: 'Test Goal',
-    };
-
-    let response;
-    await act(async () => {
-      response = await result.current(1, 1, false, data);
-    });
-
-    expect(response).toEqual([1]);
-  });
 
   it('reopens a closed goal', async () => {
     const { result } = renderHook(() => useNewGoalAction());

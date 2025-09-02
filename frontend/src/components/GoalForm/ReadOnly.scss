@@ -3,3 +3,8 @@
 .ttahub-goal-form-goal-summary {
     background-color: $base-lightest;
 }
+
+.ttahub-goal-form-goal-summary .position-relative .smart-hub--button__no-margin {
+    margin: 0px;
+    padding: 0px;
+}

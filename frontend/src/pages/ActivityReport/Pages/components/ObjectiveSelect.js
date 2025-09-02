@@ -17,9 +17,24 @@ export default function ObjectiveSelect({
 }) {
   const modalRef = useRef(null);
 
+  // Do not mutate function parameters directly; instead, prepare a derived value
+  const updatedSelectedObjectives = React.useMemo(() => {
+    if (Array.isArray(selectedObjectives)) {
+      return selectedObjectives.map((obj) => (
+        obj && !obj.label
+          ? { ...obj, label: 'Create a new objective' }
+          : obj
+      ));
+    }
+    if (selectedObjectives && !selectedObjectives.label) {
+      return { ...selectedObjectives, label: 'Create a new objective' };
+    }
+    return selectedObjectives;
+  }, [selectedObjectives]);
+
   return (
     <>
-      <div className="display-flex flex-justify maxw-mobile-lg margin-top-5">
+      <div className="display-flex flex-justify maxw-mobile-lg margin-top-4">
         <h3 className="margin-0">Objective summary</h3>
         { onRemove && (
           <ModalToggleButton
@@ -45,7 +60,7 @@ export default function ObjectiveSelect({
           options={options}
           styles={selectOptionsReset}
           placeholder="- Select -"
-          value={selectedObjectives}
+          value={updatedSelectedObjectives}
           required
         />
       </Label>

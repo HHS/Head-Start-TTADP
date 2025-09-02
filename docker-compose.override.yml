@@ -80,15 +80,3 @@ services:
       - ./reports:/zap/wrk:rw
     depends_on:
       - backend
-  owasp_zap_similarity:
-    image: softwaresecurityproject/zap-stable:latest
-    profiles:
-      - full_stack_zap
-    platform: linux/amd64
-    user: zap
-    command: zap-api-scan.py -t http://similarity_api:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
-    volumes:
-      - ./zap.conf:/zap/wrk/zap.conf:ro
-      - ./reports:/zap/wrk:rw
-    depends_on:
-      - similarity_api
