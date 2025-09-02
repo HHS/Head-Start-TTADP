@@ -129,7 +129,7 @@ export async function createOrUpdateReport(newReport, oldReport) {
 
   // Sync the approvers, if an empty array they get removed
   if (newReport.approverUserIds) {
-    await syncCRApprovers(savedReport.id, newReport.approverUserIds);
+    await syncCRApprovers();
   }
 
   // Finally, fetch a new copy of the saved report from the DB
