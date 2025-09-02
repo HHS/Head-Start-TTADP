@@ -36,6 +36,6 @@ describe('Review component', () => {
 
   it('renders the component', () => {
     render(<RenderReview />);
-    expect(screen.getByText('Review and approve report')).toBeInTheDocument();
+    expect(screen.getByText('Review and approve')).toBeInTheDocument();
   });
 });

@@ -16,7 +16,7 @@ const REGION_ID = 1;
 const getGroupsByRegionUrl = join('/', 'api', 'admin', 'groups', 'region', String(REGION_ID));
 const templatesUrl = join('/', 'api', 'admin', 'goals', 'curated-templates');
 const creatorsUrl = join('/', 'api', 'admin', 'users', 'creators', 'region', String(REGION_ID));
-const promptsUrl = join('/', 'api', 'goal-templates', '1', 'prompts');
+const promptsUrl = join('/', 'api', 'goal-templates', '1', 'prompts?&isForActivityReport=false');
 
 const createGoalsUrl = join('/', 'api', 'admin', 'goals');
 

@@ -1,7 +1,6 @@
 import {
   validateListOfResources,
   GOAL_NAME_ERROR,
-  GOAL_SOURCE_ERROR,
 } from '../../../../components/GoalForm/constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
@@ -41,6 +40,7 @@ export const unfinishedObjectives = (
   objectives,
   setError = () => {},
   fieldArrayName = 'goalForEditing.objectives',
+  isMonitoringGoal = false,
 ) => {
   const unfinished = objectives.some(
     (objective, index) => {
@@ -61,7 +61,8 @@ export const unfinishedObjectives = (
       }
 
       // We only validate citations if they exist (they are not always required).
-      if (objective.citations && !objective.citations.length) {
+      if (isMonitoringGoal && (!objective.citations
+        || (objective.citations && !objective.citations.length))) {
         setError(`${fieldArrayName}[${index}].citations`, { message: OBJECTIVE_CITATIONS });
         incomplete = true;
       }
@@ -86,7 +87,7 @@ export const unfinishedObjectives = (
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };
 
-export const unfinishedGoals = (goals, setError = () => {}, hasMultipleGrants) => {
+export const unfinishedGoals = (goals, setError = () => {}) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
 
@@ -95,14 +96,10 @@ export const unfinishedGoals = (goals, setError = () => {}, hasMultipleGrants) =
       return GOAL_NAME_ERROR;
     }
 
-    if (!goal.source && !hasMultipleGrants) {
-      setError('goalSource', { message: GOAL_SOURCE_ERROR });
-      return GOAL_SOURCE_ERROR;
-    }
-
     // Every goal must have an objective or the `goals` field has unfinished goals
     if (goal.objectives && goal.objectives.length > 0) {
-      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives');
+      const isMonitoringGoal = goal.standard === 'Monitoring';
+      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives', isMonitoringGoal);
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
@@ -115,12 +112,12 @@ export const unfinishedGoals = (goals, setError = () => {}, hasMultipleGrants) =
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}, hasMultipleGrants = false) => {
+export const validateGoals = (goals, setError = () => {}) => {
   if (goals.length < 1) {
     return GOALS_EMPTY;
   }
 
-  const unfinishedMessage = unfinishedGoals(goals, setError, hasMultipleGrants);
+  const unfinishedMessage = unfinishedGoals(goals, setError);
   if (unfinishedMessage) {
     return unfinishedMessage;
   }

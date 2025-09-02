@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import Req from './Req';
-
+import QuestionTooltip from './QuestionTooltip';
 import './FormItem.scss';
 
 const labelPropTypes = {
@@ -30,7 +30,7 @@ function FieldSetWrapper({ label, children, className }) {
 FieldSetWrapper.propTypes = labelPropTypes;
 
 function LabelWrapper({
-  label, children, className, htmlFor,
+  label, children, className, htmlFor, toolTipText = null,
 }) {
   /**
    * The date picker component renders two inputs. This seemed to create
@@ -42,7 +42,17 @@ function LabelWrapper({
   if (htmlFor) {
     return (
       <Label className={className} htmlFor={htmlFor}>
-        {label}
+        <div>
+          {label}
+          {toolTipText && (
+
+          <QuestionTooltip
+            text={toolTipText}
+            className="margin-left-0"
+          />
+
+          )}
+        </div>
         {children}
       </Label>
     );
@@ -73,8 +83,10 @@ function FormItem({
   name,
   fieldSetWrapper,
   className,
+  formGroupClassName,
   htmlFor,
-  tooltipText,
+  toolTipText,
+  customLabel,
 }) {
   const { formState: { errors } } = useFormContext();
 
@@ -86,14 +98,14 @@ function FormItem({
   const labelWithRequiredTag = (
     <>
       {label}
-      {required && (
+      {label && required && (
         <>
           {' '}
           <Req announce />
         </>
       )}
-      {tooltipText && (
-      <Tooltip asCustom={CustomTooltip} label={tooltipText}>
+      {toolTipText && (
+      <Tooltip asCustom={CustomTooltip} label={toolTipText}>
         <FontAwesomeIcon className="margin-right-1 no-print" data-testid="info-tooltip-icon" color={colors.ttahubMediumBlue} icon={faQuestionCircle} />
       </Tooltip>
       )}
@@ -103,8 +115,16 @@ function FormItem({
   const LabelType = fieldSetWrapper ? FieldSetWrapper : LabelWrapper;
 
   return (
-    <FormGroup error={fieldErrors}>
-      <LabelType htmlFor={htmlFor} label={labelWithRequiredTag} className={className}>
+    <FormGroup className={formGroupClassName} error={fieldErrors}>
+      {
+        !label && (customLabel)
+       }
+      <LabelType
+        htmlFor={htmlFor}
+        label={labelWithRequiredTag}
+        className={className}
+        toolTipText={toolTipText}
+      >
         {hint && (
         <>
           <br />
@@ -125,6 +145,7 @@ function FormItem({
 
 FormItem.propTypes = {
   label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
+  customLabel: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,
@@ -132,7 +153,8 @@ FormItem.propTypes = {
   className: PropTypes.string,
   htmlFor: PropTypes.string,
   hint: PropTypes.string,
-  tooltipText: PropTypes.string,
+  toolTipText: PropTypes.string,
+  formGroupClassName: PropTypes.string,
 };
 
 FormItem.defaultProps = {
@@ -141,7 +163,8 @@ FormItem.defaultProps = {
   className: '',
   htmlFor: '',
   hint: '',
-  tooltipText: undefined,
+  toolTipText: null,
+  formGroupClassName: '',
 };
 
 export default FormItem;

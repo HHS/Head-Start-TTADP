@@ -24,6 +24,7 @@ describe('GoalForm', () => {
       id,
       isNew: id === 'new',
       goalIds: [123],
+      goalTemplateId: 1,
     };
 
     const hookForm = useForm({
@@ -52,6 +53,8 @@ describe('GoalForm', () => {
               roles={[]}
               topicOptions={[{ label: 'Coaching', value: 1 }]}
               reportId={1}
+              templateResponses={[]}
+              templatePrompts={[]}
             />
           </FormProvider>
         </UserContext.Provider>
@@ -111,7 +114,7 @@ describe('GoalForm', () => {
 
   it('fetches data for existing goals', async () => {
     const goalId = 123;
-    fetchMock.get(`/api/goals?reportId=1&goalIds=${goalId}`, [{
+    fetchMock.get('/api/goals?reportId=1&goalTemplateId=1', [{
       status: '',
       value: goalId,
       label: 'Test',

@@ -229,6 +229,15 @@ const GOAL_SOURCES = [
 
 exports.GOAL_SOURCES = GOAL_SOURCES;
 
+const ACTIVITY_REASONS = [
+  'Federal monitoring issues, including CLASS and RANs',
+  'Group event follow-up',
+  'Recipient requested',
+  'Regional Office requested',
+];
+
+exports.ACTIVITY_REASONS = ACTIVITY_REASONS;
+
 const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
