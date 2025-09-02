@@ -133,3 +133,19 @@ export async function saveReport(req: Request, res: Response) {
     await handleErrors(req, res, error, logContext);
   }
 }
+
+export async function softDeleteReport(req: Request, res: Response) {
+  res.send(204);
+}
+
+export async function submitReport(req: Request, res: Response) {
+  res.send(204);
+}
+
+export async function reviewReport(req: Request, res: Response) {
+  res.send(204);
+}
+
+export async function createReport(req: Request, res: Response) {
+  res.send(204);
+}
