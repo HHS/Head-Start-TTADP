@@ -121,14 +121,10 @@ export default function GoalForm({
     activityRecipients,
   );
 
-  const isCurated = goal.isCurated || false;
   return (
     <>
       <FormFieldThatIsSometimesReadOnly
-        permissions={[
-          !(goal.onApprovedAR),
-          !isCurated,
-        ]}
+        permissions={[false]}
         label="Recipient's goal"
         value={goalText}
       >
