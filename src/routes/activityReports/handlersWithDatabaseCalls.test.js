@@ -24,6 +24,8 @@ const draftObject = {
   ttaType: ['type'],
   creatorRole: 'TTAC',
   version: 2,
+  language: ['english'],
+  activityReason: 'recipient requested',
 };
 
 const mockUser = {
