@@ -10,6 +10,7 @@ executors:
     - image: cimg/node:20.19.3-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+        IGNORE_CACHE: true
     - image: cimg/postgres:15.12
       environment:
         POSTGRES_USER: postgres
