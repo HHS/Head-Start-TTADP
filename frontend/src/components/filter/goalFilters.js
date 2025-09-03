@@ -148,7 +148,7 @@ export const grantNumberFilter = (possibleGrants) => ({
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: (query) => {
     const toDisplay = query.map((q) => {
-      const grant = possibleGrants.find((g) => g.number === q);
+      const grant = (possibleGrants || []).find((g) => g.number === q);
       if (grant) {
         return grant.numberWithProgramTypes;
       }
@@ -163,7 +163,7 @@ export const grantNumberFilter = (possibleGrants) => ({
       onApply={onApplyQuery}
       inputId={`grant-number-${condition}-${id}`}
       labelText="Select grant numbers to filter by"
-      options={possibleGrants.map((g) => ({
+      options={(possibleGrants || []).map((g) => ({
         value: g.number,
         label: `${g.numberWithProgramTypes} - ${g.status}`,
       }))}

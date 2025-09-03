@@ -1,3 +1,4 @@
+import moment from 'moment';
 import * as Sequelize from 'sequelize';
 import db from '../models';
 
@@ -7,6 +8,8 @@ interface GoalStatusChangeParams {
   newStatus: string;
   reason: string;
   context: string;
+  performedAt?: string,
+  forceStatusChange?: boolean;
   transaction?: Sequelize.Transaction;
 }
 
@@ -35,6 +38,7 @@ export async function changeGoalStatusWithSystemUser({
       newStatus,
       reason,
       context,
+      performedAt: null,
     });
 
     await goal.reload();
@@ -49,6 +53,8 @@ export default async function changeGoalStatus({
   newStatus,
   reason,
   context,
+  performedAt,
+  forceStatusChange = false,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
     db.User.findOne({
@@ -74,18 +80,20 @@ export default async function changeGoalStatus({
 
   const oldStatus = goal.status;
 
-  if (oldStatus !== newStatus) {
-    await db.GoalStatusChange.create({
-      goalId,
-      userId,
-      userName: user.name,
-      userRoles: user.roles.map((role) => role.name),
-      oldStatus,
-      newStatus,
-      reason,
-      context,
-    });
+  const change = {
+    goalId,
+    userId,
+    userName: user.name,
+    userRoles: user.roles.map((role: { name: string }) => role.name),
+    oldStatus,
+    newStatus,
+    reason,
+    context,
+    performedAt: performedAt ? moment.utc(performedAt).toDate() : new Date(),
+  };
 
+  if (oldStatus !== newStatus || forceStatusChange) {
+    await db.GoalStatusChange.create(change);
     await goal.reload();
   }
 

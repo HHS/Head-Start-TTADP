@@ -5,9 +5,8 @@ import {
 
 const goalsUrl = join('/', 'api', 'goals');
 
-export async function goalsByIdsAndActivityReport(goalIds, reportId) {
-  const params = goalIds.map((goalId) => `goalIds=${goalId}`);
-  const url = join(goalsUrl, `?reportId=${reportId}&${params.join('&')}`);
+export async function getGoalTemplateObjectiveOptions(reportId, goalTemplateId) {
+  const url = join(goalsUrl, `?reportId=${reportId}&goalTemplateId=${goalTemplateId}`);
   const response = await get(url);
   return response.json();
 }
@@ -52,65 +51,6 @@ export async function deleteGoal(goalIds, regionId) {
   const url = join(goalsUrl, `?${goalIds.map((id) => `goalIds=${id}`).join('&')}`);
   const deleted = await destroy(url, { regionId });
   return deleted.json();
-}
-
-export async function mergeGoals(
-  selectedGoalIds,
-  finalGoalId,
-  recipientId,
-  regionId,
-  goalSimilarityGroupId,
-) {
-  const res = await post(join(
-    goalsUrl,
-    'recipient',
-    String(recipientId),
-    'region',
-    String(regionId),
-    'merge',
-  ), {
-    selectedGoalIds,
-    finalGoalId,
-    goalSimilarityGroupId,
-  });
-  return res.json();
-}
-
-export async function similarity(regionId, recipientId) {
-  const url = join(
-    goalsUrl,
-    'similar',
-    'region',
-    String(regionId),
-    'recipient',
-    String(recipientId),
-    '?cluster=true',
-  );
-  const response = await get(url);
-  return response.json();
-}
-
-export async function similiarGoalsByText(
-  regionId,
-  recipientId,
-  name,
-  grantNumbers,
-) {
-  const parameterizedGrantNumbers = grantNumbers.map((grantNumber) => `grantNumbers=${encodeURIComponent(grantNumber)}`).join('&');
-  const parameterizedGoalName = `name=${encodeURIComponent(name)}`;
-
-  const url = join(
-    goalsUrl,
-    'recipient',
-    String(recipientId),
-    'region',
-    String(regionId),
-    'nudge',
-    `?${parameterizedGoalName}&${parameterizedGrantNumbers}`,
-  );
-
-  const response = await get(url);
-  return response.json();
 }
 
 export async function missingDataForActivityReport(regionId, goalIds) {

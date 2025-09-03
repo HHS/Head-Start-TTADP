@@ -7,15 +7,20 @@ import Section from './ReviewSection';
 import ReviewItem from './ReviewItem';
 import { reportIsEditable } from '../../../../utils';
 
-const ReviewPage = ({ sections, path }) => {
+const ReviewPage = ({
+  sections, path, isCustomValue, className,
+}) => {
   const { getValues } = useFormContext();
   const canEdit = reportIsEditable(getValues('calculatedStatus'));
-
   return (
-    <>
+    <div className={className}>
       {sections.map((section) => {
         const names = section.items.map((item) => item.name);
-        const values = getValues(names);
+        const isEditSection = section.isEditSection || false;
+        const values = isCustomValue
+          ? section.items.map((item) => item.customValue[item.name])
+          : getValues(names);
+
         const isEmpty = !some(values, (value) => value && value.length);
         return (
           <Section
@@ -24,7 +29,7 @@ const ReviewPage = ({ sections, path }) => {
             basePath={path}
             anchor={section.anchor}
             title={section.title}
-            canEdit={canEdit}
+            canEdit={canEdit && isEditSection}
           >
             {section.items.map((item) => (
               <ReviewItem
@@ -33,12 +38,14 @@ const ReviewPage = ({ sections, path }) => {
                 path={item.path}
                 name={item.name}
                 sortValues={item.sort}
+                isRichText={item.isRichText}
+                customValue={item.customValue}
               />
             ))}
           </Section>
         );
       })}
-    </>
+    </div>
   );
 };
 
@@ -53,6 +60,13 @@ ReviewPage.propTypes = {
       name: PropTypes.string,
     })),
   })).isRequired,
+  isCustomValue: PropTypes.bool,
+  className: PropTypes.string,
+};
+
+ReviewPage.defaultProps = {
+  isCustomValue: false,
+  className: '',
 };
 
 export default ReviewPage;
