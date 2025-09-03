@@ -36,6 +36,10 @@ const autoPopulateTemplateNameModifiedAt = (sequelize, instance, options) => {
   }
 };
 
+// TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
+// Going forward, all goals will be standard goals.
+// We determine what the creation method is going to be for standard goals.
+// Automatic, created, system generated or something different all together (check with Nathan).
 const autoPopulateCreationMethod = (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -46,28 +50,6 @@ const autoPopulateCreationMethod = (sequelize, instance, options) => {
     if (!options.fields.includes('creationMethod')) {
       options.fields.push('creationMethod');
     }
-  }
-};
-
-const propagateTemplateName = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-        && changed.includes('templateName')
-        && instance.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
-    await sequelize.models.Goal.update(
-      { name: instance.templateName },
-      {
-        where: {
-          [Op.and]: [
-            { goalTemplateId: instance.id },
-            { onApprovedAR: false },
-            { name: { [Op.not]: instance.templateName } },
-          ],
-        },
-        transaction: options.transaction,
-        individualHooks: true,
-      },
-    );
   }
 };
 
@@ -87,7 +69,6 @@ const afterCreate = async (sequelize, instance, options) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
-  await propagateTemplateName(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
 };
 
@@ -96,7 +77,6 @@ export {
   autoPopulateHash,
   autoPopulateTemplateNameModifiedAt,
   autoPopulateCreationMethod,
-  propagateTemplateName,
   beforeValidate,
   beforeUpdate,
   afterCreate,

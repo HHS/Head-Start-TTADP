@@ -1,10 +1,19 @@
 const { Model } = require('sequelize');
 const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+// The below import seems very odd to me that we are bringing in hooks for a different model.
+// Its hard to say if this was a mistake or if we are using goal hooks for resource processing.
+// One would think if we were using goal hooks in the next steps after create it would be commented.
+/*
 const {
   afterCreate,
   afterUpdate,
 } = require('./hooks/goal');
+ */
+const {
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/nextStep');
 
 export default (sequelize, DataTypes) => {
   class NextStep extends Model {

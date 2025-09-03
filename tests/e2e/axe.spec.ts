@@ -26,7 +26,7 @@ const testForAxeViolations = async (page: Page, url: { url: string, disabledRule
   builder.disableRules(url.disabledRules);
   const results = await builder.analyze();
   expect(results.violations).toEqual([]);
-};  
+};
 
 for (const url of axeUrls) {
   test(`testing with ${url.url}`, async ({ page }) => {

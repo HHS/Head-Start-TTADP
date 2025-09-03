@@ -317,7 +317,6 @@ export default function Create() {
             {prompts && (
             <ConditionalFieldsForHookForm
               prompts={prompts}
-              isMultiRecipientReport={false}
               userCanEdit
             />
             )}

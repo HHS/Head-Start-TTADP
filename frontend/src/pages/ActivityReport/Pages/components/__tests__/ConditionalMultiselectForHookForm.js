@@ -14,11 +14,11 @@ describe('ConditionalMultiselectForHookForm', () => {
   let setError;
 
   // eslint-disable-next-line react/prop-types
-  const Rt = ({ userCanEdit = true }) => {
+  const Rt = ({ userCanEdit = true, defaultValue = [], value = ['run', 'test'] }) => {
     const hookForm = useForm({
       mode: 'onChange',
       defaultValues: {
-        testField: ['run', 'test'],
+        testField: value,
       },
     });
 
@@ -30,6 +30,7 @@ describe('ConditionalMultiselectForHookForm', () => {
       options: [
         'test',
         'run',
+        'default',
       ],
       title: 'Riddle',
       type: 'multiselect',
@@ -55,7 +56,7 @@ describe('ConditionalMultiselectForHookForm', () => {
             fieldData={fieldData}
             validations={validations}
             fieldName="testField"
-            defaultValue={[]}
+            defaultValue={defaultValue}
             userCanEdit={userCanEdit}
           />
         </FormProvider>
@@ -66,6 +67,9 @@ describe('ConditionalMultiselectForHookForm', () => {
   it('renders the prompt if editable', () => {
     render(<Rt />);
     expect(screen.getByText('answer my riddle')).toBeInTheDocument();
+    // Ensure we render the selected options.
+    expect(screen.getByText('run')).toBeInTheDocument();
+    expect(screen.getByText('test')).toBeInTheDocument();
   });
 
   it('renders a prompt with errors', async () => {
@@ -79,5 +83,10 @@ describe('ConditionalMultiselectForHookForm', () => {
   it('renders the prompt if read only', () => {
     render(<Rt userCanEdit={false} />);
     expect(screen.getByText('Riddle')).toBeInTheDocument();
+  });
+
+  it('renders the default value when the field value is null', () => {
+    render(<Rt defaultValue={['default']} value={null} />);
+    expect(screen.getByText('default')).toBeInTheDocument();
   });
 });
