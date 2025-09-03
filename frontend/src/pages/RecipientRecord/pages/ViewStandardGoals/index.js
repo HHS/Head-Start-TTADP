@@ -198,6 +198,16 @@ export default function ViewGoalDetails({
 
     const objectives = goal.objectives || [];
 
+    const getUserByFromStatus = (update) => {
+      if (goal.standard === 'Monitoring' && update.newStatus === 'Not Started') {
+        return ' by OHS';
+      }
+      if (update.user) {
+        return ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}`;
+      }
+      return '';
+    };
+
     return {
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
@@ -239,7 +249,7 @@ export default function ViewGoalDetails({
                       <strong>
                         {update.performedAt}
                       </strong>
-                      {update.user ? ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}` : ''}
+                      {getUserByFromStatus(update)}
                       {(update.newStatus === GOAL_STATUS.SUSPENDED
                       && updateIndex !== statusUpdates.length - 1)
                         ? (

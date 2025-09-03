@@ -455,4 +455,19 @@ describe('ViewGoalDetails', () => {
     expect(updates).toHaveLength(1);
     expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2024-10-01T00:00:00.000Z')} by Pizza Man`);
   });
+
+  test('renders by ohs tool tip if goal is monitoring and status is Not Started', async () => {
+    const monitoringGoal = {
+      id: 6,
+      name: 'G-6',
+      status: 'Not Started',
+      standard: 'Monitoring',
+    };
+
+    fetchMock.get(goalHistoryUrl, [monitoringGoal, ...mockGoalHistory]);
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+    expect(screen.getByText(/by ohs/i)).toBeInTheDocument();
+  });
 });
