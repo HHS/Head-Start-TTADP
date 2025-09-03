@@ -69,7 +69,7 @@ describe('CollaborationReportForm', () => {
   it('renders', async () => {
     render(<ReportComponent id="new" />);
 
-    const heading = await screen.findByText('Collaboration report for Region');
+    const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
     expect(heading).toBeInTheDocument();
   });
 });
