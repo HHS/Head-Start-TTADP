@@ -1,10 +1,10 @@
 import React, {
-  useState, useContext, useRef,
+  useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
-import { isUndefined } from 'lodash';
+// import { isUndefined } from 'lodash';
 import {
   Fieldset,
   Radio,
@@ -24,20 +24,20 @@ import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
 // import HtmlReviewItem from './Review/HtmlReviewItem';
 // import Section from './Review/ReviewSection';
-import { reportIsEditable } from '../../../utils';
+// import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
 import './activitySummary.scss';
+import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 
 const ActivitySummary = ({ collaborators = [] }) => {
-  // we store this to cause the end date to re-render when updated by the start date (and only then)
-  const [endDateKey, setEndDateKey] = useState('endDate');
+  const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
+
   const {
     register,
     watch,
-    setValue,
     control,
     // getValues,
     // clearErrors,
@@ -51,15 +51,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const { connectionActive } = useContext(NetworkContext);
   const placeholderText = '- Select -';
   const drawerTriggerRef = useRef(null);
-
-  const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
-
-    // this will trigger the re-render of the
-    // uncontrolled end date input
-    // it's a little clumsy, but it does work
-    setEndDateKey(`endDate-${newEnd}`);
-  };
 
   const deliveryMethodOptions = [
     { label: 'Email', value: 'email' },
@@ -411,35 +402,36 @@ ActivitySummary.propTypes = {
 //   },
 // ];
 
-const ReviewSection = () => {
-  const { watch } = useFormContext();
-  const {
-    context,
-    calculatedStatus,
-  } = watch();
+const ReviewSection = () => <div>Activity name</div>;
 
-  const canEdit = reportIsEditable(calculatedStatus);
-  return (
-    <>
-      {/* <ReviewPage sections={sections} path="activity-summary" /> */}
-      {/* eslint-disable-next-line react/jsx-no-undef */}
-      <Section
-        hidePrint={isUndefined(context)}
-        key="context"
-        basePath="activity-summary"
-        anchor="context"
-        title="Context"
-        canEdit={canEdit}
-      >
-        {/* eslint-disable-next-line react/jsx-no-undef */}
-        <HtmlReviewItem
-          label="Context"
-          name="context"
-        />
-      </Section>
-    </>
-  );
-};
+// TODO: Abandoned review section
+// const { watch } = useFormContext();
+// const {
+//   context,
+//   calculatedStatus,
+// } = watch();
+
+// const canEdit = reportIsEditable(calculatedStatus);
+// return (
+//   <>
+//     {/* <ReviewPage sections={sections} path="activity-summary" /> */}
+//     {/* eslint-disable-next-line react/jsx-no-undef */}
+//     <Section
+//       hidePrint={isUndefined(context)}
+//       key="context"
+//       basePath="activity-summary"
+//       anchor="context"
+//       title="Context"
+//       canEdit={canEdit}
+//     >
+//       {/* eslint-disable-next-line react/jsx-no-undef */}
+//       <HtmlReviewItem
+//         label="Context"
+//         name="context"
+//       />
+//     </Section>
+//   </>
+// );
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;

@@ -34,6 +34,7 @@ import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import './index.scss';
+import usePresenceData from '../../hooks/usePresenceData';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -62,12 +63,11 @@ function CollaborationReport({ match, location, region }) {
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
-  const [presenceData, setPresenceData] = useState({
-    hasMultipleUsers: false,
-    otherUsers: [],
-    tabCount: 0,
-  });
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
+  const {
+    presenceData,
+    handlePresenceUpdate,
+  } = usePresenceData(setShouldAutoSave);
 
   const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
     LOCAL_STORAGE_CR_DATA_KEY(collabReportId), null,
@@ -82,7 +82,7 @@ function CollaborationReport({ match, location, region }) {
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
-  const [editable, updateEditable] = useLocalStorage(
+  const [, updateEditable] = useLocalStorage(
     LOCAL_STORAGE_CR_EDITABLE_KEY(collabReportId), (collabReportId === 'new'), currentPage !== 'review',
   );
   const [errorMessage, updateErrorMessage] = useState();
@@ -105,22 +105,6 @@ function CollaborationReport({ match, location, region }) {
     // seeing a save message if they refresh the page after creating a new report.
     history.replace();
   }, [collabReportId, history]);
-
-  // If there are multiple users working on the same report, we need to suspend auto-saving
-  useEffect(() => {
-    if (presenceData.hasMultipleUsers || presenceData.tabCount > 1) {
-      const otherUsernames = presenceData.otherUsers
-        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
-        .filter((username, index, self) => self.indexOf(username) === index);
-      if (otherUsernames.length > 0 || presenceData.tabCount > 1) {
-        setShouldAutoSave(false);
-      } else {
-        setShouldAutoSave(true);
-      }
-    } else {
-      setShouldAutoSave(true);
-    }
-  }, [presenceData]);
 
   useLocalStorageCleanup(
     formData,
@@ -257,7 +241,7 @@ function CollaborationReport({ match, location, region }) {
             .
           </>
         );
-        const errorMsg = !connection ? networkErrorMessage : <>Unable to load activity report</>;
+        const errorMsg = !connection ? networkErrorMessage : <>Unable to load report</>;
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
@@ -283,12 +267,6 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
-  // If no region was able to be found, we will re-reroute user to the main page
-  // FIXME: when re-routing user show a message explaining what happened
-  if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
-    return <Redirect to="/" />;
-  }
-
   // This error message is a catch all assuming that the network storage is working
   if (error && !formData) {
     return (
@@ -298,17 +276,19 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
+  // TODO: uncomment when logic is more complete
   // if (connectionActive && !editable && currentPage !== 'review') {
   //   return (
   //     <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
   //   );
   // }
 
-  if (!currentPage && editable && isPendingApprover) {
-    return (
-      <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
-    );
-  }
+  // TODO: uncomment when logic is more complete
+  // if (!currentPage && editable && isPendingApprover) {
+  //   return (
+  //     <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
+  //   );
+  // }
 
   if (!currentPage) {
     return (
@@ -316,22 +296,31 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
-  const updatePage = (position) => {
-    if (!editable) {
-      return;
-    }
+  // TODO: Will take position as a parameter
+  const updatePage = () => {
+    // TODO: uncomment when logic is complete
+    // TODO (alternately): since this logic is so similar in multiple places now,
+    // I suspect we could make it reusable
 
-    const state = {};
-    if (collabReportId === 'new' && reportId.current !== 'new') {
-      state.showLastUpdatedTime = true;
-    }
+    // if (!editable) {
+    //   return;
+    // }
 
-    const page = pages.find((p) => p.position === position);
-    const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    // const state = {};
+    // if (collabReportId === 'new' && reportId.current !== 'new') {
+    //   state.showLastUpdatedTime = true;
+    // }
+
+    // const page = pages.find((p) => p.position === position);
+    // const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
+    // history.push(newPath, state);
   };
 
+  // ===========================================================================//
+  //
   // NOTE: onSave, onFormSubmit, onReview, and onResetToDraft go here eventually
+  //
+  // ===========================================================================//
 
   const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
@@ -350,12 +339,6 @@ function CollaborationReport({ match, location, region }) {
 
       </>
   ) : null;
-
-  /* istanbul ignore next: hard to test websocket functionality */
-  // receives presence updates from the Mesh component
-  const handlePresenceUpdate = (data) => {
-    setPresenceData(data);
-  };
 
   /* istanbul ignore next: hard to test websocket functionality */
   // eslint-disable-next-line no-shadow, no-unused-vars

@@ -6,6 +6,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
+import userEvent from '@testing-library/user-event';
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, { isPageComplete } from '../activitySummary';
 import UserContext from '../../../../UserContext';
@@ -49,6 +50,36 @@ const RenderActivitySummary = ({
   );
 };
 
+describe('CollabReport ActivitySummary Review Section', () => {
+  const RenderReview = ({
+    networkActive = true,
+    defaultValues = {},
+  }) => {
+    const hookForm = useForm({
+      mode: 'onChange',
+      defaultValues,
+    });
+
+    return (
+      <NetworkContext.Provider
+        value={{ connectionActive: networkActive, localStorageAvailable: true }}
+      >
+        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+          <FormProvider {...hookForm}>
+            {activitySummary.reviewSection()}
+          </FormProvider>
+        </UserContext.Provider>
+      </NetworkContext.Provider>
+    );
+  };
+
+  it('renders', async () => {
+    render(<RenderReview />);
+
+    expect(screen.getByText('Activity name')).toBeInTheDocument();
+  });
+});
+
 describe('CollabReport Activity Summary Page', () => {
   it('renders', () => {
     render(<RenderActivitySummary />);
@@ -86,6 +117,20 @@ describe('CollabReport Activity Summary Page', () => {
 
     expect(screen.getByText('Start date')).toBeInTheDocument();
     expect(screen.getByText('End date')).toBeInTheDocument();
+  });
+
+  it('updates end date', async () => {
+    render(<RenderActivitySummary defaultValues={{ startDate: '01/01/2024', endDate: '01/02/2024' }} />);
+
+    // I wrote this this way to account for the weird HTML while also preserving the desired pattern
+    // of accessing inputs the same way the user would, via the label text
+    // TODO: determine if the nested strategy of the FormItem component
+    // presents an accessibility issue
+    let endDate = document.querySelector(`#${(await screen.findByText(/End date/i)).parentElement.getAttribute('for')}`);
+    userEvent.clear(endDate);
+    userEvent.type(endDate, '01/04/2025');
+    endDate = document.querySelector(`#${(await screen.findByText(/End date/i)).parentElement.getAttribute('for')}`);
+    expect(endDate).toHaveValue('01/04/2025');
   });
 
   describe('isPageComplete function', () => {
