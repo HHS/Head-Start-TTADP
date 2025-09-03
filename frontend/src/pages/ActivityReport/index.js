@@ -44,6 +44,7 @@ import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLo
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
+import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -132,32 +133,6 @@ export const formatReportWithSaveBeforeConversion = async (
   return reportData;
 };
 
-export function cleanupLocalStorage(id, replacementKey) {
-  try {
-    if (replacementKey) {
-      window.localStorage.setItem(
-        LOCAL_STORAGE_AR_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_AR_DATA_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_AR_EDITABLE_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_AR_EDITABLE_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(id)),
-      );
-    }
-
-    window.localStorage.removeItem(LOCAL_STORAGE_AR_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(id));
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Local storage may not be available: ', e);
-  }
-}
-
 function ActivityReport({
   match, location, region,
 }) {
@@ -238,15 +213,7 @@ function ActivityReport({
     }
   }, [presenceData]);
 
-  // cleanup local storage if the report has been submitted or approved
-  useEffect(() => {
-    if (formData
-      && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
-      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
-    ) {
-      cleanupLocalStorage(activityReportId);
-    }
-  }, [activityReportId, formData]);
+  useLocalStorageCleanup(formData, activityReportId);
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 

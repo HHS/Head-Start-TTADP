@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /*
   Collaboration report. Makes use of the navigator to split the long form into
   multiple pages. Each "page" is defined in the `./Pages` directory.
@@ -11,62 +12,49 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import pages from './Pages';
-import ActivityReportNavigator from '../../components/Navigator/ActivityReportNavigator';
-import './index.scss';
+import Navigator from '../../components/Navigator';
 import { NOT_STARTED } from './constants';
 import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_CR_EDITABLE_KEY,
+  NOOP,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
 import { getCollaborators } from '../../fetchers/collaborators';
-import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
+import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
+import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
+import './index.scss';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
   collaborators: [],
+  approvers: [],
+  pageState: {
+    1: NOT_STARTED,
+  },
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
-export function cleanupLocalStorage(id, replacementKey) {
-  try {
-    if (replacementKey) {
-      window.localStorage.setItem(
-        LOCAL_STORAGE_CR_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_CR_DATA_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_CR_EDITABLE_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_CR_EDITABLE_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY(id)),
-      );
-    }
-
-    window.localStorage.removeItem(LOCAL_STORAGE_CR_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_CR_EDITABLE_KEY(id));
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Local storage may not be available: ', e);
-  }
-}
-
 function CollaborationReport({ match, location, region }) {
   const { params: { currentPage, collabReportId } } = match;
+
+  const hookForm = useForm({
+    mode: 'onBlur',
+    defaultValues,
+    shouldUnregister: false,
+  });
 
   const history = useHistory();
   const [error, updateError] = useState();
@@ -100,7 +88,7 @@ function CollaborationReport({ match, location, region }) {
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
-  const [connectionActive, setConnectionActive] = useState(true);
+  const [connectionActive] = useState(true);
 
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
@@ -134,15 +122,13 @@ function CollaborationReport({ match, location, region }) {
     }
   }, [presenceData]);
 
-  // cleanup local storage if the report has been submitted or approved
-  useEffect(() => {
-    if (formData
-        && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
-        || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
-    ) {
-      cleanupLocalStorage(collabReportId);
-    }
-  }, [collabReportId, formData]);
+  useLocalStorageCleanup(
+    formData,
+    collabReportId,
+    LOCAL_STORAGE_CR_DATA_KEY,
+    LOCAL_STORAGE_CR_EDITABLE_KEY,
+    LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
+  );
 
   // const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
@@ -259,7 +245,7 @@ function CollaborationReport({ match, location, region }) {
 
         updateError();
       } catch (e) {
-        const connection = setConnectionActiveWithError(e, setConnectionActive);
+        const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}
@@ -312,11 +298,11 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
-  if (connectionActive && !editable && currentPage !== 'review') {
-    return (
-      <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
-    );
-  }
+  // if (connectionActive && !editable && currentPage !== 'review') {
+  //   return (
+  //     <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
+  //   );
+  // }
 
   if (!currentPage && editable && isPendingApprover) {
     return (
@@ -461,31 +447,33 @@ function CollaborationReport({ match, location, region }) {
         }
       }
       >
-        <ActivityReportNavigator
-          key={currentPage}
-          editable={editable}
-          updatePage={updatePage}
-          reportCreator={reportCreator}
-          lastSaveTime={lastSaveTime}
-          updateLastSaveTime={updateLastSaveTime}
-          reportId={reportId.current}
-          currentPage={currentPage}
-          additionalData={initialAdditionalData}
-          formData={formData}
-          updateFormData={updateFormData}
-          pages={pages}
-          // onFormSubmit={onFormSubmit}
-          // onSave={onSave}
-          // onResetToDraft={onResetToDraft}
-          isApprover={isApprover}
-          isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
-          // onReview={onReview}
-          errorMessage={errorMessage}
-          updateErrorMessage={updateErrorMessage}
-          savedToStorageTime={savedToStorageTime}
-          shouldAutoSave={shouldAutoSave}
-          hideSideNav={hideSideNav}
-        />
+        <FormProvider {...hookForm}>
+          <Navigator
+            formData={formData}
+            pages={pages}
+            onFormSubmit={NOOP}
+            onReview={NOOP}
+            currentPage={currentPage}
+            additionalData={initialAdditionalData}
+            onSave={NOOP}
+            isApprover={isApprover}
+            isPendingApprover={isPendingApprover}
+            reportId={reportId.current}
+            updatePage={updatePage}
+            reportCreator={reportCreator}
+            lastSaveTime={lastSaveTime}
+            errorMessage={errorMessage}
+            updateErrorMessage={updateErrorMessage}
+            savedToStorageTime={savedToStorageTime}
+            onSaveDraft={NOOP}
+            onSaveAndContinue={NOOP}
+          // showSavedDraft={showSavedDraft}
+          // updateShowSavedDraft={updateShowSavedDraft}
+          // datePickerKey={datePickerKey}
+            shouldAutoSave={shouldAutoSave}
+            hideSideNav={hideSideNav}
+          />
+        </FormProvider>
       </NetworkContext.Provider>
     </div>
   );
