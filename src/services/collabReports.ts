@@ -80,7 +80,7 @@ export async function collabReportById(crId) {
         include: [
           {
             model: User,
-            as: 'user',
+            as: 'specialist',
           },
         ],
       },

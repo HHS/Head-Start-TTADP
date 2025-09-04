@@ -1,12 +1,13 @@
 import express from 'express';
 import {
-  createReport,
+  // createReport,
   getReport,
   getReports,
-  reviewReport,
+  // resetToDraft,
+  // reviewReport,
   saveReport,
-  softDeleteReport,
-  submitReport,
+  // softDeleteReport,
+  // submitReport,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 import { checkCollabReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -20,10 +21,13 @@ const router = express.Router();
  */
 
 // createReport
-router.post('/', transactionWrapper(createReport));
+// router.post('/', transactionWrapper(createReport));
 
 // deleteReport
-router.delete('/:collabReportId', checkCollabReportIdParam, transactionWrapper(softDeleteReport));
+// router.delete(
+//   '/:collabReportId',
+//   checkCollabReportIdParam,
+//   transactionWrapper(softDeleteReport));
 
 // getReport
 router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, transactionWrapper(getReport));
@@ -31,13 +35,20 @@ router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, 
 // getReports
 router.get('/', transactionWrapper(getReports));
 
+// resetToDraft
+// router.put('/:collabReportId/reset', checkCollabReportIdParam, transactionWrapper(resetToDraft));
+
 // reviewReport
-router.put('/:collabReportId/review', checkCollabReportIdParam, transactionWrapper(reviewReport));
+// router.put('/:collabReportId/review',
+// checkCollabReportIdParam,
+// transactionWrapper(reviewReport));
 
 // saveReport
 router.put('/:collabReportId', checkCollabReportIdParam, transactionWrapper(saveReport));
 
 // submitReport
-router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapper(submitReport));
+// router.put('/:collabReportId/submit',
+// checkCollabReportIdParam,
+// transactionWrapper(submitReport));
 
 export default router;

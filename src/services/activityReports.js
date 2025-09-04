@@ -37,13 +37,12 @@ import {
   Course,
 } from '../models';
 import {
-  removeUnusedGoalsObjectivesFromReport,
-  saveGoalsForReport,
   removeRemovedRecipientsGoals,
 } from '../goalServices/goals';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
-import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
+import { getObjectivesByReportId } from './objectives';
 import parseDate from '../lib/date';
+import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } from './standardGoals';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -338,22 +337,25 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: Recipient,
             as: 'recipient',
-            attributes: ['name'],
+            attributes: ['id', 'name'],
           },
         ],
       },
     ],
   });
-
   const activityRecipients = recipients.map((recipient) => {
+    const recipientId = recipient.id;
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
 
     return {
       id: activityRecipientId,
+      recipientId,
       activityRecipientId, // Create or Update Report Expect's this Field.
       name,
+      // We need the actual id of the recipient to narrow down what grants are selected on the FE.
+      recipientIdForLookUp: recipient.grant.recipientId,
     };
   });
 
@@ -964,7 +966,7 @@ export function formatResources(resources) {
   }, []);
 }
 
-export async function createOrUpdate(newActivityReport, report) {
+export async function createOrUpdate(newActivityReport, report, userId) {
   let savedReport;
   const {
     approvers,
@@ -1001,6 +1003,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(
@@ -1027,24 +1030,6 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveNotes(id, specialistNextSteps, false);
   }
 
-  /**
-     * since on partial updates, a new value for activity recipient type may not be passed,
-     * we use the old one in that case
-     */
-
-  const recipientType = () => {
-    if (allFields?.activityRecipientType) {
-      return allFields.activityRecipientType;
-    }
-    if (report?.activityRecipientType) {
-      return report.activityRecipientType;
-    }
-
-    return '';
-  };
-
-  const activityRecipientType = recipientType();
-
   if (
     recipientsWhoHaveGoalsThatShouldBeRemoved?.length
   ) {
@@ -1055,11 +1040,8 @@ export async function createOrUpdate(newActivityReport, report) {
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
-
-  if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
-    await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
-  } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
+  if (goals) {
+    await saveStandardGoalsForReport(goals, userId, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
