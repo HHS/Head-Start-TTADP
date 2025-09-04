@@ -12,6 +12,7 @@ import {
   faTrash,
   faUsers,
   faUserGroup,
+  faPauseCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
@@ -62,6 +63,9 @@ const Draft = () => <i className="fa-regular fa-pen-circle margin-right-1 flex-a
 const Ceased = ({ size }) => <Icon size={size} color={colors.errorDark} icon={faTimesCircle} />;
 Ceased.propTypes = STATUS_ICON_PROP_TYPES;
 Ceased.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const Paused = ({ size }) => <Icon size={size} color={colors.errorDark} icon={faPauseCircle} />;
+Paused.propTypes = STATUS_ICON_PROP_TYPES;
+Paused.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 const Pencil = ({ size }) => <Icon size={size} color={colors.ttahubMediumBlue} icon={faPencil} />;
 Pencil.propTypes = STATUS_ICON_PROP_TYPES;
 Pencil.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
@@ -88,6 +92,7 @@ export {
   NotStarted,
   Draft,
   Ceased,
+  Paused,
   Pencil,
   PendingApprovalIcon,
   NeedsActionIcon,

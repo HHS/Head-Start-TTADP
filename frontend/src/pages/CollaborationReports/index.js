@@ -1,46 +1,34 @@
-import React, { useContext, useMemo, useCallback } from 'react';
+import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-import { allRegionsUserHasActivityReportPermissionTo } from '../../permissions';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import { showFilterWithMyRegions } from '../regionHelpers';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import FilterPanel from '../../components/filter/FilterPanel';
 import UserContext from '../../UserContext';
 import CollabReports from './components/CollabReports';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import useFilters from '../../hooks/useFilters';
 import './index.scss';
 
 const FILTER_KEY = 'collab-landing-filters';
 
 export const CollabReportsLanding = () => {
-  // TODO: Very similar logic in ActivityReportsLanding, consider refactoring
   const { user } = useContext(UserContext);
-  const regions = allRegionsUserHasActivityReportPermissionTo(user);
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const hasMultipleRegions = regions?.length > 1;
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+
+  const {
+    hasMultipleRegions,
+    defaultRegion,
+    regions,
+    allRegionsFilters,
+    filters,
+    setFilters,
+  } = useFilters(
+    user,
     FILTER_KEY,
-    defaultRegion !== 14
-      && defaultRegion !== 0
-      && hasMultipleRegions
-      ? [{
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      }]
-      : allRegionsFilters,
+    true,
+    [],
+    [], // update with FILTER_CONFIG once created
   );
-  // Empty config for now
-  const filtersToUse = [];
-  // TODO: Filter logic is not part of work of TTAHUB-3999 so empty for now
-  const setFilters = useCallback((newFilters) => {
-    // pass through
-    setFiltersInHook(newFilters);
-  }, [setFiltersInHook]);
 
   const regionLabel = `your region${(defaultRegion === 14 || hasMultipleRegions) ? 's' : ''}`;
   const inProgressCollabEmptyMsg = 'You have no Collaboration Reports in progress.';
@@ -75,7 +63,7 @@ export const CollabReportsLanding = () => {
         <FilterPanel
           applyButtonAria="apply filters for activity reports"
           filters={filters}
-          filterConfig={filtersToUse}
+          filterConfig={[]}
           allUserRegions={regions}
         />
       </FilterPanelContainer>

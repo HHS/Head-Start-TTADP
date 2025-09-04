@@ -50,6 +50,7 @@ import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWith
 import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
+import SubmittedActivityReport from './pages/SubmittedActivityReport';
 
 export default function Routes({
   alert,
@@ -141,6 +142,14 @@ export default function Routes({
           render={() => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <Home />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/activity-reports/submitted/:activityReportId([0-9]*)"
+          render={({ match, location }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <SubmittedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
         />

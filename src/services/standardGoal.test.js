@@ -19,12 +19,15 @@ import db, {
   Recipient,
   Role,
   UserRole,
+  CollaboratorType,
+  User,
 } from '../models';
 import {
   goalForRtr,
   newStandardGoal,
   standardGoalsForRecipient,
   updateExistingStandardGoal,
+  createObjectivesForGoal,
 } from './standardGoals';
 import {
   createGrant,
@@ -33,7 +36,7 @@ import {
   createReport,
   destroyReport,
 } from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
 
 describe('standardGoal service', () => {
@@ -254,16 +257,63 @@ describe('standardGoal service', () => {
         expect(g2.id).not.toBe(g.id);
       });
 
+      it('sets the goal status to the provided status', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+        });
+
+        const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
+        expect(g).toBeDefined();
+
+        await Goal.update(
+          {
+            status: GOAL_STATUS.CLOSED,
+          },
+          {
+            where: {
+              id: g.id,
+            },
+          },
+        );
+
+        const g2 = await newStandardGoal(
+          grant.id,
+          goalTemplateNoPrompt.id,
+          [],
+          [],
+          GOAL_STATUS.IN_PROGRESS,
+        );
+        expect(g2).toBeDefined();
+        expect(g2.status).toBe(GOAL_STATUS.IN_PROGRESS);
+        expect(g2.id).not.toBe(g.id);
+      });
+
       it('throws an error if the standard goal is not found', async () => {
         await expect(newStandardGoal(grant.id, 999)).rejects.toThrow();
       });
 
       it('throws an error if the standard goal is already used', async () => {
+        // First, make sure we don't have any existing goals for this template/grant
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+          force: true,
+        });
+
+        // Now create a goal with the specific grant and template
         await Goal.create({
           grantId: grant.id,
           goalTemplateId: goalTemplateNoPrompt.id,
+          status: GOAL_STATUS.NOT_STARTED,
+          createdVia: 'rtr',
         });
 
+        // Try to create another goal with the same grant and template - should throw
         await expect(newStandardGoal(grant.id, goalTemplateNoPrompt.id)).rejects.toThrow();
       });
 
@@ -321,6 +371,9 @@ describe('standardGoal service', () => {
       let goalTemplate;
       let goalTemplateNoUtilization;
       let objectiveTemplate;
+      let objectiveWithId;
+      let objectiveWithoutId;
+      const titleForLookup = 'Find this objective by goal id and title';
 
       const objectiveTitle = faker.lorem.sentence(5);
 
@@ -503,6 +556,89 @@ describe('standardGoal service', () => {
         expect(g.responses).toBeDefined();
         expect(g.responses[0].response).toEqual(['Option 1', 'Option 2']);
       });
+
+      it('updates existing and reuses existing objective by id', async () => {
+        // Create the test objective here so its not deleted by other tests in this block.
+        objectiveWithId = await Objective.create({
+          title: 'This is an existing suspended objective with the a matching ID',
+          objectiveTemplateId: null,
+          goalId: goal.id,
+          status: OBJECTIVE_STATUS.COMPLETE,
+          createdVia: 'rtr',
+        });
+
+        const g = await updateExistingStandardGoal(
+          grant.id,
+          goalTemplate.id,
+          [
+            {
+              id: objectiveWithId.id,
+              title: 'This is an existing suspended objective with the a matching ID Updated',
+              objectiveTemplateId: null,
+            },
+          ],
+          [],
+        );
+
+        expect(g).toBeDefined();
+        expect(g.objectives).toBeDefined();
+        expect(g.objectives.length).toBe(1);
+        expect(g.objectives[0].id).toBe(objectiveWithId.id);
+        expect(g.objectives[0].title).toBe('This is an existing suspended objective with the a matching ID Updated');
+        expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      });
+
+      it('updates existing and reuses existing objective by title and goal id', async () => {
+        objectiveWithoutId = await Objective.create({
+          title: titleForLookup,
+          objectiveTemplateId: null,
+          goalId: goal.id,
+          status: GOAL_STATUS.SUSPENDED,
+          onApprovedAR: true,
+        });
+        const g = await updateExistingStandardGoal(
+          grant.id,
+          goalTemplate.id,
+          [
+            {
+              id: null, // For whatever reason there is no id.
+              title: titleForLookup,
+              objectiveTemplateId: null,
+            },
+          ],
+          [],
+        );
+
+        expect(g).toBeDefined();
+        expect(g.objectives).toBeDefined();
+        expect(g.objectives.length).toBe(1);
+        expect(g.objectives[0].id).toBe(objectiveWithoutId.id);
+        expect(g.objectives[0].title).toBe(titleForLookup);
+        expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+      });
+
+      it('creates a new objective if its not found by id or title and goal id', async () => {
+        // Create the test objecitve here so its not dlelete by other tests in this block.
+        const g = await updateExistingStandardGoal(
+          grant.id,
+          goalTemplate.id,
+          [
+            {
+              id: null, // For whatever reason there is no id.
+              title: 'This does not exist',
+              objectiveTemplateId: null,
+            },
+          ],
+          [],
+        );
+
+        expect(g).toBeDefined();
+        expect(g.objectives).toBeDefined();
+        expect(g.objectives.length).toBe(1);
+        expect(g.objectives[0].id).toBeDefined();
+        expect(g.objectives[0].title).toBe('This does not exist');
+        expect(g.objectives[0].status).toBe(OBJECTIVE_STATUS.NOT_STARTED);
+      });
     });
   });
 
@@ -527,8 +663,14 @@ describe('standardGoal service', () => {
     let activityReportFour; // associated with secondGoalTemplate, secondGoalForSecondTemplate
 
     beforeAll(async () => {
-      grant = await createGrant({ recipientId: recipient.id });
-      secondGrant = await createGrant({ recipientId: recipient.id });
+      grant = await createGrant({ recipientId: recipient.id, regionId: 1 });
+      secondGrant = await createGrant({ recipientId: recipient.id, regionId: 1 });
+
+      // Create collaborator type for 'Creator'
+      const creatorType = await CollaboratorType.findOrCreate({
+        where: { name: 'Creator' },
+        defaults: { name: 'Creator' },
+      });
 
       topicOne = await Topic.create({
         name: faker.finance.accountName(),
@@ -553,6 +695,7 @@ describe('standardGoal service', () => {
         goalTemplateId: goalTemplate.id,
         status: GOAL_STATUS.CLOSED,
         name: goalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       secondGoalForFirstTemplate = await Goal.create({
@@ -560,6 +703,7 @@ describe('standardGoal service', () => {
         goalTemplateId: goalTemplate.id,
         status: GOAL_STATUS.NOT_STARTED,
         name: goalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       firstGoalForSecondTemplate = await Goal.create({
@@ -567,6 +711,7 @@ describe('standardGoal service', () => {
         goalTemplateId: secondGoalTemplate.id,
         status: GOAL_STATUS.CLOSED,
         name: secondGoalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       secondGoalForSecondTemplate = await Goal.create({
@@ -574,6 +719,7 @@ describe('standardGoal service', () => {
         goalTemplateId: secondGoalTemplate.id,
         status: GOAL_STATUS.NOT_STARTED,
         name: secondGoalTemplate.templateName,
+        createdVia: 'rtr',
       });
 
       const reportData = {
@@ -629,6 +775,31 @@ describe('standardGoal service', () => {
       await UserRole.create({
         userId: reportData.userId,
         roleId: role.id,
+      });
+
+      // Add collaborators to the goals
+      await GoalCollaborator.create({
+        goalId: firstGoalForFirstTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: secondGoalForFirstTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: firstGoalForSecondTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
+      });
+
+      await GoalCollaborator.create({
+        goalId: secondGoalForSecondTemplate.id,
+        userId: reportData.userId,
+        collaboratorTypeId: creatorType[0].id,
       });
 
       await changeGoalStatus({
@@ -715,6 +886,19 @@ describe('standardGoal service', () => {
     });
 
     afterAll(async () => {
+      // Clean up collaborators
+      await GoalCollaborator.destroy({
+        where: {
+          goalId: [
+            firstGoalForFirstTemplate.id,
+            secondGoalForFirstTemplate.id,
+            firstGoalForSecondTemplate.id,
+            secondGoalForSecondTemplate.id,
+          ],
+        },
+        force: true,
+      });
+
       await ActivityReportGoal.destroy({
         where: {
           goalId: [
@@ -820,146 +1004,563 @@ describe('standardGoal service', () => {
       });
     });
 
-    it('retrieves standard goals for recipient', async () => {
-      const goals = await standardGoalsForRecipient(
+    it('retrieves standard goals for a recipient with correct structure and data', async () => {
+      // Call the function with the recipient and region from the grant
+      const result = await standardGoalsForRecipient(
         recipient.id,
+        grant.regionId,
+        { sortBy: 'goalStatus', sortDir: 'desc' },
+      );
+
+      // Verify the structure of the response
+      expect(result).toHaveProperty('count');
+      expect(result).toHaveProperty('goalRows');
+      expect(result).toHaveProperty('statuses');
+      expect(result).toHaveProperty('allGoalIds');
+
+      // Verify the count matches the number of unique goal template/grant combinations
+      // We expect 2 goals (the latest for each template)
+      expect(result.count).toBe(2);
+
+      // Verify the goals are correctly processed
+      expect(result.goalRows.length).toBe(2);
+
+      // Find the goal for the second template (should be IN_PROGRESS)
+      const secondTemplateGoal = result.goalRows.find(
+        (g) => g.goalTemplateId === secondGoalTemplate.id,
+      );
+      expect(secondTemplateGoal).toBeDefined();
+      expect(secondTemplateGoal.status).toBe(GOAL_STATUS.IN_PROGRESS);
+
+      // Find the goal for the first template (should be NOT_STARTED)
+      const firstTemplateGoal = result.goalRows.find(
+        (g) => g.goalTemplateId === goalTemplate.id,
+      );
+      expect(firstTemplateGoal).toBeDefined();
+      expect(firstTemplateGoal.status).toBe(GOAL_STATUS.NOT_STARTED);
+
+      // Verify objectives are processed correctly
+      expect(secondTemplateGoal.objectives.length).toBe(2);
+
+      // Verify the allGoalIds contains the IDs of the two goals
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toContain(secondGoalForSecondTemplate.id);
+
+      // Verify the statuses object is returned
+      expect(result.statuses).toBeDefined();
+    });
+
+    it('paginates standard goals correctly using limit and offset', async () => {
+      // Get all goals for reference
+      const allGoals = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+        },
+      );
+
+      // There should be 2 goals total
+      expect(allGoals.count).toBe(2);
+      expect(allGoals.goalRows.length).toBe(2);
+
+      // Test with limit of 1 and offset of 0 (first page)
+      const firstPage = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 1,
+          offset: 0,
+        },
+      );
+
+      // Should return the count of all goals, but only include 1 goal in goalRows
+      expect(firstPage.count).toBe(2); // Total count remains the same
+      expect(firstPage.goalRows.length).toBe(1); // But only 1 goal returned
+      expect(firstPage.goalRows[0].id).toBe(allGoals.goalRows[0].id); // First goal should match
+
+      // Test with limit of 1 and offset of 1 (second page)
+      const secondPage = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 1,
+          offset: 1,
+        },
+      );
+
+      // Should return the count of all goals, but only include 1 goal in goalRows
+      expect(secondPage.count).toBe(2); // Total count remains the same
+      expect(secondPage.goalRows.length).toBe(1); // But only 1 goal returned
+      expect(secondPage.goalRows[0].id).toBe(allGoals.goalRows[1].id); // Second goal should match
+
+      // Test with limit larger than available goals
+      const largeLimit = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 10,
+          offset: 0,
+        },
+      );
+
+      // Should return all goals
+      expect(largeLimit.count).toBe(2);
+      expect(largeLimit.goalRows.length).toBe(2);
+
+      // Test with offset beyond available goals
+      const largeOffset = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          limit: 10,
+          offset: 10,
+        },
+      );
+
+      // Should return empty result set but correct count
+      expect(largeOffset.count).toBe(2);
+      expect(largeOffset.goalRows.length).toBe(0);
+    });
+  });
+
+  describe('standardGoalsForRecipient Only Approved Objectives Param', () => {
+    let user;
+    let recipientForParam;
+    let grant;
+    let goalTemplate;
+    let goalTemplateNotOnApprovedAR;
+    let goal;
+    let goalNotOnApprovedAR;
+
+    let createdViaRtrObjective;
+    let createdViaArButNotApprovedObjective;
+    let createdViaArAndApprovedObjective;
+
+    let creatorCollabType;
+
+    beforeAll(async () => {
+      user = await User.create({
+        id: faker.datatype.number({ min: 1000 }),
+        homeRegionId: 1,
+        name: 'Test Param User',
+        hsesUsername: 'Test Param User',
+        hsesUserId: 'Test Param User',
+        lastLogin: new Date(),
+      });
+
+      creatorCollabType = await CollaboratorType.findOrCreate({
+        where: { name: 'Creator' },
+        defaults: { name: 'Creator', validForId: 1 },
+        validForId: 1,
+      });
+
+      recipientForParam = await createRecipient({});
+
+      grant = await createGrant({
+        recipientId: recipientForParam.id,
+        regionId: 1,
+      });
+
+      goalTemplate = await createGoalTemplate({
+        name: 'Test Param Template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      goalTemplateNotOnApprovedAR = await createGoalTemplate({
+        name: 'Test Param Template Not on Approved AR',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      goal = await Goal.create({
+        name: 'Goal 1',
+        status: GOAL_STATUS.NOT_STARTED,
+        createdAt: new Date(),
+        goalTemplateId: goalTemplate.id,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      goalNotOnApprovedAR = await Goal.create({
+        name: 'Goal 2 - Not on Approved AR',
+        status: GOAL_STATUS.NOT_STARTED,
+        createdAt: new Date(),
+        goalTemplateId: goalTemplateNotOnApprovedAR.id, // Using different template
+        grantId: grant.id,
+        createdVia: 'activityReport',
+        onApprovedAR: false, // Should not be included in the results.
+      });
+
+      await GoalCollaborator.create({
+        goalId: goal.id,
+        userId: user.id,
+        collaboratorTypeId: creatorCollabType[0].id,
+      });
+
+      createdViaRtrObjective = await Objective.create({
+        title: 'Created via RTR Objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        goalId: goal.id,
+        createdVia: 'rtr',
+        onApprovedAR: true,
+      });
+
+      createdViaArButNotApprovedObjective = await Objective.create({
+        title: 'Created via AR but not approved Objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        goalId: goal.id,
+        createdVia: 'activityReport',
+        onApprovedAR: false,
+      });
+
+      createdViaArAndApprovedObjective = await Objective.create({
+        title: 'Created via AR and approved Objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        goalId: goal.id,
+        createdVia: 'activityReport',
+        onApprovedAR: true,
+      });
+    });
+
+    afterAll(async () => {
+      // cleanup all the crap you created for this test.
+      await GoalCollaborator.destroy({
+        where: {
+          goalId: goal.id,
+        },
+        force: true,
+      });
+      await Objective.destroy({
+        where: {
+          id: [
+            createdViaRtrObjective.id,
+            createdViaArButNotApprovedObjective.id,
+            createdViaArAndApprovedObjective.id,
+          ],
+        },
+        force: true,
+      });
+      await Goal.destroy({ where: { id: [goal.id, goalNotOnApprovedAR.id] }, force: true });
+      await GoalTemplate.destroy({
+        where: { id: [goalTemplate.id, goalTemplateNotOnApprovedAR.id] },
+        force: true,
+      });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true, force: true });
+      await Recipient.destroy({ where: { id: recipientForParam.id }, force: true });
+      await CollaboratorType.destroy({
+        where: { id: creatorCollabType[0].id },
+        force: true,
+      });
+      await User.destroy({ where: { id: user.id }, force: true });
+    });
+
+    it('returns goals for recipient with default params', async () => {
+      const result = await standardGoalsForRecipient(
+        recipientForParam.id,
         grant.regionId,
         {},
       );
+      expect(result.count).toBe(1);
+      expect(result.goalRows[0].objectives.length).toBe(3);
 
-      expect(goals).toBeDefined();
+      // we expect two objectives find them by title.
+      const createdViaRtrObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via RTR Objective',
+      );
+      expect(createdViaRtrObjectiveToAssert).toBeDefined();
 
-      const {
-        allGoalIds,
-        count,
-        goalRows,
-        statuses,
-      } = goals;
+      const createdViaArButNotApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via AR and approved Objective',
+      );
+      expect(createdViaArButNotApprovedObjectiveToAssert).toBeDefined();
 
-      expect(allGoalIds).toHaveLength(2);
-      expect(allGoalIds).toContain(secondGoalForFirstTemplate.id);
-      expect(allGoalIds).toContain(secondGoalForSecondTemplate.id);
+      const createdViaArAndApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via AR and approved Objective',
+      );
+      expect(createdViaArAndApprovedObjectiveToAssert).toBeDefined();
+    });
 
-      expect(count).toBe(2);
+    it('returns only approved objectives and rtr', async () => {
+      const result = await standardGoalsForRecipient(
+        recipientForParam.id,
+        grant.regionId,
+        {},
+        true,
+      );
+      expect(result.count).toBe(1);
+      expect(result.goalRows[0].objectives.length).toBe(2);
 
-      expect(statuses.total).toBe(2);
-      expect(statuses['Not started']).toBe(1);
-      expect(statuses['In progress']).toBe(1);
-      expect(statuses.Suspended).toBe(0);
-      expect(statuses.Closed).toBe(0);
+      const createdViaRtrObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via RTR Objective',
+      );
+      expect(createdViaRtrObjectiveToAssert).toBeDefined();
+      const createdViaArAndApprovedObjectiveToAssert = result.goalRows[0].objectives.find(
+        (o) => o.title === 'Created via AR and approved Objective',
+      );
+      expect(createdViaArAndApprovedObjectiveToAssert).toBeDefined();
+    });
+  });
 
-      expect(goalRows).toHaveLength(2);
+  describe('standardGoalsForRecipient includes Curated and Automatic templates', () => {
+    let localRecipient;
+    let localGrant;
+    let curatedTemplate;
+    let automaticTemplate;
+    let curatedGoal;
+    let automaticGoal;
 
-      const [goalOne, goalTwo] = goalRows;
+    beforeAll(async () => {
+      localRecipient = await createRecipient({});
+      localGrant = await createGrant({ recipientId: localRecipient.id, regionId: 1 });
 
-      // ======
+      curatedTemplate = await createGoalTemplate({
+        name: 'CM Curated Template',
+        creationMethod: CREATION_METHOD.CURATED,
+      });
 
-      expect(goalOne.id).toBe(secondGoalForSecondTemplate.id);
-      expect(goalOne.name).toBe(secondGoalTemplate.templateName);
-      expect(goalOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
+      automaticTemplate = await createGoalTemplate({
+        name: 'CM Automatic Template',
+        creationMethod: CREATION_METHOD.AUTOMATIC,
+      });
 
-      const { statusChanges: goalOneStatusChanges } = goalOne;
+      curatedGoal = await Goal.create({
+        name: 'Curated Goal',
+        status: GOAL_STATUS.NOT_STARTED,
+        grantId: localGrant.id,
+        goalTemplateId: curatedTemplate.id,
+        createdVia: 'rtr',
+      });
 
-      expect(goalOneStatusChanges).toHaveLength(1);
-      expect(goalOneStatusChanges[0].oldStatus).toBe(GOAL_STATUS.NOT_STARTED);
-      expect(goalOneStatusChanges[0].newStatus).toBe(GOAL_STATUS.IN_PROGRESS);
+      automaticGoal = await Goal.create({
+        name: 'Automatic Goal',
+        status: GOAL_STATUS.NOT_STARTED,
+        grantId: localGrant.id,
+        goalTemplateId: automaticTemplate.id,
+        createdVia: 'rtr',
+      });
+    });
 
-      const { grant: goalOneGrant } = goalOne;
-      expect(goalOneGrant.number).toBe(grant.number);
+    afterAll(async () => {
+      await Goal.destroy({
+        where: { id: [curatedGoal.id, automaticGoal.id] },
+        individualHooks: true,
+        force: true,
+      });
+      await GoalTemplate.destroy({
+        where: { id: [curatedTemplate.id, automaticTemplate.id] },
+        individualHooks: true,
+        force: true,
+      });
+      await Grant.destroy({ where: { id: localGrant.id }, individualHooks: true, force: true });
+      await Recipient.destroy({ where: { id: localRecipient.id }, force: true });
+    });
 
-      const { objectives: goalOneObjectives } = goalOne;
+    it('returns goals for both Curated and Automatic creation methods', async () => {
+      const result = await standardGoalsForRecipient(
+        localRecipient.id,
+        localGrant.regionId,
+        {},
+      );
+      expect(result.count).toBe(2);
+      const templateIds = result.goalRows.map((g) => g.goalTemplateId);
+      expect(templateIds).toEqual(expect.arrayContaining([
+        curatedTemplate.id,
+        automaticTemplate.id,
+      ]));
+    });
+  });
 
-      expect(goalOneObjectives).toHaveLength(2);
-      const [goalOneObjectiveOne, goalOneObjectiveTwo] = goalOneObjectives;
+  describe('createObjectivesForGoal', () => {
+    const goal = { id: 1 };
+    const objectives = [
+      {
+        id: 1,
+        isNew: false,
+        ttaProvided: 'TTA provided details',
+        title: 'Objective title 1',
+        status: GOAL_STATUS.IN_PROGRESS,
+        topics: ['topic1'],
+        resources: ['resource1'],
+        files: ['file1'],
+        courses: ['course1'],
+        closeSuspendReason: null,
+        closeSuspendContext: null,
+        ActivityReportObjective: {},
+        supportType: 'supportType1',
+        goalId: 1,
+        createdHere: false,
+      },
+      {
+        id: 2,
+        isNew: true,
+        ttaProvided: 'TTA provided details',
+        title: 'Objective title 2',
+        status: 'NOT_STARTED',
+        topics: ['topic2'],
+        resources: ['resource2'],
+        files: ['file2'],
+        courses: ['course2'],
+        closeSuspendReason: null,
+        closeSuspendContext: null,
+        ActivityReportObjective: {},
+        supportType: 'supportType2',
+        goalId: 2,
+        createdHere: true,
+      },
+    ];
 
-      expect(goalOneObjectiveOne.title).toBeDefined();
-      expect(goalOneObjectiveOne.status).toBeDefined();
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
 
-      expect(goalOneObjectiveOne.activityReportObjectives).toHaveLength(1);
+    it('should return an empty array if no objectives are provided', async () => {
+      const result = await createObjectivesForGoal(goal, null);
+      expect(result).toEqual([]);
+    });
 
-      const [aroOne] = goalOneObjectiveOne.activityReportObjectives;
+    it('should create new objectives for new items', async () => {
+      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 2,
+          title: 'Objective title 2',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
 
-      const { topics: aroOneTopics } = aroOne;
-      expect(aroOneTopics).toHaveLength(1);
-      expect(aroOneTopics[0].name).toBe(topicOne.name);
+      const result = await createObjectivesForGoal(goal, objectives);
 
-      const { activityReport: aroOneReport } = aroOne;
-      expect(aroOneReport.id).toBe(activityReportFour.id);
+      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
+      expect(Objective.create).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Objective title 2',
+        goalId: goal.id,
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        createdVia: 'activityReport',
+      }));
 
-      expect(aroOneReport.startDate).toBeDefined();
-      expect(aroOneReport.endDate).toBeDefined();
-      expect(aroOneReport.displayId).toBeDefined();
+      expect(result).toHaveLength(2);
+      expect(result[1].title).toBe('Objective title 2');
+    });
 
-      expect(goalOneObjectiveTwo.title).toBeDefined();
-      expect(goalOneObjectiveTwo.status).toBeDefined();
+    it('should update existing objectives', async () => {
+      Objective.findByPk = jest.fn().mockResolvedValue({
+        id: 1,
+        title: 'Objective title 1',
+        onApprovedAR: false,
+        update: jest.fn().mockResolvedValue(true),
+        save: jest.fn().mockResolvedValue(true),
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective title 1',
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          goalId: goal.id,
+        }),
+      });
 
-      expect(goalOneObjectiveTwo.activityReportObjectives).toHaveLength(1);
-      const [aroTwo] = goalOneObjectiveTwo.activityReportObjectives;
-      const { topics: aroTwoTopics } = aroTwo;
-      expect(aroTwoTopics).toHaveLength(2);
-      const aroTwoTopicNames = aroTwoTopics.map((t) => t.name);
-      expect(aroTwoTopicNames).toContain(topicOne.name);
-      expect(aroTwoTopicNames).toContain(topicTwo.name);
-      const { activityReport: aroTwoReport } = aroTwo;
-      expect(aroTwoReport.id).toBe(activityReportThree.id);
-      expect(aroTwoReport.startDate).toBeDefined();
-      expect(aroTwoReport.endDate).toBeDefined();
-      expect(aroTwoReport.displayId).toBeDefined();
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 2,
+          title: 'Objective title 2',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
 
-      // ======
+      const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(goalTwo.id).toBe(secondGoalForFirstTemplate.id);
-      expect(goalTwo.name).toBe(goalTemplate.templateName);
-      expect(goalOne.status).toBe(GOAL_STATUS.IN_PROGRESS);
+      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
+      expect(Objective.findByPk).toHaveBeenCalledWith(1);
 
-      const { statusChanges: goalTwoStatusChanges } = goalOne;
+      expect(result).toHaveLength(2);
+      expect(result[0].title).toBe('Objective title 1');
+      expect(result[1].title).toBe('Objective title 2');
+    });
 
-      expect(goalTwoStatusChanges).toHaveLength(1);
-      const [goalTwoStatusChange] = goalTwoStatusChanges;
-      expect(goalTwoStatusChange.oldStatus).toBe(GOAL_STATUS.NOT_STARTED);
-      expect(goalTwoStatusChange.newStatus).toBe(GOAL_STATUS.IN_PROGRESS);
+    it('should reuse an existing objective if conditions match', async () => {
+      Objective.findByPk = jest.fn().mockResolvedValue(null);
 
-      const { grant: goalTwoGrant } = goalOne;
-      expect(goalTwoGrant.number).toBe(grant.number);
+      // Mock finding the objective by title and goal ID
+      Objective.findOne = jest.fn()
+        .mockImplementation(({ where }) => {
+          if (where.title === 'Objective title 2') {
+            return Promise.resolve({
+              id: 2,
+              title: 'Objective title 2',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+              update: jest.fn().mockResolvedValue(true),
+              save: jest.fn().mockResolvedValue(true),
+              toJSON: () => ({
+                id: 2,
+                title: 'Objective title 2',
+                status: OBJECTIVE_STATUS.NOT_STARTED,
+                goalId: goal.id,
+              }),
+            });
+          }
+          return Promise.resolve(null);
+        });
 
-      const { objectives: goalTwoObjectives } = goalOne;
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective title 1',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
 
-      expect(goalTwoObjectives).toHaveLength(2);
-      const [goalTwoObjectiveOne, goalTwoObjectiveTwo] = goalTwoObjectives;
+      const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(goalTwoObjectiveOne.title).toBeDefined();
-      expect(goalOneObjectiveOne.status).toBeDefined();
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: {
+          goalId: goal.id,
+          title: 'Objective title 2',
+        },
+      });
 
-      expect(goalTwoObjectiveOne.activityReportObjectives).toHaveLength(1);
+      expect(result).toHaveLength(2);
+      expect(result[1].id).toBe(2);
+      expect(result[1].title).toBe('Objective title 2');
+    });
 
-      const [goalTwoAroOne] = goalTwoObjectiveOne.activityReportObjectives;
+    it('should handle undefined fields without throwing an error', async () => {
+      const incompleteObjectives = [
+        {
+          id: 1,
+          isNew: false,
+          supportType: 'supportType1',
+          goalId: 1,
+          createdHere: false,
+        },
+      ];
 
-      const { topics: goalTwoAroOneTopics } = goalTwoAroOne;
-      expect(goalTwoAroOneTopics).toHaveLength(1);
-      expect(goalTwoAroOneTopics[0].name).toBe(topicOne.name);
+      Objective.findByPk = jest.fn().mockResolvedValue(null);
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 1,
+          title: 'Objective with missing fields',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: goal.id,
+        }),
+      });
 
-      const { activityReport: aroOneGoalTwoReport } = goalTwoAroOne;
-      expect(aroOneGoalTwoReport.id).toBe(activityReportFour.id);
+      const result = await createObjectivesForGoal(goal, incompleteObjectives);
 
-      expect(aroOneGoalTwoReport.startDate).toBeDefined();
-      expect(aroOneGoalTwoReport.endDate).toBeDefined();
-      expect(aroOneGoalTwoReport.displayId).toBeDefined();
-
-      expect(goalTwoObjectiveTwo.title).toBeDefined();
-      expect(goalTwoObjectiveTwo.status).toBeDefined();
-
-      expect(goalTwoObjectiveTwo.activityReportObjectives).toHaveLength(1);
-      const [goalTwoObjectiveTwoAro] = goalOneObjectiveTwo.activityReportObjectives;
-      const { topics: goalTwoObjectiveTwoAroTopics } = goalTwoObjectiveTwoAro;
-      expect(goalTwoObjectiveTwoAroTopics).toHaveLength(2);
-      const goalTwoObjectiveTwoAroTopicNames = goalTwoObjectiveTwoAroTopics.map((t) => t.name);
-      expect(goalTwoObjectiveTwoAroTopicNames).toContain(topicOne.name);
-      expect(goalTwoObjectiveTwoAroTopicNames).toContain(topicTwo.name);
-      const { activityReport: goalTwoObjectiveTwoAroReport } = aroTwo;
-      expect(goalTwoObjectiveTwoAroReport.id).toBe(activityReportThree.id);
-      expect(goalTwoObjectiveTwoAroReport.startDate).toBeDefined();
-      expect(goalTwoObjectiveTwoAroReport.endDate).toBeDefined();
-      expect(goalTwoObjectiveTwoAroReport.displayId).toBeDefined();
+      expect(result).toHaveLength(0);
+      expect(Objective.create).not.toHaveBeenCalled();
     });
   });
 });
