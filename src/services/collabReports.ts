@@ -65,7 +65,7 @@ export async function collabReportById(crId) {
 
   const report = await CollabReport.findOne({
     where: {
-      id: crId,
+      id: collabReportId,
     },
     include: [
       {
