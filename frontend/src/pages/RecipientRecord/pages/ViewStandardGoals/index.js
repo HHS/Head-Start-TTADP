@@ -36,11 +36,10 @@ const GoalUserIdentifier = ({ goal }) => {
     : '';
 };
 
-const StatusActionTag = ({ update, goalHistory, currentGoalIndex }) => {
-  const isReopened = update.reason === 'Goal created'
-    && goalHistory.some((goal, index) => index > currentGoalIndex && goal.status === 'Closed');
-
-  if (update.reason === 'Goal created') {
+const StatusActionTag = ({ update, goalHistory: statusHistory, currentGoalIndex }) => {
+  const isReopened = (update.reason === 'Goal created' || update.reason === 'Active monitoring citations')
+    && statusHistory.some((hist, index) => index < currentGoalIndex && hist.newStatus === 'Closed');
+  if (update.reason === 'Goal created' || update.reason === 'Active monitoring citations') {
     return <span>{isReopened ? 'Reopened on' : 'Added on'}</span>;
   }
 
@@ -195,7 +194,6 @@ export default function ViewGoalDetails({
         gsc.performedAt || gsc.createdAt,
       ).format(DATE_DISPLAY_FORMAT),
     }));
-
     // Deduplicate near-identical updates (same time and statuses) to avoid double-rendering.
     const dedupedStatusUpdates = statusUpdates.reduce((acc, curr) => {
       if (!acc.find((gsc) => gsc.performedAt === curr.performedAt
@@ -231,9 +229,14 @@ export default function ViewGoalDetails({
       if (update && update.synthetic) {
         return <GoalUserIdentifier goal={goal} />;
       }
-      if (goal.standard === 'Monitoring' && update.newStatus === 'Not Started') {
+      if (goal.standard === 'Monitoring' && update.newStatus === 'Not Started' && update.reason === 'Active monitoring citations') {
         return ' by OHS';
       }
+
+      if (goal.standard === 'Monitoring' && update.newStatus === 'Closed' && update.reason === 'No active monitoring citations') {
+        return ' by OHS';
+      }
+
       if (update.user) {
         return ` by ${update.user.name}, ${update.user.roles.map(({ name }) => name).join(', ')}`;
       }
@@ -259,8 +262,8 @@ export default function ViewGoalDetails({
                       <strong>
                         <StatusActionTag
                           update={update}
-                          goalHistory={sortedGoalHistory}
-                          currentGoalIndex={index}
+                          goalHistory={statusUpdates}
+                          currentGoalIndex={updateIndex}
                         />
                       </strong>
                       {' '}
