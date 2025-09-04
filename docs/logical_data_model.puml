@@ -216,6 +216,17 @@ class CollabReportActivityStates{
  * activityStateCode : varchar(255)
 }
 
+class CollabReportApprovers{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * status : enum
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ note : text
+}
+
 class CollabReportDataUsed{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
@@ -252,7 +263,10 @@ class CollabReportSteps{
 
 class CollabReports{
  * id : integer : <generated>
+ lastUpdatedById : integer : REFERENCES "Users".id
+ userId : integer : REFERENCES "Users".id
  * conductMethod : enum
+ * createdAt : timestamp with time zone
  * description : text
  * duration : smallint
  * endDate : date
@@ -260,6 +274,8 @@ class CollabReports{
  * name : varchar(255)
  * startDate : date
  * status : enum
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
 }
 
 class CollaboratorRoles{
@@ -1432,6 +1448,20 @@ class ZALActivityReports{
 }
 
 class ZALCollabReportActivityStates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALCollabReportApprovers{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2682,6 +2712,7 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -2700,6 +2731,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiv
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportActivityStates : collabReport, activityStates
+CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : collabReport, approvers
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportDataUsed : collabReport, dataUsed
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : collabReport, reportGoals
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportReasons : collabReport, reportReasons
@@ -2816,6 +2848,7 @@ UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : se
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
+Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, collabReportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : specialist, collabReportSpecialists
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
