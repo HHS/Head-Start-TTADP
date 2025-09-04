@@ -196,9 +196,41 @@ export default function ViewGoalDetails({
       ).format(DATE_DISPLAY_FORMAT),
     }));
 
+    // Deduplicate near-identical updates (same time and statuses) to avoid double-rendering.
+    const dedupedStatusUpdates = statusUpdates.reduce((acc, curr) => {
+      if (!acc.find((gsc) => gsc.performedAt === curr.performedAt
+        && gsc.newStatus === curr.newStatus
+        && gsc.oldStatus === curr.oldStatus)) {
+        acc.push(curr);
+      }
+      return acc;
+    }, []);
+
+    // Ensure the list includes an initial "Added" item when there are updates
+    // but no explicit add. Criteria to detect an existing "Added"-like update:
+    // oldStatus is null or newStatus is Not Started.
+    const hasAddedUpdate = dedupedStatusUpdates.some((u) => u.oldStatus === null
+      || u.newStatus === GOAL_STATUS.NOT_STARTED);
+    const displayUpdates = [...dedupedStatusUpdates];
+    if (dedupedStatusUpdates.length > 0 && !hasAddedUpdate) {
+      displayUpdates.unshift({
+        id: `synthetic-added-${goal.id}-${index}`,
+        performedAt: moment.utc(goal.createdAt).format(DATE_DISPLAY_FORMAT),
+        createdAt: goal.createdAt,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        oldStatus: null,
+        // mark as synthetic so we can tailor rendering (e.g., user identifier)
+        synthetic: true,
+      });
+    }
+
     const objectives = goal.objectives || [];
 
     const getUserByFromStatus = (update) => {
+      // For synthetic "Added" updates, fall back to goal-level identifier.
+      if (update && update.synthetic) {
+        return <GoalUserIdentifier goal={goal} />;
+      }
       if (goal.standard === 'Monitoring' && update.newStatus === 'Not Started') {
         return ' by OHS';
       }
@@ -222,21 +254,7 @@ export default function ViewGoalDetails({
               {' '}
               {statusUpdates.length > 0 ? (
                 <ul className="usa-list" aria-label="Goal status updates">
-                  {statusUpdates.reduce((acc, curr) => {
-                    if (
-                      // this is just a way of grouping status updates that are nearly identical so
-                      // they don't double up in the UI. Specifically this case occurs when a goal
-                      // is reopened on an AR and used on an AR for the first time, which triggers
-                      // an extra status update intended to catch goals reopened on RTR and then
-                      // used on an AR for the first time
-                      !acc.find((gsc) => gsc.performedAt === curr.performedAt
-                      && gsc.newStatus === curr.newStatus
-                       && gsc.oldStatus === curr.oldStatus)
-                    ) {
-                      acc.push(curr);
-                    }
-                    return acc;
-                  }, []).map((update, updateIndex) => (
+                  {displayUpdates.map((update, updateIndex) => (
                     <li key={update.id}>
                       <strong>
                         <StatusActionTag
@@ -251,16 +269,14 @@ export default function ViewGoalDetails({
                       </strong>
                       {getUserByFromStatus(update)}
                       {(update.newStatus === GOAL_STATUS.SUSPENDED
-                      && updateIndex !== statusUpdates.length - 1)
-                        ? (
+                        && updateIndex !== displayUpdates.length - 1) ? (
                           <>
                             <br />
                             Reason:
                             {' '}
                             {update.reason}
                           </>
-                        )
-                        : <></>}
+                        ) : <></>}
                     </li>
                   ))}
                 </ul>
