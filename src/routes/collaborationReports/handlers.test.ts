@@ -1,14 +1,16 @@
 import { Request, Response } from 'express';
 import { getReports, getReport } from './handlers';
+import * as mailer from '../../lib/mailer';
 import * as CRServices from '../../services/collabReports';
 
-jest.mock('../../services/collaborationReports');
+jest.mock('../../services/collabReports');
 
 describe('Collaboration Reports Handlers', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockJson: jest.Mock;
   let mockSendStatus: jest.Mock;
+  let mockMailer: jest.Mock;
 
   beforeEach(() => {
     mockJson = jest.fn();

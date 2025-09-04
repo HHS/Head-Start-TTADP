@@ -2682,6 +2682,7 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -2705,6 +2706,8 @@ CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : coll
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportReasons : collabReport, reportReasons
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : collabReport, collabReportSpecialists
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSteps : collabReport, steps
+!issue='associations need to be defined both directions'
+CollabReports "1" --[#d54309,dashed,thickness=2]--{  "n" undefined : approvers
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorTypes : mapsToCollaboratorType, mapsFromCollaboratorTypes
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goalCollaborator, collaboratorType
 CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : groupCollaborator, collaboratorType
