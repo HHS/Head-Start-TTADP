@@ -36,12 +36,18 @@ const GoalUserIdentifier = ({ goal }) => {
     : '';
 };
 
-const StatusActionTag = ({ update, goalHistory: statusHistory, currentGoalIndex }) => {
+const StatusActionTag = ({ update, goalHistory, currentGoalIndex, goalId }) => {
+  console.log('------- do we go here?', goalId, update, update.reason);
+  console.log('------- goalHistory', goalHistory, goalId);
   const isReopened = (update.reason === 'Goal created' || update.reason === 'Active monitoring citations')
-    && statusHistory.some((hist, index) => index < currentGoalIndex && hist.newStatus === 'Closed');
+    && goalHistory.some((hist, index) => index > currentGoalIndex && hist.status === 'Closed');
+
   if (update.reason === 'Goal created' || update.reason === 'Active monitoring citations') {
     return <span>{isReopened ? 'Reopened on' : 'Added on'}</span>;
   }
+  console.log('------------------>goalId: ', goalId);
+  console.log('------------------>update: ', update);
+  console.log('------------------>isReopened', isReopened);
 
   switch (update.newStatus) {
     case 'Not Started':
@@ -225,6 +231,7 @@ export default function ViewGoalDetails({
     const objectives = goal.objectives || [];
 
     const getUserByFromStatus = (update) => {
+      console.log('goal to check', goal.id, goal.standard, update);
       // For synthetic "Added" updates, fall back to goal-level identifier.
       if (update && update.synthetic) {
         return <GoalUserIdentifier goal={goal} />;
@@ -242,7 +249,11 @@ export default function ViewGoalDetails({
       }
       return '';
     };
-
+        console.log('goal ID: >>>>>', goal.id);
+    console.log('sorted goal History>>>>>: ', sortedGoalHistory);
+    console.log('goal:>>>>>', goal);
+    console.log('statusUpdates>>>>: ', statusUpdates);
+    console.log('displayUpdates>>>>: ', displayUpdates);
     return {
       id: `goal-${goal.id}`,
       title: `G-${goal.id} | ${goal.status}`,
@@ -262,8 +273,9 @@ export default function ViewGoalDetails({
                       <strong>
                         <StatusActionTag
                           update={update}
-                          goalHistory={statusUpdates}
-                          currentGoalIndex={updateIndex}
+                          goalHistory={sortedGoalHistory}
+                          currentGoalIndex={index}
+                          goalId={goal.id}
                         />
                       </strong>
                       {' '}
