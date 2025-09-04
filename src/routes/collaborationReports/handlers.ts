@@ -12,8 +12,13 @@ import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { USER_SETTINGS } from '../../constants';
-import { collaboratorAssignedNotification } from '../../lib/mailer';
+import {
+  collaboratorAssignedNotification,
+  // changesRequestedNotification,
+  // reportApprovedNotification,
+} from '../../lib/mailer';
 import { setReadRegions } from '../../services/accessValidation';
+import { upsertApprover } from '../../services/collabReportApprovers';
 
 const namespace = 'SERVICE:COLLAB_REPORTS';
 
@@ -178,8 +183,56 @@ export async function submitReport(req: Request, res: Response) {
   }
 }
 
+/**
+ * Review a report, setting Approver status to approved or needs action
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export async function reviewReport(req: Request, res: Response) {
-  res.send(204);
+  try {
+    const { collabReportId } = req.params;
+    const { status, note } = req.body;
+    const userId = await currentUserId(req, res);
+
+    const existingReport = await collabReportById(collabReportId);
+    if (!existingReport) {
+      res.sendStatus(404);
+      return;
+    }
+
+    // Make sure the current user is authorized to update the report
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, existingReport);
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedApprover = await upsertApprover({
+      status,
+      note,
+      collabReportId,
+      userId,
+    });
+
+    // todo: send notifications in a future ticket
+
+    // reload report in order to get updated status
+    // await existingReport.reload();
+
+    // if (existingReport.status === REPORT_STATUSES.APPROVED) {
+
+    // }
+
+    // if (existingReport.status === REPORT_STATUSES.NEEDS_ACTION) {
+
+    // }
+
+    res.json(savedApprover);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
 }
 
 export async function createReport(req: Request, res: Response) {
