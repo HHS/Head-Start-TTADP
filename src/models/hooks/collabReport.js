@@ -1,11 +1,13 @@
 const { REPORT_STATUSES } = require('@ttahub/common');
 
-export default async function validateSubmission(instance) {
+export async function validateSubmission(instance) {
   const changed = instance.changed();
   const isSubmission = Array.isArray(changed) && changed.includes('status')
-     && !instance.previous('status') === REPORT_STATUSES.SUBMITTED
-     && instance.status !== REPORT_STATUSES.SUBMITTED;
+     && instance.previous('status') !== REPORT_STATUSES.SUBMITTED
+     && instance.status === REPORT_STATUSES.SUBMITTED;
 
+  // we can expand this as we go to also query for related models
+  // like next steps
   const requiredFields = [
     'name',
     'startDate',
@@ -18,7 +20,9 @@ export default async function validateSubmission(instance) {
 
   if (isSubmission) {
     requiredFields.forEach((field) => {
-      if (!instance[field]) {
+      const value = instance[field];
+      // we allow false in the case of boolean fields
+      if (value !== false && !value) {
         throw new Error(`Required field not provided: ${field}`);
       }
     });
