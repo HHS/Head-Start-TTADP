@@ -2455,6 +2455,20 @@ describe('createMonitoringGoals', () => {
     expect(grant1Goals[0].name).toBe(goalTemplateName);
     expect(grant1Goals[0].status).toBe('Not Started');
 
+    // Ensure initial GoalStatusChange was inserted for the created goal (creation event).
+    const goalChangeStatus1 = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant1Goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus1).not.toBeNull();
+    expect(goalChangeStatus1.userId).toBeNull();
+    expect(goalChangeStatus1.userName).toBeNull();
+
     // CASE 2: Does not create a monitoring goal for a grant that already has one.
     const grant2Goals = await Goal.findAll({ where: { grantId: grantThatAlreadyHasMonitoringGoal2.id } });
     expect(grant2Goals.length).toBe(1);
@@ -2493,6 +2507,20 @@ describe('createMonitoringGoals', () => {
     expect(grant9Goals[0].name).toBe(goalTemplateName);
     expect(grant9Goals[0].status).toBe('Not Started');
 
+    // Ensure initial GoalStatusChange exists for this created goal as well.
+    const goalChangeStatus9 = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant9Goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus9).not.toBeNull();
+    expect(goalChangeStatus9.userId).toBeNull();
+    expect(goalChangeStatus9.userName).toBeNull();
+
     // CASE 10: Creates a monitoring goal ONLY for the grant that initially had the monitoring goal and does NOT create one for the split grant..
     const grant10AGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10A.id } });
     expect(grant10AGoals.length).toBe(1);
@@ -2501,6 +2529,20 @@ describe('createMonitoringGoals', () => {
     const grant10CGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10B.id } });
     expect(grant10CGoals.length).toBe(1);
     expect(grant10CGoals[0].goalTemplateId).toBe(goalTemplate.id);
+
+    // Ensure initial GoalStatusChange for the newly created split goal (10B)
+    const goalChangeStatus10B = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant10CGoals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus10B).not.toBeNull();
+    expect(goalChangeStatus10B.userId).toBeNull();
+    expect(goalChangeStatus10B.userName).toBeNull();
 
     const grant10BGoals = await Goal.findAll({ where: { grantId: grantBeingMonitoredSplit10C.id } });
     expect(grant10BGoals.length).toBe(0);
@@ -2517,6 +2559,20 @@ describe('createMonitoringGoals', () => {
     const grant11CGoals = await Goal.findAll({ where: { grantId: grantBeingMerged11C.id } });
     expect(grant11CGoals.length).toBe(1);
     expect(grant11CGoals[0].goalTemplateId).toBe(goalTemplate.id);
+
+    // Ensure initial GoalStatusChange for the newly created merged goal (11C)
+    const goalChangeStatus11C = await GoalStatusChange.findOne({
+      where: {
+        goalId: grant11CGoals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus11C).not.toBeNull();
+    expect(goalChangeStatus11C.userId).toBeNull();
+    expect(goalChangeStatus11C.userName).toBeNull();
 
     // CASE 12: Reopen closed monitoring goal if it meets the criteria.
     const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
@@ -2597,7 +2653,7 @@ describe('createMonitoringGoals', () => {
   };
   // TODO: Figure out why this test is failing in CI, but works locally.
   // eslint-disable-next-line jest/no-disabled-tests -- fails in CI, but works locally.
-  it.skip('creates monitoring goals for grants that need them', async () => {
+  it('creates monitoring goals for grants that need them', async () => {
     // 1st Run of the CRON job.
     await createMonitoringGoals();
     await assertMonitoringGoals();
