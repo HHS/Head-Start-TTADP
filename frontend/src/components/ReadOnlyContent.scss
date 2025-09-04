@@ -6,6 +6,23 @@
     }
 }
 
+// "Special handling" for last-of elements within read-only-section-containers
+.ttahub-activity-report-view .ttahub-read-only-content-section-container {
+  // Increases the bottom margin for the last content-section
+  .ttahub-read-only-content-section:last-child {
+    padding-bottom: 2rem;
+  }
+
+  // Zeroes out the bottom margin on the last data row of the last heading-section
+  .ttahub-read-only-content-section--heading--section-row:last-child .ttahub-read-only-content-section--heading--section-row-data:last-child {
+  margin-bottom: 0;
+}
+}
+
+.ttahub-read-only-content-section--heading--section-row {
+  line-height: 1.4; // otherwise too squishy
+}
+
 // these next two style blocks will only apply on desktop
 .ttahub-read-only-content-section--heading--section-row-data  {
   flex-basis: max(300px, 75%)

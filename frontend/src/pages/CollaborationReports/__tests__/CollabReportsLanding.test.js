@@ -1,26 +1,31 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import '@testing-library/jest-dom';
-import { Helmet } from 'react-helmet';
 import { CollabReportsLanding } from '../index';
 import UserContext from '../../../UserContext';
 
-// Import mocked modules
-import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
-import { allRegionsUserHasActivityReportPermissionTo } from '../../../permissions';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../../regionHelpers';
-import CollabReports from '../components/CollabReports';
-import FilterPanel from '../../../components/filter/FilterPanel';
-import RegionPermissionModal from '../../../components/RegionPermissionModal';
+jest.mock('../../../hooks/useFilters');
+/* eslint-disable react/prop-types */
+jest.mock('../components/CollabReports', () => function MockCollabReports({ title, emptyMsg }) {
+  return (
+    <div data-testid="collab-reports">
+      <h2>{title}</h2>
+      {emptyMsg && <p>{emptyMsg}</p>}
+    </div>
+  );
+});
+jest.mock('../../../components/filter/FilterPanelContainer', () => function MockFilterPanelContainer({ children }) {
+  return <div data-testid="filter-panel-container">{children}</div>;
+});
+jest.mock('../../../components/filter/FilterPanel', () => function MockFilterPanel({ applyButtonAria }) {
+  return <div data-testid="filter-panel" aria-label={applyButtonAria} />;
+});
+jest.mock('../../../components/RegionPermissionModal', () => function MockRegionPermissionModal() {
+  return <div data-testid="region-permission-modal" />;
+});
+/* eslint-enable react/prop-types */
 
-// Mock dependencies
-jest.mock('../../../hooks/useSessionFiltersAndReflectInUrl');
-jest.mock('../../../permissions');
-jest.mock('../../regionHelpers');
-jest.mock('../components/CollabReports');
-jest.mock('../../../components/filter/FilterPanel');
-jest.mock('../../../components/RegionPermissionModal');
+const useFilters = require('../../../hooks/useFilters');
 
 describe('CollabReportsLanding', () => {
   const mockUser = {
@@ -29,77 +34,129 @@ describe('CollabReportsLanding', () => {
     homeRegionId: 1,
   };
 
+  const mockUseFiltersReturn = {
+    hasMultipleRegions: false,
+    defaultRegion: 1,
+    regions: [{ id: 1, name: 'Region 1' }],
+    allRegionsFilters: [],
+    filters: [],
+    setFilters: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Setup default mocks
-    useSessionFiltersAndReflectInUrl.mockReturnValue([[], jest.fn()]);
-    allRegionsUserHasActivityReportPermissionTo.mockReturnValue([1, 2]);
-    buildDefaultRegionFilters.mockReturnValue([]);
-    showFilterWithMyRegions.mockReturnValue(jest.fn());
-
-    // Mock components
-    CollabReports.mockImplementation(() => <div data-testid="collab-reports">Collab Reports</div>);
-    FilterPanel.mockImplementation(() => <div data-testid="filter-panel">Filter Panel</div>);
-    RegionPermissionModal.mockImplementation(() => <div data-testid="region-permission-modal">Region Permission Modal</div>);
+    useFilters.default.mockReturnValue(mockUseFiltersReturn);
   });
 
-  const renderComponent = (user = mockUser) => render(
-    <MemoryRouter>
-      <UserContext.Provider value={{ user }}>
-        <CollabReportsLanding />
-      </UserContext.Provider>
-    </MemoryRouter>,
-  );
+  const renderComponent = (userOverrides = {}) => {
+    const user = { ...mockUser, ...userOverrides };
+    return render(
+      <MemoryRouter>
+        <UserContext.Provider value={{ user }}>
+          <CollabReportsLanding />
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+  };
 
-  it('renders the main heading', () => {
+  test('renders heading with plural regions when user has multiple regions', () => {
+    useFilters.default.mockReturnValue({
+      ...mockUseFiltersReturn,
+      hasMultipleRegions: true,
+    });
+
     renderComponent();
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/Collaboration reports/)).toBeInTheDocument();
+
+    expect(screen.getByText('Collaboration reports - your regions')).toBeInTheDocument();
   });
 
-  it('renders the New Collaboration Report button', () => {
+  test('renders heading with plural regions when defaultRegion is 14', () => {
+    useFilters.default.mockReturnValue({
+      ...mockUseFiltersReturn,
+      defaultRegion: 14,
+    });
+
     renderComponent();
-    const newReportButton = screen.getByRole('link', { name: /New Collaboration Report/i });
-    expect(newReportButton).toBeInTheDocument();
-    expect(newReportButton).toHaveAttribute('href', '/collaboration-reports/new/activity-summary');
+
+    expect(screen.getByText('Collaboration reports - your regions')).toBeInTheDocument();
   });
 
-  it('renders the filter panel', () => {
+  test('renders New Collaboration Report link with correct href', () => {
     renderComponent();
-    expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+
+    const newReportLink = screen.getByRole('link', { name: /new collaboration report/i });
+    expect(newReportLink).toBeInTheDocument();
+    expect(newReportLink).toHaveAttribute('href', '/collaboration-reports/new/activity-summary');
+    expect(newReportLink).toHaveClass('usa-button', 'smart-hub--new-report-btn');
   });
 
-  it('renders the region permission modal', () => {
+  test('renders RegionPermissionModal with correct props', () => {
     renderComponent();
+
     expect(screen.getByTestId('region-permission-modal')).toBeInTheDocument();
   });
 
-  it('renders collab reports components', () => {
+  test('renders FilterPanelContainer and FilterPanel', () => {
     renderComponent();
-    const collabReports = screen.getAllByTestId('collab-reports');
-    expect(collabReports).toHaveLength(2);
+
+    expect(screen.getByTestId('filter-panel-container')).toBeInTheDocument();
+    expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+    expect(screen.getByLabelText('apply filters for activity reports')).toBeInTheDocument();
   });
 
-  it('sets the document title', () => {
+  test('renders both CollabReports components with correct props', () => {
     renderComponent();
-    const helmet = Helmet.peek();
-    expect(helmet.title).toBe('Collaboration Reports');
+
+    const collabReportsComponents = screen.getAllByTestId('collab-reports');
+    expect(collabReportsComponents).toHaveLength(2);
+
+    expect(screen.getByText('Collaboration Report Alerts')).toBeInTheDocument();
+    expect(screen.getByText('You have no Collaboration Reports in progress.')).toBeInTheDocument();
+
+    expect(screen.getByText('Approved Collaboration Reports')).toBeInTheDocument();
+    expect(screen.getByText('You have no approved Collaboration Reports.')).toBeInTheDocument();
   });
 
-  it('renders with single region label', () => {
-    const singleRegionUser = { ...mockUser, homeRegionId: 5 };
-    allRegionsUserHasActivityReportPermissionTo.mockReturnValue([5]);
+  test('calls useFilters with correct parameters', () => {
+    renderComponent();
 
-    renderComponent(singleRegionUser);
-    expect(screen.getByText(/your region$/)).toBeInTheDocument();
+    expect(useFilters.default).toHaveBeenCalledWith(
+      mockUser,
+      'collab-landing-filters',
+      true,
+      [],
+      [],
+    );
   });
 
-  it('renders with multiple regions label', () => {
-    const multiRegionUser = { ...mockUser, homeRegionId: 1 };
-    allRegionsUserHasActivityReportPermissionTo.mockReturnValue([1, 2, 3]);
+  test('renders header with correct classes', () => {
+    renderComponent();
 
-    renderComponent(multiRegionUser);
-    expect(screen.getByText(/your regions$/)).toBeInTheDocument();
+    const header = document.querySelector('.collab-report-header');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveClass('flex-align-center', 'margin-top-0', 'margin-bottom-3');
+  });
+
+  test('renders heading with correct class', () => {
+    renderComponent();
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveClass('landing');
+  });
+
+  test('renders plus icon in new report button', () => {
+    renderComponent();
+
+    const plusIcon = document.querySelector('.smart-hub--plus');
+    expect(plusIcon).toBeInTheDocument();
+    expect(plusIcon).toHaveTextContent('+');
+  });
+
+  test('renders new report text span', () => {
+    renderComponent();
+
+    const newReportText = document.querySelector('.smart-hub--new-report');
+    expect(newReportText).toBeInTheDocument();
+    expect(newReportText).toHaveTextContent('New Collaboration Report');
   });
 });

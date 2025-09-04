@@ -36,7 +36,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, restore_db ]
+    enum: [ build_test_deploy, deploy_only, import_data, restore_db, backup_prod ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
@@ -52,21 +52,17 @@ workflows:
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
     when: pipeline.parameters.action == "build_test_deploy"
+    max_auto_reruns: 3
     jobs:
     - build_and_lint
-    - build_similarity_api
     - checkpoint:
         name: build_done
         requires:
         - build_and_lint
-        - build_similarity_api
     - test_frontend:
         requires:
         - build_done
     - test_backend:
-        requires:
-        - build_done
-    - test_similarity_api:
         requires:
         - build_done
     - test_e2e_app:
@@ -89,7 +85,6 @@ workflows:
         requires:
         - test_frontend
         - test_backend
-        - test_similarity_api
         - test_e2e_app
         - test_e2e_api
         - test_e2e_utils
@@ -121,14 +116,12 @@ workflows:
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
-    - build_similarity_api
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
         target_env: "<< pipeline.parameters.target_env >>"
         requires:
         - build_and_lint
-        - build_similarity_api
 
   import_data_cron:
     # scheduled job to download and process monitoring data
@@ -159,6 +152,7 @@ workflows:
     # backup temp db to snapshot
     # restore temp snapshot to lower env dbs
     # run migrations
+    max_auto_reruns: 3
     triggers:
     - schedule:
         cron: "0 4 * * *" # 4AM UTC = 12AM EST
@@ -218,10 +212,9 @@ workflows:
         requires:
         - backup_temp_db
 
-  restore_db_manual:
-    # restore the anonymized db snapshot to a lower env db and run migrations
-    # uses the last production backup, does not interact with prod or modify snapshots
-    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+  backup_prod_manual:
+    # backup prod db, process(anonymize) it, then backup the processed db
+    when: pipeline.parameters.action == "backup_prod" and pipeline.trigger_source == "api"
     jobs:
     - backup_prod_db:
         serial-group: "tta-automation-lock"
@@ -237,10 +230,14 @@ workflows:
         serial-group: "tta-automation-lock"
         requires:
         - process_temp_db
+
+  restore_db_manual:
+    # restore the anonymized db snapshot to a lower env db and run migrations
+    # uses the last production backup, does not interact with prod or modify snapshots
+    when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
+    jobs:
     - restore_db_job:
         serial-group: tta-automation-lock
-        requires:
-        - backup_temp_db
         target_env: "<< pipeline.parameters.target_env >>"
 
 # ----------------- Jobs -----------------
@@ -296,35 +293,6 @@ jobs:
         root: .
         paths:
         - .
-
-  build_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - checkout
-    - create_combined_pipfreeze
-    - restore_cache:
-        keys:
-        # To manually bust the cache, increment the version e.g. v7-pip...
-        - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
-        # If checksum is new, restore partial cache
-        - v2-pip-deps-
-    - run:
-        name: Install python dependencies
-        command: |
-          cd similarity_api/src
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install -U pip setuptools wheel
-          pip install -U --use-pep517 -r requirements.txt
-    - save_cache:
-        paths:
-        - similarity_api/src/venv
-        key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-
-    - persist_to_workspace:
-        root: .
-        paths:
-        - similarity_api
 
   test_backend:
     executor: docker-postgres-executor
@@ -401,48 +369,6 @@ jobs:
         path: coverage-artifacts/
         destination: uncovered-lines
     - store_test_results:
-        path: reports/
-
-  test_similarity_api:
-    executor: docker-python-executor
-    steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: Syft SBOM
-        environment:
-          SYFT_VERSION: v1.5.0
-          IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
-          OUTPUT_FORMAT: json
-          OUTPUT_FILE: reports/syft_sbom.json
-        command: |
-          mkdir -p reports/
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
-          ./syft similarity_api/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Grype Docker image
-        environment:
-          GRYPE_VERSION: v0.92.2
-          OUTPUT_FORMAT: sarif
-          OUTPUT_FILE: reports/grype.json
-        command: |
-          mkdir -p reports
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
-          ./grype db update
-          ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
-          echo "Grype scan results saved in $OUTPUT_FILE"
-    - run:
-        name: Test similarity
-        command: |
-          mkdir -p coverage/similarity
-          cd similarity_api/src
-          source venv/bin/activate
-          pip install pytest pytest-cov
-          pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
-          coverage report --show-missing --skip-covered
-          coverage html -d ~/project/coverage/similarity --skip-covered
-    - store_artifacts:
         path: reports/
 
   test_frontend:
@@ -529,17 +455,11 @@ jobs:
         name: Wait for Node.js server to start
         command: ./bin/ping-server 8080
     - run:
-        name: Wait for similarity_api to start
-        command: ./bin/ping-server 9100 localhost /openapi.json
-    - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
     - run:
         name: Run OWASP ZAP scan for Node.js server
         command: ./bin/run-owasp-scan --target http://server:8080 --full
-    - run:
-        name: Run OWASP ZAP scan for similarity_api
-        command: ./bin/run-owasp-scan --target http://similarity_api:8080 --api
     - store_artifacts:
         path: reports
 
@@ -842,17 +762,6 @@ commands:
     - run:
         name: Combine package-lock.json files to single file
         command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
-
-  create_combined_pipfreeze:
-    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
-    parameters:
-      filename:
-        type: string
-        default: "combined-requirements.txt"
-    steps:
-    - run:
-        name: Combine requirements.txt files to single file
-        command: cat similarity_api/src/requirements.txt > << parameters.filename >>
 
   sparse_checkout:
     description: "Checkout sparse directories from a specific branch."

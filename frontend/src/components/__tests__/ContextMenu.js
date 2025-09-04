@@ -96,7 +96,6 @@ describe('ContextMenu', () => {
         <>
           <ContextMenu menuItems={menuItems()} label="label" />
           <div data-testid="other" />
-          );
         </>,
       );
       const button = await screen.findByTestId('context-menu-actions-btn');
