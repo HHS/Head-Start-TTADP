@@ -45,12 +45,10 @@ function LabelWrapper({
         <div>
           {label}
           {toolTipText && (
-
-          <QuestionTooltip
-            text={toolTipText}
-            className="margin-left-0"
-          />
-
+            <QuestionTooltip
+              text={toolTipText}
+              className="margin-left-0"
+            />
           )}
         </div>
         {children}

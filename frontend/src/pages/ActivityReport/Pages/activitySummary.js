@@ -42,6 +42,7 @@ import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Req from '../../../components/Req';
+import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
@@ -81,8 +82,8 @@ const ActivitySummary = ({
   setShouldAutoSave,
   formData,
 }) => {
-  // we store this to cause the end date to re-render when updated by the start date (and only then)
-  const [endDateKey, setEndDateKey] = useState('endDate');
+  const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
+
   const {
     register,
     watch,
@@ -203,15 +204,6 @@ const ActivitySummary = ({
       recipientSelectRef.current?.blur();
       recipientSelectRef.current?.focus();
     }, 10);
-  };
-
-  const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
-
-    // this will trigger the re-render of the
-    // uncontrolled end date input
-    // it's a little clumsy, but it does work
-    setEndDateKey(`endDate-${newEnd}`);
   };
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
