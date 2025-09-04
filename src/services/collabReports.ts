@@ -201,16 +201,3 @@ export async function getReports(
     order: [[sortBy, sortDir]],
   });
 }
-
-export async function submitReport(reportId: number) {
-  const report = await CollabReport.findByPk(reportId);
-
-  await report.save({
-    status: REPORT_STATUSES.SUBMITTED,
-  }); // this fires a pre-submit hook that verifies that
-  // the report is complete and can be submitted and throws an
-  // error otherwise
-
-  await report.reload();
-  return report;
-}
