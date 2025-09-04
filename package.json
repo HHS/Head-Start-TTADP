@@ -173,7 +173,8 @@
       "tests/*",
       "packages/*",
       "frontend/public/*",
-      "ops/*"
+      "ops/*",
+      "cucumber/*"
     ],
     "rules": {
       "linebreak-style": 0,

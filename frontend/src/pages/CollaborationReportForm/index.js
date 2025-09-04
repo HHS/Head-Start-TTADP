@@ -19,29 +19,28 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 import { NOT_STARTED } from './constants';
-import { convertReportToFormData, convertGoalsToFormData } from './formDataHelpers';
+import { convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_CR_EDITABLE_KEY,
-  NOOP,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
 import {
+  createReport,
   getReport,
-  // createReport,
-  // submitReport,
-  // reviewReport,
+  reviewReport,
+  saveReport,
+  submitReport,
 } from '../../fetchers/collaborationReports';
 import { getCollaborators } from '../../fetchers/collaborators';
-import useLocalStorage from '../../hooks/useLocalStorage';
+import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
-import './index.scss';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -54,6 +53,54 @@ const defaultValues = {
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
+
+export const formatReportWithSaveBeforeConversion = async (
+  data,
+  formData,
+  user,
+  userHasOneRole,
+  reportId,
+  approverIds,
+  forceUpdate,
+) => {
+  // if it isn't a new report, we compare it to the last response from the backend (formData)
+  // and pass only the updated to save report
+  const creatorRole = !data.creatorRole && userHasOneRole
+    ? user.roles[0].fullName
+    : data.creatorRole;
+
+  const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
+  const isEmpty = Object.keys(updatedFields).length === 0;
+
+  // save report returns dates in YYYY-MM-DD format, so we need to parse them
+  // formData stores them as MM/DD/YYYY so we are good in that instance
+  const thereIsANeedToParseDates = !isEmpty;
+  const updatedReport = isEmpty && !forceUpdate
+    ? { ...formData }
+    : await saveReport(
+      reportId.current, {
+        ...updatedFields,
+        version: 3,
+        approverUserIds: approverIds,
+        pageState: data.pageState,
+        activityRecipientType: 'recipient',
+      }, {},
+    );
+
+  let reportData = {
+    ...updatedReport,
+  };
+
+  if (thereIsANeedToParseDates) {
+    reportData = {
+      ...reportData,
+      startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+      endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+    };
+  }
+
+  return reportData;
+};
 
 function CollaborationReport({ match, location, region }) {
   const { params: { currentPage, collabReportId } } = match;
@@ -89,13 +136,13 @@ function CollaborationReport({ match, location, region }) {
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
-  const [, updateEditable] = useLocalStorage(
+  const [editable, updateEditable] = useLocalStorage(
     LOCAL_STORAGE_CR_EDITABLE_KEY(collabReportId), (collabReportId === 'new'), currentPage !== 'review',
   );
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
-  const [connectionActive] = useState(true);
+  const [connectionActive, setConnectionActive] = useState(true);
 
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
@@ -113,7 +160,7 @@ function CollaborationReport({ match, location, region }) {
     history.replace();
   }, [collabReportId, history]);
 
-  useLocalStorageCleanup(
+  const cleanupLocalStorage = useLocalStorageCleanup(
     formData,
     collabReportId,
     LOCAL_STORAGE_CR_DATA_KEY,
@@ -279,19 +326,14 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
-  // TODO: uncomment when logic is more complete
-  // if (connectionActive && !editable && currentPage !== 'review') {
-  //   return (
-  //     <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
-  //   );
-  // }
-
-  // TODO: uncomment when logic is more complete
-  // if (!currentPage && editable && isPendingApprover) {
-  //   return (
-  //     <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
-  //   );
-  // }
+  const notEditable = connectionActive && !editable && currentPage !== 'review';
+  const editableAndIsApprover = !currentPage && editable && isPendingApprover;
+  const shouldShowReview = notEditable || editableAndIsApprover;
+  if (shouldShowReview) {
+    return (
+      <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
+    );
+  }
 
   if (!currentPage) {
     return (
@@ -319,11 +361,75 @@ function CollaborationReport({ match, location, region }) {
     // history.push(newPath, state);
   };
 
-  // ===========================================================================//
-  //
-  // NOTE: onSave, onFormSubmit, and onReview go here eventually
-  //
-  // ===========================================================================//
+  const onSave = async (data, forceUpdate = false) => {
+    const approverIds = data.approvers.map((a) => a.user.id);
+
+    try {
+      if (reportId.current === 'new') {
+        const savedReport = await createReport({
+          ...data,
+          regionId: formData.regionId,
+          approverUserIds: approverIds,
+          version: 2,
+        });
+
+        if (!savedReport) {
+          throw new Error('Report not found');
+        }
+
+        reportId.current = savedReport.id;
+
+        cleanupLocalStorage('new', savedReport.id);
+
+        window.history.replaceState(null, null, `/collaboration-reports/${savedReport.id}/${currentPage}`);
+
+        setConnectionActive(true);
+        updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+      } else {
+        const updatedReport = await formatReportWithSaveBeforeConversion(
+          data,
+          formData,
+          user,
+          userHasOneRole,
+          reportId,
+          approverIds,
+          forceUpdate,
+        );
+
+        updateFormData(updatedReport, true);
+        setConnectionActive(true);
+        updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+      }
+    } catch (e) {
+      setConnectionActiveWithError(error, setConnectionActive);
+    }
+  };
+
+  const onFormSubmit = async (data) => {
+    const approverIds = data.approvers.map((a) => a.user.id);
+    const reportToSubmit = {
+      additionalNotes: data.additionalNotes,
+      approverUserIds: approverIds,
+      creatorRole: data.creatorRole,
+    };
+    const response = await submitReport(reportId.current, reportToSubmit);
+
+    updateFormData(
+      {
+        ...formData,
+        calculatedStatus: response.calculatedStatus,
+        approvers: response.approvers,
+      },
+      true,
+    );
+    updateEditable(false);
+
+    cleanupLocalStorage(collabReportId);
+  };
+
+  const onReview = async (data) => {
+    await reviewReport(reportId.current, { note: data.note, status: data.status });
+  };
 
   const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
@@ -437,11 +543,11 @@ function CollaborationReport({ match, location, region }) {
           <Navigator
             formData={formData}
             pages={pages}
-            onFormSubmit={NOOP}
-            onReview={NOOP}
+            onFormSubmit={onFormSubmit}
+            onReview={onReview}
             currentPage={currentPage}
             additionalData={initialAdditionalData}
-            onSave={NOOP}
+            onSave={onSave}
             isApprover={isApprover}
             isPendingApprover={isPendingApprover}
             reportId={reportId.current}
@@ -451,8 +557,8 @@ function CollaborationReport({ match, location, region }) {
             errorMessage={errorMessage}
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}
-            onSaveDraft={NOOP}
-            onSaveAndContinue={NOOP}
+            // onSaveDraft={onSaveDraft}
+            // onSaveAndContinue={onSaveAndContinue}
           // showSavedDraft={showSavedDraft}
           // updateShowSavedDraft={updateShowSavedDraft}
           // datePickerKey={datePickerKey}
