@@ -103,7 +103,7 @@ const createMonitoringGoals = async () => {
       if (goals && goals.length) {
         await Goal.bulkCreate(goals, { individualHooks: true, transaction });
       }
-      
+
       // 2. Previously, we reopened closed monitoring goals when needed.
       //    We now always create a new goal instead.
 
@@ -206,9 +206,9 @@ const createMonitoringGoals = async () => {
         })));
       }
   */
-      
-  // 3. Mark eligible AR-duped or RTR monitoring Goals so they can be used
-  //    for follow-up TTA.
+
+      // 3. Mark eligible AR-duped or RTR monitoring Goals so they can be used
+      //    for follow-up TTA.
       //    This checks to make sure the unmarked monitoring goals are on grants that replace
       //    grants that already have properly marked Goals. This is intended to address cases
       //    where follow-up TTA is being performed beyond the initial review, which will usually
