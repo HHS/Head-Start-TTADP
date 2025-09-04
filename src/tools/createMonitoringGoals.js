@@ -23,8 +23,9 @@ const createMonitoringGoals = async () => {
     }
 
     // 1. Create monitoring goals for grants that need them.
+    let goals = [];
     await sequelize.transaction(async (transaction) => {
-      await sequelize.query(`
+      [goals] = await sequelize.query(`
       WITH
       grants_needing_goal AS (
         SELECT
@@ -89,12 +90,16 @@ const createMonitoringGoals = async () => {
         CROSS JOIN grants_needing_goal gng
         WHERE gt.id = ${monitoringGoalTemplate.id}
       )
-      INSERT INTO "Goals"
-      ("name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source")
       SELECT
         "name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "goalTemplateId", "grantId", "onApprovedAR", "createdVia", "isRttapa", "onAR", "source"
       FROM new_goals;
     `, { transaction });
+
+      // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
+      // We need to do this to ensure we enter the Goal Status Change on create.
+      if (goals && goals.length) {
+        await Goal.bulkCreate(goals, { individualHooks: true, transaction });
+      }
 
       // 2. Reopen monitoring goals for grants that need them.
       const goalsToOpen = await sequelize.query(`
