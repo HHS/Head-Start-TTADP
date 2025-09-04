@@ -50,6 +50,34 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
+        userId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        lastUpdatedById: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportActivityStates', {
