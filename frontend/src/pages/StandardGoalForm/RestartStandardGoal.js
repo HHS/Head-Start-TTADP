@@ -30,7 +30,7 @@ export default function RestartStandardGoal({ recipient }) {
     },
   });
 
-  const goalTemplatePrompts = useGoalTemplatePrompts(goalTemplateId);
+  const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   useEffect(() => {
     const fetchStandardGoal = async () => {
@@ -44,12 +44,10 @@ export default function RestartStandardGoal({ recipient }) {
         }
         setGoal(g);
 
-        // we handle the restart case a little differently
-        // first off: all objectives will be "fresh" but the previous iterations
-        // objectives will appear as removable
+        // We want the user to start fresh with objectives and root causes.
         const resetFormData = {
           // eslint-disable-next-line max-len
-          [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({ value: o.title, objectiveId: o.id, onAR: false })),
+          [GOAL_FORM_FIELDS.OBJECTIVES]: [],
         };
 
         hookForm.reset(resetFormData);
@@ -95,6 +93,7 @@ export default function RestartStandardGoal({ recipient }) {
       await addStandardGoal({
         goalTemplateId,
         grantId,
+        status: GOAL_STATUS.IN_PROGRESS,
         ...mapObjectivesAndRootCauses(data),
       });
 
@@ -120,6 +119,7 @@ export default function RestartStandardGoal({ recipient }) {
       goal={goal}
       goalTemplatePrompts={goalTemplatePrompts}
       standardGoalFormButtons={standardGoalFormButtons}
+      isRestart
     />
   );
 }

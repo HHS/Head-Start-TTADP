@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {

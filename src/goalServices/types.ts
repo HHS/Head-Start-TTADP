@@ -17,14 +17,16 @@ interface IPrompt {
   }[];
   dataValues?: IPrompt;
   toJSON?: () => IPrompt;
-  allGoalsHavePromptResponse?: boolean;
   grantId?: number;
+  grantDisplayName?: string;
 }
 
 interface IReviewPrompt {
   key: string;
   promptId: number;
   responses: string[];
+  grantId?: number;
+  grantDisplayName?: string;
   recipients:
   {
     id: number;

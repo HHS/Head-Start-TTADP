@@ -521,7 +521,7 @@ module.exports = {
         and new_row_data ->> 'mapsToParentGoalId' IS NOT null
         GROUP BY 1,2
         `,
-        GOAL_COLLABORATORS.MERGE_DEPRECATOR,
+        'Merge-Deprecator',
       );
 
       const collectGoalCollaboratorsAsMergeCreator = () => collectGoalCollaborators(
@@ -542,7 +542,7 @@ module.exports = {
         AND new_row_data -> 'name' IS NOT NULL
         GROUP BY 1,2
         `,
-        GOAL_COLLABORATORS.MERGE_CREATOR,
+        'Merge-Creator',
       );
 
       const collectGoalCollaboratorsForMerged = () => /* sql */`
@@ -565,7 +565,7 @@ module.exports = {
             JOIN "Goals" pg
             ON g."mapsToParentGoalId" = pg.id
             WHERE g."mapsToParentGoalId" IS NOT NULL
-            AND ct.name NOT IN ('${GOAL_COLLABORATORS.MERGE_CREATOR}', '${GOAL_COLLABORATORS.MERGE_DEPRECATOR}')
+            AND ct.name NOT IN ('Merge-Creator', 'Merge-Deprecator')
           ),
           unrolled as (
             SELECT

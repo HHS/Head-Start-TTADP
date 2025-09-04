@@ -16,7 +16,7 @@ import ActivityReportNavigator, {
   formatEndDate,
 } from '../ActivityReportNavigator';
 import UserContext from '../../../UserContext';
-import { NOT_STARTED, IN_PROGRESS } from '../constants';
+import { NOT_STARTED, IN_PROGRESS, COMPLETE } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import NavigatorButtons from '../components/NavigatorButtons';
@@ -368,6 +368,149 @@ describe('ActivityReportNavigator', () => {
     await renderNavigator({ currentPage: 'second', onSave });
     jest.advanceTimersByTime(800);
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('navigates between pages and preserves form data', async () => {
+    const updatePage = jest.fn();
+    const onSave = jest.fn();
+    const updateForm = jest.fn();
+
+    await renderNavigator({
+      currentPage: 'first',
+      onSave,
+      updatePage,
+      updateForm,
+    });
+
+    // Fill out the first page
+    const firstInput = screen.getByTestId('first');
+    userEvent.click(firstInput);
+
+    // Click continue to go to the second page
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
+
+    // Verify updatePage was called to go to page 2
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
+
+    // Verify onSave was called with the correct data
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState, 1: IN_PROGRESS,
+        },
+        first: 'on',
+      },
+      false,
+    ));
+
+    // Reset mocks for further testing
+    onSave.mockClear();
+    updatePage.mockClear();
+
+    // Render the second page
+    await renderNavigator({
+      currentPage: 'second',
+      onSave,
+      updatePage,
+      updateForm,
+      formData: {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState, 1: IN_PROGRESS,
+        },
+        first: 'on',
+      },
+    });
+
+    // Fill out the second page
+    const secondInput = screen.getByTestId('second');
+    userEvent.click(secondInput);
+
+    // Navigate back to the first page
+    userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    // Verify updatePage was called to go to page 1
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+
+    // Verify onSave was called with the correct data including both pages
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        ...initialData,
+        pageState: {
+          ...initialData.pageState,
+          1: IN_PROGRESS,
+          2: IN_PROGRESS,
+        },
+        first: 'on',
+        second: 'on',
+      },
+      false,
+    ));
+  });
+
+  it('re-evaluates goals/objectives page state after save and updates form data', async () => {
+    const onSave = jest.fn();
+    const updateForm = jest.fn();
+
+    await renderNavigator({
+      currentPage: 'first',
+      onSave,
+      updateForm,
+    });
+
+    // Mark the form dirty so Save draft triggers a save
+    userEvent.click(screen.getByTestId('first'));
+
+    // Trigger a manual save
+    userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
+
+    // After save, the goals/objectives page (position 2) should be set to IN_PROGRESS
+    await waitFor(() => expect(updateForm).toHaveBeenCalled());
+    const [updatedData, calledWithFlag] = updateForm.mock.calls[0];
+    expect(updatedData.pageState[2]).toBe(IN_PROGRESS);
+    expect(calledWithFlag).toBe(false);
+  });
+
+  it('marks goals/objectives page COMPLETE after save when page is complete', async () => {
+    const onSave = jest.fn();
+    const updateForm = jest.fn();
+
+    const completePages = [
+      {
+        ...defaultPages[0],
+      },
+      {
+        ...defaultPages[1],
+        // Simulate Goals & Objectives page at position 2 being complete
+        isPageComplete: () => true,
+      },
+      {
+        ...defaultPages[2],
+      },
+      {
+        ...defaultPages[3],
+      },
+    ];
+
+    await renderNavigator({
+      currentPage: 'first',
+      onSave,
+      updateForm,
+      pages: completePages,
+    });
+
+    // Mark the form dirty so Save draft triggers a save
+    userEvent.click(screen.getByTestId('first'));
+
+    // Trigger a manual save
+    userEvent.click(await screen.findByRole('button', { name: 'Save draft' }));
+
+    // After save, the goals/objectives page (position 2) should be set to COMPLETE
+    await waitFor(() => expect(updateForm).toHaveBeenCalled());
+    const [updatedData, calledWithFlag] = updateForm.mock.calls[0];
+    expect(updatedData.pageState[2]).toBe(COMPLETE);
+    expect(calledWithFlag).toBe(false);
   });
 });
 
