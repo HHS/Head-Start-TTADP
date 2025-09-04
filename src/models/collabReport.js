@@ -1,5 +1,6 @@
 const { Model } = require('sequelize');
 const { formatDate } = require('../lib/modelHelpers');
+const { beforeUpdate } = require('./hooks/collabReport');
 
 export default (sequelize, DataTypes) => {
   class CollabReport extends Model {
@@ -111,6 +112,9 @@ export default (sequelize, DataTypes) => {
       },
     },
     {
+      hooks: {
+        beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      },
       sequelize,
       modelName: 'CollabReport',
       tableName: 'CollabReports',

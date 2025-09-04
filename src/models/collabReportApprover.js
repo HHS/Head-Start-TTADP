@@ -48,6 +48,7 @@ export default (sequelize, DataTypes) => {
       sequelize,
       modelName: 'CollabReportApprover',
       paranoid: true,
+      timestamps: true, // enables createdAt and updatedAt
     },
   );
 
