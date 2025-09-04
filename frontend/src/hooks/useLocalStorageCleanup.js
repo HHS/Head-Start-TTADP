@@ -44,7 +44,6 @@ export default function useLocalStorageCleanup(
   dataKey = LOCAL_STORAGE_AR_DATA_KEY,
   editableKey = LOCAL_STORAGE_AR_EDITABLE_KEY,
   additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
-
 ) {
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
@@ -55,4 +54,10 @@ export default function useLocalStorageCleanup(
       cleanupLocalStorage(reportId, dataKey, editableKey, additionalDataKey);
     }
   }, [reportId, formData, dataKey, editableKey, additionalDataKey]);
+
+  // return a function to cleanup local storage for a given report ID and replacement key
+  const cleanup = (reportIdToClean, dataKeyToClean) => (
+    cleanupLocalStorage(reportIdToClean, dataKeyToClean, editableKey, additionalDataKey)
+  );
+  return cleanup;
 }
