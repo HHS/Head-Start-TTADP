@@ -152,7 +152,7 @@ export async function submitReport(req: Request, res: Response) {
 
     // Make sure the current user is authorized to update the report
     const user = await userById(userId);
-    const authorization = new ActivityReport(user, existingReport);
+    const authorization = new CollabReportPolicy(user, existingReport);
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
       return;
