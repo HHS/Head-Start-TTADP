@@ -4,7 +4,6 @@ import {
   Goal,
 } from '../models';
 import { auditLogger } from '../logger';
-import { changeGoalStatusWithSystemUser } from '../goalServices/changeGoalStatus';
 
 const createMonitoringGoals = async () => {
   try {
@@ -49,10 +48,6 @@ const createMonitoringGoals = async () => {
         JOIN "MonitoringFindingGrants" mfg
         ON mf."findingId" = mfg."findingId"
         AND mrg."granteeId" = mfg."granteeId"
-        LEFT JOIN "Goals" g
-        ON (grta."grantId" = g."grantId"
-        OR grta."activeGrantId" = g."grantId")
-        AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
         JOIN "Grants" gr2
         ON grta."activeGrantId" = gr2.id
         AND gr."recipientId" = gr2."recipientId"
@@ -68,7 +63,15 @@ const createMonitoringGoals = async () => {
           'FA-2', 'FA2-CR',
           'Special'
         )
-        AND g.id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM "Goals" gx
+          WHERE (gx."grantId" = grta."grantId" OR gx."grantId" = grta."activeGrantId")
+            AND gx."goalTemplateId" = ${monitoringGoalTemplate.id}
+            AND (
+              (gx."createdVia" = 'monitoring' AND gx.status NOT IN ('Closed', 'Suspended'))
+              OR (gx."createdVia" != 'monitoring')
+            )
+        )
         GROUP BY 1
       ),
       new_goals AS (
@@ -100,73 +103,11 @@ const createMonitoringGoals = async () => {
       if (goals && goals.length) {
         await Goal.bulkCreate(goals, { individualHooks: true, transaction });
       }
+      
+      // 2. Previously, we reopened closed monitoring goals when needed.
+      //    We now always create a new goal instead.
 
-      // 2. Reopen monitoring goals for grants that need them.
-      const goalsToOpen = await sequelize.query(`
-      WITH
-        grants_needing_goal_reopend AS (
-          SELECT
-            g.id AS "goalId"
-          FROM "Grants" gr
-          JOIN "GrantRelationshipToActive" grta
-            ON gr.id = grta."grantId"
-            AND grta."activeGrantId" IS NOT NULL
-          JOIN "MonitoringReviewGrantees" mrg
-            ON gr.number = mrg."grantNumber"
-          JOIN "MonitoringReviews" mr
-            ON mrg."reviewId" = mr."reviewId"
-          JOIN "MonitoringReviewStatuses" mrs
-            ON mr."statusId" = mrs."statusId"
-          JOIN "MonitoringFindingHistories" mfh
-            ON mr."reviewId" = mfh."reviewId"
-          JOIN "MonitoringFindings" mf
-            ON mfh."findingId" = mf."findingId"
-          JOIN "MonitoringFindingStatuses" mfs
-            ON mf."statusId" = mfs."statusId"
-          JOIN "MonitoringFindingGrants" mfg
-            ON mf."findingId" = mfg."findingId"
-            AND mrg."granteeId" = mfg."granteeId"
-          LEFT JOIN "Goals" g
-            ON (grta."grantId" = g."grantId"
-            OR grta."activeGrantId" = g."grantId")
-            AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
-          JOIN "Grants" gr2
-            ON grta."activeGrantId" = gr2.id
-            AND gr."recipientId" = gr2."recipientId"
-          WHERE NOT gr2.cdi
-            AND mrs."name" = 'Complete'
-            AND mfs."name" = 'Active'
-            AND mr."reportDeliveryDate" BETWEEN '${cutOffDate}' AND NOW()
-            AND mr."reviewType" IN (
-              'AIAN-DEF',
-              'RAN',
-              'Follow-up',
-              'FA-1', 'FA1-FR',
-              'FA-2', 'FA2-CR',
-              'Special'
-            )
-            AND g.status IN ('Closed', 'Suspended')
-            AND g."createdVia" = 'monitoring'
-          GROUP BY 1
-        )
-      SELECT "goalId"
-      FROM grants_needing_goal_reopend;
-    `, { transaction });
-
-      // Set reopened goals via Sequelize so we ensure the hooks fire.
-      if (goalsToOpen[0].length > 0) {
-        const goalsToOpenIds = goalsToOpen[0].map((goal) => goal.goalId);
-        // This function also updates the status of the goal via the hook.
-        // No need to explicitly update the goal status.
-        await Promise.all(goalsToOpen[0].map((goal) => changeGoalStatusWithSystemUser({
-          goalId: goal.goalId,
-          newStatus: 'Not Started',
-          reason: 'Active monitoring citations',
-          context: null,
-        })));
-      }
-
-      // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
+      // 2. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives
       /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
       const goalsToClose = await sequelize.query(`
@@ -264,9 +205,10 @@ const createMonitoringGoals = async () => {
           context: null,
         })));
       }
-      */
-
-      // 4. Mark eligible AR-duped or RTR monitoring Goals so they can be used for follow-up TTA.
+  */
+      
+  // 3. Mark eligible AR-duped or RTR monitoring Goals so they can be used
+  //    for follow-up TTA.
       //    This checks to make sure the unmarked monitoring goals are on grants that replace
       //    grants that already have properly marked Goals. This is intended to address cases
       //    where follow-up TTA is being performed beyond the initial review, which will usually

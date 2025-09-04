@@ -2574,30 +2574,41 @@ describe('createMonitoringGoals', () => {
     expect(goalChangeStatus11C.userId).toBeNull();
     expect(goalChangeStatus11C.userName).toBeNull();
 
-    // CASE 12: Reopen closed monitoring goal if it meets the criteria.
+    // CASE 12: Create a new monitoring goal when an existing one is closed; keep old closed.
     const grant12Goals = await Goal.findAll({ where: { grantId: grantReopenMonitoringGoal12.id } });
-    expect(grant12Goals.length).toBe(1);
-    expect(grant12Goals[0].goalTemplateId).toBe(goalTemplate.id);
-    expect(grant12Goals[0].status).toBe('Not Started');
-
-    // Ensure the correct GoalChangeStatus has been created.
-    // with goal hooks (createInitialStatusChange), there will be two status changes:
-    // 1. the initial status change (oldStatus=null, newStatus='Closed')
-    // 2. the status change from 'Closed' to 'Not Started'
-    // we need to find the second one
-    const goalChangeStatus12 = await GoalStatusChange.findOne({
+    expect(grant12Goals.length).toBe(2);
+    // Old closed goal remains closed.
+    const closedOldGoal = grant12Goals.find((g) => g.id === goalForReopen12.id);
+    expect(closedOldGoal).toBeTruthy();
+    expect(closedOldGoal.status).toBe('Closed');
+    // New goal is created in Not Started using the monitoring template.
+    const newMonitoringGoal = grant12Goals.find((g) => g.id !== goalForReopen12.id
+      && g.goalTemplateId === goalTemplate.id
+      && g.createdVia === 'monitoring');
+    expect(newMonitoringGoal).toBeTruthy();
+    expect(newMonitoringGoal.status).toBe('Not Started');
+    // Ensure initial GoalStatusChange exists for the newly created goal (creation event).
+    const goalChangeStatus12New = await GoalStatusChange.findOne({
+      where: {
+        goalId: newMonitoringGoal.id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(goalChangeStatus12New).not.toBeNull();
+    expect(goalChangeStatus12New.userId).toBeNull();
+    expect(goalChangeStatus12New.userName).toBeNull();
+    // Ensure we did NOT change status on the old closed goal.
+    const noReopenOld = await GoalStatusChange.findOne({
       where: {
         goalId: goalForReopen12.id,
         oldStatus: 'Closed',
         newStatus: 'Not Started',
       },
     });
-    expect(goalChangeStatus12).not.toBeNull();
-    expect(goalChangeStatus12.userId).toBeNull();
-    expect(goalChangeStatus12.oldStatus).toBe('Closed');
-    expect(goalChangeStatus12.newStatus).toBe('Not Started');
-    expect(goalChangeStatus12.userName).toBe('system');
-    expect(goalChangeStatus12.reason).toBe('Active monitoring citations');
+    expect(noReopenOld).toBeNull();
 
     // CASE 13: Does not auto-close monitoring goal that no longer has any active citations.
     const grant13Goals = await Goal.findAll({ where: { grantId: grantClosedMonitoringGoal13.id } });
