@@ -7,8 +7,6 @@ import Container from '../../../../../components/Container';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from '../Approved';
-import Submitted from './Submitted';
-import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Submitter = ({
   availableApprovers,
@@ -19,6 +17,7 @@ const Submitter = ({
   onSaveForm,
   pages,
   lastSaveTime,
+  reviewItems,
 }) => {
   const {
     additionalNotes,
@@ -165,27 +164,15 @@ const Submitter = ({
   return (
     <>
       {renderTopAlert()}
-      {!submitted && (
-      <Container skipTopPadding className="margin-top-2 padding-top-2">
-        <h2 className="font-family-serif">Review and Submit</h2>
-        <IndicatesRequiredField />
-        <p className="margin-top-0">
-          {/* eslint-disable-next-line max-len */}
-          Review the information in each section before submitting for approval. Once submitted, you will no longer be able to edit the report.
-        </p>
-      </Container>
-      )}
-
-      {/* Accordion of "pages" items goes here */}
       {children}
 
-      <Container skipTopPadding className="margin-top-2 padding-top-2" skipBottomPadding={!submitted && !draft}>
+      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding={!submitted && !draft} paddingY={0}>
         {error && (
-          <Alert noIcon className="margin-y-4" type="error">
-            <b>Error</b>
-            <br />
-            {error}
-          </Alert>
+        <Alert noIcon className="margin-y-4" type="error">
+          <b>Error</b>
+          <br />
+          {error}
+        </Alert>
         )}
         {draft
           && (
@@ -201,15 +188,7 @@ const Submitter = ({
               creatorRole={creatorRole}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
-            />
-          )}
-        {submitted
-          && (
-            <Submitted
-              additionalNotes={additionalNotes}
-              reportId={id}
-              displayId={displayId}
-              approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
         {needsAction
@@ -223,6 +202,7 @@ const Submitter = ({
               displayId={displayId}
               reportId={id}
               availableApprovers={availableApprovers}
+              reviewItems={reviewItems}
               grantsMissingMonitoring={grantsMissingMonitoring()}
               grantsMissingCitations={grantsMissingCitations()}
             />
@@ -232,6 +212,7 @@ const Submitter = ({
             <Approved
               additionalNotes={additionalNotes}
               approverStatusList={approverStatusList}
+              reviewItems={reviewItems}
             />
           )}
       </Container>
@@ -274,7 +255,11 @@ Submitter.propTypes = {
     })),
   }).isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-
+  reviewItems: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    content: PropTypes.node,
+  })).isRequired,
 };
 
 Submitter.defaultProps = {

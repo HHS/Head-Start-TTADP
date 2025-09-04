@@ -47,18 +47,6 @@ services:
       - "9443:9443"
     environment:
       - MAX_FILE_SIZE=30M
-  similarity_api:
-    build:
-      context: ./similarity_api
-    profiles:
-      - minimal_required_python
-    ports:
-      - "9100:8080"
-    env_file: .env
-    depends_on:
-      - db
-    volumes:
-      - "./similarity_api/src:/app:rw"
   redis:
     image: redis:5.0.6-alpine
     profiles:

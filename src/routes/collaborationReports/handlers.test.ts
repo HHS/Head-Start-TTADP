@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
 import {
-  getReports,
-  getReport,
-  submitReport,
-  reviewReport,
+  getReports, getReport, submitReport, reviewReport,
 } from './handlers';
+import * as mailer from '../../lib/mailer';
 import * as CRServices from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -14,18 +12,13 @@ import CollabReportPolicy from '../../policies/collabReport';
 import { upsertApprover } from '../../services/collabReportApprovers';
 
 jest.mock('../../services/collabReports');
-jest.mock('../../services/currentUser');
-jest.mock('../../services/users');
-jest.mock('../../services/accessValidation');
-jest.mock('../../lib/apiErrorHandler');
-jest.mock('../../policies/collabReport');
-jest.mock('../../services/collabReportApprovers');
 
 describe('Collaboration Reports Handlers', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockJson: jest.Mock;
   let mockSendStatus: jest.Mock;
+  let mockMailer: jest.Mock;
 
   beforeEach(() => {
     mockJson = jest.fn();

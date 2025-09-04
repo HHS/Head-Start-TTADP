@@ -189,4 +189,40 @@ describe('ConditionalFields', () => {
     // Check if validatePrompts has been called with the expected arguments
     expect(validatePrompts).toHaveBeenCalledWith('Test', true, expect.any(String));
   });
+
+  it('validates field on blur and reports error when validation fails', async () => {
+    const validatePrompts = jest.fn();
+    const errorMessage = 'How DARE you';
+    const prompts = [{
+      fieldType: 'multiselect',
+      title: 'Test',
+      prompt: 'What is a test?',
+      options: ['option1', 'option2', 'option3'],
+      validations: {
+        rules: [
+          {
+            name: 'maxSelections',
+            value: 1,
+            message: errorMessage,
+          },
+        ],
+      },
+      // Set the initial response to already have 2 options selected,
+      // which exceeds the maxSelections of 1, so validation will fail on blur
+      response: ['option1', 'option2'],
+    }];
+    act(() => {
+      render(<CF prompts={prompts} validatePrompts={validatePrompts} />);
+    });
+
+    // Simulate the onBlur event directly on the input field
+    // This will trigger validation with the already-exceeded maxSelections
+    fireEvent.blur(screen.getByLabelText('What is a test?')); // Check if validatePrompts has been called with the expected arguments for failure
+    // This specifically tests lines 78-79 in ConditionalFields.js
+    expect(validatePrompts).toHaveBeenCalledWith('Test', true, errorMessage);
+
+    // Validate that validatePrompts was called only once, which confirms
+    // the return false; statement was executed, stopping further validation
+    expect(validatePrompts).toHaveBeenCalledTimes(1);
+  });
 });

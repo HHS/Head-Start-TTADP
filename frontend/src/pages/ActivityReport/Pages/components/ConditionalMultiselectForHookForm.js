@@ -13,9 +13,13 @@ export default function ConditionalMultiselectForHookForm({
   fieldName,
   defaultValue,
   userCanEdit,
+  // drawer props
+  drawerButtonText,
+  drawerTitle,
+  drawerTagName,
+  drawerClassName,
 }) {
   const rules = transformValidationsIntoRules(validations);
-
   const {
     field: {
       onChange,
@@ -28,20 +32,29 @@ export default function ConditionalMultiselectForHookForm({
     rules,
     defaultValue,
   });
-
   const { errors } = useFormContext();
   const error = errors[fieldName] ? ERROR_FORMAT(errors[name].message) : <></>;
+
+  // If we don't have a field value but we have a default value set it using onChange.
+  if (!fieldValue && defaultValue) {
+    onChange(defaultValue);
+  }
 
   return (
     <ConditionalMultiselect
       fieldData={fieldData}
       validations={validations}
       fieldName={fieldName}
-      fieldValue={fieldValue}
+      fieldValue={fieldValue || defaultValue} // If we have no response from the ARG, use the GFR.
       onBlur={onBlur}
-      onChange={onChange}
       error={error}
       userCanEdit={userCanEdit}
+      onChange={onChange}
+      // drawer props
+      drawerButtonText={drawerButtonText}
+      drawerTitle={drawerTitle}
+      drawerTagName={drawerTagName}
+      drawerClassName={drawerClassName}
     />
   );
 }
@@ -59,8 +72,16 @@ ConditionalMultiselectForHookForm.propTypes = {
   }).isRequired,
   defaultValue: PropTypes.arrayOf(PropTypes.string).isRequired,
   userCanEdit: PropTypes.bool,
+  drawerButtonText: PropTypes.string,
+  drawerTitle: PropTypes.string,
+  drawerTagName: PropTypes.string,
+  drawerClassName: PropTypes.string,
 };
 
 ConditionalMultiselectForHookForm.defaultProps = {
   userCanEdit: false,
+  drawerButtonText: '',
+  drawerTitle: '',
+  drawerTagName: '',
+  drawerClassName: '',
 };

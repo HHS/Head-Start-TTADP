@@ -2,31 +2,63 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, { isPageComplete } from '../activitySummary';
+import { getGoalTemplates } from '../../../../fetchers/goalTemplates';
+import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 
-const RenderActivitySummary = ({ passedGroups = null, passedGoals = [] }) => {
+jest.mock('../../../../fetchers/goalTemplates');
+jest.mock('../../../../fetchers/citations');
+
+const RenderActivitySummary = ({
+  passedGroups = null,
+  passedGoals = [],
+  recipientsOverride = null,
+  formDataOverride = {},
+  setShouldAutoSave = jest.fn(),
+}) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
       goals: passedGoals,
+      goalsAndObjectives: passedGoals,
       objectivesWithoutGoals: [],
       participants: [],
       activityRecipients: [],
       targetPopulations: [],
       activityReportCollaborators: [],
-      reason: [],
+      activityReason: null,
+      ...formDataOverride,
     },
   });
 
   const additionalData = {
-    recipients: { grants: [], otherEntities: [] },
+    recipients: recipientsOverride || {
+      grants: [
+        {
+          id: 1,
+          name: 'Recipient A',
+          grants: [{ name: 'Grant 1', activityRecipientId: 101, grantId: 201 }],
+        },
+        {
+          id: 2,
+          name: 'Recipient B',
+          grants: [{ name: 'Grant 2', activityRecipientId: 102, grantId: 202 }],
+        },
+      ],
+      otherEntities: [],
+    },
     collaborators: [{ id: 1, name: 'test', roles: [] }, { id: 2, name: 'test2', roles: [] }],
     availableApprovers: [],
     groups: passedGroups || [{ id: 1, name: 'group 1' }, { id: 2, name: 'group 2' }],
+  };
+
+  const mockFormData = {
+    regionId: 1,
+    ...formDataOverride,
   };
 
   return (
@@ -34,9 +66,9 @@ const RenderActivitySummary = ({ passedGroups = null, passedGoals = [] }) => {
       <FormProvider {...hookForm}>
         {activitySummary.render(
           additionalData,
-          {},
+          mockFormData,
           1,
-          null,
+          false, // isAppLoading
           jest.fn(),
           jest.fn(),
           jest.fn(),
@@ -44,11 +76,34 @@ const RenderActivitySummary = ({ passedGroups = null, passedGoals = [] }) => {
           '',
           jest.fn(),
           () => <></>,
+          setShouldAutoSave,
         )}
       </FormProvider>
     </NetworkContext.Provider>
   );
 };
+
+const passedGoalsWithCitations = [
+  {
+    id: 1,
+    name: '(monitoring) goal 1',
+    standard: 'Monitoring',
+    objectives: [
+      {
+        id: 1,
+        title: 'objective 1',
+        citations: [
+          {
+            id: 1,
+            monitoringReferences: [{
+              reportDeliveryDate: '2024-08-07T04:00:00+00:00',
+            }],
+          },
+        ],
+      },
+    ],
+  },
+];
 
 describe('activity summary', () => {
   describe('duration validation', () => {
@@ -69,27 +124,6 @@ describe('activity summary', () => {
 
   describe('start date citations validation', () => {
     it('correctly displays the start date citations validation', async () => {
-      const passedGoalsWithCitations = [
-        {
-          id: 1,
-          name: 'goal 1',
-          standard: 'Monitoring',
-          objectives: [
-            {
-              id: 1,
-              title: 'objective 1',
-              citations: [
-                {
-                  id: 1,
-                  monitoringReferences: [{
-                    reportDeliveryDate: '2024-08-07T04:00:00+00:00',
-                  }],
-                },
-              ],
-            },
-          ],
-        },
-      ];
       const { container } = render(
         <RenderActivitySummary passedGoals={passedGoalsWithCitations} />,
       );
@@ -101,27 +135,6 @@ describe('activity summary', () => {
     });
 
     it('does not show the start date citations validation when the date is valid', async () => {
-      const passedGoalsWithCitations = [
-        {
-          id: 1,
-          name: 'goal 1',
-          standard: 'Monitoring',
-          objectives: [
-            {
-              id: 1,
-              title: 'objective 1',
-              citations: [
-                {
-                  id: 1,
-                  monitoringReferences: [{
-                    reportDeliveryDate: '2024-08-07T04:00:00+00:00',
-                  }],
-                },
-              ],
-            },
-          ],
-        },
-      ];
       const { container } = render(
         <RenderActivitySummary passedGoals={passedGoalsWithCitations} />,
       );
@@ -133,79 +146,174 @@ describe('activity summary', () => {
     });
   });
 
-  describe('activity recipients validation', () => {
-    it('shows a validation message when clicked and recipient type is not selected', async () => {
-      render(<RenderActivitySummary />);
-      const input = screen.getByTestId('activityRecipients-click-container');
-      userEvent.click(input);
-      expect(await screen.findByText('You must first select who the activity is for')).toBeInTheDocument();
+  describe('handleRecipientChange', () => {
+    it('fetches goal templates, citations, and triggers modal when needed', async () => {
+      getGoalTemplates.mockResolvedValue([{ id: 1, standard: 'Monitoring' }]);
+      fetchCitationsByGrant.mockResolvedValue([{ citation: 'ABC' }]);
+
+      const { findByText } = render(
+        <RenderActivitySummary
+          formDataOverride={{
+            startDate: '08/01/2024',
+            recipients: [{
+              activityRecipientId: 101,
+              grantNumber: 'Grant 1',
+              grantId: 201,
+              recipientId: 1,
+              name: 'Recipient A',
+            }],
+          }}
+          passedGoals={passedGoalsWithCitations}
+        />,
+      );
+
+      const dropdowns = await screen.findAllByRole('combobox');
+      const recipientDropdown = dropdowns[0];
+      userEvent.click(recipientDropdown);
+      const grantOption = await findByText('Recipient B');
+      userEvent.click(grantOption);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
     });
 
-    it('hides the message when the recipient type is selected', async () => {
-      const { container } = render(<RenderActivitySummary />);
-      const input = screen.getByTestId('activityRecipients-click-container');
-      userEvent.click(input);
-      expect(await screen.findByText('You must first select who the activity is for')).toBeInTheDocument();
-      await act(() => {
-        const recipient = container.querySelector('#category-recipient');
-        userEvent.click(recipient);
+    it('closes modal and resets state on confirm', async () => {
+      getGoalTemplates.mockResolvedValue([{ id: 1, standard: 'Monitoring' }]);
+      fetchCitationsByGrant.mockResolvedValue([{ citation: 'ABC' }]);
+      const { findByText, findByRole } = render(
+        <RenderActivitySummary
+          formDataOverride={{
+            startDate: '08/01/2024',
+            recipients: [{
+              activityRecipientId: 101,
+              grantNumber: 'Grant 1',
+              grantId: 201,
+              recipientId: 1,
+              name: 'Recipient A',
+            }],
+          }}
+          passedGoals={passedGoalsWithCitations}
+        />,
+      );
+
+      const dropdowns = await screen.findAllByRole('combobox');
+      const recipientDropdown = dropdowns[0];
+      userEvent.click(recipientDropdown);
+      const option = await findByText('Recipient B');
+      userEvent.click(option);
+
+      const confirmBtn = await findByRole('button', { name: /change/i });
+      userEvent.click(confirmBtn);
+
+      // Modal should now be closed
+      expect(screen.queryByText('change')).not.toBeInTheDocument();
+    });
+    it('reverts recipient and resets state on cancel', async () => {
+      getGoalTemplates.mockResolvedValue([{ id: 1, standard: 'Monitoring' }]);
+      fetchCitationsByGrant.mockResolvedValue([{ citation: 'ABC' }]);
+
+      const { findByText, findByRole, queryByText } = render(
+        <RenderActivitySummary
+          formDataOverride={{
+            startDate: '08/01/2024',
+            recipients: [
+              {
+                id: 1,
+                name: 'Recipient A',
+                grants: [
+                  {
+                    activityRecipientId: 101,
+                    name: 'Recipient A - Grant1 number - EHS',
+                    number: 'Grant1 number',
+                    programs: [],
+                    recipient: {},
+                  },
+                ],
+              },
+              {
+                id: 2,
+                name: 'Recipient B',
+                grants: [
+                  {
+                    activityRecipientId: 102,
+                    name: 'Recipient B - Grant2 number - EHS',
+                    number: 'Grant2 number',
+                    programs: [],
+                    recipient: {},
+                  },
+                ],
+              },
+            ],
+            activityRecipients: [{
+              activityRecipientId: 101,
+              grantNumber: 'Grant 1',
+              grantId: 201,
+              recipientId: 1,
+              recipientIdForLookUp: 1,
+              name: 'Recipient A',
+            }],
+          }}
+          passedGoals={passedGoalsWithCitations}
+        />,
+      );
+
+      const dropdowns = await screen.findAllByRole('combobox');
+      const recipientDropdown = dropdowns[0];
+      userEvent.click(recipientDropdown);
+      const option = await findByText('Recipient B');
+      userEvent.click(option);
+
+      const cancelBtn = await findByRole('button', { name: /cancel/i });
+      userEvent.click(cancelBtn);
+
+      // Wait for modal to disappear
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
-      expect(screen.queryByText('You must first select who the activity is for')).not.toBeInTheDocument();
+
+      // Verify that Recipient A is still selected
+      await waitFor(() => {
+        expect(screen.getByText('Recipient A')).toBeInTheDocument();
+      });
+
+      expect(queryByText('Recipient B')).not.toBeInTheDocument();
     });
   });
 });
 
-describe('groups', () => {
-  it('correctly shows and hides all group options', async () => {
-    render(<RenderActivitySummary />);
+describe('ReviewSection', () => {
+  it('should display both participant fields when deliveryMethod is hybrid', () => {
+    // Create a wrapper component to use the hook
+    const TestComponent = () => {
+      const hookForm = useForm({
+        mode: 'onChange',
+        defaultValues: {
+          deliveryMethod: 'hybrid',
+          numberOfParticipants: 10,
+          numberOfParticipantsVirtually: 15,
+        },
+      });
 
-    // Click 'recipient' radio button.
-    const recipientCheckBox = screen.queryAllByRole('radio', { name: /recipient/i });
-    await act(() => {
-      userEvent.click(recipientCheckBox[0]);
-    });
+      return (
+        <FormProvider {...hookForm}>
+          <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
+            <activitySummary.reviewSection />
+          </NetworkContext.Provider>
+        </FormProvider>
+      );
+    };
 
-    // CLick the use group checkbox.
-    let useGroupCheckbox = screen.getByRole('checkbox', { name: /use group/i });
-    await act(() => {
-      userEvent.click(useGroupCheckbox);
-    });
+    render(<TestComponent />);
 
-    // Correctly shows the group drop down.
-    const groupOption = screen.getByRole('combobox', { name: /group name required/i });
-    expect(groupOption).toBeInTheDocument();
+    expect(screen.getByText('Number of participants attending in person')).toBeInTheDocument();
+    expect(screen.getByText('Number of participants attending virtually')).toBeInTheDocument();
 
-    // Uncheck the use group checkbox.
-    useGroupCheckbox = screen.getByRole('checkbox', { name: /use group/i });
-    await act(() => {
-      userEvent.click(useGroupCheckbox);
-    });
+    const inPersonValue = screen.getByText('10');
+    const virtualValue = screen.getByText('15');
 
-    // Assert that the group drop down is no longer visible.
-    expect(groupOption).not.toBeInTheDocument();
-
-    // Click the other-entity radio button.
-    const otherEntityCheckBox = screen.queryAllByRole('radio', { name: /other entity/i });
-    await act(() => {
-      userEvent.click(otherEntityCheckBox[0]);
-    });
-
-    // Verify the use group checkbox is not visible.
-    expect(useGroupCheckbox).not.toBeInTheDocument();
-  });
-
-  it('hides the use group check box if we dont have any groups', async () => {
-    render(<RenderActivitySummary passedGroups={[]} />);
-
-    // Click 'recipient' radio button.
-    const recipientCheckBox = screen.queryAllByRole('radio', { name: /recipient/i });
-    await act(() => {
-      userEvent.click(recipientCheckBox[0]);
-    });
-
-    // expect the use group check box not to be visible.
-    const useGroupCheckbox = screen.queryByRole('checkbox', { name: /use group/i });
-    expect(useGroupCheckbox).not.toBeInTheDocument();
+    expect(inPersonValue).toBeInTheDocument();
+    expect(virtualValue).toBeInTheDocument();
   });
 });
 
@@ -217,7 +325,6 @@ describe('isPageComplete', () => {
     virtualDeliveryType: '',
     activityRecipients: [{}],
     targetPopulations: ['people'],
-    reason: ['reason'],
     ttaType: ['tta'],
     participants: ['participant'],
     duration: 1,
@@ -225,6 +332,7 @@ describe('isPageComplete', () => {
     startDate: '09/01/2020',
     endDate: '09/01/2020',
     language: ['English'],
+    activityReason: 'recipient requested',
   };
 
   it('returns true if validated by hook form', async () => {
@@ -233,7 +341,7 @@ describe('isPageComplete', () => {
   });
 
   it('validates strings', async () => {
-    const result = isPageComplete({ ...FORM_DATA, requester: null }, { isValid: false });
+    const result = isPageComplete({ ...FORM_DATA, activityReason: null }, { isValid: false });
     expect(result).toBe(false);
   });
 
@@ -259,6 +367,22 @@ describe('isPageComplete', () => {
 
   it('validates language', async () => {
     const result = isPageComplete({ ...FORM_DATA, language: [] }, { isValid: false });
+    expect(result).toBe(false);
+  });
+
+  it('validates language has value', async () => {
+    const result = isPageComplete({ ...FORM_DATA, language: null }, { isValid: false });
+    expect(result).toBe(false);
+  });
+
+  it('validates both participant fields when deliveryMethod is hybrid', async () => {
+    const result = isPageComplete({
+      ...FORM_DATA,
+      deliveryMethod: 'hybrid',
+      numberOfParticipants: 3,
+      numberOfParticipantsInPerson: null,
+      numberOfParticipantsVirtually: null,
+    }, { isValid: false });
     expect(result).toBe(false);
   });
 });
