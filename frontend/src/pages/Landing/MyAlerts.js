@@ -16,7 +16,7 @@ import { deleteReport } from '../../fetchers/activityReports';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
-import { cleanupLocalStorage } from '../ActivityReport';
+import { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 import UserContext from '../../UserContext';
 import {
   PendingApprovalIcon,

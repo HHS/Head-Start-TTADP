@@ -28,6 +28,8 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
   let activeGrant;
 
   let template;
+  let templateTwo;
+  let templateThree;
 
   beforeAll(async () => {
     recipient = await createRecipient();
@@ -42,6 +44,16 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
       creationMethod: CREATION_METHOD.CURATED,
     });
 
+    templateTwo = await createGoalTemplate({
+      name: `${goalTitle} 2`,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
+
+    templateThree = await createGoalTemplate({
+      name: `${goalTitle} 3`,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
+
     goalOne = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       name: goalTitle,
@@ -53,14 +65,14 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
       status: GOAL_STATUS.IN_PROGRESS,
       name: goalTitle,
       grantId: activeGrant.id,
-      goalTemplateId: template.id,
+      goalTemplateId: templateTwo.id,
     });
 
     goalThree = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       name: goalTitle,
       grantId: activeGrant.id,
-      goalTemplateId: template.id,
+      goalTemplateId: templateThree.id,
     });
 
     const prompt = await GoalTemplateFieldPrompt.create({
@@ -116,7 +128,7 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
 
     await GoalTemplate.destroy({
       where: {
-        id: template.id,
+        id: [template.id, templateTwo.id, templateThree.id],
       },
       individualHooks: true,
     });

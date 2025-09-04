@@ -15,6 +15,7 @@ import {
   getCuratedTemplates,
   getSourceFromTemplate,
   getFieldPromptsForCuratedTemplate,
+  getFieldPromptsForActivityReports,
   getOptionsByGoalTemplateFieldPromptName,
 } from '../../services/goalTemplates';
 import {
@@ -321,7 +322,7 @@ describe('goalTemplates handlers', () => {
 
       await getPrompts(req, mockResponse);
 
-      expect(mockResponse.json).toHaveBeenCalledWith(prompts);
+      expect(mockResponse.json).toHaveBeenCalledWith([prompts, null]);
     });
 
     it('handles error', async () => {
@@ -339,6 +340,24 @@ describe('goalTemplates handlers', () => {
       await getPrompts(req, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
+
+    it('correctly calls getFieldPromptsForActivityReports when the parameter is true', async () => {
+      const req = {
+        params: {
+          goalTemplateId: 1,
+        },
+        query: {
+          goalIds: '1,2,3',
+          isForActivityReport: true,
+        },
+      };
+
+      const prompts = [[{ id: 1, prompt: 'Prompt 1' }], []];
+      getFieldPromptsForActivityReports.mockResolvedValue(prompts);
+
+      await getPrompts(req, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(prompts);
     });
   });
 

@@ -5,6 +5,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
   getFieldPromptsForCuratedTemplate,
+  getFieldPromptsForActivityReports,
   getOptionsByGoalTemplateFieldPromptName,
   getSourceFromTemplate,
 } from '../../services/goalTemplates';
@@ -42,13 +43,13 @@ export async function getStandardGoal(req: Request, res: Response) {
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
-    const { grantIds } = req.query;
+    const { grantIds, includeClosedSuspendedGoals } = req.query;
 
     // ensure we only pass numbers to the service
     const parsedGrantIds = [grantIds].flat().map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const templates = await getCuratedTemplates(parsedGrantIds);
+    const templates = await getCuratedTemplates(parsedGrantIds, !!(includeClosedSuspendedGoals));
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');
@@ -58,13 +59,14 @@ export async function getGoalTemplates(req: Request, res: Response) {
 export async function useStandardGoal(req: Request, res: Response) {
   try {
     const { grantId, goalTemplateId } = req.params;
-    const { objectives, rootCauses } = req.body;
+    const { objectives, rootCauses, status } = req.body;
 
     const standards = await newStandardGoal(
       Number(grantId),
       Number(goalTemplateId),
       objectives,
       rootCauses,
+      status || undefined, // if status is not provided, it will default to NOT_STARTED
     );
 
     res.json(standards);
@@ -118,7 +120,7 @@ export async function getSource(req: Request, res: Response) {
 export async function getPrompts(req: Request, res: Response) {
   try {
     const { goalTemplateId } = req.params;
-    const { goalIds } = req.query;
+    const { goalIds, isForActivityReport } = req.query;
 
     // this is a single string param in the url, i.e. the "1" in /goalTemplates/1/prompts/
     // this will be verified as "canBeNumber" by some middleware before we get to this point
@@ -132,8 +134,21 @@ export async function getPrompts(req: Request, res: Response) {
       .map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const prompts = await getFieldPromptsForCuratedTemplate(numericalGoalTemplateId, parsedGoalIds);
-    res.json(prompts);
+    let responsesWithPrompts;
+    if (isForActivityReport) {
+      // If this is for an AR we need the prompts back in a different format.
+      responsesWithPrompts = await getFieldPromptsForActivityReports(
+        numericalGoalTemplateId,
+        parsedGoalIds,
+      );
+    } else {
+      const originalPromptsWithResponses = await getFieldPromptsForCuratedTemplate(
+        numericalGoalTemplateId,
+        parsedGoalIds,
+      );
+      responsesWithPrompts = [originalPromptsWithResponses, null];
+    }
+    res.json(responsesWithPrompts);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getPrompts');
   }
