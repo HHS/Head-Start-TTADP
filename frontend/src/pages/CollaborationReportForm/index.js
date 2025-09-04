@@ -49,6 +49,7 @@ const defaultValues = {
   pageState: {
     1: NOT_STARTED,
   },
+  status: REPORT_STATUSES.DRAFT,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -210,10 +211,10 @@ function CollaborationReport({ match, location, region }) {
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
-        && (report.calculatedStatus === REPORT_STATUSES.DRAFT
-          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+        && (report.status === REPORT_STATUSES.DRAFT
+          || report.status === REPORT_STATUSES.NEEDS_ACTION);
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
-          report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+          report.status === REPORT_STATUSES.SUBMITTED)
         );
 
         updateAdditionalData({
