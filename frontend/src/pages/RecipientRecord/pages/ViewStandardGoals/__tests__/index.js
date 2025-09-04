@@ -470,4 +470,52 @@ describe('ViewGoalDetails', () => {
     });
     expect(screen.getByText(/by ohs/i)).toBeInTheDocument();
   });
+
+  test('adds synthetic "Added on" with creator when initial Not Started is missing', async () => {
+    // This goal has status changes but none with oldStatus=null or newStatus=Not Started,
+    // so the component should synthesize an initial "Added on <createdAt> by <Creator>" entry.
+    const goalWithMissingAdded = {
+      id: 7,
+      name: 'Goal missing initial Not Started',
+      status: 'In Progress',
+      createdAt: '2025-02-01T00:00:00.000Z',
+      goalTemplate: null,
+      grant: null,
+      objectives: [],
+      statusChanges: [
+        {
+          id: 70, goalId: 7, userId: 10, oldStatus: 'Not Started', newStatus: 'In Progress', createdAt: '2025-02-03T00:00:00.000Z', user: { name: 'Jane Doe', roles: [{ name: 'Program Specialist' }] },
+        },
+        {
+          id: 71, goalId: 7, userId: 11, oldStatus: 'In Progress', newStatus: 'Complete', createdAt: '2025-02-10T00:00:00.000Z', user: { name: 'Another PS', roles: [{ name: 'Program Specialist' }] },
+        },
+      ],
+      goalCollaborators: [
+        {
+          goalId: 7,
+          userId: 10,
+          collaboratorType: { name: 'Creator' },
+          user: { id: 10, name: 'Tom Jones' },
+        },
+      ],
+      responses: null,
+    };
+
+    fetchMock.get('/api/goals/7/history', [goalWithMissingAdded]);
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, '?goalId=7');
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-7 \| In Progress/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+    const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
+    const updates = within(updatesList).getAllByRole('listitem');
+
+    // Should synthesize the first entry as Added on <createdAt> by Tom Jones
+    expect(updates[0]).toHaveTextContent(`Added on ${formatDate('2025-02-01T00:00:00.000Z')} by Tom Jones`);
+    // Followed by the existing updates in ascending order
+    expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-02-03T00:00:00.000Z')} by Jane Doe`);
+    expect(updates[2]).toHaveTextContent(`Completed on ${formatDate('2025-02-10T00:00:00.000Z')} by Another PS`);
+  });
 });
