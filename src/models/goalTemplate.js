@@ -30,6 +30,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'resourceId',
         as: 'resources',
       });
+      GoalTemplate.hasMany(models.CollabReportGoal, { foreignKey: 'goalTemplateId', as: 'collabReportGoals' });
     }
   }
   GoalTemplate.init({
