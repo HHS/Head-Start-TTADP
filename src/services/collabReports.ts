@@ -161,7 +161,7 @@ export async function getReports(
   return CollabReport.findAndCountAll({
     where: {
       [Op.and]: [
-        { status },
+        { calculatedStatus: status },
         scopes,
       ],
     },
@@ -179,7 +179,7 @@ export async function getReports(
         include: [
           {
             model: User,
-            as: 'user',
+            as: 'specialist',
           },
         ],
       },
