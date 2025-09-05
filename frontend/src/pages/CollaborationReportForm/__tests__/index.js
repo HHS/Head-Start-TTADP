@@ -31,7 +31,8 @@ const dummyReport = {
   regionId: 1,
   endDate: '2025-01-01',
   approvers: [],
-  status: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  calculatedStatus: REPORT_STATUSES.DRAFT,
   userId: 1,
 };
 
