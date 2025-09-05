@@ -1,7 +1,7 @@
 # ADR: Archiving Growing Audit Logs
 
 ## Status
-Proposed
+Rejected
 
 ## Context
 We need to determine the most suitable approach for archiving growing audit logs. The data retention period specified by OCIO is 6 years. While we plan to leave the TTA Hub data used for analytics intact, the audit logs providing a historic view of how that data changed need to be managed. The main reason behind the need to implement an archiving strategy is to ensure the rapidly growing data doesn't stand in the way of the application performance. We have identified two alternatives for archiving the audit logs:
