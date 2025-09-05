@@ -2751,8 +2751,19 @@ describe('createMonitoringGoals', () => {
 
     // CASE 16 & 17: We should not open or close goals without createdVia='monitoring'
     const grant16Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToOpen16.id } });
-    expect(grant16Goals.length).toBe(1);
-    expect(grant16Goals[0].status).toBe('Closed');
+    expect(grant16Goals.length).toBe(2);
+
+    // Assert of the two goals one is closed one is open for the same grant. The one that is closed should have createdVia activityReport the one that is open should have created via monitoring
+    const closedMonitoringGoal = grant16Goals.find((goal) => goal.status === 'Closed');
+    const openMonitoringGoal = grant16Goals.find((goal) => goal.status === 'Not Started');
+    expect(closedMonitoringGoal).not.toBeNull();
+    expect(closedMonitoringGoal.createdVia).toBe('activityReport');
+    expect(closedMonitoringGoal.goalTemplateId).toBe(goalTemplate.id);
+    expect(closedMonitoringGoal.grantId).toBe(grantWithNonMonitoringGoalToOpen16.id);
+    expect(openMonitoringGoal).not.toBeNull();
+    expect(openMonitoringGoal.createdVia).toBe('monitoring');
+    expect(openMonitoringGoal.grantId).toBe(grantWithNonMonitoringGoalToOpen16.id);
+    expect(openMonitoringGoal.goalTemplateId).toBe(goalTemplate.id);
 
     const grant17Goals = await Goal.findAll({ where: { grantId: grantWithNonMonitoringGoalToClose17.id } });
     expect(grant17Goals.length).toBe(1);
