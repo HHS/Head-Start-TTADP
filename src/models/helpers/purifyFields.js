@@ -45,8 +45,6 @@ function purifyFields(instance, fields) {
   const { window } = new JSDOM('');
   const purify = DOMPurify(window);
 
-  console.log(instance, fields);
-
   if (!('changed' in instance) || typeof instance.changed !== 'function') {
     return;
   }
@@ -55,9 +53,7 @@ function purifyFields(instance, fields) {
     const changed = instance.changed();
     if (!changed || !Array.isArray(changed)) return;
     fields.forEach((field) => {
-      console.log(field);
       if (changed.includes(field) && typeof instance[field] === 'string') {
-        console.log(purify.sanitize(instance[field]));
         instance.set(field, purify.sanitize(instance[field]));
       }
     });
