@@ -84,7 +84,6 @@ export const formatReportWithSaveBeforeConversion = async (
         version: 3,
         approverUserIds: approverIds,
         pageState: data.pageState,
-        activityRecipientType: 'recipient',
       }, {},
     );
 
