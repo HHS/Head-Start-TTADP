@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   CollabReportApprover,
   CollabReport,
@@ -34,7 +35,6 @@ describe('collabReportApprovers service', () => {
     collabReport = await CollabReport.create({
       id: 999,
       name: 'Test Collab Report',
-      status: 'draft',
       startDate: '2023-01-01',
       endDate: '2023-01-02',
       duration: 1,
@@ -42,6 +42,7 @@ describe('collabReportApprovers service', () => {
       conductMethod: 'email',
       isStateActivity: false,
       description: 'Test collaboration report description',
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
     });
 
     await CollabReportApprover.destroy({
@@ -81,7 +82,7 @@ describe('collabReportApprovers service', () => {
       const values = {
         collabReportId: collabReport.id,
         userId: user.id,
-        status: 'approved',
+        status: 'needs_action',
         note: 'Test note',
       };
 
@@ -90,7 +91,7 @@ describe('collabReportApprovers service', () => {
       expect(result).toBeTruthy();
       expect(result.collabReportId).toBe(collabReport.id);
       expect(result.userId).toBe(user.id);
-      expect(result.status).toBe('approved');
+      expect(result.status).toBe('needs_action');
       expect(result.note).toBe('Test note');
     });
 
@@ -115,7 +116,7 @@ describe('collabReportApprovers service', () => {
 
       expect(result).toBeTruthy();
       expect(result.status).toBe('approved');
-      expect(result.note).toBe('Updated note');
+      expect(result.note).toBe(''); // cleared out on approval
     });
 
     it('restores a soft deleted approver', async () => {
