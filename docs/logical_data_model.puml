@@ -276,8 +276,9 @@ class CollabReports{
  * isStateActivity : boolean : false
  * name : varchar(255)
  * startDate : date
- * status : enum
+ * submissionStatus : enum
  * updatedAt : timestamp with time zone
+ calculatedStatus : enum
  deletedAt : timestamp with time zone
 }
 

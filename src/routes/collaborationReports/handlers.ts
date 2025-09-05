@@ -165,7 +165,7 @@ export async function submitReport(req: Request, res: Response) {
 
     const newReport = {
       lastUpdatedById: userId,
-      status: REPORT_STATUSES.SUBMITTED,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
     };
 
     // Merge the updated report with the old
@@ -216,18 +216,7 @@ export async function reviewReport(req: Request, res: Response) {
       userId,
     });
 
-    // todo: send notifications in a future ticket
-
-    // reload report in order to get updated status
-    // await existingReport.reload();
-
-    // if (existingReport.status === REPORT_STATUSES.APPROVED) {
-
-    // }
-
-    // if (existingReport.status === REPORT_STATUSES.NEEDS_ACTION) {
-
-    // }
+    // TODO: send notifications in a future ticket
 
     res.json(savedApprover);
   } catch (error) {

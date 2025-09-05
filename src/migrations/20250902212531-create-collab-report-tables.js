@@ -18,9 +18,13 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
-        status: {
-          type: Sequelize.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
+        submissionStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted']),
           allowNull: false,
+        },
+        calculatedStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted', 'needs_action', 'approved']),
+          allowNull: true,
         },
         startDate: {
           type: Sequelize.DATEONLY,

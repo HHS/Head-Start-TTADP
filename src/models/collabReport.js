@@ -70,13 +70,19 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.STRING,
       },
-      status: {
+      submissionStatus: {
         allowNull: false,
         type: DataTypes.ENUM([
           'draft',
           'submitted',
-          'reviewed',
-          'needs_approval',
+        ]),
+      },
+      calculatedStatus: {
+        allowNull: true,
+        type: DataTypes.ENUM([
+          'draft',
+          'submitted',
+          'needs_action',
           'approved',
         ]),
       },
