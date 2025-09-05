@@ -166,6 +166,7 @@ export async function submitReport(req: Request, res: Response) {
     const newReport = {
       lastUpdatedById: userId,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
     };
 
     // Merge the updated report with the old
