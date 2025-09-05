@@ -95,7 +95,8 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     {
       key: 8,
       label: 'Log out',
-      to: '/logout',
+      to: '/api/logout-oidc',
+      external: true,
     },
   ].map(({
     key,

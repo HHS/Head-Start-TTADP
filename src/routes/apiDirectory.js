@@ -4,8 +4,8 @@ import httpContext from 'express-http-context';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
 
-import authMiddleware, { login } from '../middleware/authMiddleware';
-import cookieSession from '../middleware/sessionMiddleware';
+import authMiddleware, { login, logoutOidc } from '../middleware/authMiddleware';
+import session from '../middleware/sessionMiddleware';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
@@ -43,7 +43,7 @@ authMiddleware.unless = unless;
 const router = express.Router();
 
 router.use(httpContext.middleware);
-router.use(cookieSession);
+router.use(session);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 
 router.use((req, res, next) => {
@@ -102,6 +102,7 @@ router.get('/logout', (req, res) => {
   req.session = null;
   res.sendStatus(204);
 });
+router.get('/logout-oidc', logoutOidc);
 
 router.get(loginPath, login);
 
