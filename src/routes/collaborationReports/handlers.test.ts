@@ -285,13 +285,13 @@ describe('Collaboration Reports Handlers', () => {
       const mockReport = {
         id: '1',
         name: 'Report 1',
-        status: 'draft',
+        submissionStatus: 'draft',
         lastUpdatedById: 456,
       };
 
       const submittedReport = {
         ...mockReport,
-        status: 'submitted',
+        submissionStatus: 'submitted',
         lastUpdatedById: 123,
       };
 
@@ -304,7 +304,7 @@ describe('Collaboration Reports Handlers', () => {
       expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith({
         ...mockReport,
         lastUpdatedById: 123,
-        status: 'submitted',
+        submissionStatus: 'submitted',
       }, mockReport);
       expect(mockJson).toHaveBeenCalledWith(submittedReport);
       expect(mockSendStatus).not.toHaveBeenCalled();
