@@ -8,7 +8,7 @@ describe('CollaboratorReports Fetcher', () => {
   describe('getReports', () => {
     it('fetches collaboration reports', async () => {
       const mockResponse = { rows: [{ id: 1, name: 'Report 1' }] };
-      fetchMock.get(join('/api/collaboration-report'), mockResponse);
+      fetchMock.get(join('/api/collaboration-reports'), mockResponse);
 
       const reports = await getReports();
 

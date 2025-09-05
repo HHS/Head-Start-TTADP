@@ -63,7 +63,7 @@ router.use((req, res, next) => {
 
 router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
-router.use('/collaboration-report', collaborationReportsRouter);
+router.use('/collaboration-reports', collaborationReportsRouter);
 router.use('/users', usersRouter);
 router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);

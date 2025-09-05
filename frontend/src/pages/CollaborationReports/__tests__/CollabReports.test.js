@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import CollabReports from '../components/CollabReports';
 import { getReports } from '../../../fetchers/collaborationReports';
 
-jest.mock('../../../fetchers/collaboratorReports');
+jest.mock('../../../fetchers/collaborationReports');
 
 describe('CollabReports', () => {
   const mockReports = [

@@ -40,7 +40,6 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
-import './index.scss';
 import usePresenceData from '../../hooks/usePresenceData';
 
 // Default values for a new collaboration report go here
@@ -50,6 +49,7 @@ const defaultValues = {
   pageState: {
     1: NOT_STARTED,
   },
+  calculatedStatus: REPORT_STATUSES.DRAFT,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -84,7 +84,6 @@ export const formatReportWithSaveBeforeConversion = async (
         version: 3,
         approverUserIds: approverIds,
         pageState: data.pageState,
-        activityRecipientType: 'recipient',
       }, {},
     );
 

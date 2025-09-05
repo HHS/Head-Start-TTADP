@@ -18,9 +18,13 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
-        status: {
-          type: Sequelize.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
+        submissionStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted']),
           allowNull: false,
+        },
+        calculatedStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted', 'needs_action', 'approved']),
+          allowNull: true,
         },
         startDate: {
           type: Sequelize.DATEONLY,
@@ -49,6 +53,34 @@ module.exports = {
         description: {
           type: Sequelize.TEXT,
           allowNull: false,
+        },
+        userId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        lastUpdatedById: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
