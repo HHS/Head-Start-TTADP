@@ -124,7 +124,9 @@ export default function Routes({
           path="/collaboration-reports"
           render={({ match }) => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
-              <CollaborationReportsLanding match={match} />
+              <FeatureFlag flag="collaboration_report" renderNotFound>
+                <CollaborationReportsLanding match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -132,7 +134,9 @@ export default function Routes({
           path="/collaboration-reports/:collabReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <CollaborationReport location={location} match={match} />
+              <FeatureFlag flag="collaboration_report" renderNotFound>
+                <CollaborationReport location={location} match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
