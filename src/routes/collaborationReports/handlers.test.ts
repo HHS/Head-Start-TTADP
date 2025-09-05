@@ -304,6 +304,7 @@ describe('Collaboration Reports Handlers', () => {
       expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith({
         ...mockReport,
         lastUpdatedById: 123,
+        calculatedStatus: 'submitted',
         submissionStatus: 'submitted',
       }, mockReport);
       expect(mockJson).toHaveBeenCalledWith(submittedReport);
