@@ -261,7 +261,7 @@ export default function StandardGoalCard({
   };
 
   const renderEnteredBy = () => {
-    if (isMonitoringGoal) {
+    if (isMonitoringGoal && (!lastStatusChange || !lastStatusChange.user)) {
       return (
         <SpecialistTags
           specialists={[{
