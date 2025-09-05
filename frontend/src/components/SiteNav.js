@@ -128,7 +128,7 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="collaboration_reports">
+                  <FeatureFlag flag="collaboration_report">
                     <li>
                       <NavLink
                         withinDisclosure
