@@ -48,6 +48,12 @@ const createMonitoringGoals = async () => {
         JOIN "MonitoringFindingGrants" mfg
         ON mf."findingId" = mfg."findingId"
         AND mrg."granteeId" = mfg."granteeId"
+        LEFT JOIN "Goals" g
+        ON (grta."grantId" = g."grantId"
+        OR grta."activeGrantId" = g."grantId")
+        AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
+        AND g."deletedAt" IS NULL
+        AND (g."createdVia" != 'monitoring' OR g.status != 'Closed')
         JOIN "Grants" gr2
         ON grta."activeGrantId" = gr2.id
         AND gr."recipientId" = gr2."recipientId"
@@ -63,15 +69,7 @@ const createMonitoringGoals = async () => {
           'FA-2', 'FA2-CR',
           'Special'
         )
-        AND NOT EXISTS (
-          SELECT 1 FROM "Goals" gx
-          WHERE (gx."grantId" = grta."grantId" OR gx."grantId" = grta."activeGrantId")
-            AND gx."goalTemplateId" = ${monitoringGoalTemplate.id}
-            AND (
-              (gx."createdVia" = 'monitoring' AND gx.status NOT IN ('Closed', 'Suspended'))
-              OR (gx."createdVia" != 'monitoring')
-            )
-        )
+        AND g.id IS NULL
         GROUP BY 1
       ),
       new_goals AS (
@@ -100,14 +98,9 @@ const createMonitoringGoals = async () => {
 
       // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
       // We need to do this to ensure we enter the Goal Status Change on create.
-      if (goals && goals.length) {
-        await Goal.bulkCreate(goals, { individualHooks: true, transaction });
-      }
+      await Goal.bulkCreate(goals, { individualHooks: true, transaction });
 
-      // 2. Previously, we reopened closed monitoring goals when needed.
-      //    We now always create a new goal instead.
-
-      // 2. Close monitoring goals that no longer have any active citations, un-approved reports,
+      // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives
       /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
       const goalsToClose = await sequelize.query(`
@@ -205,10 +198,9 @@ const createMonitoringGoals = async () => {
           context: null,
         })));
       }
-  */
+      */
 
-      // 3. Mark eligible AR-duped or RTR monitoring Goals so they can be used
-      //    for follow-up TTA.
+      // 4. Mark eligible AR-duped or RTR monitoring Goals so they can be used for follow-up TTA.
       //    This checks to make sure the unmarked monitoring goals are on grants that replace
       //    grants that already have properly marked Goals. This is intended to address cases
       //    where follow-up TTA is being performed beyond the initial review, which will usually

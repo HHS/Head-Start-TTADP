@@ -74,6 +74,8 @@ const approvedReport = {
 };
 
 describe('createMonitoringGoals', () => {
+  // Pre-seeded data for the soft-deleted goal scenario test
+  let softDeletedGrant;
   let recipient;
   let recipientForSplitCase10;
   let recipientForMergeCase11;
@@ -2421,6 +2423,104 @@ describe('createMonitoringGoals', () => {
       name: 'Don\'t attempt to close the goal linked to this objective',
       status: 'In Progress',
     });
+
+    // Pre-seed data for: "creates a monitoring goal when an existing monitoring-template goal is soft-deleted"
+    softDeletedGrant = await Grant.create({
+      id: faker.datatype.number({ min: 9999 }),
+      number: uuidv4(),
+      recipientId: recipient.id,
+      regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
+      status: 'Active',
+    });
+
+    const reviewId = uuidv4();
+    const granteeId = uuidv4();
+    const findingId = uuidv4();
+
+    await MonitoringReviewGrantee.create({
+      id: faker.datatype.number({ min: 9999 }),
+      grantNumber: softDeletedGrant.number,
+      reviewId,
+      granteeId,
+      createTime: new Date(),
+      updateTime: new Date(),
+      updateBy: 'Support Team',
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+
+    // Use existing complete statusId=1 and allowed review type within window.
+    await MonitoringReview.create({
+      reviewId,
+      contentId: uuidv4(),
+      statusId: 1, // 'Complete'
+      name: faker.random.words(3),
+      startDate: new Date(),
+      endDate: new Date(),
+      reviewType: 'RAN',
+      reportDeliveryDate: new Date(),
+      reportAttachmentId: uuidv4(),
+      outcome: faker.random.words(5),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+
+    // Finding history linked to the review; statusId aligns with MonitoringReviewStatus id=1 (Complete).
+    await MonitoringFindingHistory.create({
+      reviewId,
+      findingHistoryId: uuidv4(),
+      findingId,
+      statusId: 1,
+      narrative: faker.random.words(10),
+      ordinal: faker.datatype.number({ min: 1, max: 10 }),
+      determination: faker.random.words(5),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    });
+
+    // Active finding status: use MonitoringFindingStatus id=1 which is 'Active' in setup.
+    await MonitoringFinding.create({
+      findingId,
+      statusId: 1,
+      findingType: faker.random.word(),
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    });
+
+    await MonitoringFindingGrant.create({
+      findingId,
+      granteeId,
+      statusId: 1,
+      findingType: faker.random.word(),
+      source: faker.random.word(),
+      correctionDeadLine: new Date(),
+      reportedDate: new Date(),
+      closedDate: null,
+      hash: uuidv4(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+      sourceDeletedAt: null,
+    });
+
+    // Seed a monitoring-template goal for this grant and soft-delete it so it should be ignored by step 1.
+    const toSoftDelete = await Goal.create({
+      id: faker.datatype.number({ min: 9999 }),
+      name: goalTemplateName,
+      grantId: softDeletedGrant.id,
+      goalTemplateId: goalTemplate.id,
+      status: 'Not Started',
+      createdVia: 'activityReport',
+    });
+    await toSoftDelete.destroy(); // sets deletedAt (paranoid)
+
+    // Ensure the materialized view includes the new grant.
+    await GrantRelationshipToActive.refresh();
   });
 
   afterEach(() => {
@@ -2680,5 +2780,28 @@ describe('createMonitoringGoals', () => {
     jest.spyOn(auditLogger, 'error');
     await expect(createMonitoringGoals()).rejects.toThrow();
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error creating monitoring:'));
+  });
+
+  it('creates a monitoring goal when an existing monitoring-template goal is soft-deleted (ignored by step 1)', async () => {
+    // Run job and assert a new monitoring goal is created for the pre-seeded grant.
+    await createMonitoringGoals();
+
+    const goals = await Goal.findAll({ where: { grantId: softDeletedGrant.id } });
+    expect(goals.length).toBe(1);
+    expect(goals[0].goalTemplateId).toBe(goalTemplate.id);
+    expect(goals[0].createdVia).toBe('monitoring');
+    expect(goals[0].status).toBe('Not Started');
+
+    // Ensure initial status change exists for the newly created goal.
+    const gsc = await GoalStatusChange.findOne({
+      where: {
+        goalId: goals[0].id,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        reason: 'Goal created',
+        context: 'Creation',
+      },
+    });
+    expect(gsc).not.toBeNull();
   });
 });
