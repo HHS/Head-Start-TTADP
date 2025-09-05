@@ -1,14 +1,16 @@
-# 1. Record architecture decisions
+# 1. Audit Log Archival
 
 Date: 2025-09-03
 
 ## Status
 
-Pending
+Accepted
 
 ## Context
 
 Most tables in the TTA database have associated triggers to log events in corresponding "audit log" tables.  These tables serve as a historical record of changes made to objects such as activity reports, and may be consulted for debugging and compliance activities as well as being queried for the process of sending notifications.  Over time these audit log tables have grown in size relatively unchecked and now comprise a significant portion of the overall database size.  In order to reduce the database size and ensure future growth at a sustainable pace, we would like to come up with a process to archive old events in a way that they can still be queried if necessary.
+
+See also ADR 18 & 19
 
 ## Options Considered
 
