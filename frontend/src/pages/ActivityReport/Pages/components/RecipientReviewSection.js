@@ -11,14 +11,28 @@ import ReviewObjectiveCitation from '../Review/ReviewObjectiveCitation';
 
 const RecipientReviewSection = () => {
   const { watch } = useFormContext();
+  // Pull both the server-sourced snapshot (goalsAndObjectives) and the live form state
+  // (selected goals + goalForEditing) so the review reflects unsaved edits, e.g., TTA provided.
+  const watched = watch();
   const {
     goalsAndObjectives,
     calculatedStatus,
-  } = watch();
+    goals: selectedGoals,
+    goalForEditing,
+  } = watched;
 
   const canEdit = reportIsEditable(calculatedStatus);
 
-  const goals = goalsAndObjectives || [];
+  // If there are goals in the form (selected or currently being edited),
+  // use those for review; otherwise fall back to the server snapshot.
+  // This ensures rich text like TTA provided updates live.
+  const hasLiveGoals = (selectedGoals && selectedGoals.length > 0) || !!goalForEditing;
+  const goals = hasLiveGoals
+    ? [
+      ...(selectedGoals || []),
+      ...(goalForEditing ? [goalForEditing] : []),
+    ]
+    : (goalsAndObjectives || []);
 
   const goalSection = [
     {
