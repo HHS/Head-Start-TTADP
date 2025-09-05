@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   sequelize,
   GoalTemplate,
@@ -52,8 +53,10 @@ const createMonitoringGoals = async () => {
         ON (grta."grantId" = g."grantId"
         OR grta."activeGrantId" = g."grantId")
         AND g."goalTemplateId" = ${monitoringGoalTemplate.id}
+
         AND g."deletedAt" IS NULL
-        AND (g."createdVia" != 'monitoring' OR g.status != 'Closed')
+        AND g.status != 'Closed'
+
         JOIN "Grants" gr2
         ON grta."activeGrantId" = gr2.id
         AND gr."recipientId" = gr2."recipientId"
