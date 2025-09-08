@@ -53,14 +53,10 @@ async function saveReportSpecialists(collabReportId, specialists) {
 
 // Helper function to update a report using the model's built-in update
 async function update(newReport, oldReport) {
-  try {
-    const updatedReport = await oldReport.update(newReport, {
-      fields: _.keys(newReport),
-    });
-    return updatedReport;
-  } catch (err) {
-    throw new Error('CR Update failed');
-  }
+  const updatedReport = await oldReport.update(newReport, {
+    fields: _.keys(newReport),
+  });
+  return updatedReport;
 }
 
 // Get a CR by its id
@@ -109,7 +105,7 @@ export async function collabReportById(crId) {
 }
 
 // Service to handle creating and updating CRs
-export async function createOrUpdateReport(newReport, oldReport): Promise<object> {
+export async function createOrUpdateReport(newReport, oldReport) {
   let savedReport;
 
   // Determine whether to update or create

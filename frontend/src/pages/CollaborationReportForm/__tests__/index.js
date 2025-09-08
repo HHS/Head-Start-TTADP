@@ -2,10 +2,10 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  act,
   render,
   screen,
   waitFor,
+  act,
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';

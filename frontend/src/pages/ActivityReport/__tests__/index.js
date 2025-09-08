@@ -392,6 +392,39 @@ describe('ActivityReport', () => {
     });
 
     describe('actively editable goals', () => {
+      it('loads goals in edit mode', async () => {
+        const data = formData();
+        fetchMock.get('/api/topic', []);
+        fetchMock.get('/api/goal-templates?grantIds=12539', []);
+        fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+        fetchMock.get('/api/goals?reportId=1&goalTemplateId=24727', []);
+        fetchMock.get('/api/activity-reports/1', {
+          ...data,
+          activityRecipientType: 'recipient',
+          activityRecipients: [
+            {
+              id: 12539,
+              activityRecipientId: 12539,
+              name: 'Barton LLC - 04bear012539  - EHS, HS',
+            },
+          ],
+          objectivesWithoutGoals: [],
+          goalsAndObjectives: mockGoalsAndObjectives(true),
+        });
+
+        act(() => renderActivityReport(1, 'goals-objectives', false, 1));
+
+        // expect no read-only goals
+        expect(document.querySelector('.ttahub-goal-form-goal-summary')).toBeNull();
+
+        // expect the form to be open
+        const goalName = await screen.findByLabelText(/Recipient's goal/i, { selector: 'textarea' });
+        expect(goalName.value).toBe('test');
+
+        // we don't need this but its for the symmetry with the below test
+        expect(document.querySelector('textarea[name="goalName"]')).not.toBeNull();
+      });
+
       it('loads goals in read-only mode', async () => {
         const data = formData();
         fetchMock.get('/api/topic', []);
