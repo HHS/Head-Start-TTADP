@@ -238,6 +238,7 @@ const FEATURE_FLAGS = [
   'monitoring_integration',
   'multirecipient_communication_log',
   'standard_goals_update',
+  'collaboration_report',
 ];
 
 const MAINTENANCE_CATEGORY = {

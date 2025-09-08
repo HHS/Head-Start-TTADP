@@ -24,6 +24,7 @@ import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_CR_EDITABLE_KEY,
+  NOOP,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
@@ -46,6 +47,7 @@ import usePresenceData from '../../hooks/usePresenceData';
 const defaultValues = {
   collaborators: [],
   approvers: [],
+  status: REPORT_STATUSES.DRAFT,
   pageState: {
     1: NOT_STARTED,
   },
@@ -208,12 +210,11 @@ function CollaborationReport({ match, location, region }) {
           && report.collabReportCollaborators.find((u) => u.userId === user.id);
         const isAuthor = report.userId === user.id;
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
-
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
-        && (report.calculatedStatus === REPORT_STATUSES.DRAFT
-          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+        && (report.status === REPORT_STATUSES.DRAFT
+          || report.status === REPORT_STATUSES.NEEDS_ACTION);
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
-          report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+          report.status === REPORT_STATUSES.SUBMITTED)
         );
 
         updateAdditionalData({
@@ -279,7 +280,7 @@ function CollaborationReport({ match, location, region }) {
 
         updateError();
       } catch (e) {
-        const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
+        const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
             {/* eslint-disable-next-line max-len */}
@@ -557,10 +558,10 @@ function CollaborationReport({ match, location, region }) {
             errorMessage={errorMessage}
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}
-            // onSaveDraft={onSaveDraft}
+            onSaveDraft={onSave}
             // onSaveAndContinue={onSaveAndContinue}
           // showSavedDraft={showSavedDraft}
-          // updateShowSavedDraft={updateShowSavedDraft}
+            updateShowSavedDraft={NOOP}
           // datePickerKey={datePickerKey}
             shouldAutoSave={shouldAutoSave}
             hideSideNav={hideSideNav}
