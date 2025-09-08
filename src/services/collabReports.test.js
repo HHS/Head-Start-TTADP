@@ -45,36 +45,39 @@ const reportObject = {
   conductMethod: 'in_person',
 };
 
-const submittedReport = {
-  ...reportObject,
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
-};
-
 describe('Collab Reports Service', () => {
+  beforeAll(async () => {
+    // Delete any reports that were previously created
+    await CollabReport.destroy({ where: { userId: mockUser.id }, force: true });
+
+    // Delete any users that were previously created
+    const userIds = [mockUser.id, mockUserTwo.id, mockUserThree.id];
+    await User.destroy({ where: { id: userIds } });
+
+    // Create users to test with
+    await Promise.all([
+      User.create(mockUser),
+      User.create(mockUserTwo),
+      User.create(mockUserThree),
+    ]);
+
+    // Create a report to test with
+    await CollabReport.create(reportObject);
+  });
+
   afterAll(async () => {
+    // Delete the report we created
+    await CollabReport.destroy({ where: { id: reportObject.id } });
+
+    // Delete the users we created
+    const userIds = [mockUser.id, mockUserTwo.id, mockUserThree.id];
+    await User.destroy({ where: { id: userIds } });
+
+    // Close the DB connection
     await db.sequelize.close();
   });
 
   describe('collabReportById', () => {
-    beforeAll(async () => {
-      // Create users to test with
-      await Promise.all([
-        User.create(mockUser),
-        User.create(mockUserTwo),
-        User.create(mockUserThree),
-      ]);
-      // Create a report to test with
-      await CollabReport.create(reportObject);
-    });
-
-    afterAll(async () => {
-      const userIds = [mockUser.id, mockUserTwo.id, mockUserThree.id];
-      const reports = await CollabReport.findAll({ where: { userId: userIds } });
-      const reportIds = reports.map((report) => report.id);
-      await CollabReport.destroy({ where: { id: reportIds } });
-      await User.destroy({ where: { id: userIds } });
-    });
-
     it('returns the correct report when given a valid ID', async () => {
       // Find the report we created to get its ID
       const createdReport = await CollabReport.findOne({ where: { userId: mockUser.id } });
