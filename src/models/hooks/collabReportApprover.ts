@@ -62,7 +62,7 @@ const updateReportStatus = async (sequelize, instance) => {
   const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
 
   if (newCalculatedStatus === REPORT_STATUSES.APPROVED
-      && report.status !== REPORT_STATUSES.APPROVED) {
+      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
     // if the report is being approved, we need to clear the notes on the approvers
     await sequelize.models.CollabReportApprover.update({
       note: '',
