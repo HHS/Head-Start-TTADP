@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useController, useFormContext } from 'react-hook-form';
 import { DECIMAL_BASE } from '@ttahub/common';
-import GoalText from '../../../../components/GoalForm/GoalText';
 import { getGoalTemplateObjectiveOptions } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import ConditionalFields from './ConditionalFieldsForHookForm';
@@ -15,8 +14,8 @@ import {
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import useGoalTemplatePrompts from '../../../../hooks/useGoalTemplatePrompts';
+import ReadOnlyField from '../../../../components/ReadOnlyField';
 
 export default function GoalForm({
   goal,
@@ -30,7 +29,7 @@ export default function GoalForm({
   const { errors, watch } = useFormContext();
 
   // App Loading Context.
-  const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   // This ensures we always have the prompts and responses for the template.
   const [templateResponses, templatePrompts] = useGoalTemplatePrompts(
@@ -55,9 +54,7 @@ export default function GoalForm({
   const {
     field: {
       onChange: onUpdateText,
-      onBlur: onBlurGoalText,
       value: goalText,
-      name: goalTextInputName,
     },
   } = useController({
     name: 'goalName',
@@ -121,28 +118,11 @@ export default function GoalForm({
     activityRecipients,
   );
 
-  const isCurated = goal.isCurated || false;
   return (
     <>
-      <FormFieldThatIsSometimesReadOnly
-        permissions={[
-          !(goal.onApprovedAR),
-          !isCurated,
-        ]}
-        label="Recipient's goal"
-        value={goalText}
-      >
-        <GoalText
-          error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-          goalName={goalText}
-          validateGoalName={onBlurGoalText}
-          onUpdateText={onUpdateText}
-          inputName={goalTextInputName}
-          isOnReport={goal.onApprovedAR || false}
-          goalStatus={status}
-          isLoading={isAppLoading}
-        />
-      </FormFieldThatIsSometimesReadOnly>
+      <ReadOnlyField>
+        {goalText}
+      </ReadOnlyField>
 
       <ConditionalFields
         prompts={prompts}
