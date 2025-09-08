@@ -18,9 +18,13 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
-        status: {
+        submissionStatus: {
           type: Sequelize.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
           allowNull: false,
+        },
+        calculatedStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted', 'needs_action', 'approved']),
+          allowNull: true,
         },
         startDate: {
           type: Sequelize.DATEONLY,
@@ -50,6 +54,34 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: false,
         },
+        userId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        lastUpdatedById: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportActivityStates', {
@@ -70,6 +102,18 @@ module.exports = {
         activityStateCode: {
           type: Sequelize.STRING,
           allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -110,6 +154,18 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: true,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportGoals', {
@@ -135,6 +191,18 @@ module.exports = {
             key: 'id',
           },
           onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -162,6 +230,18 @@ module.exports = {
           ]),
           allowNull: false,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportSpecialists', {
@@ -187,6 +267,18 @@ module.exports = {
             key: 'id',
           },
           onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -220,6 +312,18 @@ module.exports = {
         collabStepPriority: {
           type: Sequelize.SMALLINT,
           allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
     });

@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
+  act,
   render,
   screen,
   waitFor,
@@ -24,6 +25,14 @@ const user = {
   permissions: [
     { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
   ],
+};
+
+const dummyReport = {
+  regionId: 1,
+  endDate: '2025-01-01',
+  approvers: [],
+  status: REPORT_STATUSES.DRAFT,
+  userId: 1,
 };
 
 const ReportComponent = ({
@@ -67,6 +76,7 @@ describe('CollaborationReportForm', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/users/collaborators?region=1', []);
+    fetchMock.get('/api/collaboration-reports/123', dummyReport);
   });
 
   afterEach(() => {
@@ -75,7 +85,9 @@ describe('CollaborationReportForm', () => {
   });
 
   it('renders', async () => {
-    render(<ReportComponent id="new" />);
+    act(() => {
+      render(<ReportComponent id="new" />);
+    });
 
     const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
     expect(heading).toBeInTheDocument();
@@ -120,6 +132,7 @@ describe('CollaborationReportForm', () => {
     beforeEach(() => {
       fetchMock.restore();
       fetchMock.get('/api/users/collaborators?region=1', 500);
+      fetchMock.get('/api/collaboration-reports/123', 500);
     });
 
     it('handles collaborators fetch error', async () => {
@@ -142,7 +155,7 @@ describe('CollaborationReportForm', () => {
     beforeEach(() => {
       getItem.mockReturnValue(JSON.stringify({
         id: 'test-report',
-        calculatedStatus: REPORT_STATUSES.DRAFT,
+        status: REPORT_STATUSES.DRAFT,
         savedToStorageTime: new Date().toISOString(),
       }));
     });
@@ -174,6 +187,7 @@ describe('CollaborationReportForm', () => {
     beforeEach(() => {
       fetchMock.restore();
       fetchMock.get('/api/users/collaborators?region=1', []);
+      fetchMock.get('/api/collaboration-reports/123', dummyReport);
     });
 
     it('renders with approved status and shows appropriate styling', async () => {
