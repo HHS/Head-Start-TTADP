@@ -9,7 +9,7 @@ describe('collabReport hooks', () => {
       mockInstance = {
         changed: jest.fn(),
         previous: jest.fn(),
-        status: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
         name: 'Test Report',
         startDate: '2023-01-01',
         endDate: '2023-01-02',
@@ -20,44 +20,44 @@ describe('collabReport hooks', () => {
       };
     });
 
-    it('should not validate when status is not changing', async () => {
+    it('should not validate when submissionStatus is not changing', async () => {
       mockInstance.changed.mockReturnValue(['name']);
-      mockInstance.status = REPORT_STATUSES.DRAFT;
+      mockInstance.submissionStatus = REPORT_STATUSES.DRAFT;
 
       await expect(validateSubmission(mockInstance)).resolves.not.toThrow();
     });
 
-    it('should not validate when status is not being submitted', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+    it('should not validate when submissionStatus is not being submitted', async () => {
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockReturnValue(REPORT_STATUSES.DRAFT);
-      mockInstance.status = REPORT_STATUSES.APPROVED;
+      mockInstance.submissionStatus = REPORT_STATUSES.APPROVED;
 
       await expect(validateSubmission(mockInstance)).resolves.not.toThrow();
     });
 
     it('should not validate when already submitted', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockReturnValue(REPORT_STATUSES.SUBMITTED);
-      mockInstance.status = REPORT_STATUSES.APPROVED;
+      mockInstance.submissionStatus = REPORT_STATUSES.APPROVED;
 
       await expect(validateSubmission(mockInstance)).resolves.not.toThrow();
     });
 
     it('should validate successfully when all required fields are present', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockReturnValue(REPORT_STATUSES.DRAFT);
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
 
       await expect(validateSubmission(mockInstance)).resolves.not.toThrow();
     });
 
     it('should throw error when name is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.name = null;
 
       await expect(validateSubmission(mockInstance))
@@ -65,12 +65,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error when startDate is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.startDate = null;
 
       await expect(validateSubmission(mockInstance))
@@ -78,12 +78,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error when endDate is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.endDate = null;
 
       await expect(validateSubmission(mockInstance))
@@ -91,12 +91,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error when duration is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.duration = null;
 
       await expect(validateSubmission(mockInstance))
@@ -104,12 +104,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error when isStateActivity is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.isStateActivity = null;
 
       await expect(validateSubmission(mockInstance))
@@ -117,12 +117,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error when conductMethod is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.conductMethod = null;
 
       await expect(validateSubmission(mockInstance))
@@ -130,12 +130,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error when description is missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.description = null;
 
       await expect(validateSubmission(mockInstance))
@@ -143,12 +143,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should handle empty string values as missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.name = '';
 
       await expect(validateSubmission(mockInstance))
@@ -156,12 +156,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should handle undefined values as missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.description = undefined;
 
       await expect(validateSubmission(mockInstance))
@@ -169,24 +169,24 @@ describe('collabReport hooks', () => {
     });
 
     it('should handle false boolean values correctly for isStateActivity', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.isStateActivity = false;
 
       await expect(validateSubmission(mockInstance)).resolves.not.toThrow();
     });
 
     it('should handle zero values correctly for duration', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.duration = 0;
 
       await expect(validateSubmission(mockInstance))
@@ -200,12 +200,12 @@ describe('collabReport hooks', () => {
     });
 
     it('should throw error for first missing field when multiple fields are missing', async () => {
-      mockInstance.changed.mockReturnValue(['status']);
+      mockInstance.changed.mockReturnValue(['submissionStatus']);
       mockInstance.previous.mockImplementation((field) => {
-        if (field === 'status') return REPORT_STATUSES.DRAFT;
+        if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
         return undefined;
       });
-      mockInstance.status = REPORT_STATUSES.SUBMITTED;
+      mockInstance.submissionStatus = REPORT_STATUSES.SUBMITTED;
       mockInstance.name = null;
       mockInstance.startDate = null;
 
@@ -219,7 +219,7 @@ describe('collabReport hooks', () => {
       const mockInstance = {
         changed: jest.fn().mockReturnValue(['name']),
         previous: jest.fn(),
-        status: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
         name: 'Test Report',
       };
       const mockSequelize = {};
@@ -230,12 +230,12 @@ describe('collabReport hooks', () => {
 
     it('should propagate validation errors', async () => {
       const mockInstance = {
-        changed: jest.fn().mockReturnValue(['status']),
+        changed: jest.fn().mockReturnValue(['submissionStatus']),
         previous: jest.fn().mockImplementation((field) => {
-          if (field === 'status') return REPORT_STATUSES.DRAFT;
+          if (field === 'submissionStatus') return REPORT_STATUSES.DRAFT;
           return undefined;
         }),
-        status: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
         name: null,
       };
       const mockSequelize = {};
@@ -246,9 +246,9 @@ describe('collabReport hooks', () => {
 
     it('should handle successful validation', async () => {
       const mockInstance = {
-        changed: jest.fn().mockReturnValue(['status']),
+        changed: jest.fn().mockReturnValue(['submissionStatus']),
         previous: jest.fn().mockReturnValue(REPORT_STATUSES.DRAFT),
-        status: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
         name: 'Test Report',
         startDate: '2023-01-01',
         endDate: '2023-01-02',
