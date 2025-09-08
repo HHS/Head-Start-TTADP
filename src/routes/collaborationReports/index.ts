@@ -35,9 +35,6 @@ router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, 
 // getReports
 router.get('/', transactionWrapper(getReports));
 
-// resetToDraft
-// router.put('/:collabReportId/reset', checkCollabReportIdParam, transactionWrapper(resetToDraft));
-
 // reviewReport
 // router.put('/:collabReportId/review',
 // checkCollabReportIdParam,
