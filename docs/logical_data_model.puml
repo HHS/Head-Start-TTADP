@@ -217,6 +217,20 @@ class CollabReportActivityStates{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * activityStateCode : varchar(255)
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>deletedAt</color>: timestamp with time zone
+}
+
+class CollabReportApprovers{
+ * id : integer : <generated>
+ * collabReportId : integer : REFERENCES "CollabReports".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * status : enum
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ note : text
 }
 
 class CollabReportApprovers{
@@ -234,25 +248,37 @@ class CollabReportDataUsed{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * collabReportDatum : enum
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
  collabReportDataOther : varchar(255)
+!issue='column missing from model' <color:#d54309>deletedAt</color>: timestamp with time zone
 }
 
 class CollabReportGoals{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>deletedAt</color>: timestamp with time zone
 }
 
 class CollabReportReasons{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
+ * createdAt : timestamp with time zone
  * reasonId : enum
+ * updatedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>deletedAt</color>: timestamp with time zone
 }
 
 class CollabReportSpecialists{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * specialistId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>deletedAt</color>: timestamp with time zone
 }
 
 class CollabReportSteps{
@@ -262,6 +288,9 @@ class CollabReportSteps{
  * collabStepDetail : text
  * collabStepId : integer
  * collabStepPriority : smallint
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>deletedAt</color>: timestamp with time zone
 }
 
 class CollabReports{
@@ -1183,6 +1212,7 @@ class Users{
 enum enum_Users_flags {
  anv_statistics
  closed_goal_merge_override
+ collaboration_report
  manual_mark_goals_similar
  monitoring_integration
  multirecipient_communication_log
@@ -2648,6 +2678,8 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" CollabReportApprovers : user
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
