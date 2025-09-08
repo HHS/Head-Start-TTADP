@@ -159,6 +159,7 @@ export async function getReports(
   const { collabReports: scopes } = await filtersToScopes(filters, { userId });
 
   return CollabReport.findAndCountAll({
+    attributes: ['id'],
     where: {
       [Op.and]: [
         { calculatedStatus: status },

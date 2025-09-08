@@ -546,5 +546,37 @@ describe('CollaborationReportForm', () => {
       expect(result.endDate).toBeDefined();
       findWhatsChangedSpy.mockRestore();
     });
+
+    it('uses real findWhatsChanged implementation to test integration', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/users/collaborators?region=1', []);
+      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.put('/api/collaboration-reports/test-id', {
+        id: 'test-id',
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        startDate: '2025-01-15',
+        endDate: '2025-01-30',
+      });
+
+      const dataWithChanges = {
+        ...mockData,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED, // Changed from DRAFT
+        description: 'Updated description',
+      };
+
+      const result = await formatReportWithSaveBeforeConversion(
+        dataWithChanges,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result.startDate).toBe('01/15/2025');
+      expect(result.endDate).toBe('01/30/2025');
+      expect(result.calculatedStatus).toBe(REPORT_STATUSES.SUBMITTED);
+    });
   });
 });
