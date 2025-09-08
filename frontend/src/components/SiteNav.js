@@ -128,16 +128,14 @@ const SiteNav = ({
                       Activity Reports
                     </NavLink>
                   </li>
-                  <FeatureFlag flag="collaboration_report">
-                    <li>
-                      <NavLink
-                        withinDisclosure
-                        to="/collaboration-reports"
-                      >
-                        Collaboration Reports
-                      </NavLink>
-                    </li>
-                  </FeatureFlag>
+                  <li>
+                    <NavLink
+                      withinDisclosure
+                      to="/collaboration-reports"
+                    >
+                      Collaboration Reports
+                    </NavLink>
+                  </li>
                   <li>
                     <NavLink
                       withinDisclosure
