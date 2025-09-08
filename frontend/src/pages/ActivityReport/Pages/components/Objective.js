@@ -604,6 +604,7 @@ export default function Objective({
         userCanEdit
         closeSuspendContext={objectiveSuspendContext}
         closeSuspendReason={objectiveSuspendReason}
+        currentStatus={objective.objectiveStatus}
       />
     </>
   );
