@@ -105,7 +105,7 @@ export async function collabReportById(crId) {
 }
 
 // Service to handle creating and updating CRs
-export async function createOrUpdateReport(newReport, oldReport) {
+export async function createOrUpdateReport(newReport, oldReport): Promise<any> {
   let savedReport;
 
   // Determine whether to update or create
