@@ -3,7 +3,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User, CollabReport,
 } from '../models';
-import { collabReportById } from './collabReports';
+import { collabReportById, createOrUpdateReport } from './collabReports';
 
 const mockUser = {
   id: 1115665161,
@@ -60,9 +60,6 @@ describe('Collab Reports Service', () => {
       User.create(mockUserTwo),
       User.create(mockUserThree),
     ]);
-
-    // Create a report to test with
-    await CollabReport.create(reportObject);
   });
 
   afterAll(async () => {
@@ -79,11 +76,54 @@ describe('Collab Reports Service', () => {
 
   describe('collabReportById', () => {
     it('returns the correct report when given a valid ID', async () => {
+      // Create a report to test with
+      await CollabReport.create(reportObject);
+
       // Find the report we created to get its ID
       const createdReport = await CollabReport.findOne({ where: { userId: mockUser.id } });
 
       const result = await collabReportById(createdReport.id);
       expect(result.name).toEqual(reportObject.name);
+    });
+
+    it('returns null when given an invalid ID', async () => {
+      expect(await collabReportById(99999999)).toBeNull();
+    });
+  });
+
+  describe('createOrUpdateReport', () => {
+    it('creates a new report when given valid data', async () => {
+      const result = await createOrUpdateReport(reportObject, null);
+      expect(result.name).toEqual(reportObject.name);
+    });
+
+    it('updates an existing report when given valid data', async () => {
+      // Create a report to test with
+      await CollabReport.create(reportObject);
+
+      // Find the report we created to get its ID
+      const createdReport = await CollabReport.findOne({ where: { userId: mockUser.id } });
+
+      const updatedReportObject = {
+        ...reportObject,
+        id: createdReport.id,
+        name: 'Updated Report Name',
+        lastUpdatedById: mockUserTwo.id,
+      };
+
+      const result = await createOrUpdateReport(updatedReportObject, createdReport);
+      expect(result.name).toEqual('Updated Report Name');
+      expect(result.lastUpdatedById).toEqual(mockUserTwo.id);
+    });
+
+    it('throws an error when trying to update a non-existent report', async () => {
+      const nonExistentReport = {
+        ...reportObject,
+        name: 'Non-existent Report',
+      };
+
+      const result = createOrUpdateReport(reportObject, nonExistentReport);
+      await expect(result).rejects.toThrow('CR Update failed');
     });
   });
 });
