@@ -14,6 +14,14 @@ module.exports = {
           autoIncrement: true,
           primaryKey: true,
         },
+        regionId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'Regions',
+            key: 'id',
+          },
+        },
         name: {
           type: Sequelize.STRING,
           allowNull: false,
@@ -103,6 +111,18 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportDataUsed', {
@@ -142,6 +162,18 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: true,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportGoals', {
@@ -167,6 +199,18 @@ module.exports = {
             key: 'id',
           },
           onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -194,6 +238,18 @@ module.exports = {
           ]),
           allowNull: false,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportSpecialists', {
@@ -219,6 +275,18 @@ module.exports = {
             key: 'id',
           },
           onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -252,6 +320,18 @@ module.exports = {
         collabStepPriority: {
           type: Sequelize.SMALLINT,
           allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
     });
