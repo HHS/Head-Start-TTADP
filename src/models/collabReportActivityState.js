@@ -32,6 +32,7 @@ export default (sequelize, DataTypes) => {
     modelName: 'CollabReportActivityState',
     tableName: 'CollabReportActivityStates',
     timestamps: true, // enables createdAt and updatedAt
+    paranoid: true,
     indexes: [
       {
         name: 'collab_report_activity_states_activity_state_code_collab_report_id',
