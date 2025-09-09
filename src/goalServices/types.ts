@@ -197,6 +197,7 @@ interface IObjectiveModelInstance extends IObjective {
   dataValues?: IObjective
   getDataValue?: (key: string) => number | string | boolean | null;
   toJSON?: () => IObjective;
+  // objectiveStatus?: string;
 }
 
 type IReducedObjective = Omit <IObjective, 'activityReportObjectives'> & {
@@ -207,6 +208,7 @@ type IReducedObjective = Omit <IObjective, 'activityReportObjectives'> & {
   ids: number[];
   recipientIds?: number[];
   otherEntityId?: number;
+  // objectiveStatus?: string;
 };
 
 interface IGoalCollaborator {

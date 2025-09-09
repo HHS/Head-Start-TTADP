@@ -133,11 +133,13 @@ export default async function getGoalsForReport(reportId: number) {
         model: Objective,
         as: 'objectives',
         // expose the Objective status directly on each objective as `objectiveStatus`
+        /*
         attributes: {
           include: [
             [sequelize.col('Objective.status'), 'objectiveStatus'],
           ],
         },
+        */
         include: [
           {
             required: true,
