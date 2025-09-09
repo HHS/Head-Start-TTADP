@@ -37,6 +37,7 @@ import {
 } from '../../fetchers/collaborationReports';
 import { getCollaborators } from '../../fetchers/collaborators';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
+import AppLoadingContext from '../../AppLoadingContext';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
@@ -117,8 +118,11 @@ function CollaborationReport({ match, location, region }) {
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
+  // App Loading Context.
+  const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
+  const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
   const {
@@ -170,8 +174,6 @@ function CollaborationReport({ match, location, region }) {
     LOCAL_STORAGE_CR_EDITABLE_KEY,
     LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
   );
-
-  // const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -349,22 +351,22 @@ function CollaborationReport({ match, location, region }) {
     // TODO (alternately): since this logic is so similar in multiple places now,
     // I suspect we could make it reusable
 
-    // if (!editable) {
-    //   return;
-    // }
+    if (!editable) {
+      return;
+    }
 
-    // const state = {};
-    // if (collabReportId === 'new' && reportId.current !== 'new') {
-    //   state.showLastUpdatedTime = true;
-    // }
+    const state = {};
+    if (collabReportId === 'new' && reportId.current !== 'new') {
+      state.showLastUpdatedTime = true;
+    }
 
-    // const page = pages.find((p) => p.position === position);
-    // const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
-    // history.push(newPath, state);
+    const newPath = `/collaboration-reports/${reportId.current}/${currentPage}`;
+    history.push(newPath, state);
   };
 
   const onSave = async (data, forceUpdate = false) => {
-    const approverIds = data.approvers.map((a) => a.user.id);
+    console.log('data:', data);
+    const approverIds = data.approvers ? data.approvers.map((a) => a.user.id) : [];
 
     try {
       if (reportId.current === 'new') {
@@ -404,6 +406,47 @@ function CollaborationReport({ match, location, region }) {
       }
     } catch (e) {
       setConnectionActiveWithError(error, setConnectionActive);
+    }
+  };
+
+  const setSavingLoadScreen = (isAutoSave = false) => {
+    if (!isAutoSave && !isAppLoading) {
+      setAppLoadingText('Saving');
+      setIsAppLoading(true);
+    }
+  };
+
+  const onSaveDraft = async (isAutoSave = false, forceUpdate = false) => {
+    try {
+      // Turn on loading screen
+      setSavingLoadScreen(isAutoSave);
+
+      // If not editable, don't show the loading screen
+      if (!editable) {
+        setIsAppLoading(false);
+        return;
+      }
+
+      // Get the current form data
+      const { status, ...formValues } = hookForm.getValues();
+      // TODO: Add 'pageState' and newNavigatorState to the saved data
+      const data = { ...formData, ...formValues };
+
+      // Clear the previous error message if there is one
+      updateErrorMessage();
+
+      // save the form data to the server
+      await onSave(data, forceUpdate);
+
+      // Update the last saved time
+      updateLastSaveTime(moment());
+
+      // show the saved draft message
+      updateShowSavedDraft(true);
+    } catch (e) {
+      updateErrorMessage('A network error has prevented us from saving your collaboration report to our database. You work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
@@ -559,11 +602,10 @@ function CollaborationReport({ match, location, region }) {
             errorMessage={errorMessage}
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}
-            onSaveDraft={onSave}
-            // onSaveAndContinue={onSaveAndContinue}
-          // showSavedDraft={showSavedDraft}
-            updateShowSavedDraft={NOOP}
-          // datePickerKey={datePickerKey}
+            onSaveDraft={onSaveDraft}
+            onSaveAndContinue={NOOP} // TODO: implement
+            showSavedDraft={showSavedDraft}
+            updateShowSavedDraft={updateShowSavedDraft}
             shouldAutoSave={shouldAutoSave}
             hideSideNav={hideSideNav}
           />
