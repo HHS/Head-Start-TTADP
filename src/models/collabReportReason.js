@@ -35,6 +35,7 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'CollabReportReason',
     tableName: 'CollabReportReasons',
+    paranoid: true,
     timestamps: true,
     indexes: [
       {

@@ -49,6 +49,7 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'CollabReportDataUsed',
     tableName: 'CollabReportDataUsed',
+    paranoid: true,
     timestamps: true, // enables createdAt and updatedAt
     indexes: [
       {
