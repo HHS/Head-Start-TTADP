@@ -1,4 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import Objective from './Objective';
@@ -109,7 +113,7 @@ export default function Objectives({
       setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
     }
   }, [firstObjective, options.length, objectiveOptionsLoaded, isMonitoring, options, setValue]);
-
+  // console.log('objective options: ', objectiveOptions);
   return (
     <>
       {/*
@@ -150,6 +154,7 @@ export default function Objectives({
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
+              optionStatus={(objectiveOptions || []).find((opt) => opt.id === objective.id)?.status}
             />
           );
         })}

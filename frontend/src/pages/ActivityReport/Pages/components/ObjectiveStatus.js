@@ -19,6 +19,7 @@ export default function ObjectiveStatus({
   closeSuspendReason,
   currentStatus,
 }) {
+  // console.log('option status: ', currentStatus);
   const inProgressStatuses = ['In Progress', 'Suspended', 'Complete'];
 
   const availableStatuses = currentStatus && inProgressStatuses.includes(currentStatus)

@@ -54,6 +54,7 @@ export default function Objective({
   citationOptions,
   rawCitations,
   isMonitoringGoal,
+  optionStatus,
 }) {
   const modalRef = useRef();
 
@@ -604,7 +605,7 @@ export default function Objective({
         userCanEdit
         closeSuspendContext={objectiveSuspendContext}
         closeSuspendReason={objectiveSuspendReason}
-        currentStatus={objective.objectiveStatus}
+        currentStatus={optionStatus}
       />
     </>
   );
@@ -675,6 +676,7 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
+  optionStatus: PropTypes.string.isRequired,
 };
 
 Objective.defaultProps = {
