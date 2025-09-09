@@ -138,7 +138,7 @@ describe('CollaborationReportForm', () => {
     it('handles collaborators fetch error', async () => {
       render(<ReportComponent id="new" />);
 
-      expect(await screen.findByText(/unable to load report/i)).toBeInTheDocument();
+      expect(await screen.findByText(/here’s an issue with your connection. Some sections of this form may not load correctly/i)).toBeInTheDocument();
     });
   });
 
