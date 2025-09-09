@@ -2,9 +2,9 @@ const { REPORT_STATUSES } = require('@ttahub/common');
 
 export async function validateSubmission(instance) {
   const changed = instance.changed();
-  const isSubmission = Array.isArray(changed) && changed.includes('status')
-     && instance.previous('status') !== REPORT_STATUSES.SUBMITTED
-     && instance.status === REPORT_STATUSES.SUBMITTED;
+  const isSubmission = Array.isArray(changed) && changed.includes('submissionStatus')
+     && instance.previous('submissionStatus') !== REPORT_STATUSES.SUBMITTED
+     && instance.submissionStatus === REPORT_STATUSES.SUBMITTED;
 
   // we can expand this as we go to also query for related models
   // like next steps

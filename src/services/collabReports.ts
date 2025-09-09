@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
+import filtersToScopes from '../scopes';
 import { syncCRApprovers } from './collabReportApprovers';
 
 interface ICollabReport {
@@ -21,6 +22,8 @@ const {
   CollabReportSpecialist,
   User,
 } = db;
+
+const REPORTS_PER_PAGE = 10;
 
 // Helper function to create a report
 async function create(report) {
@@ -61,14 +64,10 @@ async function saveReportSpecialists(collabReportId, specialists) {
 
 // Helper function to update a report using the model's built-in update
 async function update(newReport, oldReport) {
-  try {
-    const updatedReport = await oldReport.update(newReport, {
-      fields: _.keys(newReport),
-    });
-    return updatedReport;
-  } catch (err) {
-    throw new Error('CR Update failed');
-  }
+  const updatedReport = await oldReport.update(newReport, {
+    fields: _.keys(newReport),
+  });
+  return updatedReport;
 }
 
 // Get a CR by its id
@@ -151,11 +150,67 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   return report.toJSON();
 }
 
-export function getReports() {
-  const stubbedSqlData = [];
-  const reports = stubbedSqlData;
-  return Promise.resolve({
-    count: reports.length,
-    rows: reports,
+export async function getReports(
+  {
+    sortBy = 'updatedAt',
+    sortDir = 'desc',
+    offset = 0,
+    limit = REPORTS_PER_PAGE,
+    status = REPORT_STATUSES.APPROVED,
+    userId = 0,
+    ...filters
+  }: {
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
+    offset?: number;
+    limit?: number;
+    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
+    userId?: number;
+  } = {},
+) {
+  const { collabReports: scopes } = await filtersToScopes(filters, { userId });
+
+  return CollabReport.findAndCountAll({
+    attributes: ['id'],
+    where: {
+      [Op.and]: [
+        { calculatedStatus: status },
+        scopes,
+      ],
+    },
+    include: [
+      {
+        model: User,
+        as: 'author',
+        required: false,
+      },
+      {
+        model: CollabReportSpecialist,
+        as: 'collabReportSpecialists',
+        required: false,
+        separate: true,
+        include: [
+          {
+            model: User,
+            as: 'specialist',
+          },
+        ],
+      },
+      {
+        model: CollabReportApprover,
+        attributes: ['id', 'status', 'note'],
+        as: 'approvers',
+        required: false,
+        separate: true,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'fullName'],
+          },
+        ],
+      },
+    ],
+    order: [[sortBy, sortDir]],
   });
 }
