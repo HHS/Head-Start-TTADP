@@ -35,6 +35,7 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'CollabReportSpecialist',
     tableName: 'CollabReportSpecialists',
+    paranoid: true, // enables deletedAt
     timestamps: true, // enables createdAt and updatedAt
     indexes: [
       {

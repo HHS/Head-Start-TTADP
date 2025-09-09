@@ -37,10 +37,9 @@ export async function getReport(req: Request, res: Response) {
     return;
   }
 
-  res.json({
-    ...report.dataValues,
-    displayId: report.displayId,
-  });
+  // abandoned use of ...dataValues
+  // using toJSON preserves virtual fields
+  res.json(report.toJSON());
 }
 
 export async function getReports(req: Request, res: Response) {
