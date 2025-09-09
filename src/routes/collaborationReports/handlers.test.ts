@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import {
   getReports, getReport, submitReport, reviewReport,
 } from './handlers';
-import * as mailer from '../../lib/mailer';
 import * as CRServices from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -55,7 +54,9 @@ describe('Collaboration Reports Handlers', () => {
         id: '1',
         name: 'Report 1',
         dataValues: { id: '1', name: 'Report 1' },
-        displayId: 'COLLAB-001',
+        toJSON: () => (
+          { id: '1', name: 'Report 1', displayId: 'COLLAB-001' }
+        ),
       };
 
       (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);

@@ -37,6 +37,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'collabReportId',
         as: 'collabReports',
       });
+      User.hasMany(models.CollabReportApprover, { foreignKey: 'userId', as: 'approvers', hooks: true });
     }
   }
   User.init({

@@ -5,6 +5,17 @@ import db from '../models';
 import filtersToScopes from '../scopes';
 import { syncCRApprovers } from './collabReportApprovers';
 
+interface ICollabReport {
+  id: number;
+  collabReportCollaborators: {
+    userId: number;
+    user: {
+      id: number;
+      email: string;
+    }
+  }[];
+}
+
 const {
   CollabReport,
   CollabReportApprover,
@@ -105,7 +116,8 @@ export async function collabReportById(crId) {
 }
 
 // Service to handle creating and updating CRs
-export async function createOrUpdateReport(newReport, oldReport): Promise<any> {
+// todo: create proper typescript interface for the collab report
+export async function createOrUpdateReport(newReport, oldReport): Promise<ICollabReport> {
   let savedReport;
 
   // Determine whether to update or create
@@ -133,9 +145,9 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<any> {
   // (to ensure everything saved correctly, I guess?)
   const report = await collabReportById(savedReport.id);
 
-  return {
-    ...report.dataValues,
-  };
+  // using toJSON rather than datavalues, as it captures sequelize magic like virtual fields
+  // much more effectively
+  return report.toJSON();
 }
 
 export async function getReports(
