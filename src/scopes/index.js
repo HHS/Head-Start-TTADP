@@ -12,6 +12,7 @@ const models = {
   goal,
   trainingReport,
   communicationLog,
+  collabReport: () => ({}),
 };
 
 /**

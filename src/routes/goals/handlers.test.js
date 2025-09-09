@@ -1097,7 +1097,7 @@ describe('goal handlers', () => {
           grantId: 100,
           [Op.or]: [
             {
-              createdVia: 'rtr',
+              createdVia: { [Op.ne]: 'activityReport' },
             },
             {
               onApprovedAR: true,

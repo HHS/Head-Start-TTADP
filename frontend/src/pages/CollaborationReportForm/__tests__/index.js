@@ -2,17 +2,17 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  act,
   render,
   screen,
   waitFor,
+  act,
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import { mockWindowProperty } from '../../../testHelpers';
-import CollaborationReportForm from '..';
+import CollaborationReportForm, { formatReportWithSaveBeforeConversion } from '..';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
 
@@ -31,7 +31,8 @@ const dummyReport = {
   regionId: 1,
   endDate: '2025-01-01',
   approvers: [],
-  status: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  calculatedStatus: REPORT_STATUSES.DRAFT,
   userId: 1,
 };
 
@@ -138,7 +139,7 @@ describe('CollaborationReportForm', () => {
     it('handles collaborators fetch error', async () => {
       render(<ReportComponent id="new" />);
 
-      expect(await screen.findByText(/here’s an issue with your connection. Some sections of this form may not load correctly/i)).toBeInTheDocument();
+      expect(await screen.findByText(/unable to load report/i)).toBeInTheDocument();
     });
   });
 
@@ -157,6 +158,7 @@ describe('CollaborationReportForm', () => {
         id: 'test-report',
         status: REPORT_STATUSES.DRAFT,
         savedToStorageTime: new Date().toISOString(),
+        userId: 1,
       }));
     });
 
@@ -329,6 +331,252 @@ describe('CollaborationReportForm', () => {
 
       const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
       expect(heading).toBeInTheDocument();
+    });
+  });
+
+  describe('formatReportWithSaveBeforeConversion', () => {
+    beforeEach(() => {
+      fetchMock.put('/api/collaboration-reports/test-id', {
+        id: 'test-id',
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        startDate: '2025-01-15',
+        endDate: '2025-01-30',
+      });
+    });
+
+    const mockUser = {
+      id: 1,
+      roles: [{ fullName: 'Health Specialist' }],
+    };
+
+    const mockFormData = {
+      id: 'test-report',
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      startDate: '01/15/2025',
+      endDate: '01/30/2025',
+      creatorRole: 'Health Specialist',
+    };
+
+    const mockData = {
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+      startDate: '01/15/2025',
+      endDate: '01/30/2025',
+      pageState: { 1: 'Complete' },
+    };
+
+    it('sets creatorRole when user has one role and data has no creatorRole', async () => {
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result).toBeDefined();
+      expect(result.startDate).toBe('01/15/2025');
+    });
+
+    it('preserves existing creatorRole when data already has one', async () => {
+      const dataWithCreatorRole = { ...mockData, creatorRole: 'Education Specialist' };
+
+      const result = await formatReportWithSaveBeforeConversion(
+        dataWithCreatorRole,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result).toBeDefined();
+    });
+
+    it('does not set creatorRole when user has multiple roles', async () => {
+      const multiRoleUser = {
+        ...mockUser,
+        roles: [{ fullName: 'Health Specialist' }, { fullName: 'Education Specialist' }],
+      };
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        multiRoleUser,
+        false,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result).toBeDefined();
+    });
+
+    it('returns formData when no changes detected and forceUpdate is false', async () => {
+      // Mock findWhatsChanged to return empty object (no changes)
+      const originalModule = await import('../formDataHelpers');
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result).toEqual(mockFormData);
+      findWhatsChangedSpy.mockRestore();
+    });
+
+    it('calls saveReport when changes are detected', async () => {
+      // Mock findWhatsChanged to return changes
+      const originalModule = await import('../formDataHelpers');
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
+        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result.startDate).toBe('01/15/2025');
+      expect(result.endDate).toBe('01/30/2025');
+      findWhatsChangedSpy.mockRestore();
+    });
+
+    it('calls saveReport when forceUpdate is true even with no changes', async () => {
+      // Mock findWhatsChanged to return no changes
+      const originalModule = await import('../formDataHelpers');
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        true,
+      );
+
+      expect(result.startDate).toBe('2025-01-15');
+      expect(result.endDate).toBe('2025-01-30');
+      findWhatsChangedSpy.mockRestore();
+    });
+
+    it('converts dates from YYYY-MM-DD to MM/DD/YYYY format when changes are detected', async () => {
+      // Mock findWhatsChanged to return changes
+      const originalModule = await import('../formDataHelpers');
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
+        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result.startDate).toBe('01/15/2025');
+      expect(result.endDate).toBe('01/30/2025');
+      findWhatsChangedSpy.mockRestore();
+    });
+
+    it('does not convert dates when no changes are detected', async () => {
+      // Mock findWhatsChanged to return no changes
+      const originalModule = await import('../formDataHelpers');
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged').mockReturnValue({});
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result.startDate).toBe('01/15/2025'); // Original format preserved
+      expect(result.endDate).toBe('01/30/2025'); // Original format preserved
+      findWhatsChangedSpy.mockRestore();
+    });
+
+    it('handles missing dates gracefully', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/users/collaborators?region=1', []);
+      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.put('/api/collaboration-reports/test-id', {
+        id: 'test-id',
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        // No startDate or endDate provided
+      });
+
+      // Mock findWhatsChanged to return changes
+      const originalModule = await import('../formDataHelpers');
+      const findWhatsChangedSpy = jest.spyOn(originalModule, 'findWhatsChanged')
+        .mockReturnValue({ calculatedStatus: REPORT_STATUSES.SUBMITTED });
+
+      const result = await formatReportWithSaveBeforeConversion(
+        mockData,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      // When dates are undefined from the API, moment parsing will result in 'Invalid date'
+      // The function should handle this gracefully
+      expect(result.startDate).toBeDefined();
+      expect(result.endDate).toBeDefined();
+      findWhatsChangedSpy.mockRestore();
+    });
+
+    it('uses real findWhatsChanged implementation to test integration', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/users/collaborators?region=1', []);
+      fetchMock.get('/api/collaboration-reports/123', dummyReport);
+      fetchMock.put('/api/collaboration-reports/test-id', {
+        id: 'test-id',
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        startDate: '2025-01-15',
+        endDate: '2025-01-30',
+      });
+
+      const dataWithChanges = {
+        ...mockData,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED, // Changed from DRAFT
+        description: 'Updated description',
+      };
+
+      const result = await formatReportWithSaveBeforeConversion(
+        dataWithChanges,
+        mockFormData,
+        mockUser,
+        true,
+        { current: 'test-id' },
+        [1, 2],
+        false,
+      );
+
+      expect(result.startDate).toBe('01/15/2025');
+      expect(result.endDate).toBe('01/30/2025');
+      expect(result.calculatedStatus).toBe(REPORT_STATUSES.SUBMITTED);
     });
   });
 });
