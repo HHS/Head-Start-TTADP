@@ -364,7 +364,9 @@ export async function getGoalHistory(req, res) {
         prestandard: goal.prestandard,
         [Op.or]: [
           {
-            createdVia: 'rtr',
+            createdVia: {
+              [Op.ne]: 'activityReport',
+            },
           },
           {
             onApprovedAR: true,
@@ -386,7 +388,7 @@ export async function getGoalHistory(req, res) {
         {
           model: sequelize.models.GoalStatusChange,
           as: 'statusChanges',
-          attributes: ['id', 'createdAt', 'newStatus', 'reason', 'performedAt'],
+          attributes: ['id', 'createdAt', 'newStatus', 'oldStatus', 'reason', 'performedAt'],
           include: [
             {
               model: sequelize.models.User,
