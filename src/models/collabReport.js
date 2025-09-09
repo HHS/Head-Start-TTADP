@@ -47,6 +47,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'collabReportId',
         as: 'approvers',
       });
+      CollabReport.belongsTo(models.Region, {
+        foreignKey: 'regionId',
+        as: 'region',
+      });
     }
   }
 
@@ -65,6 +69,10 @@ export default (sequelize, DataTypes) => {
       lastUpdatedById: {
         type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      regionId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
       name: {
         allowNull: false,
