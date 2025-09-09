@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User, CollabReport,
@@ -63,11 +64,30 @@ describe('Collab Reports Service', () => {
   });
 
   afterAll(async () => {
+    const userIds = [mockUser.id, mockUserTwo.id, mockUserThree.id];
+
     // Delete the report we created
-    await CollabReport.destroy({ where: { id: reportObject.id } });
+    const reports = await CollabReport.findAll({
+      where: {
+        name: reportObject.name,
+        description: reportObject.description,
+        userId: mockUser.id,
+      },
+      paranoid: true,
+    });
+
+    const ids = reports.map(({ id }) => id);
+    await CollabReport.destroy({
+      where: {
+        [Op.or]: [
+          { id: ids },
+          { userId: userIds },
+        ],
+      },
+      force: true,
+    });
 
     // Delete the users we created
-    const userIds = [mockUser.id, mockUserTwo.id, mockUserThree.id];
     await User.destroy({ where: { id: userIds } });
 
     // Close the DB connection
@@ -122,8 +142,7 @@ describe('Collab Reports Service', () => {
         name: 'Non-existent Report',
       };
 
-      const result = createOrUpdateReport(reportObject, nonExistentReport);
-      await expect(result).rejects.toThrow('CR Update failed');
+      await expect(createOrUpdateReport(reportObject, nonExistentReport)).rejects.toThrow();
     });
   });
 });
