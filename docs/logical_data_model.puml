@@ -217,9 +217,6 @@ class CollabReportActivityStates{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * activityStateCode : varchar(255)
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
 }
 
 class CollabReportApprovers{
@@ -237,37 +234,25 @@ class CollabReportDataUsed{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * collabReportDatum : enum
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
  collabReportDataOther : varchar(255)
- deletedAt : timestamp with time zone
 }
 
 class CollabReportGoals{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * goalTemplateId : integer : REFERENCES "GoalTemplates".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
 }
 
 class CollabReportReasons{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
- * createdAt : timestamp with time zone
  * reasonId : enum
- * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
 }
 
 class CollabReportSpecialists{
  * id : integer : <generated>
  * collabReportId : integer : REFERENCES "CollabReports".id
  * specialistId : integer : REFERENCES "Users".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
 }
 
 class CollabReportSteps{
@@ -277,9 +262,6 @@ class CollabReportSteps{
  * collabStepDetail : text
  * collabStepId : integer
  * collabStepPriority : smallint
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- deletedAt : timestamp with time zone
 }
 
 class CollabReports{
@@ -2797,7 +2779,7 @@ UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : se
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
-Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, approvers
+Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, collabReportApprovers, approvers
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : specialist, collabReportSpecialists
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers

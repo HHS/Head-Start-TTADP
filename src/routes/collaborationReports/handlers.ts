@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { REPORT_STATUSES } from '@ttahub/common';
 import CollabReportPolicy from '../../policies/collabReport';
 import {
   collabReportById,
@@ -11,7 +12,13 @@ import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { USER_SETTINGS } from '../../constants';
-import { collaboratorAssignedNotification } from '../../lib/mailer';
+import {
+  collaboratorAssignedNotification,
+  // changesRequestedNotification,
+  // reportApprovedNotification,
+} from '../../lib/mailer';
+import { setReadRegions } from '../../services/accessValidation';
+import { upsertApprover } from '../../services/collabReportApprovers';
 
 const namespace = 'SERVICE:COLLAB_REPORTS';
 
@@ -43,11 +50,23 @@ export async function getReport(req: Request, res: Response) {
 }
 
 export async function getReports(req: Request, res: Response) {
-  const reportPayload = await getReportsService();
-  if (!reportPayload) {
-    res.sendStatus(404);
-  } else {
+  try {
+    // get the current user ID from the request
+    const userId = await currentUserId(req, res);
+    // filter the query so that only regions the user has permission
+    // to are included
+    const query = await setReadRegions(req.query, userId);
+    // the query here may contain additional filter information
+    // so we expect the collab reports to have a full filter suite
+    const reportPayload = await getReportsService(query);
+    // reportPayload will be an object like:
+    // - { count: number, rows: CollabReport[] }
+    // if no reports are found, it'll just be:
+    // - { count: 0, rows: [] }
+    // so there's no reason to 404 or die here
     res.json(reportPayload);
+  } catch (err) {
+    await handleErrors(req, res, err, logContext);
   }
 }
 
@@ -118,4 +137,93 @@ export async function saveReport(req: Request, res: Response) {
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
+}
+
+export async function softDeleteReport(req: Request, res: Response) {
+  res.send(204);
+}
+
+export async function submitReport(req: Request, res: Response) {
+  try {
+    // Chek report existence
+    const userId = await currentUserId(req, res);
+    const { collabReportId } = req.params;
+    const existingReport = await collabReportById(collabReportId);
+    if (!existingReport) {
+      res.sendStatus(404);
+      return;
+    }
+
+    // Make sure the current user is authorized to update the report
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, existingReport);
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const newReport = {
+      lastUpdatedById: userId,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+    };
+
+    // Merge the updated report with the old
+    const savedReport = await createOrUpdateReport(
+      {
+        ...existingReport,
+        ...newReport,
+      },
+      existingReport,
+    );
+
+    res.json(savedReport);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Review a report, setting Approver status to approved or needs action
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function reviewReport(req: Request, res: Response) {
+  try {
+    const { collabReportId } = req.params;
+    const { status, note } = req.body;
+    const userId = await currentUserId(req, res);
+
+    const existingReport = await collabReportById(collabReportId);
+    if (!existingReport) {
+      res.sendStatus(404);
+      return;
+    }
+
+    // Make sure the current user is authorized to update the report
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, existingReport);
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const savedApprover = await upsertApprover({
+      status,
+      note,
+      collabReportId,
+      userId,
+    });
+
+    // TODO: send notifications in a future ticket
+
+    res.json(savedApprover);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function createReport(req: Request, res: Response) {
+  res.send(204);
 }
