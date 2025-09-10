@@ -35,7 +35,7 @@ async function saveReportSpecialists(collabReportId, specialists) {
   // Make a handy lookup object for the findOrCreate that comes next
   const newSpecialists = specialists.map((c) => ({
     collabReportId,
-    userId: c,
+    specialistId: c,
   }));
 
   // Create and/or delete CR specialists
@@ -47,7 +47,7 @@ async function saveReportSpecialists(collabReportId, specialists) {
       {
         where: {
           collabReportId,
-          userId: {
+          specialistId: {
             [Op.notIn]: specialists,
           },
         },
@@ -131,7 +131,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   if (newReport.collabReportSpecialists) {
     const { id: reportId } = savedReport;
     const specialists = newReport.collabReportSpecialists.map(
-      (c) => c.user.id,
+      (c) => c.value,
     );
     await saveReportSpecialists(reportId, specialists);
   }
