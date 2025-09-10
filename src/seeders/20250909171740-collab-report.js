@@ -1,4 +1,4 @@
-const reports = [
+const getReports = (queryInterface) => [
   {
     id: 20001,
     userId: 5,
@@ -11,7 +11,7 @@ const reports = [
     endDate: '2025-01-02',
     duration: 120,
     isStateActivity: false,
-    conductMethod: 'virtual',
+    conductMethod: queryInterface.sequelize.literal("ARRAY['virtual']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is an approved collaboration report for testing purposes.',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -28,7 +28,7 @@ const reports = [
     endDate: '2025-01-04',
     duration: 90,
     isStateActivity: false,
-    conductMethod: 'in_person',
+    conductMethod: queryInterface.sequelize.literal("ARRAY['in_person']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is a submitted collaboration report for testing purposes.',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -45,7 +45,7 @@ const reports = [
     endDate: '2025-01-06',
     duration: 60,
     isStateActivity: true,
-    conductMethod: 'email',
+    conductMethod: queryInterface.sequelize.literal("ARRAY['email']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is a draft collaboration report for testing purposes.',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -213,6 +213,7 @@ const steps = [
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
+    const reports = getReports(queryInterface);
     await queryInterface.bulkInsert('CollabReports', reports);
     await queryInterface.bulkInsert('CollabReportSpecialists', specialists);
     await queryInterface.bulkInsert('CollabReportReasons', reasons);

@@ -225,10 +225,10 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns true when all required fields are filled correctly', () => {
       const formState = { isValid: false };
       const formData = {
-        activityName: 'Test Activity',
-        activityDescription: 'test',
+        name: 'Test Activity',
+        description: 'test',
         activityReasons: ['participate'],
-        deliveryMethods: ['virtual'],
+        conductMethod: ['virtual'],
         duration: 1.5,
         regionalOrState: 'regional',
         startDate: '01/01/2024',
@@ -241,10 +241,10 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns true when state activity has statesInvolved filled', () => {
       const formState = { isValid: false };
       const formData = {
-        activityName: 'Test Activity',
-        activityDescription: 'test',
+        name: 'Test Activity',
+        description: 'test',
         activityReasons: ['participate'],
-        deliveryMethods: ['virtual'],
+        conductMethod: ['virtual'],
         duration: 1.5,
         regionalOrState: 'state',
         statesInvolved: ['CA'],

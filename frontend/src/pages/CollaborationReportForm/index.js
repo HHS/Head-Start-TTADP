@@ -46,7 +46,6 @@ import usePresenceData from '../../hooks/usePresenceData';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
-  collaborators: [],
   approvers: [],
   pageState: {
     1: NOT_STARTED,

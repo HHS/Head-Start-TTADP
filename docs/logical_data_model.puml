@@ -287,7 +287,7 @@ class CollabReports{
  lastUpdatedById : integer : REFERENCES "Users".id
  userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
- * conductMethod : enum
+ * conductMethod : enum[]
  * createdAt : timestamp with time zone
  * description : text
  * duration : smallint
@@ -300,6 +300,15 @@ class CollabReports{
  calculatedStatus : enum
  deletedAt : timestamp with time zone
 }
+
+enum enum_CollabReports_conductMethod {
+ email
+ in_person
+ phone
+ virtual
+}
+
+enum_CollabReports_conductMethod <|-- CollabReports
 
 class CollaboratorRoles{
  * id : integer : <generated>

@@ -55,7 +55,7 @@ module.exports = {
           defaultValue: false,
         },
         conductMethod: {
-          type: Sequelize.ENUM(['in_person', 'virtual', 'email', 'phone']),
+          type: Sequelize.ARRAY(Sequelize.ENUM(['in_person', 'virtual', 'email', 'phone'])),
           allowNull: false,
         },
         description: {
