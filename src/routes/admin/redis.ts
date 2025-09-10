@@ -29,7 +29,7 @@ export async function getRedisInfo(req: Request, res: Response) {
       tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
     });
 
-    await redisClient.connect();
+    // await redisClient.connect();
     const info = await redisClient.info();
 
     await redisClient.quit();
