@@ -3,6 +3,7 @@ import React, {
   useContext,
   useRef,
   useMemo,
+  useEffect,
 } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
@@ -54,7 +55,7 @@ export default function Objective({
   citationOptions,
   rawCitations,
   isMonitoringGoal,
-  optionStatus,
+  objectiveOptions,
 }) {
   const modalRef = useRef();
 
@@ -80,6 +81,16 @@ export default function Objective({
   const [citationWarnings, setCitationWarnings] = useState([]);
   const activityRecipients = watch('activityRecipients');
   const selectedGoals = useWatch({ name: 'goals' });
+
+  // This serves as sort of a refresh to ensure that we have the latest options and selected
+  // Objective before we attempt to lookup the objective status,
+  // note this is NOT the aro status, but the objective status from the options.
+  useEffect(() => {
+    if (objective && objectiveOptions) {
+      const origObjStatus = objectiveOptions.find((opt) => opt.id === objective.id)?.status;
+      setStatusForCalculations(origObjStatus);
+    }
+  }, [objective, objective.id, objectiveOptions]);
 
   /**
    * add controllers for all the controlled fields
@@ -605,7 +616,7 @@ export default function Objective({
         userCanEdit
         closeSuspendContext={objectiveSuspendContext}
         closeSuspendReason={objectiveSuspendReason}
-        currentStatus={optionStatus}
+        currentStatus={statusForCalculations}
       />
     </>
   );
@@ -676,7 +687,7 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
-  optionStatus: PropTypes.string.isRequired,
+  objectiveOptions: PropTypes.arrayOf(OBJECTIVE_PROP).isRequired,
 };
 
 Objective.defaultProps = {

@@ -43,7 +43,7 @@ export default function Objectives({
   });
 
   const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-    fields ? fields.map(({ value }) => value) : [],
+    fields ? fields.map(({ id }) => id) : [],
   );
 
   const onAddNew = () => {
@@ -62,7 +62,9 @@ export default function Objectives({
 
   const onInitialObjSelect = (objective) => {
     try {
-      append(objective);
+      // For some reason append was excluding key properties like id and value.
+      // This would cause the first objective selected to remain in the available list.
+      setValue(fieldArrayName, [...getValues(fieldArrayName) || [], objective]);
     } catch (e) {
       // this is simply for unit tests not passing
     } finally {
@@ -154,7 +156,8 @@ export default function Objectives({
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
-              optionStatus={(objectiveOptions || []).find((opt) => opt.id === objective.id)?.status}
+              // We don't do the look up here as we might still be loading stuff.
+              objectiveOptions={objectiveOptions || []}
             />
           );
         })}
