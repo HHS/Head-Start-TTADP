@@ -7,8 +7,8 @@ jest.mock('../../../fetchers/collaborationReports');
 
 describe('CollabReports', () => {
   const mockReports = [
-    { id: 1, name: 'Report 1' },
-    { id: 2, name: 'Report 2' },
+    { id: 1, name: 'Report 1', regionId: 1 },
+    { id: 2, name: 'Report 2', regionId: 1 },
   ];
 
   beforeEach(() => {

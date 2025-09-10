@@ -363,7 +363,6 @@ function CollaborationReport({ match, location, region }) {
   };
 
   const onSave = async (data, forceUpdate = false) => {
-    console.log('data:', data);
     const approverIds = data.approvers ? data.approvers.map((a) => a.user.id) : [];
 
     try {

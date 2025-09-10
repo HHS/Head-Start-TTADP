@@ -286,6 +286,7 @@ class CollabReports{
  * id : integer : <generated>
  lastUpdatedById : integer : REFERENCES "Users".id
  userId : integer : REFERENCES "Users".id
+ * regionId : integer : REFERENCES "Regions".id
  * conductMethod : enum[]
  * createdAt : timestamp with time zone
  * description : text
@@ -2781,6 +2782,7 @@ Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, p
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : recipient, communicationLogRecipients
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
+Regions "1" --[#black,dashed,thickness=2]--{  "n" CollabReports : region, collabReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates

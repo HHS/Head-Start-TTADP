@@ -14,6 +14,14 @@ module.exports = {
           autoIncrement: true,
           primaryKey: true,
         },
+        regionId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'Regions',
+            key: 'id',
+          },
+        },
         name: {
           type: Sequelize.STRING,
           allowNull: false,

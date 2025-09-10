@@ -21,6 +21,7 @@ const {
   CollabReportApprover,
   CollabReportSpecialist,
   User,
+  Region,
 } = db;
 
 const REPORTS_PER_PAGE = 10;
@@ -82,6 +83,10 @@ export async function collabReportById(crId) {
       {
         model: User,
         as: 'author',
+      },
+      {
+        model: Region,
+        as: 'region',
       },
       {
         required: false,
@@ -183,6 +188,10 @@ export async function getReports(
         model: User,
         as: 'author',
         required: false,
+      },
+      {
+        model: Region,
+        as: 'region',
       },
       {
         model: CollabReportSpecialist,
