@@ -16,7 +16,7 @@ describe('collabReport hooks', () => {
         endDate: '2023-01-02',
         duration: 120,
         isStateActivity: true,
-        conductMethod: 'virtual',
+        conductMethod: ['virtual'],
         description: 'Test description',
       };
     });
@@ -255,7 +255,7 @@ describe('collabReport hooks', () => {
         endDate: '2023-01-02',
         duration: 120,
         isStateActivity: true,
-        conductMethod: 'virtual',
+        conductMethod: ['virtual'],
         description: 'Test description',
       };
       const mockSequelize = {};
