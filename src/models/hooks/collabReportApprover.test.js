@@ -21,6 +21,7 @@ import { mockApprovers, approverUserIds } from './testHelpers';
 const mockCollabReport = {
   userId: 1,
   lastUpdatedById: 1,
+  regionId: 1,
   name: 'Test Collaboration Report',
   submissionStatus: 'draft',
   calculatedStatus: null,

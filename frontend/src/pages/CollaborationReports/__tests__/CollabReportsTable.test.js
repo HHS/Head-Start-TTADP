@@ -29,8 +29,8 @@ describe('CollabReportsTable', () => {
 
   it('renders table when reports are present', () => {
     const reports = [
-      { id: 1, name: 'Report 1' },
-      { id: 2, name: 'Report 2' },
+      { id: 1, name: 'Report 1', regionId: 1 },
+      { id: 2, name: 'Report 2', regionId: 1 },
     ];
     render(<CollabReportsTable {...defaultProps} reports={reports} />);
     expect(screen.getByRole('table')).toBeInTheDocument();
@@ -39,8 +39,8 @@ describe('CollabReportsTable', () => {
 
   it('selects all checkboxes when select all is clicked', () => {
     const reports = [
-      { id: 1, name: 'Report 1' },
-      { id: 2, name: 'Report 2' },
+      { id: 1, name: 'Report 1', regionId: 1 },
+      { id: 2, name: 'Report 2', regionId: 1 },
     ];
     render(<CollabReportsTable {...defaultProps} reports={reports} />);
     const selectAllCheckbox = screen.getByLabelText('Select or de-select all reports');

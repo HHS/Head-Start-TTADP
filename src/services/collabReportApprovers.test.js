@@ -35,6 +35,7 @@ describe('collabReportApprovers service', () => {
     collabReport = await CollabReport.create({
       id: 999,
       name: 'Test Collab Report',
+      regionId: 1,
       startDate: '2023-01-01',
       endDate: '2023-01-02',
       duration: 1,
