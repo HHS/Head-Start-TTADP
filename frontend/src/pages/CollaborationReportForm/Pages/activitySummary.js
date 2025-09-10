@@ -70,12 +70,12 @@ const ActivitySummary = ({ collaborators = [] }) => {
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend">
         <FormItem
           label="Activity name"
-          name="activityName"
+          name="name"
           fieldSetWrapper
         >
           <TextInput
-            id="activityName"
-            name="activityName"
+            id="name"
+            name="name"
             type="text"
             inputRef={register({
               required: 'Enter activity name',
@@ -86,12 +86,12 @@ const ActivitySummary = ({ collaborators = [] }) => {
           {!connectionActive ? <ConnectionError /> : null }
           <FormItem
             label="Collaborating specialists "
-            name="collabReportCollaborators"
+            name="collabReportSpecialists"
             required={false}
             tooltipText="TTA staff that you worked with during the activity."
           >
             <MultiSelect
-              name="collabReportCollaborators"
+              name="collabReportSpecialists"
               control={control}
               required={false}
               simple={false}
@@ -317,11 +317,11 @@ const ActivitySummary = ({ collaborators = [] }) => {
       <Fieldset className="smart-hub--report-legend">
         <FormItem
           label="How was the activity conducted?"
-          name="deliveryMethods"
+          name="conductMethod"
           required
         >
           <MultiSelect
-            name="deliveryMethods"
+            name="conductMethod"
             control={control}
             options={deliveryMethodOptions}
             required
@@ -329,17 +329,18 @@ const ActivitySummary = ({ collaborators = [] }) => {
         </FormItem>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">
-        <Label htmlFor="activityDescription">
+        <Label htmlFor="description">
           Activity description
           {' '}
           <Req />
         </Label>
         <Textarea
-          id="activityDescription"
+          id="description"
           className="height-10 minh-5 smart-hub--text-area__resize-vertical"
-          name="activityDescription"
+          name="description"
           defaultValue=""
-          data-testid="activityDescription-input"
+          data-testid="description-input"
+          inputRef={register()}
           required
         />
       </Fieldset>
@@ -441,13 +442,13 @@ export const isPageComplete = (formData, formState) => {
 
   const {
     // strings
-    activityName,
-    activityDescription,
+    name,
+    description,
 
     // arrays
     activityReasons,
     statesInvolved,
-    deliveryMethods,
+    conductMethod,
 
     // numbers
     duration,
@@ -461,8 +462,8 @@ export const isPageComplete = (formData, formState) => {
   } = formData;
 
   const stringsToValidate = [
-    activityName,
-    activityDescription,
+    name,
+    description,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -471,7 +472,7 @@ export const isPageComplete = (formData, formState) => {
 
   const arraysToValidate = [
     activityReasons,
-    deliveryMethods,
+    conductMethod,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
