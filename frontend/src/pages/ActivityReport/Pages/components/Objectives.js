@@ -1,4 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import Objective from './Objective';
@@ -39,7 +43,7 @@ export default function Objectives({
   });
 
   const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-    fields ? fields.map(({ value }) => value) : [],
+    fields ? fields.map(({ id }) => id) : [],
   );
 
   const onAddNew = () => {
@@ -58,7 +62,9 @@ export default function Objectives({
 
   const onInitialObjSelect = (objective) => {
     try {
-      append(objective);
+      // For some reason append was excluding key properties like id and value.
+      // This would cause the first objective selected to remain in the available list.
+      setValue(fieldArrayName, [...getValues(fieldArrayName) || [], objective]);
     } catch (e) {
       // this is simply for unit tests not passing
     } finally {
@@ -109,7 +115,7 @@ export default function Objectives({
       setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
     }
   }, [firstObjective, options.length, objectiveOptionsLoaded, isMonitoring, options, setValue]);
-
+  // console.log('objective options: ', objectiveOptions);
   return (
     <>
       {/*
@@ -150,6 +156,8 @@ export default function Objectives({
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
+              // We don't do the look up here as we might still be loading stuff.
+              objectiveOptions={objectiveOptions || []}
             />
           );
         })}
