@@ -264,5 +264,43 @@ export async function reviewReport(req: Request, res: Response) {
 }
 
 export async function createReport(req: Request, res: Response) {
-  res.send(NO_CONTENT);
+  try {
+    const newReport = req.body;
+    if (!newReport) {
+      res.sendStatus(BAD_REQUEST);
+      return;
+    }
+    const userId = await currentUserId(req, res);
+    newReport.submissionStatus = REPORT_STATUSES.DRAFT;
+    newReport.userId = userId;
+    newReport.lastUpdatedById = userId;
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, newReport);
+    if (!authorization.canCreate()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+    const report = await createOrUpdateReport(newReport, null);
+    if (report.collabReportCollaborators) {
+      const collabs = report.collabReportCollaborators;
+
+      const settingsForAllCollabs = await Promise.all(collabs.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
+
+      const collabsWithSettings = collabs.filter((_value, index) => {
+        if (!settingsForAllCollabs[index]) {
+          return false;
+        }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+      collaboratorAssignedNotification(report, collabsWithSettings);
+    }
+    res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
 }

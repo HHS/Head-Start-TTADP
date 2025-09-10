@@ -5,6 +5,8 @@ import {
   submitReport,
   reviewReport,
   softDeleteReport,
+  saveReport,
+  createReport,
 } from './handlers';
 import * as CRServices from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
@@ -13,6 +15,9 @@ import { setReadRegions } from '../../services/accessValidation';
 import handleErrors from '../../lib/apiErrorHandler';
 import CollabReportPolicy from '../../policies/collabReport';
 import { upsertApprover } from '../../services/collabReportApprovers';
+import { userSettingOverridesById } from '../../services/userSettings';
+import { collaboratorAssignedNotification } from '../../lib/mailer';
+import ActivityReport from '../../policies/activityReport';
 
 jest.mock('../../services/collabReports');
 jest.mock('../../lib/mailer');
@@ -22,6 +27,8 @@ jest.mock('../../services/accessValidation');
 jest.mock('../../lib/apiErrorHandler');
 jest.mock('../../policies/collabReport');
 jest.mock('../../services/collabReportApprovers');
+jest.mock('../../services/userSettings');
+jest.mock('../../policies/activityReport');
 
 describe('Collaboration Reports Handlers', () => {
   let mockRequest: Partial<Request>;
@@ -773,6 +780,332 @@ describe('Collaboration Reports Handlers', () => {
       );
       expect(mockSendStatus).not.toHaveBeenCalled();
       expect(CRServices.deleteReport).not.toHaveBeenCalled();
+    });
+  });
+  describe('createReport', () => {
+    beforeEach(() => {
+      mockRequest.body = {
+        title: 'New Report',
+        regionId: 1,
+        collaborators: [{ userId: 456, email: 'collaborator@example.com' }],
+      };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canCreate: jest.fn().mockReturnValue(true),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
+    });
+
+    it('should successfully create a new report', async () => {
+      const newReport = {
+        title: 'New Report',
+        regionId: 1,
+        collaborators: [{ userId: 456, email: 'collaborator@example.com' }],
+        submissionStatus: 'draft',
+        userId: 123,
+        lastUpdatedById: 123,
+      };
+
+      const createdReport = {
+        id: '1',
+        ...newReport,
+        collabReportCollaborators: [
+          { userId: 456, user: { email: 'collaborator@example.com' } },
+        ],
+      };
+
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(createdReport);
+      (userSettingOverridesById as jest.Mock).mockResolvedValue({ value: 'immediately' });
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith(newReport, null);
+      expect(mockJson).toHaveBeenCalledWith(createdReport);
+      expect(mockSendStatus).not.toHaveBeenCalled();
+      expect(collaboratorAssignedNotification).toHaveBeenCalledWith(
+        createdReport,
+        [{ userId: 456, user: { email: 'collaborator@example.com' } }],
+      );
+    });
+
+    it('should return HTTP 400 when request body is missing', async () => {
+      mockRequest.body = null;
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(400);
+      expect(mockJson).not.toHaveBeenCalled();
+      expect(CRServices.createOrUpdateReport).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 403 when user is not authorized to create', async () => {
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canCreate: jest.fn().mockReturnValue(false),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
+      expect(mockJson).not.toHaveBeenCalled();
+      expect(CRServices.createOrUpdateReport).not.toHaveBeenCalled();
+    });
+
+    it('should create report without collaborators', async () => {
+      mockRequest.body = {
+        title: 'Solo Report',
+        regionId: 1,
+      };
+
+      const newReport = {
+        title: 'Solo Report',
+        regionId: 1,
+        submissionStatus: 'draft',
+        userId: 123,
+        lastUpdatedById: 123,
+      };
+
+      const createdReport = {
+        id: '1',
+        ...newReport,
+        collabReportCollaborators: null,
+      };
+
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(createdReport);
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith(newReport, null);
+      expect(mockJson).toHaveBeenCalledWith(createdReport);
+      expect(collaboratorAssignedNotification).not.toHaveBeenCalled();
+    });
+
+    it('should only notify collaborators who want immediate notifications', async () => {
+      const newReport = {
+        title: 'New Report',
+        regionId: 1,
+        submissionStatus: 'draft',
+        userId: 123,
+        lastUpdatedById: 123,
+      };
+
+      const createdReport = {
+        id: '1',
+        ...newReport,
+        collabReportCollaborators: [
+          { userId: 456, user: { email: 'collab1@example.com' } },
+          { userId: 789, user: { email: 'collab2@example.com' } },
+        ],
+      };
+
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(createdReport);
+      (userSettingOverridesById as jest.Mock)
+        .mockResolvedValueOnce({ value: 'immediately' })
+        .mockResolvedValueOnce({ value: 'never' });
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(collaboratorAssignedNotification).toHaveBeenCalledWith(
+        createdReport,
+        [{ userId: 456, user: { email: 'collab1@example.com' } }],
+      );
+    });
+
+    it('should handle service errors', async () => {
+      const error = new Error('Database error');
+      (CRServices.createOrUpdateReport as jest.Mock).mockRejectedValue(error);
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        error,
+        { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+      expect(mockJson).not.toHaveBeenCalled();
+      expect(mockSendStatus).not.toHaveBeenCalled();
+    });
+
+    it('should handle missing user settings for collaborators', async () => {
+      const createdReport = {
+        id: '1',
+        title: 'New Report',
+        collabReportCollaborators: [
+          { userId: 456, user: { email: 'collab1@example.com' } },
+        ],
+      };
+
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(createdReport);
+      (userSettingOverridesById as jest.Mock).mockResolvedValue(null);
+
+      await createReport(mockRequest as Request, mockResponse as Response);
+
+      expect(collaboratorAssignedNotification).toHaveBeenCalledWith(createdReport, []);
+    });
+  });
+
+  describe('saveReport', () => {
+    beforeEach(() => {
+      mockRequest.params = { collabReportId: '1' };
+      mockRequest.body = {
+        title: 'Updated Report',
+        content: 'Updated content',
+      };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
+      (ActivityReport as jest.MockedClass<typeof ActivityReport>)
+        .mockImplementation(() => ({
+          canUpdate: jest.fn().mockReturnValue(true),
+        }) as unknown as jest.Mocked<ActivityReport>);
+    });
+
+    it('should successfully save a report', async () => {
+      const existingReport = {
+        id: '1',
+        title: 'Original Report',
+        content: 'Original content',
+        regionId: 1,
+        collabReportCollaborators: [
+          { user: { email: 'existing@example.com' } },
+        ],
+      };
+
+      const updatedReport = {
+        title: 'Updated Report',
+        content: 'Updated content',
+        lastUpdatedById: 123,
+      };
+
+      const savedReport = {
+        ...existingReport,
+        ...updatedReport,
+        collabReportCollaborators: [
+          { user: { email: 'existing@example.com' } },
+          { userId: 456, user: { email: 'new@example.com' } },
+        ],
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(savedReport);
+      (userSettingOverridesById as jest.Mock).mockResolvedValue({ value: 'immediately' });
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith(
+        { ...existingReport, ...updatedReport },
+        existingReport,
+      );
+      expect(collaboratorAssignedNotification).toHaveBeenCalledWith(
+        savedReport,
+        [{ userId: 456, user: { email: 'new@example.com' } }],
+      );
+    });
+
+    it('should return HTTP 400 when request body is missing', async () => {
+      mockRequest.body = null;
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(400);
+      expect(CRServices.collabReportById).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 404 when report is not found', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(mockSendStatus).toHaveBeenCalledWith(404);
+      expect(CRServices.createOrUpdateReport).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 403 when user is not authorized to update', async () => {
+      const existingReport = {
+        id: '1',
+        title: 'Original Report',
+        regionId: 1,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
+      (ActivityReport as jest.MockedClass<typeof ActivityReport>)
+        .mockImplementation(() => ({
+          canUpdate: jest.fn().mockReturnValue(false),
+        }) as unknown as jest.Mocked<ActivityReport>);
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
+      expect(CRServices.createOrUpdateReport).not.toHaveBeenCalled();
+    });
+
+    it('should remove regionId from updates', async () => {
+      const existingReport = {
+        id: '1',
+        title: 'Original Report',
+        regionId: 1,
+        collabReportCollaborators: [],
+      };
+
+      mockRequest.body = {
+        title: 'Updated Report',
+        regionId: 2, // This should be removed
+      };
+
+      const expectedUpdate = {
+        title: 'Updated Report',
+        lastUpdatedById: 123,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue({
+        ...existingReport,
+        ...expectedUpdate,
+      });
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.createOrUpdateReport).toHaveBeenCalledWith(
+        { ...existingReport, ...expectedUpdate },
+        existingReport,
+      );
+    });
+
+    it('should handle service errors', async () => {
+      const error = new Error('Database error');
+      (CRServices.collabReportById as jest.Mock).mockRejectedValue(error);
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        error,
+        { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+    });
+
+    it('should handle missing collaborators gracefully', async () => {
+      const existingReport = {
+        id: '1',
+        title: 'Original Report',
+        collabReportCollaborators: null,
+      };
+
+      const savedReport = {
+        ...existingReport,
+        collabReportCollaborators: null,
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
+      (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(savedReport);
+
+      await saveReport(mockRequest as Request, mockResponse as Response);
+
+      expect(collaboratorAssignedNotification).not.toHaveBeenCalled();
     });
   });
 });

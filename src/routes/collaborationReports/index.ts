@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  // createReport,
+  createReport,
   getReport,
   getReports,
   // reviewReport,
@@ -20,7 +20,7 @@ const router = express.Router();
  */
 
 // createReport
-// router.post('/', transactionWrapper(createReport));
+router.post('/', transactionWrapper(createReport));
 
 // deleteReport
 router.delete(
