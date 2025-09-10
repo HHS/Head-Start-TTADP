@@ -99,6 +99,9 @@ export async function saveReport(req: Request, res: Response) {
     // Record who's making the change
     newReport.lastUpdatedById = userId;
 
+    // Don't allow regionId to be changed after creation
+    delete newReport.regionId;
+
     // Merge the updated report with the old
     const savedReport = await createOrUpdateReport({
       ...existingReport, ...newReport,

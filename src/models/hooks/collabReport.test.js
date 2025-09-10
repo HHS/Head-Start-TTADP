@@ -11,6 +11,7 @@ describe('collabReport hooks', () => {
         previous: jest.fn(),
         submissionStatus: REPORT_STATUSES.DRAFT,
         name: 'Test Report',
+        regionId: 1,
         startDate: '2023-01-01',
         endDate: '2023-01-02',
         duration: 120,
