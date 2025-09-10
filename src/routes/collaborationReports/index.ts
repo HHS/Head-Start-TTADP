@@ -5,7 +5,7 @@ import {
   getReports,
   // reviewReport,
   saveReport,
-  // softDeleteReport,
+  softDeleteReport,
   // submitReport,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
@@ -23,10 +23,11 @@ const router = express.Router();
 // router.post('/', transactionWrapper(createReport));
 
 // deleteReport
-// router.delete(
-//   '/:collabReportId',
-//   checkCollabReportIdParam,
-//   transactionWrapper(softDeleteReport));
+router.delete(
+  '/:collabReportId',
+  checkCollabReportIdParam,
+  transactionWrapper(softDeleteReport),
+);
 
 // getReport
 router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, transactionWrapper(getReport));

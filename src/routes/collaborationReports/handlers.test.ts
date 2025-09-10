@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import {
-  getReports, getReport, submitReport, reviewReport,
+  getReports,
+  getReport,
+  submitReport,
+  reviewReport,
+  softDeleteReport,
 } from './handlers';
 import * as CRServices from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
@@ -607,6 +611,168 @@ describe('Collaboration Reports Handlers', () => {
         userId: 123,
       });
       expect(mockJson).toHaveBeenCalledWith(mockApprover);
+    });
+  });
+
+  describe('softDeleteReport', () => {
+    beforeEach(() => {
+      mockRequest.params = { collabReportId: '1' };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canDelete: jest.fn().mockReturnValue(true),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
+    });
+
+    it('should successfully delete a report', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        submissionStatus: 'draft',
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.deleteReport as jest.Mock).mockResolvedValue(undefined);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(currentUserId).toHaveBeenCalledWith(mockRequest, mockResponse);
+      expect(userById).toHaveBeenCalledWith(123);
+      expect(CollabReportPolicy).toHaveBeenCalledWith({ id: 123, name: 'Test User' }, mockReport);
+      expect(CRServices.deleteReport).toHaveBeenCalledWith(mockReport);
+      expect(mockSendStatus).toHaveBeenCalledWith(204);
+      expect(mockJson).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 404 when report is not found', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(mockSendStatus).toHaveBeenCalledWith(404);
+      expect(mockJson).not.toHaveBeenCalled();
+      expect(CRServices.deleteReport).not.toHaveBeenCalled();
+      expect(currentUserId).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 403 when user is not authorized to delete', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        submissionStatus: 'draft',
+      };
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
+        .mockImplementation(() => ({
+          canDelete: jest.fn().mockReturnValue(false),
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(currentUserId).toHaveBeenCalledWith(mockRequest, mockResponse);
+      expect(userById).toHaveBeenCalledWith(123);
+      expect(CollabReportPolicy).toHaveBeenCalledWith({ id: 123, name: 'Test User' }, mockReport);
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
+      expect(mockJson).not.toHaveBeenCalled();
+      expect(CRServices.deleteReport).not.toHaveBeenCalled();
+    });
+
+    it('should handle service errors from collabReportById', async () => {
+      const error = new Error('Database connection failed');
+      (CRServices.collabReportById as jest.Mock).mockRejectedValue(error);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        error,
+        { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+      expect(mockSendStatus).not.toHaveBeenCalled();
+      expect(mockJson).not.toHaveBeenCalled();
+      expect(CRServices.deleteReport).not.toHaveBeenCalled();
+    });
+
+    it('should handle errors from deleteReport service', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        submissionStatus: 'draft',
+      };
+      const error = new Error('Delete operation failed');
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.deleteReport as jest.Mock).mockRejectedValue(error);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(CRServices.deleteReport).toHaveBeenCalledWith(mockReport);
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        error,
+        { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+      expect(mockSendStatus).not.toHaveBeenCalled();
+      expect(mockJson).not.toHaveBeenCalled();
+    });
+
+    it('should handle currentUserId errors', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        submissionStatus: 'draft',
+      };
+      const error = new Error('Authentication failed');
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (currentUserId as jest.Mock).mockRejectedValue(error);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(currentUserId).toHaveBeenCalledWith(mockRequest, mockResponse);
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        error,
+        { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+      expect(mockSendStatus).not.toHaveBeenCalled();
+      expect(CRServices.deleteReport).not.toHaveBeenCalled();
+    });
+
+    it('should handle userById errors', async () => {
+      const mockReport = {
+        id: '1',
+        name: 'Report 1',
+        submissionStatus: 'draft',
+      };
+      const error = new Error('User not found');
+
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (userById as jest.Mock).mockRejectedValue(error);
+
+      await softDeleteReport(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.collabReportById).toHaveBeenCalledWith('1');
+      expect(currentUserId).toHaveBeenCalledWith(mockRequest, mockResponse);
+      expect(userById).toHaveBeenCalledWith(123);
+      expect(handleErrors).toHaveBeenCalledWith(
+        mockRequest,
+        mockResponse,
+        error,
+        { namespace: 'SERVICE:COLLAB_REPORTS' },
+      );
+      expect(mockSendStatus).not.toHaveBeenCalled();
+      expect(CRServices.deleteReport).not.toHaveBeenCalled();
     });
   });
 });
