@@ -476,6 +476,7 @@ export const isPageComplete = (formData, formState) => {
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
+    console.log('ARRAYS');
     return false;
   }
 
