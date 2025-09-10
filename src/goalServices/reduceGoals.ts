@@ -210,15 +210,6 @@ export function reduceObjectivesForActivityReport(
           : [],
       );
 
-      /*
-      if (!exists.objectiveStatus) {
-        exists.objectiveStatus = (
-          (objective.dataValues as IObjectiveModelInstance).objectiveStatus
-        || objective.objectiveStatus
-        );
-      }
-      */
-
       // Set to null if we don't have any citations.
       if (exists.citations.length === 0) {
         exists.citations = null;
@@ -266,12 +257,6 @@ export function reduceObjectivesForActivityReport(
       ttaProvided,
       supportType: objectiveSupportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
-      /*
-      objectiveStatus: (
-        (objective.dataValues as IObjectiveModelInstance).objectiveStatus
-        || objective.objectiveStatus
-      ),
-      */
       isNew: false,
       arOrder,
       closeSuspendContext,
