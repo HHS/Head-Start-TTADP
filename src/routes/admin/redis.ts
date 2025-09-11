@@ -1,7 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { Redis } from 'ioredis';
 import express, { Response, Request } from 'express';
-import { generateRedisConfig } from '../../lib/queue';
 import { getRedis } from '../../lib/redisClient';
 import { auditLogger } from '../../logger';
 import transactionWrapper from '../transactionWrapper';
@@ -20,14 +18,12 @@ const logContext = { namespace };
    * @param {Response} res - response
    */
 export async function getRedisInfo(req: Request, res: Response) {
-  console.log('entering getRedisInfo');
   // admin access is already checked in the middleware
   try {
     const r = getRedis();
     const info = await r.info();
     res.status(200).json({ info });
   } catch (err) {
-    console.log('not all good here');
     await handleError(req, res, err, logContext);
   }
 }
