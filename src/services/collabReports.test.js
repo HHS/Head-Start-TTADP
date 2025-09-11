@@ -2,9 +2,13 @@ import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  User, CollabReport,
+  User,
+  CollabReport,
+  CollabReportSpecialist,
+  CollabReportApprover,
+  CollabReportReason,
 } from '../models';
-import { collabReportById, createOrUpdateReport } from './collabReports';
+import { collabReportById, createOrUpdateReport, deleteReport } from './collabReports';
 
 const mockUser = {
   id: 1115665161,
@@ -143,6 +147,155 @@ describe('Collab Reports Service', () => {
       };
 
       await expect(createOrUpdateReport(reportObject, nonExistentReport)).rejects.toThrow();
+    });
+  });
+
+  describe('deleteReport', () => {
+    let testReport;
+    let testReportWithRelatedData;
+
+    beforeEach(async () => {
+      // Create a basic test report
+      testReport = await CollabReport.create({
+        ...reportObject,
+        name: 'Test Report for Deletion',
+      });
+
+      // Create a report with comprehensive related data
+      testReportWithRelatedData = await CollabReport.create({
+        ...reportObject,
+        name: 'Test Report with Related Data',
+        userId: mockUserTwo.id,
+        lastUpdatedById: mockUserTwo.id,
+      });
+
+      // Add related data similar to seeder structure
+      await CollabReportSpecialist.create({
+        collabReportId: testReportWithRelatedData.id,
+        specialistId: mockUser.id,
+      });
+
+      await CollabReportApprover.create({
+        collabReportId: testReportWithRelatedData.id,
+        userId: mockUser.id,
+        status: 'approved',
+        note: 'Test approval note',
+      });
+
+      await CollabReportReason.create({
+        collabReportId: testReportWithRelatedData.id,
+        reasonId: 'participate_work_groups',
+      });
+    });
+
+    afterEach(async () => {
+      // Clean up test data
+      if (testReport) {
+        await testReport.destroy({ force: true });
+      }
+      if (testReportWithRelatedData) {
+        await testReportWithRelatedData.destroy({ force: true });
+      }
+
+      // Clean up related data
+      const reportIds = [testReport?.id, testReportWithRelatedData?.id].filter(Boolean);
+      await CollabReportSpecialist.destroy({
+        where: { collabReportId: reportIds },
+        force: true,
+      });
+      await CollabReportApprover.destroy({
+        where: { collabReportId: reportIds },
+        force: true,
+      });
+      await CollabReportReason.destroy({
+        where: { collabReportId: reportIds },
+        force: true,
+      });
+    });
+
+    it('successfully deletes a report with minimal data', async () => {
+      expect(testReport).toBeTruthy();
+
+      await deleteReport(testReport);
+
+      // Verify report is soft-deleted (should not be found in normal query)
+      const deletedReport = await CollabReport.findByPk(testReport.id);
+      expect(deletedReport).toBeNull();
+
+      // Verify report still exists with paranoid: false (soft delete)
+      const softDeletedReport = await CollabReport.findByPk(testReport.id, { paranoid: false });
+      expect(softDeletedReport).toBeTruthy();
+      expect(softDeletedReport.deletedAt).toBeTruthy();
+    });
+
+    it('successfully deletes a report with comprehensive related data', async () => {
+      expect(testReportWithRelatedData).toBeTruthy();
+
+      // Verify related data exists before deletion
+      const specialists = await CollabReportSpecialist.findAll({
+        where: { collabReportId: testReportWithRelatedData.id },
+      });
+      const approvers = await CollabReportApprover.findAll({
+        where: { collabReportId: testReportWithRelatedData.id },
+      });
+      const reasons = await CollabReportReason.findAll({
+        where: { collabReportId: testReportWithRelatedData.id },
+      });
+
+      expect(specialists).toHaveLength(1);
+      expect(approvers).toHaveLength(1);
+      expect(reasons).toHaveLength(1);
+
+      // Delete the report
+      await expect(deleteReport(testReportWithRelatedData)).resolves.not.toThrow();
+
+      // Verify report is soft-deleted
+      const deletedReport = await CollabReport.findByPk(testReportWithRelatedData.id);
+      expect(deletedReport).toBeNull();
+
+      // Verify report still exists with paranoid: false
+      const softDeleted = await CollabReport.findByPk(
+        testReportWithRelatedData.id,
+        { paranoid: false },
+      );
+      expect(softDeleted).toBeTruthy();
+      expect(softDeleted.deletedAt).toBeTruthy();
+
+      // Verify related data is preserved (not cascaded)
+      const specialistsAfter = await CollabReportSpecialist.findAll({
+        where: { collabReportId: testReportWithRelatedData.id },
+      });
+      const approversAfter = await CollabReportApprover.findAll({
+        where: { collabReportId: testReportWithRelatedData.id },
+      });
+      const reasonsAfter = await CollabReportReason.findAll({
+        where: { collabReportId: testReportWithRelatedData.id },
+      });
+
+      expect(specialistsAfter).toHaveLength(1);
+      expect(approversAfter).toHaveLength(1);
+      expect(reasonsAfter).toHaveLength(1);
+    });
+
+    it('handles deletion of already deleted report', async () => {
+      // Delete the report first
+      await deleteReport(testReport);
+
+      // Verify it's deleted
+      const deletedReport = await CollabReport.findByPk(testReport.id);
+      expect(deletedReport).toBeNull();
+
+      // Get the soft-deleted report to test deleting it again
+      const softDeletedReport = await CollabReport.findByPk(testReport.id, { paranoid: false });
+
+      // Attempting to delete already deleted report should not throw
+      await expect(deleteReport(softDeletedReport)).resolves.not.toThrow();
+    });
+
+    it('throws error when trying to delete null or invalid report', async () => {
+      await expect(deleteReport(null)).rejects.toThrow();
+      await expect(deleteReport(undefined)).rejects.toThrow();
+      await expect(deleteReport({})).rejects.toThrow();
     });
   });
 });

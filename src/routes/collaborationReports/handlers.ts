@@ -1,10 +1,17 @@
 import type { Request, Response } from 'express';
 import { REPORT_STATUSES } from '@ttahub/common';
+import {
+  NOT_FOUND,
+  FORBIDDEN,
+  BAD_REQUEST,
+  NO_CONTENT,
+} from 'http-codes';
 import CollabReportPolicy from '../../policies/collabReport';
 import {
   collabReportById,
   createOrUpdateReport,
   getReports as getReportsService,
+  deleteReport,
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -31,7 +38,7 @@ export async function getReport(req: Request, res: Response) {
   const report = await collabReportById(collabReportId);
 
   if (!report) {
-    res.sendStatus(404);
+    res.sendStatus(NOT_FOUND);
     return;
   }
 
@@ -40,7 +47,7 @@ export async function getReport(req: Request, res: Response) {
   const authorization = new CollabReportPolicy(user, report);
 
   if (!authorization.canGet()) {
-    res.sendStatus(403);
+    res.sendStatus(FORBIDDEN);
     return;
   }
 
@@ -75,7 +82,7 @@ export async function saveReport(req: Request, res: Response) {
     // Make sure there's a new report to save
     const newReport = req.body;
     if (!newReport) {
-      res.sendStatus(400);
+      res.sendStatus(BAD_REQUEST);
       return;
     }
 
@@ -84,7 +91,7 @@ export async function saveReport(req: Request, res: Response) {
     const { collabReportId } = req.params;
     const existingReport = await collabReportById(collabReportId);
     if (!existingReport) {
-      res.sendStatus(404);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -92,7 +99,7 @@ export async function saveReport(req: Request, res: Response) {
     const user = await userById(userId);
     const authorization = new ActivityReport(user, existingReport);
     if (!authorization.canUpdate()) {
-      res.sendStatus(403);
+      res.sendStatus(FORBIDDEN);
       return;
     }
 
@@ -142,8 +149,37 @@ export async function saveReport(req: Request, res: Response) {
   }
 }
 
+/**
+ * Mark activity report submissionStatus as deleted
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
 export async function softDeleteReport(req: Request, res: Response) {
-  res.send(204);
+  try {
+    const { collabReportId } = req.params;
+
+    const report = await collabReportById(collabReportId);
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, report);
+
+    if (!authorization.canDelete()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    await deleteReport(report);
+    res.sendStatus(NO_CONTENT);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
 }
 
 export async function submitReport(req: Request, res: Response) {
@@ -153,7 +189,7 @@ export async function submitReport(req: Request, res: Response) {
     const { collabReportId } = req.params;
     const existingReport = await collabReportById(collabReportId);
     if (!existingReport) {
-      res.sendStatus(404);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -161,7 +197,7 @@ export async function submitReport(req: Request, res: Response) {
     const user = await userById(userId);
     const authorization = new CollabReportPolicy(user, existingReport);
     if (!authorization.canUpdate()) {
-      res.sendStatus(403);
+      res.sendStatus(FORBIDDEN);
       return;
     }
 
@@ -200,7 +236,7 @@ export async function reviewReport(req: Request, res: Response) {
 
     const existingReport = await collabReportById(collabReportId);
     if (!existingReport) {
-      res.sendStatus(404);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -208,7 +244,7 @@ export async function reviewReport(req: Request, res: Response) {
     const user = await userById(userId);
     const authorization = new CollabReportPolicy(user, existingReport);
     if (!authorization.canUpdate()) {
-      res.sendStatus(403);
+      res.sendStatus(FORBIDDEN);
       return;
     }
 
@@ -231,7 +267,7 @@ export async function createReport(req: Request, res: Response) {
   try {
     const newReport = req.body;
     if (!newReport) {
-      res.sendStatus(400);
+      res.sendStatus(BAD_REQUEST);
       return;
     }
     const userId = await currentUserId(req, res);
@@ -241,7 +277,7 @@ export async function createReport(req: Request, res: Response) {
     const user = await userById(userId);
     const authorization = new CollabReportPolicy(user, newReport);
     if (!authorization.canCreate()) {
-      res.sendStatus(403);
+      res.sendStatus(FORBIDDEN);
       return;
     }
     const report = await createOrUpdateReport(newReport, null);

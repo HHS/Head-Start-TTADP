@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Op } from 'sequelize';
+import { Model, Op } from 'sequelize';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
 import filtersToScopes from '../scopes';
@@ -72,7 +72,7 @@ async function update(newReport, oldReport) {
 }
 
 // Get a CR by its id
-export async function collabReportById(crId) {
+export async function collabReportById(crId: string) {
   const collabReportId = parseInt(crId, DECIMAL_BASE);
 
   const report = await CollabReport.findOne({
@@ -222,4 +222,12 @@ export async function getReports(
     ],
     order: [[sortBy, sortDir]],
   });
+}
+
+export async function deleteReport(report: Model) {
+  // there's no need to remove related models at this time
+  // since populating deletedAt should a) remove all trace of
+  // a collaboration report from the UI and b) preserve the state
+  // of the report at deletion, should we need to restore it
+  return report.destroy();
 }
