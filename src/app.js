@@ -14,12 +14,14 @@ import { registerEventListener } from './processHandler';
 import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
 import { getPublicJwk } from './middleware/jwkKeyManager';
 import { retrieveUserDetails } from './services/currentUser';
-import session from './middleware/sessionMiddleware';
+import sessionMiddleware from './middleware/sessionMiddleware';
 
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 
 const app = express();
+
+app.set('trust proxy', 1);
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
@@ -39,6 +41,8 @@ const serveIndex = (req, res) => {
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(sessionMiddleware);
 
 app.use((req, res, next) => {
   // set the X-Content-Type-Options header to prevent MIME-sniffing
@@ -101,25 +105,30 @@ app.get('/.well-known/jwks.json', async (_req, res) => {
   res.json({ keys: [await getPublicJwk()] });
 });
 
-// TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
-app.get(oauth2CallbackPath, session, async (req, res) => {
+app.get(oauth2CallbackPath, async (req, res) => {
   try {
     const accessToken = await getAccessToken(req);
-    req.session.accessToken = accessToken;
-    // user will have accessToken and refreshToken
-    logger.debug(`HSES AccessToken: ${accessToken}`);
-
     const data = await getUserInfo(accessToken, req.session.claims.sub);
     const dbUser = await retrieveUserDetails(data);
-    req.session.userId = dbUser.id;
-    req.session.uuid = uuidv4();
-    auditLogger.info(`User ${dbUser.id} logged in`);
 
-    logger.debug(`referrer path: ${req.session.referrerPath}`);
-    const redirectPath = req.session.referrerPath && req.session.referrerPath !== '/logout'
-      ? req.session.referrerPath
-      : '/';
-    res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+    req.session.regenerate((err) => {
+      if (err) {
+        auditLogger(`Session regenerate failed: ${err}`);
+        return res.status(INTERNAL_SERVER_ERROR).end();
+      }
+      req.session.accessToken = accessToken;
+      req.session.userId = dbUser.id;
+      req.session.uuid = uuidv4();
+
+      const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
+        ? req.session.referrerPath : '/';
+
+      logger.debug(`referrer path: ${req.session.referrerPath}`);
+
+      auditLogger.info(`User ${dbUser.id} logged in`);
+      return res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+    });
+    return;
   } catch (error) {
     auditLogger.error(`Error logging in: ${error}`);
     res.status(INTERNAL_SERVER_ERROR).end();
