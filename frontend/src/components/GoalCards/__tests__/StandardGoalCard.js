@@ -184,6 +184,32 @@ describe('StandardGoalCard', () => {
     expect(tooltip.textContent).toContain('System-generated');
   });
 
+  // New test: monitoring "Started by" overrides any user-based tags/tooltips
+  it('monitoring goals show System-generated and hide user tags/tooltips in Started by', () => {
+    const monitoringWithUser = {
+      ...goal,
+      standard: 'Monitoring',
+      statusChanges: [],
+    };
+
+    renderStandardGoalCard({}, monitoringWithUser);
+    expect(screen.getByText(/started by/i)).toBeInTheDocument();
+
+    // Should show system generated indicators
+    expect(screen.getByText(/System-generated/i)).toBeInTheDocument();
+    expect(screen.getByText(/OHS/i)).toBeInTheDocument();
+
+    // Should not show user role tags when monitoring
+    expect(screen.queryByText(/ECS/i)).not.toBeInTheDocument();
+
+    // Tooltip should reflect System-generated, not user
+    const tooltips = screen.getAllByTestId('tooltip');
+    const enteredByTooltip = tooltips.find((t) => t.classList.contains('ttahub-goal-card__entered-by-tooltip'));
+    expect(enteredByTooltip).toBeInTheDocument();
+    expect(enteredByTooltip.textContent).toContain('System-generated');
+    expect(enteredByTooltip.textContent).not.toContain('Test User');
+  });
+
   it('renders nothing when statusChanges has no user data', () => {
     const goalWithEmptyStatusChanges = {
       ...goal,
