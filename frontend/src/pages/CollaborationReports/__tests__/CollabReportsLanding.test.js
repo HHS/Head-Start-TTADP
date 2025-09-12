@@ -126,7 +126,7 @@ describe('CollabReportsLanding', () => {
 
     const header = document.querySelector('.collab-report-header');
     expect(header).toBeInTheDocument();
-    expect(header).toHaveClass('flex-align-center', 'margin-top-0', 'margin-bottom-3');
+    expect(header).toHaveClass('flex-align-start', 'margin-top-0', 'margin-bottom-3');
   });
 
   test('renders heading with correct class', () => {

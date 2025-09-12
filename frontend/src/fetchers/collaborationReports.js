@@ -25,6 +25,12 @@ export const getReports = async () => {
   return json;
 };
 
+export const getAlerts = async () => {
+  const reports = await get(collabReportUrl);
+  const json = await reports.json();
+  return json;
+};
+
 export const reviewReport = async (reportId, data) => {
   const url = join(collabReportUrl, reportId.toString(DECIMAL_BASE), 'review');
   const report = await put(url, data);
