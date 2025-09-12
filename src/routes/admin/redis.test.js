@@ -1,14 +1,11 @@
 import { getRedisInfo, flushRedis } from './redis';
 
-const mockQuit = jest.fn(() => Promise.resolve());
 const mockInfo = jest.fn(() => Promise.resolve(''));
-const mockFlushall = jest.fn(() => Promise.resolve(''));
-const mockConnect = jest.fn(() => Promise.resolve());
+const mockFlushall = jest.fn(() => Promise.resolve('OK'));
 
-jest.mock('ioredis', () => ({
-  Redis: jest.fn().mockImplementation(() => ({
-    connect: mockConnect,
-    quit: mockQuit,
+jest.mock('../../lib/redisClient', () => ({
+  __esModule: true,
+  getRedis: jest.fn(() => ({
     info: mockInfo,
     flushall: mockFlushall,
   })),
@@ -29,15 +26,14 @@ jest.mock('../../lib/queue', () => ({
 
 describe('redis', () => {
   const json = jest.fn();
+
   const mockResponse = {
     attachment: jest.fn(),
     json,
     send: jest.fn(),
     sendStatus: jest.fn(),
-    status: jest.fn(() => ({
-      end: jest.fn(),
-      json,
-    })),
+    status: jest.fn(() => mockResponse),
+    end: jest.fn(),
   };
 
   const mockRequest = {
@@ -51,7 +47,6 @@ describe('redis', () => {
     jest.clearAllMocks();
     mockInfo.mockResolvedValue('');
     mockFlushall.mockResolvedValue('');
-    mockQuit.mockResolvedValue(undefined);
 
     // eslint-disable-next-line @typescript-eslint/no-shadow, global-require
     const { handleError } = require('../../lib/apiErrorHandler');
