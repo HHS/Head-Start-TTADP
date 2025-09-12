@@ -23,6 +23,7 @@ const {
   User,
   Region,
   Role,
+  sequelize,
 } = db;
 
 const REPORTS_PER_PAGE = 10;
@@ -203,6 +204,7 @@ export async function getReports(
       'displayId',
       'regionId',
       'link',
+      'calculatedStatus',
     ],
     where: {
       [Op.and]: [
@@ -238,7 +240,11 @@ export async function getReports(
       },
       {
         model: CollabReportApprover,
-        attributes: ['id', 'status', 'note'],
+        attributes: [
+          'id',
+          'status',
+          'note',
+        ],
         as: 'approvers',
         required: false,
         include: [
@@ -246,6 +252,13 @@ export async function getReports(
             model: User,
             as: 'user',
             attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+                attributes: ['name'],
+              },
+            ],
           },
         ],
       },
