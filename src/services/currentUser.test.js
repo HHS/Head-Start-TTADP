@@ -287,8 +287,8 @@ describe('currentUser', () => {
 
     test('maps all fields and builds full name from given_name + family_name', async () => {
       const data = {
-        given_name: 'Ada',
-        family_name: 'Lovelace',
+        given_name: 'Joe',
+        family_name: 'Smith',
         email: 'ada@example.com',
         sub: 987654321, // number to exercise .toString()
         roles: ['ROLE_USER', 'ROLE_ADMIN'],
@@ -298,7 +298,7 @@ describe('currentUser', () => {
       const result = await retrieveUserDetails(data);
 
       expect(findOrCreateUser).toHaveBeenCalledWith({
-        name: 'Ada Lovelace',
+        name: 'Joe Smith',
         email: 'ada@example.com',
         hsesUsername: '987654321',
         hsesAuthorities: ['ROLE_USER', 'ROLE_ADMIN'],
@@ -369,71 +369,4 @@ describe('currentUser', () => {
       });
     });
   });
-  // describe('retrieveUserDetails', () => {
-  //   test('can handle oauth classic login user response from HSES', async () => {
-  //     const responseFromUserInfo = {
-  //       status: 200,
-  //       data: userInfoClassicLogin,
-  //     };
-  //     axios.get.mockResolvedValueOnce(responseFromUserInfo);
-  //     isEmail.mockReturnValueOnce(true);
-
-  //     const accessToken = { sign: jest.fn().mockReturnValue({ url: '/auth/user/me' }) };
-
-  //     await retrieveUserDetails(accessToken);
-
-  //     expect(axios.get).toHaveBeenCalled();
-  //     expect(findOrCreateUser).toHaveBeenCalledWith({
-  //       name: 'testUser@adhocteam.us',
-  //       email: 'testUser@adhocteam.us',
-  //       hsesUsername: 'testUser@adhocteam.us',
-  //       hsesAuthorities: ['ROLE_FEDERAL'],
-  //       hsesUserId: '1',
-  //     });
-  //   });
-
-  //   test('can handle oauth piv card login user response from HSES', async () => {
-  //     const responseFromUserInfoPiv = {
-  //       status: 200,
-  //       data: userInfoPivCardLogin,
-  //     };
-  //     axios.get.mockResolvedValueOnce(responseFromUserInfoPiv);
-  //     isEmail.mockReturnValueOnce(true);
-
-  //     const accessToken = { sign: jest.fn().mockReturnValue({ url: '/auth/user/me' }) };
-
-  //     await retrieveUserDetails(accessToken);
-
-  //     expect(axios.get).toHaveBeenCalled();
-  //     expect(findOrCreateUser).toHaveBeenCalledWith({
-  //       name: 'testUser@adhocteam.us',
-  //       email: 'testUser@adhocteam.us',
-  //       hsesUsername: 'testUser@adhocteam.us',
-  //       hsesAuthorities: ['ROLE_FEDERAL'],
-  //       hsesUserId: '1',
-  //     });
-  //   });
-
-  //   test('can handle oauth piv card login user response from HSES with null email', async () => {
-  //     const responseFromUserInfoPiv = {
-  //       status: 200,
-  //       data: userInfoPivCardLogin,
-  //     };
-  //     axios.get.mockResolvedValueOnce(responseFromUserInfoPiv);
-  //     isEmail.mockReturnValueOnce(false);
-
-  //     const accessToken = { sign: jest.fn().mockReturnValue({ url: '/auth/user/me' }) };
-
-  //     await retrieveUserDetails(accessToken);
-
-  //     expect(axios.get).toHaveBeenCalled();
-  //     expect(findOrCreateUser).toHaveBeenCalledWith({
-  //       name: 'testUser@adhocteam.us',
-  //       email: null,
-  //       hsesUsername: 'testUser@adhocteam.us',
-  //       hsesAuthorities: ['ROLE_FEDERAL'],
-  //       hsesUserId: '1',
-  //     });
-  //   });
-  // });
 });
