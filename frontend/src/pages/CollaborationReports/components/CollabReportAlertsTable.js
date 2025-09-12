@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
+import ApproverTableDisplay from '../../../components/ApproverTableDisplay';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
+import { getStatusDisplayAndClassnames } from '../../../utils';
 
 const CollabReportAlertsTable = ({
   emptyMsg,
@@ -38,7 +41,24 @@ const CollabReportAlertsTable = ({
         value: r.collaboratingSpecialists.map((c) => c.fullName).join('\n'),
       },
       {
-        value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
+        value: <ApproverTableDisplay approvers={r.approvers} />,
+      },
+      {
+        value: (() => {
+          const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
+            r.calculatedStatus,
+            r.approvers,
+            false,
+          );
+          return (
+            <Tag
+              className={statusClassName}
+            >
+              {displayStatus}
+            </Tag>
+          );
+        }
+        )(),
       },
     ],
   })), [data.rows]);
@@ -84,7 +104,8 @@ const CollabReportAlertsTable = ({
             'Creator',
             'Created date',
             'Collaborator',
-            'Last saved',
+            'Approvers',
+            'Status',
           ]}
           data={tabularData}
           firstHeading="Report ID"
