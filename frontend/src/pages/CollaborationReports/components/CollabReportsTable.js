@@ -6,11 +6,11 @@ import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
+import TooltipWithCollection from '../../../components/TooltipWithCollection';
 
 const CollabReportsTable = ({
   emptyMsg,
   loading,
-  offset,
   showCreateMsgOnEmpty,
   title,
   data,
@@ -23,6 +23,7 @@ const CollabReportsTable = ({
     heading: <Link to={r.link}>{r.displayId}</Link>,
     data: [
       {
+        tooltip: r.name,
         value: r.name,
       },
       {
@@ -30,12 +31,13 @@ const CollabReportsTable = ({
       },
       {
         value: r.author.fullName,
+        tooltip: r.author.fullName,
       },
       {
         value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
       },
       {
-        value: r.collaboratingSpecialists.map((c) => c.fullName).join('\n'),
+        value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
       },
       {
         value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
@@ -55,7 +57,8 @@ const CollabReportsTable = ({
         loading={loading}
         loadingLabel="Collaboration reports table loading"
         totalCount={data.count}
-        offset={offset}
+        offset={sortConfig.offset}
+        currentPage={sortConfig.activePage}
         perPage={10}
         titleMargin={{ bottom: 3 }}
       >
@@ -104,7 +107,6 @@ const CollabReportsTable = ({
 };
 
 CollabReportsTable.defaultProps = {
-  offset: 0,
   loading: false,
   emptyMsg: 'You have no Collaboration Reports',
   showCreateMsgOnEmpty: false,
@@ -113,14 +115,18 @@ CollabReportsTable.defaultProps = {
 CollabReportsTable.propTypes = {
   emptyMsg: PropTypes.string,
   loading: PropTypes.bool,
-  offset: PropTypes.number,
   data: PropTypes.shape({
     rows: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })),
     count: PropTypes.number,
   }).isRequired,
   // setData: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
-  sortConfig: PropTypes.shape({}).isRequired,
+  sortConfig: PropTypes.shape({
+    offset: PropTypes.number,
+    activePage: PropTypes.number,
+    direction: PropTypes.string,
+    sortBy: PropTypes.string,
+  }).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
 

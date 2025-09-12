@@ -22,6 +22,7 @@ const CollabReports = ({
     sortBy: 'id',
     direction: 'desc',
     activePage: 1,
+    offset: 0,
   }, sortKey);
 
   const requestSort = useCallback(() => {}, []);
