@@ -22,6 +22,7 @@ const {
   CollabReportSpecialist,
   User,
   Region,
+  Role,
 } = db;
 
 const REPORTS_PER_PAGE = 10;
@@ -176,7 +177,16 @@ export async function getReports(
   const { collabReports: scopes } = await filtersToScopes(filters, { userId });
 
   return CollabReport.findAndCountAll({
-    attributes: ['id'],
+    attributes: [
+      'id',
+      'name',
+      'startDate',
+      'createdAt',
+      'updatedAt',
+      'displayId',
+      'regionId',
+      'link',
+    ],
     where: {
       [Op.and]: [
         { calculatedStatus: status },
@@ -188,20 +198,24 @@ export async function getReports(
         model: User,
         as: 'author',
         required: false,
-      },
-      {
-        model: Region,
-        as: 'region',
-      },
-      {
-        model: CollabReportSpecialist,
-        as: 'collabReportSpecialists',
-        required: false,
-        separate: true,
+        attributes: ['fullName', 'name'],
         include: [
           {
-            model: User,
-            as: 'specialist',
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+          },
+        ],
+      },
+      {
+        model: User,
+        as: 'collaboratingSpecialists',
+        attributes: ['id', 'name', 'fullName'],
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
           },
         ],
       },

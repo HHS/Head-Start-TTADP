@@ -124,6 +124,18 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.TEXT,
       },
+      displayId: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return `R${this.regionId.toString().padStart(2, '0')}-CR-${this.id}`;
+        },
+      },
+      link: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return `/collaboration-reports/${this.id}`;
+        },
+      },
     },
     {
       hooks: {

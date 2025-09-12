@@ -47,7 +47,11 @@ export default function HorizontalTableWidgetCell({
       return <TextTrim text={data.tooltip ? (data.heading || data.value || '') : data.value} />;
     }
 
-    if (showDashForNullValue && !data.value) {
+    if (!isFirstColumn && showDashForNullValue && !data.value) {
+      return '-';
+    }
+
+    if (isFirstColumn && showDashForNullValue && !data.heading) {
       return '-';
     }
 
