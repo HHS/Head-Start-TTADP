@@ -44,11 +44,11 @@ export const CollabReportsLanding = () => {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
       />
-      <div className="collab-report-header flex-align-center margin-top-0 margin-bottom-3">
-        <h1 className="landing">
+      <div className="collab-report-header margin-top-0 margin-bottom-3 flex-column flex-align-start display-flex">
+        <h1 className="landing tablet:margin-right-2 margin-bottom-0">
           {`Collaboration reports - ${regionLabel}`}
         </h1>
-        <div>
+        <div className="margin-top-1">
           <Link
             to="/collaboration-reports/new/activity-summary"
             className="usa-button smart-hub--new-report-btn"
@@ -59,7 +59,7 @@ export const CollabReportsLanding = () => {
         </div>
       </div>
       {/* TODO: Wrap this in a FilterContext.Provider component when filters added */}
-      <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} />
+      <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
     </div>
   );
