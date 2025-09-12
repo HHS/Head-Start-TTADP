@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Model, Op } from 'sequelize';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
+import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { syncCRApprovers } from './collabReportApprovers';
 
@@ -23,7 +23,6 @@ const {
   User,
   Region,
   Role,
-  sequelize,
 } = db;
 
 const REPORTS_PER_PAGE = 10;
@@ -186,10 +185,14 @@ export async function getReports(
         userId,
       },
       {
-        '$collaboratingSpecialists.id$': userId,
+        id: {
+          [Op.in]: sequelize.literal(`(SELECT crs."collabReportId" FROM "CollabReportSpecialists" crs WHERE crs."specialistId" = ${userId})`),
+        },
       },
       {
-        '$approvers.userId$': userId,
+        id: {
+          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra WHERE cra."userId" = ${userId})`),
+        },
       },
     ];
   }

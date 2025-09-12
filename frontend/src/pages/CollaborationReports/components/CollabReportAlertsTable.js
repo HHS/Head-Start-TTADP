@@ -9,6 +9,7 @@ import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import { getStatusDisplayAndClassnames } from '../../../utils';
+import TooltipWithCollection from '../../../components/TooltipWithCollection';
 
 const CollabReportAlertsTable = ({
   emptyMsg,
@@ -27,18 +28,20 @@ const CollabReportAlertsTable = ({
     data: [
       {
         value: r.name,
+        tooltip: r.name,
       },
       {
         value: r.startDate,
       },
       {
         value: r.author.fullName,
+        tooltip: r.author.fullName,
       },
       {
         value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
       },
       {
-        value: r.collaboratingSpecialists.map((c) => c.fullName).join('\n'),
+        value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
       },
       {
         value: <ApproverTableDisplay approvers={r.approvers} />,
@@ -67,6 +70,7 @@ const CollabReportAlertsTable = ({
     <>
       <WidgetContainer
         title={title}
+        className="collab-alerts-table-container"
         enableCheckboxes
         checkboxes={reportCheckboxes}
         setCheckboxes={setReportCheckboxes}

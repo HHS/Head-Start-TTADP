@@ -162,6 +162,12 @@ const specialists = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    collabReportId: 20007,
+    specialistId: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const reasons = [
