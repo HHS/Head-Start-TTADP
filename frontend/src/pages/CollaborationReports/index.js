@@ -58,7 +58,6 @@ export const CollabReportsLanding = () => {
           </Link>
         </div>
       </div>
-      {/* TODO: Wrap this in a FilterContext.Provider component when filters added */}
       <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
     </div>

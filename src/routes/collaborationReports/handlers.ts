@@ -77,6 +77,35 @@ export async function getReports(req: Request, res: Response) {
   }
 }
 
+export async function getAlerts(req: Request, res: Response) {
+  try {
+    // get the current user ID from the request
+    const userId = await currentUserId(req, res);
+    // filter the query so that only regions the user has permission
+    // to are included
+    const query = await setReadRegions(req.query, userId);
+    // the query here may contain additional filter information
+    // so we expect the collab reports to have a full filter suite
+    const reportPayload = await getReportsService({
+      ...query,
+      status: [
+        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.NEEDS_ACTION,
+      ],
+      userId,
+    });
+    // reportPayload will be an object like:
+    // - { count: number, rows: CollabReport[] }
+    // if no reports are found, it'll just be:
+    // - { count: 0, rows: [] }
+    // so there's no reason to 404 or die here
+    res.json(reportPayload);
+  } catch (err) {
+    await handleErrors(req, res, err, logContext);
+  }
+}
+
 export async function saveReport(req: Request, res: Response) {
   try {
     // Make sure there's a new report to save
