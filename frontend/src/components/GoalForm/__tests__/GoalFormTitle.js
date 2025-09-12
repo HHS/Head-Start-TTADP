@@ -13,7 +13,15 @@ describe('GoalFormTitle', () => {
 
   test('renders the correct form title when goalNumbers is empty', () => {
     const goalNumbers = [];
-    const isReopenedGoal = false;
+    const isReopenedGoal = true;
+    render(<GoalFormTitle goalNumbers={goalNumbers} isReopenedGoal={isReopenedGoal} />);
+    const formTitle = screen.getByText('Recipient TTA goal');
+    expect(formTitle).toBeInTheDocument();
+  });
+
+  test('renders the correct form title when goalNumbers not empty on a reopen', () => {
+    const goalNumbers = ['1', '2', '3'];
+    const isReopenedGoal = true;
     render(<GoalFormTitle goalNumbers={goalNumbers} isReopenedGoal={isReopenedGoal} />);
     const formTitle = screen.getByText('Recipient TTA goal');
     expect(formTitle).toBeInTheDocument();
@@ -21,9 +29,9 @@ describe('GoalFormTitle', () => {
 
   test('renders the correct form title when isReopenedGoal is true', () => {
     const goalNumbers = ['1', '2', '3'];
-    const isReopenedGoal = true;
+    const isReopenedGoal = false;
     render(<GoalFormTitle goalNumbers={goalNumbers} isReopenedGoal={isReopenedGoal} />);
-    const formTitle = screen.getByText('Goal 1, 2, 3-R');
+    const formTitle = screen.getByText('Goal 1, 2, 3');
     expect(formTitle).toBeInTheDocument();
   });
 });

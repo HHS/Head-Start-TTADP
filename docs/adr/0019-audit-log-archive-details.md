@@ -1,7 +1,7 @@
 # ADR: Archiving Audit Logs Implementation
 
 ## Status
-Proposed
+Rejected
 
 ## Context
 The need to archive audit logs has arisen to ensure efficient management of growing data and maintain application performance. We have identified two options for implementing the archiving process.
