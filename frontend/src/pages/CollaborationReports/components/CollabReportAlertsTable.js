@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Tag } from '@trussworks/react-uswds';
@@ -21,8 +21,6 @@ const CollabReportAlertsTable = ({
   requestSort,
   sortConfig,
 }) => {
-  const [reportCheckboxes, setReportCheckboxes] = useState([]);
-
   const tabularData = useMemo(() => data.rows.map((r) => ({
     heading: <Link to={r.link}>{r.displayId}</Link>,
     data: [
@@ -71,10 +69,8 @@ const CollabReportAlertsTable = ({
       <WidgetContainer
         title={title}
         className="collab-alerts-table-container"
-        enableCheckboxes
-        checkboxes={reportCheckboxes}
-        setCheckboxes={setReportCheckboxes}
-        showPagingBottom={data.count > 0}
+        // enableCheckboxes
+        showPagingBottom={false}
         showPagingTop={false}
         loading={loading}
         loadingLabel="Collaboration reports table loading"
@@ -113,9 +109,6 @@ const CollabReportAlertsTable = ({
           ]}
           data={tabularData}
           firstHeading="Report ID"
-          enableCheckboxes
-          checkboxes={reportCheckboxes}
-          setCheckboxes={setReportCheckboxes}
           enableSorting
           sortConfig={sortConfig}
           requestSort={requestSort}
