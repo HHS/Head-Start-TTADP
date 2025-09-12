@@ -302,7 +302,7 @@ describe('recipient record page', () => {
     memoryHistory.push('/recipient-tta-records/1/region/45/standard-goals/10/grant/10/restart');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    expect(await screen.findByText(/Goal G-1234/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Recipient TTA goal/i)).toBeInTheDocument();
   });
 
   it('navigates to the update standard goal', async () => {

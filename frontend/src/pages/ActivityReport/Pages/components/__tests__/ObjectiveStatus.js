@@ -64,6 +64,7 @@ describe('ObjectiveStatus', () => {
       closeSuspendContext={defaultProps.closeSuspendContext}
       inputName={defaultProps.inputName}
       status="In Progress"
+      currentStatus="In Progress"
     />);
 
     // Not Started should be filtered out

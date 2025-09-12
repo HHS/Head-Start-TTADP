@@ -31,7 +31,7 @@ export default function GoalFormUpdateOrRestart({
       <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
       <GoalFormHeading recipient={recipient} regionId={regionId} />
       <GoalFormContainer>
-        <GoalFormTitleGroup status={GOAL_STATUS.NOT_STARTED} goalNumbers={[`G-${goal.id}`]} />
+        <GoalFormTitleGroup status={GOAL_STATUS.NOT_STARTED} goalNumbers={[`G-${goal.id}`]} isReopenedGoal={isRestart} />
         <ReadOnlyField label="Recipient grant numbers">
           {goal.grant.numberWithProgramTypes}
         </ReadOnlyField>
