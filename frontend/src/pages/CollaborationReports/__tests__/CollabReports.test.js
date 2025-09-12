@@ -1,7 +1,10 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import CollabReports from '../components/CollabReports';
 import { getReports } from '../../../fetchers/collaborationReports';
+import AppLoadingContext from '../../../AppLoadingContext';
+import { NOOP } from '../../../Constants';
 
 jest.mock('../../../fetchers/collaborationReports');
 
@@ -15,10 +18,18 @@ describe('CollabReports', () => {
     jest.clearAllMocks();
   });
 
-  test('Renders loading state and then reports table', async () => {
-    getReports.mockResolvedValue({ rows: mockReports });
+  const renderTest = (props) => {
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: NOOP }}>
+        <CollabReports {...props} />
+      </AppLoadingContext.Provider>,
+    );
+  };
 
-    render(<CollabReports title="Test Title" />);
+  test('Renders loading state and then reports table', async () => {
+    getReports.mockResolvedValue({ count: 0, rows: mockReports });
+
+    renderTest({ title: 'Test Title' });
 
     expect(screen.getByText('Test Title')).toBeInTheDocument();
 
@@ -29,9 +40,9 @@ describe('CollabReports', () => {
   });
 
   test('Renders empty message when no reports', async () => {
-    getReports.mockResolvedValue({ rows: [] });
+    getReports.mockResolvedValue({ count: 0, rows: [] });
 
-    render(<CollabReports emptyMsg="No reports found" />);
+    renderTest({ emptyMsg: 'No reports found' });
 
     await waitFor(() => {
       expect(getReports).toHaveBeenCalled();
@@ -42,7 +53,7 @@ describe('CollabReports', () => {
   test('Renders error alert on fetch failure', async () => {
     getReports.mockRejectedValue(new Error('Network error'));
 
-    render(<CollabReports />);
+    renderTest();
 
     await waitFor(() => {
       expect(getReports).toHaveBeenCalled();
@@ -51,9 +62,10 @@ describe('CollabReports', () => {
   });
 
   test('Passes showCreateMsgOnEmpty prop to table', async () => {
-    getReports.mockResolvedValue({ rows: [] });
+    getReports.mockResolvedValue({ count: 0, rows: [] });
 
-    render(<CollabReports showCreateMsgOnEmpty />);
+    renderTest({ showCreateMsgOnEmpty: true });
+    // render(<CollabReports showCreateMsgOnEmpty />);
 
     await waitFor(() => {
       expect(getReports).toHaveBeenCalled();

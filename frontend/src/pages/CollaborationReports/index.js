@@ -2,8 +2,7 @@ import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { showFilterWithMyRegions } from '../regionHelpers';
-import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
-import FilterPanel from '../../components/filter/FilterPanel';
+
 import UserContext from '../../UserContext';
 import CollabReports from './components/CollabReports';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
@@ -18,7 +17,7 @@ export const CollabReportsLanding = () => {
   const {
     hasMultipleRegions,
     defaultRegion,
-    regions,
+    // regions,
     allRegionsFilters,
     filters,
     setFilters,
@@ -59,14 +58,6 @@ export const CollabReportsLanding = () => {
           </Link>
         </div>
       </div>
-      <FilterPanelContainer>
-        <FilterPanel
-          applyButtonAria="apply filters for activity reports"
-          filters={filters}
-          filterConfig={[]}
-          allUserRegions={regions}
-        />
-      </FilterPanelContainer>
       {/* TODO: Wrap this in a FilterContext.Provider component when filters added */}
       <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />

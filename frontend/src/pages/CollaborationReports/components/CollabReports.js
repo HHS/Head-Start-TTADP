@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import {
   Alert,
   Grid,
@@ -6,31 +6,25 @@ import {
 import PropTypes from 'prop-types';
 import CollabReportsTable from './CollabReportsTable';
 import { getReports } from '../../../fetchers/collaborationReports';
+import useFetch from '../../../hooks/useFetch';
+import useSessionSort from '../../../hooks/useSessionSort';
 
 // TODO: Add filters as a dependency/prop in future
-const CollabReports = (props) => {
-  const { title, emptyMsg, showCreateMsgOnEmpty } = props;
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty }) => {
+  const [sortConfig] = useSessionSort({
+    sortBy: 'id',
+    direction: 'desc',
+    activePage: 1,
+  }, 'collabReportsTable');
 
-  useEffect(() => {
-    const fetchReports = async () => {
-      setLoading(true);
-      try {
-        const { rows } = await getReports();
-        setReports(rows);
-        setError('');
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
-        setError('Unable to fetch reports');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReports();
-  }, []);
+  const requestSort = useCallback(() => {}, []);
+
+  const {
+    data,
+    setData,
+    error,
+    loading,
+  } = useFetch({ rows: [], count: 0 }, getReports, [], true, 'Unable to fetch reports');
 
   return (
     <>
@@ -42,11 +36,14 @@ const CollabReports = (props) => {
         )}
       </Grid>
       <CollabReportsTable
-        reports={reports}
+        data={data}
+        setData={setData}
         title={title}
         loading={loading}
         emptyMsg={emptyMsg}
         showCreateMsgOnEmpty={showCreateMsgOnEmpty}
+        requestSort={requestSort}
+        sortConfig={sortConfig}
       />
     </>
   );

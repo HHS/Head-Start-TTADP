@@ -96,14 +96,6 @@ describe('CollabReportsLanding', () => {
     expect(screen.getByTestId('region-permission-modal')).toBeInTheDocument();
   });
 
-  test('renders FilterPanelContainer and FilterPanel', () => {
-    renderComponent();
-
-    expect(screen.getByTestId('filter-panel-container')).toBeInTheDocument();
-    expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
-    expect(screen.getByLabelText('apply filters for activity reports')).toBeInTheDocument();
-  });
-
   test('renders both CollabReports components with correct props', () => {
     renderComponent();
 
