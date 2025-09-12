@@ -163,18 +163,35 @@ export async function getReports(
     offset = 0,
     limit = REPORTS_PER_PAGE,
     status = REPORT_STATUSES.APPROVED,
-    userId = 0,
+    userId,
     ...filters
   }: {
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
     offset?: number;
     limit?: number;
-    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
     userId?: number;
+    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
   } = {},
 ) {
-  const { collabReports: scopes } = await filtersToScopes(filters, { userId });
+  const { collabReport: customScopes } = await filtersToScopes(filters);
+  const standardScopes = {
+    calculatedStatus: status,
+  };
+
+  if (userId) {
+    standardScopes[Op.or] = [
+      {
+        userId,
+      },
+      {
+        '$collaboratingSpecialists.id$': userId,
+      },
+      {
+        '$approvers.userId$': userId,
+      },
+    ];
+  }
 
   return CollabReport.findAndCountAll({
     attributes: [
@@ -189,15 +206,15 @@ export async function getReports(
     ],
     where: {
       [Op.and]: [
-        { calculatedStatus: status },
-        scopes,
+        standardScopes,
+        customScopes,
       ],
     },
     include: [
       {
         model: User,
         as: 'author',
-        required: false,
+        required: true,
         attributes: ['fullName', 'name'],
         include: [
           {
@@ -224,7 +241,6 @@ export async function getReports(
         attributes: ['id', 'status', 'note'],
         as: 'approvers',
         required: false,
-        separate: true,
         include: [
           {
             model: User,

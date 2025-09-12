@@ -26,7 +26,9 @@ export const getReports = async () => {
 };
 
 export const getAlerts = async () => {
-  const reports = await get(collabReportUrl);
+  const url = join(collabReportUrl, 'alerts');
+
+  const reports = await get(url);
   const json = await reports.json();
   return json;
 };
