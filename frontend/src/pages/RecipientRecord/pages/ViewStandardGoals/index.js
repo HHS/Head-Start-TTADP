@@ -392,7 +392,7 @@ export default function ViewGoalDetails({
                           <div className="margin-top-2">
                             {/* Render label and list separately to avoid nesting ul in p */}
                             <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-                            <ul className="usa-list margin-top-0">
+                            <ul className="usa-list margin-top-0 resource-link-wrapper">
                               {objective.activityReportObjectives
                                 .flatMap((aro) => aro.resources || [])
                                 .filter(
