@@ -204,7 +204,6 @@ const CLOSE_SUSPEND_REASONS = [
 exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
 const GOAL_CLOSE_REASONS = [
-  'Duplicate goal',
   'Recipient request',
   'Regional Office request',
   'TTA complete',
