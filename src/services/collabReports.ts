@@ -145,7 +145,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   }
 
   // Sync the approvers, if an empty array they get removed
-  if (newReport.approvers) {
+  if (approvers) {
     await syncCRApprovers(savedReport.id, approvers.map(({ userId }) => userId));
   }
 
