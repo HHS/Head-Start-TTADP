@@ -172,6 +172,12 @@ function CollaborationReport({ match, location, region }) {
     LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
   );
 
+  // A new form page is being shown so we need to reset `react-hook-form` so validations are
+  // reset and the proper values are placed inside inputs
+  useDeepCompareEffect(() => {
+    hookForm.reset(formData);
+  }, [currentPage, formData, hookForm.reset]);
+
   useDeepCompareEffect(() => {
     const fetch = async () => {
       let report;
@@ -186,7 +192,7 @@ function CollaborationReport({ match, location, region }) {
             fetchedReport = await getReport(collabReportId);
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
-            history.push('/something-went-wrong/500');
+            history.replace('/something-went-wrong/500');
           }
           report = convertReportToFormData(fetchedReport);
         } else {
@@ -199,6 +205,8 @@ function CollaborationReport({ match, location, region }) {
             version: 2,
           };
         }
+        console.log('report:', report);
+        console.log('formData:', formData);
 
         const apiCalls = [
           getCollaborators(report.regionId),
@@ -206,8 +214,11 @@ function CollaborationReport({ match, location, region }) {
 
         const [collaborators] = await Promise.all(apiCalls);
 
-        const isCollaborator = report.collabReportCollaborators
-          && report.collabReportCollaborators.find((u) => u.userId === user.id);
+        // If the report creator is in the collaborators list, remove them.
+        const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
+
+        const isCollaborator = report.collabReportSpecialists
+          && report.collabReportSpecialists.find((u) => u.userId === user.id);
         const isAuthor = report.userId === user.id;
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
@@ -219,7 +230,7 @@ function CollaborationReport({ match, location, region }) {
         );
 
         updateAdditionalData({
-          collaborators: collaborators || [],
+          collaborators: filteredCollaborators || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -241,8 +252,10 @@ function CollaborationReport({ match, location, region }) {
 
         // Update form data.
         if (shouldUpdateFromNetwork && collabReportId !== 'new') {
-          updateFormData({ ...formData, goalForEditing: null, ...report }, true);
+          console.log('Update form data one', { ...formData, ...report });
+          updateFormData({ ...formData, ...report }, true);
         } else {
+          console.log('Update form data two', { ...report, ...formData });
           updateFormData({ ...report, ...formData }, true);
         }
 
@@ -250,7 +263,6 @@ function CollaborationReport({ match, location, region }) {
 
         // Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
-
         if (isMatchingApprover && isMatchingApprover.length > 0) {
           // This user is an approver on the report.
           updateIsApprover(true);

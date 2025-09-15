@@ -32,9 +32,11 @@ export default function useTTAHUBLocalStorage(key, defaultValue) {
   // to the report data object, that way we can show them on the relevant alerts and stuff
   // on the frontend
   return [storedValue, (formData, updateSavedTime = false) => {
+    console.log('updateFormData called with:', formData, updateSavedTime);
     const savedToStorageTime = updateSavedTime ? new Date().toISOString() : null;
     const createdInLocalStorage = formData.createdInLocalStorage || savedToStorageTime;
     if (saveReport) {
+      console.log('saveReport is true, saving to local storage');
       setStoredValue({
         ...formData,
         savedToStorageTime,
