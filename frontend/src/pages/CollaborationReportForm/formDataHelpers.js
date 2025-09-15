@@ -1,9 +1,5 @@
 import { isEqual } from 'lodash';
 import moment from 'moment';
-import {
-  DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
-} from '../../Constants';
 
 /**
  * compares two objects using lodash "isEqual" and returns the difference
@@ -49,12 +45,28 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 export const convertReportToFormData = (fetchedReport) => {
-  const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
-  const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+  console.log('fetchedReport:', fetchedReport);
+
+  // Convert collaborators into a MultiSelect-friendly format
+  let collabReportSpecialists = [];
+  if (fetchedReport.collabReportSpecialists) {
+    collabReportSpecialists = fetchedReport.collabReportSpecialists.map(({ specialist }) => ({
+      name: specialist.fullName,
+      value: specialist.id,
+    }));
+  }
+
+  // Convert isStateActivity to string for radio buttons
+  let isStateActivity = '';
+  if (fetchedReport.isStateActivity !== undefined && fetchedReport.isStateActivity !== null) {
+    isStateActivity = fetchedReport.isStateActivity ? 'true' : 'false';
+  } else {
+    isStateActivity = null;
+  }
 
   return {
     ...fetchedReport,
-    endDate,
-    startDate,
+    collabReportSpecialists,
+    isStateActivity,
   };
 };

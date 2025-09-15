@@ -143,7 +143,7 @@ function FormItem({
 
 FormItem.propTypes = {
   label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
-  customLabel: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
+  customLabel: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,
@@ -156,6 +156,7 @@ FormItem.propTypes = {
 };
 
 FormItem.defaultProps = {
+  customLabel: null,
   required: true,
   fieldSetWrapper: false,
   className: '',

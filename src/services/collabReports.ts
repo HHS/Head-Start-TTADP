@@ -7,7 +7,7 @@ import { syncCRApprovers } from './collabReportApprovers';
 
 interface ICollabReport {
   id: number;
-  collabReportCollaborators: {
+  collabReportSpecialists: {
     userId: number;
     user: {
       id: number;
