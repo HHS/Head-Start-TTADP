@@ -124,6 +124,16 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.TEXT,
       },
+      // virtual columns
+      creatorName: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (this.author) {
+            return this.author.fullName;
+          }
+          return null;
+        },
+      },
       displayId: {
         type: DataTypes.VIRTUAL,
         get() {
@@ -134,6 +144,13 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.VIRTUAL,
         get() {
           return `/collaboration-reports/${this.id}`;
+        },
+      },
+      stepDetailsWithDates: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.steps) return null;
+          return this.steps.map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`).join('\n');
         },
       },
     },
