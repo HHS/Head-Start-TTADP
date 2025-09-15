@@ -34,7 +34,7 @@ module.exports = {
         },
         status: {
           type: Sequelize.ENUM(['approved', 'needs_action']),
-          allowNull: false,
+          allowNull: true,
         },
         note: {
           type: Sequelize.TEXT,
