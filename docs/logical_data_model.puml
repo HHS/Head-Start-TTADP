@@ -227,10 +227,10 @@ class CollabReportApprovers{
  * collabReportId : integer : REFERENCES "CollabReports".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
- * status : enum
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  note : text
+ status : enum
 }
 
 class CollabReportDataUsed{
