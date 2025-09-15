@@ -114,36 +114,8 @@ export async function saveReport(req: Request, res: Response) {
       ...existingReport, ...newReport,
     }, existingReport);
 
-    // Determine if notifications need to be sent out to collaborators
-    if (savedReport.collabReportSpecialists) {
-      // Only include new collaborators
-      const oldCollaborators = existingReport.collabReportSpecialists.map((o) => o.user.email);
-      // eslint-disable-next-line max-len
-      const newCollaborators = savedReport.collabReportSpecialists.filter((c) => !oldCollaborators.includes(c.user.email));
-
-      // Get all of the user setting overrides for each new collaborator,
-      // will filter them in the next step
-      const settingsForAllCollabs = await Promise.all(
-        newCollaborators.map((c) => userSettingOverridesById(
-          c.userId,
-          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
-        )),
-      );
-
-      // Filter so that we get just collabs who want a notification
-      const newCollaboratorsToNotify = newCollaborators.filter((_value, index) => {
-        // Check to make sure there's a setting for this collaborator
-        if (!settingsForAllCollabs[index]) {
-          return false;
-        }
-
-        // Return whether or not to email this collaborator
-        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
-      });
-
-      // Finally, notify the appropriate collaborators
-      collaboratorAssignedNotification(savedReport, newCollaboratorsToNotify);
-    }
+    res.json(savedReport);
+    return;
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
