@@ -19,8 +19,15 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
-export const getReports = async () => {
-  const reports = await get(collabReportUrl);
+export const getReports = async (sortConfig) => {
+  const params = new URLSearchParams();
+  params.append('sortDir', sortConfig.direction);
+  params.append('sortBy', sortConfig.sortBy);
+  params.append('activePage', sortConfig.activePage);
+  params.append('limit', sortConfig.perPage || 10);
+  params.append('offset', sortConfig.offset);
+
+  const reports = await get(`${collabReportUrl}?${params.toString()}`);
   const json = await reports.json();
   return json;
 };

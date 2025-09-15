@@ -88,7 +88,7 @@ HorizontalTableWidgetCell.propTypes = {
     link: PropTypes.string,
     tooltip: PropTypes.bool,
     heading: PropTypes.string,
-    value: PropTypes.string,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
     title: PropTypes.string,
     suffixContent: PropTypes.node,
     hideLinkIcon: PropTypes.bool,

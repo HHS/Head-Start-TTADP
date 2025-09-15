@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
@@ -9,6 +9,8 @@ import { DATE_DISPLAY_FORMAT, NOOP } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import './CollabReportsTable.css';
 
+const ALL = 2;
+
 const CollabReportsTable = ({
   emptyMsg,
   loading,
@@ -17,22 +19,32 @@ const CollabReportsTable = ({
   data,
   requestSort,
   sortConfig,
+  setSortConfig,
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState([]);
 
   const menuItems = useMemo(() => [
     {
-      label: 'Export',
+      label: 'Export selected',
       onClick: NOOP,
     },
     {
-      label: 'Copy URL',
+      label: 'Export all',
       onClick: NOOP,
-    },
-    {
-
     },
   ], []);
+
+  const handlePageChange = useCallback((e) => {
+    let newValue = Number(e.target.value);
+    if (newValue === ALL) {
+      newValue = 'all';
+    }
+
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      perPage: newValue,
+    }));
+  }, [setSortConfig]);
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
     heading: <Link to={r.link}>{r.displayId}</Link>,
@@ -79,7 +91,7 @@ const CollabReportsTable = ({
         menuItems={menuItems}
         showPagingTop
         paginationCardTopProps={{
-          perPageChange: NOOP,
+          perPageChange: handlePageChange,
           noXofX: true,
           spaceBetweenSelectPerPageAndContext: 2,
         }}
@@ -142,7 +154,6 @@ CollabReportsTable.propTypes = {
     rows: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })),
     count: PropTypes.number,
   }).isRequired,
-  // setData: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
   sortConfig: PropTypes.shape({
     offset: PropTypes.number,
@@ -152,7 +163,7 @@ CollabReportsTable.propTypes = {
   }).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
-
+  setSortConfig: PropTypes.func.isRequired,
 };
 
 export default CollabReportsTable;
