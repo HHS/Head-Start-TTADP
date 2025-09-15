@@ -52,16 +52,32 @@ const mockGoalHistory = [
             activityReport: { id: 101, displayId: 'R-101' },
             topics: [{ id: 1, name: 'Topic A' }, { id: 2, name: 'Topic B' }],
             resources: [{ id: 1, url: 'http://example.com/resource1', title: 'Resource 1' }],
+            files: [
+              { id: 201, originalFileName: 'report101-file1.pdf' },
+              { id: 202, originalFileName: 'report101-file2.docx' },
+            ],
+            activityReportObjectiveCourses: [
+              { course: { id: 301, name: 'Early Childhood Development Course' } },
+            ],
           },
           {
             activityReport: { id: 102, displayId: 'R-102' },
             topics: [{ id: 2, name: 'Topic B' }, { id: 3, name: 'Topic C' }],
             resources: [{ id: 2, url: 'http://example.com/resource2' }],
+            files: [
+              { id: 203, originalFileName: 'report102-file1.xlsx' },
+            ],
+            activityReportObjectiveCourses: [
+              { course: { id: 302, name: 'Classroom Management' } },
+              { course: { id: 303, name: 'Family Engagement Strategies' } },
+            ],
           },
           {
             activityReport: null,
             topics: [],
             resources: [],
+            files: [],
+            activityReportObjectiveCourses: [],
           },
         ],
       },
@@ -381,18 +397,42 @@ describe('ViewGoalDetails', () => {
 
     expect(topicsValue).toHaveTextContent('Topic A, Topic B, Topic C'); // check unique, comma-separated
 
-    // Resources
+    // Resources section contains all three types: courses, resource links, and files
     // Resources are handled differently in the component - they use a separate p and ul structure
     const resourcesLabel = within(objective1).getByText('Resources');
-    // Since resources use a different structure (not ReadOnlyField), we can use nextElementSibling
-    const resourceList = resourcesLabel.nextElementSibling;
-    // Verify we found the right element
-    expect(resourceList.tagName).toBe('UL');
 
-    const resourceLink1 = within(resourceList).getByRole('link', { name: 'Resource 1' });
-    const resourceLink2 = within(resourceList).getByRole('link', { name: 'http://example.com/resource2' });
+    // Get the resource sections container
+    const resourcesContainer = resourcesLabel.nextElementSibling;
+    // Verify we found the right element
+    expect(resourcesContainer.tagName).toBe('DIV');
+    expect(resourcesContainer).toHaveClass('resource-sections-container');
+
+    // Check courses
+    const coursesList = within(resourcesContainer).getAllByRole('list');
+    expect(coursesList.length).toBeGreaterThanOrEqual(1);
+
+    const courses = within(resourcesContainer).getAllByText((content, element) => (
+      ['Early Childhood Development Course', 'Classroom Management', 'Family Engagement Strategies'].includes(content)
+      && element.tagName.toLowerCase() === 'li'
+    ));
+    expect(courses).toHaveLength(3);
+    expect(courses[0]).toHaveTextContent('Early Childhood Development Course');
+
+    // Check resource links
+    const resourceLink1 = within(resourcesContainer).getByRole('link', { name: 'Resource 1' });
+    const resourceLink2 = within(resourcesContainer).getByRole('link', { name: 'http://example.com/resource2' });
     expect(resourceLink1).toHaveAttribute('href', 'http://example.com/resource1');
     expect(resourceLink2).toHaveAttribute('href', 'http://example.com/resource2');
+
+    // Check files
+    const files = within(resourcesContainer).getAllByText((content, element) => (
+      ['report101-file1.pdf', 'report101-file2.docx', 'report102-file1.xlsx'].includes(content)
+      && element.tagName.toLowerCase() === 'li'
+    ));
+    expect(files).toHaveLength(3);
+    expect(files[0]).toHaveTextContent('report101-file1.pdf');
+    expect(files[1]).toHaveTextContent('report101-file2.docx');
+    expect(files[2]).toHaveTextContent('report102-file1.xlsx');
   });
 
   test('renders root causes', async () => {
