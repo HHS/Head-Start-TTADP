@@ -8,6 +8,7 @@ import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT, NOOP } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import './CollabReportsTable.css';
+import { getReportsCSV } from '../../../fetchers/collaborationReports';
 
 const ALL = 2;
 
@@ -30,9 +31,9 @@ const CollabReportsTable = ({
     },
     {
       label: 'Export all',
-      onClick: NOOP,
+      onClick: async () => getReportsCSV(sortConfig),
     },
-  ], []);
+  ], [sortConfig]);
 
   const handlePageChange = useCallback((e) => {
     let newValue = Number(e.target.value);

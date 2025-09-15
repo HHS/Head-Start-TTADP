@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   createReport,
+  downloadReports,
   getAlerts,
   getReport,
   getReports,
@@ -32,6 +33,9 @@ router.delete(
 
 // getAlerts
 router.get('/alerts', transactionWrapper(getAlerts));
+
+// getCSV
+router.get('/csv', transactionWrapper(downloadReports));
 
 // getReport
 router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, transactionWrapper(getReport));

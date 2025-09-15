@@ -290,6 +290,7 @@ export const checkboxesToIds = (checkboxes) => {
 
 export const blobToCsvDownload = (blob, fileName) => {
   let url;
+  let a;
   try {
     // Check if url exists with the attribute of download
     // and remove it if it does.
@@ -298,7 +299,7 @@ export const blobToCsvDownload = (blob, fileName) => {
     }
 
     url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
     a.setAttribute('download', fileName);
@@ -309,6 +310,9 @@ export const blobToCsvDownload = (blob, fileName) => {
     console.error(error);
   } finally {
     window.URL.revokeObjectURL(url);
+    if (a) {
+      document.body.removeChild(a);
+    }
   }
 };
 export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
