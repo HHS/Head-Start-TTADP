@@ -5,8 +5,9 @@ import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
-import { DATE_DISPLAY_FORMAT } from '../../../Constants';
+import { DATE_DISPLAY_FORMAT, NOOP } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
+import './CollabReportsTable.css';
 
 const CollabReportsTable = ({
   emptyMsg,
@@ -18,6 +19,20 @@ const CollabReportsTable = ({
   sortConfig,
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState([]);
+
+  const menuItems = useMemo(() => [
+    {
+      label: 'Export',
+      onClick: NOOP,
+    },
+    {
+      label: 'Copy URL',
+      onClick: NOOP,
+    },
+    {
+
+    },
+  ], []);
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
     heading: <Link to={r.link}>{r.displayId}</Link>,
@@ -48,19 +63,27 @@ const CollabReportsTable = ({
   return (
     <>
       <WidgetContainer
+        className="collab-reports-table--widget-container"
         title={title}
         enableCheckboxes
         checkboxes={reportCheckboxes}
         setCheckboxes={setReportCheckboxes}
         showPagingBottom={data.count > 0}
-        showPagingTop={false}
         loading={loading}
         loadingLabel="Collaboration reports table loading"
         totalCount={data.count}
         offset={sortConfig.offset}
         currentPage={sortConfig.activePage}
         perPage={10}
-        titleMargin={{ bottom: 3 }}
+        titleMargin={{ bottom: 1 }}
+        menuItems={menuItems}
+        showPagingTop
+        paginationCardTopProps={{
+          perPageChange: NOOP,
+          noXofX: true,
+          spaceBetweenSelectPerPageAndContext: 2,
+        }}
+        titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
       >
         { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
@@ -86,7 +109,7 @@ const CollabReportsTable = ({
             'Date started',
             'Creator',
             'Created date',
-            'Collaborator',
+            'Collaborators',
             'Last saved',
           ]}
           data={tabularData}
