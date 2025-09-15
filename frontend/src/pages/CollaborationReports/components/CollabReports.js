@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Alert,
   Grid,
@@ -9,6 +9,7 @@ import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import useFetch from '../../../hooks/useFetch';
 import useSessionSort from '../../../hooks/useSessionSort';
 import CollabReportAlertsTable from './CollabReportAlertsTable';
+import useRequestSort from '../../../hooks/useRequestSort';
 
 // TODO: Add filters as a dependency/prop in future
 const CollabReports = ({
@@ -18,24 +19,24 @@ const CollabReports = ({
   isAlerts,
 }) => {
   const sortKey = useMemo(() => (isAlerts ? 'collabReportAlerts' : 'collabReportsTable'), [isAlerts]);
-  const [sortConfig] = useSessionSort({
+  const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: 'id',
     direction: 'desc',
     activePage: 1,
     offset: 0,
   }, sortKey);
 
-  const requestSort = useCallback(() => {}, []);
+  const requestSort = useRequestSort(setSortConfig);
 
   const Component = isAlerts ? CollabReportAlertsTable : CollabReportsTable;
-  const fetcher = isAlerts ? getAlerts : getReports;
+  const fetcher = isAlerts ? () => getAlerts(sortConfig) : () => getReports(sortConfig);
 
   const {
     data,
     setData,
     error,
     loading,
-  } = useFetch({ rows: [], count: 0 }, fetcher, [], true, 'Unable to fetch reports');
+  } = useFetch({ rows: [], count: 0 }, fetcher, [sortConfig], 'Unable to fetch reports');
 
   return (
     <>
@@ -55,6 +56,7 @@ const CollabReports = ({
         showCreateMsgOnEmpty={showCreateMsgOnEmpty}
         requestSort={requestSort}
         sortConfig={sortConfig}
+        setSortConfig={setSortConfig}
       />
     </>
   );

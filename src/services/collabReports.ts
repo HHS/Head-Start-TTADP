@@ -5,6 +5,20 @@ import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { syncCRApprovers } from './collabReportApprovers';
 
+const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') => {
+  const SORT_KEY = {
+    Activity_name: 'name',
+    Report_ID: 'id',
+    Date_started: 'startDate',
+    Created_date: 'createdAt',
+    Last_saved: 'updatedAt',
+    Creator: sequelize.literal('"_1"'),
+    Collaborators: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'),
+  };
+
+  return [[SORT_KEY[sortBy] || 'updatedAt', sortDir]];
+};
+
 interface ICollabReport {
   id: number;
   collabReportCollaborators: {
@@ -160,20 +174,21 @@ export async function getReports(
   {
     sortBy = 'updatedAt',
     sortDir = 'desc',
-    offset = 0,
-    limit = REPORTS_PER_PAGE,
+    offset = '0',
+    limit = String(REPORTS_PER_PAGE),
     status = REPORT_STATUSES.APPROVED,
     userId,
     ...filters
   }: {
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
-    offset?: number;
-    limit?: number;
+    offset?: string;
+    limit?: string;
     userId?: number;
     status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
   } = {},
 ) {
+  const order = orderCollabReportsBy(sortBy, sortDir);
   const { collabReport: customScopes } = await filtersToScopes(filters);
   const standardScopes = {
     calculatedStatus: status,
@@ -266,7 +281,8 @@ export async function getReports(
         ],
       },
     ],
-    order: [[sortBy, sortDir]],
+    limit: limit === 'all' ? null : Number(limit),
+    order,
   });
 }
 
