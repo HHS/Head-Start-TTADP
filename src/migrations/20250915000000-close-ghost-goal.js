@@ -11,7 +11,6 @@ module.exports = {
         -- 1: Make sure it's the correct ghost goal
         -- 2: Complete any In Progress Objectives on that Goal
         -- 3: actually close the ghost goal
-        --    "true", but all future records "false" by default.
         ----------------------------------------------------------------------
 
         -- Just here for validation convenience
