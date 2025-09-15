@@ -5,6 +5,16 @@ import {
 } from './index';
 
 const collabReportUrl = '/api/collaboration-reports';
+
+const getSortConfigParams = (sortConfig) => {
+  const params = new URLSearchParams();
+  params.append('sortDir', sortConfig.direction);
+  params.append('sortBy', sortConfig.sortBy);
+  params.append('activePage', sortConfig.activePage);
+  params.append('limit', sortConfig.perPage || 10);
+  params.append('offset', sortConfig.offset);
+  return params;
+};
 export const createReport = async (data) => {
   const report = await post(collabReportUrl, data);
   return report.json();
@@ -20,22 +30,16 @@ export const getReport = async (reportId) => {
 };
 
 export const getReports = async (sortConfig) => {
-  const params = new URLSearchParams();
-  params.append('sortDir', sortConfig.direction);
-  params.append('sortBy', sortConfig.sortBy);
-  params.append('activePage', sortConfig.activePage);
-  params.append('limit', sortConfig.perPage || 10);
-  params.append('offset', sortConfig.offset);
-
+  const params = getSortConfigParams(sortConfig);
   const reports = await get(`${collabReportUrl}?${params.toString()}`);
   const json = await reports.json();
   return json;
 };
 
-export const getAlerts = async () => {
+export const getAlerts = async (sortConfig) => {
+  const params = getSortConfigParams(sortConfig);
   const url = join(collabReportUrl, 'alerts');
-
-  const reports = await get(url);
+  const reports = await get(`${url}?${params.toString()}`);
   const json = await reports.json();
   return json;
 };
