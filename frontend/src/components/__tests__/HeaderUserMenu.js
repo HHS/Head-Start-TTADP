@@ -124,7 +124,7 @@ describe('HeaderUserMenu', () => {
         expect(logoutLink).toHaveAttribute('href', '/api/logout-oidc');
 
         expect(logoutLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
-        expect(logoutLink).not.toHaveAttribute('data-router-link'); // if applicable
+        expect(logoutLink).not.toHaveAttribute('data-router-link');
       });
     });
   });
