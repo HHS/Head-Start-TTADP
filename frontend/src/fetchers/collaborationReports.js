@@ -9,13 +9,21 @@ import { blobToCsvDownload } from '../utils';
 
 const collabReportUrl = '/api/collaboration-reports';
 
+const SORT_PARAMS_CONFIG = {
+  sortDir: 'direction',
+  sortBy: 'sortBy',
+  activePage: 'activePage',
+  offset: 'offset',
+  limit: 'perPage',
+};
+
 const getSortConfigParams = (sortConfig) => {
   const params = new URLSearchParams();
-  params.append('sortDir', sortConfig.direction);
-  params.append('sortBy', sortConfig.sortBy);
-  params.append('activePage', sortConfig.activePage);
-  params.append('limit', sortConfig.perPage || 10);
-  params.append('offset', sortConfig.offset);
+  Object.entries(SORT_PARAMS_CONFIG).forEach(([paramName, configLocation]) => {
+    if (sortConfig[configLocation]) {
+      params.append(paramName, sortConfig[configLocation]);
+    }
+  });
   return params;
 };
 

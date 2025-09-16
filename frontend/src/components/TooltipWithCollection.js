@@ -31,13 +31,13 @@ export default function TooltipWithCollection({ collection, collectionTitle, pos
 
   if (collection.length === 1) {
     return (
-      <TextTrim text={tooltip} />
+      <TextTrim text={collection[0]} />
     );
   }
 
   return (
     <Tooltip
-      displayText={tags[0]}
+      displayText={tags}
       tooltipText={tooltip}
       buttonLabel={`click to visually reveal the ${collectionTitle}`}
       position={position}

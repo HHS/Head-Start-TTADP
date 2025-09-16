@@ -10,7 +10,7 @@ describe('CollaboratorReports Fetcher', () => {
       const mockResponse = { rows: [{ id: 1, name: 'Report 1' }] };
       fetchMock.get(join('/api/collaboration-reports'), mockResponse);
 
-      const reports = await getReports();
+      const reports = await getReports({});
 
       expect(fetchMock.called()).toBeTruthy();
       expect(reports).toEqual(mockResponse);
