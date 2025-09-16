@@ -52,16 +52,32 @@ const mockGoalHistory = [
             activityReport: { id: 101, displayId: 'R-101' },
             topics: [{ id: 1, name: 'Topic A' }, { id: 2, name: 'Topic B' }],
             resources: [{ id: 1, url: 'http://example.com/resource1', title: 'Resource 1' }],
+            files: [
+              { id: 201, originalFileName: 'report101-file1.pdf' },
+              { id: 202, originalFileName: 'report101-file2.docx' },
+            ],
+            activityReportObjectiveCourses: [
+              { course: { id: 301, name: 'Early Childhood Development Course' } },
+            ],
           },
           {
             activityReport: { id: 102, displayId: 'R-102' },
             topics: [{ id: 2, name: 'Topic B' }, { id: 3, name: 'Topic C' }],
             resources: [{ id: 2, url: 'http://example.com/resource2' }],
+            files: [
+              { id: 203, originalFileName: 'report102-file1.xlsx' },
+            ],
+            activityReportObjectiveCourses: [
+              { course: { id: 302, name: 'Classroom Management' } },
+              { course: { id: 303, name: 'Family Engagement Strategies' } },
+            ],
           },
           {
             activityReport: null,
             topics: [],
             resources: [],
+            files: [],
+            activityReportObjectiveCourses: [],
           },
         ],
       },
@@ -381,18 +397,42 @@ describe('ViewGoalDetails', () => {
 
     expect(topicsValue).toHaveTextContent('Topic A, Topic B, Topic C'); // check unique, comma-separated
 
-    // Resources
+    // Resources section contains all three types: courses, resource links, and files
     // Resources are handled differently in the component - they use a separate p and ul structure
     const resourcesLabel = within(objective1).getByText('Resources');
-    // Since resources use a different structure (not ReadOnlyField), we can use nextElementSibling
-    const resourceList = resourcesLabel.nextElementSibling;
-    // Verify we found the right element
-    expect(resourceList.tagName).toBe('UL');
 
-    const resourceLink1 = within(resourceList).getByRole('link', { name: 'Resource 1' });
-    const resourceLink2 = within(resourceList).getByRole('link', { name: 'http://example.com/resource2' });
+    // Get the resource sections container
+    const resourcesContainer = resourcesLabel.nextElementSibling;
+    // Verify we found the right element
+    expect(resourcesContainer.tagName).toBe('DIV');
+    expect(resourcesContainer).toHaveClass('resource-sections-container');
+
+    // Check courses
+    const coursesList = within(resourcesContainer).getAllByRole('list');
+    expect(coursesList.length).toBeGreaterThanOrEqual(1);
+
+    const courses = within(resourcesContainer).getAllByText((content, element) => (
+      ['Early Childhood Development Course', 'Classroom Management', 'Family Engagement Strategies'].includes(content)
+      && element.tagName.toLowerCase() === 'li'
+    ));
+    expect(courses).toHaveLength(3);
+    expect(courses[0]).toHaveTextContent('Early Childhood Development Course');
+
+    // Check resource links
+    const resourceLink1 = within(resourcesContainer).getByRole('link', { name: 'Resource 1' });
+    const resourceLink2 = within(resourcesContainer).getByRole('link', { name: 'http://example.com/resource2' });
     expect(resourceLink1).toHaveAttribute('href', 'http://example.com/resource1');
     expect(resourceLink2).toHaveAttribute('href', 'http://example.com/resource2');
+
+    // Check files
+    const files = within(resourcesContainer).getAllByText((content, element) => (
+      ['report101-file1.pdf', 'report101-file2.docx', 'report102-file1.xlsx'].includes(content)
+      && element.tagName.toLowerCase() === 'li'
+    ));
+    expect(files).toHaveLength(3);
+    expect(files[0]).toHaveTextContent('report101-file1.pdf');
+    expect(files[1]).toHaveTextContent('report101-file2.docx');
+    expect(files[2]).toHaveTextContent('report102-file1.xlsx');
   });
 
   test('renders root causes', async () => {
@@ -517,5 +557,201 @@ describe('ViewGoalDetails', () => {
     // Followed by the existing updates in ascending order
     expect(updates[1]).toHaveTextContent(`Started on ${formatDate('2025-02-03T00:00:00.000Z')} by Jane Doe`);
     expect(updates[2]).toHaveTextContent(`Completed on ${formatDate('2025-02-10T00:00:00.000Z')} by Another PS`);
+  });
+
+  test('hides resource section when no courses, links, or files exist', async () => {
+    // Create a goal with an objective that has no resources
+    const goalWithEmptyResources = {
+      id: 8,
+      name: 'Goal with no resources',
+      status: 'In Progress',
+      createdAt: '2025-03-01T00:00:00.000Z',
+      goalTemplate: null,
+      grant: null,
+      objectives: [
+        {
+          id: 801,
+          title: 'Objective with no resources',
+          status: 'In Progress',
+          activityReportObjectives: [
+            {
+              activityReport: { id: 801, displayId: 'R-801' },
+              topics: [{ id: 801, name: 'Topic X' }],
+              resources: [], // Empty resources
+              files: [], // Empty files
+              activityReportObjectiveCourses: [], // Empty courses
+            },
+          ],
+        },
+      ],
+      statusChanges: [],
+      goalCollaborators: [],
+      responses: null,
+    };
+
+    fetchMock.get('/api/goals/8/history', [goalWithEmptyResources]);
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, '?goalId=8');
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-8 \| In Progress/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    const objective = within(accordionContent).getByText('Objective with no resources').closest('div.margin-bottom-3');
+
+    // The 'Resources' heading should not be present
+    expect(within(objective).queryByText('Resources')).not.toBeInTheDocument();
+  });
+
+  test('shows resource section when only courses exist', async () => {
+    // Create a goal with an objective that has only courses
+    const goalWithOnlyCourses = {
+      id: 9,
+      name: 'Goal with only courses',
+      status: 'In Progress',
+      createdAt: '2025-03-01T00:00:00.000Z',
+      goalTemplate: null,
+      grant: null,
+      objectives: [
+        {
+          id: 901,
+          title: 'Objective with only courses',
+          status: 'In Progress',
+          activityReportObjectives: [
+            {
+              activityReport: { id: 901, displayId: 'R-901' },
+              topics: [{ id: 901, name: 'Topic Y' }],
+              resources: [], // Empty resources
+              files: [], // Empty files
+              activityReportObjectiveCourses: [
+                { course: { id: 901, name: 'Course Only Test' } },
+              ],
+            },
+          ],
+        },
+      ],
+      statusChanges: [],
+      goalCollaborators: [],
+      responses: null,
+    };
+
+    fetchMock.get('/api/goals/9/history', [goalWithOnlyCourses]);
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, '?goalId=9');
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-9 \| In Progress/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    const objective = within(accordionContent).getByText('Objective with only courses').closest('div.margin-bottom-3');
+
+    // The 'Resources' heading should be present
+    expect(within(objective).getByText('Resources')).toBeInTheDocument();
+
+    // And the course should be visible
+    const resourceContainer = within(objective).getByText('Resources').nextElementSibling;
+    expect(resourceContainer).toHaveClass('resource-sections-container');
+    expect(within(resourceContainer).getByText('Course Only Test')).toBeInTheDocument();
+  });
+
+  test('shows resource section when only resource links exist', async () => {
+    // Create a goal with an objective that has only resource links
+    const goalWithOnlyLinks = {
+      id: 10,
+      name: 'Goal with only links',
+      status: 'In Progress',
+      createdAt: '2025-03-01T00:00:00.000Z',
+      goalTemplate: null,
+      grant: null,
+      objectives: [
+        {
+          id: 1001,
+          title: 'Objective with only links',
+          status: 'In Progress',
+          activityReportObjectives: [
+            {
+              activityReport: { id: 1001, displayId: 'R-1001' },
+              topics: [{ id: 1001, name: 'Topic Z' }],
+              resources: [{ id: 1001, url: 'http://example.com/resource-only', title: 'Resource Only Test' }],
+              files: [], // Empty files
+              activityReportObjectiveCourses: [], // Empty courses
+            },
+          ],
+        },
+      ],
+      statusChanges: [],
+      goalCollaborators: [],
+      responses: null,
+    };
+
+    fetchMock.get('/api/goals/10/history', [goalWithOnlyLinks]);
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, '?goalId=10');
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-10 \| In Progress/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    const objective = within(accordionContent).getByText('Objective with only links').closest('div.margin-bottom-3');
+
+    // The 'Resources' heading should be present
+    expect(within(objective).getByText('Resources')).toBeInTheDocument();
+
+    // And the resource link should be visible
+    const resourceContainer = within(objective).getByText('Resources').nextElementSibling;
+    const resourceLink = within(resourceContainer).getByRole('link', { name: 'Resource Only Test' });
+    expect(resourceLink).toHaveAttribute('href', 'http://example.com/resource-only');
+  });
+
+  test('shows resource section when only files exist', async () => {
+    // Create a goal with an objective that has only files
+    const goalWithOnlyFiles = {
+      id: 11,
+      name: 'Goal with only files',
+      status: 'In Progress',
+      createdAt: '2025-03-01T00:00:00.000Z',
+      goalTemplate: null,
+      grant: null,
+      objectives: [
+        {
+          id: 1101,
+          title: 'Objective with only files',
+          status: 'In Progress',
+          activityReportObjectives: [
+            {
+              activityReport: { id: 1101, displayId: 'R-1101' },
+              topics: [{ id: 1101, name: 'Topic W' }],
+              resources: [], // Empty resources
+              files: [{ id: 1101, originalFileName: 'files-only-test.pdf' }], // Only files
+              activityReportObjectiveCourses: [], // Empty courses
+            },
+          ],
+        },
+      ],
+      statusChanges: [],
+      goalCollaborators: [],
+      responses: null,
+    };
+
+    fetchMock.get('/api/goals/11/history', [goalWithOnlyFiles]);
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, '?goalId=11');
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-11 \| In Progress/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    const objective = within(accordionContent).getByText('Objective with only files').closest('div.margin-bottom-3');
+
+    // The 'Resources' heading should be present
+    expect(within(objective).getByText('Resources')).toBeInTheDocument();
+
+    // And the file should be visible
+    const resourceContainer = within(objective).getByText('Resources').nextElementSibling;
+    expect(within(resourceContainer).getByText('files-only-test.pdf')).toBeInTheDocument();
   });
 });
