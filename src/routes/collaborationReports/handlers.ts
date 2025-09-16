@@ -118,7 +118,6 @@ async function sendCollabReportCSV(reports, res) {
     columns: [],
   };
 
-  // if we have some rows, we need to extract a list of goals and objectives and format the columns
   if (csvRows.length > 0) {
     options = {
       ...options,
