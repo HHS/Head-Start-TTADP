@@ -55,7 +55,7 @@ export const CollabReportsLanding = () => {
           </NewReportButton>
         </div>
       </div>
-      <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
+      <CollabReports title="My Collaboration Reports" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
     </div>
   );

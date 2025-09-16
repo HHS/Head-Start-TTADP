@@ -23,25 +23,32 @@ const CollabReportAlertsTable = ({
 }) => {
   const tabularData = useMemo(() => data.rows.map((r) => ({
     heading: <Link to={r.link}>{r.displayId}</Link>,
+    id: r.id,
     data: [
       {
+        title: 'Activity name',
         value: r.name,
         tooltip: r.name,
       },
       {
+        title: 'Date started',
         value: r.startDate,
       },
       {
+        title: 'Creator',
         value: r.author.fullName,
         tooltip: r.author.fullName,
       },
       {
+        title: 'Created date',
         value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
       },
       {
+        title: 'Collaborators',
         value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
       },
       {
+        title: 'Approvers',
         value: <ApproverTableDisplay approvers={r.approvers} />,
       },
       {
