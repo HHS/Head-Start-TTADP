@@ -43,7 +43,10 @@ const updateReportStatus = async (sequelize, instance) => {
       id: instance.collabReportId,
       submissionStatus: REPORT_STATUSES.SUBMITTED,
     },
-  });
+  }) as {
+    calculatedStatus: string,
+    submissionStatus: string
+  } | null;
 
   // we only update any of the report status fields if the report is submitted
   if (!report) {
@@ -56,7 +59,8 @@ const updateReportStatus = async (sequelize, instance) => {
   const foundApproverStatuses = await sequelize.models.CollabReportApprover.findAll({
     attributes: ['status'],
     where: { collabReportId: instance.collabReportId },
-  });
+  }) as { status: string }[];
+
   const approverStatuses = foundApproverStatuses.map((a) => a.status);
 
   const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
@@ -71,11 +75,9 @@ const updateReportStatus = async (sequelize, instance) => {
     });
   }
 
-  const updatedFields = {
+  await sequelize.models.CollabReport.update({
     calculatedStatus: newCalculatedStatus,
-  };
-
-  await sequelize.models.CollabReport.update(updatedFields, {
+  }, {
     where: { id: instance.collabReportId },
     individualHooks: true,
   });
