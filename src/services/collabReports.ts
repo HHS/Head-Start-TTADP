@@ -28,7 +28,7 @@ const {
 
 const REPORTS_PER_PAGE = 10;
 
-const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') => {
+export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') => {
   const SORT_KEY = {
     Activity_name: 'name',
     Report_ID: 'id',
@@ -42,7 +42,7 @@ const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') => {
   return [[SORT_KEY[sortBy] || 'updatedAt', sortDir]];
 };
 
-const scopes = async (filters, userId, status) => {
+export const collabReportScopes = async (filters, userId, status) => {
   const { collabReport: customScopes } = await filtersToScopes(filters);
   const standardScopes = {
     calculatedStatus: status,
@@ -226,7 +226,7 @@ export async function getCSVReports(
   const {
     standardScopes,
     customScopes,
-  } = await scopes(filters, userId, status);
+  } = await collabReportScopes(filters, userId, status);
 
   return CollabReport.findAll({
     attributes: {
@@ -333,7 +333,7 @@ export async function getReports(
   const {
     standardScopes,
     customScopes,
-  } = await scopes(filters, userId, status);
+  } = await collabReportScopes(filters, userId, status);
 
   return CollabReport.findAndCountAll({
     attributes: [
