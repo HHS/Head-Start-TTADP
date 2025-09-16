@@ -383,7 +383,7 @@ describe('Goals and Objectives', () => {
 
     act(() => userEvent.click(statusMenuToggle));
     act(() => userEvent.click(screen.getByRole('button', { name: /Closed/i })));
-    act(() => userEvent.click(screen.getByRole('radio', { name: /duplicate/i })));
+    act(() => userEvent.click(screen.getByRole('radio', { name: /tta/i })));
 
     const submit = await screen.findByRole('button', { name: /change goal status/i });
 
