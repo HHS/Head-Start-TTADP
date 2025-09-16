@@ -106,7 +106,7 @@ export default (sequelize, DataTypes) => {
       },
       duration: {
         allowNull: false,
-        type: DataTypes.SMALLINT,
+        type: DataTypes.DOUBLE,
         validate: {
           min: 0,
         },
@@ -137,6 +137,9 @@ export default (sequelize, DataTypes) => {
       displayId: {
         type: DataTypes.VIRTUAL,
         get() {
+          if (!this.regionId) {
+            return this.id;
+          }
           return `R${this.regionId.toString().padStart(2, '0')}-CR-${this.id}`;
         },
       },
