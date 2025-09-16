@@ -2,9 +2,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import CollabReportsTable from '../components/CollabReportsTable';
+import CollabReportAlertsTable from '../components/CollabReportAlertsTable';
 
-describe('CollabReportsTable', () => {
+describe('CollabReportAlertsTable', () => {
   const defaultProps = {
     data: { rows: [], count: 0 },
     title: 'Collaboration Reports',
@@ -13,17 +13,17 @@ describe('CollabReportsTable', () => {
   };
 
   it('renders the title', () => {
-    render(<CollabReportsTable {...defaultProps} />);
+    render(<CollabReportAlertsTable {...defaultProps} />);
     expect(screen.getByText('Collaboration Reports')).toBeInTheDocument();
   });
 
   it('renders empty message when no reports', () => {
-    render(<CollabReportsTable {...defaultProps} emptyMsg="No reports available" />);
+    render(<CollabReportAlertsTable {...defaultProps} emptyMsg="No reports available" />);
     expect(screen.getByText('No reports available')).toBeInTheDocument();
   });
 
   it('renders create message when showCreateMsgOnEmpty is true', () => {
-    render(<CollabReportsTable {...defaultProps} showCreateMsgOnEmpty />);
+    render(<CollabReportAlertsTable {...defaultProps} showCreateMsgOnEmpty />);
     expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
     expect(screen.getByText(/Document your work connecting Head Start programs/)).toBeInTheDocument();
     expect(screen.getByText(/To get started, click the "New Collaboration Report" button./)).toBeInTheDocument();
@@ -57,12 +57,12 @@ describe('CollabReportsTable', () => {
       ],
       count: 2,
     };
-    render(<MemoryRouter><CollabReportsTable {...defaultProps} data={data} /></MemoryRouter>);
+    render(<MemoryRouter><CollabReportAlertsTable {...defaultProps} data={data} /></MemoryRouter>);
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
   it('shows loading state when loading is true', () => {
-    render(<CollabReportsTable {...defaultProps} loading />);
+    render(<CollabReportAlertsTable {...defaultProps} loading />);
     expect(screen.getByLabelText('Collaboration reports table loading')).toBeInTheDocument();
   });
 });
