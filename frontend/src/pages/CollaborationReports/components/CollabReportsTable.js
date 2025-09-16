@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
-import { DATE_DISPLAY_FORMAT, NOOP } from '../../../Constants';
+import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import './CollabReportsTable.css';
-import { getReportsCSV } from '../../../fetchers/collaborationReports';
+import { getReportsCSV, getReportsCSVById } from '../../../fetchers/collaborationReports';
 
 const ALL = 2;
 
@@ -22,18 +22,34 @@ const CollabReportsTable = ({
   sortConfig,
   setSortConfig,
 }) => {
-  const [reportCheckboxes, setReportCheckboxes] = useState([]);
+  const [reportCheckboxes, setReportCheckboxes] = useState({});
 
-  const menuItems = useMemo(() => [
-    {
-      label: 'Export selected',
-      onClick: NOOP,
-    },
+  const selectedReports = useMemo(() => {
+    const ids = [];
+    Object.entries(reportCheckboxes).forEach(([key, value]) => {
+      if (value) {
+        ids.push(key);
+      }
+    });
+
+    return ids;
+  }, [reportCheckboxes]);
+
+  const menuItems = [
     {
       label: 'Export all',
       onClick: async () => getReportsCSV(sortConfig),
     },
-  ], [sortConfig]);
+  ];
+
+  if (selectedReports.length) {
+    menuItems.push(
+      {
+        label: 'Export selected',
+        onClick: async () => getReportsCSVById(selectedReports, sortConfig),
+      },
+    );
+  }
 
   const handlePageChange = useCallback((e) => {
     let newValue = Number(e.target.value);
@@ -48,26 +64,33 @@ const CollabReportsTable = ({
   }, [setSortConfig]);
 
   const tabularData = useMemo(() => data.rows.map((r) => ({
+    id: r.id,
     heading: <Link to={r.link}>{r.displayId}</Link>,
     data: [
       {
+        title: 'Activity name',
         tooltip: r.name,
         value: r.name,
       },
       {
+        title: 'Date started',
         value: r.startDate,
       },
       {
+        title: 'Creator',
         value: r.author.fullName,
         tooltip: r.author.fullName,
       },
       {
+        title: 'Created date',
         value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
       },
       {
+        title: 'Collaborators',
         value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
       },
       {
+        title: 'Last saved',
         value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
       },
     ],
