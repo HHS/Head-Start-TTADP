@@ -169,17 +169,17 @@ describe('Close Suspend Goal Reason', () => {
     const button = await screen.findByText('Open');
     userEvent.click(button);
 
-    const secondRadio = await screen.findByRole('radio', { name: /recipient request/i, hidden: true });
-    const thirdRadio = await screen.findByRole('radio', { name: /tta complete/i, hidden: true });
+    const firstRadio = await screen.findByRole('radio', { name: /recipient request/i, hidden: true });
+    const secondRadio = await screen.findByRole('radio', { name: /tta complete/i, hidden: true });
 
     // No radio buttons selected by default.
+    expect(firstRadio.checked).toBe(false);
     expect(secondRadio.checked).toBe(false);
-    expect(thirdRadio.checked).toBe(false);
 
     // Select third radio button.
-    userEvent.click(thirdRadio);
+    userEvent.click(secondRadio);
 
     // Verify first radio is no longer checked and third radio is checked.
-    expect(thirdRadio.checked).toBe(true);
+    expect(secondRadio.checked).toBe(true);
   });
 });
