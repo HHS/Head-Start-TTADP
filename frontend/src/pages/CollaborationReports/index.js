@@ -1,13 +1,12 @@
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
 import { showFilterWithMyRegions } from '../regionHelpers';
-
 import UserContext from '../../UserContext';
 import CollabReports from './components/CollabReports';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import useFilters from '../../hooks/useFilters';
 import './index.scss';
+import NewReportButton from '../../components/NewReportButton';
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -49,13 +48,11 @@ export const CollabReportsLanding = () => {
           {`Collaboration reports - ${regionLabel}`}
         </h1>
         <div className="margin-top-1">
-          <Link
+          <NewReportButton
             to="/collaboration-reports/new/activity-summary"
-            className="usa-button smart-hub--new-report-btn"
           >
-            <span className="smart-hub--plus">+</span>
-            <span className="smart-hub--new-report">New Collaboration Report</span>
-          </Link>
+            New Collaboration Report
+          </NewReportButton>
         </div>
       </div>
       <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />

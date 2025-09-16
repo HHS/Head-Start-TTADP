@@ -8,9 +8,9 @@ import moment from 'moment';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
-import NewReport from './NewReport';
-import './index.scss';
-import { ALERTS_PER_PAGE } from '../../Constants';
+import {
+  ALERTS_PER_PAGE,
+} from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
@@ -19,6 +19,8 @@ import { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 import UserContext from '../../UserContext';
 import ApproverTableDisplay from '../../components/ApproverTableDisplay';
 import { getStatusDisplayAndClassnames } from '../../utils';
+import NewActivityReportButton from '../../components/NewActivityReportButton';
+import './index.scss';
 
 const isCollaborator = (report, user) => {
   if (!report.activityReportCollaborators) return false;
@@ -172,7 +174,7 @@ ReportRow.propTypes = {
   updateIdToDelete: PropTypes.func.isRequired,
   modalRef: PropTypes.oneOfType([
     PropTypes.func,
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+    PropTypes.shape({ current: PropTypes.any }),
   ]).isRequired,
 };
 
@@ -195,6 +197,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
 
   const tableRows = reports.map((report, index, { length }) => (
     <ReportRow
+      key={report.id}
       report={report}
       message={message}
       index={index}
@@ -331,7 +334,11 @@ function MyAlerts(props) {
                 Would you like to begin a new activity report?
               </p>
             )}
-            {newBtn && <NewReport />}
+            {newBtn && (
+              <div className="display-flex flex-justify-center">
+                <NewActivityReportButton />
+              </div>
+            )}
           </div>
         </Container>
       )}
