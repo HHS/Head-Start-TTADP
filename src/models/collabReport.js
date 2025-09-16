@@ -156,6 +156,20 @@ export default (sequelize, DataTypes) => {
           return this.steps.map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`).join('\n');
         },
       },
+      purpose: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.reportReasons) return null;
+          return this.reportReasons.map((r) => r.reasonId).join('/n');
+        },
+      },
+      method: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.conductMethod) return null;
+          return this.conductMethod.join('\n');
+        },
+      },
     },
     {
       hooks: {

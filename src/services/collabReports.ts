@@ -21,8 +21,8 @@ const {
   CollabReportApprover,
   CollabReportSpecialist,
   CollabReportStep,
+  CollabReportReason,
   User,
-  Region,
   Role,
 } = db;
 
@@ -37,6 +37,8 @@ export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') =>
     Last_saved: 'updatedAt',
     Creator: sequelize.literal('"_1"'),
     Collaborators: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'),
+    Status: 'calculatedStatus',
+    Approvers: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportApprovers" INNER JOIN "Users" ON "Users"."id" = "CollabReportApprovers"."userId" WHERE "CollabReportApprovers"."collabReportId" = "CollabReport"."id" AND "CollabReportApprovers"."deletedAt" IS NULL)'),
   };
 
   return [[SORT_KEY[sortBy] || 'updatedAt', sortDir]];
@@ -304,6 +306,10 @@ export async function getCSVReports(
           'collabStepCompleteDate',
           'collabStepDetail',
         ],
+      },
+      {
+        model: CollabReportReason,
+        as: 'reportReasons',
       },
     ],
     limit: limit === 'all' ? null : Number(limit),
