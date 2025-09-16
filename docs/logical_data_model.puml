@@ -290,7 +290,7 @@ class CollabReports{
  * conductMethod : enum[]
  * createdAt : timestamp with time zone
  * description : text
-!issue='column type does not match model: double precision != smallint' * duration : <color:#d54309>double precision</color>
+ * duration : double precision
  * endDate : date
  * isStateActivity : boolean : false
  * name : varchar(255)
