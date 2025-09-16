@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
 import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
@@ -17,17 +17,13 @@ export default function ObjectiveStatus({
   inputName,
   closeSuspendContext,
   closeSuspendReason,
+  currentStatus,
 }) {
-  const [availableStatuses, setAvailableStatuses] = useState(statuses);
+  const inProgressStatuses = ['In Progress', 'Suspended', 'Complete'];
 
-  // Only filter statuses once on initial render
-  useEffect(() => {
-    // Filter out 'Not Started' if status is already In Progress, Suspended, or Complete
-    if (['In Progress', 'Suspended', 'Complete'].includes(status)) {
-      setAvailableStatuses(statuses.filter((s) => s !== 'Not Started'));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only once on mount
+  const availableStatuses = currentStatus && inProgressStatuses.includes(currentStatus)
+    ? statuses.filter((s) => s !== 'Not Started')
+    : statuses;
 
   return (
     <>
@@ -66,6 +62,7 @@ ObjectiveStatus.propTypes = {
   onBlur: PropTypes.func.isRequired,
   closeSuspendReason: PropTypes.string.isRequired,
   closeSuspendContext: PropTypes.string.isRequired,
+  currentStatus: PropTypes.string.isRequired,
 };
 
 ObjectiveStatus.defaultProps = {
