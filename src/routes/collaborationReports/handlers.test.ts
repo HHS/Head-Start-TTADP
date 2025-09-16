@@ -1372,9 +1372,9 @@ describe('Collaboration Reports Handlers', () => {
 
       // Verify CSV content structure
       const csvCall = mockSend.mock.calls[0][0];
-      expect(csvCall).toContain('"Report ID","Activity name","Description"');
-      expect(csvCall).toContain('"R01-CR-001","Report 1","Description 1"');
-      expect(csvCall).toContain('"R01-CR-002","Report 2","Description 2"');
+      expect(csvCall).toContain('"Report ID","Activity name","Start date","End date","Duration","Purpose","Is state activity","Method","Description","Next steps","Created date","Last updated date"');
+      expect(csvCall).toContain('"R01-CR-001","Report 1"');
+      expect(csvCall).toContain('"R01-CR-002","Report 2"');
     });
 
     it('should generate empty CSV when no reports exist', async () => {
@@ -1406,8 +1406,8 @@ describe('Collaboration Reports Handlers', () => {
       expect(mockSend).toHaveBeenCalled();
 
       const csvCall = mockSend.mock.calls[0][0];
-      expect(csvCall).toContain('"Report ID","Activity name","Description"');
-      expect(csvCall).toContain('"R01-CR-001","Single Report","Single Description"');
+      expect(csvCall).toContain('"Report ID","Activity name","Start date","End date","Duration","Purpose","Is state activity","Method","Description","Next steps","Created date","Last updated date"');
+      expect(csvCall).toContain('"R01-CR-001","Single Report"');
     });
 
     it('should handle reports with special characters in CSV', async () => {
@@ -1487,7 +1487,7 @@ describe('Collaboration Reports Handlers', () => {
 
       // Should have header and data lines
       expect(lines.length).toBeGreaterThanOrEqual(2);
-      expect(lines[0]).toBe('"Report ID","Activity name","Description"');
+      expect(lines[0]).toBe('"Report ID","Activity name","Start date","End date","Duration","Purpose","Is state activity","Method","Description","Next steps","Created date","Last updated date"');
       expect(lines[1]).toContain('"R01-CR-001"');
       expect(lines[1]).toContain('"Test Report"');
       expect(lines[1]).toContain('"Test Description"');
