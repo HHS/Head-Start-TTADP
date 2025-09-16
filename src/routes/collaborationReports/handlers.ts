@@ -131,8 +131,44 @@ export async function sendCollabReportCSV(reports, res) {
           header: 'Activity name',
         },
         {
+          key: 'startDate',
+          header: 'Start date',
+        },
+        {
+          key: 'endDate',
+          header: 'End date',
+        },
+        {
+          key: 'duration',
+          header: 'Duration',
+        },
+        {
+          key: 'purpose',
+          header: 'Purpose',
+        },
+        {
+          key: 'isStateActivity',
+          header: 'Is state activity',
+        },
+        {
+          key: 'method',
+          header: 'Method',
+        },
+        {
           key: 'description',
           header: 'Description',
+        },
+        {
+          key: 'steps',
+          header: 'Next steps',
+        },
+        {
+          key: 'createdAt',
+          header: 'Created date',
+        },
+        {
+          key: 'updatedAt',
+          header: 'Last updated date',
         },
       ],
     };
