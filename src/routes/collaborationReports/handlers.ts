@@ -205,36 +205,8 @@ export async function saveReport(req: Request, res: Response) {
       ...existingReport, ...newReport,
     }, existingReport);
 
-    // Determine if notifications need to be sent out to collaborators
-    if (savedReport.collabReportCollaborators) {
-      // Only include new collaborators
-      const oldCollaborators = existingReport.collabReportCollaborators.map((o) => o.user.email);
-      // eslint-disable-next-line max-len
-      const newCollaborators = savedReport.collabReportCollaborators.filter((c) => !oldCollaborators.includes(c.user.email));
-
-      // Get all of the user setting overrides for each new collaborator,
-      // will filter them in the next step
-      const settingsForAllCollabs = await Promise.all(
-        newCollaborators.map((c) => userSettingOverridesById(
-          c.userId,
-          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
-        )),
-      );
-
-      // Filter so that we get just collabs who want a notification
-      const newCollaboratorsToNotify = newCollaborators.filter((_value, index) => {
-        // Check to make sure there's a setting for this collaborator
-        if (!settingsForAllCollabs[index]) {
-          return false;
-        }
-
-        // Return whether or not to email this collaborator
-        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
-      });
-
-      // Finally, notify the appropriate collaborators
-      collaboratorAssignedNotification(savedReport, newCollaboratorsToNotify);
-    }
+    res.json(savedReport);
+    return;
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -275,7 +247,7 @@ export async function softDeleteReport(req: Request, res: Response) {
 
 export async function submitReport(req: Request, res: Response) {
   try {
-    // Chek report existence
+    // Check report existence
     const userId = await currentUserId(req, res);
     const { collabReportId } = req.params;
     const existingReport = await collabReportById(collabReportId);
@@ -372,8 +344,8 @@ export async function createReport(req: Request, res: Response) {
       return;
     }
     const report = await createOrUpdateReport(newReport, null);
-    if (report.collabReportCollaborators) {
-      const collabs = report.collabReportCollaborators;
+    if (report.collabReportSpecialists) {
+      const collabs = report.collabReportSpecialists;
 
       const settingsForAllCollabs = await Promise.all(collabs.map(
         (c) => userSettingOverridesById(

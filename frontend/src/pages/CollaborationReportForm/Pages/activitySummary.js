@@ -39,12 +39,12 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
-    // getValues,
+    getValues,
     // clearErrors,
   } = useFormContext();
 
-  const regionalOrState = watch('regionalOrState');
-  const showStates = regionalOrState === 'state';
+  const isStateActivity = watch('isStateActivity');
+  const showStates = isStateActivity === 'state';
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -55,7 +55,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const deliveryMethodOptions = [
     { label: 'Email', value: 'email' },
     { label: 'Phone', value: 'phone' },
-    { label: 'In person', value: 'inPerson' },
+    { label: 'In person', value: 'in_person' },
     { label: 'Virtual', value: 'virtual' },
   ];
 
@@ -95,6 +95,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
               control={control}
               required={false}
               simple={false}
+              labelProperty="name"
+              valueProperty="value"
               placeholderText={placeholderText}
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
@@ -103,6 +105,16 @@ const ActivitySummary = ({ collaborators = [] }) => {
               }))}
             />
           </FormItem>
+          <button
+            type="button"
+            className="usa-button usa-button--unstyled text-no-underline"
+            onClick={() => {
+              const values = getValues();
+              console.log('values:', values);
+            }}
+          >
+            Get Values
+          </button>
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">
@@ -250,6 +262,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             name="activityReasons"
             value="participate"
             label="Participate in national, regional, state, and local work groups and meetings"
+            inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
@@ -257,6 +270,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             name="activityReasons"
             value="support"
             label="Support partnerships, coordination, and collaboration with state/regional partners"
+            inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
@@ -264,6 +278,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             name="activityReasons"
             value="aggregate"
             label="Aggregate, analyze, and/or present regional data"
+            inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
@@ -271,19 +286,20 @@ const ActivitySummary = ({ collaborators = [] }) => {
             name="activityReasons"
             value="develop"
             label="Develop and provide presentations, training, and resources to RO and/or state/regional partners"
+            inputRef={register({ required: 'Select at least one' })}
           />
         </FormItem>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">
         <FormItem
           label="Was this a regional or state activity?"
-          name="regionalOrState"
+          name="isStateActivity"
           required
         >
           <Radio
             id="regional"
-            name="regionalOrState"
-            value="regional"
+            name="isStateActivity"
+            value="false"
             label="Regional"
             className="smart-hub--report-checkbox"
             inputRef={register({ required: 'Select one' })}
@@ -291,8 +307,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
           <Radio
             id="state"
-            name="regionalOrState"
-            value="state"
+            name="isStateActivity"
+            value="true"
             label="State"
             className="smart-hub--report-checkbox"
             inputRef={register({ required: 'Select one' })}
@@ -454,7 +470,7 @@ export const isPageComplete = (formData, formState) => {
     duration,
 
     // radio values
-    regionalOrState,
+    isStateActivity,
 
     // dates
     startDate,
@@ -479,8 +495,8 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  // Check statesInvolved only if regionalOrState is 'state'
-  if (regionalOrState === 'state' && !statesInvolved.length) {
+  // Check statesInvolved only if isStateActivity is 'state'
+  if (isStateActivity === 'state' && !statesInvolved.length) {
     return false;
   }
 
@@ -500,7 +516,7 @@ export const isPageComplete = (formData, formState) => {
 };
 
 export default {
-  position: 1,
+  position: 0,
   label: 'Activity summary',
   path: 'activity-summary',
   reviewSection: () => <ReviewSection />,
@@ -523,7 +539,6 @@ export default {
       <>
         <ActivitySummary
           collaborators={collaborators}
-
         />
         <Alert />
         <NavigatorButtons

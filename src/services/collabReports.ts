@@ -7,7 +7,7 @@ import { syncCRApprovers } from './collabReportApprovers';
 
 interface ICollabReport {
   id: number;
-  collabReportCollaborators: {
+  collabReportSpecialists: {
     userId: number;
     user: {
       id: number;
@@ -131,10 +131,6 @@ export async function collabReportById(crId: string) {
         as: 'author',
       },
       {
-        model: Region,
-        as: 'region',
-      },
-      {
         required: false,
         model: CollabReportSpecialist,
         separate: true,
@@ -171,15 +167,22 @@ export async function collabReportById(crId: string) {
 export async function createOrUpdateReport(newReport, oldReport): Promise<ICollabReport> {
   let savedReport;
 
+  const {
+    author,
+    collabReportSpecialists,
+    approvers,
+    ...fields
+  } = newReport;
+
   // Determine whether to update or create
   if (oldReport) {
-    savedReport = await update(newReport, oldReport);
+    savedReport = await update(fields, oldReport);
   } else {
     savedReport = await create(newReport);
   }
 
-  // If there are specialists, those need to be saved separately
-  if (newReport.collabReportSpecialists) {
+  // // If there are specialists, those need to be saved separately
+  if (collabReportSpecialists) {
     const { id: reportId } = savedReport;
     const specialists = newReport.collabReportSpecialists.map(
       (c) => c.value,
@@ -188,8 +191,8 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   }
 
   // Sync the approvers, if an empty array they get removed
-  if (newReport.approverUserIds) {
-    await syncCRApprovers(savedReport.id, newReport.approverUserIds);
+  if (approvers) {
+    await syncCRApprovers(savedReport.id, approvers.map(({ userId }) => userId));
   }
 
   // Finally, fetch a new copy of the saved report from the DB
