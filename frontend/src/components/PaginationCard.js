@@ -88,6 +88,7 @@ function PaginationCard({
                 name="perPage"
                 data-testid="perPage"
                 onChange={perPageChange}
+                aria-label="Select per page"
               >
                 <option value="10">10</option>
                 <option value="25">25</option>

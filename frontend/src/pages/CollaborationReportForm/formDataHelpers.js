@@ -45,8 +45,6 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 export const convertReportToFormData = (fetchedReport) => {
-  console.log('fetchedReport:', fetchedReport);
-
   // Convert collaborators into a MultiSelect-friendly format
   let collabReportSpecialists = [];
   if (fetchedReport.collabReportSpecialists) {

@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
+import { uniq } from 'lodash';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
@@ -56,9 +57,9 @@ function ReportRow({
     ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
   ));
 
-  const collaboratorNames = activityReportCollaborators
+  const collaboratorNames = uniq(activityReportCollaborators
     ? activityReportCollaborators.map((collaborator) => (
-      collaborator.fullName)) : [];
+      collaborator.fullName)) : []);
 
   const idKey = `my_alerts_${id}`;
   const idLink = `/activity-reports/${id}`;
