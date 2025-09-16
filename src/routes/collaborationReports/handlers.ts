@@ -107,7 +107,7 @@ export async function getAlerts(req: Request, res: Response) {
   }
 }
 
-async function sendCollabReportCSV(reports, res) {
+export async function sendCollabReportCSV(reports, res) {
   const csvRows = await Promise.all(reports.map((r) => collabReportToCsvRecord(r)));
 
   // base options
