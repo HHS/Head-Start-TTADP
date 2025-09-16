@@ -43,7 +43,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
   } = useFormContext();
 
   const isStateActivity = watch('isStateActivity');
-  const showStates = isStateActivity === 'state';
+  const showStates = isStateActivity === 'true';
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -484,8 +484,8 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  // Check statesInvolved only if isStateActivity is 'state'
-  if (isStateActivity === 'state' && !statesInvolved.length) {
+  // Check statesInvolved only if isStateActivity is 'true'
+  if (isStateActivity === 'true' && !statesInvolved.length) {
     return false;
   }
 

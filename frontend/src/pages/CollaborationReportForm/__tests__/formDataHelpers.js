@@ -324,5 +324,133 @@ describe('formDataHelpers', () => {
         regionId: 1,
       }));
     });
+
+    describe('collabReportSpecialists conversion', () => {
+      it('should convert collabReportSpecialists to MultiSelect format when present', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: [
+            { specialist: { fullName: 'John Doe', id: 123 } },
+            { specialist: { fullName: 'Jane Smith', id: 456 } },
+          ],
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([
+          { name: 'John Doe', value: 123 },
+          { name: 'Jane Smith', value: 456 },
+        ]);
+      });
+
+      it('should set empty array for collabReportSpecialists when not present', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+
+      it('should set empty array for collabReportSpecialists when null', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: null,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+
+      it('should set empty array for collabReportSpecialists when undefined', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: undefined,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+
+      it('should handle empty collabReportSpecialists array', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: [],
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+    });
+
+    describe('isStateActivity conversion', () => {
+      it('should convert isStateActivity true to string "true"', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: true,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe('true');
+      });
+
+      it('should convert isStateActivity false to string "false"', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: false,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe('false');
+      });
+
+      it('should set isStateActivity to null when undefined', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: undefined,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe(null);
+      });
+
+      it('should set isStateActivity to null when null', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: null,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe(null);
+      });
+
+      it('should set isStateActivity to null when not present', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe(null);
+      });
+    });
   });
 });
