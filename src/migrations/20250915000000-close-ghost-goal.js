@@ -64,6 +64,8 @@ module.exports = {
           "updatedAt" = NOW()
         FROM obj_to_complete
         WHERE id = oid
+          AND o.status = 'In Progress'
+          AND o."deletedAt" IS NULL
         ;
 
         -- 3: actually close the ghost goal
