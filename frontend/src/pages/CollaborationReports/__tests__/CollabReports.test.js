@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import CollabReports from '../components/CollabReports';
-import { getReports } from '../../../fetchers/collaborationReports';
+import { getReports, getAlerts } from '../../../fetchers/collaborationReports';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { NOOP } from '../../../Constants';
 
@@ -65,10 +65,21 @@ describe('CollabReports', () => {
     getReports.mockResolvedValue({ count: 0, rows: [] });
 
     renderTest({ showCreateMsgOnEmpty: true });
-    // render(<CollabReports showCreateMsgOnEmpty />);
 
     await waitFor(() => {
       expect(getReports).toHaveBeenCalled();
+      // The empty message should still be present
+      expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
+    });
+  });
+
+  test('Passes isAlerts prop to table', async () => {
+    getAlerts.mockResolvedValue({ count: 0, rows: [] });
+
+    renderTest({ isAlerts: true });
+
+    await waitFor(() => {
+      expect(getAlerts).toHaveBeenCalled();
       // The empty message should still be present
       expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
     });

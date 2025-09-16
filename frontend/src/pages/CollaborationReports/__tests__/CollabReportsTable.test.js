@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import CollabReportsTable from '../components/CollabReportsTable';
 
@@ -61,34 +61,8 @@ describe('CollabReportsTable', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  it.skip('selects all checkboxes when select all is clicked', () => {
-    const reports = [
-      { id: 1, name: 'Report 1', regionId: 1 },
-      { id: 2, name: 'Report 2', regionId: 1 },
-    ];
-    render(<CollabReportsTable {...defaultProps} reports={reports} />);
-    const selectAllCheckbox = screen.getByLabelText('Select or de-select all reports');
-    expect(selectAllCheckbox).not.toBeChecked();
-    fireEvent.click(selectAllCheckbox);
-    expect(selectAllCheckbox).toBeChecked();
-  });
-
   it('shows loading state when loading is true', () => {
     render(<CollabReportsTable {...defaultProps} loading />);
     expect(screen.getByLabelText('Collaboration reports table loading')).toBeInTheDocument();
-  });
-
-  // TODO: re-enable
-  it.skip('resets checkboxes when reports change', () => {
-    const { rerender } = render(
-      <CollabReportsTable {...defaultProps} reports={[{ id: 1 }]} />,
-    );
-    const selectAllCheckbox = screen.getByLabelText('Select or de-select all reports');
-    fireEvent.click(selectAllCheckbox);
-    expect(selectAllCheckbox).toBeChecked();
-
-    // Change reports prop
-    rerender(<CollabReportsTable {...defaultProps} reports={[{ id: 2 }]} />);
-    expect(screen.getByLabelText('Select or de-select all reports')).not.toBeChecked();
   });
 });
