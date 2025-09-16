@@ -54,7 +54,7 @@ export default function ReadOnlyObjective({ objective }) {
         ? (
           <div className="margin-bottom-2">
             <h4 className="margin-0">Resource links</h4>
-            <ul className="usa-list usa-list--unstyled">
+            <ul className="usa-list usa-list--unstyled resource-link-wrapper">
               { objective.resources.map((resource) => (
                 <li key={resource.key}>{resource.value}</li>
               ))}
