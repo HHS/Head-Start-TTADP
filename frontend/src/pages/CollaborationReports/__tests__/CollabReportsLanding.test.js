@@ -102,7 +102,7 @@ describe('CollabReportsLanding', () => {
     const collabReportsComponents = screen.getAllByTestId('collab-reports');
     expect(collabReportsComponents).toHaveLength(2);
 
-    expect(screen.getByText('Collaboration Report Alerts')).toBeInTheDocument();
+    expect(screen.getByText('My Collaboration Reports')).toBeInTheDocument();
     expect(screen.getByText('You have no Collaboration Reports in progress.')).toBeInTheDocument();
 
     expect(screen.getByText('Approved Collaboration Reports')).toBeInTheDocument();

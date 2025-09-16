@@ -39,7 +39,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
-    getValues,
     // clearErrors,
   } = useFormContext();
 
@@ -105,16 +104,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
               }))}
             />
           </FormItem>
-          <button
-            type="button"
-            className="usa-button usa-button--unstyled text-no-underline"
-            onClick={() => {
-              const values = getValues();
-              console.log('values:', values);
-            }}
-          >
-            Get Values
-          </button>
         </div>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">

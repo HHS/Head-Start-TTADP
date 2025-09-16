@@ -37,15 +37,15 @@ const CollabReportsTable = ({
 
   const menuItems = [
     {
-      label: 'Export all',
+      label: 'Export table',
       onClick: async () => getReportsCSV(sortConfig),
     },
   ];
 
   if (selectedReports.length) {
-    menuItems.push(
+    menuItems.unshift(
       {
-        label: 'Export selected',
+        label: 'Export selected rows',
         onClick: async () => getReportsCSVById(selectedReports, sortConfig),
       },
     );
