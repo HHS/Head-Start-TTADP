@@ -119,14 +119,8 @@ test.describe('widgets', () => {
       count: Joi.number().integer().required()
     });
 
-    const reasonsSchema = Joi.object({
-      category: Joi.string().required(),
-      count: Joi.number().integer().required()
-    });
-
     const schema = Joi.object({
-      topics: Joi.array().items(topicSchema).required(),
-      reasons: Joi.array().items(reasonsSchema).required()
+      topics: Joi.array().items(topicSchema).required()
     });
 
     await validateSchema(response, schema, expect);
