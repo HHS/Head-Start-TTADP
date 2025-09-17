@@ -15,7 +15,6 @@ import {
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { USER_SETTINGS } from '../../constants';
@@ -97,7 +96,7 @@ export async function saveReport(req: Request, res: Response) {
 
     // Make sure the current user is authorized to update the report
     const user = await userById(userId);
-    const authorization = new ActivityReport(user, existingReport);
+    const authorization = new CollabReportPolicy(user, existingReport);
     if (!authorization.canUpdate()) {
       res.sendStatus(FORBIDDEN);
       return;

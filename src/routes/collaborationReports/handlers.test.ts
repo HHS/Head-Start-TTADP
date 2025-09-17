@@ -810,7 +810,7 @@ describe('Collaboration Reports Handlers', () => {
       const createdReport = {
         id: '1',
         ...newReport,
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           { userId: 456, user: { email: 'collaborator@example.com' } },
         ],
       };
@@ -869,7 +869,7 @@ describe('Collaboration Reports Handlers', () => {
       const createdReport = {
         id: '1',
         ...newReport,
-        collabReportCollaborators: null,
+        collabReportSpecialists: null,
       };
 
       (CRServices.createOrUpdateReport as jest.Mock).mockResolvedValue(createdReport);
@@ -893,7 +893,7 @@ describe('Collaboration Reports Handlers', () => {
       const createdReport = {
         id: '1',
         ...newReport,
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           { userId: 456, user: { email: 'collab1@example.com' } },
           { userId: 789, user: { email: 'collab2@example.com' } },
         ],
@@ -932,7 +932,7 @@ describe('Collaboration Reports Handlers', () => {
       const createdReport = {
         id: '1',
         title: 'New Report',
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           { userId: 456, user: { email: 'collab1@example.com' } },
         ],
       };
@@ -967,7 +967,7 @@ describe('Collaboration Reports Handlers', () => {
         title: 'Original Report',
         content: 'Original content',
         regionId: 1,
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           { user: { email: 'existing@example.com' } },
         ],
       };
@@ -981,7 +981,7 @@ describe('Collaboration Reports Handlers', () => {
       const savedReport = {
         ...existingReport,
         ...updatedReport,
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           { user: { email: 'existing@example.com' } },
           { userId: 456, user: { email: 'new@example.com' } },
         ],
@@ -1047,7 +1047,7 @@ describe('Collaboration Reports Handlers', () => {
         id: '1',
         title: 'Original Report',
         regionId: 1,
-        collabReportCollaborators: [],
+        collabReportSpecialists: [],
       };
 
       mockRequest.body = {
@@ -1092,12 +1092,12 @@ describe('Collaboration Reports Handlers', () => {
       const existingReport = {
         id: '1',
         title: 'Original Report',
-        collabReportCollaborators: null,
+        collabReportSpecialists: null,
       };
 
       const savedReport = {
         ...existingReport,
-        collabReportCollaborators: null,
+        collabReportSpecialists: null,
       };
 
       (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
