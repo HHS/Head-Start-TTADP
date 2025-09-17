@@ -5,6 +5,7 @@ import CollabReports from '../components/CollabReports';
 import { getReports, getAlerts } from '../../../fetchers/collaborationReports';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { NOOP } from '../../../Constants';
+import UserContext from '../../../UserContext';
 
 jest.mock('../../../fetchers/collaborationReports');
 
@@ -21,7 +22,9 @@ describe('CollabReports', () => {
   const renderTest = (props) => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: NOOP }}>
-        <CollabReports {...props} />
+        <UserContext.Provider value={{ user: { id: 1 } }}>
+          <CollabReports {...props} />
+        </UserContext.Provider>
       </AppLoadingContext.Provider>,
     );
   };

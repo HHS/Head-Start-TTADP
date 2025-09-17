@@ -299,6 +299,7 @@ class CollabReports{
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
  deletedAt : timestamp with time zone
+ submittedAt : timestamp with time zone
 }
 
 enum enum_CollabReports_conductMethod {

@@ -90,6 +90,10 @@ module.exports = {
           allowNull: true,
           type: Sequelize.DATE,
         },
+        submittedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportActivityStates', {

@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import ApproverTableDisplay from '../../../components/ApproverTableDisplay';
@@ -10,6 +11,31 @@ import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import { getStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
+import UserContext from '../../../UserContext';
+
+const ReportLink = ({ report, userId }) => {
+  const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
+  const isApprover = report.approvers.some(({ userId: user }) => user === userId);
+
+  if (isSubmitted && !isApprover) {
+    return <Link to={`/collaboration-reports/view/${report.id}`}>{report.displayId}</Link>;
+  }
+
+  return <Link to={report.link}>{report.displayId}</Link>;
+};
+
+ReportLink.propTypes = {
+  userId: PropTypes.number.isRequired,
+  report: PropTypes.shape({
+    id: PropTypes.number,
+    link: PropTypes.string,
+    displayId: PropTypes.string,
+    submissionStatus: PropTypes.string,
+    approvers: PropTypes.arrayOf(PropTypes.shape({
+      userId: PropTypes.number,
+    })),
+  }).isRequired,
+};
 
 const CollabReportAlertsTable = ({
   emptyMsg,
@@ -21,8 +47,10 @@ const CollabReportAlertsTable = ({
   requestSort,
   sortConfig,
 }) => {
+  const { user: { id: userId } } = useContext(UserContext);
+
   const tabularData = useMemo(() => data.rows.map((r) => ({
-    heading: <Link to={r.link}>{r.displayId}</Link>,
+    heading: <ReportLink userId={userId} report={r} />,
     id: r.id,
     data: [
       {
@@ -69,7 +97,7 @@ const CollabReportAlertsTable = ({
         )(),
       },
     ],
-  })), [data.rows]);
+  })), [data.rows, userId]);
 
   return (
     <>
