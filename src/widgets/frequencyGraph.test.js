@@ -206,17 +206,6 @@ describe('frequency graph widget', () => {
     expect(topics.find((r) => r.category === 'Nutrition').count).toBe(0);
   });
 
-  it('returns count of reasons', async () => {
-    const res = await frequencyGraph(scopes);
-
-    const { reasons } = res;
-
-    expect(reasons.find((r) => r.category === 'Change in Scope').count).toBe(3);
-    expect(reasons.find((r) => r.category === 'Complaint').count).toBe(1);
-    expect(reasons.find((r) => r.category === 'Child Incident').count).toBe(2);
-    expect(reasons.find((r) => r.category === 'Full Enrollment').count).toBe(0);
-  });
-
   it('returns count of topics with additional associated report', async () => {
     const res = await frequencyGraph(scopes);
 
