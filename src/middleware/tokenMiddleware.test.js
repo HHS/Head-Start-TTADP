@@ -22,6 +22,10 @@ jest.mock('../serializers/errorResponses', () => ({
   __esModule: true,
   unauthorized: jest.fn(),
 }));
+jest.mock('../lib/apiErrorHandler', () => ({
+  __esModule: true,
+  default: jest.fn(async () => {}),
+}));
 
 /* eslint-disable global-require */
 const tokenMiddleware = require('./tokenMiddleware').default || require('./tokenMiddleware');
@@ -101,5 +105,64 @@ describe('tokenMiddleware', () => {
     expect(auditLogger.error).toHaveBeenCalledWith(
       'Error when retrieving user details from HSES: Error: test error',
     );
+  });
+  it('401 + warns when Authorization is present but accessToken is missing', async () => {
+    req.headers.authorization = 'Bearer 1234';
+    req.session = { claims: { sub: 's' } }; // missing accessToken
+
+    await tokenMiddleware(req, res, next);
+
+    expect(auditLogger.warn).toHaveBeenCalledWith(
+      'MIDDLEWARE:TOKEN missing session tokens for HSES lookup',
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      status: '401',
+      title: 'Unauthenticated User',
+      detail: 'User token is missing or did not map to a known user',
+    });
+  });
+
+  it('401 + warns when Authorization is present but sub is missing', async () => {
+    req.headers.authorization = 'Bearer 1234';
+    req.session = { accessToken: 't', claims: {} }; // missing sub
+
+    await tokenMiddleware(req, res, next);
+
+    expect(auditLogger.warn).toHaveBeenCalledWith(
+      'MIDDLEWARE:TOKEN missing session tokens for HSES lookup',
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      status: '401',
+      title: 'Unauthenticated User',
+      detail: 'User token is missing or did not map to a known user',
+    });
+  });
+  it('handles errors from validateUserAuthForAccess (second try/catch)', async () => {
+    req.headers.authorization = 'Bearer 1234';
+    req.session = { accessToken: 't', claims: { sub: 's' } };
+    retrieveUserDetails.mockResolvedValue({ id: 1 });
+
+    validateUserAuthForAccess.mockRejectedValue(new Error('db down'));
+
+    const handleErrors = require('../lib/apiErrorHandler').default;
+
+    await tokenMiddleware(req, res, next);
+
+    expect(handleErrors).toHaveBeenCalledWith(
+      req,
+      res,
+      expect.any(Error),
+      'MIDDLEWARE:TOKEN',
+    );
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Unrecoverable error in tokenMiddleware: Error: db down'),
+    );
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.locals.userId).toBeUndefined();
   });
 });
