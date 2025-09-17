@@ -45,14 +45,11 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 export const convertReportToFormData = (fetchedReport) => {
-  console.log('fetchedReport:', fetchedReport);
-
   // Convert reasons into a checkbox-friendly format
   let reportReasons = [];
   if (fetchedReport.reportReasons) {
     reportReasons = fetchedReport.reportReasons.map((reason) => (reason.reasonId));
   }
-  console.log('reportReasons:', reportReasons);
 
   // Convert collaborators into a MultiSelect-friendly format
   let collabReportSpecialists = [];
