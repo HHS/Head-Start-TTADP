@@ -2,6 +2,7 @@ import {} from 'dotenv/config';
 import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
 import db, { User, Permission } from '../models';
 import SCOPES from './scopeConstants';
+import { getUserInfo, getAccessToken, logoutOidc } from './authMiddleware';
 
 jest.mock('openid-client', () => {
   /* eslint-disable global-require */
@@ -45,6 +46,11 @@ jest.mock('./jwkKeyManager', () => ({
   getPrivateJwk: jest.fn(async () => ({
     kty: 'RSA', kid: 'test', n: 'n', e: 'AQAB',
   })),
+}));
+
+jest.mock('../lib/apiErrorHandler', () => ({
+  __esModule: true,
+  default: jest.fn(async () => {}),
 }));
 
 /* eslint-disable global-require */
@@ -194,5 +200,198 @@ describe('authMiddleware', () => {
     expect(res.redirect).not.toHaveBeenCalled();
     expect(res.sendStatus).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('getAccessToken: returns access token and stores claims & id_token in session', async () => {
+    const req = {
+      originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
+      protocol: 'http',
+      get: () => 'localhost:3000',
+      session: {
+        pkce: { codeVerifier: 'verifier', state: 'state', nonce: 'nonce' },
+      },
+    };
+
+    const token = await getAccessToken(req);
+
+    expect(token).toBe('fake-access');
+    expect(req.session.claims).toEqual({
+      sub: 'user-123',
+      email: 'user@example.com',
+      given_name: 'Test',
+      family_name: 'User',
+      userId: '123',
+      roles: [],
+    });
+    expect(req.session.id_token).toBe('fake-id');
+
+    // sanity: our mocked client was invoked with the PKCE checks
+    const oc = require('openid-client');
+    expect(oc.authorizationCodeGrant).toHaveBeenCalledWith(
+      expect.anything(), // issuerConfig
+      expect.any(URL), // currentUrl
+      expect.objectContaining({
+        pkceCodeVerifier: 'verifier',
+        expectedState: 'state',
+        expectedNonce: 'nonce',
+        idTokenExpected: true,
+      }),
+    );
+  });
+
+  it('getAccessToken: returns undefined on error', async () => {
+    const oc = require('openid-client');
+    oc.authorizationCodeGrant.mockRejectedValueOnce(new Error('boom'));
+
+    const req = {
+      originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
+      protocol: 'http',
+      get: () => 'localhost:3000',
+      session: {
+        pkce: { codeVerifier: 'verifier', state: 'state', nonce: 'nonce' },
+      },
+    };
+
+    const token = await getAccessToken(req);
+    expect(token).toBeUndefined();
+  });
+
+  it('getUserInfo: returns user info for valid access token and subject', async () => {
+    const info = await getUserInfo('fake-access', 'user-123');
+    expect(info).toEqual({
+      sub: 'user-123',
+      email: 'user@example.com',
+      given_name: 'Test',
+      family_name: 'User',
+      userId: '123',
+      roles: [],
+    });
+
+    const oc = require('openid-client');
+    expect(oc.fetchUserInfo).toHaveBeenCalledWith(
+      expect.anything(),
+      'fake-access',
+      'user-123',
+    );
+  });
+
+  it('getUserInfo: throws if accessToken or subject missing', async () => {
+    await expect(getUserInfo(undefined, 'user-123')).rejects.toThrow(
+      'Access token and subject are required',
+    );
+    await expect(getUserInfo('fake-access', undefined)).rejects.toThrow(
+      'Access token and subject are required',
+    );
+  });
+
+  it('getUserInfo: returns undefined if fetchUserInfo fails', async () => {
+    const oc = require('openid-client');
+    oc.fetchUserInfo.mockRejectedValueOnce(new Error('nope'));
+
+    const result = await getUserInfo('fake-access', 'user-123');
+    expect(result).toBeUndefined();
+  });
+
+  it('logoutOidc: redirects to IdP end-session URL and clears session (with id_token_hint)', async () => {
+    const req = {
+      session: { id_token: 'fake-id', userId: 123 },
+    };
+    const res = { redirect: jest.fn() };
+
+    await logoutOidc(req, res);
+
+    expect(res.redirect).toHaveBeenCalledWith('https://auth.example/logout');
+    expect(req.session).toBeNull();
+
+    const oc = require('openid-client');
+    expect(oc.buildEndSessionUrl).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        post_logout_redirect_uri: `${process.env.TTA_SMART_HUB_URI}/logout`,
+        id_token_hint: 'fake-id',
+      }),
+    );
+  });
+
+  it('logoutOidc: falls back to /logout when end-session is unavailable (headers NOT sent)', async () => {
+    const oc = require('openid-client');
+    oc.buildEndSessionUrl.mockImplementationOnce(() => {
+      throw new Error('end-session down');
+    });
+
+    const req = { session: { id_token: 'fake-id', userId: 99 } };
+    const res = { redirect: jest.fn(), headersSent: false };
+
+    await logoutOidc(req, res);
+
+    expect(res.redirect).toHaveBeenCalledWith('/logout');
+    // in this branch, middleware does NOT clear session
+    expect(req.session).toEqual({ id_token: 'fake-id', userId: 99 });
+  });
+
+  it('logoutOidc: if headers already sent, clears session and sends 204', async () => {
+    const oc = require('openid-client');
+    oc.buildEndSessionUrl.mockImplementationOnce(() => {
+      throw new Error('end-session down');
+    });
+
+    const req = { session: { userId: 777 } };
+    const res = { headersSent: true, redirect: jest.fn(), sendStatus: jest.fn() };
+
+    await logoutOidc(req, res);
+
+    expect(res.redirect).not.toHaveBeenCalled();
+    expect(res.sendStatus).toHaveBeenCalledWith(204);
+    expect(req.session).toBeNull();
+  });
+
+  it('login: on error, logs and responds 500 (catch path)', async () => {
+    const oc = require('openid-client');
+    oc.calculatePKCECodeChallenge.mockRejectedValueOnce(new Error('some error'));
+
+    const req = {
+      path: '/api/login',
+      headers: { referer: 'http://localhost:3000/some/page' },
+      session: {},
+    };
+    const res = {
+      redirect: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+
+    await login(req, res);
+
+    expect(res.redirect).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith('Failed to start login');
+    expect(req.session.pkce?.codeVerifier).toBeDefined();
+  });
+
+  it('calls handleErrors when validateUserAuthForAccess throws (catch path)', async () => {
+    const req = { path: '/api/endpoint', session: { userId: 42 } };
+    const res = { sendStatus: jest.fn(), headersSent: false };
+    const next = jest.fn();
+
+    const access = require('../services/accessValidation');
+    jest
+      .spyOn(access, 'validateUserAuthForAccess')
+      .mockRejectedValue(new Error('kaboom'));
+
+    const handleErrors = require('../lib/apiErrorHandler').default;
+
+    const { default: underTest } = require('./authMiddleware');
+    await underTest(req, res, next);
+
+    expect(handleErrors).toHaveBeenCalledTimes(1);
+    expect(handleErrors).toHaveBeenCalledWith(
+      req,
+      res,
+      expect.any(Error),
+      'MIDDLEWARE:AUTH',
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(res.sendStatus).not.toHaveBeenCalled();
   });
 });
