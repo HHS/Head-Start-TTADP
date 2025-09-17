@@ -24,6 +24,7 @@
     "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
+    "test:e2e:ui": "npx playwright test --ui tests/e2e",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
