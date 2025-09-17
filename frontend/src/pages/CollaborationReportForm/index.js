@@ -190,6 +190,23 @@ function CollaborationReport({ match, location, region }) {
           let fetchedReport;
           try {
             fetchedReport = await getReport(collabReportId);
+            const {
+              submissionStatus,
+              approvers,
+              calculatedStatus,
+            } = fetchedReport;
+
+            // Before bothering with form data parsing or rendering, let us
+            // make sure we BELONG here
+            const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
+            const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
+            const isApproverFromFetched = approvers.some(({ userId }) => user.id === userId);
+
+            if (isApproved || (isSubmitted && !isApproverFromFetched)) {
+              // redirect to approved/submitted report view
+              history.push(`/collaboration-reports/view/${fetchedReport.id}`);
+              return;
+            }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
             history.replace('/something-went-wrong/500');
@@ -205,8 +222,6 @@ function CollaborationReport({ match, location, region }) {
             version: 2,
           };
         }
-        console.log('report:', report);
-        console.log('formData:', formData);
 
         const apiCalls = [
           getCollaborators(report.regionId),
