@@ -51,6 +51,7 @@ import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 import SubmittedActivityReport from './pages/SubmittedActivityReport';
+import ViewCollabReport from './pages/ViewCollabReport';
 
 export default function Routes({
   alert,
@@ -126,6 +127,16 @@ export default function Routes({
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <FeatureFlag flag="collaboration_report" renderNotFound>
                 <CollaborationReportsLanding match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/collaboration-reports/view/:collabReportId(new|[0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="collaboration_report" renderNotFound>
+                <ViewCollabReport match={match} />
               </FeatureFlag>
             </AppWrapper>
           )}

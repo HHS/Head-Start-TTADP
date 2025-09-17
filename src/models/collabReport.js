@@ -1,4 +1,6 @@
 const { Model } = require('sequelize');
+const { REPORT_STATUSES } = require('@ttahub/common');
+const { sortBy } = require('lodash');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeUpdate } = require('./hooks/collabReport');
 
@@ -124,6 +126,10 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.TEXT,
       },
+      submittedAt: {
+        allowNull: true,
+        type: DataTypes.DATE,
+      },
       // virtual columns
       creatorName: {
         type: DataTypes.VIRTUAL,
@@ -146,6 +152,10 @@ export default (sequelize, DataTypes) => {
       link: {
         type: DataTypes.VIRTUAL,
         get() {
+          if (this.calculatedStatus === REPORT_STATUSES.APPROVED) {
+            return `/collaboration-reports/view/${this.id}`;
+          }
+
           return `/collaboration-reports/${this.id}`;
         },
       },
@@ -166,8 +176,23 @@ export default (sequelize, DataTypes) => {
       method: {
         type: DataTypes.VIRTUAL,
         get() {
-          if (!this.conductMethod) return null;
+          if (!this.conductMethod || !this.conductMethod.join) return null;
           return this.conductMethod.join('\n');
+        },
+      },
+      approvedAt: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (this.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+            return '';
+          }
+
+          if (!this.approvers || !this.approvers.length) {
+            return '';
+          }
+
+          const max = sortBy(this.approvers, 'updatedAt');
+          return max[0].updatedAt;
         },
       },
     },
