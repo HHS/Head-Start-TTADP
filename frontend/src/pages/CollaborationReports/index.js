@@ -16,7 +16,6 @@ export const CollabReportsLanding = () => {
   const {
     hasMultipleRegions,
     defaultRegion,
-    // regions,
     allRegionsFilters,
     filters,
     setFilters,

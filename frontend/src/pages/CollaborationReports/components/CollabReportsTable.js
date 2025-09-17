@@ -10,7 +10,7 @@ import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import './CollabReportsTable.css';
 import { getReportsCSV, getReportsCSVById } from '../../../fetchers/collaborationReports';
 
-const ALL = 2;
+const ALL = 2; // this is a constant
 
 const CollabReportsTable = ({
   emptyMsg,
