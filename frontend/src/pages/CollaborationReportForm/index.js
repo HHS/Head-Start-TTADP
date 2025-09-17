@@ -205,8 +205,6 @@ function CollaborationReport({ match, location, region }) {
             version: 2,
           };
         }
-        console.log('report:', report);
-        console.log('formData:', formData);
 
         const apiCalls = [
           getCollaborators(report.regionId),
@@ -252,10 +250,8 @@ function CollaborationReport({ match, location, region }) {
 
         // Update form data.
         if (shouldUpdateFromNetwork && collabReportId !== 'new') {
-          console.log('Update form data one', { ...formData, ...report });
           updateFormData({ ...formData, ...report }, true);
         } else {
-          console.log('Update form data two', { ...report, ...formData });
           updateFormData({ ...report, ...formData }, true);
         }
 
