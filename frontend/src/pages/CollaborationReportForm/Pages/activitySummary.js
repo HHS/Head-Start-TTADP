@@ -204,7 +204,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
         <h2 className="margin-top-2">Reason for activity</h2>
         <FormItem
           label="What was the purpose for participating in this activity?"
-          name="activityReasons"
+          name="reportReasons"
           required
         >
           <DrawerTriggerButton className="margin-top-2" drawerTriggerRef={drawerTriggerRef}>
@@ -259,32 +259,32 @@ const ActivitySummary = ({ collaborators = [] }) => {
           <Checkbox
             className="margin-top-2"
             id="participate"
-            name="activityReasons"
-            value="participate"
+            name="reportReasons"
+            value="participate_work_groups"
             label="Participate in national, regional, state, and local work groups and meetings"
             inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
             id="support"
-            name="activityReasons"
-            value="support"
+            name="reportReasons"
+            value="support_coordination"
             label="Support partnerships, coordination, and collaboration with state/regional partners"
             inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
             id="aggregate"
-            name="activityReasons"
-            value="aggregate"
+            name="reportReasons"
+            value="agg_regional_data"
             label="Aggregate, analyze, and/or present regional data"
             inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
             id="develop"
-            name="activityReasons"
-            value="develop"
+            name="reportReasons"
+            value="develop_presentations"
             label="Develop and provide presentations, training, and resources to RO and/or state/regional partners"
             inputRef={register({ required: 'Select at least one' })}
           />
@@ -462,7 +462,7 @@ export const isPageComplete = (formData, formState) => {
     description,
 
     // arrays
-    activityReasons,
+    reportReasons,
     statesInvolved,
     conductMethod,
 
@@ -487,7 +487,7 @@ export const isPageComplete = (formData, formState) => {
   }
 
   const arraysToValidate = [
-    activityReasons,
+    reportReasons,
     conductMethod,
   ];
 

@@ -19,6 +19,7 @@ interface ICollabReport {
 const {
   CollabReport,
   CollabReportApprover,
+  CollabReportReason,
   CollabReportSpecialist,
   User,
   Region,
@@ -29,6 +30,37 @@ const REPORTS_PER_PAGE = 10;
 // Helper function to create a report
 async function create(report) {
   return CollabReport.create(report);
+}
+
+async function saveReportReasons(collabReportId, reasons) {
+  // Make a handy lookup object for the findOrCreate that comes next
+  const newReasons = reasons.map((r) => ({
+    collabReportId,
+    reasonId: r,
+  }));
+
+  if (newReasons.length > 0) {
+    await Promise.all(newReasons.map((where) => (
+      CollabReportReason.findOrCreate({ where })
+    )));
+    await CollabReportReason.destroy(
+      {
+        where: {
+          collabReportId,
+          reasonId: {
+            [Op.notIn]: reasons,
+          },
+        },
+      },
+    );
+  } else {
+    // If no reasons, destroy any existing reason objects in the DB
+    await CollabReportReason.destroy({
+      where: {
+        collabReportId,
+      },
+    });
+  }
 }
 
 // Function to save and remove CR specialists
@@ -86,6 +118,11 @@ export async function collabReportById(crId: string) {
       },
       {
         required: false,
+        model: CollabReportReason,
+        as: 'reportReasons',
+      },
+      {
+        required: false,
         model: CollabReportSpecialist,
         separate: true,
         as: 'collabReportSpecialists',
@@ -125,6 +162,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
     author,
     collabReportSpecialists,
     approvers,
+    reportReasons,
     ...fields
   } = newReport;
 
@@ -135,10 +173,16 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
     savedReport = await create(newReport);
   }
 
-  // // If there are specialists, those need to be saved separately
+  // Save any CollabReportReasons
+  if (reportReasons) {
+    const { id: reportId } = savedReport;
+    await saveReportReasons(reportId, reportReasons);
+  }
+
+  // If there are specialists, those need to be saved separately
   if (collabReportSpecialists) {
     const { id: reportId } = savedReport;
-    const specialists = newReport.collabReportSpecialists.map(
+    const specialists = collabReportSpecialists.map(
       (c) => c.value,
     );
     await saveReportSpecialists(reportId, specialists);

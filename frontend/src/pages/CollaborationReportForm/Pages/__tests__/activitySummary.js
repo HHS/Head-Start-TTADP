@@ -146,7 +146,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         activityName: '',
         activityDescription: 'test',
-        activityReasons: ['participate'],
+        reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: 1.5,
         regionalOrState: 'regional',
@@ -162,7 +162,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         activityName: 'Test Activity',
         activityDescription: 'test',
-        activityReasons: [],
+        reportReasons: [],
         deliveryMethods: ['virtual'],
         duration: 1.5,
         regionalOrState: 'regional',
@@ -178,7 +178,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         activityName: 'Test Activity',
         activityDescription: 'test',
-        activityReasons: ['participate'],
+        reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: 1.5,
         regionalOrState: 'state',
@@ -195,7 +195,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         activityName: 'Test Activity',
         activityDescription: 'test',
-        activityReasons: ['participate'],
+        reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: NaN,
         regionalOrState: 'regional',
@@ -211,7 +211,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         activityName: 'Test Activity',
         activityDescription: 'test',
-        activityReasons: ['participate'],
+        reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: 1.5,
         regionalOrState: 'regional',
@@ -227,7 +227,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         name: 'Test Activity',
         description: 'test',
-        activityReasons: ['participate'],
+        reportReasons: ['participate'],
         conductMethod: ['virtual'],
         duration: 1.5,
         regionalOrState: 'regional',
@@ -243,7 +243,7 @@ describe('CollabReport Activity Summary Page', () => {
       const formData = {
         name: 'Test Activity',
         description: 'test',
-        activityReasons: ['participate'],
+        reportReasons: ['participate'],
         conductMethod: ['virtual'],
         duration: 1.5,
         regionalOrState: 'state',

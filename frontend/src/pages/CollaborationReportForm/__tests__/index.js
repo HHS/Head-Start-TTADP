@@ -276,7 +276,7 @@ describe('CollaborationReportForm', () => {
       getItem.mockReturnValue(JSON.stringify({
         calculatedStatus: REPORT_STATUSES.DRAFT,
         regionId: 1,
-        collabReportCollaborators: [{ userId: 1 }],
+        collabReportSpecialists: [{ userId: 1 }],
         approvers: [{ user: { id: 1 }, status: 'pending' }],
         userId: 1,
       }));
@@ -887,7 +887,7 @@ describe('CollaborationReportForm', () => {
     it('covers line 211 - isCollaborator check with existing collaborators', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           { userId: 1, user: { id: 1 } }, // Current user is collaborator
           { userId: 2, user: { id: 2 } },
         ],
@@ -973,7 +973,7 @@ describe('CollaborationReportForm', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         userId: 1,
         approvers: [{ user: { id: 2 }, status: null }],
-        collabReportCollaborators: [{ userId: 1, user: { id: 1 } }],
+        collabReportSpecialists: [{ userId: 1, user: { id: 1 } }],
       });
       fetchMock.get('/api/users/collaborators?region=1', []);
 
