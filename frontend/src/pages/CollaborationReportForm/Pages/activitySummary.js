@@ -39,12 +39,11 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
-    // getValues,
     // clearErrors,
   } = useFormContext();
 
-  const regionalOrState = watch('regionalOrState');
-  const showStates = regionalOrState === 'state';
+  const isStateActivity = watch('isStateActivity');
+  const showStates = isStateActivity === 'true';
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -55,7 +54,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const deliveryMethodOptions = [
     { label: 'Email', value: 'email' },
     { label: 'Phone', value: 'phone' },
-    { label: 'In person', value: 'inPerson' },
+    { label: 'In person', value: 'in_person' },
     { label: 'Virtual', value: 'virtual' },
   ];
 
@@ -70,12 +69,12 @@ const ActivitySummary = ({ collaborators = [] }) => {
       <Fieldset className="smart-hub-activity-summary smart-hub--report-legend">
         <FormItem
           label="Activity name"
-          name="activityName"
+          name="name"
           fieldSetWrapper
         >
           <TextInput
-            id="activityName"
-            name="activityName"
+            id="name"
+            name="name"
             type="text"
             inputRef={register({
               required: 'Enter activity name',
@@ -86,15 +85,17 @@ const ActivitySummary = ({ collaborators = [] }) => {
           {!connectionActive ? <ConnectionError /> : null }
           <FormItem
             label="Collaborating specialists "
-            name="collabReportCollaborators"
+            name="collabReportSpecialists"
             required={false}
             tooltipText="TTA staff that you worked with during the activity."
           >
             <MultiSelect
-              name="collabReportCollaborators"
+              name="collabReportSpecialists"
               control={control}
               required={false}
               simple={false}
+              labelProperty="name"
+              valueProperty="value"
               placeholderText={placeholderText}
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
@@ -192,7 +193,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
         <h2 className="margin-top-2">Reason for activity</h2>
         <FormItem
           label="What was the purpose for participating in this activity?"
-          name="activityReasons"
+          name="reportReasons"
           required
         >
           <DrawerTriggerButton className="margin-top-2" drawerTriggerRef={drawerTriggerRef}>
@@ -247,43 +248,47 @@ const ActivitySummary = ({ collaborators = [] }) => {
           <Checkbox
             className="margin-top-2"
             id="participate"
-            name="activityReasons"
-            value="participate"
+            name="reportReasons"
+            value="participate_work_groups"
             label="Participate in national, regional, state, and local work groups and meetings"
+            inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
             id="support"
-            name="activityReasons"
-            value="support"
+            name="reportReasons"
+            value="support_coordination"
             label="Support partnerships, coordination, and collaboration with state/regional partners"
+            inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
             id="aggregate"
-            name="activityReasons"
-            value="aggregate"
+            name="reportReasons"
+            value="agg_regional_data"
             label="Aggregate, analyze, and/or present regional data"
+            inputRef={register({ required: 'Select at least one' })}
           />
           <Checkbox
             className="margin-top-2"
             id="develop"
-            name="activityReasons"
-            value="develop"
+            name="reportReasons"
+            value="develop_presentations"
             label="Develop and provide presentations, training, and resources to RO and/or state/regional partners"
+            inputRef={register({ required: 'Select at least one' })}
           />
         </FormItem>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">
         <FormItem
           label="Was this a regional or state activity?"
-          name="regionalOrState"
+          name="isStateActivity"
           required
         >
           <Radio
             id="regional"
-            name="regionalOrState"
-            value="regional"
+            name="isStateActivity"
+            value="false"
             label="Regional"
             className="smart-hub--report-checkbox"
             inputRef={register({ required: 'Select one' })}
@@ -291,8 +296,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
           />
           <Radio
             id="state"
-            name="regionalOrState"
-            value="state"
+            name="isStateActivity"
+            value="true"
             label="State"
             className="smart-hub--report-checkbox"
             inputRef={register({ required: 'Select one' })}
@@ -317,11 +322,11 @@ const ActivitySummary = ({ collaborators = [] }) => {
       <Fieldset className="smart-hub--report-legend">
         <FormItem
           label="How was the activity conducted?"
-          name="deliveryMethods"
+          name="conductMethod"
           required
         >
           <MultiSelect
-            name="deliveryMethods"
+            name="conductMethod"
             control={control}
             options={deliveryMethodOptions}
             required
@@ -329,17 +334,18 @@ const ActivitySummary = ({ collaborators = [] }) => {
         </FormItem>
       </Fieldset>
       <Fieldset className="smart-hub--report-legend">
-        <Label htmlFor="activityDescription">
+        <Label htmlFor="description">
           Activity description
           {' '}
           <Req />
         </Label>
         <Textarea
-          id="activityDescription"
+          id="description"
           className="height-10 minh-5 smart-hub--text-area__resize-vertical"
-          name="activityDescription"
+          name="description"
           defaultValue=""
-          data-testid="activityDescription-input"
+          data-testid="description-input"
+          inputRef={register()}
           required
         />
       </Fieldset>
@@ -441,19 +447,19 @@ export const isPageComplete = (formData, formState) => {
 
   const {
     // strings
-    activityName,
-    activityDescription,
+    name,
+    description,
 
     // arrays
-    activityReasons,
+    reportReasons,
     statesInvolved,
-    deliveryMethods,
+    conductMethod,
 
     // numbers
     duration,
 
     // radio values
-    regionalOrState,
+    isStateActivity,
 
     // dates
     startDate,
@@ -461,8 +467,8 @@ export const isPageComplete = (formData, formState) => {
   } = formData;
 
   const stringsToValidate = [
-    activityName,
-    activityDescription,
+    name,
+    description,
   ];
 
   if (!stringsToValidate.every((str) => str)) {
@@ -470,16 +476,16 @@ export const isPageComplete = (formData, formState) => {
   }
 
   const arraysToValidate = [
-    activityReasons,
-    deliveryMethods,
+    reportReasons,
+    conductMethod,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
     return false;
   }
 
-  // Check statesInvolved only if regionalOrState is 'state'
-  if (regionalOrState === 'state' && !statesInvolved.length) {
+  // Check statesInvolved only if isStateActivity is 'true'
+  if (isStateActivity === 'true' && !statesInvolved.length) {
     return false;
   }
 
@@ -499,7 +505,7 @@ export const isPageComplete = (formData, formState) => {
 };
 
 export default {
-  position: 1,
+  position: 0,
   label: 'Activity summary',
   path: 'activity-summary',
   reviewSection: () => <ReviewSection />,
@@ -522,7 +528,6 @@ export default {
       <>
         <ActivitySummary
           collaborators={collaborators}
-
         />
         <Alert />
         <NavigatorButtons

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs';
 import simpleGit from 'simple-git';
 
@@ -5,8 +6,23 @@ function countOccurrencesInFile(fileContent, searchString) {
   const fileLines = fileContent.split(/\r?\n/);
   const matches = [];
   for (let i = 0; i < fileLines.length; i++) { // eslint-disable-line no-plusplus
-    if (fileLines[i].includes(searchString) && i < fileLines.length - 1) {
-      matches.push(fileLines[i + 1]);
+    if (fileLines[i].includes(searchString)) {
+      // For "column missing from model", find the class name by looking backwards
+      if (searchString === 'column missing from model') {
+        // Look backwards to find the class definition
+        for (let j = i - 1; j >= 0; j--) { // eslint-disable-line no-plusplus
+          const line = fileLines[j].trim();
+          if (line.startsWith('class ') && line.includes('{')) {
+            const className = line.match(/class\s+([^{]+)\s*\{/)?.[1]?.trim();
+            if (className) {
+              matches.push(`${className}: ${fileLines[i].trim()}`);
+              break;
+            }
+          }
+        }
+      } else if (i < fileLines.length - 1) {
+        matches.push(fileLines[i + 1]);
+      }
     }
   }
 
@@ -75,8 +91,11 @@ describe('Logical Data Model', () => {
   });
   describe('columns', () => {
     it('column missing from model', () => {
-      expect(countOccurrencesInFile(fileContent, 'column missing from model'))
-        .toStrictEqual({ count: 0, matches: [] });
+      const result = countOccurrencesInFile(fileContent, 'column missing from model');
+      if (result.count > 0) {
+        console.log('Models with missing columns:', result.matches);
+      }
+      expect(result).toStrictEqual({ count: 0, matches: [] });
     });
     it('column type does not match model', () => {
       expect(countOccurrencesInFile(fileContent, 'column type does not match model'))

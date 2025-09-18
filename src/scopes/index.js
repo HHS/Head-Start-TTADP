@@ -2,6 +2,7 @@ import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { collabReportFiltersToScopes as collabReport } from './collabReports';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
 import { getValidTopicsSet } from './utils';
@@ -12,6 +13,7 @@ const models = {
   goal,
   trainingReport,
   communicationLog,
+  collabReport,
 };
 
 /**

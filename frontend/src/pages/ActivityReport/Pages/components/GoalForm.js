@@ -120,9 +120,7 @@ export default function GoalForm({
 
   return (
     <>
-      <ReadOnlyField
-        label="Recipient's goal"
-      >
+      <ReadOnlyField>
         {goalText}
       </ReadOnlyField>
 

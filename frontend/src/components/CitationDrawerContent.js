@@ -6,7 +6,7 @@ import useFetch from '../hooks/useFetch';
 
 export default function CitationDrawerContent({ citations }) {
   const fetcher = useCallback(() => fetchCitationTextByName(citations), [citations]);
-  const content = useFetch([], fetcher, [citations]);
+  const { data: content } = useFetch([], fetcher, [citations]);
 
   return (
     <div>
