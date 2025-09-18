@@ -302,10 +302,11 @@ describe('formDataHelpers', () => {
         startDate: '2024-01-15',
         endDate: '2024-01-20',
         status: 'draft',
-        collaborators: [{ id: 1, name: 'John Doe' }],
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
+        collabReportSpecialists: [],
         calculatedStatus: 'submitted',
+        isStateActivity: true,
         regionId: 1,
       };
 
@@ -317,7 +318,9 @@ describe('formDataHelpers', () => {
         startDate: '2024-01-15',
         endDate: '2024-01-20',
         status: 'draft',
-        collaborators: [{ id: 1, name: 'John Doe' }],
+        collabReportSpecialists: [],
+        reportReasons: [],
+        isStateActivity: 'true',
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
         calculatedStatus: 'submitted',
