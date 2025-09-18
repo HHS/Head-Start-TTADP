@@ -268,7 +268,7 @@ describe('formDataHelpers', () => {
         startDate: '01/15/2024',
         endDate: '01/20/2024',
         status: 'draft',
-        collabReportCollaborators: [
+        collabReportSpecialists: [
           {
             id: 1,
             specialistId: 5,
@@ -293,7 +293,7 @@ describe('formDataHelpers', () => {
         startDate: '01/15/2024',
         endDate: '01/20/2024',
         status: 'draft',
-        collabReportCollaborators: [{ value: 5, name: 'John Doe' }],
+        collabReportSpecialists: [{ value: 5, name: 'John Doe' }],
         reportReasons: [],
         isStateActivity: 'true',
         approvers: [{ id: 2, name: 'Jane Smith' }],
