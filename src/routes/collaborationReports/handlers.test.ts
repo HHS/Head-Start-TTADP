@@ -21,6 +21,7 @@ import CollabReportPolicy from '../../policies/collabReport';
 import { upsertApprover } from '../../services/collabReportApprovers';
 import ActivityReport from '../../policies/activityReport';
 import { collabReportToCsvRecord } from '../../lib/transform';
+import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/collabReports');
 jest.mock('../../lib/mailer');
@@ -60,7 +61,14 @@ describe('Collaboration Reports Handlers', () => {
     beforeEach(() => {
       mockRequest.params = { collabReportId: '1' };
       (currentUserId as jest.Mock).mockResolvedValue(123);
-      (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
+      (userById as jest.Mock).mockResolvedValue({
+        id: 123,
+        name: 'Test User',
+        permissions: [{
+          scopeId: SCOPES.READ_REPORTS,
+          regionId: 1,
+        }],
+      });
       (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
           canGet: jest.fn().mockReturnValue(true),
@@ -908,10 +916,10 @@ describe('Collaboration Reports Handlers', () => {
       };
       (currentUserId as jest.Mock).mockResolvedValue(123);
       (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
-      (ActivityReport as jest.MockedClass<typeof ActivityReport>)
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
           canUpdate: jest.fn().mockReturnValue(true),
-        }) as unknown as jest.Mocked<ActivityReport>);
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
     });
 
     it('should successfully save a report', async () => {
@@ -920,6 +928,7 @@ describe('Collaboration Reports Handlers', () => {
         title: 'Original Report',
         content: 'Original content',
         regionId: 1,
+        userId: 123,
         collabReportSpecialists: [
           { user: { email: 'existing@example.com' } },
         ],
@@ -979,10 +988,10 @@ describe('Collaboration Reports Handlers', () => {
       };
 
       (CRServices.collabReportById as jest.Mock).mockResolvedValue(existingReport);
-      (ActivityReport as jest.MockedClass<typeof ActivityReport>)
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
           canUpdate: jest.fn().mockReturnValue(false),
-        }) as unknown as jest.Mocked<ActivityReport>);
+        }) as unknown as jest.Mocked<CollabReportPolicy>);
 
       await saveReport(mockRequest as Request, mockResponse as Response);
 
