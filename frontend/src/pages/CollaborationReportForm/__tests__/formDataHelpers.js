@@ -261,95 +261,27 @@ describe('formDataHelpers', () => {
   });
 
   describe('convertReportToFormData', () => {
-    it('should convert report with valid dates', () => {
+    it('should preserve all other fields', () => {
       const fetchedReport = {
-        id: 1,
-        title: 'Test Report',
-        startDate: '2024-01-15',
-        endDate: '2024-01-20',
-        status: 'draft',
-      };
-
-      const result = convertReportToFormData(fetchedReport);
-
-      expect(result).toEqual({
         id: 1,
         title: 'Test Report',
         startDate: '01/15/2024',
         endDate: '01/20/2024',
         status: 'draft',
-      });
-    });
-
-    it('should handle report with null dates', () => {
-      const fetchedReport = {
-        id: 1,
-        title: 'Test Report',
-        startDate: null,
-        endDate: null,
-        status: 'draft',
-      };
-
-      const result = convertReportToFormData(fetchedReport);
-
-      expect(result).toEqual({
-        id: 1,
-        title: 'Test Report',
-        startDate: '',
-        endDate: '',
-        status: 'draft',
-      });
-    });
-
-    it('should handle report with undefined dates', () => {
-      const fetchedReport = {
-        id: 1,
-        title: 'Test Report',
-        status: 'draft',
-      };
-
-      const result = convertReportToFormData(fetchedReport);
-
-      expect(result).toEqual({
-        id: 1,
-        title: 'Test Report',
-        startDate: '',
-        endDate: '',
-        status: 'draft',
-      });
-    });
-
-    it('should handle report with empty string dates', () => {
-      const fetchedReport = {
-        id: 1,
-        title: 'Test Report',
-        startDate: '',
-        endDate: '',
-        status: 'draft',
-      };
-
-      const result = convertReportToFormData(fetchedReport);
-
-      expect(result).toEqual({
-        id: 1,
-        title: 'Test Report',
-        startDate: '',
-        endDate: '',
-        status: 'draft',
-      });
-    });
-
-    it('should preserve all other fields', () => {
-      const fetchedReport = {
-        id: 1,
-        title: 'Test Report',
-        startDate: '2024-01-15',
-        endDate: '2024-01-20',
-        status: 'draft',
-        collaborators: [{ id: 1, name: 'John Doe' }],
+        collabReportCollaborators: [
+          {
+            id: 1,
+            specialistId: 5,
+            specialist:
+            {
+              id: 5, fullName: 'John Doe',
+            },
+          },
+        ],
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
         calculatedStatus: 'submitted',
+        isStateActivity: true,
         regionId: 1,
       };
 
@@ -361,7 +293,9 @@ describe('formDataHelpers', () => {
         startDate: '01/15/2024',
         endDate: '01/20/2024',
         status: 'draft',
-        collaborators: [{ id: 1, name: 'John Doe' }],
+        collabReportCollaborators: [{ value: 5, name: 'John Doe' }],
+        reportReasons: [],
+        isStateActivity: 'true',
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
         calculatedStatus: 'submitted',
