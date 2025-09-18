@@ -320,4 +320,44 @@ describe('Total Hrs and Recipient Graph widget', () => {
     const scopes = await filtersToScopes(query);
     expect(() => totalHrsAndRecipientGraph(scopes, query)).not.toThrow();
   });
+
+  it('handles null duration values by treating them as 0', async () => {
+    // Create a report with valid values first
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2021-04-15',
+      duration: 1,
+      ttaType: ['training'],
+    });
+
+    // Mock the findAll method to return a null duration
+    const originalFindAll = ActivityReport.findAll;
+    ActivityReport.findAll = jest.fn().mockImplementation(async () => [
+      {
+        id: 99999,
+        startDate: new Date('2021-04-15'),
+        ttaType: ['training'],
+        duration: null, // This tests the null handling code path
+      },
+    ]);
+
+    try {
+      const query = { 'region.in': ['177'], 'startDate.win': '2021/04/01-2021/04/30' };
+      const scopes = await filtersToScopes(query);
+      const data = await totalHrsAndRecipientGraph(scopes, query);
+
+      // Verify that the training hours for April are 0 (not undefined or null)
+      expect(data[2].name).toBe('Hours of Training');
+
+      // Find the April entry (could be Apr-14 or Apr-15 depending on timezone)
+      const aprilEntry = data[2].x.find((x) => x.startsWith('Apr-'));
+      expect(aprilEntry).toBeDefined();
+
+      const aprIndex = data[2].x.indexOf(aprilEntry);
+      expect(data[2].y[aprIndex]).toBe(0);
+    } finally {
+      // Restore the original method
+      ActivityReport.findAll = originalFindAll;
+    }
+  });
 });
