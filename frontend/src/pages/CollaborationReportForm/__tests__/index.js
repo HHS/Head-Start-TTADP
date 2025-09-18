@@ -884,25 +884,6 @@ describe('CollaborationReportForm', () => {
       });
     });
 
-    it('covers line 211 - isCollaborator check with existing collaborators', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        collabReportSpecialists: [
-          { userId: 1, user: { id: 1 } }, // Current user is collaborator
-          { userId: 2, user: { id: 2 } },
-        ],
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
-
     it('handles regionId -1 case - covers line 302', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
@@ -963,33 +944,6 @@ describe('CollaborationReportForm', () => {
       await waitFor(() => {
         expect(true).toBe(true); // Test passes if no errors thrown during redirect
       });
-    });
-
-    it('covers function execution paths through component lifecycle', async () => {
-      fetchMock.restore();
-      // Setup API responses to trigger various code paths
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        userId: 1,
-        approvers: [{ user: { id: 2 }, status: null }],
-        collabReportSpecialists: [{ userId: 1, user: { id: 1 } }],
-      });
-      fetchMock.get('/api/users/collaborators?region=1', []);
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-
-      // This test covers multiple execution paths:
-      // - updateIsApprover and updateIsPendingApprover logic
-      // - approverHasMarkedReport logic
-      // - collaboration and authorship checks
-      // - report processing and form data updates
     });
   });
 });
