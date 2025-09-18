@@ -267,10 +267,8 @@ function CollaborationReport({ match, location, region }) {
 
         // Update form data.
         if (shouldUpdateFromNetwork && collabReportId !== 'new') {
-          console.log('Update form data one', { ...formData, ...report });
           updateFormData({ ...formData, ...report }, true);
         } else {
-          console.log('Update form data two', { ...report, ...formData });
           updateFormData({ ...report, ...formData }, true);
         }
 
@@ -370,12 +368,7 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
-  // TODO: Will take position as a parameter
-  const updatePage = () => {
-    // TODO: uncomment when logic is complete
-    // TODO (alternately): since this logic is so similar in multiple places now,
-    // I suspect we could make it reusable
-
+  const updatePage = (position) => {
     if (!editable) {
       return;
     }
@@ -385,7 +378,8 @@ function CollaborationReport({ match, location, region }) {
       state.showLastUpdatedTime = true;
     }
 
-    const newPath = `/collaboration-reports/${reportId.current}/${currentPage}`;
+    const page = pages.find((p) => p.position === position);
+    const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
     history.push(newPath, state);
   };
 
