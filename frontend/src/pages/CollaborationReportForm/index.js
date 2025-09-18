@@ -449,7 +449,7 @@ function CollaborationReport({ match, location, region }) {
       // show the saved draft message
       updateShowSavedDraft(true);
     } catch (e) {
-      updateErrorMessage('A network error has prevented us from saving your collaboration report to our database. You work is safely saved to your web browser in the meantime.');
+      updateErrorMessage('A network error has prevented us from saving your collaboration report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
       setIsAppLoading(false);
     }
