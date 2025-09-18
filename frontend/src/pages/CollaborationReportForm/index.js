@@ -410,7 +410,7 @@ function CollaborationReport({ match, location, region }) {
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
     } catch (e) {
-      setConnectionActiveWithError(error, setConnectionActive);
+      setConnectionActiveWithError(e, setConnectionActive);
     }
   };
 
