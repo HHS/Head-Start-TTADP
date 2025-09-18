@@ -61,8 +61,8 @@ describe('authMiddleware', () => {
   );
 
   it('should allow access if user data is present', async () => {
-    await setupUser(mockUser);
     process.env.CURRENT_USER_ID = 66349;
+    await setupUser(mockUser);
 
     const mockNext = jest.fn();
     const mockSession = jest.fn();
@@ -144,8 +144,6 @@ describe('authMiddleware', () => {
     // auth is bypassed if non-prod NODE_ENV and BYPASS_AUTH = 'true', needed for cucumber and axe
     const user = {
       ...mockUser,
-      id: process.env.CURRENT_USER_ID,
-      hsesUserId: process.env.CURRENT_USER_ID,
     };
     await setupUser(user);
     process.env.NODE_ENV = 'development';

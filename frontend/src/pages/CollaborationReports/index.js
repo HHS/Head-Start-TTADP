@@ -1,14 +1,12 @@
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
 import { showFilterWithMyRegions } from '../regionHelpers';
-import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
-import FilterPanel from '../../components/filter/FilterPanel';
 import UserContext from '../../UserContext';
 import CollabReports from './components/CollabReports';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import useFilters from '../../hooks/useFilters';
 import './index.scss';
+import NewReportButton from '../../components/NewReportButton';
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -18,7 +16,6 @@ export const CollabReportsLanding = () => {
   const {
     hasMultipleRegions,
     defaultRegion,
-    regions,
     allRegionsFilters,
     filters,
     setFilters,
@@ -45,30 +42,19 @@ export const CollabReportsLanding = () => {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
       />
-      <div className="collab-report-header flex-align-center margin-top-0 margin-bottom-3">
-        <h1 className="landing">
+      <div className="collab-report-header margin-top-0 margin-bottom-3 flex-column flex-align-start display-flex">
+        <h1 className="landing tablet:margin-right-2 margin-bottom-0">
           {`Collaboration reports - ${regionLabel}`}
         </h1>
-        <div>
-          <Link
+        <div className="margin-top-1">
+          <NewReportButton
             to="/collaboration-reports/new/activity-summary"
-            className="usa-button smart-hub--new-report-btn"
           >
-            <span className="smart-hub--plus">+</span>
-            <span className="smart-hub--new-report">New Collaboration Report</span>
-          </Link>
+            New Collaboration Report
+          </NewReportButton>
         </div>
       </div>
-      <FilterPanelContainer>
-        <FilterPanel
-          applyButtonAria="apply filters for activity reports"
-          filters={filters}
-          filterConfig={[]}
-          allUserRegions={regions}
-        />
-      </FilterPanelContainer>
-      {/* TODO: Wrap this in a FilterContext.Provider component when filters added */}
-      <CollabReports title="Collaboration Report Alerts" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} />
+      <CollabReports title="My Collaboration Reports" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
     </div>
   );

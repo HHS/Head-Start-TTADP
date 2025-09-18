@@ -120,7 +120,7 @@ const Navigator = ({
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
-    let stateOfPage = pageState[p.position];
+    let stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
     if (stateOfPage !== COMPLETE) {
       stateOfPage = current ? IN_PROGRESS : pageState[p.position];
     }

@@ -14,13 +14,25 @@ module.exports = {
           autoIncrement: true,
           primaryKey: true,
         },
+        regionId: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'Regions',
+            key: 'id',
+          },
+        },
         name: {
           type: Sequelize.STRING,
           allowNull: false,
         },
-        status: {
-          type: Sequelize.ENUM(['draft', 'submitted', 'reviewed', 'needs_approval', 'approved']),
+        submissionStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted']),
           allowNull: false,
+        },
+        calculatedStatus: {
+          type: Sequelize.ENUM(['draft', 'submitted', 'needs_action', 'approved']),
+          allowNull: true,
         },
         startDate: {
           type: Sequelize.DATEONLY,
@@ -31,7 +43,7 @@ module.exports = {
           allowNull: false,
         },
         duration: {
-          type: Sequelize.SMALLINT,
+          type: Sequelize.DOUBLE,
           allowNull: false,
           validate: {
             min: 0,
@@ -43,12 +55,40 @@ module.exports = {
           defaultValue: false,
         },
         conductMethod: {
-          type: Sequelize.ENUM(['in_person', 'virtual', 'email', 'phone']),
+          type: Sequelize.ARRAY(Sequelize.ENUM(['in_person', 'virtual', 'email', 'phone'])),
           allowNull: false,
         },
         description: {
           type: Sequelize.TEXT,
           allowNull: false,
+        },
+        userId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        lastUpdatedById: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: 'Users',
+            key: 'id',
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -70,6 +110,18 @@ module.exports = {
         activityStateCode: {
           type: Sequelize.STRING,
           allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -110,6 +162,18 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: true,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportGoals', {
@@ -135,6 +199,18 @@ module.exports = {
             key: 'id',
           },
           onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -162,6 +238,18 @@ module.exports = {
           ]),
           allowNull: false,
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
 
       await queryInterface.createTable('CollabReportSpecialists', {
@@ -187,6 +275,18 @@ module.exports = {
             key: 'id',
           },
           onDelete: 'CASCADE',
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
 
@@ -220,6 +320,18 @@ module.exports = {
         collabStepPriority: {
           type: Sequelize.SMALLINT,
           allowNull: false,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
         },
       }, { transaction });
     });

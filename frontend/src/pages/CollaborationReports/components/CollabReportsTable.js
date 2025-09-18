@@ -1,50 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  Checkbox,
-} from '@trussworks/react-uswds';
+import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
+import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
+import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
+import { DATE_DISPLAY_FORMAT } from '../../../Constants';
+import TooltipWithCollection from '../../../components/TooltipWithCollection';
+import './CollabReportsTable.css';
+import { getReportsCSV, getReportsCSVById } from '../../../fetchers/collaborationReports';
 
-import { parseCheckboxEvent } from '../../../Constants';
+const ALL = 2; // this is a constant
 
-const CollabReportsTable = (props) => {
-  const {
-    emptyMsg, loading, offset, reports, showCreateMsgOnEmpty, title,
-  } = props;
-  const [reportCheckboxes, setReportCheckboxes] = useState([]);
-  const reportsCount = reports?.length ?? 0;
+const CollabReportsTable = ({
+  emptyMsg,
+  loading,
+  showCreateMsgOnEmpty,
+  title,
+  data,
+  requestSort,
+  sortConfig,
+  setSortConfig,
+}) => {
+  const [reportCheckboxes, setReportCheckboxes] = useState({});
 
-  useEffect(() => {
-    setReportCheckboxes([]);
-  }, [reports]);
+  const selectedReports = useMemo(() => {
+    const ids = [];
+    Object.entries(reportCheckboxes).forEach(([key, value]) => {
+      if (value) {
+        ids.push(key);
+      }
+    });
 
-  const toggleSelectAll = (event) => {
-    const { checked } = parseCheckboxEvent(event);
-    const boxes = checked ? reports.map((report) => report.id) : [];
-    setReportCheckboxes(boxes);
-  };
+    return ids;
+  }, [reportCheckboxes]);
 
-  const allReportsChecked = reports.every((report) => reportCheckboxes.includes(report.id));
+  const menuItems = [
+    {
+      label: 'Export table',
+      onClick: async () => getReportsCSV(sortConfig),
+    },
+  ];
+
+  if (selectedReports.length) {
+    menuItems.unshift(
+      {
+        label: 'Export selected rows',
+        onClick: async () => getReportsCSVById(selectedReports, sortConfig),
+      },
+    );
+  }
+
+  const handlePageChange = useCallback((e) => {
+    let newValue = Number(e.target.value);
+    if (newValue === ALL) {
+      newValue = 'all';
+    }
+
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      perPage: newValue,
+    }));
+  }, [setSortConfig]);
+
+  const tabularData = useMemo(() => data.rows.map((r) => ({
+    id: r.id,
+    heading: <Link to={r.link}>{r.displayId}</Link>,
+    data: [
+      {
+        title: 'Activity name',
+        tooltip: r.name,
+        value: r.name,
+      },
+      {
+        title: 'Date started',
+        value: r.startDate,
+      },
+      {
+        title: 'Creator',
+        value: r.author.fullName,
+        tooltip: r.author.fullName,
+      },
+      {
+        title: 'Created date',
+        value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
+      },
+      {
+        title: 'Collaborators',
+        value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
+      },
+      {
+        title: 'Last saved',
+        value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
+      },
+    ],
+  })), [data.rows]);
 
   return (
     <>
       <WidgetContainer
+        className="collab-reports-table--widget-container"
         title={title}
         enableCheckboxes
         checkboxes={reportCheckboxes}
         setCheckboxes={setReportCheckboxes}
-        showPagingBottom={reportsCount > 0}
-        showPagingTop={false}
+        showPagingBottom={data.count > 0}
         loading={loading}
         loadingLabel="Collaboration reports table loading"
-        totalCount={reportsCount}
-        offset={offset}
+        totalCount={data.count}
+        offset={sortConfig.offset}
+        currentPage={sortConfig.activePage}
         perPage={10}
-        titleMargin={{ bottom: 3 }}
+        titleMargin={{ bottom: 1 }}
+        menuItems={menuItems}
+        showPagingTop
+        paginationCardTopProps={{
+          perPageChange: handlePageChange,
+          noXofX: true,
+          spaceBetweenSelectPerPageAndContext: 2,
+        }}
+        titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
       >
-        { reports.length === 0 && (
+        { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
           <div className="text-center padding-10">
             <p className="usa-prose text-center bold">
@@ -61,30 +138,27 @@ const CollabReportsTable = (props) => {
           </div>
         </Container>
         )}
-        { reports.length > 0 && (
-        <div className="usa-table-container--scrollable">
-          <Table fullWidth striped stackedStyle="default">
-            <caption className="usa-sr-only">
-              {title}
-            </caption>
-            <thead>
-              <tr>
-                <th
-                  className="width-8 tta-smarthub--report-heading"
-                  aria-label="Select"
-                >
-                  <Checkbox
-                    id="all-reports"
-                    label=""
-                    onChange={toggleSelectAll}
-                    checked={allReportsChecked}
-                    aria-label="Select or de-select all reports"
-                  />
-                </th>
-              </tr>
-            </thead>
-          </Table>
-        </div>
+        { data.rows.length > 0 && (
+        <HorizontalTableWidget
+          headers={[
+            'Activity name',
+            'Date started',
+            'Creator',
+            'Created date',
+            'Collaborators',
+            'Last saved',
+          ]}
+          data={tabularData}
+          firstHeading="Report ID"
+          enableCheckboxes
+          checkboxes={reportCheckboxes}
+          setCheckboxes={setReportCheckboxes}
+          enableSorting
+          sortConfig={sortConfig}
+          requestSort={requestSort}
+          showTotalColumn={false}
+          showDashForNullValue
+        />
         )}
       </WidgetContainer>
     </>
@@ -92,7 +166,6 @@ const CollabReportsTable = (props) => {
 };
 
 CollabReportsTable.defaultProps = {
-  offset: 0,
   loading: false,
   emptyMsg: 'You have no Collaboration Reports',
   showCreateMsgOnEmpty: false,
@@ -101,11 +174,20 @@ CollabReportsTable.defaultProps = {
 CollabReportsTable.propTypes = {
   emptyMsg: PropTypes.string,
   loading: PropTypes.bool,
-  offset: PropTypes.number,
-  // eslint-disable-next-line react/forbid-prop-types
-  reports: PropTypes.arrayOf(PropTypes.object).isRequired,
+  data: PropTypes.shape({
+    rows: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })),
+    count: PropTypes.number,
+  }).isRequired,
+  requestSort: PropTypes.func.isRequired,
+  sortConfig: PropTypes.shape({
+    offset: PropTypes.number,
+    activePage: PropTypes.number,
+    direction: PropTypes.string,
+    sortBy: PropTypes.string,
+  }).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
+  setSortConfig: PropTypes.func.isRequired,
 };
 
 export default CollabReportsTable;

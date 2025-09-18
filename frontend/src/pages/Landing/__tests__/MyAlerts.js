@@ -98,7 +98,8 @@ describe('My Alerts', () => {
 
   test('displays the correct recipients', async () => {
     renderMyAlerts();
-    const recipients = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera recipient name click to visually reveal the recipients for r14-ar-1/i });
+    const recipients = await screen.findByRole('button', { name: /click to visually reveal the recipients for r14-ar-1/i });
+    expect(recipients.textContent).toContain('Johnston-Romaguera');
     const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -118,8 +119,7 @@ describe('My Alerts', () => {
 
   test('displays the correct collaborators', async () => {
     renderMyAlerts();
-    const collaborators = await screen.findByRole('button', { name: /orange, gs hermione granger, ss click to visually reveal the collaborators for r14-ar-1/i });
-
+    const collaborators = await screen.findByRole('button', { name: /click to visually reveal the collaborators for r14-ar-1/i });
     expect(collaborators).toBeVisible();
     expect(collaborators.firstChild).toHaveClass('smart-hub--ellipsis');
     const truncated = collaborators.firstChild.firstChild.firstChild;

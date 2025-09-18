@@ -1,62 +1,85 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import CollabReports from '../components/CollabReports';
-import * as fetchers from '../../../fetchers/collaboratorReports';
+import { getReports, getAlerts } from '../../../fetchers/collaborationReports';
+import AppLoadingContext from '../../../AppLoadingContext';
+import { NOOP } from '../../../Constants';
 
-jest.mock('../../../fetchers/collaboratorReports');
+jest.mock('../../../fetchers/collaborationReports');
 
 describe('CollabReports', () => {
   const mockReports = [
-    { id: 1, name: 'Report 1' },
-    { id: 2, name: 'Report 2' },
+    { id: 1, name: 'Report 1', regionId: 1 },
+    { id: 2, name: 'Report 2', regionId: 1 },
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('Renders loading state and then reports table', async () => {
-    fetchers.getReports.mockResolvedValue({ rows: mockReports });
+  const renderTest = (props) => {
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: NOOP }}>
+        <CollabReports {...props} />
+      </AppLoadingContext.Provider>,
+    );
+  };
 
-    render(<CollabReports title="Test Title" />);
+  test('Renders loading state and then reports table', async () => {
+    getReports.mockResolvedValue({ count: 0, rows: mockReports });
+
+    renderTest({ title: 'Test Title' });
 
     expect(screen.getByText('Test Title')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(fetchers.getReports).toHaveBeenCalled();
+      expect(getReports).toHaveBeenCalled();
       expect(screen.getByText('Test Title')).toBeInTheDocument();
     });
   });
 
   test('Renders empty message when no reports', async () => {
-    fetchers.getReports.mockResolvedValue({ rows: [] });
+    getReports.mockResolvedValue({ count: 0, rows: [] });
 
-    render(<CollabReports emptyMsg="No reports found" />);
+    renderTest({ emptyMsg: 'No reports found' });
 
     await waitFor(() => {
-      expect(fetchers.getReports).toHaveBeenCalled();
+      expect(getReports).toHaveBeenCalled();
       expect(screen.getByText('No reports found')).toBeInTheDocument();
     });
   });
 
   test('Renders error alert on fetch failure', async () => {
-    fetchers.getReports.mockRejectedValue(new Error('Network error'));
+    getReports.mockRejectedValue(new Error('Network error'));
 
-    render(<CollabReports />);
+    renderTest();
 
     await waitFor(() => {
-      expect(fetchers.getReports).toHaveBeenCalled();
+      expect(getReports).toHaveBeenCalled();
       expect(screen.getByRole('alert')).toHaveTextContent('Unable to fetch reports');
     });
   });
 
   test('Passes showCreateMsgOnEmpty prop to table', async () => {
-    fetchers.getReports.mockResolvedValue({ rows: [] });
+    getReports.mockResolvedValue({ count: 0, rows: [] });
 
-    render(<CollabReports showCreateMsgOnEmpty />);
+    renderTest({ showCreateMsgOnEmpty: true });
 
     await waitFor(() => {
-      expect(fetchers.getReports).toHaveBeenCalled();
+      expect(getReports).toHaveBeenCalled();
+      // The empty message should still be present
+      expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
+    });
+  });
+
+  test('Passes isAlerts prop to table', async () => {
+    getAlerts.mockResolvedValue({ count: 0, rows: [] });
+
+    renderTest({ isAlerts: true });
+
+    await waitFor(() => {
+      expect(getAlerts).toHaveBeenCalled();
       // The empty message should still be present
       expect(screen.getByText('You have no Collaboration Reports')).toBeInTheDocument();
     });
