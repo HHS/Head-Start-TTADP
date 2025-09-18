@@ -43,7 +43,7 @@ module.exports = {
           allowNull: false,
         },
         duration: {
-          type: Sequelize.FLOAT,
+          type: Sequelize.DOUBLE,
           allowNull: false,
           validate: {
             min: 0,

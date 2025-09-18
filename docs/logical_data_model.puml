@@ -227,10 +227,10 @@ class CollabReportApprovers{
  * collabReportId : integer : REFERENCES "CollabReports".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
- * status : enum
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  note : text
+ status : enum
 }
 
 class CollabReportDataUsed{
@@ -290,7 +290,7 @@ class CollabReports{
  * conductMethod : enum[]
  * createdAt : timestamp with time zone
  * description : text
-!issue='column type does not match model: double precision != smallint' * duration : <color:#d54309>double precision</color>
+ * duration : double precision
  * endDate : date
  * isStateActivity : boolean : false
  * name : varchar(255)

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import stringify from 'csv-stringify/lib/sync';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   NOT_FOUND,
@@ -12,6 +13,7 @@ import {
   createOrUpdateReport,
   getReports as getReportsService,
   deleteReport,
+  getCSVReports,
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -20,11 +22,10 @@ import { userSettingOverridesById } from '../../services/userSettings';
 import { USER_SETTINGS } from '../../constants';
 import {
   collaboratorAssignedNotification,
-  // changesRequestedNotification,
-  // reportApprovedNotification,
 } from '../../lib/mailer';
 import { setReadRegions } from '../../services/accessValidation';
 import { upsertApprover } from '../../services/collabReportApprovers';
+import { collabReportToCsvRecord } from '../../lib/transform';
 
 const namespace = 'SERVICE:COLLAB_REPORTS';
 
@@ -73,6 +74,132 @@ export async function getReports(req: Request, res: Response) {
     res.json(reportPayload);
   } catch (err) {
     await handleErrors(req, res, err, logContext);
+  }
+}
+
+export async function getAlerts(req: Request, res: Response) {
+  try {
+    // get the current user ID from the request
+    const userId = await currentUserId(req, res);
+    // filter the query so that only regions the user has permission
+    // to are included
+    const query = await setReadRegions(req.query, userId);
+    // the query here may contain additional filter information
+    // so we expect the collab reports to have a full filter suite
+    const reportPayload = await getReportsService({
+      ...query,
+      status: [
+        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.NEEDS_ACTION,
+      ],
+      userId,
+    });
+    // reportPayload will be an object like:
+    // - { count: number, rows: CollabReport[] }
+    // if no reports are found, it'll just be:
+    // - { count: 0, rows: [] }
+    // so there's no reason to 404 or die here
+    res.json(reportPayload);
+  } catch (err) {
+    await handleErrors(req, res, err, logContext);
+  }
+}
+
+export async function sendCollabReportCSV(reports, res) {
+  const csvRows = await Promise.all(reports.map((r) => collabReportToCsvRecord(r)));
+
+  // base options
+  let options = {
+    header: true,
+    quoted: true,
+    quoted_empty: true,
+    columns: [],
+  };
+
+  if (csvRows.length > 0) {
+    options = {
+      ...options,
+      columns: [
+        {
+          key: 'displayId',
+          header: 'Report ID',
+        },
+        {
+          key: 'name',
+          header: 'Activity name',
+        },
+        {
+          key: 'startDate',
+          header: 'Start date',
+        },
+        {
+          key: 'endDate',
+          header: 'End date',
+        },
+        {
+          key: 'duration',
+          header: 'Duration',
+        },
+        {
+          key: 'purpose',
+          header: 'Purpose',
+        },
+        {
+          key: 'isStateActivity',
+          header: 'Is state activity',
+        },
+        {
+          key: 'method',
+          header: 'Method',
+        },
+        {
+          key: 'description',
+          header: 'Description',
+        },
+        {
+          key: 'steps',
+          header: 'Next steps',
+        },
+        {
+          key: 'createdAt',
+          header: 'Created date',
+        },
+        {
+          key: 'updatedAt',
+          header: 'Last updated date',
+        },
+      ],
+    };
+  }
+
+  const csvData = stringify(
+    csvRows,
+    options,
+  );
+
+  res.send(csvData);
+}
+
+/**
+ * Download activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function downloadReports(req: Request, res: Response) {
+  try {
+    // get the current user ID from the request
+    const userId = await currentUserId(req, res);
+    // filter the query so that only regions the user has permission
+    // to are included
+    const query = await setReadRegions(req.query, userId);
+    // the query here may contain additional filter information
+    // so we expect the collab reports to have a full filter suite
+    const reportPayload = await getCSVReports(query);
+    await sendCollabReportCSV(reportPayload, res);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
   }
 }
 

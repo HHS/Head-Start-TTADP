@@ -105,7 +105,7 @@ export default function StateMultiSelect({
   name, control,
 }) {
   const { user } = useContext(UserContext);
-  const [stateCodes, setStateCodes] = useState([]);
+  const [stateCodes, setStateCodes] = useState();
 
   useEffect(() => {
     async function fetchStateCodes() {
@@ -172,7 +172,7 @@ export default function StateMultiSelect({
     }
 
     // we're only fetching these once
-    if (!stateCodes.length) {
+    if (!stateCodes) {
       fetchStateCodes();
     }
   }, [stateCodes, user]);
@@ -181,7 +181,7 @@ export default function StateMultiSelect({
     <MultiSelect
       name={name}
       control={control}
-      options={stateCodes}
+      options={stateCodes || []}
     />
   );
 }

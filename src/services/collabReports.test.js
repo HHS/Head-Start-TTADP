@@ -8,7 +8,14 @@ import db, {
   CollabReportApprover,
   CollabReportReason,
 } from '../models';
-import { collabReportById, createOrUpdateReport, deleteReport } from './collabReports';
+import {
+  collabReportById,
+  createOrUpdateReport,
+  deleteReport,
+  orderCollabReportsBy,
+  collabReportScopes,
+  getCSVReports,
+} from './collabReports';
 
 const mockUser = {
   id: 1115665161,
@@ -296,6 +303,241 @@ describe('Collab Reports Service', () => {
       await expect(deleteReport(null)).rejects.toThrow();
       await expect(deleteReport(undefined)).rejects.toThrow();
       await expect(deleteReport({})).rejects.toThrow();
+    });
+  });
+
+  describe('orderCollabReportsBy', () => {
+    it('returns correct order for Activity_name ascending', () => {
+      const result = orderCollabReportsBy('Activity_name', 'asc');
+      expect(result).toEqual([['name', 'asc']]);
+    });
+
+    it('returns correct order for Activity_name descending', () => {
+      const result = orderCollabReportsBy('Activity_name', 'desc');
+      expect(result).toEqual([['name', 'desc']]);
+    });
+
+    it('returns correct order for Report_ID', () => {
+      const result = orderCollabReportsBy('Report_ID', 'asc');
+      expect(result).toEqual([['id', 'asc']]);
+    });
+
+    it('returns correct order for Date_started', () => {
+      const result = orderCollabReportsBy('Date_started', 'desc');
+      expect(result).toEqual([['startDate', 'desc']]);
+    });
+
+    it('returns correct order for Created_date', () => {
+      const result = orderCollabReportsBy('Created_date', 'asc');
+      expect(result).toEqual([['createdAt', 'asc']]);
+    });
+
+    it('returns correct order for Last_saved', () => {
+      const result = orderCollabReportsBy('Last_saved', 'desc');
+      expect(result).toEqual([['updatedAt', 'desc']]);
+    });
+
+    it('returns literal for Creator sort', () => {
+      const result = orderCollabReportsBy('Creator', 'asc');
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveLength(2);
+      expect(result[0][1]).toBe('asc');
+      // Check that it's a Sequelize literal
+      expect(result[0][0]).toHaveProperty('val');
+    });
+
+    it('returns literal for Collaborators sort', () => {
+      const result = orderCollabReportsBy('Collaborators', 'desc');
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveLength(2);
+      expect(result[0][1]).toBe('desc');
+      // Check that it's a Sequelize literal
+      expect(result[0][0]).toHaveProperty('val');
+    });
+
+    it('defaults to updatedAt for unknown sort key', () => {
+      const result = orderCollabReportsBy('UnknownField', 'asc');
+      expect(result).toEqual([['updatedAt', 'asc']]);
+    });
+
+    it('handles null or undefined sortBy', () => {
+      const result1 = orderCollabReportsBy(null, 'desc');
+      expect(result1).toEqual([['updatedAt', 'desc']]);
+
+      const result2 = orderCollabReportsBy(undefined, 'asc');
+      expect(result2).toEqual([['updatedAt', 'asc']]);
+    });
+  });
+
+  describe('collabReportScopes', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('returns standard scopes with calculatedStatus', async () => {
+      const result = await collabReportScopes({}, null, 'approved');
+
+      expect(result).toEqual({
+        customScopes: [],
+        standardScopes: {
+          calculatedStatus: 'approved',
+        },
+      });
+    });
+
+    it('adds userId filter when userId is provided', async () => {
+      const result = await collabReportScopes({}, 123, 'draft');
+
+      expect(result.standardScopes).toHaveProperty([Op.or]);
+      expect(result.standardScopes[Op.or]).toHaveLength(3);
+      expect(result.standardScopes[Op.or][0]).toEqual({ userId: 123 });
+    });
+
+    it('includes specialist subquery when userId is provided', async () => {
+      const result = await collabReportScopes({}, 456, 'submitted');
+
+      const orConditions = result.standardScopes[Op.or];
+      expect(orConditions[1]).toHaveProperty('id');
+      expect(orConditions[1].id).toHaveProperty([Op.in]);
+      // Check that it contains the user ID in the literal
+      expect(orConditions[1].id[Op.in].val).toContain('456');
+    });
+
+    it('includes approver subquery when userId is provided', async () => {
+      const result = await collabReportScopes({}, 789, 'approved');
+
+      const orConditions = result.standardScopes[Op.or];
+      expect(orConditions[2]).toHaveProperty('id');
+      expect(orConditions[2].id).toHaveProperty([Op.in]);
+      // Check that it contains the user ID in the literal
+      expect(orConditions[2].id[Op.in].val).toContain('789');
+    });
+
+    it('does not add userId filter when userId is null', async () => {
+      const result = await collabReportScopes({ region: [1, 2] }, null, 'needs_action');
+
+      expect(result).toEqual({
+        customScopes: [],
+        standardScopes: {
+          calculatedStatus: 'needs_action',
+        },
+      });
+      expect(result.standardScopes).not.toHaveProperty([Op.or]);
+    });
+  });
+
+  describe('getCSVReports', () => {
+    it('returns all reports when no filters are provided', async () => {
+      const result = await getCSVReports();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('includes all required attributes for CSV export', async () => {
+      const result = await getCSVReports({ limit: '1' });
+      expect(result.length).toBe(1);
+
+      const report = result[0];
+      expect(report).toHaveProperty('name');
+      expect(report).toHaveProperty('description');
+      expect(report).toHaveProperty('startDate');
+      expect(report).toHaveProperty('endDate');
+      expect(report).toHaveProperty('author');
+      expect(report).toHaveProperty('collaboratingSpecialists');
+      expect(report).toHaveProperty('approvers');
+      expect(report.get('status')).toBeTruthy();
+    });
+
+    it('includes author information with roles', async () => {
+      const result = await getCSVReports({ limit: '1' });
+      const report = result[0];
+
+      expect(report.author).toHaveProperty('fullName');
+      expect(report.author).toHaveProperty('name');
+      expect(report.author).toHaveProperty('roles');
+      expect(Array.isArray(report.author.roles)).toBe(true);
+    });
+
+    it('includes collaborating specialists with roles', async () => {
+      const result = await getCSVReports({ limit: '10' });
+
+      // Find a report with specialists
+      const reportWithSpecialists = result.find((r) => r.collaboratingSpecialists
+        && r.collaboratingSpecialists.length > 0);
+
+      expect(reportWithSpecialists).toBeTruthy();
+      expect(Array.isArray(reportWithSpecialists.collaboratingSpecialists)).toBe(true);
+      const specialist = reportWithSpecialists.collaboratingSpecialists[0];
+      expect(specialist).toHaveProperty('id');
+      expect(specialist).toHaveProperty('name');
+      expect(specialist).toHaveProperty('fullName');
+      expect(specialist).toHaveProperty('roles');
+      expect(Array.isArray(specialist.roles)).toBe(true);
+    });
+
+    it('includes approvers with user information', async () => {
+      const result = await getCSVReports({ limit: '10' });
+
+      // Find a report with approvers
+      const reportWithApprovers = result.find((r) => r.approvers && r.approvers.length > 0);
+
+      expect(reportWithApprovers).toBeTruthy();
+      expect(Array.isArray(reportWithApprovers.approvers)).toBe(true);
+      const approver = reportWithApprovers.approvers[0];
+      expect(approver).toHaveProperty('id');
+      expect(approver).toHaveProperty('status');
+      expect(approver).toHaveProperty('note');
+      expect(approver).toHaveProperty('user');
+      expect(approver.user).toHaveProperty('id');
+      expect(approver.user).toHaveProperty('name');
+      expect(approver.user).toHaveProperty('fullName');
+    });
+
+    it('respects limit parameter', async () => {
+      const result = await getCSVReports({ limit: '1' });
+      expect(result).toHaveLength(1);
+    });
+
+    it('handles "all" limit parameter', async () => {
+      const result = await getCSVReports({ limit: 'all' });
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('respects sortBy and sortDir parameters', async () => {
+      const resultAsc = await getCSVReports({
+        sortBy: 'Activity_name',
+        sortDir: 'asc',
+        limit: '2',
+      });
+      const resultDesc = await getCSVReports({
+        sortBy: 'Activity_name',
+        sortDir: 'desc',
+        limit: '2',
+      });
+
+      expect(resultAsc).toHaveLength(2);
+      expect(resultDesc).toHaveLength(2);
+
+      // Names should be in opposite order
+      expect(resultAsc[0].name).not.toBe(resultDesc[0].name);
+    });
+
+    it('includes steps data when available', async () => {
+      const result = await getCSVReports({ limit: '10' });
+
+      result.forEach((report) => {
+        expect(report).toHaveProperty('steps');
+        expect(Array.isArray(report.steps)).toBe(true);
+      });
+    });
+
+    it('uses default parameters when none provided', async () => {
+      const result = await getCSVReports();
+
+      expect(Array.isArray(result)).toBe(true);
+      // Should respect default limit of REPORTS_PER_PAGE (10)
+      expect(result.length).toBeLessThanOrEqual(10);
     });
   });
 });

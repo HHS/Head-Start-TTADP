@@ -3,7 +3,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import {
-  render, screen,
+  render, screen, act,
 } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
@@ -144,12 +144,16 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns false when required strings are missing', () => {
       const formState = { isValid: false };
       const formData = {
+        name: '',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
         activityName: '',
         activityDescription: 'test',
         reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: 1.5,
-        regionalOrState: 'regional',
+        isStateActivity: 'false',
         startDate: '01/01/2024',
         endDate: '01/02/2024',
       };
@@ -160,12 +164,16 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns false when required arrays are empty', () => {
       const formState = { isValid: false };
       const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: [],
+        conductMethod: ['virtual'],
         activityName: 'Test Activity',
         activityDescription: 'test',
         reportReasons: [],
         deliveryMethods: ['virtual'],
         duration: 1.5,
-        regionalOrState: 'regional',
+        isStateActivity: 'false',
         startDate: '01/01/2024',
         endDate: '01/02/2024',
       };
@@ -176,12 +184,16 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns false when statesInvolved is empty for state activity', () => {
       const formState = { isValid: false };
       const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
         activityName: 'Test Activity',
         activityDescription: 'test',
         reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: 1.5,
-        regionalOrState: 'state',
+        isStateActivity: 'true',
         statesInvolved: [],
         startDate: '01/01/2024',
         endDate: '01/02/2024',
@@ -193,12 +205,16 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns false when duration is invalid', () => {
       const formState = { isValid: false };
       const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
         activityName: 'Test Activity',
         activityDescription: 'test',
         reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: NaN,
-        regionalOrState: 'regional',
+        isStateActivity: 'false',
         startDate: '01/01/2024',
         endDate: '01/02/2024',
       };
@@ -209,12 +225,16 @@ describe('CollabReport Activity Summary Page', () => {
     it('returns false when dates are invalid', () => {
       const formState = { isValid: false };
       const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
         activityName: 'Test Activity',
         activityDescription: 'test',
         reportReasons: ['participate'],
         deliveryMethods: ['virtual'],
         duration: 1.5,
-        regionalOrState: 'regional',
+        isStateActivity: 'false',
         startDate: 'invalid-date',
         endDate: '01/02/2024',
       };
@@ -230,7 +250,7 @@ describe('CollabReport Activity Summary Page', () => {
         reportReasons: ['participate'],
         conductMethod: ['virtual'],
         duration: 1.5,
-        regionalOrState: 'regional',
+        isStateActivity: 'false',
         startDate: '01/01/2024',
         endDate: '01/02/2024',
       };
@@ -246,13 +266,223 @@ describe('CollabReport Activity Summary Page', () => {
         reportReasons: ['participate'],
         conductMethod: ['virtual'],
         duration: 1.5,
-        regionalOrState: 'state',
+        isStateActivity: 'true',
         statesInvolved: ['CA'],
         startDate: '01/01/2024',
         endDate: '01/02/2024',
       };
 
       expect(isPageComplete(formData, formState)).toBe(true);
+    });
+
+    it('returns true when regional activity without statesInvolved', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        reportReasons: ['participate'],
+        conductMethod: ['virtual'],
+        duration: 1.5,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: '01/02/2024',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(true);
+    });
+
+    it('returns false when name is missing', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: '',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
+        duration: 1.5,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: '01/02/2024',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+
+    it('returns false when description is missing', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: '',
+        activityReasons: ['participate'],
+        reportReasons: ['participate'],
+        conductMethod: ['virtual'],
+        duration: 1.5,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: '01/02/2024',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+
+    it('returns false when conductMethod is empty', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        reportReasons: ['participate'],
+        conductMethod: [],
+        duration: 1.5,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: '01/02/2024',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+
+    it('returns false when duration is 0', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
+        reportReasons: ['participate'],
+        duration: 0,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: '01/02/2024',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+
+    it('returns false when duration is null', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        reportReasons: ['participate'],
+        conductMethod: ['virtual'],
+        duration: null,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: '01/02/2024',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+
+    it('returns false when both dates are invalid', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        conductMethod: ['virtual'],
+        reportReasons: ['participate'],
+        duration: 1.5,
+        isStateActivity: 'false',
+        startDate: 'invalid-date',
+        endDate: 'invalid-date',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+
+    it('returns false when end date is invalid', () => {
+      const formState = { isValid: false };
+      const formData = {
+        name: 'Test Activity',
+        description: 'test',
+        activityReasons: ['participate'],
+        reportReasons: ['participate'],
+        conductMethod: ['virtual'],
+        duration: 1.5,
+        isStateActivity: 'false',
+        startDate: '01/01/2024',
+        endDate: 'invalid-date',
+      };
+
+      expect(isPageComplete(formData, formState)).toBe(false);
+    });
+  });
+
+  describe('State activity conditional rendering', () => {
+    it('shows states fieldset when state activity is selected', async () => {
+      render(
+        <RenderActivitySummary
+          defaultValues={{ isStateActivity: 'true' }}
+        />,
+      );
+
+      expect(screen.getByText('Choose the states involved')).toBeInTheDocument();
+    });
+
+    it('hides states fieldset when regional activity is selected', async () => {
+      render(
+        <RenderActivitySummary
+          defaultValues={{ isStateActivity: 'false' }}
+        />,
+      );
+
+      expect(screen.queryByText('Choose the states involved')).not.toBeInTheDocument();
+    });
+
+    it('hides states fieldset by default when no value is set', async () => {
+      render(<RenderActivitySummary />);
+
+      expect(screen.queryByText('Choose the states involved')).not.toBeInTheDocument();
+    });
+
+    it('renders StateMultiSelect component when states fieldset is shown', async () => {
+      render(
+        <RenderActivitySummary
+          defaultValues={{ isStateActivity: 'true' }}
+        />,
+      );
+
+      expect(screen.getByText('Choose the states involved')).toBeInTheDocument();
+      // StateMultiSelect should render - we can verify by checking for the multi-select structure
+      const statesField = screen.getByText('Choose the states involved').closest('fieldset');
+      expect(statesField).toBeInTheDocument();
+    });
+
+    it('shows states fieldset when user selects state radio button', async () => {
+      render(<RenderActivitySummary />);
+
+      // Initially, states fieldset should not be visible
+      expect(screen.queryByText('Choose the states involved')).not.toBeInTheDocument();
+
+      const stateRadio = screen.getByLabelText('State');
+
+      await act(async () => {
+        userEvent.click(stateRadio);
+      });
+
+      expect(await screen.findByText('Choose the states involved')).toBeInTheDocument();
+    });
+
+    it('hides states fieldset when user selects regional radio button', async () => {
+      render(
+        <RenderActivitySummary
+          defaultValues={{ isStateActivity: 'true' }}
+        />,
+      );
+
+      // Verify states fieldset is initially shown
+      expect(screen.getByText('Choose the states involved')).toBeInTheDocument();
+
+      const regionalRadio = screen.getByLabelText('Regional');
+
+      await act(async () => {
+        userEvent.click(regionalRadio);
+      });
+
+      expect(screen.queryByText('Choose the states involved')).not.toBeInTheDocument();
     });
   });
 });

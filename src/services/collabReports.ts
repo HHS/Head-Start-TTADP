@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Model, Op } from 'sequelize';
 import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
+import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { syncCRApprovers } from './collabReportApprovers';
 
@@ -19,13 +19,60 @@ interface ICollabReport {
 const {
   CollabReport,
   CollabReportApprover,
-  CollabReportReason,
   CollabReportSpecialist,
+  CollabReportStep,
+  CollabReportReason,
   User,
-  Region,
+  Role,
 } = db;
 
 const REPORTS_PER_PAGE = 10;
+
+export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') => {
+  const SORT_KEY = {
+    Activity_name: 'name',
+    Report_ID: 'id',
+    Date_started: 'startDate',
+    Created_date: 'createdAt',
+    Last_saved: 'updatedAt',
+    Creator: sequelize.literal('"_1"'),
+    Collaborators: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportSpecialists" INNER JOIN "Users" ON "Users"."id" = "CollabReportSpecialists"."specialistId" WHERE "CollabReportSpecialists"."collabReportId" = "CollabReport"."id" AND "CollabReportSpecialists"."deletedAt" IS NULL)'),
+    Status: 'calculatedStatus',
+    Approvers: sequelize.literal('(SELECT MIN("Users"."name") FROM "CollabReportApprovers" INNER JOIN "Users" ON "Users"."id" = "CollabReportApprovers"."userId" WHERE "CollabReportApprovers"."collabReportId" = "CollabReport"."id" AND "CollabReportApprovers"."deletedAt" IS NULL)'),
+  };
+
+  return [[SORT_KEY[sortBy] || 'updatedAt', sortDir]];
+};
+
+export const collabReportScopes = async (filters, userId, status) => {
+  const { collabReport: customScopes } = await filtersToScopes(filters);
+  const standardScopes = {
+    calculatedStatus: status,
+  };
+
+  if (userId) {
+    standardScopes[Op.or] = [
+      {
+        userId,
+      },
+      {
+        id: {
+          [Op.in]: sequelize.literal(`(SELECT crs."collabReportId" FROM "CollabReportSpecialists" crs WHERE crs."specialistId" = ${userId})`),
+        },
+      },
+      {
+        id: {
+          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra WHERE cra."userId" = ${userId})`),
+        },
+      },
+    ];
+  }
+
+  return {
+    customScopes,
+    standardScopes,
+  };
+};
 
 // Helper function to create a report
 async function create(report) {
@@ -202,72 +249,212 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   return report.toJSON();
 }
 
-export async function getReports(
+export async function getCSVReports(
   {
     sortBy = 'updatedAt',
     sortDir = 'desc',
-    offset = 0,
-    limit = REPORTS_PER_PAGE,
+    offset = '0',
+    limit = String(REPORTS_PER_PAGE),
     status = REPORT_STATUSES.APPROVED,
-    userId = 0,
+    userId,
     ...filters
   }: {
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
-    offset?: number;
-    limit?: number;
-    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
+    offset?: string;
+    limit?: string;
     userId?: number;
+    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
   } = {},
 ) {
-  const { collabReports: scopes } = await filtersToScopes(filters, { userId });
+  const order = orderCollabReportsBy(sortBy, sortDir);
+  const {
+    standardScopes,
+    customScopes,
+  } = await collabReportScopes(filters, userId, status);
 
-  return CollabReport.findAndCountAll({
-    attributes: ['id'],
+  return CollabReport.findAll({
+    attributes: {
+      include: [
+        ['calculatedStatus', 'status'],
+      ],
+      exclude: [
+        'calculatedStatus',
+        'submissionStatus',
+        'lastUpdatedById',
+      ],
+    },
     where: {
       [Op.and]: [
-        { calculatedStatus: status },
-        scopes,
+        standardScopes,
+        customScopes,
+      ],
+    },
+    include: [
+
+      {
+        model: User,
+        as: 'author',
+        required: true,
+        attributes: ['fullName', 'name'],
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+          },
+        ],
+      },
+      {
+        model: User,
+        as: 'collaboratingSpecialists',
+        attributes: ['id', 'name', 'fullName'],
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+          },
+        ],
+      },
+      {
+        model: CollabReportApprover,
+        attributes: [
+          'id',
+          'status',
+          'note',
+        ],
+        as: 'approvers',
+        required: false,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+                attributes: ['name'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: CollabReportStep,
+        as: 'steps',
+        required: false,
+        attributes: [
+          'collabStepCompleteDate',
+          'collabStepDetail',
+        ],
+      },
+      {
+        model: CollabReportReason,
+        as: 'reportReasons',
+      },
+    ],
+    limit: limit === 'all' ? null : Number(limit),
+    order,
+  });
+}
+
+export async function getReports(
+  {
+    sortBy = 'updatedAt',
+    sortDir = 'desc',
+    offset = '0',
+    limit = String(REPORTS_PER_PAGE),
+    status = REPORT_STATUSES.APPROVED,
+    userId,
+    ...filters
+  }: {
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
+    offset?: string;
+    limit?: string;
+    userId?: number;
+    status?: keyof typeof REPORT_STATUSES | Array<keyof typeof REPORT_STATUSES>;
+  } = {},
+) {
+  const order = orderCollabReportsBy(sortBy, sortDir);
+  const {
+    standardScopes,
+    customScopes,
+  } = await collabReportScopes(filters, userId, status);
+
+  return CollabReport.findAndCountAll({
+    attributes: [
+      'id',
+      'name',
+      'startDate',
+      'createdAt',
+      'updatedAt',
+      'displayId',
+      'regionId',
+      'link',
+      'calculatedStatus',
+    ],
+    where: {
+      [Op.and]: [
+        standardScopes,
+        customScopes,
       ],
     },
     include: [
       {
         model: User,
         as: 'author',
-        required: false,
-      },
-      {
-        model: Region,
-        as: 'region',
-      },
-      {
-        model: CollabReportSpecialist,
-        as: 'collabReportSpecialists',
-        required: false,
-        separate: true,
+        required: true,
+        attributes: ['fullName', 'name'],
         include: [
           {
-            model: User,
-            as: 'specialist',
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+          },
+        ],
+      },
+      {
+        model: User,
+        as: 'collaboratingSpecialists',
+        attributes: ['id', 'name', 'fullName'],
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
           },
         ],
       },
       {
         model: CollabReportApprover,
-        attributes: ['id', 'status', 'note'],
+        attributes: [
+          'id',
+          'status',
+          'note',
+        ],
         as: 'approvers',
         required: false,
-        separate: true,
         include: [
           {
             model: User,
             as: 'user',
             attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+                attributes: ['name'],
+              },
+            ],
           },
         ],
       },
     ],
-    order: [[sortBy, sortDir]],
+    limit: limit === 'all' ? null : Number(limit),
+    order,
   });
 }
 

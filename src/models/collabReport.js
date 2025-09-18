@@ -106,7 +106,7 @@ export default (sequelize, DataTypes) => {
       },
       duration: {
         allowNull: false,
-        type: DataTypes.SMALLINT,
+        type: DataTypes.DOUBLE,
         validate: {
           min: 0,
         },
@@ -123,6 +123,52 @@ export default (sequelize, DataTypes) => {
       description: {
         allowNull: false,
         type: DataTypes.TEXT,
+      },
+      // virtual columns
+      creatorName: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (this.author) {
+            return this.author.fullName;
+          }
+          return null;
+        },
+      },
+      displayId: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.regionId) {
+            return this.id;
+          }
+          return `R${this.regionId.toString().padStart(2, '0')}-CR-${this.id}`;
+        },
+      },
+      link: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return `/collaboration-reports/${this.id}`;
+        },
+      },
+      stepDetailsWithDates: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.steps) return null;
+          return this.steps.map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`).join('\n');
+        },
+      },
+      purpose: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.reportReasons) return null;
+          return this.reportReasons.map((r) => r.reasonId).join('/n');
+        },
+      },
+      method: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          if (!this.conductMethod) return null;
+          return this.conductMethod.join('\n');
+        },
       },
     },
     {

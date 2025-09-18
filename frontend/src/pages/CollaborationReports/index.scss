@@ -1,20 +1,9 @@
-// TODO: we can refactor the react to use 
+// TODO: we can refactor the react/HTML to use 
 // the uswds css classes and existing components
 // to dispose of this file entirely
 
 .collab-report-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   gap: 0rem;
-
-  h1 {
-    margin-bottom: 0;
-  }
-
-  div {
-    margin-top: 16px;
-  }
 
   @media (min-width: 84em) {
     flex-direction: row;
