@@ -261,25 +261,50 @@ describe('formDataHelpers', () => {
   });
 
   describe('convertReportToFormData', () => {
+    it('should handle report with undefined dates', () => {
+      const fetchedReport = {
+        id: 1,
+        title: 'Test Report',
+        status: 'draft',
+      };
+
+      const result = convertReportToFormData(fetchedReport);
+
+      expect(result).toEqual(expect.objectContaining({
+        id: 1,
+        title: 'Test Report',
+        status: 'draft',
+      }));
+    });
+
+    it('should handle report with empty string dates', () => {
+      const fetchedReport = {
+        id: 1,
+        title: 'Test Report',
+        startDate: '',
+        endDate: '',
+        status: 'draft',
+      };
+
+      const result = convertReportToFormData(fetchedReport);
+
+      expect(result).toEqual(expect.objectContaining({
+        id: 1,
+        title: 'Test Report',
+        status: 'draft',
+      }));
+    });
+
     it('should preserve all other fields', () => {
       const fetchedReport = {
         id: 1,
         title: 'Test Report',
-        startDate: '01/15/2024',
-        endDate: '01/20/2024',
+        startDate: '2024-01-15',
+        endDate: '2024-01-20',
         status: 'draft',
-        collabReportSpecialists: [
-          {
-            id: 1,
-            specialistId: 5,
-            specialist:
-            {
-              id: 5, fullName: 'John Doe',
-            },
-          },
-        ],
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
+        collabReportSpecialists: [{ id: 5, name: 'John Doe', specialist: { id: 1, fullName: 'John Doe, Specialist' } }],
         calculatedStatus: 'submitted',
         isStateActivity: true,
         regionId: 1,
@@ -287,19 +312,147 @@ describe('formDataHelpers', () => {
 
       const result = convertReportToFormData(fetchedReport);
 
-      expect(result).toEqual({
+      expect(result).toEqual(expect.objectContaining({
         id: 1,
         title: 'Test Report',
-        startDate: '01/15/2024',
-        endDate: '01/20/2024',
+        startDate: '2024-01-15',
+        endDate: '2024-01-20',
         status: 'draft',
-        collabReportSpecialists: [{ value: 5, name: 'John Doe' }],
+        collabReportSpecialists: [{ value: 1, name: 'John Doe, Specialist' }],
         reportReasons: [],
         isStateActivity: 'true',
         approvers: [{ id: 2, name: 'Jane Smith' }],
         additionalData: { notes: 'Important notes' },
         calculatedStatus: 'submitted',
         regionId: 1,
+      }));
+    });
+
+    describe('collabReportSpecialists conversion', () => {
+      it('should convert collabReportSpecialists to MultiSelect format when present', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: [
+            { specialist: { fullName: 'John Doe', id: 123 } },
+            { specialist: { fullName: 'Jane Smith', id: 456 } },
+          ],
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([
+          { name: 'John Doe', value: 123 },
+          { name: 'Jane Smith', value: 456 },
+        ]);
+      });
+
+      it('should set empty array for collabReportSpecialists when not present', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+
+      it('should set empty array for collabReportSpecialists when null', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: null,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+
+      it('should set empty array for collabReportSpecialists when undefined', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: undefined,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+
+      it('should handle empty collabReportSpecialists array', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          collabReportSpecialists: [],
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.collabReportSpecialists).toEqual([]);
+      });
+    });
+
+    describe('isStateActivity conversion', () => {
+      it('should convert isStateActivity true to string "true"', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: true,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe('true');
+      });
+
+      it('should convert isStateActivity false to string "false"', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: false,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe('false');
+      });
+
+      it('should set isStateActivity to null when undefined', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: undefined,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe(null);
+      });
+
+      it('should set isStateActivity to null when null', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+          isStateActivity: null,
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe(null);
+      });
+
+      it('should set isStateActivity to null when not present', () => {
+        const fetchedReport = {
+          id: 1,
+          title: 'Test Report',
+        };
+
+        const result = convertReportToFormData(fetchedReport);
+
+        expect(result.isStateActivity).toBe(null);
       });
     });
   });

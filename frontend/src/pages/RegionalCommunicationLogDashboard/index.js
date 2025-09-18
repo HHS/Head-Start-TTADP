@@ -2,7 +2,7 @@ import React, { useContext, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
-import { Grid, Link } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import { getUserRegions } from '../../permissions';
 import UserContext from '../../UserContext';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -14,6 +14,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionalCommLogTable from './components/RegionalCommLogTable';
 import { regionFilter } from '../../components/filter/communicationLogFilters';
+import NewReportButton from '../../components/NewReportButton';
 import './index.scss';
 
 const defaultDate = formatDateRange({
@@ -133,13 +134,9 @@ export default function RegionalCommunicationLog() {
           {userHasOnlyOneRegion ? 'your region' : 'your regions'}
         </h1>
         <div>
-          <Link
-            href={`/communication-log/region/${defaultRegion}/log/new`}
-            className="usa-button smart-hub--new-report-btn"
-          >
-            <span className="smart-hub--plus">+</span>
-            <span className="smart-hub--new-report">Add communication</span>
-          </Link>
+          <NewReportButton to={`/communication-log/region/${defaultRegion}/log/new`}>
+            Add communication
+          </NewReportButton>
         </div>
       </div>
 

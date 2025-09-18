@@ -1,76 +1,34 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
+import ApproverTableDisplay from '../../../components/ApproverTableDisplay';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
+import { getStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
-import './CollabReportsTable.css';
-import { getReportsCSV, getReportsCSVById } from '../../../fetchers/collaborationReports';
 
-const ALL = 2; // this is a constant
-
-const CollabReportsTable = ({
+const CollabReportAlertsTable = ({
   emptyMsg,
   loading,
+  offset,
   showCreateMsgOnEmpty,
   title,
   data,
   requestSort,
   sortConfig,
-  setSortConfig,
 }) => {
-  const [reportCheckboxes, setReportCheckboxes] = useState({});
-
-  const selectedReports = useMemo(() => {
-    const ids = [];
-    Object.entries(reportCheckboxes).forEach(([key, value]) => {
-      if (value) {
-        ids.push(key);
-      }
-    });
-
-    return ids;
-  }, [reportCheckboxes]);
-
-  const menuItems = [
-    {
-      label: 'Export table',
-      onClick: async () => getReportsCSV(sortConfig),
-    },
-  ];
-
-  if (selectedReports.length) {
-    menuItems.unshift(
-      {
-        label: 'Export selected rows',
-        onClick: async () => getReportsCSVById(selectedReports, sortConfig),
-      },
-    );
-  }
-
-  const handlePageChange = useCallback((e) => {
-    let newValue = Number(e.target.value);
-    if (newValue === ALL) {
-      newValue = 'all';
-    }
-
-    setSortConfig((previousConfig) => ({
-      ...previousConfig,
-      perPage: newValue,
-    }));
-  }, [setSortConfig]);
-
   const tabularData = useMemo(() => data.rows.map((r) => ({
-    id: r.id,
     heading: <Link to={r.link}>{r.displayId}</Link>,
+    id: r.id,
     data: [
       {
         title: 'Activity name',
-        tooltip: r.name,
         value: r.name,
+        tooltip: r.name,
       },
       {
         title: 'Date started',
@@ -90,8 +48,25 @@ const CollabReportsTable = ({
         value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
       },
       {
-        title: 'Last saved',
-        value: moment(r.updatedAt).format(DATE_DISPLAY_FORMAT),
+        title: 'Approvers',
+        value: <ApproverTableDisplay approvers={r.approvers} />,
+      },
+      {
+        value: (() => {
+          const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
+            r.calculatedStatus,
+            r.approvers,
+            false,
+          );
+          return (
+            <Tag
+              className={statusClassName}
+            >
+              {displayStatus}
+            </Tag>
+          );
+        }
+        )(),
       },
     ],
   })), [data.rows]);
@@ -99,27 +74,17 @@ const CollabReportsTable = ({
   return (
     <>
       <WidgetContainer
-        className="collab-reports-table--widget-container"
         title={title}
-        enableCheckboxes
-        checkboxes={reportCheckboxes}
-        setCheckboxes={setReportCheckboxes}
-        showPagingBottom={data.count > 0}
+        className="collab-alerts-table-container"
+        // enableCheckboxes
+        showPagingBottom={false}
+        showPagingTop={false}
         loading={loading}
         loadingLabel="Collaboration reports table loading"
         totalCount={data.count}
-        offset={sortConfig.offset}
-        currentPage={sortConfig.activePage}
+        offset={offset}
         perPage={10}
-        titleMargin={{ bottom: 1 }}
-        menuItems={menuItems}
-        showPagingTop
-        paginationCardTopProps={{
-          perPageChange: handlePageChange,
-          noXofX: true,
-          spaceBetweenSelectPerPageAndContext: 2,
-        }}
-        titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
+        titleMargin={{ bottom: 3 }}
       >
         { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
@@ -146,13 +111,11 @@ const CollabReportsTable = ({
             'Creator',
             'Created date',
             'Collaborators',
-            'Last saved',
+            'Approvers',
+            'Status',
           ]}
           data={tabularData}
           firstHeading="Report ID"
-          enableCheckboxes
-          checkboxes={reportCheckboxes}
-          setCheckboxes={setReportCheckboxes}
           enableSorting
           sortConfig={sortConfig}
           requestSort={requestSort}
@@ -165,29 +128,27 @@ const CollabReportsTable = ({
   );
 };
 
-CollabReportsTable.defaultProps = {
+CollabReportAlertsTable.defaultProps = {
+  offset: 0,
   loading: false,
   emptyMsg: 'You have no Collaboration Reports',
   showCreateMsgOnEmpty: false,
 };
 
-CollabReportsTable.propTypes = {
+CollabReportAlertsTable.propTypes = {
   emptyMsg: PropTypes.string,
   loading: PropTypes.bool,
+  offset: PropTypes.number,
   data: PropTypes.shape({
     rows: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })),
     count: PropTypes.number,
   }).isRequired,
+  // setData: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
-  sortConfig: PropTypes.shape({
-    offset: PropTypes.number,
-    activePage: PropTypes.number,
-    direction: PropTypes.string,
-    sortBy: PropTypes.string,
-  }).isRequired,
+  sortConfig: PropTypes.shape({}).isRequired,
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
-  setSortConfig: PropTypes.func.isRequired,
+
 };
 
-export default CollabReportsTable;
+export default CollabReportAlertsTable;

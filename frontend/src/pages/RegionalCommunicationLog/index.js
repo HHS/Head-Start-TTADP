@@ -20,7 +20,7 @@ import LogFormNavigator from '../../components/CommunicationLog/components/LogFo
 import AppLoadingContext from '../../AppLoadingContext';
 import UserContext from '../../UserContext';
 
-const shouldFetch = ({
+export const shouldFetch = ({
   communicationLogId,
   regionId,
   reportFetched,

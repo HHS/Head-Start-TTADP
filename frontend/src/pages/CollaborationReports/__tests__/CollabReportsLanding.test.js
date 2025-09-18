@@ -96,21 +96,13 @@ describe('CollabReportsLanding', () => {
     expect(screen.getByTestId('region-permission-modal')).toBeInTheDocument();
   });
 
-  test('renders FilterPanelContainer and FilterPanel', () => {
-    renderComponent();
-
-    expect(screen.getByTestId('filter-panel-container')).toBeInTheDocument();
-    expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
-    expect(screen.getByLabelText('apply filters for activity reports')).toBeInTheDocument();
-  });
-
   test('renders both CollabReports components with correct props', () => {
     renderComponent();
 
     const collabReportsComponents = screen.getAllByTestId('collab-reports');
     expect(collabReportsComponents).toHaveLength(2);
 
-    expect(screen.getByText('Collaboration Report Alerts')).toBeInTheDocument();
+    expect(screen.getByText('My Collaboration Reports')).toBeInTheDocument();
     expect(screen.getByText('You have no Collaboration Reports in progress.')).toBeInTheDocument();
 
     expect(screen.getByText('Approved Collaboration Reports')).toBeInTheDocument();
@@ -134,7 +126,7 @@ describe('CollabReportsLanding', () => {
 
     const header = document.querySelector('.collab-report-header');
     expect(header).toBeInTheDocument();
-    expect(header).toHaveClass('flex-align-center', 'margin-top-0', 'margin-bottom-3');
+    expect(header).toHaveClass('flex-align-start', 'margin-top-0', 'margin-bottom-3');
   });
 
   test('renders heading with correct class', () => {

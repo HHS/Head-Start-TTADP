@@ -39,7 +39,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
     },
     status: {
-      allowNull: false,
+      allowNull: true,
       type: DataTypes.ENUM(Object.keys(APPROVER_STATUSES).map((k) => APPROVER_STATUSES[k])),
     },
     note: {

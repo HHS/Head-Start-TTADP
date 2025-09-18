@@ -34,6 +34,8 @@ const dummyReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
   calculatedStatus: REPORT_STATUSES.DRAFT,
   userId: 1,
+  reportReasons: [],
+  collabReportSpecialists: [],
 };
 
 const ReportComponent = ({
@@ -852,10 +854,10 @@ describe('CollaborationReportForm', () => {
       fetchMock.get('/api/users/collaborators?region=-1', []);
     });
 
-    it('handles pending approver status logic - covers line 257 and 261', async () => {
+    it('handles approver with pending status', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [{ user: { id: 1 }, status: null }],
+        approvers: [{ user: { id: 1 }, status: 'pending' }],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
 
@@ -868,11 +870,14 @@ describe('CollaborationReportForm', () => {
       });
     });
 
-    it('handles approver with pending status - covers line 261', async () => {
+    it('isCollaborator check with existing collaborators', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
-        approvers: [{ user: { id: 1 }, status: 'pending' }],
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        collabReportSpecialists: [
+          { userId: 1, user: { id: 1 }, specialist: { fullName: 'a' } }, // Current user is collaborator
+          { userId: 2, user: { id: 2 }, specialist: { fullName: 'b' } },
+        ],
+        calculatedStatus: REPORT_STATUSES.DRAFT,
       });
 
       getItem.mockReturnValue(null);
