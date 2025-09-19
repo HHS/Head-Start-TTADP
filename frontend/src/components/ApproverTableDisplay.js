@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import { APPROVER_STATUSES } from '@ttahub/common';
 import {
   PendingApprovalIcon,
@@ -40,7 +41,7 @@ const ApproverTableDisplay = ({
   ));
 
   return approverNames.map((a) => (
-    <span key={a.id}>
+    <span key={uniqueId('approver-table-display-')}>
       <ProperIcon approvalStatus={a.status} />
       {a.user.fullName}
     </span>

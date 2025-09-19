@@ -22,8 +22,12 @@ const {
   CollabReportSpecialist,
   CollabReportStep,
   CollabReportReason,
+  CollabReportDataUsed,
+  CollabReportGoal,
+  CollabReportActivityState,
   User,
   Role,
+  GoalTemplate,
 } = db;
 
 const REPORTS_PER_PAGE = 10;
@@ -179,6 +183,38 @@ export async function collabReportById(crId: string) {
             as: 'specialist',
           },
         ],
+      },
+      {
+        model: CollabReportGoal,
+        as: 'reportGoals',
+        include: [
+          {
+            model: GoalTemplate,
+            as: 'goalTemplate',
+            attributes: ['id', 'standard'],
+          },
+        ],
+      },
+      {
+        model: CollabReportDataUsed,
+        as: 'dataUsed',
+      },
+      {
+        model: CollabReportStep,
+        as: 'steps',
+        required: false,
+        attributes: [
+          'collabStepCompleteDate',
+          'collabStepDetail',
+        ],
+      },
+      {
+        model: CollabReportReason,
+        as: 'reportReasons',
+      },
+      {
+        model: CollabReportActivityState,
+        as: 'activityStates',
       },
       {
         model: CollabReportApprover,
@@ -395,6 +431,7 @@ export async function getReports(
       'regionId',
       'link',
       'calculatedStatus',
+      'submissionStatus',
     ],
     where: {
       [Op.and]: [

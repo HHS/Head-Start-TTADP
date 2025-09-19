@@ -13,6 +13,7 @@ const getReports = (queryInterface) => [
     isStateActivity: false,
     conductMethod: queryInterface.sequelize.literal("ARRAY['virtual']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is an approved collaboration report for testing purposes.',
+    submittedAt: new Date('2025-01-02'),
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -30,6 +31,7 @@ const getReports = (queryInterface) => [
     isStateActivity: false,
     conductMethod: queryInterface.sequelize.literal("ARRAY['in_person']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is a submitted collaboration report for testing purposes.',
+    submittedAt: new Date('2025-01-04'),
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -64,6 +66,7 @@ const getReports = (queryInterface) => [
     isStateActivity: false,
     conductMethod: queryInterface.sequelize.literal("ARRAY['virtual']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is an approved collaboration report for testing purposes.',
+    submittedAt: new Date('2025-01-02'),
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -81,6 +84,7 @@ const getReports = (queryInterface) => [
     isStateActivity: false,
     conductMethod: queryInterface.sequelize.literal("ARRAY['virtual']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is an approved collaboration report for testing purposes.',
+    submittedAt: new Date('2025-01-02'),
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -132,6 +136,7 @@ const getReports = (queryInterface) => [
     isStateActivity: false,
     conductMethod: queryInterface.sequelize.literal("ARRAY['virtual']::\"enum_CollabReports_conductMethod\"[]"),
     description: 'This is a report for testing purposes.',
+    submittedAt: new Date('2025-01-02'),
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -189,6 +194,18 @@ const reasons = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    collabReportId: 20004,
+    reasonId: 'participate_work_groups',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20005,
+    reasonId: 'support_coordination',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const approvers = [
@@ -229,6 +246,18 @@ const activityStates = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    collabReportId: 20004,
+    activityStateCode: 'CA',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20005,
+    activityStateCode: 'FL',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const dataUsed = [
@@ -253,6 +282,20 @@ const dataUsed = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    collabReportId: 20004,
+    collabReportDatum: 'pir',
+    collabReportDataOther: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20005,
+    collabReportDatum: 'census_data',
+    collabReportDataOther: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const goals = [
@@ -271,6 +314,18 @@ const goals = [
   {
     collabReportId: 20003,
     goalTemplateId: 18,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20004,
+    goalTemplateId: 17,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20005,
+    goalTemplateId: 19,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -310,6 +365,42 @@ const steps = [
     collabStepDetail: 'Draft preparation and review',
     collabStepCompleteDate: '2025-01-05',
     collabStepPriority: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20004,
+    collabStepId: 1,
+    collabStepDetail: 'Initial assessment and planning phase',
+    collabStepCompleteDate: '2025-01-01',
+    collabStepPriority: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20004,
+    collabStepId: 2,
+    collabStepDetail: 'Implementation and monitoring phase',
+    collabStepCompleteDate: '2025-01-02',
+    collabStepPriority: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20005,
+    collabStepId: 1,
+    collabStepDetail: 'Regional coordination and assessment',
+    collabStepCompleteDate: '2025-01-01',
+    collabStepPriority: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20005,
+    collabStepId: 2,
+    collabStepDetail: 'Cross-regional collaboration implementation',
+    collabStepCompleteDate: '2025-01-02',
+    collabStepPriority: 2,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

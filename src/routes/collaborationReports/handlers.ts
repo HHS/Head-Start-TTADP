@@ -301,6 +301,7 @@ export async function submitReport(req: Request, res: Response) {
 
     const newReport = {
       lastUpdatedById: userId,
+      submittedAt: new Date(),
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
     };
