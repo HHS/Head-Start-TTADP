@@ -1,7 +1,7 @@
 import overview from './overview';
 import dashboardOverview from './dashboardOverview';
 import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
-import reasonList from './reasonList';
+import standardGoalsList from './standardGoalsList';
 import { topicFrequencyGraph } from './topicFrequencyGraph';
 import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
@@ -23,7 +23,7 @@ export default {
   overview,
   dashboardOverview,
   totalHrsAndRecipientGraph,
-  reasonList,
+  standardGoalsList,
 
   topicFrequencyGraph,
   targetPopulationTable,

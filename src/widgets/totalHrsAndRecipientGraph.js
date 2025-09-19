@@ -143,9 +143,9 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       // Check if we have added this activity report for this date.
       if (!arDates.find((cache) => cache.id === r.id && cache.date === r.startDate)) {
         // Populate Both.
-        if ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) || r.ttaType.includes('Both')) {
+        if (r.ttaType && ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) || r.ttaType.includes('Both'))) {
           addOrUpdateResponse(2, res, xValue, r.duration, month);
-        } else if (r.ttaType.includes('training') || r.ttaType.includes('Training')) {
+        } else if (r.ttaType && (r.ttaType.includes('training') || r.ttaType.includes('Training'))) {
           // Hours of Training.
           addOrUpdateResponse(0, res, xValue, r.duration, month);
         } else {
