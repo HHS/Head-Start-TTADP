@@ -70,9 +70,9 @@ export default function SubmittedCollabReport({ report }) {
   const formattedStates = activityStates.map(({ activityStateCode }) => STATES[activityStateCode] || '').join(', ');
   const formattedReasons = reportReasons.map(({ reasonId }) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
   const formattedGoals = reportGoals.map((goal) => goal?.goalTemplate?.standard || '').join(', ');
-  const formattedDataUsed = dataUsed.map(({ collabReportDatum, collabReportDatumOther }) => {
+  const formattedDataUsed = dataUsed.map(({ collabReportDatum, collabReportDataOther }) => {
     if (collabReportDatum === 'other') {
-      return collabReportDatumOther;
+      return collabReportDataOther;
     }
 
     return COLLAB_REPORT_DATA[collabReportDatum] || '';
