@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
-  LOCAL_STORAGE_DATA_KEY,
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY as LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY as LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_EDITABLE_KEY as LOCAL_STORAGE_EDITABLE_KEY,
 } from '../Constants';
 import { getReport } from '../fetchers/activityReports';
 

@@ -12,6 +12,8 @@ const WidgetContainerTitleGroup = ({
   pagination,
   menuItems,
   titleMargin,
+  menuClassNames,
+  className,
 }) => {
   const h2Margins = useMarginFromConfig(titleMargin);
 
@@ -28,7 +30,7 @@ const WidgetContainerTitleGroup = ({
   };
 
   return (
-    <div className={`smart-hub--table-widget-container padding-x-3 padding-top-3 position-relative ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
+    <div className={`smart-hub--table-widget-container  ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className}`}>
       <div className="desktop:display-flex flex-align-center flex-gap-2">
         <div>
           <h2 className={`smart-hub--table-widget-heading ${h2Margins} font-sans-lg`}>
@@ -40,7 +42,7 @@ const WidgetContainerTitleGroup = ({
       </div>
       <div>
         {(menuItems.length > 0 && (
-          <div className="position-absolute top-0 right-0 margin-top-3 margin-right-3">
+          <div className={menuClassNames}>
             <ContextMenu
               menuItems={menuItems}
               label={`Open Actions for ${title}`}
@@ -69,6 +71,8 @@ WidgetContainerTitleGroup.propTypes = {
     right: PropTypes.number,
     left: PropTypes.number,
   }),
+  className: PropTypes.string,
+  menuClassNames: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -78,6 +82,8 @@ WidgetContainerTitleGroup.defaultProps = {
   subtitle: '',
   showHeaderBorder: false,
   menuItems: [],
+  className: 'padding-x-3 padding-top-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2',
+  menuClassNames: 'position-absolute right-0 margin-top-3 margin-right-3 top-0',
   titleMargin: {
     bottom: 0,
     top: 0,
