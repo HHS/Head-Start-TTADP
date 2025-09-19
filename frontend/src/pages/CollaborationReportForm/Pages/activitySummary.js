@@ -4,7 +4,6 @@ import React, {
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
-// import { isUndefined } from 'lodash';
 import {
   Fieldset,
   Radio,
@@ -22,15 +21,13 @@ import FormItem from '../../../components/FormItem';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
-// import HtmlReviewItem from './Review/HtmlReviewItem';
-// import Section from './Review/ReviewSection';
-// import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
 import './activitySummary.scss';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const ActivitySummary = ({ collaborators = [] }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
@@ -362,82 +359,51 @@ ActivitySummary.propTypes = {
   ).isRequired,
 };
 
-// const sections = [
-//   {
-//     title: 'Who was the activity for?',
-//     anchor: 'activity-for',
-//     items: [
-//       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
-//       { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
-//       { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
-//     ],
-//   },
-//   {
-//     title: 'Reason for activity',
-//     anchor: 'reasons',
-//     items: [
-//       { label: 'Requested by', name: 'requester' },
-//       { label: 'Reasons', name: 'reason', sort: true },
-//     ],
-//   },
-//   {
-//     title: 'Activity date',
-//     anchor: 'date',
-//     items: [
-//       { label: 'Start date', name: 'startDate' },
-//       { label: 'End date', name: 'endDate' },
-//       { label: 'Duration', name: 'duration' },
-//     ],
-//   },
-//   {
-//     title: 'Training or Technical Assistance',
-//     anchor: 'tta',
-//     items: [
-//       { label: 'TTA type', name: 'ttaType' },
-//       { label: 'Language used', name: 'language' },
-//       { label: 'Conducted', name: 'deliveryMethod' },
-//     ],
-//   },
-//   {
-//     title: 'Other participants',
-//     anchor: 'other-participants',
-//     items: [
-//       { label: 'Recipient participants', name: 'participants', sort: true },
-//       { label: 'Number of participants', name: 'numberOfParticipants' },
-//     ],
-//   },
-// ];
-
-const ReviewSection = () => <div>Activity name</div>;
-
-// TODO: Abandoned review section
-// const { watch } = useFormContext();
-// const {
-//   context,
-//   calculatedStatus,
-// } = watch();
-
-// const canEdit = reportIsEditable(calculatedStatus);
-// return (
-//   <>
-//     {/* <ReviewPage sections={sections} path="activity-summary" /> */}
-//     {/* eslint-disable-next-line react/jsx-no-undef */}
-//     <Section
-//       hidePrint={isUndefined(context)}
-//       key="context"
-//       basePath="activity-summary"
-//       anchor="context"
-//       title="Context"
-//       canEdit={canEdit}
-//     >
-//       {/* eslint-disable-next-line react/jsx-no-undef */}
-//       <HtmlReviewItem
-//         label="Context"
-//         name="context"
-//       />
-//     </Section>
-//   </>
-// );
+const sections = [
+  // {
+  //   title: 'Who was the activity for?',
+  //   anchor: 'activity-for',
+  //   items: [
+  //     { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
+  //     { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
+  //     { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
+  //   ],
+  // },
+  // {
+  //   title: 'Reason for activity',
+  //   anchor: 'reasons',
+  //   items: [
+  //     { label: 'Requested by', name: 'requester' },
+  //     { label: 'Reasons', name: 'reason', sort: true },
+  //   ],
+  // },
+  {
+    title: 'Activity date',
+    anchor: 'date',
+    items: [
+      { label: 'Start date', name: 'startDate' },
+      { label: 'End date', name: 'endDate' },
+      { label: 'Duration', name: 'duration' },
+    ],
+  },
+  // {
+  //   title: 'Training or Technical Assistance',
+  //   anchor: 'tta',
+  //   items: [
+  //     { label: 'TTA type', name: 'ttaType' },
+  //     { label: 'Language used', name: 'language' },
+  //     { label: 'Conducted', name: 'deliveryMethod' },
+  //   ],
+  // },
+  // {
+  //   title: 'Other participants',
+  //   anchor: 'other-participants',
+  //   items: [
+  //     { label: 'Recipient participants', name: 'participants', sort: true },
+  //     { label: 'Number of participants', name: 'numberOfParticipants' },
+  //   ],
+  // },
+];
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -508,7 +474,7 @@ export default {
   position: 0,
   label: 'Activity summary',
   path: 'activity-summary',
-  reviewSection: () => <ReviewSection />,
+  reviewSection: () => <ReviewPage sections={sections} path="activity-summary" />,
   review: false,
   render: (
     additionalData,
