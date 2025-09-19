@@ -1,0 +1,4 @@
+/* Ensuring consistent padding between table headers and data cells */
+.ttahub-goal-counts-table .ttahub-simple-sortable-table td {
+  padding-left: 1.5rem;
+}
