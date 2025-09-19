@@ -19,9 +19,10 @@ export function StandardGoalsListTable({
     <Container paddingX={1} paddingY={1} loading={loading} loadingLabel="Goals list loading">
       <div className="ttahub-goal-counts-table landing inline-size-auto maxw-full margin-bottom-0">
         <div className="display-flex flex-wrap flex-align-center">
-          <WidgetH2 classNames="padding-3">
+          <WidgetH2 classNames="padding-bottom-0 padding-3">
             {title || 'Goals categories in Activity Reports'}
           </WidgetH2>
+          <p className="usa-prose padding-x-3 padding-bottom-3 padding-top-1 margin-0">Data shown reflects activity from 09/01/25 onwards.</p>
         </div>
         <div
           className="usa-table-container--scrollable"
