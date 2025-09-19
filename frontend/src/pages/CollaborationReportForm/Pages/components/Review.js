@@ -6,34 +6,39 @@ import _ from 'lodash';
 import {
   Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
-import { Editor } from 'react-draft-wysiwyg';
-import IncompletePages from '../../../components/IncompletePages';
-import { Accordion } from '../../../components/Accordion';
-import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../Constants';
-import { getEditorState } from '../../../utils';
-import FormItem from '../../../components/FormItem';
-import HookFormRichEditor from '../../../components/HookFormRichEditor';
-import ApproverStatusList from '../../ActivityReport/Pages/components/ApproverStatusList';
-import UserContext from '../../../UserContext';
-import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import ApproverSelect from '../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect';
-import DisplayApproverNotes from '../../ActivityReport/Pages/components/DisplayApproverNotes';
+import IncompletePages from '../../../../components/IncompletePages';
+import { Accordion } from '../../../../components/Accordion';
+import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../Constants';
+import FormItem from '../../../../components/FormItem';
+import HookFormRichEditor from '../../../../components/HookFormRichEditor';
+import ApproverStatusList from '../../../ActivityReport/Pages/components/ApproverStatusList';
+import UserContext from '../../../../UserContext';
+import IndicatesRequiredField from '../../../../components/IndicatesRequiredField';
+import ApproverSelect from '../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect';
+import DisplayApproverNotes from '../../../ActivityReport/Pages/components/DisplayApproverNotes';
+import ApproverReview from './ApproverReview';
+import CreatorSubmit from './CreatorSubmit';
 
 const Review = ({
-  additionalNotes,
   onFormReview,
   approverStatusList,
   pendingOtherApprovals,
   dateSubmitted,
   pages,
-  showDraftViewForApproverAndCreator,
   availableApprovers,
   reviewItems,
+  isCreator,
+  isSubmitted,
+  // isApproved,
+  // isNeedsAction,
+  // isApprover,
 }) => {
+
+  const FormComponent = isSubmitted ? ApproverReview : CreatorSubmit;
+
   const { handleSubmit, register } = useFormContext();
   const { user } = useContext(UserContext);
 
-  const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
   const otherManagerNotes = approverStatusList
     ? approverStatusList.filter((a) => a.user.id !== user.id) : null;
   const thisApprovingManager = approverStatusList
@@ -50,6 +55,8 @@ const Review = ({
   const hasIncompletePages = incompletePages.length > 0;
   const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
 
+  const submitButtonText = isSubmitted ? 'Submit for approval' : 'Submit report';
+
   return (
     <>
       <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
@@ -59,12 +66,12 @@ const Review = ({
           <Accordion bordered items={reviewItems} multiselectable />
         </div>
       )}
-      <div className="smart-hub--creator-notes" aria-label="additionalNotes">
-        <p>
-          <span className="text-bold">Creator notes</span>
-        </p>
-        <Editor readOnly toolbarHidden defaultEditorState={defaultEditorState} />
-      </div>
+
+      <FormComponent
+        hasIncompletePages={hasIncompletePages}
+        incompletePages={incompletePages}
+      />
+
       {
         otherManagerNotes && otherManagerNotes.length > 0 && (
           <div className="smart-hub--creator-notes margin-top-2">
@@ -77,6 +84,23 @@ const Review = ({
       }
 
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
+        {(isCreator && !isSubmitted) && (
+        <div className="margin-bottom-3">
+          <Fieldset className="smart-hub--report-legend margin-top-4">
+            <FormItem
+              label="Approving manager"
+              name="approvers"
+            >
+              <ApproverSelect
+                name="approvers"
+                valueProperty="user.id"
+                labelProperty="user.fullName"
+                options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
+              />
+            </FormItem>
+          </Fieldset>
+        </div>
+        )}
         <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top">
           <Label htmlFor="note">Add manager notes</Label>
           <div className="margin-top-1">
@@ -90,7 +114,6 @@ const Review = ({
           </div>
         </Fieldset>
 
-        { !showDraftViewForApproverAndCreator ? (
           <>
             {
             dateSubmitted
@@ -122,7 +145,7 @@ const Review = ({
             </FormItem>
 
           </>
-        ) : (
+        {/* ) : (
           <div className="margin-bottom-3">
             <Fieldset className="smart-hub--report-legend margin-top-4">
               <FormItem
@@ -138,18 +161,17 @@ const Review = ({
               </FormItem>
             </Fieldset>
           </div>
-        )}
+        )} */}
 
-        <ApproverStatusList approverStatus={approverStatusList} />
-        {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
-        <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Update report' : 'Submit'}</Button>
+        {/* <ApproverStatusList approverStatus={approverStatusList} /> */}
+        
+        <Button disabled={hasIncompletePages} type="submit">{ submitButtonText }</Button>
       </Form>
     </>
   );
 };
 
 Review.propTypes = {
-  additionalNotes: PropTypes.string,
   onFormReview: PropTypes.func.isRequired,
   dateSubmitted: PropTypes.string,
   pendingOtherApprovals: PropTypes.bool,
@@ -157,7 +179,6 @@ Review.propTypes = {
     approver: PropTypes.string,
     status: PropTypes.string,
   })),
-  showDraftViewForApproverAndCreator: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,
@@ -172,11 +193,15 @@ Review.propTypes = {
     title: PropTypes.string.isRequired,
     content: PropTypes.node.isRequired,
   })).isRequired,
+  isCreator: PropTypes.bool.isRequired,
+  isSubmitted: PropTypes.bool.isRequired,
+  isApproved: PropTypes.bool.isRequired,
+  isNeedsAction: PropTypes.bool.isRequired,
+  isApprover: PropTypes.bool.isRequired,
 };
 
 Review.defaultProps = {
   pendingOtherApprovals: false,
-  additionalNotes: '',
   approverStatusList: [],
   dateSubmitted: null,
 };

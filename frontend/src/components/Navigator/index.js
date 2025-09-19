@@ -118,12 +118,11 @@ const Navigator = ({
   }, autoSaveInterval);
 
   const navigatorPages = pages.map((p) => {
-    // debugger;
     const current = p.position === page.position;
 
     const stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
     if (stateOfPage !== COMPLETE) {
-      // stateOfPage = current ? IN_PROGRESS : pageState[p.position];
+      // stateOfPage = current ? IN_PROGRESS : pageState[p.position]; // todo: uncomment
     }
 
     const state = p.review ? formData[formDataStatusProp] : stateOfPage;
