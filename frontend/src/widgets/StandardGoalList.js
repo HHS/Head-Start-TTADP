@@ -22,7 +22,7 @@ export function StandardGoalsListTable({
           <WidgetH2 classNames="padding-bottom-0 padding-3">
             {title || 'Goals categories in Activity Reports'}
           </WidgetH2>
-          <p className="usa-prose padding-x-3 padding-bottom-3 padding-top-1 margin-0">Data shown reflects activity from 09/01/25 onwards.</p>
+          <p className="usa-prose padding-x-3 padding-bottom-3 padding-top-1 margin-0">Data reflects activity starting on 09/01/2025.</p>
         </div>
         <div
           className="usa-table-container--scrollable"
