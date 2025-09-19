@@ -29,6 +29,9 @@ export default function WidgetContainer(
     enableCheckboxes,
     titleMargin,
     displayPaginationBoxOutline,
+    paginationCardTopProps,
+    menuClassNames,
+    titleGroupClassNames,
   },
 ) {
   return (
@@ -38,6 +41,8 @@ export default function WidgetContainer(
         title={title}
         subtitle={subtitle}
         showHeaderBorder={showHeaderBorder}
+        menuClassNames={menuClassNames}
+        className={titleGroupClassNames}
         pagination={showPagingTop ? (
           <PaginationCard
             currentPage={currentPage}
@@ -45,7 +50,8 @@ export default function WidgetContainer(
             offset={offset}
             perPage={perPage}
             handlePageChange={handlePageChange}
-            className="flex-justify-self-end"
+              // eslint-disable-next-line react/jsx-props-no-spreading
+            {...paginationCardTopProps}
           />
         ) : null}
         menuItems={menuItems}
@@ -99,6 +105,11 @@ WidgetContainer.propTypes = {
   offset: PropTypes.number,
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func,
+  paginationCardTopProps: PropTypes.shape({
+    handlePageChange: PropTypes.func,
+    noXofX: PropTypes.bool,
+    spaceBetweenSelectPerPageAndContext: PropTypes.number,
+  }),
   error: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
@@ -116,6 +127,8 @@ WidgetContainer.propTypes = {
     right: PropTypes.number,
     left: PropTypes.number,
   }),
+  menuClassNames: PropTypes.string,
+  titleGroupClassNames: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -129,10 +142,13 @@ WidgetContainer.defaultProps = {
   offset: 0,
   perPage: 10,
   handlePageChange: null,
+  paginationCardTopProps: {},
   showHeaderBorder: true,
   error: null,
   titleSlot: null,
   loadingLabel: 'Loading',
+  titleGroupClassNames: 'padding-x-3 padding-top-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2',
+  menuClassNames: 'position-absolute right-0 margin-top-3 margin-right-3 top-0',
   className: '',
   menuItems: [],
   footNote: null,

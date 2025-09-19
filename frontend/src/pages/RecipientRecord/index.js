@@ -26,6 +26,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import StandardGoalForm from '../StandardGoalForm';
 import UpdateStandardGoal from '../StandardGoalForm/UpdateStandardGoal';
 import RestartStandardGoal from '../StandardGoalForm/RestartStandardGoal';
+import NewReportButton from '../../components/NewReportButton';
 
 export function PageWithHeading({
   children,
@@ -292,13 +293,9 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <div className="recipient-comm-log-header">
                 <h1 className="page-heading">{recipientNameWithRegion}</h1>
                 <div>
-                  <Link
-                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}
-                    className="usa-button smart-hub--new-report-btn"
-                  >
-                    <span className="smart-hub--plus">+</span>
-                    <span className="smart-hub--new-report">Add communication</span>
-                  </Link>
+                  <NewReportButton to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/new`}>
+                    Add communication
+                  </NewReportButton>
                 </div>
               </div>
               <CommunicationLog
