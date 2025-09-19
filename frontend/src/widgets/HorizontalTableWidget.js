@@ -70,7 +70,6 @@ export default function HorizontalTableWidget(
     );
   };
 
-  // TODO: uncomment once I track down the update ourobouros
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
     setAllCheckBoxesChecked(false);

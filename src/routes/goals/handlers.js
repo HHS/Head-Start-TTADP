@@ -439,6 +439,23 @@ export async function getGoalHistory(req, res) {
                   as: 'resources',
                   attributes: ['id', 'url', 'title'],
                 },
+                {
+                  model: sequelize.models.File,
+                  as: 'files',
+                  attributes: ['id', 'originalFileName', 'fileSize', 'url', 'key'],
+                },
+                {
+                  separate: true,
+                  model: sequelize.models.ActivityReportObjectiveCourse,
+                  as: 'activityReportObjectiveCourses',
+                  required: false,
+                  include: [
+                    {
+                      model: sequelize.models.Course,
+                      as: 'course',
+                    },
+                  ],
+                },
               ],
             },
           ],
