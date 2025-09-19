@@ -1,12 +1,11 @@
-import React from 'react';
-// import React, { useContext } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import formPages from './pages';
-import Review from './Review';
+import Review from './components/Review';
 import Container from '../../../components/Container';
-// import UserContext from '../../../UserContext';
+import UserContext from '../../../UserContext';
 
 const ReviewSubmit = ({
   onFormReview,
@@ -18,17 +17,15 @@ const ReviewSubmit = ({
   reviewItems,
 }) => {
   const {
-    additionalNotes,
     calculatedStatus,
     submissionStatus,
     approvers,
     submittedAt,
     author,
+    userId,
   } = formData;
 
-  console.log({ formData });
-
-  // const { user } = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file
@@ -38,10 +35,11 @@ const ReviewSubmit = ({
   // the report has been approved
 
   // store some values for readability
+  const isCreator = userId === user.id;
   const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
-  // const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
-  // const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  // const isApprover = approvers && approvers.some((a) => a.userId === user.id);
+  const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
+  const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+  const isApprover = approvers && approvers.some((a) => a.user.id === user.id);
 
   // Approvers should be able to change their review until the report is approved.
   // isPendingApprover:
@@ -97,13 +95,16 @@ const ReviewSubmit = ({
         )}
 
         <Review
+          isCreator={isCreator}
+          isSubmitted={isSubmitted}
+          isApproved={isApproved}
+          isNeedsAction={isNeedsAction}
+          isApprover={isApprover}
           pendingOtherApprovals={pendingOtherApprovals}
-          additionalNotes={additionalNotes}
           dateSubmitted={submittedAt}
           onFormReview={onFormReview}
           approverStatusList={approvers}
           pages={formPages}
-        //   showDraftViewForApproverAndCreator={showDraftViewForApproverAndCreator}
           availableApprovers={availableApprovers}
           reviewItems={reviewItems}
         />
@@ -125,6 +126,7 @@ ReviewSubmit.propTypes = {
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
+    userId: PropTypes.number,
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
     submissionStatus: PropTypes.string,
@@ -156,7 +158,7 @@ ReviewSubmit.defaultProps = {
 };
 
 const reviewPage = {
-  position: 5,
+  position: 4,
   review: true,
   label: 'Review and submit',
   path: 'review',
@@ -174,7 +176,7 @@ const reviewPage = {
       lastSaveTime,
     ) => (
       <ReviewSubmit
-        availableApprovers={additionalData.availableApprovers}
+        availableApprovers={additionalData.approvers}
         onSubmit={onSubmit}
         onSaveForm={onSaveForm}
         onReview={onReview}

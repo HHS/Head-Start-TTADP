@@ -43,12 +43,15 @@ import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
+import { getApprovers } from '../../fetchers/activityReports';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
   approvers: [],
   pageState: {
     1: NOT_STARTED,
+    2: NOT_STARTED,
+    3: NOT_STARTED,
   },
   calculatedStatus: REPORT_STATUSES.DRAFT,
 };
@@ -134,7 +137,7 @@ function CollaborationReport({ match, location, region }) {
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
-  const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
+  const [additionalData, updateAdditionalData] = useLocalStorage(
     LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY(collabReportId), {},
   );
   const [isApprover, updateIsApprover] = useState(false);
@@ -226,9 +229,10 @@ function CollaborationReport({ match, location, region }) {
 
         const apiCalls = [
           getCollaborators(report.regionId),
+          getApprovers(report.regionId),
         ];
 
-        const [collaborators] = await Promise.all(apiCalls);
+        const [collaborators, approvers] = await Promise.all(apiCalls);
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
@@ -247,6 +251,7 @@ function CollaborationReport({ match, location, region }) {
 
         updateAdditionalData({
           collaborators: filteredCollaborators || [],
+          approvers: approvers || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -610,7 +615,7 @@ function CollaborationReport({ match, location, region }) {
             onFormSubmit={onFormSubmit}
             onReview={onReview}
             currentPage={currentPage}
-            additionalData={initialAdditionalData}
+            additionalData={additionalData}
             onSave={onSave}
             isApprover={isApprover}
             isPendingApprover={isPendingApprover}

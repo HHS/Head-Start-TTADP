@@ -28,6 +28,10 @@ import StateMultiSelect from '../../../components/StateMultiSelect';
 import './activitySummary.scss';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { COLLAB_REPORT_REASONS, STATES } from '../../../Constants';
+
+const position = 0;
+const path = 'activity-summary';
 
 const ActivitySummary = ({ collaborators = [] }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
@@ -359,52 +363,6 @@ ActivitySummary.propTypes = {
   ).isRequired,
 };
 
-const sections = [
-  // {
-  //   title: 'Who was the activity for?',
-  //   anchor: 'activity-for',
-  //   items: [
-  //     { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
-  //     { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
-  //     { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
-  //   ],
-  // },
-  // {
-  //   title: 'Reason for activity',
-  //   anchor: 'reasons',
-  //   items: [
-  //     { label: 'Requested by', name: 'requester' },
-  //     { label: 'Reasons', name: 'reason', sort: true },
-  //   ],
-  // },
-  {
-    title: 'Activity date',
-    anchor: 'date',
-    items: [
-      { label: 'Start date', name: 'startDate' },
-      { label: 'End date', name: 'endDate' },
-      { label: 'Duration', name: 'duration' },
-    ],
-  },
-  // {
-  //   title: 'Training or Technical Assistance',
-  //   anchor: 'tta',
-  //   items: [
-  //     { label: 'TTA type', name: 'ttaType' },
-  //     { label: 'Language used', name: 'language' },
-  //     { label: 'Conducted', name: 'deliveryMethod' },
-  //   ],
-  // },
-  // {
-  //   title: 'Other participants',
-  //   anchor: 'other-participants',
-  //   items: [
-  //     { label: 'Recipient participants', name: 'participants', sort: true },
-  //     { label: 'Number of participants', name: 'numberOfParticipants' },
-  //   ],
-  // },
-];
-
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
   if (isValid) {
@@ -470,11 +428,60 @@ export const isPageComplete = (formData, formState) => {
   return true;
 };
 
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+  const {
+    name,
+    collabReportSpecialists,
+    startDate,
+    endDate,
+    duration,
+    description,
+    reportReasons,
+    isStateActivity,
+    activityStates,
+    method,
+  } = getValues();
+  const sections = [
+    {
+      anchor: 'activity-for',
+      items: [
+        { label: 'Activity name', name: 'name', customValue: { name } },
+        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists.map((c) => c.name).join(', ') } },
+      ],
+    },
+    {
+      title: 'Activity date',
+      anchor: 'date',
+      items: [
+        { label: 'Start date', name: 'startDate', customValue: { startDate } },
+        { label: 'End date', name: 'endDate', customValue: { endDate } },
+        { label: 'Duration', name: 'duration', customValue: { duration } },
+      ],
+    },
+    {
+      title: 'Reason for activity',
+      anchor: 'reasons',
+      items: [
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons.map((r) => COLLAB_REPORT_REASONS[r.reasonId] || '').join(', ') } },
+        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
+        ...(isStateActivity ? [
+          { label: 'States involved', name: 'states', customValue: { states: activityStates.map((s) => STATES[s.activityStateCode] || '').join(', ') } },
+        ] : []),
+        { label: 'Activity method', name: 'method', customValue: { method } },
+        { label: 'Activity description', name: 'description', customValue: { description } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export default {
-  position: 0,
+  position,
   label: 'Activity summary',
-  path: 'activity-summary',
-  reviewSection: () => <ReviewPage sections={sections} path="activity-summary" />,
+  path,
+  reviewSection: () => <ReviewSection />,
   review: false,
   render: (
     additionalData,
@@ -500,8 +507,8 @@ export default {
           isAppLoading={isAppLoading}
           onContinue={onContinue}
           onSaveDraft={onSaveDraft}
-          path="activity-summary"
-          position={1}
+          path={path}
+          position={position}
           onUpdatePage={onUpdatePage}
         />
       </>
