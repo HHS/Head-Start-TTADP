@@ -368,12 +368,7 @@ function CollaborationReport({ match, location, region }) {
     );
   }
 
-  // TODO: Will take position as a parameter
-  const updatePage = () => {
-    // TODO: uncomment when logic is complete
-    // TODO (alternately): since this logic is so similar in multiple places now,
-    // I suspect we could make it reusable
-
+  const updatePage = (position) => {
     if (!editable) {
       return;
     }
@@ -383,7 +378,8 @@ function CollaborationReport({ match, location, region }) {
       state.showLastUpdatedTime = true;
     }
 
-    const newPath = `/collaboration-reports/${reportId.current}/${currentPage}`;
+    const page = pages.find((p) => p.position === position);
+    const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
     history.push(newPath, state);
   };
 
@@ -452,7 +448,7 @@ function CollaborationReport({ match, location, region }) {
       // Get the current form data
       const { status, ...formValues } = hookForm.getValues();
       // TODO: Add 'pageState' and newNavigatorState to the saved data
-      const data = { ...formData, ...formValues };
+      const data = { ...formData, ...formValues, pageState: {} };
 
       // Clear the previous error message if there is one
       updateErrorMessage();
