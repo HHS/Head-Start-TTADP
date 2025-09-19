@@ -333,6 +333,7 @@ describe('Collaboration Reports Handlers', () => {
         lastUpdatedById: 123,
         calculatedStatus: 'submitted',
         submissionStatus: 'submitted',
+        submittedAt: expect.any(Date),
       }, mockReport);
       expect(mockJson).toHaveBeenCalledWith(submittedReport);
       expect(mockSendStatus).not.toHaveBeenCalled();
