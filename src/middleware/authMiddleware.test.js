@@ -101,16 +101,23 @@ describe('authMiddleware', () => {
   const destroyUser = async (user) => User.destroy({ where: { id: user.id } });
 
   it('should allow access if user data is present', async () => {
+    process.env.CURRENT_USER_ID = 66349;
     await setupUser(mockUser);
-    process.env.CURRENT_USER_ID = String(mockUser.id);
 
-    const next = jest.fn();
-    const req = { path: '/api/endpoint', session: { userId: mockUser.id } };
-    const res = { redirect: jest.fn(), sendStatus: jest.fn() };
-
-    await authMiddleware(req, res, next);
-    expect(res.redirect).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalled();
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = mockUser.id;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalled();
     await destroyUser(mockUser);
   });
 
@@ -145,8 +152,11 @@ describe('authMiddleware', () => {
     expect(req.session.referrerPath).toBe('');
   });
 
-  it('bypass auth when NODE_ENV non-prod and BYPASS_AUTH=true', async () => {
-    const user = { ...mockUser, id: 777, hsesUserId: '777' };
+  it('bypass authorization if variables are set for UAT or accessibility testing', async () => {
+    // auth is bypassed if non-prod NODE_ENV and BYPASS_AUTH = 'true', needed for cucumber and axe
+    const user = {
+      ...mockUser,
+    };
     await setupUser(user);
     process.env.NODE_ENV = 'development';
     process.env.BYPASS_AUTH = 'true';
