@@ -90,7 +90,7 @@ export default function TextTrim({ text, position }) {
 }
 
 TextTrim.propTypes = {
-  text: PropTypes.string.isRequired,
+  text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   position: PropTypes.string,
 };
 
