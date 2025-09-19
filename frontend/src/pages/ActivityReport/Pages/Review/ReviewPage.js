@@ -12,6 +12,7 @@ const ReviewPage = ({
 }) => {
   const { getValues } = useFormContext();
   const canEdit = reportIsEditable(getValues('calculatedStatus'));
+
   return (
     <div className={className}>
       {sections.map((section) => {

@@ -30,9 +30,7 @@ const Review = ({
   availableApprovers,
   reviewItems,
 }) => {
-  const { handleSubmit, register, watch } = useFormContext();
-  const watchTextValue = watch('note');
-  const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
+  const { handleSubmit, register } = useFormContext();
   const { user } = useContext(UserContext);
 
   const defaultEditorState = getEditorState(additionalNotes || 'No creator notes');
@@ -81,7 +79,7 @@ const Review = ({
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
         <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top">
           <Label htmlFor="note">Add manager notes</Label>
-          <div className={`margin-top-1 ${textAreaClass}`}>
+          <div className="margin-top-1">
             <HookFormRichEditor
               ariaLabel="Manager notes"
               id="note"

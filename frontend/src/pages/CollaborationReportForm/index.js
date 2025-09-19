@@ -448,7 +448,7 @@ function CollaborationReport({ match, location, region }) {
       // Get the current form data
       const { status, ...formValues } = hookForm.getValues();
       // TODO: Add 'pageState' and newNavigatorState to the saved data
-      const data = { ...formData, ...formValues };
+      const data = { ...formData, ...formValues, pageState: {} };
 
       // Clear the previous error message if there is one
       updateErrorMessage();
