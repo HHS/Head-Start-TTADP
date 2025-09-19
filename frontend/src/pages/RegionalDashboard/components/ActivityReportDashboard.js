@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import DashboardOverview from '../../../widgets/DashboardOverview';
 import TopicFrequencyGraph from '../../../widgets/TopicFrequencyGraph';
-import ReasonList from '../../../widgets/ReasonList';
+import StandardGoalList from '../../../widgets/StandardGoalList';
 import TotalHrsAndRecipient from '../../../widgets/TotalHrsAndRecipientGraph';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FilterContext from '../../../FilterContext';
@@ -33,7 +33,7 @@ export default function ActivityReportDashboard({
       />
       <Grid row gap={2}>
         <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
-          <ReasonList
+          <StandardGoalList
             filters={filtersToApply}
           />
         </Grid>
