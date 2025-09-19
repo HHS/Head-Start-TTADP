@@ -21,6 +21,8 @@ import runCronJobs from './lib/cron';
 
 const app = express();
 
+// Behind cloud.gov’s router/LB the app sees HTTP from the proxy even though the client used HTTPS.
+// Tell Express to trust the first proxy so req.secure reflects X-Forwarded-Proto === 'https'.
 app.set('trust proxy', 1);
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
