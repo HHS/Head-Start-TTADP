@@ -24,7 +24,7 @@ module.exports = {
         },
         name: {
           type: Sequelize.STRING,
-          allowNull: false,
+          allowNull: true,
         },
         submissionStatus: {
           type: Sequelize.ENUM(['draft', 'submitted']),
@@ -36,15 +36,15 @@ module.exports = {
         },
         startDate: {
           type: Sequelize.DATEONLY,
-          allowNull: false,
+          allowNull: true,
         },
         endDate: {
           type: Sequelize.DATEONLY,
-          allowNull: false,
+          allowNull: true,
         },
         duration: {
           type: Sequelize.DOUBLE,
-          allowNull: false,
+          allowNull: true,
           validate: {
             min: 0,
           },
@@ -56,15 +56,15 @@ module.exports = {
         },
         conductMethod: {
           type: Sequelize.ARRAY(Sequelize.ENUM(['in_person', 'virtual', 'email', 'phone'])),
-          allowNull: false,
+          allowNull: true,
         },
         description: {
           type: Sequelize.TEXT,
-          allowNull: false,
+          allowNull: true,
         },
         userId: {
           type: Sequelize.INTEGER,
-          allowNull: true,
+          allowNull: false,
           references: {
             model: 'Users',
             key: 'id',
