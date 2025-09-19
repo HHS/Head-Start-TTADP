@@ -15,7 +15,7 @@ import UserContext from '../../../UserContext';
 
 const ReportLink = ({ report, userId }) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
-  const isApprover = report.approvers.some(({ userId: user }) => user === userId);
+  const isApprover = report.approvers.some(({ user }) => user.id === userId);
 
   if (isSubmitted && !isApprover) {
     return <Link to={`/collaboration-reports/view/${report.id}`}>{report.displayId}</Link>;
