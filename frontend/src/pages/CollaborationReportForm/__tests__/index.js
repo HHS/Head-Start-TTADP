@@ -794,7 +794,7 @@ describe('CollaborationReportForm', () => {
         ...dummyReport,
         calculatedStatus: REPORT_STATUSES.APPROVED,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ userId: 2 }], // Different user
+        approvers: [{ user: { id: 2 } }],
         id: 123,
       });
 
@@ -812,7 +812,7 @@ describe('CollaborationReportForm', () => {
         ...dummyReport,
         calculatedStatus: REPORT_STATUSES.DRAFT,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ userId: 2 }], // Different user
+        approvers: [{ user: { id: 2 } }], // Different user
         id: 123,
       });
 
@@ -830,7 +830,7 @@ describe('CollaborationReportForm', () => {
         ...dummyReport,
         calculatedStatus: REPORT_STATUSES.DRAFT,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ userId: 1 }], // Same user
+        approvers: [{ user: { id: 1 } }], // Same user
         id: 123,
       });
 

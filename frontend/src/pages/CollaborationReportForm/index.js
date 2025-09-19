@@ -200,7 +200,8 @@ function CollaborationReport({ match, location, region }) {
             // make sure we BELONG here
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
-            const isApproverFromFetched = approvers.some(({ userId }) => user.id === userId);
+            // eslint-disable-next-line max-len
+            const isApproverFromFetched = approvers.some(({ user: approver }) => user.id === approver.id);
 
             if (isApproved || (isSubmitted && !isApproverFromFetched)) {
               // redirect to approved/submitted report view
