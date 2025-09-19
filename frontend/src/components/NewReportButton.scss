@@ -1,0 +1,23 @@
+@use '../colors.scss' as *;
+
+.smart-hub--plus {
+  display: none;
+  font-size: 40px;
+}
+
+@media(min-width: 480px){
+  .smart-hub--plus {
+    display: inline;
+  } 
+}
+
+.smart-hub--new-report-btn {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  line-height: 0.5;
+  min-width: 225px;
+  max-width: 272px;
+  background-color: $ttahub-medium-blue;
+  border-radius: 5px;
+}

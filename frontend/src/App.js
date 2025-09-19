@@ -12,9 +12,9 @@ import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { getNotifications } from './fetchers/feed';
 import { storageAvailable } from './hooks/helpers';
 import {
-  LOCAL_STORAGE_DATA_KEY,
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
+  LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
@@ -98,9 +98,9 @@ function App() {
       try {
         const reportsForCleanup = await getReportsForLocalStorageCleanup();
         reportsForCleanup.forEach(async (report) => {
-          window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
-          window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
-          window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_AR_DATA_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(report.id));
         });
       } catch (err) {
         // eslint-disable-next-line no-console

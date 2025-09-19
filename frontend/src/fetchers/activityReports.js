@@ -127,12 +127,6 @@ export const saveObjectivesForReport = async (data) => {
   return objectives.json();
 };
 
-export const getCollaborators = async (region) => {
-  const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
-  const collaborators = await get(url);
-  return collaborators.json();
-};
-
 export const reviewReport = async (reportId, data) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'review');
   const report = await put(url, data);

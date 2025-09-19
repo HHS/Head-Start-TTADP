@@ -3,7 +3,6 @@ import {
   FORM_FIELD_DEFAULT_ERRORS,
   FORM_FIELD_INDEXES,
   objectivesWithValidResourcesOnly,
-  grantsToMultiValue,
   noDisallowedUrls,
 } from '../constants';
 
@@ -58,29 +57,6 @@ describe('form constants', () => {
     });
   });
 
-  test('grantsToSources function should return the correct source object', () => {
-    const grants = [
-      { numberWithProgramTypes: '123' },
-      { numberWithProgramTypes: '456' },
-      { numberWithProgramTypes: '789' },
-    ];
-
-    const source = {
-      123: 'Source 1',
-      456: 'Source 2',
-      1234: 'Source 1',
-    };
-
-    const expected = {
-      123: 'Source 1',
-      456: 'Source 2',
-      789: '',
-    };
-
-    const result = grantsToMultiValue(grants, source);
-
-    expect(result).toEqual(expected);
-  });
   describe('objectivesWithValidResourcesOnly', () => {
     it('strips invalid resources', () => {
       const objectives = [
