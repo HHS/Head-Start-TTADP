@@ -68,8 +68,8 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
-  test('reasonList', async ({ request }) => {
-    const response = await request.get(`${root}/widgets/reasonList`);
+  test('standardGoalsList', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/standardGoalsList`);
     expect(response.status()).toBe(200);
 
     const schema = Joi.array().items(
