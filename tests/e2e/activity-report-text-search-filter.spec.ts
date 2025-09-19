@@ -42,7 +42,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('link', { name: 'Activity Reports' }).click();
 
     // Create new report.
-    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+    await page.getByRole('link', { name: '+ New Activity Report' }).click();
     const heading = page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 

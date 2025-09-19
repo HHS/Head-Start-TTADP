@@ -21,6 +21,7 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
       User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
       User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
+      User.hasMany(models.CollabReportApprover, { foreignKey: 'userId', as: 'collabReportApprovers', hooks: true });
       User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
       User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
@@ -29,6 +30,14 @@ export default (sequelize, DataTypes) => {
       // User can belong to a national center through a national center user.
       User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
       User.belongsToMany(models.NationalCenter, { through: models.NationalCenterUser, foreignKey: 'userId', as: 'nationalCenters' });
+      User.hasMany(models.CollabReportSpecialist, { foreignKey: 'specialistId', as: 'collabReportSpecialists' });
+      User.belongsToMany(models.CollabReport, {
+        through: models.CollabReportSpecialist,
+        foreignKey: 'specialistId',
+        otherKey: 'collabReportId',
+        as: 'collabReports',
+      });
+      User.hasMany(models.CollabReportApprover, { foreignKey: 'userId', as: 'approvers', hooks: true });
     }
   }
   User.init({

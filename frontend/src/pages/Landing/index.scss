@@ -168,35 +168,6 @@ h1.landing {
   margin: 0px;
 }
 
-.smart-hub--plus {
-  display: none;
-  font-size: 40px;
-}
-
-@media(min-width: 480px ){
-  .smart-hub--plus {
-    display: inline;
-  } 
-  .smart-hub--new-report {
-    margin-left: 10px;
-    margin-top: 7px;
-    float: right;
-  }
-}
-
-.smart-hub--new-report-btn {
-  line-height: 0.5;
-  min-width: 220px;
-  background-color: $ttahub-medium-blue;
-  max-height: 44px;
-  border-radius: 5px;
-  padding: 0.7rem 1.25rem 0.75rem 1.25rem;
-}
-
-.smart-hub--create-new-report {
-  padding-top: 30px;
-}
-
 thead th > .sortable {
   position: relative;
 }
