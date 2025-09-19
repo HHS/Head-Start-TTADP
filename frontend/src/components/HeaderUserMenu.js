@@ -92,10 +92,13 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
       showIfAdmin: true,
     },
     { key: 7, divider: true, showIfAdmin: false },
+    // Use hard navigation so the browser hits the server endpoint
+    // for TTA Hub (RP) initiated logout.
     {
       key: 8,
       label: 'Log out',
-      to: '/logout',
+      to: '/api/logout-oidc',
+      external: true,
     },
   ].map(({
     key,
