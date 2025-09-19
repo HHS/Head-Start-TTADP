@@ -1,7 +1,6 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { DECIMAL_BASE, DISALLOWED_URLS, isValidResourceUrl } from '@ttahub/common';
-import { uniq } from 'lodash';
 
 export const noDisallowedUrls = (value) => {
   const urls = value.map((v) => v.value);
@@ -100,50 +99,6 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
   if (!event.relatedTarget || !event.relatedTarget.matches(selector)) {
     dismiss(true);
   }
-};
-
-/**
- *
- * converts an array of grants to an object with the grant number
- * as the key and the default value as the value
- *
- * @param {Array} grants - an array of grants
- * @param {Object} value - the current value of the form { grantNumber: value }
- * @param {String} defaultValue - the default value for the form
- * @returns {Object} - the new value of the form
- */
-export const grantsToMultiValue = (grants, value = {}, defaultValue = '') => {
-  const current = [];
-  const values = uniq(Object.values(value));
-  let def = defaultValue;
-  if (values.length === 1 && values[0] !== defaultValue) {
-    [def] = values;
-  }
-
-  const newValue = grants.reduce((s, grant) => {
-    current.push(grant.numberWithProgramTypes);
-
-    if (value[grant.numberWithProgramTypes]) {
-      return {
-        ...s,
-        [grant.numberWithProgramTypes]: value[grant.numberWithProgramTypes],
-      };
-    }
-
-    return {
-      ...s,
-      [grant.numberWithProgramTypes]: def || defaultValue,
-    };
-  }, value);
-
-  const keys = Object.keys(newValue);
-  const removedKeys = keys.filter((k) => !current.includes(k));
-
-  removedKeys.forEach((k) => {
-    delete newValue[k];
-  });
-
-  return newValue;
 };
 
 export const grantsToGoals = ({
