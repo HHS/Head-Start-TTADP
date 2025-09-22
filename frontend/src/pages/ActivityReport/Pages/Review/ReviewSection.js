@@ -38,7 +38,7 @@ const Section = ({
 
 Section.propTypes = {
   hidePrint: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.string,
   anchor: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
   basePath: PropTypes.string.isRequired,
@@ -48,6 +48,7 @@ Section.propTypes = {
 
 Section.defaultProps = {
   isLastSection: false,
+  title: '',
 };
 
 export default Section;

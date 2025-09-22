@@ -1,9 +1,28 @@
 import PropTypes from 'prop-types';
 
+const approver = PropTypes.shape({
+  note: PropTypes.string,
+  status: PropTypes.string,
+});
+
 const reviewPagePropType = {
   hasIncompletePages: PropTypes.bool.isRequired,
-  incompletePage: PropTypes.arrayOf(PropTypes.string).isRequired,
+  incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
+  isCreator: PropTypes.bool.isRequired,
+  isSubmitted: PropTypes.bool.isRequired,
+  onFormReview: PropTypes.func.isRequired,
+  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+  })).isRequired,
+  dateSubmitted: PropTypes.string,
+  otherManagerNotes: PropTypes.arrayOf(approver),
+  onSaveDraft: PropTypes.func.isRequired,
+  isNeedsAction: PropTypes.bool.isRequired,
 };
 
-// eslint-disable-next-line import/prefer-default-export
-export { reviewPagePropType };
+const reviewPageDefaultProps = {
+  dateSubmitted: null,
+};
+
+export { reviewPagePropType, reviewPageDefaultProps };

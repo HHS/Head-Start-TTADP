@@ -16,8 +16,9 @@ import UserContext from '../../../UserContext';
 const ReportLink = ({ report, userId }) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApprover = report.approvers.some(({ user }) => user.id === userId);
+  const isNeedsAction = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
-  if (isSubmitted && !isApprover) {
+  if (isSubmitted && !isApprover && !isNeedsAction) {
     return <Link to={`/collaboration-reports/view/${report.id}`}>{report.displayId}</Link>;
   }
 
@@ -31,6 +32,7 @@ ReportLink.propTypes = {
     link: PropTypes.string,
     displayId: PropTypes.string,
     submissionStatus: PropTypes.string,
+    calculatedStatus: PropTypes.string,
     approvers: PropTypes.arrayOf(PropTypes.shape({
       userId: PropTypes.number,
     })),

@@ -205,10 +205,16 @@ function CollaborationReport({ match, location, region }) {
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
             // eslint-disable-next-line max-len
             const isApproverFromFetched = approvers.some(({ user: approver }) => user.id === approver.id);
+            const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
 
-            if (isApproved || (isSubmitted && !isApproverFromFetched)) {
+            if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
               // redirect to approved/submitted report view
               history.push(`/collaboration-reports/view/${fetchedReport.id}`);
+              return;
+            }
+
+            if (isNeedsAction) {
+              history.push(`/collaboration-reports/${fetchedReport.id}/review-submit`);
               return;
             }
           } catch (e) {
