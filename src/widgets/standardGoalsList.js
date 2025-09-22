@@ -18,11 +18,15 @@ export default async function standardGoalsList(scopes) {
       [sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'count'],
     ],
     where: {
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-      /* startDate: {
+      [Op.and]: [
+        scopes.activityReport,
+        { calculatedStatus: REPORT_STATUSES.APPROVED },
+      ],
+      /*
+      startDate: {
         [Op.gte]: new Date('2025-09-01'),
-      }, */
-      ...scopes.activityReport,
+      },
+      */
     },
     include: [
       {
