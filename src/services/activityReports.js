@@ -355,7 +355,8 @@ export async function activityReportAndRecipientsById(activityReportId) {
       activityRecipientId, // Create or Update Report Expect's this Field.
       name,
       // We need the actual id of the recipient to narrow down what grants are selected on the FE.
-      recipientIdForLookUp: recipient.grant.recipientId,
+      // Viewing legacy OE reports will have a null grant.
+      recipientIdForLookUp: recipient.grant ? recipient.grant.recipientId : null,
     };
   });
 
