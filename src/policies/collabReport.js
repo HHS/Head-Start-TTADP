@@ -148,13 +148,13 @@ export default class CollabReport {
   }
 
   isCollaborator() {
-    if (!this.collabReport.collabReportCollaborators
-      || this.collabReport.collabReportCollaborators.length === 0) {
+    if (!this.collabReport.collabReportSpecialists
+      || this.collabReport.collabReportSpecialists.length === 0) {
       return false;
     }
 
     return this.collabReport
-      .collabReportCollaborators.some((collab) => collab.user.id === this.user.id);
+      .collabReportSpecialists.some((collab) => collab.user.id === this.user.id);
   }
 
   isApprovingManager() {

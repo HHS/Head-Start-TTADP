@@ -140,7 +140,7 @@ const CollabReportAlertsTable = ({
             'Date started',
             'Creator',
             'Created date',
-            'Collaborator',
+            'Collaborators',
             'Approvers',
             'Status',
           ]}
