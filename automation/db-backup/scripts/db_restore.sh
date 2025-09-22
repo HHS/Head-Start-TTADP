@@ -537,6 +537,8 @@ function perform_restore() {
     local source_date=$2
     local rds_target=$2
 
+    log "INFO" "Starting db restore from: ${source_prefix}/${source_date} to db: ${rds_target}"
+
     log "INFO" "Validate parameters and exports"
     parameters_validate "${source_prefix}"
     parameters_validate "${rds_target}"
