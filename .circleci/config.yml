@@ -1017,15 +1017,15 @@ commands:
         target_env: << parameters.target_env >>
         task_name: "restore_s3:<< parameters.backup_prefix >>->rds:<< parameters.rds_service_name >>"
         task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
-        task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+        task_args: '["<< parameters.backup_prefix >>", "latest", "<< parameters.rds_service_name >>"]'
         config: "<< parameters.backup_prefix >>-restore"
         success_message: ':database: "<< parameters.backup_prefix >>" restored to "<< parameters.rds_service_name >>"'
         timeout: "1800"
-    - run:
-        when: on_fail
-        command: |
-          msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
-          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
+    # - run:
+    #     when: on_fail
+    #     command: |
+    #       msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
+    #       ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
 
 
   cf_retention:

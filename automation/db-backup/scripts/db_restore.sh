@@ -5,6 +5,22 @@ set -o pipefail
 set -o noglob
 set -o noclobber
 
+# S3 service instance name in Cloud Foundry
+S3_SERVICE_BUCKET="ttahub-db-backups"
+
+# -----------------------------------------------------------------------------
+# Script to restore a Postgres database from an encrypted backup stored in AWS S3
+# -----------------------------------------------------------------------------
+# Usage: db_restore.sh <source_prefix> <source_date> <rds_target> 
+# Examples: 
+#   db_restore.sh processed latest ttahub-dev-blue
+#   db_restore.sh production 2025-09-22 ttahub-dev-green
+#
+# Parameters:
+#   source_prefix: The prefix in the S3 bucket where backups are stored (e.g., "production" or "processed")
+#   source_date: The date of the backup to restore (e.g., "2025-09-22" or "latest" for the most recent)
+#   rds_target: The name of the RDS instance to restore the backup to (e.g., "ttahub-dev-blue")
+
 # -----------------------------------------------------------------------------
 # Generic helper functions
 # -----------------------------------------------------------------------------
@@ -412,11 +428,11 @@ function s3_test_connectivity() {
 
 # Download the latest backup file list
 function aws_s3_get_latest_backup() {
-    local backup_filename_prefix=$1
-    local latest_backup_filename="${backup_filename_prefix}-latest-backup.txt"
+    local source_prefix=$1
+    local latest_backup_filename="${source_prefix}-latest-backup.txt"
 
     log "INFO" "Downloading latest backup file list from S3..."
-    if aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${backup_filename_prefix}/${latest_backup_filename}" - > latest_backup.txt; then
+    if aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${source_prefix}/${latest_backup_filename}" - > latest_backup.txt; then
         log "INFO" "Successfully downloaded latest backup file list."
 
         # Check if the file exists and is not empty
@@ -517,14 +533,13 @@ function aws_s3_verify_file_integrity() {
 # Main restore function
 # -----------------------------------------------------------------------------
 function perform_restore() {
-    local backup_filename_prefix=$1
-    local rds_server=$2
-    local aws_s3_server=$3
+    local source_prefix=$1
+    local source_date=$2
+    local rds_target=$2
 
     log "INFO" "Validate parameters and exports"
-    parameters_validate "${backup_filename_prefix}"
-    parameters_validate "${rds_server}"
-    parameters_validate "${aws_s3_server}"
+    parameters_validate "${source_prefix}"
+    parameters_validate "${rds_target}"
 
     export_validate "VCAP_SERVICES"
 
@@ -549,13 +564,13 @@ function perform_restore() {
     check_dependencies aws md5sum pg_restore sha256sum gzip openssl
 
     log "INFO" "collect and configure credentials"
-    rds_prep "${VCAP_SERVICES}" "${rds_server}" || {
+    rds_prep "${VCAP_SERVICES}" "${rds_target}" || {
         log "ERROR" "Failed to prepare RDS credentials"
         set -e
         exit 1
     }
 
-    aws_s3_prep "${VCAP_SERVICES}" "${aws_s3_server}" || {
+    aws_s3_prep "${VCAP_SERVICES}" "${S3_SERVICE_BUCKET}" || {
         log "ERROR" "Failed to prepare AWS S3 credentials"
         set -e
         exit 1
@@ -574,16 +589,30 @@ function perform_restore() {
         exit 1
     }
 
-    log "INFO" "Downloading latest backup file list"
-    aws_s3_get_latest_backup "${backup_filename_prefix}" || {
-        log "ERROR" "Failed to download latest backup file list"
-        set -e
-        exit 1
-    }
-
-    log "INFO" "Reading backup file paths from the latest backup file list"
     local backup_file_path md5_file_path sha256_file_path password_file_path
-    backup_file_path=$(awk 'NR==1' latest_backup.txt)
+    if [[ $source_date == "latest" ]]; then
+        log "INFO" "Searching for latest backup file list"
+        aws_s3_get_latest_backup "${source_prefix}" || {
+            log "ERROR" "Failed to download latest backup file list"
+            set -e
+            exit 1
+        log "INFO" "Reading backup file paths from the latest backup file list"
+        backup_file_path=$(awk 'NR==1' latest_backup.txt)
+    }
+    else 
+        echo "Searching for backup from: ${source_date}"
+        result=$(aws s3api list-objects --bucket ${BUCKET_NAME} --query "Contents[?contains(Key, 'production/production-${source_date}')]")
+        if [[ $result == "[]" ]]; then
+            echo "No backups found for date: ${source_date}"
+            exit 1
+        else 
+            backup_file_path=$($result | jq -r '.[].Key' | grep "zenc")
+            echo "Found backup for ${source_date}: ${backup_file_path}"
+        fi
+    fi
+
+    exit 1
+
     md5_file_path="${backup_file_path%.zenc}.md5"
     sha256_file_path="${backup_file_path%.zenc}.sha256"
     password_file_path="${backup_file_path%.zenc}.pwd"
@@ -592,54 +621,54 @@ function perform_restore() {
     parameters_validate "${sha256_file_path}"
     parameters_validate "${password_file_path}"
 
-    log "INFO" "Downloading backup password"
-    local backup_password
-    backup_password=$(aws_s3_download_password "${password_file_path}") || {
-        log "ERROR" "Failed to download backup password"
-        set -e
-        exit 1
-    }
+#     log "INFO" "Downloading backup password"
+#     local backup_password
+#     backup_password=$(aws_s3_download_password "${password_file_path}") || {
+#         log "ERROR" "Failed to download backup password"
+#         set -e
+#         exit 1
+#     }
 
-    log "INFO" "Verifying the backup file from S3"
-    aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" || {
-        log "ERROR" "Failed to verify the backup file"
-        set -e
-        exit 1
-    }
+#     log "INFO" "Verifying the backup file from S3"
+#     aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" || {
+#         log "ERROR" "Failed to verify the backup file"
+#         set -e
+#         exit 1
+#     }
 
-    #set -x
-    set -o pipefail
+#     #set -x
+#     set -o pipefail
 
-    log "INFO" "Reset database before restore"
+#     log "INFO" "Reset database before restore"
 
-    psql -d postgres <<EOF
-select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
-DROP DATABASE IF EXISTS "${PGDATABASE}";
-CREATE DATABASE "${PGDATABASE}";
-EOF
+#     psql -d postgres <<EOF
+# select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
+# DROP DATABASE IF EXISTS "${PGDATABASE}";
+# CREATE DATABASE "${PGDATABASE}";
+# EOF
 
-    if [[ $? -ne 0 ]]; then
-        log "ERROR" "Failed to reset database"
-        exit 1
-    fi
+#     if [[ $? -ne 0 ]]; then
+#         log "ERROR" "Failed to reset database"
+#         exit 1
+#     fi
 
-    log "INFO" "Database reset successfully"
+#     log "INFO" "Database reset successfully"
 
-    log "INFO" "Restoring the database from the backup file"
-    aws s3 cp "s3://${backup_file_path}" - |\
-     openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
-     gzip -d |\
-     psql  || {
-        log "ERROR" "failed to restore"
-        set -e
-        exit 1
-    }
+#     log "INFO" "Restoring the database from the backup file"
+#     aws s3 cp "s3://${backup_file_path}" - |\
+#      openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
+#      gzip -d |\
+#      psql  || {
+#         log "ERROR" "failed to restore"
+#         set -e
+#         exit 1
+#     }
 
-    log "INFO" "Database restore completed successfully"
+#     log "INFO" "Database restore completed successfully"
 
-    log "INFO" "clear the populated env vars"
-    rds_clear
-    aws_s3_clear
+#     log "INFO" "clear the populated env vars"
+#     rds_clear
+#     aws_s3_clear
 }
 
 monitor_memory $$ &
