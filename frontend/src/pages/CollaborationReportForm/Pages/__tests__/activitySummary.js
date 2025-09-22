@@ -7,6 +7,7 @@ import {
 } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
+
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, { isPageComplete } from '../activitySummary';
 import UserContext from '../../../../UserContext';
@@ -35,7 +36,7 @@ const RenderActivitySummary = ({
             additionalData,
             {},
             1,
-            null,
+            false,
             jest.fn(),
             jest.fn(),
             jest.fn(),
@@ -53,8 +54,19 @@ const RenderActivitySummary = ({
 describe('CollabReport ActivitySummary Review Section', () => {
   const RenderReview = ({
     networkActive = true,
-    defaultValues = {},
   }) => {
+    const defaultValues = {
+      collabReportSpecialists: [],
+      name: '',
+      startDate: '',
+      endDate: '',
+      duration: 0,
+      description: '',
+      reportReasons: [],
+      isStateActivity: 'false',
+      activityStates: [],
+      method: '',
+    };
     const hookForm = useForm({
       mode: 'onChange',
       defaultValues,
@@ -76,7 +88,7 @@ describe('CollabReport ActivitySummary Review Section', () => {
   it('renders', async () => {
     render(<RenderReview />);
 
-    expect(screen.getByText('Activity name')).toBeInTheDocument();
+    expect(await screen.findByText('Activity name')).toBeInTheDocument();
   });
 });
 

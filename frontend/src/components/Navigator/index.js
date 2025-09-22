@@ -122,7 +122,11 @@ const Navigator = ({
 
     let stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
     if (stateOfPage !== COMPLETE) {
-      stateOfPage = current ? IN_PROGRESS : pageState[p.position];
+      if (current) {
+        stateOfPage = IN_PROGRESS;
+      } else {
+        stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
+      }
     }
 
     const state = p.review ? formData[formDataStatusProp] : stateOfPage;
