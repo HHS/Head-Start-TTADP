@@ -16,17 +16,6 @@ describe('StandardGoalsListTable', () => {
     expect(screen.getByText('Data reflects activity starting on 09/01/2025.')).toBeInTheDocument();
   });
 
-  it('renders the component with custom title', () => {
-    render(<StandardGoalsListTable
-      data={mockData}
-      loading={false}
-      title="Custom Title"
-    />);
-
-    expect(screen.getByText('Custom Title')).toBeInTheDocument();
-    expect(screen.getByText('Data reflects activity starting on 09/01/2025.')).toBeInTheDocument();
-  });
-
   it('renders goal data correctly in table', () => {
     render(<StandardGoalsListTable data={mockData} loading={false} />);
 

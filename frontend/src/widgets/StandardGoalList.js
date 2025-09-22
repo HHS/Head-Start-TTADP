@@ -4,10 +4,10 @@ import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import WidgetH2 from '../components/WidgetH2';
 import SimpleSortableTable from '../components/SimpleSortableTable';
-import './StandardGoalList.css';
+import './StandardGoalList.scss';
 
 export function StandardGoalsListTable({
-  data, loading, title,
+  data, loading,
 }) {
   // Define the columns for the SimpleSortableTable
   const columns = [
@@ -16,11 +16,11 @@ export function StandardGoalsListTable({
   ];
 
   return (
-    <Container paddingX={1} paddingY={1} loading={loading} loadingLabel="Goals list loading">
-      <div className="ttahub-goal-counts-table landing inline-size-auto maxw-full margin-bottom-0">
-        <div className="display-flex flex-wrap flex-align-center padding-3">
+    <Container paddingX={0} paddingY={1} loading={loading} loadingLabel="Goals list loading">
+      <div className="ttahub-goal-counts-table inline-size-auto maxw-full margin-bottom-0">
+        <div className="display-flex flex-wrap flex-align-center padding-3 goal-list-header">
           <WidgetH2 classNames="padding-0">
-            {title || 'Goals categories in Activity Reports'}
+            Goals categories in Activity Reports
           </WidgetH2>
           <p className="usa-prose padding-0 margin-0">Data reflects activity starting on 09/01/2025.</p>
         </div>
@@ -28,7 +28,7 @@ export function StandardGoalsListTable({
           className="usa-table-container--scrollable"
           style={{
             position: 'relative',
-            maxHeight: '365px',
+            flex: '1 1 auto',
             overflowY: 'auto',
           }}
         >
@@ -54,12 +54,10 @@ StandardGoalsListTable.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-  title: PropTypes.string,
 };
 
 StandardGoalsListTable.defaultProps = {
   data: [],
-  title: 'Goals categories in Activity Reports',
 };
 
 export default withWidgetData(StandardGoalsListTable, 'standardGoalsList');
