@@ -19,9 +19,9 @@ export default async function standardGoalsList(scopes) {
     ],
     where: {
       calculatedStatus: REPORT_STATUSES.APPROVED,
-      startDate: {
+      /* startDate: {
         [Op.gte]: new Date('2025-09-01'),
-      },
+      }, */
       ...scopes.activityReport,
     },
     include: [
@@ -64,7 +64,7 @@ export default async function standardGoalsList(scopes) {
 
   // Transform results to format expected by the widget
   return results.map((result) => ({
-    name: result.standard || 'Unknown',
+    name: result.standard,
     count: parseInt(result.count, 10),
   })).sort((a, b) => b.count - a.count);
 }

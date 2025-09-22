@@ -1,0 +1,20 @@
+/* Set consistent height for the entire widget to match adjacent widgets */
+.ttahub-goal-counts-table {
+  height: 450px;
+  display: flex;
+  flex-direction: column;
+}
+/* Ensuring consistent padding between table headers and data cells */
+.ttahub-goal-counts-table .ttahub-simple-sortable-table td {
+  padding-left: 1.5rem;
+}
+
+/* Adding bottom border to the header and ensuring white background */
+.ttahub-goal-counts-table .goal-list-header {
+  border-bottom: 1px solid #DFE1E2;
+}
+
+/* Ensure table headers also have a white background */
+.ttahub-goal-counts-table .ttahub-simple-sortable-table thead th {
+  background-color: white;
+}
