@@ -154,9 +154,10 @@ describe('authMiddleware', () => {
 
   it('bypass authorization if variables are set for UAT or accessibility testing', async () => {
     // auth is bypassed if non-prod NODE_ENV and BYPASS_AUTH = 'true', needed for cucumber and axe
-    const user = {
-      ...mockUser,
-    };
+    // const user = {
+    //   ...mockUser,
+    // };
+    const user = { ...mockUser, id: 777, hsesUserId: '777' };
     await setupUser(user);
     process.env.NODE_ENV = 'development';
     process.env.BYPASS_AUTH = 'true';
