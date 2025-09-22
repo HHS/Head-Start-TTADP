@@ -285,20 +285,22 @@ class CollabReportSteps{
 class CollabReports{
  * id : integer : <generated>
  lastUpdatedById : integer : REFERENCES "Users".id
- userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
- * conductMethod : enum[]
+ * userId : integer : REFERENCES "Users".id
+ * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
- * description : text
- * duration : double precision
- * endDate : date
  * isStateActivity : boolean : false
- * name : varchar(255)
- * startDate : date
  * submissionStatus : enum
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
+ conductMethod : enum[]
  deletedAt : timestamp with time zone
+ description : text
+ duration : double precision
+ endDate : date
+ name : varchar(255)
+ participants : varchar(255)[]
+ startDate : date
  submittedAt : timestamp with time zone
 }
 
