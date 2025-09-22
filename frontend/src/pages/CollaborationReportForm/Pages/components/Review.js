@@ -1,23 +1,76 @@
 import React, { useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import _ from 'lodash';
-import {
-  Dropdown, Form, Label, Fieldset, Button,
-} from '@trussworks/react-uswds';
-import IncompletePages from '../../../../components/IncompletePages';
+import { Alert } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { Accordion } from '../../../../components/Accordion';
-import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../Constants';
-import FormItem from '../../../../components/FormItem';
-import HookFormRichEditor from '../../../../components/HookFormRichEditor';
-import ApproverStatusList from '../../../ActivityReport/Pages/components/ApproverStatusList';
 import UserContext from '../../../../UserContext';
 import IndicatesRequiredField from '../../../../components/IndicatesRequiredField';
-import ApproverSelect from '../../../ActivityReport/Pages/Review/Submitter/components/ApproverSelect';
-import DisplayApproverNotes from '../../../ActivityReport/Pages/components/DisplayApproverNotes';
 import ApproverReview from './ApproverReview';
 import CreatorSubmit from './CreatorSubmit';
+
+const TopAlert = ({
+  author,
+  isNeedsAction,
+  pendingApprovalCount,
+  approvers,
+}) => {
+  const getNeedsActionApprovingMangers = () => {
+    const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
+    if (needActionApprovers && needActionApprovers.length > 0) {
+      return needActionApprovers.map((a) => a.user.fullName).join(', ');
+    }
+    return '';
+  };
+
+  if (isNeedsAction) {
+    return (
+      <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
+        <span className="text-bold">
+          The following approving manager(s) have requested changes to this collaboration report:
+          {' '}
+          {getNeedsActionApprovingMangers()}
+        </span>
+        <br />
+        Please review the manager notes and re-submit for approval.
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert type="info" noIcon slim className="margin-bottom-4 no-print">
+      <>
+        <span className="text-bold">
+          {author.fullName}
+          {' '}
+          has requested approval for this collaboration report (
+          <strong>
+            {`${pendingApprovalCount} of
+               ${approvers?.count || 0}`}
+            {' '}
+            reviews pending
+          </strong>
+          ).
+        </span>
+        <br />
+        Please review all information in each section before submitting.
+      </>
+    </Alert>
+  );
+};
+
+TopAlert.propTypes = {
+  author: PropTypes.shape({
+    fullName: PropTypes.string,
+  }).isRequired,
+  isNeedsAction: PropTypes.bool.isRequired,
+  pendingApprovalCount: PropTypes.number.isRequired,
+  approvers: PropTypes.arrayOf(PropTypes.shape({
+    status: PropTypes.string,
+    user: PropTypes.shape({
+      fullName: PropTypes.string,
+    }),
+  })).isRequired,
+};
 
 const Review = ({
   onFormReview,
@@ -29,14 +82,16 @@ const Review = ({
   reviewItems,
   isCreator,
   isSubmitted,
-  // isApproved,
-  // isNeedsAction,
-  // isApprover,
+  onSaveForm,
+  onUpdatePage,
+  onSaveDraft,
+  isNeedsAction,
+  pendingApprovalCount,
+  author,
+  approvers,
 }) => {
+  const FormComponent = isCreator ? CreatorSubmit : ApproverReview;
 
-  const FormComponent = isSubmitted ? ApproverReview : CreatorSubmit;
-
-  const { handleSubmit, register } = useFormContext();
   const { user } = useContext(UserContext);
 
   const otherManagerNotes = approverStatusList
@@ -53,14 +108,20 @@ const Review = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
   const hasIncompletePages = incompletePages.length > 0;
-  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
-
-  const submitButtonText = isSubmitted ? 'Submit for approval' : 'Submit report';
 
   return (
     <>
       <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
+
       <IndicatesRequiredField />
+      {isSubmitted && (
+      <TopAlert
+        pendingApprovalCount={pendingApprovalCount}
+        isNeedsAction={isNeedsAction}
+        author={author}
+        approvers={approvers}
+      />
+      )}
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-3">
           <Accordion bordered items={reviewItems} multiselectable />
@@ -70,103 +131,21 @@ const Review = ({
       <FormComponent
         hasIncompletePages={hasIncompletePages}
         incompletePages={incompletePages}
+        isCreator={isCreator}
+        isSubmitted={isSubmitted}
+        isNeedsAction={isNeedsAction}
+        onFormReview={onFormReview}
+        availableApprovers={availableApprovers}
+        dateSubmitted={dateSubmitted}
+        thisApprovingManager={thisApprovingManager}
+        otherManagerNotes={otherManagerNotes}
+        hasBeenReviewed={hasBeenReviewed}
+        hasReviewNote={hasReviewNote}
+        approverStatusList={approverStatusList}
+        onSaveForm={onSaveForm}
+        onUpdatePage={onUpdatePage}
+        onSaveDraft={onSaveDraft}
       />
-
-      {
-        otherManagerNotes && otherManagerNotes.length > 0 && (
-          <div className="smart-hub--creator-notes margin-top-2">
-            <p>
-              <span className="text-bold">Manager notes</span>
-            </p>
-            <DisplayApproverNotes approverStatusList={otherManagerNotes} />
-          </div>
-        )
-      }
-
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-        {(isCreator && !isSubmitted) && (
-        <div className="margin-bottom-3">
-          <Fieldset className="smart-hub--report-legend margin-top-4">
-            <FormItem
-              label="Approving manager"
-              name="approvers"
-            >
-              <ApproverSelect
-                name="approvers"
-                valueProperty="user.id"
-                labelProperty="user.fullName"
-                options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
-              />
-            </FormItem>
-          </Fieldset>
-        </div>
-        )}
-        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top">
-          <Label htmlFor="note">Add manager notes</Label>
-          <div className="margin-top-1">
-            <HookFormRichEditor
-              ariaLabel="Manager notes"
-              id="note"
-              name="note"
-              defaultValue={hasReviewNote
-                ? thisApprovingManager[0].note : null}
-            />
-          </div>
-        </Fieldset>
-
-          <>
-            {
-            dateSubmitted
-              ? (
-                <>
-                  <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date Submitted</p>
-                  <p className="margin-top-0">{formattedDateSubmitted}</p>
-                </>
-              )
-              : null
-            }
-            <FormItem
-              name="status"
-              label="Choose approval status"
-              className="margin-bottom-3"
-            >
-              <Dropdown
-                id="status"
-                name="status"
-                defaultValue={hasBeenReviewed
-                  ? thisApprovingManager[0].status : ''}
-                inputRef={register({ required: true })}
-              >
-                <option name="default" value="" disabled hidden>- Select -</option>
-                {managerReportStatuses.map((status) => (
-                  <option key={status} value={status}>{_.startCase(status)}</option>
-                ))}
-              </Dropdown>
-            </FormItem>
-
-          </>
-        {/* ) : (
-          <div className="margin-bottom-3">
-            <Fieldset className="smart-hub--report-legend margin-top-4">
-              <FormItem
-                label="Approving manager"
-                name="approvers"
-              >
-                <ApproverSelect
-                  name="approvers"
-                  valueProperty="user.id"
-                  labelProperty="user.fullName"
-                  options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
-                />
-              </FormItem>
-            </Fieldset>
-          </div>
-        )} */}
-
-        {/* <ApproverStatusList approverStatus={approverStatusList} /> */}
-        
-        <Button disabled={hasIncompletePages} type="submit">{ submitButtonText }</Button>
-      </Form>
     </>
   );
 };
@@ -195,9 +174,20 @@ Review.propTypes = {
   })).isRequired,
   isCreator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
-  isApproved: PropTypes.bool.isRequired,
+  onUpdatePage: PropTypes.func.isRequired,
+  onSaveForm: PropTypes.func.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
-  isApprover: PropTypes.bool.isRequired,
+  author: PropTypes.shape({
+    fullName: PropTypes.string,
+  }).isRequired,
+  pendingApprovalCount: PropTypes.number.isRequired,
+  approvers: PropTypes.arrayOf(PropTypes.shape({
+    status: PropTypes.string,
+    user: PropTypes.shape({
+      fullName: PropTypes.string,
+    }),
+  })).isRequired,
 };
 
 Review.defaultProps = {

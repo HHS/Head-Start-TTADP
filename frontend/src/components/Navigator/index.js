@@ -183,6 +183,7 @@ const Navigator = ({
             reportCreator,
             lastSaveTime,
             onUpdatePage,
+            onSaveDraft,
           )}
           {!page.review
             && (

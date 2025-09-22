@@ -8,13 +8,15 @@ import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
 
 const ReviewSubmit = ({
-  onFormReview,
+  onReview,
   formData,
-  children,
   error,
   isPendingApprover,
   availableApprovers,
   reviewItems,
+  onUpdatePage,
+  onSaveForm,
+  onSaveDraft,
 }) => {
   const {
     calculatedStatus,
@@ -41,50 +43,11 @@ const ReviewSubmit = ({
   const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const isApprover = approvers && approvers.some((a) => a.user.id === user.id);
 
-  // Approvers should be able to change their review until the report is approved.
-  // isPendingApprover:
-  // Tells us if the person viewing the report is an approver AND if they have a pending review.
-  const review = (calculatedStatus === REPORT_STATUSES.SUBMITTED
-    || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
-
-  const pendingOtherApprovals = review && !isPendingApprover;
-
+  const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover;
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
-  const approverCount = approvers ? approvers.length : 0;
-
-  // if a user is an approver and they are also the creator of the report, the logic below
-  // needs to account for what they'll see
-  //   const showDraftViewForApproverAndCreator = (
-  //     approverIsAlsoCreator && calculatedStatus === REPORT_STATUSES.DRAFT
-  //   );
-
-  const TopAlert = () => (
-    <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
-      {review && (
-      <>
-        <span className="text-bold">
-          {author.fullName}
-          {' '}
-          has requested approval for this collaboration report (
-          <strong>
-            {`${pendingApprovalCount} of
-               ${approverCount}`}
-            {' '}
-            reviews pending
-          </strong>
-          ).
-        </span>
-        <br />
-        Please review all information in each section before submitting.
-      </>
-      )}
-    </Alert>
-  );
 
   return (
     <>
-      {isSubmitted && (<TopAlert />)}
-      {children}
       <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
@@ -95,6 +58,8 @@ const ReviewSubmit = ({
         )}
 
         <Review
+          author={author}
+          approvers={approvers}
           isCreator={isCreator}
           isSubmitted={isSubmitted}
           isApproved={isApproved}
@@ -102,11 +67,15 @@ const ReviewSubmit = ({
           isApprover={isApprover}
           pendingOtherApprovals={pendingOtherApprovals}
           dateSubmitted={submittedAt}
-          onFormReview={onFormReview}
+          onFormReview={onReview}
           approverStatusList={approvers}
           pages={formPages}
           availableApprovers={availableApprovers}
           reviewItems={reviewItems}
+          onSaveForm={onSaveForm}
+          onSaveDraft={onSaveDraft}
+          onUpdatePage={onUpdatePage}
+          pendingApprovalCount={pendingApprovalCount}
         />
 
       </Container>
@@ -121,8 +90,7 @@ ReviewSubmit.propTypes = {
       name: PropTypes.string,
     }),
   ).isRequired,
-  onFormReview: PropTypes.func.isRequired,
-  children: PropTypes.node.isRequired,
+  onReview: PropTypes.func.isRequired,
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
@@ -151,6 +119,9 @@ ReviewSubmit.propTypes = {
       content: PropTypes.node.isRequired,
     }),
   ).isRequired,
+  onSaveForm: PropTypes.func.isRequired,
+  onUpdatePage: PropTypes.func.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };
 
 ReviewSubmit.defaultProps = {
@@ -165,20 +136,24 @@ const reviewPage = {
   render:
     (
       formData,
-      onSubmit,
+      onFormSubmit,
       additionalData,
       onReview,
       isApprover,
       isPendingApprover,
-      onSaveForm,
-      allPages,
+      onSave,
+      navigatorPages,
       reportCreator,
       lastSaveTime,
+      onUpdatePage,
+      onSaveDraft,
     ) => (
       <ReviewSubmit
         availableApprovers={additionalData.approvers}
-        onSubmit={onSubmit}
-        onSaveForm={onSaveForm}
+        onSubmit={onFormSubmit}
+        onSaveForm={onSave}
+        onSaveDraft={onSaveDraft}
+        onUpdatePage={onUpdatePage}
         onReview={onReview}
         isApprover={isApprover}
         isPendingApprover={isPendingApprover}
@@ -191,7 +166,7 @@ const reviewPage = {
           }))
         }
         formData={formData}
-        pages={allPages}
+        pages={navigatorPages}
         reportCreator={reportCreator}
       />
     ),
