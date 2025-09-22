@@ -106,7 +106,7 @@ export const formatReportWithSaveBeforeConversion = async (
   return reportData;
 };
 
-function CollaborationReport({ match, location, region }) {
+function CollaborationReport({ match, location }) {
   const { params: { currentPage, collabReportId } } = match;
 
   const hookForm = useForm({
@@ -228,7 +228,7 @@ function CollaborationReport({ match, location, region }) {
             creatorRole: userHasOneRole ? user.roles[0].fullName : null,
             pageState: defaultPageState,
             userId: user.id,
-            regionId: region || getRegionWithReadWrite(user),
+            regionId: getRegionWithReadWrite(user),
             version: 2,
           };
         }
@@ -346,7 +346,7 @@ function CollaborationReport({ match, location, region }) {
       }
     };
     fetch();
-  }, [collabReportId, user, showLastUpdatedTime, region]);
+  }, [collabReportId, user, showLastUpdatedTime]);
 
   if (loading) {
     return (
