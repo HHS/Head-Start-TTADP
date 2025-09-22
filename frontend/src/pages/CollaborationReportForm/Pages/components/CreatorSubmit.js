@@ -70,7 +70,7 @@ export default function CreatorSubmit({
                 name="approvers"
                 valueProperty="user.id"
                 labelProperty="user.fullName"
-                options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
+                options={(availableApprovers || []).map((a) => ({ value: a.id, label: a.name }))}
               />
             </FormItem>
           </Fieldset>

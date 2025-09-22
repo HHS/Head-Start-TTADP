@@ -17,14 +17,16 @@ const SupportingInformation = () => (
 );
 
 const ReviewSection = () => {
-  const { getValues } = useFormContext();
+  const { watch } = useFormContext();
   const {
     reportGoals,
     dataUsed,
-  } = getValues();
+  } = watch();
 
-  const goals = reportGoals.map(({ goalTemplate }) => goalTemplate.standard).join(', ');
-  const data = dataUsed.map(({ collabReportDatum, collabReportDataOther }) => {
+  const goals = (reportGoals || []).filter(Boolean).map((goal) => goal?.goalTemplate?.standard || '').filter(Boolean).join(', ');
+  const data = (dataUsed || []).filter(Boolean).map((item) => {
+    if (!item) return '';
+    const { collabReportDatum, collabReportDataOther } = item;
     if (collabReportDatum === 'other') {
       return collabReportDataOther;
     }
