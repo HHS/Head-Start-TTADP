@@ -37,14 +37,27 @@ describe('StandardGoalsListTable', () => {
     expect(screen.getByLabelText('Goals list loading')).toBeInTheDocument();
   });
 
-  it('shows no data message when data is empty', () => {
+  it('shows no results component when data is empty and hides table headers', () => {
     render(<StandardGoalsListTable data={[]} loading={false} />);
 
-    expect(screen.getByText('No data available')).toBeInTheDocument();
+    // NoResultsFound component should be visible
+    expect(screen.getByText('No results found.')).toBeInTheDocument();
+    expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+
+    // Table headers should not be visible
+    expect(screen.queryByText('Goal category')).not.toBeInTheDocument();
+    expect(screen.queryByText('# of goals')).not.toBeInTheDocument();
   });
 
-  it('shows no data message when data is null', () => {
+  it('shows no results component when data is null and hides table headers', () => {
     render(<StandardGoalsListTable data={null} loading={false} />);
-    expect(screen.getByText('No data available')).toBeInTheDocument();
+
+    // NoResultsFound component should be visible
+    expect(screen.getByText('No results found.')).toBeInTheDocument();
+    expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+
+    // Table headers should not be visible
+    expect(screen.queryByText('Goal category')).not.toBeInTheDocument();
+    expect(screen.queryByText('# of goals')).not.toBeInTheDocument();
   });
 });
