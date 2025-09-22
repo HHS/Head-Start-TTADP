@@ -447,7 +447,7 @@ const ReviewSection = () => {
       anchor: 'activity-for',
       items: [
         { label: 'Activity name', name: 'name', customValue: { name } },
-        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists.map((c) => c.name).join(', ') } },
+        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map((c) => c.name).join(', ') || '' } },
       ],
     },
     {
@@ -463,10 +463,10 @@ const ReviewSection = () => {
       title: 'Reason for activity',
       anchor: 'reasons',
       items: [
-        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons.map((r) => COLLAB_REPORT_REASONS[r.reasonId] || '').join(', ') } },
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r.reasonId] || '').join(', ') || '' } },
         { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
         ...(isStateActivity ? [
-          { label: 'States involved', name: 'states', customValue: { states: activityStates.map((s) => STATES[s.activityStateCode] || '').join(', ') } },
+          { label: 'States involved', name: 'states', customValue: { states: activityStates?.map((s) => STATES[s.activityStateCode] || '').join(', ') || '' } },
         ] : []),
         { label: 'Activity method', name: 'method', customValue: { method } },
         { label: 'Activity description', name: 'description', customValue: { description } },
