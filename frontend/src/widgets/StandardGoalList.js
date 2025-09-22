@@ -17,7 +17,7 @@ export function StandardGoalsListTable({
   ];
 
   return (
-    <Container paddingX={0} paddingY={1} loading={loading} loadingLabel="Goals list loading" className="ttahub-goal-counts-container">
+    <Container paddingX={0} paddingY={1} loading={loading} loadingLabel="Goals list loading" className="ttahub-goal-counts-container margin-bottom-0 height-full">
       <div className="ttahub-goal-counts-table inline-size-auto maxw-full margin-bottom-0">
         <div className="display-flex flex-wrap flex-align-center padding-3 goal-list-header">
           <WidgetH2 classNames="padding-0">
