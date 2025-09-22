@@ -615,6 +615,7 @@ jobs:
           node ./build/server/src/tools/importSystemCLI.js process 1
           yarn createMonitoringGoalsCLI
           node ./build/server/src/tools/queryMonitoringDataCLI.js
+          node ./build/server/src/tools/maintainMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
