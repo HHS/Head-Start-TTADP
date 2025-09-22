@@ -1,9 +1,3 @@
-/* Set consistent height for the entire widget to match adjacent widgets */
-.ttahub-goal-counts-table {
-  height: 450px;
-  display: flex;
-  flex-direction: column;
-}
 /* Ensuring consistent padding between table headers and data cells */
 .ttahub-goal-counts-table .ttahub-simple-sortable-table td {
   padding-left: 1.5rem;
@@ -17,4 +11,17 @@
 /* Ensure table headers also have a white background */
 .ttahub-goal-counts-table .ttahub-simple-sortable-table thead th {
   background-color: white;
+}
+
+/* Fixed height to match TotalHrsAndRecipient widget */
+.ttahub-goal-counts-table .usa-table-container--scrollable {
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+/* Ensure the goal counts table matches the height of adjacent widgets */
+.ttahub-goal-counts-container {
+  height: 465px;
+  display: flex;
+  flex-direction: column;
 }
