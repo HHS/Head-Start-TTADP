@@ -15,9 +15,15 @@ const TopAlert = ({
   approvers,
 }) => {
   const getNeedsActionApprovingMangers = () => {
-    const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
+    const approversList = Array.isArray(approvers) ? approvers : (approvers?.rows || []);
+    const needActionApprovers = approversList.filter(
+      (a) => a.status === REPORT_STATUSES.NEEDS_ACTION,
+    );
     if (needActionApprovers && needActionApprovers.length > 0) {
-      return needActionApprovers.map((a) => a.user.fullName).join(', ');
+      return needActionApprovers
+        .filter((a) => a.user && a.user.fullName)
+        .map((a) => a.user.fullName)
+        .join(', ');
     }
     return '';
   };
