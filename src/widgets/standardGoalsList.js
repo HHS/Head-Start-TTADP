@@ -40,9 +40,9 @@ export default async function standardGoalsList(scopes) {
             as: 'goal',
             attributes: [],
             required: true,
-             /*where: {
+            /* where: {
               prestandard: false,
-            },*/
+            }, */
             include: [
               {
                 model: GoalTemplate,
