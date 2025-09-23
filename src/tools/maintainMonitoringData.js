@@ -21,9 +21,17 @@ const maintainMonitoringData = async () => {
     -- through COMMIT; at the end, uncommenting both.
     -- BEGIN;
     set maint.tableset = '{
+        "MonitoringClassSummaries",
         "MonitoringFindings",
+        "MonitoringFindingStatuses",
+        "MonitoringFindingStandards",
+        "MonitoringFindingGrants",
         "MonitoringFindingHistories",
-        "MonitoringReviews"
+        "MonitoringFindingHistoryStatuses",
+        "MonitoringReviews",
+        "MonitoringReviewStatuses",
+        "MonitoringReviewGrantees",
+        "MonitoringStandards"
         }';
 
     SELECT
@@ -34,8 +42,7 @@ const maintainMonitoringData = async () => {
 
     -- softdelete Goals that have been deleted at the source
     -- This is a simple process because the Monitoring data import process
-    -- updates sourceDeletedAt to null if the record comes back. This is
-    -- to 
+    -- updates sourceDeletedAt to null if the record comes back.
     CREATE OR REPLACE PROCEDURE softdelete_sourcedeleted(IN tablename TEXT)
     LANGUAGE plpgsql
     AS $$
@@ -74,7 +81,7 @@ const maintainMonitoringData = async () => {
     END;
     $$;
 
-    CREATE OR REPLACE PROCEDURE clean_audit_log(IN tablename TEXT)
+    CREATE OR REPLACE PROCEDURE clean_monitoring_audit_log(IN tablename TEXT)
     LANGUAGE plpgsql
     AS $$
     DECLARE
@@ -130,19 +137,23 @@ const maintainMonitoringData = async () => {
     BEGIN
       FOREACH tname IN ARRAY tlist
       LOOP
-        CALL clean_audit_log(tname);
+        CALL clean_monitoring_audit_log(tname);
       END LOOP;
     END
     $$;
     SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
     
+    -- This lists the change in the number of findings on reviews
+    -- due to deletion or undeletion activity. Thus negative numbers
+    -- are findings being deleted and positive numbers are findings
+    -- being restored from prior deletion
     SELECT
       'Finding deletion activity in Review:' || mr.name review,
       gr.number grant_number,
       "regionId" region,
       COUNT(DISTINCT t."findingId") FILTER (WHERE deleted_at IS NULL) -
       COUNT(DISTINCT t."findingId") FILTER (WHERE deleted_at IS NOT NULL) 
-      AS findings
+      AS change
     FROM "sourcedelMonitoringFindings"
     JOIN "MonitoringFindings" t
       ON t.id = tid
