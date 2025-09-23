@@ -5,7 +5,8 @@ import { sequelize } from '../models';
 
 const maintainMonitoringData = async () => {
   console.info('Starting Monitoring data maintenance');
-  const result = await sequelize.query(`
+  const result = await sequelize.query(
+    `
     -------------------------------------------------------------
     -- This marks source-deleted Monitoring data with deletedAt
     -- It also clears away "deletedAt" if the sourceDeletedAt is
