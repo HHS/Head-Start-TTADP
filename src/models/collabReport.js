@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { REPORT_STATUSES } = require('@ttahub/common');
+const { REPORT_STATUSES, COLLAB_REPORT_PARTICIPANTS } = require('@ttahub/common');
 const { sortBy } = require('lodash');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeUpdate } = require('./hooks/collabReport');
@@ -89,7 +89,7 @@ export default (sequelize, DataTypes) => {
       },
       participants: {
         allowNull: true,
-        type: DataTypes.ARRAY(DataTypes.STRING),
+        type: DataTypes.ARRAY(DataTypes.ENUM(COLLAB_REPORT_PARTICIPANTS)),
       },
       calculatedStatus: {
         allowNull: true,

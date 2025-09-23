@@ -1,4 +1,4 @@
-const { query } = require('express');
+const { COLLAB_REPORT_PARTICIPANTS } = require('@ttahub/common');
 const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
@@ -10,7 +10,7 @@ module.exports = {
 
       await queryInterface.addColumn('CollabReports', 'participants', {
         allowNull: true,
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: Sequelize.ARRAY(Sequelize.ENUM(COLLAB_REPORT_PARTICIPANTS)),
       }, { transaction });
 
       // Allow nulls for name field

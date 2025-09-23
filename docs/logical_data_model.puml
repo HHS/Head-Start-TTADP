@@ -299,7 +299,7 @@ class CollabReports{
  duration : double precision
  endDate : date
  name : varchar(255)
- participants : varchar(255)[]
+ participants : enum[]
  startDate : date
  submittedAt : timestamp with time zone
 }
@@ -312,6 +312,31 @@ enum enum_CollabReports_conductMethod {
 }
 
 enum_CollabReports_conductMethod <|-- CollabReports
+
+enum enum_CollabReports_participants {
+ Child Care Training and Technical Assistance Network
+ Child Care and Development Fund
+ Child care licensing
+ DOE/State PreK
+ Head Start Collaboration Office
+ Head Start Recipients
+ Health department/WIC
+ Office of Child Care
+ Other
+ Quality Rating and Improvement System
+ Regional HSA
+ Regional Office staff
+ State HSA
+ State Professional development system
+ State and territory adminstrators
+ State environmental health and safety systems
+ State family engagement systems
+ State health and welness systems
+ State homelessness agency/McKinney Vento liason
+ TTA staff
+}
+
+enum_CollabReports_participants <|-- CollabReports
 
 class CollaboratorRoles{
  * id : integer : <generated>
