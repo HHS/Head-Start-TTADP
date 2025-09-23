@@ -13,6 +13,9 @@ const namespace = 'MIDDLEWARE:AUTH';
 let cachedClient = null;
 let issuerConfig = null;
 const CODE_CHALLENGE_METHOD = 'S256';
+const AUTH_METHOD = (process.env.OIDC_AUTH_METHOD || '').toLowerCase(); // 'pkce' or 'private_key_jwt'
+const USE_PKCE = AUTH_METHOD === 'pkce'
+  || (AUTH_METHOD === '' && (process.env.AUTH_CLIENT_ID ?? '').endsWith('local'));
 
 async function getOidcClient() {
   if (cachedClient) return cachedClient;
@@ -22,13 +25,13 @@ async function getOidcClient() {
   /**
    * @type {import('openid-client').ClientMetadata & import('oauth4webapi').Client}
    */
-  const clientMetadata = {
+  const clientMetadataPrivateKeyJwt = {
     client_id: process.env.AUTH_CLIENT_ID,
     token_endpoint_auth_method: 'private_key_jwt',
     token_endpoint_auth_signing_alg: 'RS256',
   };
 
-  const clientMetadataLocal = {
+  const clientMetadataPKCE = {
     client_id: process.env.AUTH_CLIENT_ID,
     tlsOnly: issuerUrl.protocol === 'https:',
   };
@@ -45,13 +48,13 @@ async function getOidcClient() {
   // https://developers.login.gov/oidc/getting-started/#choosing-an-authentication-method
   // Use private_key_jwt in cloud environment.
   // Use PKCE in local development environment.
-  const localEnvironment = (process.env.AUTH_CLIENT_ID ?? '').endsWith('local');
+  // const localEnvironment = (process.env.AUTH_CLIENT_ID ?? '').endsWith('local');
 
   issuerConfig = await openidClient.discovery(
     issuerUrl,
     process.env.AUTH_CLIENT_ID,
-    localEnvironment ? clientMetadataLocal : clientMetadata,
-    localEnvironment ? undefined : openidClient.PrivateKeyJwt(await getPrivateJwk()),
+    USE_PKCE ? clientMetadataPKCE : clientMetadataPrivateKeyJwt,
+    USE_PKCE ? undefined : openidClient.PrivateKeyJwt(await getPrivateJwk()),
     discoveryRequestOptions,
   );
 
@@ -61,7 +64,6 @@ async function getOidcClient() {
 }
 
 export async function login(req, res) {
-  // keep your existing referrer tracking if you have it
   const referrer = req.headers.referer;
   req.session.referrerPath = referrer ? new URL(referrer).pathname : '';
 
@@ -97,8 +99,6 @@ export async function login(req, res) {
     const redirectTo = client.buildAuthorizationUrl(issuerConfig, parameters);
     res.redirect(redirectTo.href);
   } catch (err) {
-    // your existing error handling
-    // await handleErrors(req, res, err, 'MIDDLEWARE:AUTH');
     auditLogger.error(`${namespace} Failed to start login`, err);
     res.status(500).send('Failed to start login');
   }
@@ -117,11 +117,24 @@ export async function getAccessToken(req) {
      * @type {import('openid-client').AuthorizationCodeGrantChecks}
      */
     const options = {
-      pkceCodeVerifier: req.session.pkce.codeVerifier,
+      ...(USE_PKCE ? { pkceCodeVerifier: req.session?.pkce?.codeVerifier } : {}),
       expectedState: req.session.pkce.state,
       expectedNonce: req.session.pkce.nonce,
       idTokenExpected: true,
     };
+
+    if (
+      USE_PKCE
+      && (!options.pkceCodeVerifier
+        || !options.expectedState
+        || !options.expectedNonce)
+    ) {
+      auditLogger.error(
+        'OIDC callback missing PKCE/session. Possible lost session.',
+      );
+      return undefined;
+    }
+
     const tokens = await client.authorizationCodeGrant(issuerConfig, currentUrl, options);
 
     // The authorization server compares the challenge with the one it associated with the
