@@ -22,6 +22,7 @@ FORCE_CRON: "false"
 AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
 REDIRECT_URI_HOST: https://tta-smarthub-${full_env}.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-${full_env}.app.cloud.gov
+OIDC_AUTH_METHOD: "pkce"
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
