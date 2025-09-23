@@ -12,7 +12,7 @@ import { reviewPageDefaultProps, reviewPagePropType } from './constants';
 import CreatorNeedsAction from './CreatorNeedsAction';
 
 const PREVIOUS_POSITION = 3;
-const path = 'review-submit';
+const path = 'review';
 
 export default function CreatorSubmit({
   hasIncompletePages,

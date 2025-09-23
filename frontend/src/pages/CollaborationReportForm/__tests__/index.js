@@ -969,7 +969,7 @@ describe('CollaborationReportForm', () => {
       render(<ReportComponent id="123" userId={1} />);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review-submit');
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review');
       });
     });
 
