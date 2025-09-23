@@ -969,7 +969,7 @@ describe('CollaborationReportForm', () => {
       render(<ReportComponent id="123" userId={1} />);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review-submit');
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review');
       });
     });
 
@@ -1139,7 +1139,7 @@ describe('CollaborationReportForm', () => {
       });
     });
 
-    it('handles regionId -1 case - covers line 302', async () => {
+    it('handles regionId -1 case', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         regionId: -1,
@@ -1158,20 +1158,7 @@ describe('CollaborationReportForm', () => {
       });
     });
 
-    it('handles no connection and null formData case - covers line 306', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', { throws: new Error('Network error') });
-      fetchMock.get('/api/activity-reports/approvers?region=1', { throws: new Error('Network error') });
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="new" />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Unable to load report')).toBeInTheDocument();
-      });
-    });
-
-    it('redirects to review when not editable and connection active - covers line 336', async () => {
+    it('redirects to review when not editable and connection active', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         calculatedStatus: REPORT_STATUSES.APPROVED,

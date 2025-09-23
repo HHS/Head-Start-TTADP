@@ -51,7 +51,7 @@ const TopAlert = ({
           has requested approval for this collaboration report (
           <strong>
             {`${pendingApprovalCount} of
-               ${approvers?.count || 0}`}
+               ${approvers?.length || 0}`}
             {' '}
             reviews pending
           </strong>

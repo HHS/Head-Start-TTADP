@@ -220,6 +220,7 @@ function CollaborationReport({ match, location }) {
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
             history.replace('/something-went-wrong/500');
+            return;
           }
           report = convertReportToFormData(fetchedReport);
         } else {

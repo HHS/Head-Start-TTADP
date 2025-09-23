@@ -140,6 +140,24 @@ const getReports = (queryInterface) => [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    id: 20009,
+    userId: 1,
+    lastUpdatedById: 5,
+    regionId: 1,
+    name: 'User 1 Submitted Report with Null Approver Status',
+    submissionStatus: 'submitted',
+    calculatedStatus: 'submitted',
+    startDate: '2025-01-07',
+    endDate: '2025-01-08',
+    duration: 150,
+    isStateActivity: false,
+    conductMethod: queryInterface.sequelize.literal("ARRAY['phone']::\"enum_CollabReports_conductMethod\"[]"),
+    description: 'This is a submitted collaboration report with null approver status for testing purposes.',
+    submittedAt: new Date('2025-01-08'),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const specialists = [
@@ -170,6 +188,12 @@ const specialists = [
   {
     collabReportId: 20007,
     specialistId: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20009,
+    specialistId: 5,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -206,6 +230,12 @@ const reasons = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    collabReportId: 20009,
+    reasonId: 'support_coordination',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const approvers = [
@@ -221,6 +251,14 @@ const approvers = [
     collabReportId: 20008,
     userId: 5,
     status: 'needs_action',
+    note: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20009,
+    userId: 5,
+    status: null,
     note: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -255,6 +293,12 @@ const activityStates = [
   {
     collabReportId: 20005,
     activityStateCode: 'FL',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20009,
+    activityStateCode: 'TX',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -296,6 +340,13 @@ const dataUsed = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    collabReportId: 20009,
+    collabReportDatum: 'pir',
+    collabReportDataOther: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 const goals = [
@@ -326,6 +377,12 @@ const goals = [
   {
     collabReportId: 20005,
     goalTemplateId: 19,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20009,
+    goalTemplateId: 18,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -400,6 +457,24 @@ const steps = [
     collabStepId: 2,
     collabStepDetail: 'Cross-regional collaboration implementation',
     collabStepCompleteDate: '2025-01-02',
+    collabStepPriority: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20009,
+    collabStepId: 1,
+    collabStepDetail: 'Initial planning and stakeholder engagement',
+    collabStepCompleteDate: '2025-01-07',
+    collabStepPriority: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    collabReportId: 20009,
+    collabStepId: 2,
+    collabStepDetail: 'Implementation and evaluation phase',
+    collabStepCompleteDate: '2025-01-08',
     collabStepPriority: 2,
     createdAt: new Date(),
     updatedAt: new Date(),

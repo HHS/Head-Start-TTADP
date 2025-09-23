@@ -130,21 +130,19 @@ describe('Review Component', () => {
     it('displays TopAlert when isSubmitted is true', () => {
       renderTest({
         isSubmitted: true,
-        pendingApprovalCount: 2,
+        pendingApprovalCount: 1,
         isNeedsAction: false,
-        approvers: {
-          count: 3,
-          rows: [
-            {
-              status: REPORT_STATUSES.SUBMITTED,
-              user: { fullName: 'Approver One' },
-            },
-          ],
-        },
+        approvers: [
+          {
+            status: null,
+            user: { fullName: 'Approver One' },
+          },
+
+        ],
       });
 
       expect(screen.getByText(/Report Author has requested approval/)).toBeInTheDocument();
-      expect(screen.getByText(/2 of 3 reviews pending/)).toBeInTheDocument();
+      expect(screen.getByText(/1 of 1 reviews pending/)).toBeInTheDocument();
     });
 
     it('displays needs action alert when isNeedsAction is true', () => {
