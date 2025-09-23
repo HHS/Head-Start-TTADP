@@ -12,7 +12,7 @@ import './NoResultsFound.scss';
 function NoResultsFound() {
   const drawerTriggerRef = useRef(null);
   return (
-    <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center padding-x-3 text-center">
+    <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center">
       <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="2x" />
       <span>
         <h4 className="margin-bottom-1 margin-top-2">No results found.</h4>
