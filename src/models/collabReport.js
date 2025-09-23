@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { REPORT_STATUSES } = require('@ttahub/common');
+const { REPORT_STATUSES, COLLAB_REPORT_PARTICIPANTS } = require('@ttahub/common');
 const { sortBy } = require('lodash');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeUpdate } = require('./hooks/collabReport');
@@ -66,7 +66,7 @@ export default (sequelize, DataTypes) => {
       },
       userId: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
       },
       lastUpdatedById: {
         type: DataTypes.INTEGER,
@@ -77,7 +77,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       name: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.STRING,
       },
       submissionStatus: {
@@ -86,6 +86,10 @@ export default (sequelize, DataTypes) => {
           'draft',
           'submitted',
         ]),
+      },
+      participants: {
+        allowNull: true,
+        type: DataTypes.ARRAY(DataTypes.ENUM(COLLAB_REPORT_PARTICIPANTS)),
       },
       calculatedStatus: {
         allowNull: true,
@@ -97,17 +101,17 @@ export default (sequelize, DataTypes) => {
         ]),
       },
       startDate: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.DATEONLY,
         get: formatDate,
       },
       endDate: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.DATEONLY,
         get: formatDate,
       },
       duration: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.DOUBLE,
         validate: {
           min: 0,
@@ -119,11 +123,11 @@ export default (sequelize, DataTypes) => {
         defaultValue: false,
       },
       conductMethod: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.ARRAY(DataTypes.ENUM(['email', 'phone', 'in_person', 'virtual'])),
       },
       description: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.TEXT,
       },
       submittedAt: {
