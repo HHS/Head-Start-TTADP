@@ -532,3 +532,9 @@ fill: #1B1B1B;
 .rdw-link-decorator-icon {
   display: none;
 }
+
+.resource-link-wrapper {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}

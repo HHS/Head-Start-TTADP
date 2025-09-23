@@ -21,12 +21,12 @@ import ActivityReportNavigator from '../../components/Navigator/ActivityReportNa
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
-  LOCAL_STORAGE_DATA_KEY,
-  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
-  LOCAL_STORAGE_EDITABLE_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
+  LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
-import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 import {
   submitReport,
@@ -34,16 +34,18 @@ import {
   getReport,
   getRecipientsForExistingAR,
   createReport,
-  getCollaborators,
   getApprovers,
   reviewReport,
   getGroupsForActivityReport,
   getRecipients,
 } from '../../fetchers/activityReports';
+import { getCollaborators } from '../../fetchers/collaborators';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import MeshPresenceManager from '../../components/MeshPresenceManager';
+import useLocalStorageCleanup, { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
+import usePresenceData from '../../hooks/usePresenceData';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -132,32 +134,6 @@ export const formatReportWithSaveBeforeConversion = async (
   return reportData;
 };
 
-export function cleanupLocalStorage(id, replacementKey) {
-  try {
-    if (replacementKey) {
-      window.localStorage.setItem(
-        LOCAL_STORAGE_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_DATA_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_EDITABLE_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_EDITABLE_KEY(id)),
-      );
-      window.localStorage.setItem(
-        LOCAL_STORAGE_ADDITIONAL_DATA_KEY(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id)),
-      );
-    }
-
-    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
-    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(id));
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Local storage may not be available: ', e);
-  }
-}
-
 function ActivityReport({
   match, location, region,
 }) {
@@ -168,23 +144,22 @@ function ActivityReport({
   const [loading, updateLoading] = useState(true);
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
-
-  const [presenceData, setPresenceData] = useState({
-    hasMultipleUsers: false,
-    otherUsers: [],
-    tabCount: 0,
-  });
   const [shouldAutoSave, setShouldAutoSave] = useState(true);
 
-  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
+  const {
+    presenceData,
+    handlePresenceUpdate,
+  } = usePresenceData(setShouldAutoSave);
+
+  const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
+    LOCAL_STORAGE_AR_DATA_KEY(activityReportId), null,
   );
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {
+    LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(activityReportId), {
       recipients: {
         grants: [],
         otherEntities: [],
@@ -198,7 +173,7 @@ function ActivityReport({
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
+    LOCAL_STORAGE_AR_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
 
   const [isCollaboratorOrCreator, setIsCollaboratorOrCreator] = useState(false);
@@ -222,31 +197,7 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
-  // If there are multiple users working on the same report, we need to suspend auto-saving
-  useEffect(() => {
-    if (presenceData.hasMultipleUsers || presenceData.tabCount > 1) {
-      const otherUsernames = presenceData.otherUsers
-        .map((presenceUser) => (presenceUser.username ? presenceUser.username : 'Unknown user'))
-        .filter((username, index, self) => self.indexOf(username) === index);
-      if (otherUsernames.length > 0 || presenceData.tabCount > 1) {
-        setShouldAutoSave(false);
-      } else {
-        setShouldAutoSave(true);
-      }
-    } else {
-      setShouldAutoSave(true);
-    }
-  }, [presenceData]);
-
-  // cleanup local storage if the report has been submitted or approved
-  useEffect(() => {
-    if (formData
-      && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
-      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
-    ) {
-      cleanupLocalStorage(activityReportId);
-    }
-  }, [activityReportId, formData]);
+  useLocalStorageCleanup(formData, activityReportId);
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
@@ -599,12 +550,6 @@ function ActivityReport({
 
     </>
   ) : null;
-
-  /* istanbul ignore next: hard to test websocket functionality */
-  // receives presence updates from the Mesh component
-  const handlePresenceUpdate = (data) => {
-    setPresenceData(data);
-  };
 
   /* istanbul ignore next: hard to test websocket functionality */
   // eslint-disable-next-line no-shadow, no-unused-vars

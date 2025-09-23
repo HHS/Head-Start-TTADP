@@ -47,7 +47,11 @@ export default function HorizontalTableWidgetCell({
       return <TextTrim text={data.tooltip ? (data.heading || data.value || '') : data.value} />;
     }
 
-    if (showDashForNullValue && !data.value) {
+    if (!isFirstColumn && showDashForNullValue && !data.value) {
+      return '-';
+    }
+
+    if (isFirstColumn && showDashForNullValue && !data.heading) {
       return '-';
     }
 
@@ -82,9 +86,9 @@ HorizontalTableWidgetCell.propTypes = {
     isUrl: PropTypes.bool,
     isInternalLink: PropTypes.bool,
     link: PropTypes.string,
-    tooltip: PropTypes.bool,
-    heading: PropTypes.string,
-    value: PropTypes.string,
+    tooltip: PropTypes.oneOfType([PropTypes.string, PropTypes.node, PropTypes.bool]),
+    heading: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
     title: PropTypes.string,
     suffixContent: PropTypes.node,
     hideLinkIcon: PropTypes.bool,

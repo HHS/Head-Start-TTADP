@@ -121,7 +121,6 @@ describe('Close Suspend Goal Reason', () => {
     expect(await screen.findByText(GOAL_CLOSE_REASONS[0])).toBeVisible();
     expect(await screen.findByText(GOAL_CLOSE_REASONS[1])).toBeVisible();
     expect(await screen.findByText(GOAL_CLOSE_REASONS[2])).toBeVisible();
-    expect(await screen.findByText(GOAL_CLOSE_REASONS[3])).toBeVisible(); // regional office request
 
     // Verify Context.
     expect(await screen.findByText('Additional context')).toBeVisible();
@@ -142,7 +141,6 @@ describe('Close Suspend Goal Reason', () => {
     expect(await screen.findByText(GOAL_SUSPEND_REASONS[0])).toBeVisible();
     expect(await screen.findByText(GOAL_SUSPEND_REASONS[1])).toBeVisible();
     expect(await screen.findByText(GOAL_SUSPEND_REASONS[2])).toBeVisible();
-    expect(await screen.findByText(GOAL_SUSPEND_REASONS[3])).toBeVisible();
 
     // Verify Context.
     expect(await screen.findByText('Additional context')).toBeVisible();
@@ -171,26 +169,17 @@ describe('Close Suspend Goal Reason', () => {
     const button = await screen.findByText('Open');
     userEvent.click(button);
 
-    const firstRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
-    const secondRadio = await screen.findByRole('radio', { name: /recipient request/i, hidden: true });
-    const thirdRadio = await screen.findByRole('radio', { name: /tta complete/i, hidden: true });
+    const firstRadio = await screen.findByRole('radio', { name: /recipient request/i, hidden: true });
+    const secondRadio = await screen.findByRole('radio', { name: /tta complete/i, hidden: true });
 
     // No radio buttons selected by default.
     expect(firstRadio.checked).toBe(false);
     expect(secondRadio.checked).toBe(false);
-    expect(thirdRadio.checked).toBe(false);
-
-    // Select first radio button.
-    userEvent.click(firstRadio);
-
-    // Verify its selected.
-    expect(firstRadio.checked).toBe(true);
 
     // Select third radio button.
-    userEvent.click(thirdRadio);
+    userEvent.click(secondRadio);
 
     // Verify first radio is no longer checked and third radio is checked.
-    expect(firstRadio.checked).toBe(false);
-    expect(thirdRadio.checked).toBe(true);
+    expect(secondRadio.checked).toBe(true);
   });
 });

@@ -19,8 +19,6 @@ import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
-import NewReport from './NewReport';
-import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
 import {
@@ -28,7 +26,6 @@ import {
 } from '../../Constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
-import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
@@ -38,6 +35,8 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import colors from '../../colors';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
+import NewActivityReportButton from '../../components/NewActivityReportButton';
+import './index.scss';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -123,7 +122,9 @@ function Landing() {
       setDownloadAlertsError(true);
     } finally {
       setIsDownloadingAlerts(false);
-      downloadAllAlertsButtonRef.current.focus();
+      if (downloadAllAlertsButtonRef.current) {
+        downloadAllAlertsButtonRef.current.focus();
+      }
     }
   };
 
@@ -282,7 +283,9 @@ function Landing() {
               && reportAlerts.length > 0
               && hasReadWrite(user)
               && appliedRegionNumber !== 14
-              && <NewReport />}
+              && (
+              <NewActivityReportButton />
+              )}
             </div>
           </Grid>
           <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">

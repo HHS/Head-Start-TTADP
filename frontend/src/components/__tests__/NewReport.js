@@ -6,9 +6,8 @@ import {
 import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-
-import NewReport from '../NewReport';
-import { mockWindowProperty } from '../../../testHelpers';
+import NewActivityReportButton from '../NewActivityReportButton';
+import { mockWindowProperty } from '../../testHelpers';
 
 describe('NewReport', () => {
   const history = createMemoryHistory();
@@ -22,14 +21,14 @@ describe('NewReport', () => {
   });
 
   const renderNewReport = () => {
-    render(<Router history={history}><NewReport /></Router>);
+    render(<Router history={history}><NewActivityReportButton /></Router>);
   };
 
   it('attempts to clear local storage and navigates the page', async () => {
     renderNewReport();
     expect(removeItem).not.toHaveBeenCalled();
-    const button = await screen.findByRole('button');
-    userEvent.click(button);
+    const l = await screen.findByRole('link');
+    userEvent.click(l);
     expect(removeItem).toHaveBeenCalled();
     expect(historyPush).toHaveBeenCalled();
   });

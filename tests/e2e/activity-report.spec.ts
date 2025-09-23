@@ -171,7 +171,7 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
 
-    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+    await page.getByRole('link', { name: '+ New Activity Report' }).click();
 
     const regionNumber = await getRegionNumber(page);
 
@@ -492,8 +492,8 @@ test.describe('Activity Report', () => {
     await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
-    await page.getByRole('button', { name: '+ New Activity Report' }).click();
-      const heading = page.getByRole('heading', { name: /activity report for region \d/i });
+    await page.getByRole('link', { name: '+ New Activity Report' }).click();
+    const heading = page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
     await activitySummary(page);
@@ -601,7 +601,7 @@ test.describe('Activity Report', () => {
     await page.goto('http://localhost:3000/');
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
-    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+    await page.getByRole('link', { name: '+ New Activity Report' }).click();
 
     // add a recipient
     await activitySummary(page);
