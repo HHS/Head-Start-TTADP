@@ -12,10 +12,10 @@ import './NoResultsFound.scss';
 function NoResultsFound() {
   const drawerTriggerRef = useRef(null);
   return (
-    <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center">
+    <div className="smart-hub--no-results-found display-flex flex-justify-center flex-align-center text-center height-full">
       <FontAwesomeIcon icon={faChartColumn} color={colors.baseDarkest} size="2x" />
       <span>
-        <h4 className="margin-bottom-1 margin-top-2">No results found.</h4>
+        <h3 className="margin-bottom-1 margin-top-2">No results found.</h3>
       </span>
       <span className="margin-bottom-1">Try removing or changing the selected filters.</span>
       <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
