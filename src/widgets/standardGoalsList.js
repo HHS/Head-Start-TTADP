@@ -22,11 +22,9 @@ export default async function standardGoalsList(scopes) {
         scopes.activityReport,
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
-      /*
       startDate: {
         [Op.gte]: new Date('2025-09-01'),
       },
-      */
     },
     include: [
       {
@@ -40,9 +38,9 @@ export default async function standardGoalsList(scopes) {
             as: 'goal',
             attributes: [],
             required: true,
-            /* where: {
+            where: {
               prestandard: false,
-            }, */
+            },
             include: [
               {
                 model: GoalTemplate,
