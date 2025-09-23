@@ -424,3 +424,30 @@ const TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = {
   BOTH: 'both',
 };
  exports.TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS = TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS;
+
+
+ const COLLAB_REPORT_PARTICIPANTS = [
+  "Child Care and Development Fund",
+  "Child care licensing",
+  "Child Care Training and Technical Assistance Network",
+  "DOE/State PreK",
+  "Head Start Collaboration Office",
+  "Head Start Recipients",
+  "Health department/WIC",
+  "Office of Child Care",
+  "Quality Rating and Improvement System",
+  "State and territory adminstrators",
+  "Regional HSA",
+  "Regional Office staff",
+  "State HSA",
+  "State environmental health and safety systems",
+  "State family engagement systems",
+  "State health and welness systems",
+  "State homelessness agency/McKinney Vento liason",
+  "State Professional development system",
+  "TTA staff",
+  "Other",
+ ];
+
+ exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
+ 
