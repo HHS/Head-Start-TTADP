@@ -114,6 +114,61 @@ async function saveReportReasons(collabReportId, reasons) {
   }
 }
 
+async function saveReportSteps(collabReportId, steps) {
+  // First, destroy all existing steps for this report
+  await CollabReportStep.destroy({
+    where: {
+      collabReportId,
+    },
+  });
+
+  // Then create new steps if any are provided
+  if (steps && steps.length > 0) {
+    const newSteps = steps.map((step) => ({
+      collabReportId,
+      ...step,
+    }));
+    await CollabReportStep.bulkCreate(newSteps);
+  }
+}
+
+async function saveReportDataUsed(collabReportId, dataUsed) {
+  // First, destroy all existing data used entries for this report
+  await CollabReportDataUsed.destroy({
+    where: {
+      collabReportId,
+    },
+  });
+
+  // Then create new data used entries if any are provided
+  if (dataUsed && dataUsed.length > 0) {
+    const newDataUsed = dataUsed.map((data) => ({
+      collabReportId,
+      collabReportDatum: data.collabReportDatum || data,
+      collabReportDataOther: data.collabReportDataOther,
+    }));
+    await CollabReportDataUsed.bulkCreate(newDataUsed);
+  }
+}
+
+async function saveReportActivityStates(collabReportId, activityStates) {
+  // First, destroy all existing activity states for this report
+  await CollabReportActivityState.destroy({
+    where: {
+      collabReportId,
+    },
+  });
+
+  // Then create new activity states if any are provided
+  if (activityStates && activityStates.length > 0) {
+    const newActivityStates = activityStates.map((state) => ({
+      collabReportId,
+      activityStateCode: state.activityStateCode || state,
+    }));
+    await CollabReportActivityState.bulkCreate(newActivityStates);
+  }
+}
+
 // Function to save and remove CR specialists
 async function saveReportSpecialists(collabReportId, specialists) {
   // Make a handy lookup object for the findOrCreate that comes next
@@ -246,6 +301,10 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
     collabReportSpecialists,
     approvers,
     reportReasons,
+    steps,
+    dataUsed,
+    activityStates,
+    reportGoals,
     ...fields
   } = newReport;
 
@@ -260,6 +319,24 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   if (reportReasons) {
     const { id: reportId } = savedReport;
     await saveReportReasons(reportId, reportReasons);
+  }
+
+  // Save any steps
+  if (steps) {
+    const { id: reportId } = savedReport;
+    await saveReportSteps(reportId, steps);
+  }
+
+  // Save any data used
+  if (dataUsed) {
+    const { id: reportId } = savedReport;
+    await saveReportDataUsed(reportId, dataUsed);
+  }
+
+  // Save any activity states
+  if (activityStates) {
+    const { id: reportId } = savedReport;
+    await saveReportActivityStates(reportId, activityStates);
   }
 
   // If there are specialists, those need to be saved separately

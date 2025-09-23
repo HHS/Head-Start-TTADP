@@ -214,7 +214,7 @@ function CollaborationReport({ match, location }) {
             }
 
             if (isNeedsAction) {
-              history.push(`/collaboration-reports/${fetchedReport.id}/review-submit`);
+              history.push(`/collaboration-reports/${fetchedReport.id}/review`);
               return;
             }
           } catch (e) {
@@ -362,15 +362,6 @@ function CollaborationReport({ match, location }) {
       <Alert type="error">
         {error}
       </Alert>
-    );
-  }
-
-  const notEditable = connectionActive && !editable && currentPage !== 'review';
-  const editableAndIsApprover = !currentPage && editable && isPendingApprover;
-  const shouldShowReview = notEditable || editableAndIsApprover;
-  if (shouldShowReview) {
-    return (
-      <Redirect to={`/collaboration-reports/${collabReportId}/review`} />
     );
   }
 

@@ -7,6 +7,9 @@ import db, {
   CollabReportSpecialist,
   CollabReportApprover,
   CollabReportReason,
+  CollabReportStep,
+  CollabReportDataUsed,
+  CollabReportActivityState,
 } from '../models';
 import {
   collabReportById,
@@ -538,6 +541,447 @@ describe('Collab Reports Service', () => {
       expect(Array.isArray(result)).toBe(true);
       // Should respect default limit of REPORTS_PER_PAGE (10)
       expect(result.length).toBeLessThanOrEqual(10);
+    });
+  });
+
+  describe('createOrUpdateReport with steps, dataUsed, and activityStates', () => {
+    let testReport;
+
+    afterEach(async () => {
+      if (testReport) {
+        // Clean up related data
+        await CollabReportStep.destroy({
+          where: { collabReportId: testReport.id },
+          force: true,
+        });
+        await CollabReportDataUsed.destroy({
+          where: { collabReportId: testReport.id },
+          force: true,
+        });
+        await CollabReportActivityState.destroy({
+          where: { collabReportId: testReport.id },
+          force: true,
+        });
+        await testReport.destroy({ force: true });
+        testReport = null;
+      }
+    });
+
+    describe('steps functionality', () => {
+      it('creates new steps when creating a report', async () => {
+        const reportWithSteps = {
+          ...reportObject,
+          name: 'Test Report with Steps',
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'First step completed',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+            {
+              collabStepId: 2,
+              collabStepDetail: 'Second step completed',
+              collabStepCompleteDate: '2020-09-02',
+              collabStepPriority: 2,
+            },
+          ],
+        };
+
+        const result = await createOrUpdateReport(reportWithSteps, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        const steps = await CollabReportStep.findAll({
+          where: { collabReportId: result.id },
+          order: [['collabStepPriority', 'ASC']],
+        });
+
+        expect(steps).toHaveLength(2);
+        expect(steps[0].collabStepDetail).toBe('First step completed');
+        expect(steps[1].collabStepDetail).toBe('Second step completed');
+        expect(steps[0].collabStepId).toBe(1);
+        expect(steps[1].collabStepId).toBe(2);
+      });
+
+      it('updates existing steps when updating a report', async () => {
+        // Create initial report with steps
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Step Updates',
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'Original step',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+          ],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with new steps
+        const updatedReport = {
+          ...initialReport,
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'Updated step',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+            {
+              collabStepId: 2,
+              collabStepDetail: 'New step',
+              collabStepCompleteDate: '2020-09-02',
+              collabStepPriority: 2,
+            },
+          ],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const steps = await CollabReportStep.findAll({
+          where: { collabReportId: created.id },
+          order: [['collabStepPriority', 'ASC']],
+        });
+
+        expect(steps).toHaveLength(2);
+        expect(steps[0].collabStepDetail).toBe('Updated step');
+        expect(steps[1].collabStepDetail).toBe('New step');
+      });
+
+      it('removes steps when they are no longer included', async () => {
+        // Create initial report with steps
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Step Removal',
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'Step to keep',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+            {
+              collabStepId: 2,
+              collabStepDetail: 'Step to remove',
+              collabStepCompleteDate: '2020-09-02',
+              collabStepPriority: 2,
+            },
+          ],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with fewer steps
+        const updatedReport = {
+          ...initialReport,
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'Step to keep',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+          ],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const steps = await CollabReportStep.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(steps).toHaveLength(1);
+        expect(steps[0].collabStepDetail).toBe('Step to keep');
+      });
+
+      it('removes all steps when steps array is empty', async () => {
+        // Create initial report with steps
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for All Steps Removal',
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'Step to remove',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+          ],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with empty steps
+        const updatedReport = {
+          ...initialReport,
+          steps: [],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const steps = await CollabReportStep.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(steps).toHaveLength(0);
+      });
+    });
+
+    describe('dataUsed functionality', () => {
+      it('creates new data used entries when creating a report', async () => {
+        const reportWithDataUsed = {
+          ...reportObject,
+          name: 'Test Report with Data Used',
+          dataUsed: [
+            {
+              collabReportDatum: 'census_data',
+            },
+            {
+              collabReportDatum: 'other',
+              collabReportDataOther: 'Custom data source',
+            },
+          ],
+        };
+
+        const result = await createOrUpdateReport(reportWithDataUsed, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        const dataUsed = await CollabReportDataUsed.findAll({
+          where: { collabReportId: result.id },
+        });
+
+        expect(dataUsed).toHaveLength(2);
+        expect(dataUsed.find((d) => d.collabReportDatum === 'census_data')).toBeTruthy();
+        expect(dataUsed.find((d) => d.collabReportDatum === 'other')).toBeTruthy();
+        expect(dataUsed.find((d) => d.collabReportDataOther === 'Custom data source')).toBeTruthy();
+      });
+
+      it('handles data used as simple strings', async () => {
+        const reportWithDataUsed = {
+          ...reportObject,
+          name: 'Test Report with Simple Data Used',
+          dataUsed: ['census_data', 'pir'],
+        };
+
+        const result = await createOrUpdateReport(reportWithDataUsed, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        const dataUsed = await CollabReportDataUsed.findAll({
+          where: { collabReportId: result.id },
+        });
+
+        expect(dataUsed).toHaveLength(2);
+        expect(dataUsed.find((d) => d.collabReportDatum === 'census_data')).toBeTruthy();
+        expect(dataUsed.find((d) => d.collabReportDatum === 'pir')).toBeTruthy();
+      });
+
+      it('updates data used entries when updating a report', async () => {
+        // Create initial report
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Data Used Updates',
+          dataUsed: [{ collabReportDatum: 'census_data' }],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with new data used
+        const updatedReport = {
+          ...initialReport,
+          dataUsed: [
+            { collabReportDatum: 'pir' },
+            { collabReportDatum: 'other', collabReportDataOther: 'New source' },
+          ],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const dataUsed = await CollabReportDataUsed.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(dataUsed).toHaveLength(2);
+        expect(dataUsed.find((d) => d.collabReportDatum === 'census_data')).toBeFalsy();
+        expect(dataUsed.find((d) => d.collabReportDatum === 'pir')).toBeTruthy();
+        expect(dataUsed.find((d) => d.collabReportDatum === 'other')).toBeTruthy();
+      });
+
+      it('removes all data used when array is empty', async () => {
+        // Create initial report
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Data Used Removal',
+          dataUsed: [{ collabReportDatum: 'census_data' }],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with empty data used
+        const updatedReport = {
+          ...initialReport,
+          dataUsed: [],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const dataUsed = await CollabReportDataUsed.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(dataUsed).toHaveLength(0);
+      });
+    });
+
+    describe('activityStates functionality', () => {
+      it('creates new activity states when creating a report', async () => {
+        const reportWithActivityStates = {
+          ...reportObject,
+          name: 'Test Report with Activity States',
+          activityStates: [
+            { activityStateCode: 'CA' },
+            { activityStateCode: 'NY' },
+          ],
+        };
+
+        const result = await createOrUpdateReport(reportWithActivityStates, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        const activityStates = await CollabReportActivityState.findAll({
+          where: { collabReportId: result.id },
+        });
+
+        expect(activityStates).toHaveLength(2);
+        expect(activityStates.find((s) => s.activityStateCode === 'CA')).toBeTruthy();
+        expect(activityStates.find((s) => s.activityStateCode === 'NY')).toBeTruthy();
+      });
+
+      it('handles activity states as simple strings', async () => {
+        const reportWithActivityStates = {
+          ...reportObject,
+          name: 'Test Report with Simple Activity States',
+          activityStates: ['TX', 'FL'],
+        };
+
+        const result = await createOrUpdateReport(reportWithActivityStates, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        const activityStates = await CollabReportActivityState.findAll({
+          where: { collabReportId: result.id },
+        });
+
+        expect(activityStates).toHaveLength(2);
+        expect(activityStates.find((s) => s.activityStateCode === 'TX')).toBeTruthy();
+        expect(activityStates.find((s) => s.activityStateCode === 'FL')).toBeTruthy();
+      });
+
+      it('updates activity states when updating a report', async () => {
+        // Create initial report
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Activity States Updates',
+          activityStates: [{ activityStateCode: 'CA' }],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with new activity states
+        const updatedReport = {
+          ...initialReport,
+          activityStates: [
+            { activityStateCode: 'NY' },
+            { activityStateCode: 'TX' },
+          ],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const activityStates = await CollabReportActivityState.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(activityStates).toHaveLength(2);
+        expect(activityStates.find((s) => s.activityStateCode === 'CA')).toBeFalsy();
+        expect(activityStates.find((s) => s.activityStateCode === 'NY')).toBeTruthy();
+        expect(activityStates.find((s) => s.activityStateCode === 'TX')).toBeTruthy();
+      });
+
+      it('removes all activity states when array is empty', async () => {
+        // Create initial report
+        const initialReport = {
+          ...reportObject,
+          name: 'Test Report for Activity States Removal',
+          activityStates: [{ activityStateCode: 'CA' }],
+        };
+
+        const created = await createOrUpdateReport(initialReport, null);
+        testReport = await CollabReport.findByPk(created.id);
+
+        // Update with empty activity states
+        const updatedReport = {
+          ...initialReport,
+          activityStates: [],
+        };
+
+        await createOrUpdateReport(updatedReport, testReport);
+
+        const activityStates = await CollabReportActivityState.findAll({
+          where: { collabReportId: created.id },
+        });
+
+        expect(activityStates).toHaveLength(0);
+      });
+    });
+
+    describe('combined functionality', () => {
+      it('handles all three data types together', async () => {
+        const comprehensiveReport = {
+          ...reportObject,
+          name: 'Comprehensive Test Report',
+          steps: [
+            {
+              collabStepId: 1,
+              collabStepDetail: 'Planning phase',
+              collabStepCompleteDate: '2020-09-01',
+              collabStepPriority: 1,
+            },
+          ],
+          dataUsed: [
+            { collabReportDatum: 'census_data' },
+            { collabReportDatum: 'other', collabReportDataOther: 'Custom source' },
+          ],
+          activityStates: [
+            { activityStateCode: 'CA' },
+            { activityStateCode: 'NY' },
+          ],
+        };
+
+        const result = await createOrUpdateReport(comprehensiveReport, null);
+        testReport = await CollabReport.findByPk(result.id);
+
+        // Verify all data was saved
+        const steps = await CollabReportStep.findAll({
+          where: { collabReportId: result.id },
+        });
+        const dataUsed = await CollabReportDataUsed.findAll({
+          where: { collabReportId: result.id },
+        });
+        const activityStates = await CollabReportActivityState.findAll({
+          where: { collabReportId: result.id },
+        });
+
+        expect(steps).toHaveLength(1);
+        expect(dataUsed).toHaveLength(2);
+        expect(activityStates).toHaveLength(2);
+      });
     });
   });
 });
