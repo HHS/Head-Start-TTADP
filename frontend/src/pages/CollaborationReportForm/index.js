@@ -216,7 +216,6 @@ function CollaborationReport({ match, location }) {
 
             if (isNeedsAction) {
               history.push(`/collaboration-reports/${fetchedReport.id}/review`);
-              return;
             }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
