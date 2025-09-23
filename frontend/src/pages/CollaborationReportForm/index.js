@@ -52,6 +52,7 @@ const defaultValues = {
     1: NOT_STARTED,
     2: NOT_STARTED,
     3: NOT_STARTED,
+    4: NOT_STARTED,
   },
   calculatedStatus: REPORT_STATUSES.DRAFT,
 };
@@ -214,7 +215,7 @@ function CollaborationReport({ match, location }) {
             }
 
             if (isNeedsAction) {
-              history.push(`/collaboration-reports/${fetchedReport.id}/review-submit`);
+              history.push(`/collaboration-reports/${fetchedReport.id}/review`);
               return;
             }
           } catch (e) {
