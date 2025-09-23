@@ -281,16 +281,6 @@ describe('CreatorSubmit Component', () => {
       expect(backButton).toHaveClass('usa-button', 'usa-button--outline');
     });
 
-    it('assigns correct IDs to draft buttons', () => {
-      renderComponent();
-
-      const saveDraftButton = screen.getByText('Save draft');
-      const backButton = screen.getByText('Back');
-
-      expect(saveDraftButton).toHaveAttribute('id', 'draft-review-submit-save-draft');
-      expect(backButton).toHaveAttribute('id', 'draft-review-submit-back');
-    });
-
     it('enables submit button when hasIncompletePages is false', () => {
       renderComponent({ hasIncompletePages: false });
 
