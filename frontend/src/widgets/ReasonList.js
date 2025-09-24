@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import TableWidget from './TableWidget';
+import './ReasonsList.scss';
 
 const renderReasonList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
@@ -23,14 +24,17 @@ export function ReasonListTable({
   data, loading, title,
 }) {
   return (
-    <TableWidget
-      data={data}
-      headings={['Reason', 'Number of activities']}
-      loading={loading}
-      loadingLabel="Reason list loading"
-      title={title}
-      renderData={renderReasonList}
-    />
+    <div className="smarthub-reasons-list">
+      <TableWidget
+        className="height-full margin-bottom-0"
+        data={data}
+        headings={['Reason', 'Number of activities']}
+        loading={loading}
+        loadingLabel="Reason list loading"
+        title={title}
+        renderData={renderReasonList}
+      />
+    </div>
   );
 }
 

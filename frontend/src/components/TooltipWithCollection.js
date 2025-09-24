@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import Tooltip from './Tooltip';
+import TextTrim from './TextTrim';
 
 export default function TooltipWithCollection({ collection, collectionTitle, position }) {
   if (!collection || collection.length === 0) {
@@ -30,12 +31,7 @@ export default function TooltipWithCollection({ collection, collectionTitle, pos
 
   if (collection.length === 1) {
     return (
-      <Tooltip
-        displayText={tooltip}
-        tooltipText={tooltip}
-        buttonLabel={`click to visually reveal the ${collectionTitle}`}
-        position={position}
-      />
+      <TextTrim text={collection[0]} />
     );
   }
 

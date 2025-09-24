@@ -23,6 +23,7 @@ export default (sequelize, DataTypes) => {
         timestamps: false,
       });
       Region.hasMany(models.ActivityReport, { foreignKey: 'regionId', as: 'activityReports' });
+      Region.hasMany(models.CollabReport, { foreignKey: 'regionId', as: 'collabReports' });
       Region.hasMany(models.GoalTemplate, { foreignKey: 'regionId', as: 'goalTemplates' });
       Region.hasMany(models.ObjectiveTemplate, { foreignKey: 'regionId', as: 'objectiveTemplates' });
       Region.hasMany(models.Permission, { foreignKey: 'regionId', as: 'permissions' });
