@@ -112,7 +112,10 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const accessToken = await getAccessToken(req);
     const data = await getUserInfo(accessToken, req.session.claims.sub);
     const dbUser = await retrieveUserDetails(data);
+    const claims = req.session.claims || {};
+    const idToken = req.session.id_token || '';
 
+    // console.log('REQ SESSION BEFORE REGEN:', req.session);
     req.session.regenerate((err) => {
       if (err) {
         auditLogger(`Session regenerate failed: ${err}`);
@@ -121,6 +124,8 @@ app.get(oauth2CallbackPath, async (req, res) => {
       req.session.accessToken = accessToken;
       req.session.userId = dbUser.id;
       req.session.uuid = uuidv4();
+      req.session.clams = claims;
+      req.session.id_token = idToken;
 
       const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
         ? req.session.referrerPath : '/';
@@ -128,6 +133,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
       logger.debug(`referrer path: ${req.session.referrerPath}`);
 
       auditLogger.info(`User ${dbUser.id} logged in`);
+      // console.log('REQ SESSION AFTER REGEN:', req.session);
       return res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
     });
     return;
