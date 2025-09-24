@@ -13,7 +13,7 @@ const namespace = 'MIDDLEWARE:AUTH';
 let cachedClient = null;
 let issuerConfig = null;
 const CODE_CHALLENGE_METHOD = 'S256';
-const AUTH_METHOD = (process.env.OIDC_AUTH_METHOD || '').toLowerCase(); // 'pkce' or 'private_key_jwt'
+const AUTH_METHOD = (process.env.OIDC_AUTH_METHOD || 'pkce').toLowerCase(); // 'pkce' or 'private_key_jwt'
 const USE_PKCE = AUTH_METHOD === 'pkce'
   || (AUTH_METHOD === '' && (process.env.AUTH_CLIENT_ID ?? '').endsWith('local'));
 
@@ -117,10 +117,10 @@ export async function getAccessToken(req) {
      * @type {import('openid-client').AuthorizationCodeGrantChecks}
      */
     const options = {
-      ...(USE_PKCE ? { pkceCodeVerifier: req.session?.pkce?.codeVerifier } : {}),
       expectedState: req.session.pkce.state,
       expectedNonce: req.session.pkce.nonce,
       idTokenExpected: true,
+      ...(USE_PKCE ? { pkceCodeVerifier: req.session?.pkce?.codeVerifier } : {}),
     };
 
     if (USE_PKCE) {
