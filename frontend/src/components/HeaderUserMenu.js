@@ -92,18 +92,16 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
       showIfAdmin: true,
     },
     { key: 7, divider: true, showIfAdmin: false },
-    // Use hard navigation so the browser hits the server endpoint
-    // for TTA Hub (RP) initiated logout.
     {
       key: 8,
       label: 'Log out',
-      to: '/api/logout-oidc',
-      external: true,
+      href: '/api/logout-oidc',
     },
   ].map(({
     key,
     label,
     to,
+    href,
     external = false,
     divider = false,
     space = false,
@@ -128,7 +126,23 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
         ),
       };
     }
-
+    if (href) {
+      return {
+        key,
+        presentation: false,
+        element: (
+          <a
+            key={key}
+            className="usa-nav__link"
+            href={href}
+            onClick={fn}
+          >
+            <span>{label}</span>
+            {badge}
+          </a>
+        ),
+      };
+    }
     return {
       key,
       presentation: false,
