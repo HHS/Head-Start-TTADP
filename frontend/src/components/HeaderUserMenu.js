@@ -136,6 +136,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
             className="usa-nav__link"
             href={href}
             onClick={fn}
+            rel="noopener noreferrer"
           >
             <span>{label}</span>
             {badge}
