@@ -18,6 +18,7 @@ export default function CreatorSubmit({
   hasIncompletePages,
   incompletePages,
   isCreator,
+  isCollaborator,
   isSubmitted,
   onFormReview,
   availableApprovers,
@@ -51,6 +52,7 @@ export default function CreatorSubmit({
         hasBeenReviewed={hasBeenReviewed}
         hasReviewNote={hasReviewNote}
         approverStatusList={approverStatusList}
+        isCollaborator={isCollaborator}
       />
     );
   }
@@ -59,7 +61,7 @@ export default function CreatorSubmit({
     <>
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-        {(isCreator && !isSubmitted) && (
+        {((isCreator || isCollaborator) && !isSubmitted) && (
         <div className="margin-bottom-3">
           <Fieldset className="smart-hub--report-legend margin-top-4">
             <FormItem

@@ -79,30 +79,27 @@ export async function syncCRApprovers(collabReportId: number, approverUserIds: n
     where: { collabReportId },
   });
 
-  console.log({ existingApprovers });
-
   // Destroy any existing approvers now missing from user Ids
   if (existingApprovers && existingApprovers.length > 0) {
     const approversToDestroy = existingApprovers.filter((a) => !approverUserIds.includes(a.userId));
-    console.log(approversToDestroy);
-    // const destroyPromises = approversToDestroy.map(async (approver) => {
-    //   // By default, do a soft delete
-    //   let force = false;
+    const destroyPromises = approversToDestroy.map(async (approver) => {
+      // By default, do a soft delete
+      let force = false;
 
-    //   if (!approver.note && !approver.status) {
-    //     // Approver was assigned but never reviewed, so nothing for UI to display;
-    //     // do a hard delete
-    //     force = true;
-    //   }
+      if (!approver.note && !approver.status) {
+        // Approver was assigned but never reviewed, so nothing for UI to display;
+        // do a hard delete
+        force = true;
+      }
 
-    //   return CollabReportApprover.destroy({
-    //     where: { id: approver.id },
-    //     individualHooks: true,
-    //     force,
-    //   });
-    // });
+      return CollabReportApprover.destroy({
+        where: { id: approver.id },
+        individualHooks: true,
+        force,
+      });
+    });
 
-    // await Promise.all(destroyPromises);
+    await Promise.all(destroyPromises);
   }
 
   // Create or restore approvers

@@ -25,6 +25,7 @@ const ReviewSubmit = ({
     submittedAt,
     author,
     userId,
+    collabReportSpecialists,
   } = formData;
 
   const { user } = useContext(UserContext);
@@ -38,6 +39,8 @@ const ReviewSubmit = ({
 
   // store some values for readability
   const isCreator = userId === user.id;
+  // eslint-disable-next-line max-len
+  const isCollaborator = collabReportSpecialists.some(({ specialistId }) => user.id === specialistId);
   const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
@@ -76,6 +79,7 @@ const ReviewSubmit = ({
           onSaveDraft={onSaveDraft}
           onUpdatePage={onUpdatePage}
           pendingApprovalCount={pendingApprovalCount}
+          isCollaborator={isCollaborator}
         />
 
       </Container>
@@ -95,6 +99,9 @@ ReviewSubmit.propTypes = {
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     userId: PropTypes.number,
+    collabReportSpecialists: PropTypes.arrayOf(PropTypes.shape({
+      specialistId: PropTypes.number,
+    })).isRequired,
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
     submissionStatus: PropTypes.string,

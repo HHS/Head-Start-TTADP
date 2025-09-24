@@ -87,7 +87,6 @@ export const formatReportWithSaveBeforeConversion = async (
       reportId.current, {
         ...updatedFields,
         version: 3,
-        approverUserIds: approverIds,
         pageState: data.pageState,
       }, {},
     );
@@ -210,7 +209,6 @@ function CollaborationReport({ match, location }) {
 
             if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
               // redirect to approved/submitted report view
-              console.log('we pushin');
               history.push(`/collaboration-reports/view/${fetchedReport.id}`);
               return;
             }
@@ -242,7 +240,7 @@ function CollaborationReport({ match, location }) {
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
 
         const isCollaborator = report.collabReportSpecialists
-          && report.collabReportSpecialists.some((u) => u.value === user.id);
+          && report.collabReportSpecialists.some((u) => u.specialistId === user.id);
         const isAuthor = report.userId === user.id;
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
@@ -316,7 +314,6 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
-        console.log({ e });
         const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
@@ -393,7 +390,6 @@ function CollaborationReport({ match, location }) {
         const savedReport = await createReport({
           ...data,
           regionId: formData.regionId,
-          approverUserIds: approverIds,
           version: 2,
         });
 
@@ -471,10 +467,8 @@ function CollaborationReport({ match, location }) {
   };
 
   const onFormSubmit = async (data) => {
-    const approverIds = data.approvers.map((a) => a.user.id);
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
-      approverUserIds: approverIds,
       creatorRole: data.creatorRole,
     };
     const response = await submitReport(reportId.current, reportToSubmit);

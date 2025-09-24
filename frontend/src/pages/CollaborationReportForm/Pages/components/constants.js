@@ -9,6 +9,7 @@ const reviewPagePropType = {
   hasIncompletePages: PropTypes.bool.isRequired,
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
   isCreator: PropTypes.bool.isRequired,
+  isCollaborator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   onFormReview: PropTypes.func.isRequired,
   availableApprovers: PropTypes.arrayOf(PropTypes.shape({

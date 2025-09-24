@@ -374,8 +374,6 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
 
   // If there are specialists, those need to be saved separately
   if (collabReportSpecialists) {
-    console.log({ collabReportSpecialists });
-
     const specialists = collabReportSpecialists.map(
       (c: { specialistId: number }) => c.specialistId,
     );
@@ -384,7 +382,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
 
   // Sync the approvers, if an empty array they get removed
   if (approvers) {
-    await syncCRApprovers(savedReport.id, approvers.map(({ userId }) => userId));
+    await syncCRApprovers(savedReport.id, approvers.map(({ user }) => user.id));
   }
 
   // Finally, fetch a new copy of the saved report from the DB
