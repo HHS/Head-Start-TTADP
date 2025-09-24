@@ -392,8 +392,10 @@ function CollaborationReport({ match, location }) {
     }
 
     const page = pages.find((p) => p.position === position);
-    const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    if (page) {
+      const newPath = `/collaboration-reports/${reportId.current}/${page.path}`;
+      history.push(newPath, state);
+    }
   };
 
   const onSave = async (data, forceUpdate = false) => {
@@ -497,7 +499,16 @@ function CollaborationReport({ match, location }) {
   };
 
   const onSaveAndContinue = async () => {
+    const validity = await hookForm.trigger();
+    if (!validity) {
+      return;
+    }
 
+    const currentPosition = pages.find((page) => page.path === currentPage)?.position;
+
+    const isAutoSave = false;
+    await onSaveDraft(isAutoSave);
+    updatePage(currentPosition + 1);
   };
 
   const onReview = async (data) => {
