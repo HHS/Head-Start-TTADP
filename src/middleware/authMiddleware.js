@@ -123,16 +123,12 @@ export async function getAccessToken(req) {
       idTokenExpected: true,
     };
 
-    if (
-      USE_PKCE
-      && (!options.pkceCodeVerifier
-        || !options.expectedState
-        || !options.expectedNonce)
-    ) {
-      auditLogger.error(
-        'OIDC callback missing PKCE/session. Possible lost session.',
-      );
-      return undefined;
+    if (USE_PKCE) {
+      const { pkce } = req.session || {};
+      if (!pkce?.codeVerifier || !pkce?.state || !pkce?.nonce) {
+        auditLogger.error('OIDC callback missing PKCE/session. Possible lost session.');
+        return undefined;
+      }
     }
 
     const tokens = await client.authorizationCodeGrant(issuerConfig, currentUrl, options);
