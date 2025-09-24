@@ -30,7 +30,7 @@ import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey'
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { COLLAB_REPORT_REASONS, STATES } from '../../../Constants';
 
-const position = 0;
+const position = 1;
 const path = 'activity-summary';
 
 const ActivitySummary = ({ collaborators = [] }) => {
@@ -363,7 +363,10 @@ ActivitySummary.propTypes = {
   ).isRequired,
 };
 
-export const isPageComplete = (formData, formState) => {
+export const isPageComplete = (hookForm) => {
+  const { formState, getValues } = hookForm;
+  const formData = getValues();
+
   const { isValid } = formState;
   if (isValid) {
     return true;
@@ -408,8 +411,7 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  // Check statesInvolved only if isStateActivity is 'true'
-  if (isStateActivity === 'true' && !statesInvolved.length) {
+  if (isStateActivity === 'true' && (!statesInvolved || !statesInvolved.length)) {
     return false;
   }
 

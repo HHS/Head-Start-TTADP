@@ -17,6 +17,7 @@ const ReviewSubmit = ({
   onUpdatePage,
   onSaveForm,
   onSaveDraft,
+  onSubmit,
 }) => {
   const {
     calculatedStatus,
@@ -77,6 +78,7 @@ const ReviewSubmit = ({
           reviewItems={reviewItems}
           onSaveForm={onSaveForm}
           onSaveDraft={onSaveDraft}
+          onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
           pendingApprovalCount={pendingApprovalCount}
           isCollaborator={isCollaborator}
@@ -95,6 +97,7 @@ ReviewSubmit.propTypes = {
     }),
   ).isRequired,
   onReview: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
   error: PropTypes.string,
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({

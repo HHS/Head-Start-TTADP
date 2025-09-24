@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { useFormContext } from 'react-hook-form';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Accordion } from '../../../../components/Accordion';
@@ -92,6 +93,7 @@ const Review = ({
   onSaveForm,
   onUpdatePage,
   onSaveDraft,
+  onSubmit,
   isNeedsAction,
   pendingApprovalCount,
   author,
@@ -99,6 +101,7 @@ const Review = ({
 }) => {
   const FormComponent = (isCreator || isCollaborator) ? CreatorSubmit : ApproverReview;
 
+  const { watch } = useFormContext();
   const { user } = useContext(UserContext);
 
   const otherManagerNotes = approverStatusList
@@ -112,8 +115,10 @@ const Review = ({
     && thisApprovingManager.length > 0
     && thisApprovingManager[0].note;
 
-  const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
-  const incompletePages = filtered.map((f) => f.label);
+  const pageState = watch('pageState');
+  const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => position);
+  // eslint-disable-next-line max-len
+  const incompletePages = pages.filter((page) => filtered.includes(page.position)).map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
 
   return (
@@ -153,6 +158,7 @@ const Review = ({
         onSaveForm={onSaveForm}
         onUpdatePage={onUpdatePage}
         onSaveDraft={onSaveDraft}
+        onSubmit={onSubmit}
       />
     </>
   );
@@ -160,6 +166,7 @@ const Review = ({
 
 Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
   dateSubmitted: PropTypes.string,
   pendingOtherApprovals: PropTypes.bool,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({

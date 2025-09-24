@@ -44,6 +44,7 @@ import MeshPresenceManager from '../../components/MeshPresenceManager';
 import useLocalStorageCleanup from '../../hooks/useLocalStorageCleanup';
 import usePresenceData from '../../hooks/usePresenceData';
 import { getApprovers } from '../../fetchers/activityReports';
+import useHookFormPageState from '../../hooks/useHookFormPageState';
 
 // Default values for a new collaboration report go here
 const defaultValues = {
@@ -129,6 +130,9 @@ function CollaborationReport({ match, location }) {
     presenceData,
     handlePresenceUpdate,
   } = usePresenceData(setShouldAutoSave);
+
+  // hook to update the page state in the sidebar
+  useHookFormPageState(hookForm, pages, currentPage);
 
   const [formData, updateFormData, localStorageAvailable] = useTTAHUBLocalStorage(
     LOCAL_STORAGE_CR_DATA_KEY(collabReportId), null,
@@ -416,7 +420,7 @@ function CollaborationReport({ match, location }) {
           forceUpdate,
         );
 
-        updateFormData(updatedReport, true);
+        updateFormData(convertReportToFormData(updatedReport), true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
@@ -470,20 +474,11 @@ function CollaborationReport({ match, location }) {
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
       creatorRole: data.creatorRole,
+      approvers: data.approvers,
     };
-    const response = await submitReport(reportId.current, reportToSubmit);
-
-    updateFormData(
-      {
-        ...formData,
-        calculatedStatus: response.calculatedStatus,
-        approvers: response.approvers,
-      },
-      true,
-    );
-    updateEditable(false);
-
+    await submitReport(reportId.current, reportToSubmit);
     cleanupLocalStorage(collabReportId);
+    history.push('/collaboration-reports/'); // TODO: message
   };
 
   const onReview = async (data) => {
@@ -621,7 +616,6 @@ function CollaborationReport({ match, location }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             shouldAutoSave={shouldAutoSave}
-            hideSideNav={hideSideNav}
           />
         </FormProvider>
       </NetworkContext.Provider>

@@ -31,6 +31,7 @@ export default function CreatorSubmit({
   hasBeenReviewed,
   thisApprovingManager,
   approverStatusList,
+  onSubmit,
 }) {
   const { handleSubmit } = useFormContext();
 
@@ -53,6 +54,7 @@ export default function CreatorSubmit({
         hasReviewNote={hasReviewNote}
         approverStatusList={approverStatusList}
         isCollaborator={isCollaborator}
+        onSubmit={onSubmit}
       />
     );
   }
@@ -60,7 +62,7 @@ export default function CreatorSubmit({
   return (
     <>
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
+      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         {((isCreator || isCollaborator) && !isSubmitted) && (
         <div className="margin-bottom-3">
           <Fieldset className="smart-hub--report-legend margin-top-4">

@@ -6,6 +6,7 @@ import {
   FORBIDDEN,
   BAD_REQUEST,
   NO_CONTENT,
+  INTERNAL_SERVER_ERROR,
 } from 'http-codes';
 import CollabReportPolicy from '../../policies/collabReport';
 import {
@@ -304,6 +305,7 @@ export async function submitReport(req: Request, res: Response) {
       submittedAt: new Date(),
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      approvers: req.body.approvers,
     };
 
     // Merge the updated report with the old

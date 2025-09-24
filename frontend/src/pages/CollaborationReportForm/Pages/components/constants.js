@@ -20,6 +20,7 @@ const reviewPagePropType = {
   otherManagerNotes: PropTypes.arrayOf(approver),
   onSaveDraft: PropTypes.func.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
+  onSubmit: PropTypes.func.isRequired,
 };
 
 const reviewPageDefaultProps = {
