@@ -427,7 +427,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -444,7 +443,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -463,7 +461,6 @@ describe('CollaborationReportForm', () => {
         multiRoleUser,
         false,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -481,7 +478,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -501,7 +497,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -521,7 +516,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         true,
       );
 
@@ -542,7 +536,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -562,7 +555,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -593,7 +585,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -628,7 +619,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 

@@ -85,8 +85,8 @@ async function create(report) {
 
 async function saveCollabReportAssociation(
   collabReportId: number,
-  model: typeof CollabReportReason,
-  associationKey: 'reasonId',
+  model: typeof CollabReportActivityState | typeof CollabReportActivityState,
+  associationKey: 'reasonId' | 'activityStateCode',
   data: { id: number | string }[],
 ) {
   if (data.length) {
@@ -140,12 +140,12 @@ async function saveCollabReportAssociation(
   }
 }
 
-async function saveReportReasons(collabReportId: number, reasons: { reasonId: string }[]) {
+async function saveReportReasons(collabReportId: number, reasons: string[]) {
   await saveCollabReportAssociation(
     collabReportId,
     CollabReportReason,
     'reasonId',
-    reasons.map(({ reasonId: id }) => ({ id })),
+    reasons.map((reasonId) => ({ id: reasonId })),
   );
 }
 
@@ -186,22 +186,13 @@ async function saveReportDataUsed(collabReportId, dataUsed) {
   }
 }
 
-async function saveReportActivityStates(collabReportId, activityStates) {
-  // First, destroy all existing activity states for this report
-  await CollabReportActivityState.destroy({
-    where: {
-      collabReportId,
-    },
-  });
-
-  // Then create new activity states if any are provided
-  if (activityStates && activityStates.length > 0) {
-    const newActivityStates = activityStates.map((state) => ({
-      collabReportId,
-      activityStateCode: state.activityStateCode || state,
-    }));
-    await CollabReportActivityState.bulkCreate(newActivityStates);
-  }
+async function saveReportActivityStates(collabReportId: number, activityStates: string[]) {
+  await saveCollabReportAssociation(
+    collabReportId,
+    CollabReportActivityState,
+    'activityStateCode',
+    activityStates.map((state) => ({ id: state })),
+  );
 }
 
 // Function to save and remove CR specialists
@@ -238,8 +229,11 @@ async function saveReportSpecialists(collabReportId: number, specialists: number
 
 // Helper function to update a report using the model's built-in update
 async function update(newReport, oldReport) {
-  const updatedReport = await oldReport.update(newReport, {
-    fields: _.keys(newReport),
+  const fields = newReport;
+  delete fields.reportReasons;
+
+  const updatedReport = await oldReport.update(fields, {
+    fields: _.keys(fields),
   });
   return updatedReport;
 }
@@ -249,6 +243,28 @@ export async function collabReportById(crId: string) {
   const collabReportId = parseInt(crId, DECIMAL_BASE);
 
   const report = await CollabReport.findOne({
+    attributes: {
+      include: [
+        [
+          sequelize.literal(`(
+            SELECT array_agg("reasonId")
+            FROM "CollabReportReasons"
+            WHERE "CollabReportReasons"."collabReportId" = "CollabReport"."id"
+            AND "CollabReportReasons"."deletedAt" IS NULL
+          )`),
+          'reportReasons',
+        ],
+        [
+          sequelize.literal(`(
+            SELECT array_agg("activityStateCode")
+            FROM "CollabReportActivityStates"
+            WHERE "CollabReportActivityStates"."collabReportId" = "CollabReport"."id"
+            AND "CollabReportActivityStates"."deletedAt" IS NULL
+          )`),
+          'statesInvolved',
+        ],
+      ],
+    },
     where: {
       id: collabReportId,
     },
@@ -256,11 +272,6 @@ export async function collabReportById(crId: string) {
       {
         model: User,
         as: 'author',
-      },
-      {
-        required: false,
-        model: CollabReportReason,
-        as: 'reportReasons',
       },
       {
         required: false,
@@ -299,14 +310,6 @@ export async function collabReportById(crId: string) {
         ],
       },
       {
-        model: CollabReportReason,
-        as: 'reportReasons',
-      },
-      {
-        model: CollabReportActivityState,
-        as: 'activityStates',
-      },
-      {
         model: CollabReportApprover,
         attributes: ['id', 'status', 'note'],
         as: 'approvers',
@@ -339,6 +342,7 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
     steps,
     dataUsed,
     activityStates,
+    statesInvolved,
     reportGoals,
     ...fields
   } = newReport;
@@ -368,8 +372,8 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   }
 
   // Save any activity states
-  if (activityStates) {
-    await saveReportActivityStates(reportId, activityStates);
+  if (statesInvolved) {
+    await saveReportActivityStates(reportId, statesInvolved);
   }
 
   // If there are specialists, those need to be saved separately
@@ -422,6 +426,15 @@ export async function getCSVReports(
     attributes: {
       include: [
         ['calculatedStatus', 'status'],
+        [
+          sequelize.literal(`(
+            SELECT array_agg("reasonId")
+            FROM "CollabReportReasons"
+            WHERE "CollabReportReasons"."collabReportId" = "CollabReport"."id"
+            AND "CollabReportReasons"."deletedAt" IS NULL
+          )`),
+          'reportReasons',
+        ],
       ],
       exclude: [
         'calculatedStatus',
@@ -494,10 +507,6 @@ export async function getCSVReports(
           'collabStepCompleteDate',
           'collabStepDetail',
         ],
-      },
-      {
-        model: CollabReportReason,
-        as: 'reportReasons',
       },
     ],
     limit: limit === 'all' ? null : Number(limit),

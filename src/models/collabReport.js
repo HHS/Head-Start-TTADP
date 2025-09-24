@@ -173,7 +173,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.VIRTUAL,
         get() {
           if (!this.reportReasons) return null;
-          return this.reportReasons.map((r) => r.reasonId).join('/n');
+          return this.reportReasons.join('/n');
         },
       },
       method: {

@@ -146,15 +146,6 @@ describe('CollabReport Activity Summary Page', () => {
   });
 
   describe('isPageComplete function', () => {
-    it('returns true when form is valid', () => {
-      const hookForm = {
-        formState: { isValid: true },
-        getValues: () => ({}),
-      };
-
-      expect(isPageComplete(hookForm)).toBe(true);
-    });
-
     it('returns false when required strings are missing', () => {
       const hookForm = {
         formState: { isValid: false },

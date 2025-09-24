@@ -24,7 +24,6 @@ import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_CR_EDITABLE_KEY,
-  NOOP,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useTTAHUBLocalStorage from '../../hooks/useTTAHUBLocalStorage';
@@ -67,7 +66,6 @@ export const formatReportWithSaveBeforeConversion = async (
   user,
   userHasOneRole,
   reportId,
-  approverIds,
   forceUpdate,
 ) => {
   // if it isn't a new report, we compare it to the last response from the backend (formData)
@@ -76,19 +74,18 @@ export const formatReportWithSaveBeforeConversion = async (
     ? user.roles[0].fullName
     : data.creatorRole;
 
-  const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
+  const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData) || {};
   const isEmpty = Object.keys(updatedFields).length === 0;
 
   // save report returns dates in YYYY-MM-DD format, so we need to parse them
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
   const updatedReport = isEmpty && !forceUpdate
-    ? { ...formData }
+    ? formData
     : await saveReport(
       reportId.current, {
         ...updatedFields,
         version: 3,
-        pageState: data.pageState,
       }, {},
     );
 
@@ -97,11 +94,20 @@ export const formatReportWithSaveBeforeConversion = async (
   };
 
   if (thereIsANeedToParseDates) {
-    reportData = {
-      ...reportData,
-      startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-      endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-    };
+    // Check if dates are in YYYY-MM-DD format before parsing
+    const isYMDFormat = updatedReport.startDate
+      && updatedReport.startDate.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (isYMDFormat) {
+      reportData = {
+        ...reportData,
+        startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+        endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+      };
+    } else {
+      // Preserve existing dates if API doesn't return them or they're in wrong format
+      reportData.startDate = reportData.startDate || formData.startDate;
+      reportData.endDate = reportData.endDate || formData.endDate;
+    }
   }
 
   return reportData;
@@ -222,6 +228,10 @@ function CollaborationReport({ match, location }) {
             return;
           }
           report = convertReportToFormData(fetchedReport);
+          // Ensure pageState is initialized if not present in fetched data
+          if (!report.pageState) {
+            report.pageState = defaultPageState;
+          }
         } else {
           report = {
             ...defaultValues,
@@ -387,8 +397,6 @@ function CollaborationReport({ match, location }) {
   };
 
   const onSave = async (data, forceUpdate = false) => {
-    const approverIds = data.approvers ? data.approvers.map((a) => a.user.id) : [];
-
     try {
       if (reportId.current === 'new') {
         const savedReport = await createReport({
@@ -407,6 +415,12 @@ function CollaborationReport({ match, location }) {
 
         window.history.replaceState(null, null, `/collaboration-reports/${savedReport.id}/${currentPage}`);
 
+        const currentPageState = hookForm.getValues('pageState');
+        const convertedReport = convertReportToFormData(savedReport);
+        updateFormData({
+          ...convertedReport,
+          pageState: currentPageState || convertedReport.pageState,
+        }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
       } else {
@@ -416,11 +430,12 @@ function CollaborationReport({ match, location }) {
           user,
           userHasOneRole,
           reportId,
-          approverIds,
           forceUpdate,
         );
 
-        updateFormData(convertReportToFormData(updatedReport), true);
+        const currentPageState = hookForm.getValues('pageState');
+        const convertedReport = convertReportToFormData(updatedReport);
+        updateFormData({ ...convertedReport, pageState: currentPageState }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
@@ -450,7 +465,7 @@ function CollaborationReport({ match, location }) {
       // Get the current form data
       const { status, ...formValues } = hookForm.getValues();
       // TODO: Add 'pageState' and newNavigatorState to the saved data
-      const data = { ...formData, ...formValues, pageState: {} };
+      const data = { ...formData, ...formValues };
 
       // Clear the previous error message if there is one
       updateErrorMessage();
@@ -479,6 +494,10 @@ function CollaborationReport({ match, location }) {
     await submitReport(reportId.current, reportToSubmit);
     cleanupLocalStorage(collabReportId);
     history.push('/collaboration-reports/'); // TODO: message
+  };
+
+  const onSaveAndContinue = async () => {
+
   };
 
   const onReview = async (data) => {
@@ -612,7 +631,7 @@ function CollaborationReport({ match, location }) {
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}
             onSaveDraft={onSaveDraft}
-            onSaveAndContinue={NOOP} // TODO: implement
+            onSaveAndContinue={onSaveAndContinue}
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             shouldAutoSave={shouldAutoSave}

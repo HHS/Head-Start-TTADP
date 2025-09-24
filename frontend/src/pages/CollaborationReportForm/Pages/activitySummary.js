@@ -364,13 +364,8 @@ ActivitySummary.propTypes = {
 };
 
 export const isPageComplete = (hookForm) => {
-  const { formState, getValues } = hookForm;
+  const { getValues } = hookForm;
   const formData = getValues();
-
-  const { isValid } = formState;
-  if (isValid) {
-    return true;
-  }
 
   const {
     // strings
@@ -441,7 +436,7 @@ const ReviewSection = () => {
     description,
     reportReasons,
     isStateActivity,
-    activityStates,
+    statesInvolved,
     method,
   } = getValues();
   const sections = [
@@ -465,10 +460,10 @@ const ReviewSection = () => {
       title: 'Reason for activity',
       anchor: 'reasons',
       items: [
-        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r.reasonId] || '').join(', ') || '' } },
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
         { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
         ...(isStateActivity ? [
-          { label: 'States involved', name: 'states', customValue: { states: activityStates?.map((s) => STATES[s.activityStateCode] || '').join(', ') || '' } },
+          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
         ] : []),
         { label: 'Activity method', name: 'method', customValue: { method } },
         { label: 'Activity description', name: 'description', customValue: { description } },

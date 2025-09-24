@@ -8,6 +8,14 @@ import moment from 'moment';
  * @returns {} containing any new keys/values
  */
 export const findWhatsChanged = (object, base) => {
+  // Handle null/undefined inputs
+  if (!object || typeof object !== 'object') {
+    return {};
+  }
+
+  // Ensure base is an object or default to empty object
+  const baseObj = base && typeof base === 'object' ? base : {};
+
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
       if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
@@ -21,7 +29,7 @@ export const findWhatsChanged = (object, base) => {
       return accumulator;
     }
 
-    if (!isEqual(base[current], object[current])) {
+    if (!isEqual(baseObj[current], object[current])) {
       accumulator[current] = object[current];
     }
 
@@ -33,7 +41,12 @@ export const findWhatsChanged = (object, base) => {
   }
 
   // we sort these so they traverse in a particular order
-  return Object.keys(object).sort().reduce(reduction, {});
+  const keys = Object.keys(object);
+  if (keys.length === 0) {
+    return {};
+  }
+
+  return keys.sort().reduce(reduction, {});
 };
 
 export const unflattenResourcesUsed = (array) => {
@@ -48,7 +61,7 @@ export const convertReportToFormData = (fetchedReport) => {
   // Convert reasons into a checkbox-friendly format
   let reportReasons = [];
   if (fetchedReport.reportReasons) {
-    reportReasons = fetchedReport.reportReasons.map((reason) => (reason.reasonId));
+    reportReasons = fetchedReport.reportReasons || [];
   }
 
   // Convert isStateActivity to string for radio buttons
