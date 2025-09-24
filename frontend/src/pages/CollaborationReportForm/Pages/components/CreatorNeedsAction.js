@@ -40,6 +40,7 @@ export default function CreatorNeedsAction({
             <FormItem
               label="Add additional approvers"
               name="approvers"
+              required={false}
             >
               <ApproverSelect
                 name="approvers"
@@ -47,6 +48,7 @@ export default function CreatorNeedsAction({
                 labelProperty="user.fullName"
                 options={approverOptions}
                 filterInitialValue
+                required={false}
               />
             </FormItem>
           </Fieldset>
