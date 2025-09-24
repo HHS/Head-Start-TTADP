@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
@@ -544,7 +545,7 @@ describe('Collab Reports Service', () => {
     });
   });
 
-  describe('createOrUpdateReport with steps, dataUsed, and activityStates', () => {
+  describe('createOrUpdateReport with steps, dataUsed, and statesInvolved', () => {
     let testReport;
 
     afterEach(async () => {
@@ -574,16 +575,14 @@ describe('Collab Reports Service', () => {
           name: 'Test Report with Steps',
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'First step completed',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: 'First step completed', collabStepCompleteDate: '2020-09-01' }; },
             },
             {
-              collabStepId: 2,
               collabStepDetail: 'Second step completed',
               collabStepCompleteDate: '2020-09-02',
-              collabStepPriority: 2,
+              toJSON() { return { collabStepDetail: 'Second step completed', collabStepCompleteDate: '2020-09-02' }; },
             },
           ],
         };
@@ -593,14 +592,12 @@ describe('Collab Reports Service', () => {
 
         const steps = await CollabReportStep.findAll({
           where: { collabReportId: result.id },
-          order: [['collabStepPriority', 'ASC']],
+          order: [['collabStepDetail', 'ASC']],
         });
 
         expect(steps).toHaveLength(2);
         expect(steps[0].collabStepDetail).toBe('First step completed');
         expect(steps[1].collabStepDetail).toBe('Second step completed');
-        expect(steps[0].collabStepId).toBe(1);
-        expect(steps[1].collabStepId).toBe(2);
       });
 
       it('updates existing steps when updating a report', async () => {
@@ -610,10 +607,9 @@ describe('Collab Reports Service', () => {
           name: 'Test Report for Step Updates',
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'Original step',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: 'Original step', collabStepCompleteDate: '2020-09-01' }; },
             },
           ],
         };
@@ -626,16 +622,14 @@ describe('Collab Reports Service', () => {
           ...initialReport,
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'Updated step',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
             {
-              collabStepId: 2,
               collabStepDetail: 'New step',
               collabStepCompleteDate: '2020-09-02',
-              collabStepPriority: 2,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
           ],
         };
@@ -644,12 +638,12 @@ describe('Collab Reports Service', () => {
 
         const steps = await CollabReportStep.findAll({
           where: { collabReportId: created.id },
-          order: [['collabStepPriority', 'ASC']],
+          order: [['collabStepDetail', 'ASC']],
         });
 
         expect(steps).toHaveLength(2);
-        expect(steps[0].collabStepDetail).toBe('Updated step');
-        expect(steps[1].collabStepDetail).toBe('New step');
+        expect(steps[0].collabStepDetail).toBe('New step');
+        expect(steps[1].collabStepDetail).toBe('Updated step');
       });
 
       it('removes steps when they are no longer included', async () => {
@@ -659,16 +653,14 @@ describe('Collab Reports Service', () => {
           name: 'Test Report for Step Removal',
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'Step to keep',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
             {
-              collabStepId: 2,
               collabStepDetail: 'Step to remove',
               collabStepCompleteDate: '2020-09-02',
-              collabStepPriority: 2,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
           ],
         };
@@ -681,10 +673,9 @@ describe('Collab Reports Service', () => {
           ...initialReport,
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'Step to keep',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
           ],
         };
@@ -706,10 +697,9 @@ describe('Collab Reports Service', () => {
           name: 'Test Report for All Steps Removal',
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'Step to remove',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
           ],
         };
@@ -840,104 +830,98 @@ describe('Collab Reports Service', () => {
       });
     });
 
-    describe('activityStates functionality', () => {
-      it('creates new activity states when creating a report', async () => {
-        const reportWithActivityStates = {
+    describe('statesInvolved functionality', () => {
+      it('creates new states involved when creating a report', async () => {
+        const reportWithStatesInvolved = {
           ...reportObject,
-          name: 'Test Report with Activity States',
-          activityStates: [
-            { activityStateCode: 'CA' },
-            { activityStateCode: 'NY' },
-          ],
+          name: 'Test Report with States Involved',
+          statesInvolved: ['CA', 'NY'],
         };
 
-        const result = await createOrUpdateReport(reportWithActivityStates, null);
+        const result = await createOrUpdateReport(reportWithStatesInvolved, null);
         testReport = await CollabReport.findByPk(result.id);
 
-        const activityStates = await CollabReportActivityState.findAll({
+        const statesInvolvedRecords = await CollabReportActivityState.findAll({
           where: { collabReportId: result.id },
         });
 
-        expect(activityStates).toHaveLength(2);
-        expect(activityStates.find((s) => s.activityStateCode === 'CA')).toBeTruthy();
-        expect(activityStates.find((s) => s.activityStateCode === 'NY')).toBeTruthy();
+        expect(statesInvolvedRecords).toHaveLength(2);
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'CA')).toBeTruthy();
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'NY')).toBeTruthy();
       });
 
-      it('handles activity states as simple strings', async () => {
-        const reportWithActivityStates = {
+      it('handles states involved as simple strings', async () => {
+        const reportWithStatesInvolved = {
           ...reportObject,
-          name: 'Test Report with Simple Activity States',
-          activityStates: ['TX', 'FL'],
+          name: 'Test Report with Simple States Involved',
+          statesInvolved: ['TX', 'FL'],
         };
 
-        const result = await createOrUpdateReport(reportWithActivityStates, null);
+        const result = await createOrUpdateReport(reportWithStatesInvolved, null);
         testReport = await CollabReport.findByPk(result.id);
 
-        const activityStates = await CollabReportActivityState.findAll({
+        const statesInvolvedRecords = await CollabReportActivityState.findAll({
           where: { collabReportId: result.id },
         });
 
-        expect(activityStates).toHaveLength(2);
-        expect(activityStates.find((s) => s.activityStateCode === 'TX')).toBeTruthy();
-        expect(activityStates.find((s) => s.activityStateCode === 'FL')).toBeTruthy();
+        expect(statesInvolvedRecords).toHaveLength(2);
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'TX')).toBeTruthy();
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'FL')).toBeTruthy();
       });
 
-      it('updates activity states when updating a report', async () => {
+      it('updates states involved when updating a report', async () => {
         // Create initial report
         const initialReport = {
           ...reportObject,
-          name: 'Test Report for Activity States Updates',
-          activityStates: [{ activityStateCode: 'CA' }],
+          name: 'Test Report for States Involved Updates',
+          statesInvolved: ['CA'],
         };
 
         const created = await createOrUpdateReport(initialReport, null);
         testReport = await CollabReport.findByPk(created.id);
 
-        // Update with new activity states
+        // Update with new states involved
         const updatedReport = {
           ...initialReport,
-          activityStates: [
-            { activityStateCode: 'NY' },
-            { activityStateCode: 'TX' },
-          ],
+          statesInvolved: ['NY', 'TX'],
         };
 
         await createOrUpdateReport(updatedReport, testReport);
 
-        const activityStates = await CollabReportActivityState.findAll({
+        const statesInvolvedRecords = await CollabReportActivityState.findAll({
           where: { collabReportId: created.id },
         });
 
-        expect(activityStates).toHaveLength(2);
-        expect(activityStates.find((s) => s.activityStateCode === 'CA')).toBeFalsy();
-        expect(activityStates.find((s) => s.activityStateCode === 'NY')).toBeTruthy();
-        expect(activityStates.find((s) => s.activityStateCode === 'TX')).toBeTruthy();
+        expect(statesInvolvedRecords).toHaveLength(2);
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'CA')).toBeFalsy();
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'NY')).toBeTruthy();
+        expect(statesInvolvedRecords.find((s) => s.activityStateCode === 'TX')).toBeTruthy();
       });
 
-      it('removes all activity states when array is empty', async () => {
+      it('removes all states involved when array is empty', async () => {
         // Create initial report
         const initialReport = {
           ...reportObject,
-          name: 'Test Report for Activity States Removal',
-          activityStates: [{ activityStateCode: 'CA' }],
+          name: 'Test Report for States Involved Removal',
+          statesInvolved: ['CA'],
         };
 
         const created = await createOrUpdateReport(initialReport, null);
         testReport = await CollabReport.findByPk(created.id);
 
-        // Update with empty activity states
+        // Update with empty states involved
         const updatedReport = {
           ...initialReport,
-          activityStates: [],
+          statesInvolved: [],
         };
 
         await createOrUpdateReport(updatedReport, testReport);
 
-        const activityStates = await CollabReportActivityState.findAll({
+        const statesInvolvedRecords = await CollabReportActivityState.findAll({
           where: { collabReportId: created.id },
         });
 
-        expect(activityStates).toHaveLength(0);
+        expect(statesInvolvedRecords).toHaveLength(0);
       });
     });
 
@@ -948,20 +932,16 @@ describe('Collab Reports Service', () => {
           name: 'Comprehensive Test Report',
           steps: [
             {
-              collabStepId: 1,
               collabStepDetail: 'Planning phase',
               collabStepCompleteDate: '2020-09-01',
-              collabStepPriority: 1,
+              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
             },
           ],
           dataUsed: [
             { collabReportDatum: 'census_data' },
             { collabReportDatum: 'other', collabReportDataOther: 'Custom source' },
           ],
-          activityStates: [
-            { activityStateCode: 'CA' },
-            { activityStateCode: 'NY' },
-          ],
+          statesInvolved: ['CA', 'NY'],
         };
 
         const result = await createOrUpdateReport(comprehensiveReport, null);
