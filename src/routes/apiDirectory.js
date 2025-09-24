@@ -8,6 +8,7 @@ import authMiddleware, { login } from '../middleware/authMiddleware';
 import cookieSession from '../middleware/sessionMiddleware';
 import filesRouter from './files';
 import activityReportsRouter from './activityReports';
+import collaborationReportsRouter from './collaborationReports';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
 import resourcesRouter from './resources';
@@ -62,6 +63,7 @@ router.use((req, res, next) => {
 
 router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
+router.use('/collaboration-reports', collaborationReportsRouter);
 router.use('/users', usersRouter);
 router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);

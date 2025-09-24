@@ -25,6 +25,8 @@ import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
 import AriaLiveContext from './AriaLiveContext';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
+import CollaborationReportsLanding from './pages/CollaborationReports';
+import CollaborationReport from './pages/CollaborationReportForm';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
@@ -49,6 +51,7 @@ import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 import SubmittedActivityReport from './pages/SubmittedActivityReport';
+import ViewCollabReport from './pages/ViewCollabReport';
 
 export default function Routes({
   alert,
@@ -114,6 +117,37 @@ export default function Routes({
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/collaboration-reports"
+          render={({ match }) => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <FeatureFlag flag="collaboration_report" renderNotFound>
+                <CollaborationReportsLanding match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/collaboration-reports/view/:collabReportId(new|[0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="collaboration_report" renderNotFound>
+                <ViewCollabReport match={match} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          path="/collaboration-reports/:collabReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match, location }) => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="collaboration_report" renderNotFound>
+                <CollaborationReport location={location} match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />

@@ -2,7 +2,7 @@ import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
 import {
   ECLKC_GOVERNMENT_HOSTNAME_EXTENSION,
   HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION,
@@ -290,6 +290,7 @@ export const checkboxesToIds = (checkboxes) => {
 
 export const blobToCsvDownload = (blob, fileName) => {
   let url;
+  let a;
   try {
     // Check if url exists with the attribute of download
     // and remove it if it does.
@@ -298,7 +299,7 @@ export const blobToCsvDownload = (blob, fileName) => {
     }
 
     url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
     a.setAttribute('download', fileName);
@@ -309,6 +310,9 @@ export const blobToCsvDownload = (blob, fileName) => {
     console.error(error);
   } finally {
     window.URL.revokeObjectURL(url);
+    if (a) {
+      document.body.removeChild(a);
+    }
   }
 };
 export const getPageInfo = (offset, totalCount, currentPage, perPage) => {
@@ -335,4 +339,55 @@ export function isValidDate(value) {
   if (!value) return null;
   const parsed = SUPPORTED_DATE_FORMATS.find((format) => moment(value, format, true).isValid());
   return parsed ? moment(value, parsed, true) : null;
+}
+
+export function getStatusDisplayAndClassnames(
+  calculatedStatus,
+  approvers = [],
+  justSubmitted = false,
+) {
+  let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
+  let displayStatus = calculatedStatus;
+
+  if (justSubmitted) {
+    displayStatus = 'Submitted';
+    statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+  }
+
+  if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+    displayStatus = 'Needs action';
+    statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+  }
+
+  if (
+    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+  ) {
+    displayStatus = 'Reviewed';
+    statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
+  }
+
+  if (
+    calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
+  ) {
+    displayStatus = 'Needs action';
+    statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+  }
+
+  if (
+    calculatedStatus !== REPORT_STATUSES.APPROVED
+      && approvers && approvers.length > 0
+      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+  ) {
+    displayStatus = REPORT_STATUSES.APPROVED;
+    statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;
+  }
+
+  return {
+    displayStatus,
+    statusClassName,
+  };
 }

@@ -8,10 +8,11 @@ import {
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
-import RegionalCommunicationLog from '..';
+import RegionalCommunicationLog, { shouldFetch } from '..';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
+import { mockRSSData } from '../../../testHelpers';
 
 const completeLog = {
   displayId: 'R01-CL-13213',
@@ -63,6 +64,8 @@ describe('RegionalCommunicationLog', () => {
 
   beforeEach(() => {
     fetchMock.restore();
+    fetchMock.get('/api/feeds/item?tag=ttahub-commlog-purpose', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-commlog-results', mockRSSData());
     fetchMock.get('/api/communication-logs/region/1/additional-data', {
       regionalUsers: [{ value: 74, label: 'OtherStaff' }],
       standardGoals: [{ label: 'CQI and Data', value: '24740' }],
@@ -105,8 +108,6 @@ describe('RegionalCommunicationLog', () => {
     renderComponent('/region/1/log/new/log');
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
-    expect(fetchMock.calls()).toHaveLength(1);
-    expect(fetchMock.called('/api/communication-logs/region/1/additional-data')).toBe(true);
     expect(fetchMock.called('/api/communication-logs/region/1/log/new')).toBe(false);
   });
 
@@ -116,8 +117,6 @@ describe('RegionalCommunicationLog', () => {
 
     fetchMock.get(`/api/communication-logs/region/${regionId}/log/${logId}`, completeLog);
     fetchMock.put(`/api/communication-logs/log/${logId}`, completeLog);
-    fetchMock.get('/api/feeds/item?tag=ttahub-commlog-purpose', {});
-    fetchMock.get('/api/feeds/item?tag=ttahub-commlog-results', {});
 
     act(() => {
       renderComponent(`/region/${regionId}/log/${logId}/log`);
@@ -168,8 +167,6 @@ describe('RegionalCommunicationLog', () => {
       renderComponent('/region/1/log/new/log');
     });
 
-    expect(fetchMock.calls()).toHaveLength(1);
-
     const view = screen.getByTestId('otherStaff-click-container');
     const select = within(view).getByText(/- select -/i);
     userEvent.click(select);
@@ -202,5 +199,141 @@ describe('RegionalCommunicationLog', () => {
     userEvent.click(saveButton);
 
     await waitFor(() => expect(screen.getByText('Supporting attachments')).toBeInTheDocument());
+  });
+
+  it('displays error message when error state is set', async () => {
+    const logId = 1;
+    const regionId = 1;
+
+    fetchMock.get(`/api/communication-logs/region/${regionId}/log/${logId}`, completeLog);
+    fetchMock.put(`/api/communication-logs/log/${logId}`, 500);
+
+    renderComponent(`/region/${regionId}/log/${logId}/log`);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
+
+    const saveButton = screen.getByRole('button', { name: 'Save and continue' });
+    userEvent.click(saveButton);
+
+    await waitFor(() => expect(screen.getByText('There was an error saving the communication log. Please try again later.')).toBeInTheDocument());
+  });
+
+  it('successfully updates an existing communication log', async () => {
+    const logId = 123;
+    const regionId = 1;
+    const updatedLog = { ...completeLog, id: logId };
+
+    fetchMock.get(`/api/communication-logs/region/${regionId}/log/${logId}`, completeLog);
+    fetchMock.put(`/api/communication-logs/log/${logId}`, updatedLog);
+
+    renderComponent(`/region/${regionId}/log/${logId}/log`);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
+
+    const duration = await screen.findByLabelText(/duration in hours/i);
+    userEvent.clear(duration);
+    userEvent.type(duration, '3');
+
+    const saveButton = screen.getByRole('button', { name: 'Save and continue' });
+    userEvent.click(saveButton);
+
+    await waitFor(() => {
+      const updateCalls = fetchMock.calls().filter(([url, options]) => url.includes(`/api/communication-logs/log/${logId}`) && options.method === 'PUT');
+      expect(updateCalls).toHaveLength(1);
+    });
+  });
+
+  it('handles save when reportId is null', async () => {
+    const regionId = 1;
+
+    renderComponent(`/region/${regionId}/log/new/log`);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Communication log - your region' })).toBeInTheDocument());
+
+    const saveButton = screen.getByRole('button', { name: 'Save and continue' });
+    userEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(fetchMock.calls().filter(([url]) => url.includes('/api/communication-logs/log'))).toHaveLength(0);
+    });
+  });
+
+  describe('shouldFetch', () => {
+    it('returns false when currentPage is missing', () => {
+      const result = shouldFetch({
+        communicationLogId: '123',
+        regionId: '1',
+        reportFetched: false,
+        isAppLoading: false,
+        currentPage: null,
+      });
+      expect(result).toBe(false);
+    });
+
+    it('returns false when communicationLogId is missing', () => {
+      const result = shouldFetch({
+        communicationLogId: null,
+        regionId: '1',
+        reportFetched: false,
+        isAppLoading: false,
+        currentPage: 'log',
+      });
+      expect(result).toBe(false);
+    });
+
+    it('returns false when regionId is missing', () => {
+      const result = shouldFetch({
+        communicationLogId: '123',
+        regionId: null,
+        reportFetched: false,
+        isAppLoading: false,
+        currentPage: 'log',
+      });
+      expect(result).toBe(false);
+    });
+
+    it('returns false when communicationLogId is "new"', () => {
+      const result = shouldFetch({
+        communicationLogId: 'new',
+        regionId: '1',
+        reportFetched: false,
+        isAppLoading: false,
+        currentPage: 'log',
+      });
+      expect(result).toBe(false);
+    });
+
+    it('returns false when report is already fetched', () => {
+      const result = shouldFetch({
+        communicationLogId: '123',
+        regionId: '1',
+        reportFetched: true,
+        isAppLoading: false,
+        currentPage: 'log',
+      });
+      expect(result).toBe(false);
+    });
+
+    it('returns false when app is loading', () => {
+      const result = shouldFetch({
+        communicationLogId: '123',
+        regionId: '1',
+        reportFetched: false,
+        isAppLoading: true,
+        currentPage: 'log',
+      });
+      expect(result).toBe(false);
+    });
+
+    it('returns true when all conditions are met', () => {
+      const result = shouldFetch({
+        communicationLogId: '123',
+        regionId: '1',
+        reportFetched: false,
+        isAppLoading: false,
+        currentPage: 'log',
+      });
+      expect(result).toBe(true);
+    });
   });
 });
