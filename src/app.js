@@ -114,6 +114,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const dbUser = await retrieveUserDetails(data);
     const claims = req.session.claims || {};
     const idToken = req.session.id_token || '';
+    const prevPkce = req.session.pkce;
 
     // console.log('REQ SESSION BEFORE REGEN:', req.session);
     req.session.regenerate((err) => {
@@ -126,6 +127,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
       req.session.uuid = uuidv4();
       req.session.clams = claims;
       req.session.id_token = idToken;
+      req.session.pkce = prevPkce;
 
       const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
         ? req.session.referrerPath : '/';
