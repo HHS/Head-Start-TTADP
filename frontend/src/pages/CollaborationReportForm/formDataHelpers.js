@@ -51,15 +51,6 @@ export const convertReportToFormData = (fetchedReport) => {
     reportReasons = fetchedReport.reportReasons.map((reason) => (reason.reasonId));
   }
 
-  // Convert collaborators into a MultiSelect-friendly format
-  let collabReportSpecialists = [];
-  if (fetchedReport.collabReportSpecialists) {
-    collabReportSpecialists = fetchedReport.collabReportSpecialists.map(({ specialist }) => ({
-      name: specialist.fullName,
-      value: specialist.id,
-    }));
-  }
-
   // Convert isStateActivity to string for radio buttons
   let isStateActivity = '';
   if (fetchedReport.isStateActivity !== undefined && fetchedReport.isStateActivity !== null) {
@@ -71,7 +62,6 @@ export const convertReportToFormData = (fetchedReport) => {
   return {
     ...fetchedReport,
     reportReasons,
-    collabReportSpecialists,
     isStateActivity,
   };
 };

@@ -918,25 +918,6 @@ describe('CollaborationReportForm', () => {
       fetchMock.get('/api/activity-reports/approvers?region=1', []);
     });
 
-    it('redirects to review-submit page when report is needs action', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ user: { id: 2 } }], // Different user
-        id: 123,
-        userId: 1,
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review');
-      });
-    });
-
     it('does not redirect when report is submitted and user is an approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,

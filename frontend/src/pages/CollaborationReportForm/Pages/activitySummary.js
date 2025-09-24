@@ -95,8 +95,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
               control={control}
               required={false}
               simple={false}
-              labelProperty="name"
-              valueProperty="value"
+              labelProperty="specialist.fullName"
+              valueProperty="specialistId"
               placeholderText={placeholderText}
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the

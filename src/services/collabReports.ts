@@ -83,30 +83,56 @@ async function create(report) {
   return CollabReport.create(report);
 }
 
-async function saveReportReasons(collabReportId, reasons) {
+async function saveCollabReportAssociation(
+  collabReportId: number,
+  model: typeof CollabReportReason,
+  associationKey: 'reasonId',
+  data: { id: number | string }[],
+) {
+  if (data.length) {
   // Make a handy lookup object for the findOrCreate that comes next
-  const newReasons = reasons.map((r) => ({
-    collabReportId,
-    reasonId: r,
-  }));
+    const lookup = data.map((d) => ({
+      collabReportId,
+      [associationKey]: d.id,
+    }));
 
-  if (newReasons.length > 0) {
-    await Promise.all(newReasons.map((where) => (
-      CollabReportReason.findOrCreate({ where })
-    )));
-    await CollabReportReason.destroy(
-      {
-        where: {
+    const lookupIds = lookup.map((l) => l[associationKey]);
+
+    const existing = await model.findAll({
+      attributes: [
+        'collabReportId',
+        associationKey,
+      ],
+      where: {
+        collabReportId,
+        [associationKey]: lookupIds,
+      },
+    });
+
+    const existingLookup = existing.map((l) => l[associationKey]);
+
+    const toCreate = [] as { collabReportId: number, [associationKey]: string | number }[];
+    lookup.forEach((l) => {
+      if (!existingLookup.includes(l[associationKey])) {
+        toCreate.push({
           collabReportId,
-          reasonId: {
-            [Op.notIn]: reasons,
-          },
+          [associationKey]: l[associationKey],
+        });
+      }
+    });
+
+    await model.bulkCreate(toCreate);
+    await model.destroy({
+      where: {
+        collabReportId,
+        [associationKey]: {
+          [Op.notIn]: lookupIds,
         },
       },
-    );
+    });
   } else {
     // If no reasons, destroy any existing reason objects in the DB
-    await CollabReportReason.destroy({
+    await model.destroy({
       where: {
         collabReportId,
       },
@@ -114,7 +140,16 @@ async function saveReportReasons(collabReportId, reasons) {
   }
 }
 
-async function saveReportSteps(collabReportId, steps) {
+async function saveReportReasons(collabReportId: number, reasons: { reasonId: string }[]) {
+  await saveCollabReportAssociation(
+    collabReportId,
+    CollabReportReason,
+    'reasonId',
+    reasons.map(({ reasonId: id }) => ({ id })),
+  );
+}
+
+async function saveReportSteps(collabReportId: number, steps: Model[]) {
   // First, destroy all existing steps for this report
   await CollabReportStep.destroy({
     where: {
@@ -124,9 +159,9 @@ async function saveReportSteps(collabReportId, steps) {
 
   // Then create new steps if any are provided
   if (steps && steps.length > 0) {
-    const newSteps = steps.map((step) => ({
+    const newSteps = steps.map((step: Model) => ({
       collabReportId,
-      ...step,
+      ...step.toJSON(),
     }));
     await CollabReportStep.bulkCreate(newSteps);
   }
@@ -170,7 +205,7 @@ async function saveReportActivityStates(collabReportId, activityStates) {
 }
 
 // Function to save and remove CR specialists
-async function saveReportSpecialists(collabReportId, specialists) {
+async function saveReportSpecialists(collabReportId: number, specialists: number[]) {
   // Make a handy lookup object for the findOrCreate that comes next
   const newSpecialists = specialists.map((c) => ({
     collabReportId,
@@ -315,35 +350,34 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
     savedReport = await create(newReport);
   }
 
+  const { id: reportId } = savedReport;
+
   // Save any CollabReportReasons
   if (reportReasons) {
-    const { id: reportId } = savedReport;
     await saveReportReasons(reportId, reportReasons);
   }
 
   // Save any steps
   if (steps) {
-    const { id: reportId } = savedReport;
     await saveReportSteps(reportId, steps);
   }
 
   // Save any data used
   if (dataUsed) {
-    const { id: reportId } = savedReport;
     await saveReportDataUsed(reportId, dataUsed);
   }
 
   // Save any activity states
   if (activityStates) {
-    const { id: reportId } = savedReport;
     await saveReportActivityStates(reportId, activityStates);
   }
 
   // If there are specialists, those need to be saved separately
   if (collabReportSpecialists) {
-    const { id: reportId } = savedReport;
+    console.log({ collabReportSpecialists });
+
     const specialists = collabReportSpecialists.map(
-      (c) => c.value,
+      (c: { specialistId: number }) => c.specialistId,
     );
     await saveReportSpecialists(reportId, specialists);
   }

@@ -210,12 +210,9 @@ function CollaborationReport({ match, location }) {
 
             if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
               // redirect to approved/submitted report view
+              console.log('we pushin');
               history.push(`/collaboration-reports/view/${fetchedReport.id}`);
               return;
-            }
-
-            if (isNeedsAction) {
-              history.push(`/collaboration-reports/${fetchedReport.id}/review`);
             }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
@@ -245,7 +242,7 @@ function CollaborationReport({ match, location }) {
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
 
         const isCollaborator = report.collabReportSpecialists
-          && report.collabReportSpecialists.find((u) => u.userId === user.id);
+          && report.collabReportSpecialists.some((u) => u.value === user.id);
         const isAuthor = report.userId === user.id;
         const isMatchingApprover = report.approvers.filter((a) => a.user && a.user.id === user.id);
 
@@ -319,6 +316,7 @@ function CollaborationReport({ match, location }) {
 
         updateError();
       } catch (e) {
+        console.log({ e });
         const connection = true; // setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>

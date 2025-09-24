@@ -22,7 +22,7 @@ const ReportLink = ({ report, userId }) => {
     return <Link to={`/collaboration-reports/view/${report.id}`}>{report.displayId}</Link>;
   }
 
-  if (isSubmitted && isApprover && !isNeedsAction) {
+  if (isSubmitted && isApprover) {
     return <Link to={`/collaboration-reports/${report.id}/review`}>{report.displayId}</Link>;
   }
 

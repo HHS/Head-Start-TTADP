@@ -118,9 +118,8 @@ export default (sequelize, DataTypes) => {
         },
       },
       isStateActivity: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
       conductMethod: {
         allowNull: true,
