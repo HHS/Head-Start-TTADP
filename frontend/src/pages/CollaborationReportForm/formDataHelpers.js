@@ -2,6 +2,12 @@ import { isEqual } from 'lodash';
 import moment from 'moment';
 
 /**
+ * @param string
+ * @returns isValid bool
+ */
+export const isDateValid = (date) => !(!date || !moment(date, 'MM/DD/YYYY').isValid());
+
+/**
  * compares two objects using lodash "isEqual" and returns the difference
  * @param {*} object
  * @param {*} base
@@ -18,7 +24,7 @@ export const findWhatsChanged = (object, base) => {
 
   function reduction(accumulator, current) {
     if (current === 'startDate' || current === 'endDate') {
-      if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
+      if (!isDateValid(object[current])) {
         delete accumulator[current];
         return accumulator;
       }
