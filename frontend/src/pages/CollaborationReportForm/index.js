@@ -55,6 +55,7 @@ const defaultValues = {
     4: NOT_STARTED,
   },
   calculatedStatus: REPORT_STATUSES.DRAFT,
+  collabReportSpecialists: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
