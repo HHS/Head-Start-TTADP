@@ -11,7 +11,7 @@ cg_api: https://api.fr.cloud.gov
 cg_org: hhs-acf-ohs-tta
 
 LOG_LEVEL: info
-AUTH_BASE: https://hses.ohs.acf.hhs.gov
+AUTH_BASE: https://hses.ohs.acf.hhs.gov/oidc
 # This env variable should go away soon in favor of TTA_SMART_HUB_URI
 REDIRECT_URI_HOST: https://ttahub.ohs.acf.hhs.gov
 TTA_SMART_HUB_URI: https://ttahub.ohs.acf.hhs.gov

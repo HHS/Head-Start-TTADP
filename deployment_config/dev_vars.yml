@@ -19,7 +19,7 @@ SUPPRESS_ERROR_LOGGING: "false"
 SEND_NOTIFICATIONS: "true"
 FORCE_CRON: "false"
 
-AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
+AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov/oidc
 REDIRECT_URI_HOST: https://tta-smarthub-${full_env}.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-${full_env}.app.cloud.gov
 OIDC_AUTH_METHOD: "pkce"
