@@ -62,14 +62,8 @@ const mockReport = {
   createdAt: '2025-01-10T10:00:00.000Z',
   submittedAt: '2025-01-20T15:30:00.000Z',
   approvedAt: '2025-01-25T09:15:00.000Z',
-  activityStates: [
-    { id: 1, activityStateCode: 'CA' },
-    { id: 2, activityStateCode: 'TX' },
-  ],
-  reportReasons: [
-    { id: 1, reasonId: 'new-staff' },
-    { id: 2, reasonId: 'monitoring' },
-  ],
+  statesInvolved: ['CA', 'TX'],
+  reportReasons: ['new-staff', 'monitoring'],
   reportGoals: [
     {
       id: 1,
@@ -178,6 +172,15 @@ describe('SubmittedCollabReport', () => {
 
     expect(screen.getByText('Activity type')).toBeInTheDocument();
     expect(screen.getByText('State')).toBeInTheDocument();
+  });
+
+  it('displays states involved for state activities', () => {
+    const stateReport = { ...mockReport, isStateActivity: true };
+
+    render(<SubmittedCollabReport report={stateReport} />);
+
+    expect(screen.getByText('States involved')).toBeInTheDocument();
+    expect(screen.getByText('California, Texas')).toBeInTheDocument();
   });
 
   it('displays activity description', () => {

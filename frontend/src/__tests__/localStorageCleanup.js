@@ -59,12 +59,12 @@ describe('localStorageCleanup', () => {
 
       const calls = [
         '__storage_test__',
-        'ar-form-data-2-0.4',
-        'ar-additional-data-2-0.4',
-        'ar-can-edit-2-0.4',
-        'ar-form-data-3-0.4',
-        'ar-additional-data-3-0.4',
-        'ar-can-edit-3-0.4',
+        'ar-form-data-2-0.5',
+        'ar-additional-data-2-0.5',
+        'ar-can-edit-2-0.5',
+        'ar-form-data-3-0.5',
+        'ar-additional-data-3-0.5',
+        'ar-can-edit-3-0.5',
       ];
 
       calls.forEach((call) => {
