@@ -307,7 +307,7 @@ describe('currentUser', () => {
       expect(result).toEqual({ id: 123, email: 'returned@example.com' });
     });
 
-    test('handles missing given/family names (name becomes empty string)', async () => {
+    test('handles missing given/family names', async () => {
       const data = {
         // no given_name/family_name
         email: 'no.name@example.com',
@@ -319,7 +319,7 @@ describe('currentUser', () => {
       await retrieveUserDetails(data);
 
       expect(findOrCreateUser).toHaveBeenCalledWith({
-        name: '',
+        name: null,
         email: 'no.name@example.com',
         hsesUsername: 'sub-abc',
         hsesAuthorities: [],
@@ -327,25 +327,22 @@ describe('currentUser', () => {
       });
     });
 
-    test('coerces values to strings and falls back to empty string/array when absent', async () => {
+    test('coerces optional values to null or empty array when absent', async () => {
       const data = {
-        given_name: 'Only',
-        // family_name missing
-        email: null, // -> ''
-        // sub missing        -> ''
-        roles: undefined, // -> []
-        // userId missing     -> ''
+        given_name: 'Jane',
+        family_name: 'Doe',
+        sub: 'jane.doe',
       };
 
       await retrieveUserDetails(data);
 
-      expect(findOrCreateUser).toHaveBeenCalledWith({
-        name: 'Only',
-        email: '',
-        hsesUsername: '',
+      expect(findOrCreateUser).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'Jane Doe',
+        email: null,
+        hsesUserId: null,
         hsesAuthorities: [],
-        hsesUserId: '',
-      });
+        hsesUsername: 'jane.doe',
+      }));
     });
 
     test('handles non-string email/sub/userId via toString()', async () => {
@@ -367,6 +364,20 @@ describe('currentUser', () => {
         hsesAuthorities: ['ROLE_FEDERAL'],
         hsesUserId: '7',
       });
+    });
+
+    test('does not create a user when HSES omits sub (hsesUsername)', async () => {
+      const data = {
+        given_name: 'Test',
+        email: 'test@example.com',
+        // sub missing
+        roles: [],
+      };
+
+      await expect(retrieveUserDetails(data))
+        .rejects.toThrow(/Missing required user info from HSES/i);
+
+      expect(findOrCreateUser).not.toHaveBeenCalled();
     });
   });
 });
