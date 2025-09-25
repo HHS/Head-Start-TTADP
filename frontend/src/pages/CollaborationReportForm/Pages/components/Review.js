@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { useFormContext } from 'react-hook-form';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Accordion } from '../../../../components/Accordion';
@@ -51,7 +52,7 @@ const TopAlert = ({
           has requested approval for this collaboration report (
           <strong>
             {`${pendingApprovalCount} of
-               ${approvers?.count || 0}`}
+               ${approvers?.length || 0}`}
             {' '}
             reviews pending
           </strong>
@@ -87,17 +88,20 @@ const Review = ({
   availableApprovers,
   reviewItems,
   isCreator,
+  isCollaborator,
   isSubmitted,
   onSaveForm,
   onUpdatePage,
   onSaveDraft,
+  onSubmit,
   isNeedsAction,
   pendingApprovalCount,
   author,
   approvers,
 }) => {
-  const FormComponent = isCreator ? CreatorSubmit : ApproverReview;
+  const FormComponent = (isCreator || isCollaborator) ? CreatorSubmit : ApproverReview;
 
+  const { watch } = useFormContext();
   const { user } = useContext(UserContext);
 
   const otherManagerNotes = approverStatusList
@@ -111,8 +115,10 @@ const Review = ({
     && thisApprovingManager.length > 0
     && thisApprovingManager[0].note;
 
-  const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
-  const incompletePages = filtered.map((f) => f.label);
+  const pageState = watch('pageState');
+  const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
+  // eslint-disable-next-line max-len
+  const incompletePages = pages.filter((page) => filtered.includes(page.position)).map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
 
   return (
@@ -135,6 +141,7 @@ const Review = ({
       )}
 
       <FormComponent
+        isCollaborator={isCollaborator}
         hasIncompletePages={hasIncompletePages}
         incompletePages={incompletePages}
         isCreator={isCreator}
@@ -151,6 +158,7 @@ const Review = ({
         onSaveForm={onSaveForm}
         onUpdatePage={onUpdatePage}
         onSaveDraft={onSaveDraft}
+        onSubmit={onSubmit}
       />
     </>
   );
@@ -158,6 +166,7 @@ const Review = ({
 
 Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
   dateSubmitted: PropTypes.string,
   pendingOtherApprovals: PropTypes.bool,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
@@ -178,6 +187,7 @@ Review.propTypes = {
     title: PropTypes.string.isRequired,
     content: PropTypes.node.isRequired,
   })).isRequired,
+  isCollaborator: PropTypes.bool.isRequired,
   isCreator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,

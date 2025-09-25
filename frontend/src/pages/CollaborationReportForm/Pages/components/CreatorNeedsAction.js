@@ -13,7 +13,7 @@ import ApproverStatusList from '../../../ActivityReport/Pages/components/Approve
 import DisplayApproverNotes from '../../../ActivityReport/Pages/components/DisplayApproverNotes';
 
 export default function CreatorNeedsAction({
-  onFormReview,
+  onSubmit,
   availableApprovers,
 }) {
   // eslint-disable-next-line max-len
@@ -25,7 +25,7 @@ export default function CreatorNeedsAction({
 
   return (
     <>
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
+      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         <div className="margin-bottom-4">
           <h3 className={h3classes}>Approval status</h3>
           <ApproverStatusList approverStatus={initialValue} />
@@ -40,6 +40,7 @@ export default function CreatorNeedsAction({
             <FormItem
               label="Add additional approvers"
               name="approvers"
+              required={false}
             >
               <ApproverSelect
                 name="approvers"
@@ -47,6 +48,7 @@ export default function CreatorNeedsAction({
                 labelProperty="user.fullName"
                 options={approverOptions}
                 filterInitialValue
+                required={false}
               />
             </FormItem>
           </Fieldset>
