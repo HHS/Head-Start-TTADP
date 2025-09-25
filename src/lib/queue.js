@@ -57,7 +57,7 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
 
   return {
     host: redisHost,
-    uri: `redis://${redisPassFull}${redisHost}:${redisPort}`,
+    uri: `redis://:${redisPassFull}${redisHost}:${redisPort}`,
     port: redisPort,
     tlsEnabled,
     redisOpts: {
