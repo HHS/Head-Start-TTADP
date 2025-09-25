@@ -8,7 +8,7 @@ import {
   beforeDestroy,
   syncGoalCollaborators,
   checkIfBothIstAndPocAreComplete,
-} from './sessionReportPilot';
+} from './sessionReport';
 import { trSessionCreated } from '../../lib/mailer';
 import db from '..';
 
@@ -25,7 +25,7 @@ jest.mock('express-http-context', () => {
   };
 });
 
-describe('sessionReportPilot hooks', () => {
+describe('sessionReport hooks', () => {
   const mockOptions = {
     transaction: {},
   };
@@ -45,12 +45,12 @@ describe('sessionReportPilot hooks', () => {
     it('sets an associated event to in progress', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
             })),
           },
-          SessionReportPilot: {
+          SessionReport: {
             findByPk: jest.fn(() => ({
               data: { recipients: [] },
             })),
@@ -72,10 +72,10 @@ describe('sessionReportPilot hooks', () => {
     it('does not set an associated event to in progress if the event is already in progress', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => null),
           },
-          SessionReportPilot: {
+          SessionReport: {
             findByPk: jest.fn(() => ({
               data: { recipients: [] },
             })),
@@ -90,12 +90,12 @@ describe('sessionReportPilot hooks', () => {
     it('handles errors', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => {
               throw new Error('oops');
             }),
           },
-          SessionReportPilot: {
+          SessionReport: {
             findByPk: jest.fn(() => ({
               data: { recipients: [] },
             })),
@@ -112,12 +112,12 @@ describe('sessionReportPilot hooks', () => {
     it('calls setAssociatedEventToInProgress', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
             })),
           },
-          SessionReportPilot: {
+          SessionReport: {
             findByPk: jest.fn(() => ({
               data: { recipients: [] },
             })),
@@ -137,12 +137,12 @@ describe('sessionReportPilot hooks', () => {
       const mockSessionUpdate = jest.fn();
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
             })),
           },
-          SessionReportPilot: {
+          SessionReport: {
             update: mockSessionUpdate,
           },
         },
@@ -174,12 +174,12 @@ describe('sessionReportPilot hooks', () => {
       const mockSessionUpdate = jest.fn();
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
             })),
           },
-          SessionReportPilot: {
+          SessionReport: {
             update: mockSessionUpdate,
           },
         },
@@ -214,12 +214,12 @@ describe('sessionReportPilot hooks', () => {
       const mockSessionUpdate = jest.fn();
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
             })),
           },
-          SessionReportPilot: {
+          SessionReport: {
             update: mockSessionUpdate,
           },
         },
@@ -259,7 +259,7 @@ describe('sessionReportPilot hooks', () => {
     it('calls preventChangesIfEventComplete', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({})),
           },
         },
@@ -271,7 +271,7 @@ describe('sessionReportPilot hooks', () => {
     it('handles errors in the findone', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => {
               throw new Error('oops');
             }),
@@ -287,7 +287,7 @@ describe('sessionReportPilot hooks', () => {
     it('calls preventChangesIfEventComplete', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({})),
           },
         },
@@ -301,7 +301,7 @@ describe('sessionReportPilot hooks', () => {
     it('calls preventChangesIfEventComplete', async () => {
       const mockSequelize = {
         models: {
-          EventReportPilot: {
+          TrainingReport: {
             findOne: jest.fn(() => ({})),
           },
         },

@@ -1,8 +1,8 @@
 import faker from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  EventReportPilot,
-  SessionReportPilot,
+  TrainingReport,
+  SessionReport,
   Recipient,
   NationalCenter,
   Grant,
@@ -225,14 +225,14 @@ describe('TR hours of training by national center', () => {
 
   afterAll(async () => {
     // delete session reports
-    await SessionReportPilot.destroy({
+    await SessionReport.destroy({
       where: {
         eventId: [trainingReport1.id, trainingReport2.id, trainingReport3.id],
       },
     });
 
     // delete training reports
-    await EventReportPilot.destroy({
+    await TrainingReport.destroy({
       where: {
         id: [trainingReport1.id, trainingReport2.id, trainingReport3.id],
       },

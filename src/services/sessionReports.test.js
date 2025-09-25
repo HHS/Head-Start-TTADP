@@ -1,9 +1,9 @@
 import faker from '@faker-js/faker';
 import db, {
-  SessionReportPilotFile,
-  SessionReportPilotSupportingAttachment,
+  SessionReportFile,
+  SessionReportSupportingAttachment,
   Grant, Recipient,
-  SessionReportPilot,
+  SessionReport,
 } from '../models';
 import { createEvent, destroyEvent } from './event';
 import {
@@ -122,7 +122,7 @@ describe('session reports service', () => {
     });
 
     afterAll(async () => {
-      await SessionReportPilot.destroy({ where: { eventId: event.id }, force: true });
+      await SessionReport.destroy({ where: { eventId: event.id }, force: true });
       await destroyGoal(goalData);
       await Grant.destroy({ where: { id: 5555555 }, force: true, individualHooks: true });
       await Recipient.destroy({ where: { id: 69514 }, force: true });
@@ -130,20 +130,20 @@ describe('session reports service', () => {
 
     it('should delete files and attachments associated with the session report pilot', async () => {
       const id = 1;
-      const destroyMock = jest.spyOn(SessionReportPilotFile, 'destroy').mockResolvedValue(undefined);
-      const destroyAttachmentMock = jest.spyOn(SessionReportPilotSupportingAttachment, 'destroy').mockResolvedValue(undefined);
+      const destroyMock = jest.spyOn(SessionReportFile, 'destroy').mockResolvedValue(undefined);
+      const destroyAttachmentMock = jest.spyOn(SessionReportSupportingAttachment, 'destroy').mockResolvedValue(undefined);
 
       await destroySession(id);
 
       expect(destroyMock).toHaveBeenCalledWith(
         {
-          where: { sessionReportPilotId: id },
+          where: { sessionReportId: id },
         },
         { individualHooks: true },
       );
       expect(destroyAttachmentMock).toHaveBeenCalledWith(
         {
-          where: { sessionReportPilotId: id },
+          where: { sessionReportId: id },
         },
         { individualHooks: true },
       );
@@ -156,7 +156,7 @@ describe('session reports service', () => {
       await destroySession(createdSession.id);
 
       // Verify the session was deleted
-      const session = await SessionReportPilot.findByPk(createdSession.id);
+      const session = await SessionReport.findByPk(createdSession.id);
       expect(session).toBeNull();
     });
   });
@@ -307,7 +307,7 @@ describe('session reports service', () => {
     });
 
     afterAll(async () => {
-      await SessionReportPilot.destroy({
+      await SessionReport.destroy({
         where: {
           id: sessionIds,
         },
@@ -324,7 +324,7 @@ describe('session reports service', () => {
     });
 
     it('should return null if no sessions are found', async () => {
-      jest.spyOn(db.SessionReportPilot, 'findAll').mockResolvedValueOnce(null);
+      jest.spyOn(db.SessionReport, 'findAll').mockResolvedValueOnce(null);
       const sessions = await findSessionHelper({ eventId: 999999 }, true);
       expect(sessions).toBeNull();
     });
@@ -340,7 +340,7 @@ describe('session reports service', () => {
     });
 
     it('should return default values when data, files, supportingAttachments, and event are undefined', async () => {
-      const createdSession = await SessionReportPilot.create({
+      const createdSession = await SessionReport.create({
         eventId: createdEvent.id,
         data: {},
       });
@@ -351,11 +351,11 @@ describe('session reports service', () => {
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
 
-      await SessionReportPilot.destroy({ where: { id: createdSession.id } });
+      await SessionReport.destroy({ where: { id: createdSession.id } });
     });
 
     it('should return null for the eventId when session.event is null', async () => {
-      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({ id: 999 });
+      jest.spyOn(db.SessionReport, 'findOne').mockResolvedValueOnce({ id: 999 });
       const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
       expect(foundSession).toHaveProperty('eventId', null);
       expect(foundSession).toHaveProperty('id', 999);

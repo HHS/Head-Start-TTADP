@@ -1,8 +1,8 @@
 import faker from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  EventReportPilot,
-  SessionReportPilot,
+  TrainingReport,
+  SessionReport,
   Recipient,
   Topic,
   Grant,
@@ -223,14 +223,14 @@ describe('TR sessions by topic', () => {
 
   afterAll(async () => {
     // delete session reports
-    await SessionReportPilot.destroy({
+    await SessionReport.destroy({
       where: {
         eventId: [trainingReport1.id, trainingReport2.id, trainingReport3.id],
       },
     });
 
     // delete training reports
-    await EventReportPilot.destroy({
+    await TrainingReport.destroy({
       where: {
         id: [trainingReport1.id, trainingReport2.id, trainingReport3.id],
       },
@@ -300,7 +300,7 @@ describe('TR sessions by topic', () => {
   it('handles topics that are not in the topics list', async () => {
     // eslint-disable-next-line global-require
     const helpers = require('./helpers');
-    const originalFindAll = db.EventReportPilot.findAll;
+    const originalFindAll = db.TrainingReport.findAll;
     const originalGetAllTopics = helpers.getAllTopicsForWidget;
     const originalBaseTRScopes = helpers.baseTRScopes;
 
@@ -317,12 +317,12 @@ describe('TR sessions by topic', () => {
       { name: topic1.name },
     ];
 
-    db.EventReportPilot.findAll = jest.fn().mockResolvedValue(mockReports);
+    db.TrainingReport.findAll = jest.fn().mockResolvedValue(mockReports);
     helpers.getAllTopicsForWidget = jest.fn().mockResolvedValue(mockTopics);
     helpers.baseTRScopes = jest.fn().mockReturnValue({
       where: {},
       include: {
-        model: SessionReportPilot,
+        model: SessionReport,
         as: 'sessionReports',
         attributes: ['data', 'eventId'],
         where: {
@@ -345,7 +345,7 @@ describe('TR sessions by topic', () => {
     const nonExistentTopicInResult = data.find((d) => d.topic === nonExistentTopic);
     expect(nonExistentTopicInResult).toBeUndefined();
 
-    db.EventReportPilot.findAll = originalFindAll;
+    db.TrainingReport.findAll = originalFindAll;
     helpers.getAllTopicsForWidget = originalGetAllTopics;
     helpers.baseTRScopes = originalBaseTRScopes;
   });

@@ -549,9 +549,9 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByRole('heading', { name: 'Session 1' })).toBeInTheDocument();
   });
 
-  it('will not fetch if there are eventReportPilotNationalCenterUsers in the response that match the IDs', async () => {
+  it('will not fetch if there are trainingReportNationalCenterUsers in the response that match the IDs', async () => {
     const e = mockEvent();
-    e.eventReportPilotNationalCenterUsers = [{ userId: 2, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    e.trainingReportNationalCenterUsers = [{ userId: 2, userName: 'USER 2', nationalCenterName: 'NC 1' }];
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -565,9 +565,9 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('USER 2, NC 1')).toBeInTheDocument();
   });
 
-  it('will fetch if there are eventReportPilotNationalCenterUsers in the response that do not match the IDs', async () => {
+  it('will fetch if there are trainingReportNationalCenterUsers in the response that do not match the IDs', async () => {
     const e = mockEvent();
-    e.eventReportPilotNationalCenterUsers = [{ userId: 3, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    e.trainingReportNationalCenterUsers = [{ userId: 3, userName: 'USER 2', nationalCenterName: 'NC 1' }];
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -743,7 +743,7 @@ describe('ViewTrainingReport', () => {
 
   describe('formatOwnerName', () => {
     test('handles an error', () => {
-      const result = formatOwnerName({ eventReportPilotNationalCenterUsers: 123 });
+      const result = formatOwnerName({ trainingReportNationalCenterUsers: 123 });
       expect(result).toBe('');
     });
 
@@ -760,7 +760,7 @@ describe('ViewTrainingReport', () => {
             name: 'John Doe',
           },
         },
-        eventReportPilotNationalCenterUsers: [
+        trainingReportNationalCenterUsers: [
           {
             userId: 2,
             userName: 'Jane',
@@ -774,7 +774,7 @@ describe('ViewTrainingReport', () => {
       expect(result).toBe('John Doe, Center A');
     });
 
-    test('Returns the formatted owner name if owner is missing from eventReportPilotNationalCenterUsers', () => {
+    test('Returns the formatted owner name if owner is missing from trainingReportNationalCenterUsers', () => {
       const event = {
         data: {
           owner: {
@@ -782,7 +782,7 @@ describe('ViewTrainingReport', () => {
             name: 'John Doe',
           },
         },
-        eventReportPilotNationalCenterUsers: [
+        trainingReportNationalCenterUsers: [
           {
             userId: 2,
             userName: 'Jane',
@@ -803,7 +803,7 @@ describe('ViewTrainingReport', () => {
             name: 'John Doe',
           },
         },
-        eventReportPilotNationalCenterUsers: [
+        trainingReportNationalCenterUsers: [
           {
             userId: 1,
             userName: 'John',

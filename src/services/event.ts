@@ -22,10 +22,10 @@ import EventReport from '../policies/event';
 import { trEventComplete } from '../lib/mailer';
 
 const {
-  EventReportPilot,
-  SessionReportPilot,
+  TrainingReport,
+  SessionReport,
   User,
-  EventReportPilotNationalCenterUser,
+  TrainingReportNationalCenterUser,
 } = db;
 
 type WhereOptions = {
@@ -69,7 +69,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     data,
   } = request;
 
-  return EventReportPilot.create({
+  return TrainingReport.create({
     ownerId,
     pocIds,
     collaboratorIds,
@@ -87,13 +87,13 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
 export async function destroyEvent(id: number): Promise<void> {
   try {
     auditLogger.info(`Deleting session reports for event ${id}`);
-    await SessionReportPilot.destroy({ where: { eventId: id } });
+    await SessionReport.destroy({ where: { eventId: id } });
   } catch (e) {
     auditLogger.error(`Error deleting session reports for event ${id}:`, e);
   }
   try {
     auditLogger.info(`Deleting event report for event ${id}`);
-    await EventReportPilot.destroy({ where: { id } });
+    await TrainingReport.destroy({ where: { id } });
   } catch (e) {
     auditLogger.error(`Error deleting event report for event ${id}:`, e);
   }
@@ -113,11 +113,11 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     where,
     include: [
       {
-        model: EventReportPilotNationalCenterUser,
+        model: TrainingReportNationalCenterUser,
         as: 'eventReportPilotNationalCenterUsers',
       },
       {
-        model: SessionReportPilot,
+        model: SessionReport,
         attributes: [
           'id',
           'eventId',
@@ -125,7 +125,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           'createdAt',
           'updatedAt',
           // eslint-disable-next-line @typescript-eslint/quotes
-          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+          [sequelize.literal(`Date(NULLIF("SessionReport".data->>'startDate',''))`), 'startDate'],
         ],
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
@@ -134,7 +134,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     ],
   };
 
-  const event = plural ? await EventReportPilot.findAll(query) : await EventReportPilot.findOne(query);
+  const event = plural ? await TrainingReport.findAll(query) : await TrainingReport.findOne(query);
 
   if (!event) {
     return null;
@@ -225,7 +225,7 @@ export async function findEventHelperBlob({
     where.regionId = regions;
   }
 
-  const events = await EventReportPilot.findAll({
+  const events = await TrainingReport.findAll({
     attributes: [
       'id',
       'ownerId',
@@ -236,7 +236,7 @@ export async function findEventHelperBlob({
     ],
     include: [
       {
-        model: SessionReportPilot,
+        model: SessionReport,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
         attributes: [
@@ -246,7 +246,7 @@ export async function findEventHelperBlob({
           'createdAt',
           'updatedAt',
           // eslint-disable-next-line @typescript-eslint/quotes
-          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+          [sequelize.literal(`Date(NULLIF("SessionReport".data->>'startDate',''))`), 'startDate'],
         ],
         order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
@@ -279,7 +279,7 @@ export async function findEventHelperBlob({
  * @throws {Error} If the specified event does not exist and cannot be created.
  */
 export async function updateEvent(id: number, request: UpdateEventRequest): Promise<EventShape> {
-  const event = await EventReportPilot.findOne({
+  const event = await TrainingReport.findOne({
     where: { id },
   });
 
@@ -324,7 +324,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     }
   }
 
-  const evt = await EventReportPilot.findByPk(id);
+  const evt = await TrainingReport.findByPk(id);
 
   if (status === TRS.COMPLETE && event.status !== status) {
     // enqueue completion notification
@@ -691,7 +691,7 @@ export async function findEventsByStatus(
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
-  return EventReportPilot.findAll({
+  return TrainingReport.findAll({
     attributes: [
       'id',
       'ownerId',
@@ -803,12 +803,12 @@ const checkUserExistsByName = async (name: string) => checkUserExists('name', na
 const checkUserExistsByEmail = async (email: string) => checkUserExists('email', email);
 
 const checkEventExists = async (eventId: string) => {
-  const event = await db.EventReportPilot.findOne({
+  const event = await db.TrainingReport.findOne({
     attributes: ['id'],
     where: {
       id: {
         [Op.in]: sequelize.literal(
-          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`,
+          `(SELECT id FROM "TrainingReports" WHERE data->>'eventId' = '${eventId}')`,
         ),
       },
     },
@@ -921,7 +921,7 @@ export async function csvImport(buffer: Buffer) {
       // Target Populations, remove duplicates and invalid values.
       data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
 
-      await db.EventReportPilot.create({
+      await db.TrainingReport.create({
         collaboratorIds: collaborators,
         ownerId: owner.id,
         regionId,

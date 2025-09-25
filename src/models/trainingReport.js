@@ -4,16 +4,16 @@ const {
   beforeUpdate,
   afterCreate,
   beforeCreate,
-} = require('./hooks/eventReportPilot');
+} = require('./hooks/trainingReport');
 
 export default (sequelize, DataTypes) => {
-  class EventReportPilot extends Model {
+  class TrainingReport extends Model {
     static associate(models) {
-      EventReportPilot.hasMany(models.SessionReportPilot, { foreignKey: 'eventId', as: 'sessionReports' });
+      TrainingReport.hasMany(models.SessionReport, { foreignKey: 'eventId', as: 'sessionReports' });
     }
   }
 
-  EventReportPilot.init({
+  TrainingReport.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -46,7 +46,8 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'EventReportPilot',
+    modelName: 'TrainingReport',
+    tableName: 'TrainingReports',
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
@@ -55,5 +56,5 @@ export default (sequelize, DataTypes) => {
     },
   });
 
-  return EventReportPilot;
+  return TrainingReport;
 };

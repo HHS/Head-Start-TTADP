@@ -2,14 +2,14 @@ import faker from '@faker-js/faker';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES } from '../../constants';
 import db, {
-  EventReportPilot,
-  SessionReportPilot,
-  SessionReportPilotSupportingAttachment,
+  TrainingReport,
+  SessionReport,
+  SessionReportSupportingAttachment,
   File,
   User,
 } from '..';
 
-describe('SessionReportPilotSupportingAttachment', () => {
+describe('SessionReportSupportingAttachment', () => {
   let user;
   let event;
   let session;
@@ -27,7 +27,7 @@ describe('SessionReportPilotSupportingAttachment', () => {
     });
 
     // Create Event.
-    event = await EventReportPilot.create({
+    event = await TrainingReport.create({
       ownerId: user.id,
       pocIds: [],
       collaboratorIds: [],
@@ -38,14 +38,14 @@ describe('SessionReportPilotSupportingAttachment', () => {
       imported: {},
     });
 
-    // Create SessionEventReportPilot.
-    session = await SessionReportPilot.create({
+    // Create SessionTrainingReport.
+    session = await SessionReport.create({
       eventId: event.id,
       data: {},
     });
 
-    // Create SessionEventReportPilot two.
-    sessionTwo = await SessionReportPilot.create({
+    // Create SessionTrainingReport two.
+    sessionTwo = await SessionReport.create({
       eventId: event.id,
       data: {},
     });
@@ -66,23 +66,23 @@ describe('SessionReportPilotSupportingAttachment', () => {
       fileSize: 1235,
     });
 
-    // Create SessionReportPilotSupportingAttachment.
-    await SessionReportPilotSupportingAttachment.create({
+    // Create SessionReportSupportingAttachment.
+    await SessionReportSupportingAttachment.create({
       id: faker.datatype.number(),
-      sessionReportPilotId: session.id,
+      sessionReportId: session.id,
       fileId: file.id,
     });
   });
   afterAll(async () => {
-    // Destroy SessionReportPilotSupportingAttachment.
-    await SessionReportPilotSupportingAttachment.destroy({
+    // Destroy SessionReportSupportingAttachment.
+    await SessionReportSupportingAttachment.destroy({
       where: {
-        sessionReportPilotId: [session.id, sessionTwo.id],
+        sessionReportId: [session.id, sessionTwo.id],
       },
     });
 
-    // Destroy SessionEventReportPilot.
-    await SessionReportPilot.destroy({
+    // Destroy SessionTrainingReport.
+    await SessionReport.destroy({
       where: {
         eventId: event.id,
       },
@@ -96,7 +96,7 @@ describe('SessionReportPilotSupportingAttachment', () => {
     });
 
     // Destroy Event.
-    await EventReportPilot.destroy({
+    await TrainingReport.destroy({
       where: {
         id: event.id,
       },
@@ -112,33 +112,33 @@ describe('SessionReportPilotSupportingAttachment', () => {
     await db.sequelize.close();
   });
 
-  it('SessionReportPilotSupportingAttachment', async () => {
-    // Get SessionReportPilotSupportingAttachment.
-    let ssa = await SessionReportPilotSupportingAttachment
+  it('SessionReportSupportingAttachment', async () => {
+    // Get SessionReportSupportingAttachment.
+    let ssa = await SessionReportSupportingAttachment
       .findOne(
         {
           where: {
-            sessionReportPilotId: session.id,
+            sessionReportId: session.id,
           },
         },
       );
 
     // Assert session and file id.
-    expect(ssa.sessionReportPilotId).toBe(session.id);
+    expect(ssa.sessionReportId).toBe(session.id);
     expect(ssa.fileId).toBe(file.id);
 
-    // Update SessionReportPilotSupportingAttachment.
-    await SessionReportPilotSupportingAttachment.update({
+    // Update SessionReportSupportingAttachment.
+    await SessionReportSupportingAttachment.update({
       fileId: fileTwo.id,
-      sessionReportPilotId: sessionTwo.id,
+      sessionReportId: sessionTwo.id,
     }, {
       where: {
-        sessionReportPilotId: session.id,
+        sessionReportId: session.id,
       },
     });
 
-    // Get updated SessionReportPilotSupportingAttachment.
-    ssa = await SessionReportPilotSupportingAttachment
+    // Get updated SessionReportSupportingAttachment.
+    ssa = await SessionReportSupportingAttachment
       .findOne(
         {
           where: {
@@ -148,7 +148,7 @@ describe('SessionReportPilotSupportingAttachment', () => {
       );
 
     // Assert updated session and file id.
-    expect(ssa.sessionReportPilotId).toBe(sessionTwo.id);
+    expect(ssa.sessionReportId).toBe(sessionTwo.id);
     expect(ssa.fileId).toBe(fileTwo.id);
   });
 });

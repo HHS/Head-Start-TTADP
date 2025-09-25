@@ -1,7 +1,7 @@
 import { TRAINING_REPORT_STATUSES, REASONS, DEPRECATED_REASONS } from '@ttahub/common';
 import db, {
-  EventReportPilot,
-  SessionReportPilot,
+  TrainingReport,
+  SessionReport,
   Recipient,
   Grant,
   User,
@@ -198,14 +198,14 @@ describe('TR reason list', () => {
 
   afterAll(async () => {
     // delete session reports
-    await SessionReportPilot.destroy({
+    await SessionReport.destroy({
       where: {
         eventId: [trainingReport1.id, trainingReport2.id, trainingReport3.id],
       },
     });
 
     // delete training reports
-    await EventReportPilot.destroy({
+    await TrainingReport.destroy({
       where: {
         id: [trainingReport1.id, trainingReport2.id, trainingReport3.id],
       },

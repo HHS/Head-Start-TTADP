@@ -1,21 +1,21 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/sessionReportPilotFile');
+const { afterDestroy } = require('./hooks/sessionReportFile');
 
 export default (sequelize, DataTypes) => {
-  class SessionReportPilotFile extends Model {
+  class SessionReportFile extends Model {
     static associate(models) {
-      SessionReportPilotFile.belongsTo(models.SessionReportPilot, { foreignKey: 'sessionReportPilotId', as: 'sessionReport' });
-      SessionReportPilotFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
+      SessionReportFile.belongsTo(models.SessionReport, { foreignKey: 'sessionReportId', as: 'sessionReport' });
+      SessionReportFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
     }
   }
-  SessionReportPilotFile.init({
+  SessionReportFile.init({
     id: {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    sessionReportPilotId: {
+    sessionReportId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -25,10 +25,10 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'SessionReportPilotFile',
+    modelName: 'SessionReportFile',
     hooks: {
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
-  return SessionReportPilotFile;
+  return SessionReportFile;
 };

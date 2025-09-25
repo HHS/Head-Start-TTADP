@@ -150,7 +150,7 @@ describe('event service', () => {
         update: jest.fn(),
       };
 
-      jest.spyOn(db.EventReportPilot, 'findByPk').mockResolvedValue(mockEvent);
+      jest.spyOn(db.TrainingReport, 'findByPk').mockResolvedValue(mockEvent);
       const trEventCompleteSpy = jest.spyOn(mailer, 'trEventComplete').mockResolvedValue();
 
       await updateEvent(created.id, {
@@ -179,20 +179,20 @@ describe('event service', () => {
 
     it('findEventHelper session sort order', async () => {
       const created = await createAnEvent(98_989);
-      const sessionReport1 = await db.SessionReportPilot.create({
+      const sessionReport1 = await db.SessionReport.create({
         eventId: created.id,
         data: {
           sessionName: 'Session Name 2',
         },
       });
 
-      const sessionReport2 = await db.SessionReportPilot.create({
+      const sessionReport2 = await db.SessionReport.create({
         eventId: created.id,
         data: {
         },
       });
 
-      const sessionReport3 = await db.SessionReportPilot.create({
+      const sessionReport3 = await db.SessionReport.create({
         eventId: created.id,
         data: {
           startDate: '01/01/2023',
@@ -211,7 +211,7 @@ describe('event service', () => {
       expect(found.sessionReports[1].id).toBe(sessionReport1.id);
       expect(found.sessionReports[2].id).toBe(sessionReport2.id);
 
-      await db.SessionReportPilot.destroy({
+      await db.SessionReport.destroy({
         where: {
           id: sessionIds,
         },
@@ -319,20 +319,20 @@ describe('event service', () => {
     it('findEventHelperBlob session sort order', async () => {
       const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
 
-      const sessionReport1 = await db.SessionReportPilot.create({
+      const sessionReport1 = await db.SessionReport.create({
         eventId: created.id,
         data: {
           sessionName: 'Session Name 2',
         },
       });
 
-      const sessionReport2 = await db.SessionReportPilot.create({
+      const sessionReport2 = await db.SessionReport.create({
         eventId: created.id,
         data: {
         },
       });
 
-      const sessionReport3 = await db.SessionReportPilot.create({
+      const sessionReport3 = await db.SessionReport.create({
         eventId: created.id,
         data: {
           startDate: '01/01/2023',
@@ -359,7 +359,7 @@ describe('event service', () => {
       expect(found[0].sessionReports[1].id).toBe(sessionReport1.id);
       expect(found[0].sessionReports[2].id).toBe(sessionReport2.id);
 
-      await db.SessionReportPilot.destroy({
+      await db.SessionReport.destroy({
         where: {
           id: sessionIds,
         },
@@ -606,7 +606,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
     });
 
     afterAll(async () => {
-      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      await db.TrainingReport.destroy({ where: { ownerId: userId } });
       await db.NationalCenterUser.destroy({
         where: { userId: [userId, collaboratorId] },
       });
@@ -622,9 +622,9 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(result.count).toEqual(1);
 
       // eventId is now a field in the jsonb body of the "data" column on
-      // db.EventReportPilot.
+      // db.TrainingReport.
       // Let's make sure it exists.
-      created = await db.EventReportPilot.findOne({
+      created = await db.TrainingReport.findOne({
         where: { 'data.eventId': eventId },
       });
 
@@ -720,7 +720,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped.length).toEqual(0);
       expect(result.errors.length).toEqual(0);
 
-      const importedEvent = await db.EventReportPilot.findOne({
+      const importedEvent = await db.TrainingReport.findOne({
         where: { 'data.eventId': reportId },
       });
       expect(importedEvent).not.toBeNull();
@@ -744,7 +744,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped.length).toEqual(0);
       expect(result.errors.length).toEqual(0);
 
-      const importedEvent = await db.EventReportPilot.findOne({
+      const importedEvent = await db.TrainingReport.findOne({
         where: { 'data.eventId': reportId },
       });
       expect(importedEvent).not.toBeNull();
@@ -766,7 +766,7 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       expect(result.skipped.length).toEqual(0);
       expect(result.errors.length).toEqual(0);
 
-      const importedEvent = await db.EventReportPilot.findOne({
+      const importedEvent = await db.TrainingReport.findOne({
         where: { 'data.eventId': reportId },
       });
       expect(importedEvent).not.toBeNull();
@@ -817,7 +817,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       };
       jest.spyOn(db.User, 'findOne').mockResolvedValue(mockUser);
 
-      const createdEvent = await db.EventReportPilot.create({
+      const createdEvent = await db.TrainingReport.create({
         ownerId,
         pocIds: [ownerId],
         collaboratorIds: [ownerId],
@@ -837,15 +837,15 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         email: 'owner@test.com',
       });
 
-      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+      await db.TrainingReport.destroy({ where: { id: createdEvent.id } });
       jest.restoreAllMocks();
     });
 
-    it('should return default values when data, sessionReports, and eventReportPilotNationalCenterUsers are undefined', async () => {
+    it('should return default values when data, sessionReports, and trainingReportNationalCenterUsers are undefined', async () => {
       const ownerId = 67890;
 
-      // Create an event without data, sessionReports, and eventReportPilotNationalCenterUsers
-      const createdEvent = await db.EventReportPilot.create({
+      // Create an event without data, sessionReports, and trainingReportNationalCenterUsers
+      const createdEvent = await db.TrainingReport.create({
         ownerId,
         pocIds: [ownerId],
         collaboratorIds: [ownerId],
@@ -857,10 +857,10 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
 
       expect(foundEvent).toHaveProperty('data', {});
       expect(foundEvent).toHaveProperty('sessionReports', []);
-      expect(foundEvent).toHaveProperty('eventReportPilotNationalCenterUsers', []);
+      expect(foundEvent).toHaveProperty('trainingReportNationalCenterUsers', []);
 
       // Clean up
-      await db.EventReportPilot.destroy({ where: { id: createdEvent.id } });
+      await db.TrainingReport.destroy({ where: { id: createdEvent.id } });
     });
   });
 
@@ -868,7 +868,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('logs an error when deleting session reports fails', async () => {
       const eventId = 12345;
 
-      jest.spyOn(db.SessionReportPilot, 'destroy').mockRejectedValue(new Error('Session report deletion error'));
+      jest.spyOn(db.SessionReport, 'destroy').mockRejectedValue(new Error('Session report deletion error'));
       const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
 
       await destroyEvent(eventId);
@@ -881,7 +881,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('logs an error when deleting event report fails', async () => {
       const eventId = 12345;
 
-      jest.spyOn(db.EventReportPilot, 'destroy').mockRejectedValue(new Error('Event report deletion error'));
+      jest.spyOn(db.TrainingReport, 'destroy').mockRejectedValue(new Error('Event report deletion error'));
       const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
 
       await destroyEvent(eventId);
@@ -1081,7 +1081,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
 
   describe('findEventHelperBlob', () => {
     it('should return null if no events are found', async () => {
-      jest.spyOn(db.EventReportPilot, 'findAll').mockResolvedValue(null);
+      jest.spyOn(db.TrainingReport, 'findAll').mockResolvedValue(null);
       const result = await findEventHelperBlob({
         key: 'status',
         value: TRS.NOT_STARTED,

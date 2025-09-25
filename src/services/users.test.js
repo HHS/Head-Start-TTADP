@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import db, {
-  User, EventReportPilot, Permission,
+  User, TrainingReport, Permission,
 } from '../models';
 
 import {
@@ -420,7 +420,7 @@ describe('Users DB service', () => {
       },
     ];
 
-    const eventReportPilotId = faker.datatype.number({ min: 25000 });
+    const trainingReportId = faker.datatype.number({ min: 25000 });
 
     beforeAll(async () => {
       await Promise.all(
@@ -436,14 +436,14 @@ describe('Users DB service', () => {
           }],
           lastLogin: new Date(),
         }, { include: [{ model: Permission, as: 'permissions' }] })),
-        EventReportPilot.create({
-          id: eventReportPilotId,
+        TrainingReport.create({
+          id: trainingReportId,
           ownerId: userIds[5],
           pocIds: [],
           collaboratorIds: [],
           regionId: [1],
           data: {
-            eventId: `-${eventReportPilotId}`,
+            eventId: `-${trainingReportId}`,
           },
           imported: {},
         }),
@@ -452,7 +452,7 @@ describe('Users DB service', () => {
 
     afterAll(async () => {
       await User.destroy({ where: { id: userIds } });
-      await EventReportPilot.destroy({ where: { id: eventReportPilotId } });
+      await TrainingReport.destroy({ where: { id: trainingReportId } });
     });
 
     it('returns a list of users that have permissions on the region', async () => {
@@ -474,7 +474,7 @@ describe('Users DB service', () => {
     });
 
     it('adds missing creator id when event id is passed', async () => {
-      const result = await getTrainingReportUsersByRegion(5, eventReportPilotId);
+      const result = await getTrainingReportUsersByRegion(5, trainingReportId);
 
       const collaboratorIds = result.collaborators.map((u) => u.id);
       const pointOfContact = result.pointOfContact.map((u) => u.id);

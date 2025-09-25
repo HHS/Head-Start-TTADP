@@ -4,7 +4,7 @@ import { filterAssociation } from './utils';
 const collaborators = `
 WITH
 unnested_collaborators AS (
-    SELECT "id",unnest("collaboratorIds") FROM "EventReportPilots"
+    SELECT "id",unnest("collaboratorIds") FROM "TrainingReports"
 )
 SELECT
  DISTINCT arr1."id"

@@ -70,7 +70,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
         records.push({
           userId: user.id,
           userName: user.name,
-          eventReportPilotId: instance.id,
+          trainingReportId: instance.id,
           nationalCenterId: nc.id,
           nationalCenterName: nc.name,
         });
@@ -84,9 +84,9 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
       const record = records[i];
 
       // eslint-disable-next-line no-await-in-loop
-      const cachedData = await sequelize.models.EventReportPilotNationalCenterUser.findOne({
+      const cachedData = await sequelize.models.TrainingReportNationalCenterUser.findOne({
         where: {
-          eventReportPilotId: instance.id,
+          trainingReportId: instance.id,
           userId: record.userId,
           nationalCenterId: record.nationalCenterId,
         },
@@ -101,7 +101,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
         );
       } else {
         promises.push(
-          sequelize.models.EventReportPilotNationalCenterUser.create(record, {
+          sequelize.models.TrainingReportNationalCenterUser.create(record, {
             transaction: options.transaction,
           }),
         );
@@ -112,7 +112,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
 
     // delete records that are not present in the new list
     const ids = eventReportNationalCenterUsers.map((r) => r.id);
-    await sequelize.models.EventReportPilotNationalCenterUser.destroy({
+    await sequelize.models.TrainingReportNationalCenterUser.destroy({
       where: {
         eventReportPilotId: instance.id,
         id: {

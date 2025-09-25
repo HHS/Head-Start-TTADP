@@ -4,7 +4,7 @@ import { filterAssociation } from './utils';
 const eventIdSql = `
 SELECT
  DISTINCT erp."id"
-FROM "EventReportPilots" erp
+FROM "TrainingReports" erp
 WHERE data->>'eventId'`;
 
 export function withEventId(names) {

@@ -3,7 +3,7 @@ import { sequelize } from '../../models';
 
 export function withRegion(regions) {
   return sequelize.where(
-    sequelize.col('"EventReportPilot".regionId'),
+    sequelize.col('"TrainingReport".regionId'),
     {
       [Op.in]: regions,
     },
@@ -12,7 +12,7 @@ export function withRegion(regions) {
 
 export function withoutRegion(regions) {
   return sequelize.where(
-    sequelize.col('"EventReportPilot".regionId'),
+    sequelize.col('"TrainingReport".regionId'),
     {
       [Op.notIn]: regions,
     },

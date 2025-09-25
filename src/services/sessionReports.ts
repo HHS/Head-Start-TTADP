@@ -4,10 +4,10 @@ import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
 const {
-  SessionReportPilot,
-  EventReportPilot,
-  SessionReportPilotFile,
-  SessionReportPilotSupportingAttachment,
+  SessionReport,
+  TrainingReport,
+  SessionReportFile,
+  SessionReportSupportingAttachment,
 } = db;
 
 export const validateFields = (request, requiredFields) => {
@@ -20,19 +20,19 @@ export const validateFields = (request, requiredFields) => {
 
 export async function destroySession(id: number): Promise<void> {
   // Delete files.
-  await SessionReportPilotFile.destroy(
-    { where: { sessionReportPilotId: id } },
+  await SessionReportFile.destroy(
+    { where: { sessionReportId: id } },
     { individualHooks: true },
   );
 
   // Delete supporting attachments.
-  await SessionReportPilotSupportingAttachment.destroy(
-    { where: { sessionReportPilotId: id } },
+  await SessionReportSupportingAttachment.destroy(
+    { where: { sessionReportId: id } },
     { individualHooks: true },
   );
 
   // Delete session.
-  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
+  await SessionReport.destroy({ where: { id } }, { individualHooks: true });
 }
 
 type WhereOptions = {
@@ -50,7 +50,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'data',
       'updatedAt',
       // eslint-disable-next-line @typescript-eslint/quotes
-      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+      [sequelize.literal(`Date(NULLIF("SessionReport".data->>'startDate',''))`), 'startDate'],
     ],
     where,
     order: [['startDate', 'ASC']],
@@ -60,7 +60,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
         as: 'files',
       },
       {
-        model: EventReportPilot,
+        model: TrainingReport,
         as: 'event',
       },
       {
@@ -71,8 +71,8 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
   };
 
   const session = plural
-    ? await SessionReportPilot.findAll(query)
-    : await SessionReportPilot.findOne(query);
+    ? await SessionReport.findAll(query)
+    : await SessionReport.findOne(query);
 
   if (!session) {
     return null;
@@ -115,7 +115,7 @@ export async function createSession(request) {
     throw new Error(`Event with id ${eventId} not found`);
   }
 
-  const created = await SessionReportPilot.create({
+  const created = await SessionReport.create({
     eventId: event.id,
     data: cast(JSON.stringify(data), 'jsonb'),
   }, {
@@ -126,7 +126,7 @@ export async function createSession(request) {
 }
 
 export async function updateSession(id, request) {
-  const session = await SessionReportPilot.findOne({
+  const session = await SessionReport.findOne({
     where: { id },
   });
 
@@ -144,7 +144,7 @@ export async function updateSession(id, request) {
 
   const event = await findEventBySmartsheetIdSuffix(eventId);
 
-  await SessionReportPilot.update(
+  await SessionReport.update(
     {
       eventId: event.id,
       data: cast(JSON.stringify(newData), 'jsonb'),

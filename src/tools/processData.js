@@ -902,7 +902,7 @@ export const processTraningReports = async (where = '') => {
   // Event
   await sequelize.query(/* sql */`
     -- 1. Update data -> 'creator' field using convertEmails()
-    UPDATE "EventReportPilots"
+    UPDATE "TrainingReports"
     SET data = jsonb_set(
         data,
         '{creator}',
@@ -916,7 +916,7 @@ export const processTraningReports = async (where = '') => {
     ${where};
 
     -- 2. Update data -> 'owner' -> 'name' field using convertUserName()
-    UPDATE "EventReportPilots"
+    UPDATE "TrainingReports"
     SET data = jsonb_set(
         data,
         '{owner, name}',
@@ -930,7 +930,7 @@ export const processTraningReports = async (where = '') => {
     ${where};
 
     -- 3. Update data -> 'owner' -> 'email' field using convertEmails()
-    UPDATE "EventReportPilots"
+    UPDATE "TrainingReports"
     SET data = jsonb_set(
         data,
         '{owner, email}',
@@ -944,7 +944,7 @@ export const processTraningReports = async (where = '') => {
     ${where};
 
     -- 4. Update data -> 'owner' -> 'nameWithNationalCenters' field with a suffix, using convertUserName()
-    UPDATE "EventReportPilots"
+    UPDATE "TrainingReports"
     SET data = jsonb_set(
         data,
         '{owner, nameWithNationalCenters}',
@@ -959,7 +959,7 @@ export const processTraningReports = async (where = '') => {
     ${where};
 
     -- 5. Update each element's userName in eventReportPilotNationalCenterUsers array using convertUserName()
-    UPDATE "EventReportPilots"
+    UPDATE "TrainingReports"
     SET data = jsonb_set(
         data,
         '{eventReportPilotNationalCenterUsers}',
@@ -980,7 +980,7 @@ export const processTraningReports = async (where = '') => {
   `);
   // Session
   await sequelize.query(/* sql */`
-    UPDATE "SessionReportPilots"
+    UPDATE "SessionReports"
     SET data = jsonb_set(
         data,
         '{recipients}',

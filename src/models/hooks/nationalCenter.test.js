@@ -3,7 +3,7 @@ import faker from '@faker-js/faker';
 import db from '..';
 import { updateById } from '../../services/nationalCenters';
 
-jest.mock('./sessionReportPilot');
+jest.mock('./sessionReport');
 
 describe('nationalCenter hooks', () => {
   describe('afterDestroy', () => {
@@ -24,7 +24,7 @@ describe('nationalCenter hooks', () => {
       center2 = await db.NationalCenter.create({ name: centerTwoName });
       center3 = await db.NationalCenter.create({ name: centerThreeName });
 
-      eventReport = await db.EventReportPilot.create({
+      eventReport = await db.TrainingReport.create({
         ownerId: 1,
         pocIds: [2],
         collaboratorIds: [3, 4],
@@ -35,14 +35,14 @@ describe('nationalCenter hooks', () => {
         imported: {},
       });
 
-      sessionReport = await db.SessionReportPilot.create({
+      sessionReport = await db.SessionReport.create({
         eventId: eventReport.id,
         data: {
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
           objectiveTrainers: [center1.name, center2.name],
         },
       });
-      sessionReport2 = await db.SessionReportPilot.create({
+      sessionReport2 = await db.SessionReport.create({
         eventId: eventReport.id,
         data: {
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
@@ -52,13 +52,13 @@ describe('nationalCenter hooks', () => {
     });
 
     afterAll(async () => {
-      await db.SessionReportPilot.destroy({
+      await db.SessionReport.destroy({
         where: {
           id: [sessionReport.id, sessionReport2.id],
         },
       });
 
-      await db.EventReportPilot.destroy({
+      await db.TrainingReport.destroy({
         where: {
           id: eventReport.id,
         },
@@ -77,7 +77,7 @@ describe('nationalCenter hooks', () => {
     it('should fire the hook and update the session report', async () => {
       await updateById(center3.id, { name: centerFourName });
 
-      let sessionReportUpdated = await db.SessionReportPilot.findOne({
+      let sessionReportUpdated = await db.SessionReport.findOne({
         where: {
           id: sessionReport2.id,
         },
@@ -91,7 +91,7 @@ describe('nationalCenter hooks', () => {
 
       await center4.destroy({ individualHooks: true });
 
-      sessionReportUpdated = await db.SessionReportPilot.findOne({
+      sessionReportUpdated = await db.SessionReport.findOne({
         where: {
           id: sessionReport2.id,
         },
@@ -109,7 +109,7 @@ describe('nationalCenter hooks', () => {
 
       await center1.destroy({ individualHooks: true });
 
-      sessionReportUpdated = await db.SessionReportPilot.findOne({
+      sessionReportUpdated = await db.SessionReport.findOne({
         where: {
           id: sessionReport2.id,
         },
@@ -119,7 +119,7 @@ describe('nationalCenter hooks', () => {
         sessionReportUpdated.data.objectiveTrainers,
       ).toEqual([center1.name, center2.name]);
 
-      const unchangedSessionReport = await db.SessionReportPilot.findOne({
+      const unchangedSessionReport = await db.SessionReport.findOne({
         where: {
           id: sessionReport.id,
         },

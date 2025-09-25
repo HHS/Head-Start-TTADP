@@ -5,8 +5,8 @@ import {
   TRAINING_REPORT_STATUSES,
 } from '@ttahub/common';
 import {
-  EventReportPilot,
-  SessionReportPilot,
+  TrainingReport,
+  SessionReport,
   User,
   sequelize,
 } from '../models';
@@ -43,10 +43,10 @@ async function createEvents({
   };
 
   // event that has no start date (will not appear in alerts)
-  await EventReportPilot.create(baseEvent);
+  await TrainingReport.create(baseEvent);
 
   // event with no sessions and a start date of today (Will not appear in alerts)
-  await EventReportPilot.create({
+  await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -68,7 +68,7 @@ async function createEvents({
 
   // event with no sessions and a start date of one month ago (Will appear in alerts)
   // also missing event data
-  const a = await EventReportPilot.create({
+  const a = await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -81,7 +81,7 @@ async function createEvents({
   testData.ist.noSessionsCreated.push(a.id);
 
   // basic event: no sessions, but complete data
-  const b = await EventReportPilot.create({
+  const b = await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -95,7 +95,7 @@ async function createEvents({
 
   // complete event with incomplete sessions, but no date on the sessions
   // will not appear in alerts
-  const c = await EventReportPilot.create({
+  const c = await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -105,7 +105,7 @@ async function createEvents({
     },
   });
 
-  await SessionReportPilot.create({
+  await SessionReport.create({
     eventId: c.id,
     data: {
       sessionName: faker.datatype.string(),
@@ -113,7 +113,7 @@ async function createEvents({
   });
 
   // complete event, 20 days past end date
-  const e = await EventReportPilot.create({
+  const e = await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -124,14 +124,14 @@ async function createEvents({
     },
   });
 
-  await SessionReportPilot.create({
+  await SessionReport.create({
     eventId: e.id,
     data: {},
   });
 
   testData.ist.eventNotCompleted.push(e.id);
 
-  const f = await EventReportPilot.create({
+  const f = await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -142,7 +142,7 @@ async function createEvents({
   });
 
   // poc incomplete session
-  const f1 = await SessionReportPilot.create({
+  const f1 = await SessionReport.create({
     eventId: f.id,
     data: {
       sessionName: faker.datatype.string(),
@@ -168,7 +168,7 @@ async function createEvents({
 
   testData.poc.missingSessionInfo.push(f1.id);
 
-  const g = await EventReportPilot.create({
+  const g = await TrainingReport.create({
     ...baseEvent,
     data: {
       ...baseEvent.data,
@@ -179,7 +179,7 @@ async function createEvents({
   });
 
   // owner incomplete session
-  const g1 = await SessionReportPilot.create({
+  const g1 = await SessionReport.create({
     eventId: g.id,
     data: {
       sessionName: faker.datatype.string(),
@@ -205,7 +205,7 @@ async function createEvents({
   testData.ist.missingSessionInfo.push(g1.id);
 
   // should not appear in alerts, as it is compete
-  await SessionReportPilot.create({
+  await SessionReport.create({
     eventId: g.id,
     data: {
       status: TRAINING_REPORT_STATUSES.COMPLETE,
@@ -252,9 +252,9 @@ describe('getTrainingReportAlertsForUser', () => {
     });
 
     afterAll(async () => {
-      const events = await EventReportPilot.findAll({ where: { ownerId } });
-      await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
-      await EventReportPilot.destroy({ where: { ownerId } });
+      const events = await TrainingReport.findAll({ where: { ownerId } });
+      await SessionReport.destroy({ where: { eventId: events.map(({ id }) => id) } });
+      await TrainingReport.destroy({ where: { ownerId } });
       await User.destroy({ where: { id: ownerId } });
     });
 
@@ -286,15 +286,15 @@ describe('getTrainingReportAlertsForUser', () => {
     });
 
     afterAll(async () => {
-      const events = await EventReportPilot.findAll({
+      const events = await TrainingReport.findAll({
         where: {
           collaboratorIds: {
             [Op.contains]: [collaboratorId],
           },
         },
       });
-      await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
-      await EventReportPilot.destroy({ where: { id: events.map(({ id }) => id) } });
+      await SessionReport.destroy({ where: { eventId: events.map(({ id }) => id) } });
+      await TrainingReport.destroy({ where: { id: events.map(({ id }) => id) } });
       await User.destroy({ where: { id: collaboratorId } });
     });
 
@@ -325,15 +325,15 @@ describe('getTrainingReportAlertsForUser', () => {
     });
 
     afterAll(async () => {
-      const events = await EventReportPilot.findAll({
+      const events = await TrainingReport.findAll({
         where: {
           pocIds: {
             [Op.contains]: [pocId],
           },
         },
       });
-      await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
-      await EventReportPilot.destroy({ where: { id: events.map(({ id }) => id) } });
+      await SessionReport.destroy({ where: { eventId: events.map(({ id }) => id) } });
+      await TrainingReport.destroy({ where: { id: events.map(({ id }) => id) } });
       await User.destroy({ where: { id: pocId } });
     });
 

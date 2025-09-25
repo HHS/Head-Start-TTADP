@@ -154,7 +154,7 @@ describe('file handlers, additional tests', () => {
         id: 123,
         key: 'key',
         supportingAttachments: [{
-          sessionReportPilotId: 456,
+          sessionReportId: 456,
           fileId: 123,
         }],
       });

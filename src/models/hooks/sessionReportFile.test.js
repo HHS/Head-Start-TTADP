@@ -1,5 +1,5 @@
 const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');
-const { afterDestroy } = require('./sessionReportPilotFile');
+const { afterDestroy } = require('./sessionReportFile');
 
 jest.mock('../helpers/orphanCleanupHelper', () => ({
   cleanupOrphanFiles: jest.fn(),

@@ -4,10 +4,10 @@ import filtersToScopes from '../index';
 
 import {
   User,
-  EventReportPilot,
+  TrainingReport,
   NationalCenterUser,
   NationalCenter,
-  EventReportPilotNationalCenterUser,
+  TrainingReportNationalCenterUser,
   sequelize,
 } from '../../models';
 import { filterAssociation } from './utils';
@@ -35,9 +35,9 @@ describe('filtersToScopes', () => {
     await sequelize.close();
   });
   describe('startDate', () => {
-    let lteEventReportPilot;
-    let gteEventReportPilot;
-    let betweenEventReportPilot;
+    let lteTrainingReport;
+    let gteTrainingReport;
+    let betweenTrainingReport;
     let possibleIds;
 
     beforeAll(async () => {
@@ -45,7 +45,7 @@ describe('filtersToScopes', () => {
       await User.create(mockUser);
 
       // create lte report.
-      lteEventReportPilot = await EventReportPilot.create({
+      lteTrainingReport = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [],
@@ -56,7 +56,7 @@ describe('filtersToScopes', () => {
       });
 
       // create gte report.
-      gteEventReportPilot = await EventReportPilot.create({
+      gteTrainingReport = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [],
@@ -67,7 +67,7 @@ describe('filtersToScopes', () => {
       });
 
       // create between report.
-      betweenEventReportPilot = await EventReportPilot.create({
+      betweenTrainingReport = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [],
@@ -77,13 +77,13 @@ describe('filtersToScopes', () => {
         },
       });
 
-      possibleIds = [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id];
+      possibleIds = [lteTrainingReport.id, gteTrainingReport.id, betweenTrainingReport.id];
     });
     afterAll(async () => {
       // destroy reports.
-      await EventReportPilot.destroy({
+      await TrainingReport.destroy({
         where: {
-          id: [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id],
+          id: [lteTrainingReport.id, gteTrainingReport.id, betweenTrainingReport.id],
         },
       });
 
@@ -94,32 +94,32 @@ describe('filtersToScopes', () => {
     it('before returns reports with start dates before the given date', async () => {
       const filters = { 'startDate.bef': '2021/06/06' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found[0].id).toBe(lteEventReportPilot.id);
+      expect(found[0].id).toBe(lteTrainingReport.id);
     });
 
     it('before returns reports with start dates between the given dates', async () => {
       const filters = { 'startDate.win': '2021/06/07-2021/06/07' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found[0].id).toBe(betweenEventReportPilot.id);
+      expect(found[0].id).toBe(betweenTrainingReport.id);
     });
 
     it('before returns reports with start dates after the given date', async () => {
       const filters = { 'startDate.aft': '2021/06/08' };
       const { trainingReport: scope } = await filtersToScopes(filters);
 
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found[0].id).toBe(gteEventReportPilot.id);
+      expect(found[0].id).toBe(gteTrainingReport.id);
     });
 
     it('returns an empty object when date range is invalid', async () => {
@@ -130,8 +130,8 @@ describe('filtersToScopes', () => {
 
     it('uses default comparator when none is provided', async () => {
       const out = filterAssociation('asdf', ['1', '2'], false);
-      expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'1\')'));
-      expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'2\')'));
+      expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal('"TrainingReport"."id" IN (asdf ~* \'1\')'));
+      expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal('"TrainingReport"."id" IN (asdf ~* \'2\')'));
     });
   });
 
@@ -146,7 +146,7 @@ describe('filtersToScopes', () => {
       await User.create(mockUser);
 
       // create report with region 1.
-      reportWithRegion1 = await EventReportPilot.create({
+      reportWithRegion1 = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [],
@@ -155,7 +155,7 @@ describe('filtersToScopes', () => {
       });
 
       // create report with region 2.
-      reportWithRegion2 = await EventReportPilot.create({
+      reportWithRegion2 = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [],
@@ -164,7 +164,7 @@ describe('filtersToScopes', () => {
       });
 
       // create report with different region.
-      reportWithoutRegion = await EventReportPilot.create({
+      reportWithoutRegion = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [],
@@ -176,7 +176,7 @@ describe('filtersToScopes', () => {
     });
     afterAll(async () => {
       // destroy reports.
-      await EventReportPilot.destroy({
+      await TrainingReport.destroy({
         where: {
           id: possibleIds,
         },
@@ -189,7 +189,7 @@ describe('filtersToScopes', () => {
     it('before returns reports with start dates before the given date', async () => {
       const filters = { 'region.in': '1' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
@@ -200,7 +200,7 @@ describe('filtersToScopes', () => {
     it('before returns reports with start dates between the given dates', async () => {
       const filters = { 'region.nin': '1' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
@@ -219,7 +219,7 @@ describe('filtersToScopes', () => {
       await User.create(mockUser);
 
       // Report with event to find.
-      reportWithEventId = await EventReportPilot.create({
+      reportWithEventId = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
@@ -228,7 +228,7 @@ describe('filtersToScopes', () => {
       }, { individualHooks: false });
 
       // Report without event to find.
-      reportWithoutEventId = await EventReportPilot.create({
+      reportWithoutEventId = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
@@ -237,7 +237,7 @@ describe('filtersToScopes', () => {
       }, { individualHooks: false });
 
       // Report with null event.
-      reportWithNullEventId = await EventReportPilot.create({
+      reportWithNullEventId = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
@@ -252,7 +252,7 @@ describe('filtersToScopes', () => {
     });
     afterAll(async () => {
       // destroy reports.
-      await EventReportPilot.destroy({
+      await TrainingReport.destroy({
         where: {
           id: possibleIds,
         },
@@ -265,7 +265,7 @@ describe('filtersToScopes', () => {
     it('returns event with event id', async () => {
       const filters = { 'eventId.ctn': '1035' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
@@ -275,7 +275,7 @@ describe('filtersToScopes', () => {
     it('returns events without event id', async () => {
       const filters = { 'eventId.nctn': '1035' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
@@ -329,7 +329,7 @@ describe('filtersToScopes', () => {
       });
 
       // create report with region 1.
-      reportWithCollaborator = await EventReportPilot.create({
+      reportWithCollaborator = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockUser.id],
@@ -338,7 +338,7 @@ describe('filtersToScopes', () => {
       });
 
       // create report with region 2.
-      reportWithBothCollaborators = await EventReportPilot.create({
+      reportWithBothCollaborators = await TrainingReport.create({
         ownerId: mockUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockCollaboratorUser.id, mockUser.id],
@@ -347,7 +347,7 @@ describe('filtersToScopes', () => {
       });
 
       // create report with different region.
-      reportWithOtherCollaborator = await EventReportPilot.create({
+      reportWithOtherCollaborator = await TrainingReport.create({
         ownerId: mockCollaboratorUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockCollaboratorUser.id],
@@ -361,7 +361,7 @@ describe('filtersToScopes', () => {
         reportWithOtherCollaborator.id];
     });
     afterAll(async () => {
-      await EventReportPilotNationalCenterUser.destroy({ where: {} });
+      await TrainingReportNationalCenterUser.destroy({ where: {} });
 
       // destroy national centers users.
       await NationalCenterUser.destroy({
@@ -385,7 +385,7 @@ describe('filtersToScopes', () => {
       });
 
       // destroy reports.
-      await EventReportPilot.destroy({
+      await TrainingReport.destroy({
         where: {
           id: possibleIds,
         },
@@ -398,7 +398,7 @@ describe('filtersToScopes', () => {
     it('before returns reports with mock contains collaborator national center', async () => {
       const filters = { 'collaborators.in': 'NC Test 1' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
@@ -412,7 +412,7 @@ describe('filtersToScopes', () => {
     it('before returns reports with mock contains creator national center', async () => {
       const filters = { 'creator.in': 'NC Test 1' };
       const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
+      const found = await TrainingReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);

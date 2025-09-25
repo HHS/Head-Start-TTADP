@@ -25,8 +25,8 @@ export const formatOwnerName = (event) => {
     }
 
     if (event && event.data && event.data.owner) {
-      if (event.eventReportPilotNationalCenterUsers) {
-        const user = event.eventReportPilotNationalCenterUsers
+      if (event.trainingReportNationalCenterUsers) {
+        const user = event.trainingReportNationalCenterUsers
           .find((erpnc) => erpnc.userId === event.data.owner.id);
 
         if (user) {
@@ -105,8 +105,8 @@ export default function ViewTrainingReport({ match }) {
     async function fetchCollaborators() {
       if (event && event.collaboratorIds && event.collaboratorIds.length) {
         try {
-          if (event.eventReportPilotNationalCenterUsers) {
-            const collaborators = event.eventReportPilotNationalCenterUsers.filter((erpnc) => (
+          if (event.trainingReportNationalCenterUsers) {
+            const collaborators = event.trainingReportNationalCenterUsers.filter((erpnc) => (
               event.collaboratorIds.includes(erpnc.userId)
             ));
             if (collaborators.length > 0) {

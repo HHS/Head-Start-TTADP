@@ -10,7 +10,7 @@ import {
 import { auditLogger } from '../logger';
 
 jest.spyOn(auditLogger, 'info');
-jest.mock('../models/hooks/sessionReportPilot');
+jest.mock('../models/hooks/sessionReport');
 
 describe('nationalCenters service', () => {
   afterAll(() => {
@@ -236,7 +236,7 @@ describe('nationalCenters service', () => {
       center2 = await db.NationalCenter.create({ name: centerTwoName });
       center3 = await db.NationalCenter.create({ name: centerThreeName });
 
-      eventReport1 = await db.EventReportPilot.create({
+      eventReport1 = await db.TrainingReport.create({
         ownerId: 1,
         pocIds: [2],
         collaboratorIds: [3, 4],
@@ -247,7 +247,7 @@ describe('nationalCenters service', () => {
         imported: {},
       });
 
-      eventReport2 = await db.EventReportPilot.create({
+      eventReport2 = await db.TrainingReport.create({
         ownerId: 1,
         pocIds: [2],
         collaboratorIds: [3, 4],
@@ -258,14 +258,14 @@ describe('nationalCenters service', () => {
         imported: {},
       });
 
-      sessionReport = await db.SessionReportPilot.create({
+      sessionReport = await db.SessionReport.create({
         eventId: eventReport1.id,
         data: {
           status: EVENT_REPORT_STATUSES.IN_PROGRESS,
           objectiveTrainers: [center1.name, center2.name],
         },
       });
-      sessionReport2 = await db.SessionReportPilot.create({
+      sessionReport2 = await db.SessionReport.create({
         eventId: eventReport2.id,
         data: {
           status: EVENT_REPORT_STATUSES.COMPLETE,
@@ -281,13 +281,13 @@ describe('nationalCenters service', () => {
     });
 
     afterAll(async () => {
-      await db.SessionReportPilot.destroy({
+      await db.SessionReport.destroy({
         where: {
           id: [sessionReport.id, sessionReport2.id],
         },
       });
 
-      await db.EventReportPilot.destroy({
+      await db.TrainingReport.destroy({
         where: {
           id: [eventReport1.id, eventReport2.id],
         },
@@ -307,12 +307,12 @@ describe('nationalCenters service', () => {
       ids.push(center1.id);
       expect(center1.name).toBe(newCenterName);
 
-      const updatedSessionReport = await db.SessionReportPilot.findByPk(sessionReport.id);
+      const updatedSessionReport = await db.SessionReport.findByPk(sessionReport.id);
       expect(
         updatedSessionReport.data.objectiveTrainers.sort(),
       ).toEqual([newCenterName, center2.name].sort());
 
-      const reportNotUpdated = await db.SessionReportPilot.findByPk(sessionReport2.id);
+      const reportNotUpdated = await db.SessionReport.findByPk(sessionReport2.id);
       expect(
         reportNotUpdated.data.objectiveTrainers.sort(),
       ).toEqual([centerOneName, center2.name, center3.name].sort());

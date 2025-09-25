@@ -8,8 +8,8 @@ const { auditLogger } = require('../../logger');
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   let event;
   try {
-    const { EventReportPilot } = sequelize.models;
-    event = await EventReportPilot.findOne({
+    const { TrainingReport } = sequelize.models;
+    event = await TrainingReport.findOne({
       where: {
         id: instance.eventId,
         data: {
@@ -29,8 +29,8 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
 
 const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
   try {
-    const { EventReportPilot } = sequelize.models;
-    const event = await EventReportPilot.findOne({
+    const { TrainingReport } = sequelize.models;
+    const event = await TrainingReport.findOne({
       where: {
         id: instance.eventId,
         data: {
@@ -59,8 +59,8 @@ const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
 
 const notifySessionCreated = async (sequelize, instance, options) => {
   try {
-    const { EventReportPilot } = sequelize.models;
-    const event = await EventReportPilot.findOne({
+    const { TrainingReport } = sequelize.models;
+    const event = await TrainingReport.findOne({
       where: {
         id: instance.eventId,
       },
@@ -166,7 +166,7 @@ export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, optio
       const currentPocComplete = current.pocComplete || false;
 
       if (currentOwnerComplete && currentPocComplete && current.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        sequelize.models.SessionReportPilot.update({
+        sequelize.models.SessionReport.update({
           data: {
             ...current,
             status: TRAINING_REPORT_STATUSES.COMPLETE,

@@ -12,7 +12,7 @@ const updateExistingSessionReports = async (sequelize, instance, options, isDest
     const oldNationalCenterName = isDestroy ? instance.name : instance.previous('name');
     // Find all session reports that contain the
     // old national center name as a data.objectiveTrainers value.
-    const sessionReports = await sequelize.models.SessionReportPilot.findAll({
+    const sessionReports = await sequelize.models.SessionReport.findAll({
       where: {
         [Op.and]: [
           {
@@ -20,7 +20,7 @@ const updateExistingSessionReports = async (sequelize, instance, options, isDest
               status: EVENT_REPORT_STATUSES.IN_PROGRESS,
             },
           },
-          sequelize.literal(`("SessionReportPilot"."data"->'objectiveTrainers')::text like '%${oldNationalCenterName}%'`),
+          sequelize.literal(`("SessionReport"."data"->'objectiveTrainers')::text like '%${oldNationalCenterName}%'`),
         ],
       },
       include: [{
@@ -59,7 +59,7 @@ const updateExistingSessionReports = async (sequelize, instance, options, isDest
       }
 
       // Update with the new trainers list.
-      await sequelize.models.SessionReportPilot.update({
+      await sequelize.models.SessionReport.update({
         data: {
           ...sessionReport.data,
           objectiveTrainers: newObjectiveTrainersWithoutOld,

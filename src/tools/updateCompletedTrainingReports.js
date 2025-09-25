@@ -3,9 +3,9 @@ import db from '../models';
 
 const { sequelize } = db;
 
-export default async function updateCompletedEventReportPilots() {
+export default async function updateCompletedTrainingReports() {
   return sequelize.transaction(async () => {
-    const completedTrainingReports = await db.EventReportPilot.findAll({
+    const completedTrainingReports = await db.TrainingReport.findAll({
       attributes: [
         'id',
         'ownerId',
@@ -65,7 +65,7 @@ export default async function updateCompletedEventReportPilots() {
     );
 
     return Promise.all(
-      bulkCreate.map((item) => db.EventReportPilotNationalCenterUser.findOrCreate({ where: item })),
+      bulkCreate.map((item) => db.TrainingReportNationalCenterUser.findOrCreate({ where: item })),
     );
   });
 }

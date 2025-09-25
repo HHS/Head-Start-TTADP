@@ -7,7 +7,7 @@ SELECT
 FROM "NationalCenters" "NationalCenters"
 INNER JOIN "NationalCenterUsers" "NationalCenterUsers"
 ON "NationalCenters".id = "NationalCenterUsers"."nationalCenterId"
-INNER JOIN "EventReportPilots" erp
+INNER JOIN "TrainingReports" erp
 ON erp."ownerId"="NationalCenterUsers"."userId"
 WHERE "NationalCenters"."name"`;
 

@@ -149,7 +149,7 @@ const deleteHandler = async (req, res) => {
       }
 
       const sof = file.sessionFiles.find(
-        (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE),
+        (r) => r.sessionReportId === parseInt(eventSessionId, DECIMAL_BASE),
       );
       if (sof) {
         await deleteSessionFile(sof.id);
@@ -181,7 +181,7 @@ const deleteHandler = async (req, res) => {
       }
 
       const sof = file.supportingAttachments.find(
-        (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE),
+        (r) => r.sessionReportId === parseInt(sessionAttachmentId, DECIMAL_BASE),
       );
       if (sof) {
         await deleteSessionSupportingAttachment(sof.id);

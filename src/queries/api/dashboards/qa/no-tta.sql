@@ -477,7 +477,7 @@ no_tta AS (
     LEFT JOIN "ActivityReports" a ON far.id = a.id
     AND a."calculatedStatus" = 'approved'
     AND a."startDate"::date > now() - INTERVAL '90 days'
-    LEFT JOIN "SessionReportPilots" srp ON EXISTS (
+    LEFT JOIN "SessionReports" srp ON EXISTS (
         SELECT 1 
         FROM jsonb_array_elements(srp.data -> 'recipients') AS elem
         WHERE (elem ->> 'value')::int = r.id

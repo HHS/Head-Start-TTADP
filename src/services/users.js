@@ -10,7 +10,7 @@ import {
   Role,
   sequelize,
   UserValidationStatus,
-  EventReportPilot,
+  TrainingReport,
   NationalCenter,
 } from '../models';
 
@@ -512,7 +512,7 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
 
   if (eventId) {
     // get event report pilot that has the id event id.
-    const eventReportPilot = await EventReportPilot.findOne({
+    const eventReportPilot = await TrainingReport.findOne({
       attributes: ['id', 'ownerId', 'data'],
       where: {
         data: {

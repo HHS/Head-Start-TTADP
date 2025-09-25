@@ -5,32 +5,32 @@ const {
   beforeCreate,
   beforeUpdate,
   beforeDestroy,
-} = require('./hooks/sessionReportPilot');
+} = require('./hooks/sessionReport');
 
 export default (sequelize, DataTypes) => {
-  class SessionReportPilot extends Model {
+  class SessionReport extends Model {
     static associate(models) {
-      SessionReportPilot.belongsTo(models.EventReportPilot, { foreignKey: 'eventId', as: 'event' });
-      SessionReportPilot.hasMany(models.SessionReportPilotFile, { foreignKey: 'sessionReportPilotId', as: 'sessionFiles' });
+      SessionReport.belongsTo(models.TrainingReport, { foreignKey: 'eventId', as: 'event' });
+      SessionReport.hasMany(models.SessionReportFile, { foreignKey: 'sessionReportId', as: 'sessionFiles' });
       // Files.
-      SessionReportPilot.belongsToMany(models.File, {
-        through: models.SessionReportPilotFile,
-        foreignKey: 'sessionReportPilotId',
+      SessionReport.belongsToMany(models.File, {
+        through: models.SessionReportFile,
+        foreignKey: 'sessionReportId',
         otherKey: 'fileId',
         as: 'files',
       });
       // Supporting attachments.
-      SessionReportPilot.hasMany(models.SessionReportPilotSupportingAttachment, { foreignKey: 'sessionReportPilotId', as: 'sessionSupportingAttachments' });
-      SessionReportPilot.belongsToMany(models.File, {
-        through: models.SessionReportPilotSupportingAttachment,
-        foreignKey: 'sessionReportPilotId',
+      SessionReport.hasMany(models.SessionReportSupportingAttachment, { foreignKey: 'sessionReportId', as: 'sessionSupportingAttachments' });
+      SessionReport.belongsToMany(models.File, {
+        through: models.SessionReportSupportingAttachment,
+        foreignKey: 'sessionReportId',
         otherKey: 'fileId',
         as: 'supportingAttachments',
       });
     }
   }
 
-  SessionReportPilot.init({
+  SessionReport.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'SessionReportPilot',
+    modelName: 'SessionReport',
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
@@ -57,5 +57,5 @@ export default (sequelize, DataTypes) => {
     },
   });
 
-  return SessionReportPilot;
+  return SessionReport;
 };

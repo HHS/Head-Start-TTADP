@@ -12,7 +12,7 @@ import {
   GoalTemplate,
   Goal,
   EventReportPilot,
-  SessionReportPilot,
+  SessionReport,
 } from './models';
 import { auditLogger } from './logger';
 
@@ -494,7 +494,7 @@ export async function createSessionReport(report) {
     attributes: ['id'],
   });
 
-  return SessionReportPilot.create({
+  return SessionReport.create({
     data: mockSessionData(data || {}),
     eventId: event?.id || await createTrainingReport({}).id,
   });

@@ -13,7 +13,7 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
         required: false,
       },
       {
-        model: sequelize.models.SessionReportPilotFile,
+        model: sequelize.models.SessionReportFile,
         as: 'sessionFiles',
         required: false,
       },

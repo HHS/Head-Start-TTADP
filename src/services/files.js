@@ -5,9 +5,9 @@ import {
   ActivityReportObjectiveFile,
   File,
   ActivityReportObjective,
-  SessionReportPilotFile,
+  SessionReportFile,
   CommunicationLogFile,
-  SessionReportPilotSupportingAttachment,
+  SessionReportSupportingAttachment,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
 
@@ -29,13 +29,13 @@ const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({
   where: { id },
   individualHooks: true,
 });
-const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
+const deleteSessionFile = async (id) => SessionReportFile.destroy({
   where: { id },
   individualHooks: true,
 });
 
 // eslint-disable-next-line max-len
-const deleteSessionSupportingAttachment = async (id) => SessionReportPilotSupportingAttachment.destroy({
+const deleteSessionSupportingAttachment = async (id) => SessionReportSupportingAttachment.destroy({
   where: { id },
   individualHooks: true,
 });
@@ -61,10 +61,10 @@ const getFileById = async (id) => File.findOne({
       attributes: ['id', 'activityReportObjectiveId'],
     },
     {
-      model: SessionReportPilotFile,
+      model: SessionReportFile,
       as: 'sessionFiles',
       required: false,
-      attributes: ['id', 'sessionReportPilotId'],
+      attributes: ['id', 'sessionReportId'],
     },
     {
       model: CommunicationLogFile,
@@ -73,10 +73,10 @@ const getFileById = async (id) => File.findOne({
       attributes: ['id', 'communicationLogId'],
     },
     {
-      model: SessionReportPilotSupportingAttachment,
+      model: SessionReportSupportingAttachment,
       as: 'supportingAttachments',
       required: false,
-      attributes: ['id', 'sessionReportPilotId'],
+      attributes: ['id', 'sessionReportId'],
     },
   ],
 });
@@ -187,22 +187,22 @@ const createActivityReportObjectiveFileMetaData = async (
 const createSessionObjectiveFileMetaData = async (
   originalFileName,
   s3FileName,
-  sessionReportPilotId,
+  sessionReportId,
   fileSize,
 ) => {
   const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
-  await SessionReportPilotFile.create({ sessionReportPilotId, fileId: file.id });
+  await SessionReportFile.create({ sessionReportId, fileId: file.id });
   return file;
 };
 
 const createSessionSupportingAttachmentMetaData = async (
   originalFileName,
   s3FileName,
-  sessionReportPilotId,
+  sessionReportId,
   fileSize,
 ) => {
   const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
-  await SessionReportPilotSupportingAttachment.create({ sessionReportPilotId, fileId: file.id });
+  await SessionReportSupportingAttachment.create({ sessionReportId, fileId: file.id });
   return file;
 };
 

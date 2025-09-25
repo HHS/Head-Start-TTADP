@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { afterUpdate, afterCreate } from './eventReportPilot';
+import { afterUpdate, afterCreate } from './trainingReport';
 import {
   trCollaboratorAdded,
 } from '../../lib/mailer';
@@ -13,7 +13,7 @@ jest.mock('../../lib/mailer', () => ({
   trVisionComplete: jest.fn(),
 }));
 
-describe('eventReportPilot', () => {
+describe('trainingReport', () => {
   const mockOptions = {
     transaction: {},
   };
@@ -70,7 +70,7 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
       User: {
         findAll: jest.fn(),
       },
-      EventReportPilotNationalCenterUser: {
+      TrainingReportNationalCenterUser: {
         bulkCreate: jest.fn(),
         create: jest.fn(),
         destroy: jest.fn(),
@@ -137,28 +137,28 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
       {
         userId: 5,
         userName: 'John Doe',
-        eventReportPilotId: 1,
+        trainingReportId: 1,
         nationalCenterId: 10,
         nationalCenterName: 'National Center 1',
       },
       {
         userId: 5,
         userName: 'John Doe',
-        eventReportPilotId: 1,
+        trainingReportId: 1,
         nationalCenterId: 11,
         nationalCenterName: 'National Center 2',
       },
       {
         userId: 1,
         userName: 'Jane Smith',
-        eventReportPilotId: 1,
+        trainingReportId: 1,
         nationalCenterId: 10,
         nationalCenterName: 'National Center 1',
       },
       {
         userId: 2,
         userName: 'Bob Johnson',
-        eventReportPilotId: 1,
+        trainingReportId: 1,
         nationalCenterId: 11,
         nationalCenterName: 'National Center 2',
       },
@@ -166,7 +166,7 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
 
     sequelize.models.User.findAll.mockResolvedValue(users);
     bulks.forEach((b, i) => {
-      sequelize.models.EventReportPilotNationalCenterUser.create.mockResolvedValueOnce(
+      sequelize.models.TrainingReportNationalCenterUser.create.mockResolvedValueOnce(
         { ...b, id: i + 1 },
       );
     });
@@ -187,15 +187,15 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
     });
 
     bulks.forEach((bulk) => {
-      expect(sequelize.models.EventReportPilotNationalCenterUser.create).toHaveBeenCalledWith(
+      expect(sequelize.models.TrainingReportNationalCenterUser.create).toHaveBeenCalledWith(
         bulk,
         { transaction: options.transaction },
       );
     });
 
-    expect(sequelize.models.EventReportPilotNationalCenterUser.destroy).toHaveBeenCalledWith({
+    expect(sequelize.models.TrainingReportNationalCenterUser.destroy).toHaveBeenCalledWith({
       where: {
-        eventReportPilotId: 1,
+        trainingReportId: 1,
         id: {
           [Op.notIn]: [1, 2, 3, 4],
         },
@@ -245,7 +245,7 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
         userId: collaborator2.id,
         nationalCenterId: n3.id,
       }, { individualHooks: true });
-      newEvent = await db.EventReportPilot.create({
+      newEvent = await db.TrainingReport.create({
         regionId: 1,
         data: {},
         ownerId: owner.id,
@@ -254,7 +254,7 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
     });
 
     afterAll(async () => {
-      await db.EventReportPilotNationalCenterUser.destroy({
+      await db.TrainingReportNationalCenterUser.destroy({
         where: {
           userId: [owner.id, collaborator.id, collaborator2.id],
         },
@@ -280,9 +280,9 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
     afterEach(() => jest.clearAllMocks());
 
     it('should create the national center user cache table', async () => {
-      const e = await db.EventReportPilotNationalCenterUser.findAll({
+      const e = await db.TrainingReportNationalCenterUser.findAll({
         where: {
-          eventReportPilotId: newEvent.id,
+          trainingReportId: newEvent.id,
         },
       });
 
@@ -298,7 +298,7 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
         },
         individualHooks: true,
       });
-      await db.EventReportPilot.update({
+      await db.TrainingReport.update({
         data: { status: 'complete' },
         collaboratorIds: [collaborator.id],
       }, {
@@ -308,9 +308,9 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
         individualHooks: true,
       });
 
-      const e = await db.EventReportPilotNationalCenterUser.findAll({
+      const e = await db.TrainingReportNationalCenterUser.findAll({
         where: {
-          eventReportPilotId: newEvent.id,
+          trainingReportId: newEvent.id,
         },
       });
 

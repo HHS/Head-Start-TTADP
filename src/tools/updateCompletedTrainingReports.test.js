@@ -7,10 +7,10 @@ import db, {
   NationalCenter,
   NationalCenterUser,
 } from '../models';
-import updateCompletedEventReportPilots from './updateCompletedEventReportPilots';
+import updateCompletedTrainingReports from './updateCompletedTrainingReports';
 import { createUser } from '../testUtils';
 
-describe('updateCompletedEventReportPilots', () => {
+describe('updateCompletedTrainingReports', () => {
   let nationalCenter1;
   let nationalCenter2;
   let nationalCenter3;
@@ -57,7 +57,7 @@ describe('updateCompletedEventReportPilots', () => {
 
     await EventReportPilotNationalCenterUser.destroy({
       where: {
-        eventReportPilotId: [erp1.id, erp2.id, erp3.id],
+        trainingReportId: [erp1.id, erp2.id, erp3.id],
       },
     });
   });
@@ -65,7 +65,7 @@ describe('updateCompletedEventReportPilots', () => {
   afterAll(async () => {
     await EventReportPilotNationalCenterUser.destroy({
       where: {
-        eventReportPilotId: [erp1.id, erp2.id, erp3.id],
+        trainingReportId: [erp1.id, erp2.id, erp3.id],
       },
     });
     await EventReportPilot.destroy({ where: { id: [erp1.id, erp2.id, erp3.id] } });
@@ -79,16 +79,16 @@ describe('updateCompletedEventReportPilots', () => {
   });
 
   it('creates EventReportPilotNationalCenterUser records for completed event report pilots', async () => {
-    await updateCompletedEventReportPilots();
+    await updateCompletedTrainingReports();
 
     let erp1Users = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erp1.id },
+      where: { trainingReportId: erp1.id },
     });
     let erp2Users = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erp2.id },
+      where: { trainingReportId: erp2.id },
     });
     let erp3Users = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erp3.id },
+      where: { trainingReportId: erp3.id },
     });
 
     expect(erp1Users).toHaveLength(3);
@@ -101,15 +101,15 @@ describe('updateCompletedEventReportPilots', () => {
       .toEqual(expect.arrayContaining([user1.id, user2.id, user3.id]));
 
     // run it again to make sure that it doesn't error on existing
-    await updateCompletedEventReportPilots();
+    await updateCompletedTrainingReports();
 
     erp1Users = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erp1.id },
+      where: { trainingReportId: erp1.id },
     });
     erp2Users = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erp2.id },
+      where: { trainingReportId: erp2.id },
     }); erp3Users = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erp3.id },
+      where: { trainingReportId: erp3.id },
     });
 
     expect(erp1Users).toHaveLength(3);
@@ -134,10 +134,10 @@ describe('updateCompletedEventReportPilots', () => {
       data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
     }, { individualHooks: false });
 
-    await updateCompletedEventReportPilots();
+    await updateCompletedTrainingReports();
 
     const erpNationalCenterUsers = await EventReportPilotNationalCenterUser.findAll({
-      where: { eventReportPilotId: erpWithoutNationalCenter.id },
+      where: { trainingReportId: erpWithoutNationalCenter.id },
     });
 
     expect(erpNationalCenterUsers).toHaveLength(0);

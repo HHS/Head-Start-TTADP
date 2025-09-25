@@ -10,7 +10,7 @@ import {
   Grant,
   GrantReplacements,
   Recipient,
-  SessionReportPilot,
+  SessionReport,
   Topic,
   sequelize,
 } from '../models';
@@ -52,7 +52,7 @@ export function baseTRScopes(scopes) {
       ],
     },
     include: {
-      model: SessionReportPilot,
+      model: SessionReport,
       as: 'sessionReports',
       attributes: ['data', 'eventId'],
       where: {

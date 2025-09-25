@@ -103,7 +103,7 @@ describe('deleteHandler', () => {
   // });
 
   it('returns 403 if user is not authorized for event session', async () => {
-    getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
+    getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
@@ -127,7 +127,7 @@ describe('deleteHandler', () => {
   });
 
   it('deletes session file if authorized', async () => {
-    getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
+    getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
@@ -199,7 +199,7 @@ describe('deleteHandler', () => {
   });
 
   it('returns 403 if user is not authorized for session attachment', async () => {
-    getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
+    getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
@@ -223,7 +223,7 @@ describe('deleteHandler', () => {
   });
 
   it('deletes session attachment file if authorized', async () => {
-    getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
+    getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
     jest.spyOn(require('../../services/event'), 'findEventBySmartsheetIdSuffix').mockResolvedValueOnce({ id: 1 });
