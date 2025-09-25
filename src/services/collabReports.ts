@@ -230,7 +230,6 @@ async function saveReportSpecialists(collabReportId: number, specialists: number
 // Helper function to update a report using the model's built-in update
 async function update(newReport, oldReport) {
   const fields = newReport;
-  delete fields.reportReasons;
 
   const updatedReport = await oldReport.update(fields, {
     fields: _.keys(fields),
