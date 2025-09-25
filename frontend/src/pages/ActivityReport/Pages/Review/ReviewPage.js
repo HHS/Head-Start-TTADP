@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { some } from 'lodash';
+import { some, uniqueId } from 'lodash';
 import { useFormContext } from 'react-hook-form';
-
 import Section from './ReviewSection';
 import ReviewItem from './ReviewItem';
 import { reportIsEditable } from '../../../../utils';
@@ -12,6 +11,7 @@ const ReviewPage = ({
 }) => {
   const { getValues } = useFormContext();
   const canEdit = reportIsEditable(getValues('calculatedStatus'));
+
   return (
     <div className={className}>
       {sections.map((section) => {
@@ -25,7 +25,7 @@ const ReviewPage = ({
         return (
           <Section
             hidePrint={isEmpty}
-            key={section.title}
+            key={section.title || uniqueId('review-section-')}
             basePath={path}
             anchor={section.anchor}
             title={section.title}
@@ -33,7 +33,7 @@ const ReviewPage = ({
           >
             {section.items.map((item) => (
               <ReviewItem
-                key={item.label}
+                key={item.label || uniqueId('review-item-')}
                 label={item.label}
                 path={item.path}
                 name={item.name}
