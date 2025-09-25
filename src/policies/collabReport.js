@@ -154,13 +154,14 @@ export default class CollabReport {
     }
 
     return this.collabReport
-      .collabReportSpecialists.some((collab) => collab.user.id === this.user.id);
+      .collabReportSpecialists.some((collab) => collab.specialist.id === this.user.id);
   }
 
   isApprovingManager() {
     if (!this.collabReport.approvers) {
       return false;
     }
+
     const approverUserIds = this.collabReport.approvers.map((approval) => approval.user.id);
     return approverUserIds.includes(this.user.id);
   }

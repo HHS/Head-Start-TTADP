@@ -146,7 +146,10 @@ ReviewItem.propTypes = {
   name: PropTypes.string.isRequired,
   path: PropTypes.string,
   sortValues: PropTypes.bool,
-  customValue: PropTypes.arrayOf(PropTypes.string),
+  // This will be object like { [fieldName]: value }, so
+  // we don't know the keys and types in advance
+  // eslint-disable-next-line react/forbid-prop-types
+  customValue: PropTypes.object,
   linkNamePath: PropTypes.string,
   isFile: PropTypes.bool,
   isRichText: PropTypes.bool,

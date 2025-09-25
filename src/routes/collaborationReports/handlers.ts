@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import stringify from 'csv-stringify/lib/sync';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
 import {
   NOT_FOUND,
   FORBIDDEN,
@@ -26,6 +26,9 @@ import {
 import { setReadRegions } from '../../services/accessValidation';
 import { upsertApprover } from '../../services/collabReportApprovers';
 import { collabReportToCsvRecord } from '../../lib/transform';
+import db from '../../models';
+
+const { CollabReportApprover } = db;
 
 const namespace = 'SERVICE:COLLAB_REPORTS';
 
@@ -304,6 +307,7 @@ export async function submitReport(req: Request, res: Response) {
       submittedAt: new Date(),
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      approvers: req.body.approvers,
     };
 
     // Merge the updated report with the old
@@ -314,6 +318,12 @@ export async function submitReport(req: Request, res: Response) {
       },
       existingReport,
     );
+
+    // Resubmitting resets any needs_action status to null ("pending" status)
+    await CollabReportApprover.update({ status: null }, {
+      where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
+      individualHooks: true,
+    });
 
     res.json(savedReport);
   } catch (error) {
