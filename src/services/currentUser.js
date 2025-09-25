@@ -115,13 +115,24 @@ export async function currentUserId(req, res) {
 export async function retrieveUserDetails(data) {
   logger.debug(`User details response data: ${JSON.stringify(data, null, 2)}`);
 
-  const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || '';
+  const name = [data?.given_name, data?.family_name].filter(Boolean).join(' ') || null;
+
+  const email = data?.email ? data.email.toString() : null;
+  const hsesUsername = data?.sub ? data.sub.toString() : null;
+  const hsesUserId = data?.userId ? data.userId.toString() : null;
+  const hsesAuthorities = data?.roles || [];
+  if (!hsesUsername) {
+    auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created');
+    throw new Error(`Missing required user info from HSES: ${JSON.stringify({
+      hsesUsername,
+    })}`);
+  }
 
   return findOrCreateUser({
     name,
-    email: data?.email?.toString() || '',
-    hsesUsername: data?.sub?.toString() || '',
-    hsesAuthorities: data?.roles || [],
-    hsesUserId: data?.userId?.toString() || '',
+    email,
+    hsesUsername,
+    hsesAuthorities,
+    hsesUserId,
   });
 }
