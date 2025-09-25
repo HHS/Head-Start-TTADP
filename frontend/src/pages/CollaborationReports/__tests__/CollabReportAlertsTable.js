@@ -54,7 +54,7 @@ describe('CollabReportAlertsTable', () => {
           collaboratingSpecialists: [{ fullName: 'Jane Smith' }],
           updatedAt: '2024-01-02T10:00:00Z',
           link: '/collaboration-reports/1',
-          approvers: [{ userId: 1, user: { fullName: 'Approver user' } }],
+          approvers: [{ id: 1, user: { fullName: 'Approver user', id: 1 } }],
           submissionStatus: REPORT_STATUSES.SUBMITTED,
         },
         {
@@ -88,7 +88,7 @@ describe('CollabReportAlertsTable', () => {
     };
     renderTest({ data });
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(document.querySelector('a[href="/collaboration-reports/1"]')).toBeTruthy();
+    expect(document.querySelector('a[href="/collaboration-reports/1/review"]')).toBeTruthy();
     expect(document.querySelector('a[href="/collaboration-reports/3"]')).toBeNull();
     expect(document.querySelector('a[href="/collaboration-reports/view/3"]')).toBeTruthy();
   });

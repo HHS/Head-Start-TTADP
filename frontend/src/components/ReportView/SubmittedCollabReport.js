@@ -40,7 +40,7 @@ export default function SubmittedCollabReport({ report }) {
     submissionStatus,
     calculatedStatus,
 
-    activityStates,
+    statesInvolved,
     reportReasons,
     reportGoals,
     dataUsed,
@@ -67,8 +67,8 @@ export default function SubmittedCollabReport({ report }) {
 
   const creator = author?.fullName || 'Unknown';
 
-  const formattedStates = activityStates.map(({ activityStateCode }) => STATES[activityStateCode] || '').join(', ');
-  const formattedReasons = reportReasons.map(({ reasonId }) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
+  const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || '';
+  const formattedReasons = reportReasons.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
   const formattedGoals = reportGoals.map((goal) => goal?.goalTemplate?.standard || '').join(', ');
   const formattedDataUsed = dataUsed.map(({ collabReportDatum, collabReportDataOther }) => {
     if (collabReportDatum === 'other') {
@@ -152,7 +152,8 @@ export default function SubmittedCollabReport({ report }) {
               data: {
                 'Activity purpose': formattedReasons,
                 'Activity type': activityType,
-                'States involved': formattedStates,
+                ...(isStateActivity ? { 'States involved': formattedStates } : {}
+                ),
                 'Activity description': description,
               },
               striped: false,
@@ -253,24 +254,10 @@ SubmittedCollabReport.propTypes = {
       }),
     ),
     reportReasons: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        collabReportId: PropTypes.number,
-        reasonId: PropTypes.string,
-        createdAt: PropTypes.string,
-        updatedAt: PropTypes.string,
-        deletedAt: PropTypes.string,
-      }),
+      PropTypes.string,
     ),
-    activityStates: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        collabReportId: PropTypes.number,
-        activityStateCode: PropTypes.string,
-        createdAt: PropTypes.string,
-        updatedAt: PropTypes.string,
-        deletedAt: PropTypes.string,
-      }),
+    statesInvolved: PropTypes.arrayOf(
+      PropTypes.string,
     ),
     collabReportSpecialists: PropTypes.arrayOf(
       PropTypes.shape({
