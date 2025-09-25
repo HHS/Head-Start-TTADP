@@ -19,7 +19,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 import { NOT_STARTED } from './constants';
-import { convertReportToFormData, findWhatsChanged } from './formDataHelpers';
+import { convertReportToFormData, isDateValid, findWhatsChanged } from './formDataHelpers';
 import {
   LOCAL_STORAGE_CR_DATA_KEY,
   LOCAL_STORAGE_CR_ADDITIONAL_DATA_KEY,
@@ -402,8 +402,18 @@ function CollaborationReport({ match, location }) {
   const onSave = async (data, forceUpdate = false) => {
     try {
       if (reportId.current === 'new') {
+        const fields = data;
+
+        if (!isDateValid(fields.startDate)) {
+          delete fields.startDate;
+        }
+
+        if (!isDateValid(fields.endDate)) {
+          delete fields.endDate;
+        }
+
         const savedReport = await createReport({
-          ...data,
+          ...fields,
           regionId: formData.regionId,
           version: 2,
         });
