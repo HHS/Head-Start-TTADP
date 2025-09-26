@@ -88,7 +88,7 @@ describe('CollabReportAlertsTable', () => {
     };
     renderTest({ data });
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(document.querySelector('a[href="/collaboration-reports/1"]')).toBeTruthy();
+    expect(document.querySelector('a[href="/collaboration-reports/1/review"]')).toBeTruthy();
     expect(document.querySelector('a[href="/collaboration-reports/3"]')).toBeNull();
     expect(document.querySelector('a[href="/collaboration-reports/view/3"]')).toBeTruthy();
   });

@@ -12,7 +12,18 @@ function ApproverSelect({
   labelProperty,
   valueProperty,
   filterInitialValue = false,
+  required = true,
 }) {
+  let rules = {};
+
+  if (required) {
+    rules = {
+      validate: {
+        notEmpty: (value) => (value && value.length) || 'Select at least one manager',
+      },
+    };
+  }
+
   const {
     field: {
       onChange: onSelect,
@@ -21,11 +32,7 @@ function ApproverSelect({
     },
   } = useController({
     name,
-    rules: {
-      validate: {
-        notEmpty: (value) => (value && value.length) || 'Select at least one manager',
-      },
-    },
+    rules,
     defaultValue: null,
   });
 
@@ -98,7 +105,7 @@ function ApproverSelect({
       closeMenuOnSelect={false}
       hideSelectedOptions
       placeholder=""
-      required
+      required={required}
       isMulti
     />
   );
@@ -126,18 +133,14 @@ ApproverSelect.propTypes = {
       label: PropTypes.string.isRequired,
     }),
   ).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  //   control: PropTypes.object.isRequired,
-  components: PropTypes.shape({}),
-  rules: PropTypes.shape({}),
+  required: PropTypes.bool,
 };
 
 ApproverSelect.defaultProps = {
   labelProperty: 'label',
   valueProperty: 'value',
   filterInitialValue: false,
-  components: {},
-  rules: {},
+  required: true,
 };
 
 export default ApproverSelect;

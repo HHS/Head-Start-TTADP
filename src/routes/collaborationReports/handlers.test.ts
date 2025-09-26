@@ -22,6 +22,7 @@ import { upsertApprover } from '../../services/collabReportApprovers';
 import ActivityReport from '../../policies/activityReport';
 import { collabReportToCsvRecord } from '../../lib/transform';
 import SCOPES from '../../middleware/scopeConstants';
+import db from '../../models';
 
 jest.mock('../../services/collabReports');
 jest.mock('../../lib/mailer');
@@ -34,6 +35,11 @@ jest.mock('../../services/collabReportApprovers');
 jest.mock('../../services/userSettings');
 jest.mock('../../policies/activityReport');
 jest.mock('../../lib/transform');
+jest.mock('../../models', () => ({
+  CollabReportApprover: {
+    update: jest.fn(),
+  },
+}));
 
 describe('Collaboration Reports Handlers', () => {
   let mockRequest: Partial<Request>;
@@ -55,6 +61,7 @@ describe('Collaboration Reports Handlers', () => {
     };
 
     jest.clearAllMocks();
+    (db.CollabReportApprover.update as jest.Mock).mockResolvedValue(undefined);
   });
 
   describe('getReport', () => {
@@ -300,6 +307,7 @@ describe('Collaboration Reports Handlers', () => {
   describe('submitReport', () => {
     beforeEach(() => {
       mockRequest.params = { collabReportId: '1' };
+      mockRequest.body = { approvers: [] };
       (currentUserId as jest.Mock).mockResolvedValue(123);
       (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
       (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
@@ -334,7 +342,15 @@ describe('Collaboration Reports Handlers', () => {
         calculatedStatus: 'submitted',
         submissionStatus: 'submitted',
         submittedAt: expect.any(Date),
+        approvers: [],
       }, mockReport);
+      expect(db.CollabReportApprover.update).toHaveBeenCalledWith(
+        { status: null },
+        {
+          where: { status: 'needs_action', collabReportId: '1' },
+          individualHooks: true,
+        },
+      );
       expect(mockJson).toHaveBeenCalledWith(submittedReport);
       expect(mockSendStatus).not.toHaveBeenCalled();
     });
