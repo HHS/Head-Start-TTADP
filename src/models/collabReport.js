@@ -91,6 +91,24 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         type: DataTypes.ARRAY(DataTypes.ENUM(COLLAB_REPORT_PARTICIPANTS)),
       },
+      otherParticipants: {
+        allowNull: true,
+        type: DataTypes.TEXT,
+      },
+      hasDataUsed: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      otherDataUsed: {
+        allowNull: true,
+        type: DataTypes.TEXT,
+      },
+      hasGoals: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
       calculatedStatus: {
         allowNull: true,
         type: DataTypes.ENUM([
