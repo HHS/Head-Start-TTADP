@@ -223,6 +223,11 @@ function CollaborationReport({ match, location }) {
               history.push(`/collaboration-reports/view/${fetchedReport.id}`);
               return;
             }
+
+            if (isNeedsAction) {
+              history.push(`/collaboration-reports/${fetchedReport.id}/review`);
+              return;
+            }
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
             history.replace('/something-went-wrong/500');
@@ -478,7 +483,7 @@ function CollaborationReport({ match, location }) {
       // Get the current form data
       const { status, ...formValues } = hookForm.getValues();
       // TODO: Add 'pageState' and newNavigatorState to the saved data
-      const data = { ...formData, ...formValues };
+      const data = { ...formData, ...formValues, pageState: {} };
 
       // Clear the previous error message if there is one
       updateErrorMessage();
