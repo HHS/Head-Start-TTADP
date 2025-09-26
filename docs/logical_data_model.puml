@@ -275,8 +275,6 @@ class CollabReportSteps{
  * collabReportId : integer : REFERENCES "CollabReports".id
  * collabStepCompleteDate : date
  * collabStepDetail : text
- * collabStepId : integer
- * collabStepPriority : smallint
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
@@ -289,7 +287,6 @@ class CollabReports{
  * userId : integer : REFERENCES "Users".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
- * isStateActivity : boolean : false
  * submissionStatus : enum
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
@@ -298,6 +295,7 @@ class CollabReports{
  description : text
  duration : double precision
  endDate : date
+ isStateActivity : boolean
  name : varchar(255)
  participants : enum[]
  startDate : date

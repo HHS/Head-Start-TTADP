@@ -21,7 +21,7 @@ describe('StandardGoalsListTable', () => {
 
     // Check column headers
     expect(screen.getByText('Goal category')).toBeInTheDocument();
-    expect(screen.getByText('# of goals')).toBeInTheDocument();
+    expect(screen.getByText('# of reports')).toBeInTheDocument();
 
     // Check data rows
     expect(screen.getByText('School Readiness')).toBeInTheDocument();

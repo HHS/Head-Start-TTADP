@@ -23,10 +23,6 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
-    collabStepId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
     collabStepDetail: {
       allowNull: false,
       type: DataTypes.TEXT,
@@ -36,27 +32,12 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       get: formatDate,
     },
-    collabStepPriority: {
-      allowNull: false,
-      type: DataTypes.SMALLINT,
-      comment: 'Used for ordering steps without affecting auto-generated IDs',
-    },
   }, {
     sequelize,
     modelName: 'CollabReportStep',
     tableName: 'CollabReportSteps',
     timestamps: true,
     paranoid: true,
-    indexes: [
-      {
-        name: 'collab_report_steps_collab_step_id_collab_report_id',
-        unique: true,
-        fields: ['collabReportId', 'collabStepId'],
-      },
-      {
-        fields: ['collabReportId', 'collabStepPriority'],
-      },
-    ],
   });
 
   return CollabReportStep;
