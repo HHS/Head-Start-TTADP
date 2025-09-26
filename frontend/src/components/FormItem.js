@@ -102,7 +102,7 @@ function FormItem({
           <Req announce />
         </>
       )}
-      {toolTipText && (
+      {toolTipText && !htmlFor && (
       <Tooltip asCustom={CustomTooltip} label={toolTipText}>
         <FontAwesomeIcon className="margin-right-1 no-print" data-testid="info-tooltip-icon" color={colors.ttahubMediumBlue} icon={faQuestionCircle} />
       </Tooltip>

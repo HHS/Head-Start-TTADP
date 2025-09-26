@@ -334,7 +334,7 @@
     "@faker-js/faker": "^6.0.0",
     "@mesh-kit/core": "^1.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "2.2.13",
+    "@ttahub/common": "2.2.14",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",
