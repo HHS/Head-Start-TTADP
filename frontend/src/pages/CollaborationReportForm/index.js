@@ -13,7 +13,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { FormProvider, useForm } from 'react-hook-form';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { REPORT_STATUSES, DECIMAL_BASE, APPROVER_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import pages from './Pages';
@@ -524,7 +524,19 @@ function CollaborationReport({ match, location }) {
 
   const onReview = async (data) => {
     await reviewReport(reportId.current, { note: data.note, status: data.status });
-    history.push('/collaboration-reports', { message: '' });
+    const timezone = moment.tz.guess();
+    const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+    const message = {
+      time,
+      reportId: formData.id,
+      displayId: formData.displayId,
+    };
+    history.push('/collaboration-reports', {
+      message: {
+        ...message,
+        status: data.status === APPROVER_STATUSES.APPROVED ? 'approved' : 'reviewed',
+      },
+    });
   };
 
   const reportCreator = { name: user.name, roles: user.roles };

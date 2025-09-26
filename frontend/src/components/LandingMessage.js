@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Alert, Button } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router';
 import { Link } from 'react-router-dom';
@@ -6,7 +7,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
-export default function LandingMessage() {
+export default function LandingMessage({
+  linkBase = '/activity-reports/',
+}) {
   const [showAlert, updateShowAlert] = useState(true);
   const history = useHistory();
 
@@ -21,7 +24,7 @@ export default function LandingMessage() {
         {' '}
         report
         {' '}
-        <Link to={`/activity-reports/${message.reportId}`}>
+        <Link to={`${linkBase}${message.reportId}`}>
           {message.displayId}
         </Link>
         {' '}
@@ -59,3 +62,11 @@ export default function LandingMessage() {
 
   return null;
 }
+
+LandingMessage.propTypes = {
+  linkBase: PropTypes.string,
+};
+
+LandingMessage.defaultProps = {
+  linkBase: '/activity-reports/',
+};
