@@ -123,12 +123,7 @@ describe('Review Component', () => {
   describe('Basic Rendering', () => {
     it('renders the component with default heading', () => {
       renderTest();
-      expect(screen.getByText('Review and approve')).toBeInTheDocument();
-    });
-
-    it('renders "Pending other approvals" heading when pendingOtherApprovals is true', () => {
-      renderTest({ pendingOtherApprovals: true });
-      expect(screen.getByText('Pending other approvals')).toBeInTheDocument();
+      expect(screen.getByText('Review and submit')).toBeInTheDocument();
     });
 
     it('renders IndicatesRequiredField component', () => {
@@ -253,7 +248,7 @@ describe('Review Component', () => {
 
     it('handles empty pages array', () => {
       renderTest({ pages: [] });
-      expect(screen.getByText('Review and approve')).toBeInTheDocument();
+      expect(screen.getByText('Review and submit')).toBeInTheDocument();
     });
   });
 
@@ -272,7 +267,7 @@ describe('Review Component', () => {
   describe('Edge Cases', () => {
     it('handles null approverStatusList', () => {
       renderTest({ approverStatusList: null });
-      expect(screen.getByText('Review and approve')).toBeInTheDocument();
+      expect(screen.getByText('Review and submit')).toBeInTheDocument();
     });
 
     it('handles empty approvers array in TopAlert', () => {
