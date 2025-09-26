@@ -14,7 +14,7 @@ export default function useGoalTemplates(
     async function fetchGoalTemplates() {
       try {
         const templates = await getGoalTemplates(
-          selectedGrants.map((grant) => grant.id),
+          selectedGrants.map((grant) => grant.id || ''),
           includeClosedSuspended,
         );
 
@@ -28,9 +28,7 @@ export default function useGoalTemplates(
       }
     }
 
-    if (selectedGrants[0] && selectedGrants[0].id) {
-      fetchGoalTemplates();
-    }
+    fetchGoalTemplates();
   }, [selectedGrants]);
 
   return goalTemplates;

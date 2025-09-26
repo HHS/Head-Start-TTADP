@@ -40,7 +40,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
-    // clearErrors,
   } = useFormContext();
 
   const isStateActivity = watch('isStateActivity');
