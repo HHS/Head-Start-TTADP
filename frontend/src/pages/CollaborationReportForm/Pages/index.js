@@ -1,10 +1,7 @@
 /*
   Collaboration Report Pages index
 */
-import activitySummary from './activitySummary';
+import formPages from './pages';
+import reviewPage from './reviewSubmit';
 
-const pages = [
-  activitySummary,
-];
-
-export default [...pages];
+export default [...formPages, reviewPage];
