@@ -134,7 +134,7 @@ const Review = ({
       />
       )}
       {reviewItems && reviewItems.length > 0 && (
-        <div className="margin-bottom-3">
+        <div className="margin-bottom-4">
           <Accordion bordered items={reviewItems} multiselectable />
         </div>
       )}

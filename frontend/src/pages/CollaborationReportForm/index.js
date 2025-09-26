@@ -524,6 +524,7 @@ function CollaborationReport({ match, location }) {
 
   const onReview = async (data) => {
     await reviewReport(reportId.current, { note: data.note, status: data.status });
+    history.push('/collaboration-reports', { message: '' });
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
