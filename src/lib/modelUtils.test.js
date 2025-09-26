@@ -53,6 +53,7 @@ describe('modelUtils', () => {
         { columnName: 'updatedAt', dataType: 'TIMESTAMP WITH TIME ZONE', allowNull: false },
         { columnName: 'deletedAt', dataType: 'TIMESTAMP WITH TIME ZONE', allowNull: true },
         { columnName: 'mapsTo', dataType: 'INTEGER', allowNull: true },
+        { columnName: 'deprecated', dataType: 'BOOLEAN', allowNull: false },
       ]);
     });
   });

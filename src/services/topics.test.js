@@ -31,6 +31,7 @@ describe('getAllTopics', () => {
     const topicsRaw = await Topic.findAll(
       {
         attributes: ['id'],
+        where: { deprecated: false },
       },
     );
 
