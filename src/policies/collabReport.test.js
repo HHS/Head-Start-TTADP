@@ -51,7 +51,7 @@ describe('CollabReport Policy', () => {
   describe('isCollaborator', () => {
     it('should return true when user is a collaborator', () => {
       collabReport.collabReportSpecialists = [
-        { user: { id: 1 } },
+        { specialist: { id: 1 } },
       ];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isCollaborator()).toBe(true);
@@ -59,7 +59,7 @@ describe('CollabReport Policy', () => {
 
     it('should return false when user is not a collaborator', () => {
       collabReport.collabReportSpecialists = [
-        { user: { id: 2 } },
+        { specialist: { id: 2 } },
       ];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isCollaborator()).toBe(false);
@@ -311,7 +311,7 @@ describe('CollabReport Policy', () => {
     it('should return true when user is collaborator and report is editable', () => {
       collabReport.userId = 2;
       collabReport.collabReportSpecialists = [
-        { user: { id: 1 } },
+        { specialist: { id: 1 } },
       ];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canUpdate()).toBe(true);
@@ -363,7 +363,7 @@ describe('CollabReport Policy', () => {
       collabReport.userId = 2;
       collabReport.calculatedStatus = REPORT_STATUSES.SUBMITTED;
       collabReport.collabReportSpecialists = [
-        { user: { id: 1 } },
+        { specialist: { id: 1 } },
       ];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canReset()).toBe(true);
@@ -455,7 +455,7 @@ describe('CollabReport Policy', () => {
     it('should return true when user is collaborator', () => {
       collabReport.userId = 2;
       collabReport.collabReportSpecialists = [
-        { user: { id: 1 } },
+        { specialist: { id: 1 } },
       ];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canGet()).toBe(true);
