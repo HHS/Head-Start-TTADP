@@ -82,7 +82,6 @@ TopAlert.propTypes = {
 const Review = ({
   onFormReview,
   approverStatusList,
-  pendingOtherApprovals,
   dateSubmitted,
   pages,
   availableApprovers,
@@ -123,7 +122,7 @@ const Review = ({
 
   return (
     <>
-      <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
+      <h2 className="font-family-serif">Review and submit</h2>
 
       <IndicatesRequiredField />
       {isSubmitted && (
@@ -135,7 +134,7 @@ const Review = ({
       />
       )}
       {reviewItems && reviewItems.length > 0 && (
-        <div className="margin-bottom-3">
+        <div className="margin-bottom-4">
           <Accordion bordered items={reviewItems} multiselectable />
         </div>
       )}
@@ -168,7 +167,6 @@ Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   dateSubmitted: PropTypes.string,
-  pendingOtherApprovals: PropTypes.bool,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
@@ -207,7 +205,6 @@ Review.propTypes = {
 };
 
 Review.defaultProps = {
-  pendingOtherApprovals: false,
   approverStatusList: [],
   dateSubmitted: null,
 };
