@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import {
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
@@ -13,25 +13,34 @@ export function cleanupLocalStorage(
   editableKey = LOCAL_STORAGE_AR_EDITABLE_KEY,
   additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
 ) {
+  const newDataKey = dataKey(replacementKey);
+  const oldDataKey = dataKey(id);
+
+  const newEditableKey = editableKey(replacementKey);
+  const oldEditableKey = editableKey(id);
+
+  const newAdditionalDataKey = additionalDataKey(replacementKey);
+  const oldAdditionalDataKey = additionalDataKey(id);
+
   try {
     if (replacementKey) {
       window.localStorage.setItem(
-        dataKey(replacementKey),
-        window.localStorage.getItem(dataKey(id)),
+        newDataKey,
+        window.localStorage.getItem(oldDataKey),
       );
       window.localStorage.setItem(
-        editableKey(replacementKey),
-        window.localStorage.getItem(LOCAL_STORAGE_AR_EDITABLE_KEY(id)),
+        newEditableKey,
+        window.localStorage.getItem(oldEditableKey),
       );
       window.localStorage.setItem(
-        additionalDataKey(replacementKey),
-        window.localStorage.getItem(additionalDataKey(id)),
+        newAdditionalDataKey,
+        window.localStorage.getItem(oldAdditionalDataKey),
       );
     }
 
-    window.localStorage.removeItem(dataKey(id));
-    window.localStorage.removeItem(additionalDataKey(id));
-    window.localStorage.removeItem(editableKey(id));
+    window.localStorage.removeItem(oldDataKey);
+    window.localStorage.removeItem(oldAdditionalDataKey);
+    window.localStorage.removeItem(oldEditableKey);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('Local storage may not be available: ', e);
@@ -45,19 +54,28 @@ export default function useLocalStorageCleanup(
   editableKey = LOCAL_STORAGE_AR_EDITABLE_KEY,
   additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
 ) {
+  const keys = useMemo(() => ({
+    data: dataKey,
+    editable: editableKey,
+    additional: additionalDataKey,
+  }), [additionalDataKey, dataKey, editableKey]);
+
+  const {
+    editable, additional, data,
+  } = keys;
+
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
-    if (formData
-          && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
-          || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+    if (formData && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
+      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
     ) {
-      cleanupLocalStorage(reportId, dataKey, editableKey, additionalDataKey);
+      cleanupLocalStorage(reportId, null, data, editable, additional);
     }
-  }, [reportId, formData, dataKey, editableKey, additionalDataKey]);
+  }, [reportId, formData, editable, data, additional]);
 
   // return a function to cleanup local storage for a given report ID and replacement key
-  const cleanup = (reportIdToClean, dataKeyToClean) => (
-    cleanupLocalStorage(reportIdToClean, dataKeyToClean, editableKey, additionalDataKey)
-  );
+  const cleanup = useCallback((reportIdToClean, dataKeyToClean) => (
+    cleanupLocalStorage(reportIdToClean, dataKeyToClean, data, editable, additional)
+  ), [additional, data, editable]);
   return cleanup;
 }

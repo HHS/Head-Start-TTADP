@@ -35,6 +35,7 @@ describe('CreatorNeedsAction Component', () => {
     isSubmitted: false,
     onUpdatePage: jest.fn(),
     onSaveDraft: jest.fn(),
+    onSubmit: jest.fn(),
     isNeedsAction: true,
     dateSubmitted: null,
     otherManagerNotes: [],

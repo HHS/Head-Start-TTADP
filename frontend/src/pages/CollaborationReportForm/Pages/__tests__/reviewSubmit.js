@@ -112,6 +112,7 @@ describe('reviewSubmit Page', () => {
       submittedAt: null,
       author: { id: 1, name: 'Test Author' },
       userId: 1,
+      collabReportSpecialists: [],
     },
     error: '',
     isPendingApprover: false,
@@ -380,6 +381,7 @@ describe('reviewSubmit Page', () => {
     it('passes all required props to Review component', () => {
       const formDataComplete = {
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        collabReportSpecialists: [],
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [{ user: { id: 1 }, status: 'needs_action' }],
         submittedAt: '2024-01-15T10:30:00Z',
@@ -507,6 +509,7 @@ describe('reviewSubmit Page', () => {
       const formDataComplex = {
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
+        collabReportSpecialists: [],
         approvers: [
           { user: { id: 1 }, status: 'approved' },
           { user: { id: 2 }, status: 'needs_action' },

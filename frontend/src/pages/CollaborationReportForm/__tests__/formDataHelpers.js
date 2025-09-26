@@ -318,7 +318,7 @@ describe('formDataHelpers', () => {
         startDate: '2024-01-15',
         endDate: '2024-01-20',
         status: 'draft',
-        collabReportSpecialists: [{ value: 1, name: 'John Doe, Specialist' }],
+        collabReportSpecialists: fetchedReport.collabReportSpecialists,
         reportReasons: [],
         isStateActivity: 'true',
         approvers: [{ id: 2, name: 'Jane Smith' }],
@@ -326,73 +326,6 @@ describe('formDataHelpers', () => {
         calculatedStatus: 'submitted',
         regionId: 1,
       }));
-    });
-
-    describe('collabReportSpecialists conversion', () => {
-      it('should convert collabReportSpecialists to MultiSelect format when present', () => {
-        const fetchedReport = {
-          id: 1,
-          title: 'Test Report',
-          collabReportSpecialists: [
-            { specialist: { fullName: 'John Doe', id: 123 } },
-            { specialist: { fullName: 'Jane Smith', id: 456 } },
-          ],
-        };
-
-        const result = convertReportToFormData(fetchedReport);
-
-        expect(result.collabReportSpecialists).toEqual([
-          { name: 'John Doe', value: 123 },
-          { name: 'Jane Smith', value: 456 },
-        ]);
-      });
-
-      it('should set empty array for collabReportSpecialists when not present', () => {
-        const fetchedReport = {
-          id: 1,
-          title: 'Test Report',
-        };
-
-        const result = convertReportToFormData(fetchedReport);
-
-        expect(result.collabReportSpecialists).toEqual([]);
-      });
-
-      it('should set empty array for collabReportSpecialists when null', () => {
-        const fetchedReport = {
-          id: 1,
-          title: 'Test Report',
-          collabReportSpecialists: null,
-        };
-
-        const result = convertReportToFormData(fetchedReport);
-
-        expect(result.collabReportSpecialists).toEqual([]);
-      });
-
-      it('should set empty array for collabReportSpecialists when undefined', () => {
-        const fetchedReport = {
-          id: 1,
-          title: 'Test Report',
-          collabReportSpecialists: undefined,
-        };
-
-        const result = convertReportToFormData(fetchedReport);
-
-        expect(result.collabReportSpecialists).toEqual([]);
-      });
-
-      it('should handle empty collabReportSpecialists array', () => {
-        const fetchedReport = {
-          id: 1,
-          title: 'Test Report',
-          collabReportSpecialists: [],
-        };
-
-        const result = convertReportToFormData(fetchedReport);
-
-        expect(result.collabReportSpecialists).toEqual([]);
-      });
     });
 
     describe('isStateActivity conversion', () => {

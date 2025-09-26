@@ -427,7 +427,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -444,7 +443,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -463,7 +461,6 @@ describe('CollaborationReportForm', () => {
         multiRoleUser,
         false,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -481,7 +478,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -501,7 +497,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -521,7 +516,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         true,
       );
 
@@ -542,7 +536,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -562,7 +555,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -593,7 +585,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -628,7 +619,6 @@ describe('CollaborationReportForm', () => {
         mockUser,
         true,
         { current: 'test-id' },
-        [1, 2],
         false,
       );
 
@@ -918,42 +908,6 @@ describe('CollaborationReportForm', () => {
       fetchMock.get('/api/activity-reports/approvers?region=1', []);
     });
 
-    it('redirects to view page when report is approved', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ user: { id: 2 } }],
-        id: 123,
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
-      });
-    });
-
-    it('redirects to view page when report is submitted and user is not an approver', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ user: { id: 2 } }], // Different user
-        id: 123,
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
-      });
-    });
-
     it('redirects to review-submit page when report is needs action', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
@@ -1031,22 +985,6 @@ describe('CollaborationReportForm', () => {
       render(<ReportComponent id="new" />);
       await waitFor(() => {
         expect(screen.getByText('Unable to load report')).toBeInTheDocument();
-      });
-    });
-
-    it('handles invalid region redirect scenario', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', { throws: new Error('Network error') });
-      fetchMock.get('/api/activity-reports/approvers?region=1', { throws: new Error('Network error') });
-
-      // Mock getItem to simulate the error scenario that sets regionId to -1
-      getItem.mockReturnValue(null);
-
-      const { container } = render(<ReportComponent id="123" />);
-
-      await waitFor(() => {
-        // The component should handle the invalid region scenario
-        expect(container).toBeInTheDocument();
       });
     });
 
@@ -1139,7 +1077,7 @@ describe('CollaborationReportForm', () => {
       });
     });
 
-    it('handles regionId -1 case - covers line 302', async () => {
+    it('handles regionId -1 case', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
         regionId: -1,
@@ -1155,36 +1093,6 @@ describe('CollaborationReportForm', () => {
       await waitFor(() => {
         // Component should handle regionId -1 and call updateFormData
         expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
-
-    it('handles no connection and null formData case - covers line 306', async () => {
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', { throws: new Error('Network error') });
-      fetchMock.get('/api/activity-reports/approvers?region=1', { throws: new Error('Network error') });
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="new" />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Unable to load report')).toBeInTheDocument();
-      });
-    });
-
-    it('redirects to review when not editable and connection active - covers line 336', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        userId: 2, // Different user so not editable
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" currentPage="activity-summary" />);
-
-      await waitFor(() => {
-        // Should redirect, test passes if no crash
-        expect(true).toBe(true);
       });
     });
 

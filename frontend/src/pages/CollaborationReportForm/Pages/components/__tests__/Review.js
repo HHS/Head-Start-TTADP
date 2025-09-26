@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
 import React from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { REPORT_STATUSES } from '@ttahub/common';
@@ -38,12 +39,17 @@ describe('Review Component', () => {
 
   const defaultProps = {
     onFormReview: jest.fn(),
+    onSubmit: jest.fn(),
     approverStatusList: [],
     pendingOtherApprovals: false,
     dateSubmitted: '2024-01-15',
     pages: [
-      { state: 'Complete', review: false, label: 'Page 1' },
-      { state: 'In Progress', review: false, label: 'Page 2' },
+      {
+        state: 'Complete', review: false, label: 'Page 1', position: '1',
+      },
+      {
+        state: 'In Progress', review: false, label: 'Page 2', position: '2',
+      },
     ],
     availableApprovers: [
       { id: 1, name: 'Manager One' },
@@ -62,6 +68,7 @@ describe('Review Component', () => {
       },
     ],
     isCreator: false,
+    isCollaborator: false,
     isSubmitted: false,
     onSaveForm: jest.fn(),
     onUpdatePage: jest.fn(),
@@ -71,24 +78,42 @@ describe('Review Component', () => {
     author: {
       fullName: 'Report Author',
     },
-    approvers: {
-      count: 1,
-      rows: [
-        {
-          status: REPORT_STATUSES.SUBMITTED,
-          user: { fullName: 'Approver One' },
-        },
-      ],
-    },
+    approvers: [
+      {
+        status: REPORT_STATUSES.SUBMITTED,
+        user: { fullName: 'Approver One' },
+      },
+    ],
   };
 
-  const renderTest = (props = {}, userOverrides = {}) => {
+  const renderTest = (props = {}, userOverrides = {}, formValues = {}) => {
     const user = { ...mockUser, ...userOverrides };
-    return render(
-      <UserContext.Provider value={{ user }}>
-        <Review {...defaultProps} {...props} />
-      </UserContext.Provider>,
-    );
+
+    const TestWrapper = () => {
+      const defaultFormValues = {
+        pageState: {
+          1: 'Complete',
+          2: 'In Progress',
+          3: 'Complete',
+        },
+        ...formValues,
+      };
+
+      const hookForm = useForm({
+        mode: 'onChange',
+        defaultValues: defaultFormValues,
+      });
+
+      return (
+        <UserContext.Provider value={{ user }}>
+          <FormProvider {...hookForm}>
+            <Review {...defaultProps} {...props} />
+          </FormProvider>
+        </UserContext.Provider>
+      );
+    };
+
+    return render(<TestWrapper />);
   };
 
   beforeEach(() => {
@@ -130,21 +155,19 @@ describe('Review Component', () => {
     it('displays TopAlert when isSubmitted is true', () => {
       renderTest({
         isSubmitted: true,
-        pendingApprovalCount: 2,
+        pendingApprovalCount: 1,
         isNeedsAction: false,
-        approvers: {
-          count: 3,
-          rows: [
-            {
-              status: REPORT_STATUSES.SUBMITTED,
-              user: { fullName: 'Approver One' },
-            },
-          ],
-        },
+        approvers: [
+          {
+            status: null,
+            user: { fullName: 'Approver One' },
+          },
+
+        ],
       });
 
       expect(screen.getByText(/Report Author has requested approval/)).toBeInTheDocument();
-      expect(screen.getByText(/2 of 3 reviews pending/)).toBeInTheDocument();
+      expect(screen.getByText(/1 of 1 reviews pending/)).toBeInTheDocument();
     });
 
     it('displays needs action alert when isNeedsAction is true', () => {
