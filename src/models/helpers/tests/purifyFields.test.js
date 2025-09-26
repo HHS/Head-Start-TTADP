@@ -13,7 +13,7 @@ import { purifyFields, purifyDataFields } from '../purifyFields';
 const {
   ActivityReportApprover,
   ActivityReport,
-  EventReportPilot,
+  TrainingReport,
 } = db;
 
 const xss = '<A HREF=//google.com><script>alert("XSS")</script><img src=x onerror=alert(1)//>';
@@ -217,7 +217,7 @@ describe('purifyFields', () => {
         { note: xss },
         { where: { id: approver.id }, individualHooks: true },
       );
-      await EventReportPilot.update(
+      await TrainingReport.update(
         { data: { ...event.data, eventName: xss } },
         { where: { id: event.id }, individualHooks: true },
       );

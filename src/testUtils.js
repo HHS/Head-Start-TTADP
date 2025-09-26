@@ -11,7 +11,7 @@ import {
   Region,
   GoalTemplate,
   Goal,
-  EventReportPilot,
+  TrainingReport,
   SessionReport,
 } from './models';
 import { auditLogger } from './logger';
@@ -379,7 +379,7 @@ export async function createTrainingReport(report) {
     return user.id;
   }));
 
-  return EventReportPilot.create({
+  return TrainingReport.create({
     data: mockTrainingReportData(data || {}),
     collaboratorIds: userCollaborators,
     ownerId: userCreator.id,
@@ -489,7 +489,7 @@ export function mockSessionData(data) {
 export async function createSessionReport(report) {
   const { eventId, data } = report;
 
-  const event = await EventReportPilot.findOne({
+  const event = await TrainingReport.findOne({
     where: { id: eventId },
     attributes: ['id'],
   });

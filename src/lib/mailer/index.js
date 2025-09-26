@@ -486,7 +486,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 };
 
 /**
- * @param {db.models.EventReportPilot.dataValues} event
+ * @param {db.models.TrainingReport.dataValues} event
  * @param {number} sessionId
  */
 export const trSessionCreated = async (event, sessionId) => {
@@ -531,7 +531,7 @@ export const trSessionCreated = async (event, sessionId) => {
 
 /**
  *
- * @param {db.models.EventReportPilot.dataValues} report
+ * @param {db.models.TrainingReport.dataValues} report
  * @param {number} newCollaboratorId
  */
 export const trCollaboratorAdded = async (
@@ -579,7 +579,7 @@ export const trCollaboratorAdded = async (
 
 /**
  *
- * @param {db.models.EventReportPilot.dataValues} report
+ * @param {db.models.TrainingReport.dataValues} report
  * @param {number} newCollaboratorId
  */
 export const trOwnerAdded = async (
@@ -615,7 +615,7 @@ export const trOwnerAdded = async (
 
 /**
  *
- * @param {db.models.EventReportPilot.dataValues} report
+ * @param {db.models.TrainingReport.dataValues} report
  * @param {number} newCollaboratorId
  */
 export const trEventComplete = async (
