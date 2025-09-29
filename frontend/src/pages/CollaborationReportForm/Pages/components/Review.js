@@ -88,6 +88,7 @@ const Review = ({
   reviewItems,
   isCreator,
   isCollaborator,
+  isApprover,
   isSubmitted,
   onSaveForm,
   onUpdatePage,
@@ -98,7 +99,7 @@ const Review = ({
   author,
   approvers,
 }) => {
-  const FormComponent = (isCreator || isCollaborator) ? CreatorSubmit : ApproverReview;
+  const FormComponent = (isApprover) ? ApproverReview : CreatorSubmit;
 
   const { watch } = useFormContext();
   const { user } = useContext(UserContext);
@@ -188,6 +189,7 @@ Review.propTypes = {
   isCollaborator: PropTypes.bool.isRequired,
   isCreator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
+  isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,

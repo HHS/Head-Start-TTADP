@@ -69,6 +69,7 @@ describe('Review Component', () => {
     ],
     isCreator: false,
     isCollaborator: false,
+    isApprover: false,
     isSubmitted: false,
     onSaveForm: jest.fn(),
     onUpdatePage: jest.fn(),
@@ -133,14 +134,14 @@ describe('Review Component', () => {
   });
 
   describe('Component Selection', () => {
-    it('renders ApproverReview component when isCreator is false', () => {
-      renderTest({ isCreator: false });
+    it('renders ApproverReview component when isApprover is true', () => {
+      renderTest({ isApprover: true });
       expect(screen.getByTestId('approver-review')).toBeInTheDocument();
       expect(screen.queryByTestId('creator-submit')).not.toBeInTheDocument();
     });
 
-    it('renders CreatorSubmit component when isCreator is true', () => {
-      renderTest({ isCreator: true });
+    it('renders CreatorSubmit component when isApprover is false', () => {
+      renderTest({ isApprover: false });
       expect(screen.getByTestId('creator-submit')).toBeInTheDocument();
       expect(screen.queryByTestId('approver-review')).not.toBeInTheDocument();
     });
@@ -223,7 +224,7 @@ describe('Review Component', () => {
       ];
 
       renderTest({
-        isCreator: false,
+        isApprover: true,
         approverStatusList,
         isSubmitted: true,
         isNeedsAction: true,
@@ -242,7 +243,7 @@ describe('Review Component', () => {
         { state: 'Complete', review: true, label: 'Review Page' },
       ];
 
-      renderTest({ pages, isCreator: true });
+      renderTest({ pages, isApprover: false });
       expect(screen.getByTestId('creator-submit')).toBeInTheDocument();
     });
 
@@ -259,7 +260,7 @@ describe('Review Component', () => {
         { user: { id: 2 }, status: 'needs_action', note: 'Other note' },
       ];
 
-      renderTest({ approverStatusList }, { id: 1 });
+      renderTest({ approverStatusList, isApprover: true }, { id: 1 });
       expect(screen.getByTestId('approver-review')).toBeInTheDocument();
     });
   });
