@@ -597,7 +597,7 @@ function CollaborationReport({ match, location }) {
   };
 
   return (
-    <div className="smart-hub-activity-report">
+    <div className="smart-hub-collab-report">
       { error
       && (
       <Alert type="warning">
