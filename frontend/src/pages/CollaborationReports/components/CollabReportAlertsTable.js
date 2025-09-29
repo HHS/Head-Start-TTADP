@@ -4,7 +4,7 @@ import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
-import ApproverTableDisplay from '../../../components/ApproverTableDisplay';
+import CollabReportApproverTableDisplay from '../../../components/CollabReportApproverTableDisplay';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
@@ -83,7 +83,9 @@ const CollabReportAlertsTable = ({
       },
       {
         title: 'Approvers',
-        value: <ApproverTableDisplay approvers={r.approvers} />,
+        value: <CollabReportApproverTableDisplay
+          approvers={r.approvers}
+        />,
       },
       {
         value: (() => {

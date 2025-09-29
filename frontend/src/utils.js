@@ -341,6 +341,98 @@ export function isValidDate(value) {
   return parsed ? moment(value, parsed, true) : null;
 }
 
+/**
+ *
+ * @param {number} userId
+ * @param {object} report
+ * report is like {
+ *   userId: number,
+ *   collaboratingSpecialists: {
+ *    id: number,
+ *   }[]
+ *   calculatedStatus: string,
+ *   approvers: {
+ *    status: string,
+ *    user: { id: number }
+ *   }[]
+ * }
+ */
+export function getCollabReportStatusDisplayAndClassnames(
+  userId,
+  report,
+) {
+  const {
+    calculatedStatus,
+    userId: reportUserId,
+    collaboratingSpecialists = [],
+    approvers = [],
+  } = report;
+
+  let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
+  let displayStatus = calculatedStatus;
+
+  // Check if user is the report creator or collaborator
+  const isCreatorOrCollaborator = userId === reportUserId
+    || collaboratingSpecialists.some((specialist) => specialist.id === userId);
+
+  // Check if user is an approver
+  const userApprover = approvers.find((approver) => approver.user && approver.user.id === userId);
+  const isApprover = !!userApprover;
+
+  // Reviewed and submitted have the same styles and should use the classname
+  // `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+
+  if (isCreatorOrCollaborator) {
+    // if user is report creator or collaborator:
+    // -- they see a needs action tag if the report is needs action by one approver
+    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    } else if (
+      calculatedStatus === REPORT_STATUSES.SUBMITTED
+      && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+      && !approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      // -- if the report is submitted and the report has been approved by one approver
+      // but not by all reviewers, they see "Reviewed"
+      displayStatus = 'Reviewed';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+    } else if (calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+      // -- else, they see "Submitted" if the report is submitted
+      displayStatus = 'Submitted';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+    }
+    // -- else, they see the default name and classname that are passed in
+  }
+
+  if (isApprover) {
+    // if the user is an approver and has been submitted
+    // and they haven't reviewed it yet they see "Needs action"
+    if (
+      calculatedStatus === REPORT_STATUSES.SUBMITTED
+      && (!userApprover.status || userApprover.status === APPROVER_STATUSES.NEEDS_ACTION)
+    ) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    } else if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      // else if they have reviewed it and the report status is "needs action"
+      // they see needs action
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    } else if (userApprover.status === APPROVER_STATUSES.APPROVED) {
+      // else if they have reviewed it and approved it, they see "reviewed"
+      displayStatus = 'Reviewed';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+    }
+  }
+
+  return {
+    displayStatus,
+    statusClassName,
+  };
+}
+
 export function getStatusDisplayAndClassnames(
   calculatedStatus,
   approvers = [],

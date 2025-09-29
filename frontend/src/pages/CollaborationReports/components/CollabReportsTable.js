@@ -117,7 +117,7 @@ const CollabReportsTable = ({
         perPage={10}
         titleMargin={{ bottom: 1 }}
         menuItems={menuItems}
-        showPagingTop={data.rows.length}
+        showPagingTop={data.rows.length > 0}
         paginationCardTopProps={{
           perPageChange: handlePageChange,
           noXofX: true,

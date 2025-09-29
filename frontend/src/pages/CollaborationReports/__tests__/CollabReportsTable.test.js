@@ -21,6 +21,34 @@ const { getReportsCSV, getReportsCSVById } = require('../../../fetchers/collabor
 describe('CollabReportsTable', () => {
   const mockSetSortConfig = jest.fn();
 
+  const mockReportData = {
+    rows: [
+      {
+        id: 1,
+        displayId: 'R01-1',
+        name: 'Report 1',
+        startDate: '2024-01-01',
+        author: { fullName: 'John Doe' },
+        createdAt: '2024-01-01T10:00:00Z',
+        collaboratingSpecialists: [{ fullName: 'Jane Smith' }],
+        updatedAt: '2024-01-02T10:00:00Z',
+        link: '/collaboration-reports/1',
+      },
+      {
+        id: 2,
+        displayId: 'R01-2',
+        name: 'Report 2',
+        startDate: '2024-01-02',
+        author: { fullName: 'Bob Johnson' },
+        createdAt: '2024-01-02T10:00:00Z',
+        collaboratingSpecialists: [{ fullName: 'Alice Brown' }],
+        updatedAt: '2024-01-03T10:00:00Z',
+        link: '/collaboration-reports/2',
+      },
+    ],
+    count: 2,
+  };
+
   const defaultProps = {
     data: { rows: [], count: 0 },
     title: 'Collaboration Reports',
@@ -57,34 +85,11 @@ describe('CollabReportsTable', () => {
   });
 
   it('renders table when reports are present', () => {
-    const data = {
-      rows: [
-        {
-          id: 1,
-          displayId: 'R01-1',
-          name: 'Report 1',
-          startDate: '2024-01-01',
-          author: { fullName: 'John Doe' },
-          createdAt: '2024-01-01T10:00:00Z',
-          collaboratingSpecialists: [{ fullName: 'Jane Smith' }],
-          updatedAt: '2024-01-02T10:00:00Z',
-          link: '/collaboration-reports/1',
-        },
-        {
-          id: 2,
-          displayId: 'R01-2',
-          name: 'Report 2',
-          startDate: '2024-01-02',
-          author: { fullName: 'Bob Johnson' },
-          createdAt: '2024-01-02T10:00:00Z',
-          collaboratingSpecialists: [{ fullName: 'Alice Brown' }],
-          updatedAt: '2024-01-03T10:00:00Z',
-          link: '/collaboration-reports/2',
-        },
-      ],
-      count: 2,
-    };
-    render(<MemoryRouter><CollabReportsTable {...defaultProps} data={data} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <CollabReportsTable {...defaultProps} data={mockReportData} />
+      </MemoryRouter>,
+    );
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
@@ -95,7 +100,11 @@ describe('CollabReportsTable', () => {
 
   describe('handlePageChange', () => {
     it('calls setSortConfig with new perPage value', () => {
-      render(<CollabReportsTable {...defaultProps} />);
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
+        </MemoryRouter>,
+      );
 
       // Find the perPage select dropdown
       const perPageSelect = screen.getByLabelText('Select per page');
@@ -106,7 +115,11 @@ describe('CollabReportsTable', () => {
     });
 
     it('preserves other sortConfig properties when changing perPage', () => {
-      render(<CollabReportsTable {...defaultProps} />);
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
+        </MemoryRouter>,
+      );
 
       const perPageSelect = screen.getByLabelText('Select per page');
 
@@ -124,7 +137,11 @@ describe('CollabReportsTable', () => {
 
   describe('Export functionality', () => {
     it('renders Export all menu item', () => {
-      render(<CollabReportsTable {...defaultProps} />);
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
+        </MemoryRouter>,
+      );
 
       // Look for the menu button using the correct aria-label
       const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
@@ -134,7 +151,11 @@ describe('CollabReportsTable', () => {
     });
 
     it('calls getReportsCSV when Export all is clicked', async () => {
-      render(<CollabReportsTable {...defaultProps} />);
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
+        </MemoryRouter>,
+      );
 
       const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
@@ -148,7 +169,11 @@ describe('CollabReportsTable', () => {
     });
 
     it('does not show Export selected when no reports are selected', () => {
-      render(<CollabReportsTable {...defaultProps} />);
+      render(
+        <MemoryRouter>
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
+        </MemoryRouter>,
+      );
 
       const menuButton = screen.getByRole('button', { name: /open actions for collaboration reports/i });
       fireEvent.click(menuButton);
@@ -158,38 +183,10 @@ describe('CollabReportsTable', () => {
   });
 
   describe('Checkbox functionality', () => {
-    const dataWithReports = {
-      rows: [
-        {
-          id: 1,
-          displayId: 'R01-1',
-          name: 'Report 1',
-          startDate: '2024-01-01',
-          author: { fullName: 'John Doe' },
-          createdAt: '2024-01-01T10:00:00Z',
-          collaboratingSpecialists: [{ fullName: 'Jane Smith' }],
-          updatedAt: '2024-01-02T10:00:00Z',
-          link: '/collaboration-reports/1',
-        },
-        {
-          id: 2,
-          displayId: 'R01-2',
-          name: 'Report 2',
-          startDate: '2024-01-02',
-          author: { fullName: 'Bob Johnson' },
-          createdAt: '2024-01-02T10:00:00Z',
-          collaboratingSpecialists: [{ fullName: 'Alice Brown' }],
-          updatedAt: '2024-01-03T10:00:00Z',
-          link: '/collaboration-reports/2',
-        },
-      ],
-      count: 2,
-    };
-
     it('shows Export selected when reports are selected', async () => {
       render(
         <MemoryRouter>
-          <CollabReportsTable {...defaultProps} data={dataWithReports} />
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
         </MemoryRouter>,
       );
 
@@ -207,7 +204,7 @@ describe('CollabReportsTable', () => {
     it('calls getReportsCSVById when Export selected is clicked', async () => {
       render(
         <MemoryRouter>
-          <CollabReportsTable {...defaultProps} data={dataWithReports} />
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
         </MemoryRouter>,
       );
 
@@ -233,7 +230,7 @@ describe('CollabReportsTable', () => {
     it('updates selectedReports when checkboxes change', async () => {
       render(
         <MemoryRouter>
-          <CollabReportsTable {...defaultProps} data={dataWithReports} />
+          <CollabReportsTable {...defaultProps} data={mockReportData} />
         </MemoryRouter>,
       );
 
@@ -245,7 +242,7 @@ describe('CollabReportsTable', () => {
       // Close menu, select a checkbox
       fireEvent.click(menuButton);
       const checkbox = screen.getByDisplayValue('1');
-      await userEvent.click(checkbox);
+      userEvent.click(checkbox);
 
       // Now Export selected should be available
       fireEvent.click(menuButton);

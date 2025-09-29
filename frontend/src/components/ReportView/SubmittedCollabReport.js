@@ -68,8 +68,8 @@ export default function SubmittedCollabReport({ report }) {
   const creator = author?.fullName || 'Unknown';
 
   const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || '';
-  const formattedReasons = reportReasons.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
-  const formattedGoals = reportGoals.map((goal) => goal?.goalTemplate?.standard || '').join(', ');
+  const formattedReasons = reportReasons?.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ') || '';
+  const formattedGoals = reportGoals?.map((goal) => goal?.goalTemplate?.standard || '').join(', ') || '';
   const formattedDataUsed = dataUsed.map(({ collabReportDatum, collabReportDataOther }) => {
     if (collabReportDatum === 'other') {
       return collabReportDataOther;
