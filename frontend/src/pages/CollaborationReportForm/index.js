@@ -56,6 +56,17 @@ const defaultValues = {
   },
   calculatedStatus: REPORT_STATUSES.DRAFT,
   collabReportSpecialists: [],
+  name: '',
+  steps: [],
+  statesInvolved: [],
+  startDate: '',
+  endDate: '',
+  duration: '',
+  reportReasons: [],
+  isStateActivity: '',
+  conductMethod: [],
+  description: '',
+  id: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -424,18 +435,16 @@ function CollaborationReport({ match, location }) {
 
         reportId.current = savedReport.id;
 
+        // Clean up the 'new' local storage entries
         cleanupLocalStorage('new', savedReport.id);
 
-        window.history.replaceState(null, null, `/collaboration-reports/${savedReport.id}/${currentPage}`);
-
-        const currentPageState = hookForm.getValues('pageState');
-        const convertedReport = convertReportToFormData(savedReport);
-        updateFormData({
-          ...convertedReport,
-          pageState: currentPageState || convertedReport.pageState,
-        }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+
+        // Navigate to the new report URL to trigger a proper re-render
+        // with the correct local storage keys
+        const newPath = `/collaboration-reports/${savedReport.id}/${currentPage}`;
+        history.push(newPath, { showLastUpdatedTime: true });
       } else {
         const updatedReport = await formatReportWithSaveBeforeConversion(
           data,
