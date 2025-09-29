@@ -237,14 +237,14 @@ workflows:
     when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
     jobs:
     - restore_db_job:
-      serial-group: tta-automation-lock
-      target_env: "<< pipeline.parameters.target_env >>"
+        serial-group: tta-automation-lock
+        target_env: "<< pipeline.parameters.target_env >>"
 
   clear_build_cache:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
     - clear_cache_job:
-      target_env: << pipeline.parameters.target_env >> 
+        target_env: << pipeline.parameters.target_env >> 
 
   clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
@@ -671,22 +671,22 @@ jobs:
             message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
 
-    clear_cache_job:
-      executor: docker-executor
-      parameters:
-        target_env:
-          type: string
-      steps:
-      - checkout
-      - install_cf_tools
-      - run:
-          name: Clear build cache
-          command: |
-            app_name="tta-smarthub-<< parameters.target_env >>"
-            echo "Clearing build cache for ${app_name}"
-            app_guid=$(cf app --guid ${app-name})
-            cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
-            echo "Build cache cleared"
+  clear_cache_job:
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - install_cf_tools
+    - run:
+        name: Clear build cache
+        command: |
+          app_name="tta-smarthub-<< parameters.target_env >>"
+          echo "Clearing build cache for ${app_name}"
+          app_guid=$(cf app --guid ${app-name})
+          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
 
 # ----------------- Commands -----------------
 
