@@ -346,7 +346,9 @@ export function isValidDate(value) {
  * @param {number} userId
  * @param {object} report
  * report is like {
- *   userId: number,
+ *   author: {
+ *    id: number,
+ *   },
  *   collaboratingSpecialists: {
  *    id: number,
  *   }[]
@@ -363,7 +365,7 @@ export function getCollabReportStatusDisplayAndClassnames(
 ) {
   const {
     calculatedStatus,
-    userId: reportUserId,
+    author,
     collaboratingSpecialists = [],
     approvers = [],
   } = report;
@@ -372,15 +374,12 @@ export function getCollabReportStatusDisplayAndClassnames(
   let displayStatus = calculatedStatus;
 
   // Check if user is the report creator or collaborator
-  const isCreatorOrCollaborator = userId === reportUserId
+  const isCreatorOrCollaborator = (author && userId === author.id)
     || collaboratingSpecialists.some((specialist) => specialist.id === userId);
 
   // Check if user is an approver
   const userApprover = approvers.find((approver) => approver.user && approver.user.id === userId);
   const isApprover = !!userApprover;
-
-  // Reviewed and submitted have the same styles and should use the classname
-  // `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
 
   if (isCreatorOrCollaborator) {
     // if user is report creator or collaborator:

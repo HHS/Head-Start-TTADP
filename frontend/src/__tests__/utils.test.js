@@ -9,12 +9,12 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
 
   const createMockReport = ({
     calculatedStatus = REPORT_STATUSES.DRAFT,
-    userId = mockReportCreatorId,
+    author = { id: mockReportCreatorId },
     collaboratingSpecialists = [],
     approvers = [],
   } = {}) => ({
     calculatedStatus,
-    userId,
+    author,
     collaboratingSpecialists,
     approvers,
   });
@@ -28,7 +28,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show "Needs action" when report status is needs action', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        userId: mockUserId,
+        author: { id: mockUserId },
       });
 
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
@@ -40,7 +40,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show "Reviewed" when submitted and some but not all approvers have approved', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [
           createMockApprover(4, APPROVER_STATUSES.APPROVED),
           createMockApprover(5, APPROVER_STATUSES.NEEDS_ACTION),
@@ -56,7 +56,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show "Submitted" when report is submitted with no approvals', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [
           createMockApprover(4, APPROVER_STATUSES.NEEDS_ACTION),
           createMockApprover(5, APPROVER_STATUSES.NEEDS_ACTION),
@@ -72,7 +72,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show "Submitted" when report is submitted with all approvers approved', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [
           createMockApprover(4, APPROVER_STATUSES.APPROVED),
           createMockApprover(5, APPROVER_STATUSES.APPROVED),
@@ -88,7 +88,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show default status for draft reports', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.DRAFT,
-        userId: mockUserId,
+        author: { id: mockUserId },
       });
 
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
@@ -100,7 +100,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show default status for approved reports', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        userId: mockUserId,
+        author: { id: mockUserId },
       });
 
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
@@ -218,7 +218,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should prioritize approver logic when submitted and needs action', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [createMockApprover(mockUserId, APPROVER_STATUSES.NEEDS_ACTION)],
       });
 
@@ -231,7 +231,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show "Reviewed" when user has approved their own report', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [createMockApprover(mockUserId, APPROVER_STATUSES.APPROVED)],
       });
 
@@ -246,7 +246,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should show default status and classname', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockReportCreatorId,
+        author: { id: mockReportCreatorId },
         collaboratingSpecialists: [{ id: mockCollaboratorId }],
         approvers: [createMockApprover(mockApproverId, APPROVER_STATUSES.APPROVED)],
       });
@@ -262,7 +262,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should handle missing collaboratingSpecialists array', () => {
       const report = {
         calculatedStatus: REPORT_STATUSES.DRAFT,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [],
       };
 
@@ -275,7 +275,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should handle missing approvers array', () => {
       const report = {
         calculatedStatus: REPORT_STATUSES.DRAFT,
-        userId: mockUserId,
+        author: { id: mockUserId },
         collaboratingSpecialists: [],
       };
 
@@ -300,7 +300,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
     it('should handle empty approvers array when checking for partial approval', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        userId: mockUserId,
+        author: { id: mockUserId },
         approvers: [],
       });
 
@@ -308,6 +308,19 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
 
       expect(result.displayStatus).toBe('Submitted');
       expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+    });
+
+    it('should handle missing author object', () => {
+      const report = {
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        collaboratingSpecialists: [],
+        approvers: [],
+      };
+
+      const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
+
+      expect(result.displayStatus).toBe(REPORT_STATUSES.DRAFT);
+      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.DRAFT}`);
     });
   });
 });

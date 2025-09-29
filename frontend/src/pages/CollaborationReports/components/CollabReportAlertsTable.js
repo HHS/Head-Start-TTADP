@@ -9,7 +9,7 @@ import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
-import { getStatusDisplayAndClassnames } from '../../../utils';
+import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import UserContext from '../../../UserContext';
 
@@ -89,10 +89,9 @@ const CollabReportAlertsTable = ({
       },
       {
         value: (() => {
-          const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
-            r.calculatedStatus,
-            r.approvers,
-            false,
+          const { displayStatus, statusClassName } = getCollabReportStatusDisplayAndClassnames(
+            userId,
+            r,
           );
           return (
             <Tag
