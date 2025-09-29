@@ -99,30 +99,33 @@ const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
 // Function to create a PL/pgSQL function in the PostgreSQL database that processes HTML content by
 // replacing words with randomly generated words
 const processHtmlCreate = async () => sequelize.query(/* sql */`
-  CREATE OR REPLACE FUNCTION "processHtml"(input TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
+  CREATE OR REPLACE FUNCTION "processHtml"(input TEXT)
+  RETURNS TEXT
+  LANGUAGE plpgsql AS $$
   DECLARE
-      result TEXT;
-      new_word TEXT;
+    tokens TEXT[];
+    i INT;
   BEGIN
-      IF input IS NULL OR input = '' THEN
-          RETURN input;
+    IF input IS NULL OR input = '' THEN
+      RETURN input;
+    END IF;
+
+    -- Tokenize into words OR non-words, preserving separators.
+    -- [[:alnum:]] = letters+digits, [^[:alnum:]] = everything else
+    tokens := ARRAY(
+      SELECT m[1]
+      FROM regexp_matches(input, '([[:alnum:]]+|[^[:alnum:]]+)', 'g') AS m
+    );
+
+    -- Replace each "word" token with a random lorem-ish word
+    FOR i IN array_lower(tokens,1)..array_upper(tokens,1) LOOP
+      IF tokens[i] ~ '^[[:alnum:]]+$' THEN
+        tokens[i] := (ARRAY['Lorem','ipsum','dolor','sit','amet','consectetur'])
+                      [floor(random()*6 + 1)::int];
       END IF;
+    END LOOP;
 
-      -- Replace each word in the input with a random word from a predefined list
-      result := regexp_replace(
-          input,
-          chr(92) || 'w+',  -- Match words using a regular expression
-          (
-              SELECT string_agg(word, ' ')
-              FROM (
-                  SELECT (ARRAY['Lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur'])[floor(random() * 6 + 1)::int] AS word
-                  FROM generate_series(1, regexp_count(input, chr(92) || 'w+'))
-              ) AS subquery
-          ),
-          'g'  -- Global flag to replace all occurrences
-      );
-
-      RETURN result;
+    RETURN array_to_string(tokens, '');
   END $$;
 `);
 
@@ -1031,6 +1034,39 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
+// anonymize grantNumber inside ActivityReportObjectiveCitations.monitoringReferences
+export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
+  UPDATE "ActivityReportObjectiveCitations" aroc
+  SET "monitoringReferences" = COALESCE(
+    (
+      SELECT jsonb_agg(
+        CASE
+          WHEN ref ? 'grantNumber' THEN
+            jsonb_set(
+              ref,
+              '{grantNumber}',
+              to_jsonb(
+                "convertGrantNumber"(
+                  ref ->> 'grantNumber',
+                  COALESCE(
+                    NULLIF(ref ->> 'originalGrantId', '')::int,
+                    NULLIF(ref ->> 'grantId', '')::int
+                  )
+                )
+              ),
+              true
+            )
+          ELSE ref
+        END
+      )
+      FROM jsonb_array_elements(aroc."monitoringReferences") AS ref
+    ),
+    aroc."monitoringReferences"
+  )
+  WHERE aroc."monitoringReferences" IS NOT NULL
+  ${where};
+`);
+
 /* Main function to orchestrate the entire anonymization process, including creating and dropping
 * database functions, hiding users, recipients, and grants, processing activity reports and files,
 * and truncating audit tables
@@ -1073,6 +1109,8 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
 
   // Bootstrap HSES users and assign permissions
   await bootstrapUsers();
+
+  await processMonitoringReferences();
 
   // Delete all records from the RequestErrors table
   await RequestErrors.destroy({
