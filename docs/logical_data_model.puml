@@ -1177,6 +1177,7 @@ class SiteAlerts{
 class Topics{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
+ * deprecated : boolean : false
  * name : varchar(255)
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
