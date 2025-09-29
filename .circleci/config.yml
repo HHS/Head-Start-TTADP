@@ -237,16 +237,16 @@ workflows:
     when: pipeline.parameters.action == "restore_db" and pipeline.trigger_source == "api"
     jobs:
     - restore_db_job:
-        serial-group: tta-automation-lock
-        target_env: "<< pipeline.parameters.target_env >>"
+      serial-group: tta-automation-lock
+      target_env: "<< pipeline.parameters.target_env >>"
 
   clear_build_cache:
     when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
     jobs:
-    - clear_build_cache:
-        target_env: << pipeline.parameters.target_env >> 
+    - clear_cache_job:
+      target_env: << pipeline.parameters.target_env >> 
 
-  clear_buildcache:
+  clear_buildcache_cron:
     # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
     # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
     triggers:
@@ -257,19 +257,19 @@ workflows:
             only:
             - main
     jobs:
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-prod" 
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-staging"
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-dev-blue" 
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-dev-green" 
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-dev-red" 
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-dev-gold" 
-    - clear_build_cache:
+    - clear_cache_job:
         target_env: "tta-smarthub-dev-pink"
         
 
@@ -671,7 +671,7 @@ jobs:
             message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
 
-    clear_build_cache:
+    clear_cache_job:
       executor: docker-executor
       parameters:
         target_env:
