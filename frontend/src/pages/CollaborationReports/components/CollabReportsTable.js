@@ -35,12 +35,16 @@ const CollabReportsTable = ({
     return ids;
   }, [reportCheckboxes]);
 
-  const menuItems = [
-    {
-      label: 'Export table',
-      onClick: async () => getReportsCSV(sortConfig),
-    },
-  ];
+  const menuItems = [];
+
+  if (data.rows.length) {
+    menuItems.push(
+      {
+        label: 'Export table',
+        onClick: async () => getReportsCSV(sortConfig),
+      },
+    );
+  }
 
   if (selectedReports.length) {
     menuItems.unshift(
@@ -113,13 +117,13 @@ const CollabReportsTable = ({
         perPage={10}
         titleMargin={{ bottom: 1 }}
         menuItems={menuItems}
-        showPagingTop
+        showPagingTop={data.rows.length}
         paginationCardTopProps={{
           perPageChange: handlePageChange,
           noXofX: true,
           spaceBetweenSelectPerPageAndContext: 2,
         }}
-        titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
+        titleGroupClassNames={data.rows.length ? 'padding-x-3 padding-top-3 position-relative' : 'padding-x-3 padding-top-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2'}
       >
         { data.rows.length === 0 && (
         <Container className="landing" paddingX={0} paddingY={0}>
