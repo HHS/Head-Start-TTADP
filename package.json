@@ -24,6 +24,7 @@
     "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
+    "test:e2e:ui": "npx playwright test --ui tests/e2e",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
     "lint:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
@@ -173,7 +174,8 @@
       "tests/*",
       "packages/*",
       "frontend/public/*",
-      "ops/*"
+      "ops/*",
+      "cucumber/*"
     ],
     "rules": {
       "linebreak-style": 0,
@@ -332,7 +334,7 @@
     "@faker-js/faker": "^6.0.0",
     "@mesh-kit/core": "^1.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "2.2.11",
+    "@ttahub/common": "2.2.14",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",

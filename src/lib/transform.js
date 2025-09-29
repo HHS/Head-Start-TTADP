@@ -579,6 +579,19 @@ const logTransformers = [
   transformRelatedModelPropNested('data', 'specialistNextSteps', 'note'),
 ];
 
+const collabReportTransformers = [
+  'displayId',
+  'regionId',
+  'name',
+  'description',
+  'conductMethod',
+  'isStateActivity',
+  'duration',
+  'startDate',
+  'endDate',
+  'status',
+];
+
 /**
    * csvRows is an array of objects representing csv data. Sometimes,
    * some objects can have keys that other objects will not.
@@ -663,9 +676,14 @@ function communicationLogToCsvRecord(log) {
   return toCSVRecord(log, logTransformers);
 }
 
+function collabReportToCsvRecord(report) {
+  return toCSVRecord(report, collabReportTransformers);
+}
+
 export {
   communicationLogToCsvRecord,
   activityReportToCsvRecord,
+  collabReportToCsvRecord,
   arTransformers,
   makeGoalsAndObjectivesObject,
   extractListOfGoalsAndObjectives,
