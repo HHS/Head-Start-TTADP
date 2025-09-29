@@ -679,7 +679,7 @@ jobs:
     steps:
     - checkout
     - install_cf_tools
-    cf_login:
+    - cf_login:
         target_env: << parameters.target_env >>
     - run:
         name: Clear build cache
