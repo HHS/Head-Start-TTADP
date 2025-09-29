@@ -478,6 +478,14 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety',
+        count: 0,
+      },
+      {
         topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
@@ -644,6 +652,14 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Disabilities Services',
+        count: 0,
+      },
+      {
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety',
         count: 0,
       },
       {
@@ -816,6 +832,14 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety',
+        count: 0,
+      },
+      {
         topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
@@ -981,6 +1005,14 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Disabilities Services',
+        count: 0,
+      },
+      {
+        topic: 'Emergency Preparedness, Response, and Recovery (EPRR)',
+        count: 0,
+      },
+      {
+        topic: 'Environmental Health and Safety',
         count: 0,
       },
       {
