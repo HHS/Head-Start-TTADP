@@ -50,7 +50,7 @@ const TopAlert = ({
         <span className="text-bold">
           {author.fullName}
           {' '}
-          has requested approval for this collaboration report (
+          has requested approval for this Collaboration report (
           <strong>
             {`${pendingApprovalCount} of
                ${approvers?.length || 0}`}
@@ -60,7 +60,7 @@ const TopAlert = ({
           ).
         </span>
         <br />
-        Please review all information in each section before submitting.
+        Please review all information, then select an approval status.
       </>
     </Alert>
   );
