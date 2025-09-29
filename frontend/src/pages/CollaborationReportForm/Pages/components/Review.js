@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
+import { useHistory } from 'react-router';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Accordion } from '../../../../components/Accordion';
@@ -101,8 +102,10 @@ const Review = ({
 }) => {
   const FormComponent = (isApprover) ? ApproverReview : CreatorSubmit;
 
-  const { watch } = useFormContext();
+  const { watch, getValues } = useFormContext();
   const { user } = useContext(UserContext);
+  const { id } = getValues();
+  const history = useHistory();
 
   const otherManagerNotes = approverStatusList
     ? approverStatusList.filter((a) => a.user.id !== user.id) : null;
@@ -136,7 +139,18 @@ const Review = ({
       )}
       {reviewItems && reviewItems.length > 0 && (
         <div className="margin-bottom-4">
-          <Accordion bordered items={reviewItems} multiselectable />
+          <Accordion
+            bordered
+            items={reviewItems}
+            pages={pages.map((page) => ({
+              ...page,
+              onNavigation: () => {
+                history.push(`/collaboration-reports/${id}/${page.path}`);
+              },
+            }))}
+            multiselectable
+            canEdit
+          />
         </div>
       )}
 
