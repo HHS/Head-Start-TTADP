@@ -172,18 +172,18 @@ describe('ApproverReview Component', () => {
   });
 
   describe('Button State and Form Submission', () => {
-    it('enables submit button when hasIncompletePages is false', () => {
+    it('enables submit button when hasIncompletePages is false', async () => {
       renderComponent({ hasIncompletePages: false });
 
-      const submitButton = screen.getByText('Submit report');
+      const submitButton = await screen.findByRole('button', { name: 'Submit' });
       expect(submitButton).toBeEnabled();
       expect(submitButton).toHaveAttribute('type', 'submit');
     });
 
-    it('disables submit button when hasIncompletePages is true', () => {
+    it('disables submit button when hasIncompletePages is true', async () => {
       renderComponent({ hasIncompletePages: true });
 
-      const submitButton = screen.getByText('Submit report');
+      const submitButton = await screen.findByRole('button', { name: 'Submit' });
       expect(submitButton).toBeDisabled();
     });
 

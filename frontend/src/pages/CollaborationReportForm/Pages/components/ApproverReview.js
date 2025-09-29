@@ -91,7 +91,7 @@ export default function ApproverReview({
 
         <ApproverStatusList approverStatus={approverStatusList} />
 
-        <Button disabled={hasIncompletePages} type="submit">Submit report</Button>
+        <Button disabled={hasIncompletePages} type="submit">Submit</Button>
       </Form>
     </>
   );
