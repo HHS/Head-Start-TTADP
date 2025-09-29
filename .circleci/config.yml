@@ -686,7 +686,7 @@ jobs:
         command: |
           app_name="tta-smarthub-<< parameters.target_env >>"
           echo "Clearing build cache for ${app_name}"
-          app_guid=$(cf app --guid ${app-name})
+          app_guid=$(cf app --guid ${app_name})
           cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
           echo "Build cache cleared"
 
