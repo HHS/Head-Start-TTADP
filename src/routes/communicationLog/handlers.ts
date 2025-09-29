@@ -105,7 +105,10 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
         model: Grant,
         as: 'grants',
         attributes: [],
-        where: { regionId },
+        where: {
+          regionId,
+          status: 'Active',
+        },
         required: true,
       },
     ],
