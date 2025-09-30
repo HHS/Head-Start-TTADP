@@ -354,7 +354,7 @@ export async function reviewReport(req: Request, res: Response) {
     // Make sure the current user is authorized to update the report
     const user = await userById(userId);
     const authorization = new CollabReportPolicy(user, existingReport);
-    if (!authorization.canUpdate()) {
+    if (!authorization.canReview()) {
       res.sendStatus(FORBIDDEN);
       return;
     }
