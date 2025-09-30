@@ -77,17 +77,21 @@ export const convertReportToFormData = (fetchedReport) => {
 
   // Convert isStateActivity to string for radio buttons
   let isStateActivity = null;
-  if (fetchedReport.isStateActivity) {
+  if (fetchedReport.isStateActivity !== null && fetchedReport.isStateActivity !== undefined) {
     isStateActivity = String(Boolean(fetchedReport.isStateActivity));
   }
 
   // Convert hasDataUsed to string for radio buttons
   let hasDataUsedValue = null;
-  if (hasDataUsed) hasDataUsedValue = String(Boolean(hasDataUsed));
+  if (hasDataUsed !== null && hasDataUsed !== undefined) {
+    hasDataUsedValue = String(Boolean(hasDataUsed));
+  }
 
   // Convert hasGoals to string for radio buttons
   let hasGoalsValue = null;
-  if (hasGoals) hasGoalsValue = String(Boolean(hasGoals));
+  if (hasGoals !== null && hasGoals !== undefined) {
+    hasGoalsValue = String(Boolean(hasGoals));
+  }
 
   // Convert participants, dataUsed, and goals for use with multiselect components
   const participantValues = participants ? participants.map((p) => ({ label: p, value: p })) : [];

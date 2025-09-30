@@ -4,7 +4,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
-import supportingInformationPage, { isPageComplete } from '../supportingInformation';
+import supportingInformationPage from '../supportingInformation';
 
 // Mock dependencies
 jest.mock('react-helmet', () => ({
@@ -91,14 +91,6 @@ describe('supportingInformation Page', () => {
 
     it('exports render function', () => {
       expect(typeof supportingInformationPage.render).toBe('function');
-    });
-  });
-
-  describe('isPageComplete Function', () => {
-    it('always returns true', () => {
-      expect(isPageComplete()).toBe(true);
-      expect(isPageComplete({})).toBe(true);
-      expect(isPageComplete({ someData: 'test' })).toBe(true);
     });
   });
 
