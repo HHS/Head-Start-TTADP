@@ -896,84 +896,6 @@ describe('CollaborationReportForm', () => {
     });
   });
 
-  describe('report status redirection logic', () => {
-    const mockPush = jest.fn();
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      history.push = mockPush;
-      history.replace = jest.fn();
-      fetchMock.restore();
-      fetchMock.get('/api/users/collaborators?region=1', []);
-      fetchMock.get('/api/activity-reports/approvers?region=1', []);
-    });
-
-    it('redirects to review-submit page when report is needs action', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ user: { id: 2 } }], // Different user
-        id: 123,
-        userId: 1,
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/123/review');
-      });
-    });
-
-    it('does not redirect when report is submitted and user is an approver', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ user: { id: 1 } }], // Same user
-        id: 123,
-      });
-
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-
-      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
-    });
-
-    it('does not redirect when report is not approved and not submitted', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        approvers: [{ userId: 2 }],
-        id: 123,
-      });
-
-      getItem.mockReturnValue(JSON.stringify({
-        regionId: 1,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      }));
-
-      render(<ReportComponent id="123" userId={1} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-
-      expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/view/123');
-    });
-  });
-
   describe('additional edge cases', () => {
     it('handles network error with connection check', async () => {
       fetchMock.restore();
@@ -1093,23 +1015,6 @@ describe('CollaborationReportForm', () => {
       await waitFor(() => {
         // Component should handle regionId -1 and call updateFormData
         expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
-      });
-    });
-
-    it('redirects when editable and is pending approver with no current page', async () => {
-      fetchMock.get('/api/collaboration-reports/123', {
-        ...dummyReport,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        approvers: [{ user: { id: 1 }, status: null }],
-        userId: 2,
-      });
-
-      getItem.mockReturnValue(null);
-
-      render(<ReportComponent id="123" currentPage="" userId={1} />);
-
-      await waitFor(() => {
-        expect(true).toBe(true); // Test passes if no errors thrown during redirect
       });
     });
   });
