@@ -6,7 +6,7 @@ import {
 } from '../models';
 import { auditLogger } from '../logger';
 
-const createMonitoringGoals = async () => {
+const createMonitoringGoals = async (from_cli = false) => {
   try {
     const cutOffDate = '2025-01-21';
     // Verify that the monitoring goal template exists.
@@ -102,8 +102,12 @@ const createMonitoringGoals = async () => {
       // Bulk insert the goals returned from the above query using sequelize Goal.bulkCreate.
       // We need to do this to ensure we enter the Goal Status Change on create.
       auditLogger.info(`Creating ${goals.length} monitoring goals`);
-      await Goal.bulkCreate(goals, { individualHooks: true, transaction });
-
+      await Goal.bulkCreate(goals, {
+        individualHooks: true,
+        transaction,
+        userId: null, // or use a system user ID if you have one
+        autoPopulateCreator: !from_cli, // Skip creator population for CLI scripts
+      });
       // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives
       /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
