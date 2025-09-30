@@ -444,7 +444,7 @@ describe('Collaboration Reports Handlers', () => {
       (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
       (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
-          canUpdate: jest.fn().mockReturnValue(true),
+          canReview: jest.fn().mockReturnValue(true),
         }) as unknown as jest.Mocked<CollabReportPolicy>);
     });
 
@@ -500,7 +500,7 @@ describe('Collaboration Reports Handlers', () => {
       (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
       (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
-          canUpdate: jest.fn().mockReturnValue(false),
+          canReview: jest.fn().mockReturnValue(false),
         }) as unknown as jest.Mocked<CollabReportPolicy>);
 
       await reviewReport(mockRequest as Request, mockResponse as Response);
