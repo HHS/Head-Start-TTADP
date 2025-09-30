@@ -4,6 +4,7 @@ import {
   GoalTemplate,
   Recipient,
   Group,
+  Grant,
   sequelize,
 } from '../../models';
 import {
@@ -46,6 +47,7 @@ jest.mock('../../models', () => ({
   Recipient: {
     findAll: jest.fn(),
   },
+  Grant: {},
   sequelize: {
     close: jest.fn(),
     col: jest.fn(),
@@ -715,6 +717,52 @@ describe('communicationLog handlers', () => {
         standardGoals: mockGoals,
         recipients: mockRecipients,
         groups: [],
+      });
+    });
+
+    it('only returns recipients with active grants', async () => {
+      const mockRequest = {
+        session: {
+          userId: authorizedToReadOnly.id,
+        },
+        params: {
+          regionId: REGION_ID,
+        },
+      };
+      const mockUsers = [{ value: 1, label: 'UserA' }];
+      const mockGoals = [{ value: 1, label: 'GoalA' }];
+      const mockRecipients = [{ value: 1, label: 'RecipientA' }];
+
+      userById.mockResolvedValue(authorizedToReadOnly);
+      User.findAll.mockResolvedValue(mockUsers);
+      GoalTemplate.findAll.mockResolvedValue(mockGoals);
+      Recipient.findAll.mockResolvedValue(mockRecipients);
+      Group.findAll.mockResolvedValue([]);
+
+      await getAvailableUsersRecipientsAndGoals(mockRequest, { ...mockResponse });
+
+      // Verify that Recipient.findAll was called with the correct query parameters
+      expect(Recipient.findAll).toHaveBeenCalledWith({
+        attributes: [
+          ['id', 'value'],
+          ['name', 'label'],
+        ],
+        where: {
+          deleted: false,
+        },
+        include: [
+          {
+            model: Grant,
+            as: 'grants',
+            attributes: [],
+            where: {
+              regionId: REGION_ID,
+              status: 'Active',
+            },
+            required: true,
+          },
+        ],
+        order: [['label', 'ASC']],
       });
     });
 
