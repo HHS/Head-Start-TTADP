@@ -117,7 +117,7 @@ describe('CreatorSubmit Component', () => {
       expect(screen.getByText('CreatorNeedsAction Component')).toBeInTheDocument();
 
       // Should not render the normal form
-      expect(screen.queryByText('Submit for approval')).not.toBeInTheDocument();
+      expect(screen.queryByText('Submit')).not.toBeInTheDocument();
       expect(screen.queryByText('Save draft')).not.toBeInTheDocument();
       expect(screen.queryByText('Back')).not.toBeInTheDocument();
     });
@@ -146,7 +146,7 @@ describe('CreatorSubmit Component', () => {
       renderComponent({ isNeedsAction: false });
 
       expect(screen.queryByTestId('creator-needs-action')).not.toBeInTheDocument();
-      expect(screen.getByText('Submit for approval')).toBeInTheDocument();
+      expect(screen.getByText('Submit')).toBeInTheDocument();
       expect(screen.getByText('Save draft')).toBeInTheDocument();
       expect(screen.getByText('Back')).toBeInTheDocument();
     });
@@ -263,7 +263,7 @@ describe('CreatorSubmit Component', () => {
     it('renders three buttons with correct text and types', () => {
       renderComponent();
 
-      const submitButton = screen.getByText('Submit for approval');
+      const submitButton = screen.getByText('Submit');
       const saveDraftButton = screen.getByText('Save draft');
       const backButton = screen.getByText('Back');
 
@@ -285,14 +285,14 @@ describe('CreatorSubmit Component', () => {
     it('enables submit button when hasIncompletePages is false', () => {
       renderComponent({ hasIncompletePages: false });
 
-      const submitButton = screen.getByText('Submit for approval');
+      const submitButton = screen.getByText('Submit');
       expect(submitButton).toBeEnabled();
     });
 
     it('disables submit button when hasIncompletePages is true', () => {
       renderComponent({ hasIncompletePages: true });
 
-      const submitButton = screen.getByText('Submit for approval');
+      const submitButton = screen.getByText('Submit');
       expect(submitButton).toBeDisabled();
     });
   });
@@ -385,7 +385,7 @@ describe('CreatorSubmit Component', () => {
       });
 
       // Should not break the component
-      expect(screen.getByText('Submit for approval')).toBeInTheDocument();
+      expect(screen.getByText('Submit')).toBeInTheDocument();
     });
 
     it('handles complex prop combinations', () => {
@@ -399,7 +399,7 @@ describe('CreatorSubmit Component', () => {
 
       expect(screen.getByTestId('incomplete-pages')).toBeInTheDocument();
       expect(screen.queryByText('Approving manager')).not.toBeInTheDocument();
-      expect(screen.getByText('Submit for approval')).toBeDisabled();
+      expect(screen.getByText('Submit')).toBeDisabled();
     });
   });
 });

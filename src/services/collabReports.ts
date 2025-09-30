@@ -271,6 +271,12 @@ export async function collabReportById(crId: string) {
       {
         model: User,
         as: 'author',
+        include: [
+          {
+            model: Role,
+            as: 'role',
+          },
+        ],
       },
       {
         required: false,
@@ -281,6 +287,12 @@ export async function collabReportById(crId: string) {
           {
             model: User,
             as: 'specialist',
+            include: [
+              {
+                model: Role,
+                as: 'role',
+              },
+            ],
           },
         ],
       },
@@ -319,6 +331,12 @@ export async function collabReportById(crId: string) {
             model: User,
             as: 'user',
             attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'role',
+              },
+            ],
           },
         ],
       },

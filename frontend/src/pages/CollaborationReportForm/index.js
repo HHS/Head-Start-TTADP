@@ -549,7 +549,24 @@ function CollaborationReport({ match, location }) {
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
-  const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
+  const tagClass = (() => {
+    if (!formData || !formData.calculatedStatus) {
+      return '';
+    }
+
+    const { calculatedStatus } = formData;
+
+    if (calculatedStatus === REPORT_STATUSES.APPROVED) {
+      return 'smart-hub--tag-approved';
+    }
+
+    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      return 'smart-hub--tag-needs-action';
+    }
+
+    return '';
+  })();
+
   // eslint-disable-next-line max-len
   const hideSideNav = formData && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
 

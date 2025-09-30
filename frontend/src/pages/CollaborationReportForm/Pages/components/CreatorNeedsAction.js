@@ -53,7 +53,7 @@ export default function CreatorNeedsAction({
             </FormItem>
           </Fieldset>
         </div>
-        <Button type="submit">Update report</Button>
+        <Button type="submit">Submit</Button>
       </Form>
     </>
   );
