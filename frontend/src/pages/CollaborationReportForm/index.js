@@ -225,9 +225,14 @@ function CollaborationReport({ match, location }) {
             // make sure we BELONG here
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
+            const isCreator = user.id === fetchedReport.userId;
             // eslint-disable-next-line max-len
             const isApproverFromFetched = approvers.some(({ user: approver }) => user.id === approver.id);
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+            if (isNeedsAction && isCreator) {
+              history.push(`/collaboration-reports/${fetchedReport.id}/review`);
+              return;
+            }
 
             if (isApproved || (isSubmitted && !isApproverFromFetched && !isNeedsAction)) {
               // redirect to approved/submitted report view
