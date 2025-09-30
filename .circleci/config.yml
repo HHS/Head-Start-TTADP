@@ -36,7 +36,7 @@ parameters:
   action:
     description: "Choose the workflow to run"
     type: enum
-    enum: [ build_test_deploy, deploy_only, import_data, restore_db, backup_prod ]
+    enum: [ build_test_deploy, deploy_only, import_data, restore_db, backup_prod, clear_cache ]
     default: build_test_deploy
   target_env:
     description: "Environment to target"
@@ -239,6 +239,39 @@ workflows:
     - restore_db_job:
         serial-group: tta-automation-lock
         target_env: "<< pipeline.parameters.target_env >>"
+
+  clear_build_cache:
+    when: pipeline.parameters.action == "clear_cache" and pipeline.trigger_source == "api"
+    jobs:
+    - clear_cache_job:
+        target_env: << pipeline.parameters.target_env >> 
+
+  clear_buildcache_cron:
+    # the build cache grows over time, causing deploys to fail.  this job will clear it weekly
+    # see https://docs.cloud.gov/knowledge-base/2024/12/09/apt-buildpack-cache-issue/
+    triggers:
+    - schedule:
+        cron: "0 0 * * 0" # midnight Sunday
+        filters:
+          branches:
+            only:
+            - main
+    jobs:
+    - clear_cache_job:
+        target_env: "tta-smarthub-prod" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-staging"
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-blue" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-green" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-red" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-gold" 
+    - clear_cache_job:
+        target_env: "tta-smarthub-dev-pink"
+        
 
 # ----------------- Jobs -----------------
 
@@ -615,6 +648,7 @@ jobs:
           node ./build/server/src/tools/importSystemCLI.js process 1
           yarn createMonitoringGoalsCLI
           node ./build/server/src/tools/queryMonitoringDataCLI.js
+          node ./build/server/src/tools/maintainMonitoringDataCLI.js
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
@@ -636,6 +670,25 @@ jobs:
         - notify_slack:
             message_text_file: monitoring-updates.txt
             slack_channel: << parameters.slack_channel >>
+
+  clear_cache_job:
+    executor: docker-executor
+    parameters:
+      target_env:
+        type: string
+    steps:
+    - checkout
+    - install_cf_tools
+    - cf_login:
+        target_env: << parameters.target_env >>
+    - run:
+        name: Clear build cache
+        command: |
+          app_name="tta-smarthub-<< parameters.target_env >>"
+          echo "Clearing build cache for ${app_name}"
+          app_guid=$(cf app --guid ${app_name})
+          cf curl -X POST /v3/apps/${app_guid}/actions/clear_buildpack_cache
+          echo "Build cache cleared"
 
 # ----------------- Commands -----------------
 

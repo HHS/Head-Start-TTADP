@@ -275,8 +275,6 @@ class CollabReportSteps{
  * collabReportId : integer : REFERENCES "CollabReports".id
  * collabStepCompleteDate : date
  * collabStepDetail : text
- * collabStepId : integer
- * collabStepPriority : smallint
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
@@ -285,20 +283,22 @@ class CollabReportSteps{
 class CollabReports{
  * id : integer : <generated>
  lastUpdatedById : integer : REFERENCES "Users".id
- userId : integer : REFERENCES "Users".id
  * regionId : integer : REFERENCES "Regions".id
- * conductMethod : enum[]
+ * userId : integer : REFERENCES "Users".id
+ * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
- * description : text
- * duration : double precision
- * endDate : date
- * isStateActivity : boolean : false
- * name : varchar(255)
- * startDate : date
  * submissionStatus : enum
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
+ conductMethod : enum[]
  deletedAt : timestamp with time zone
+ description : text
+ duration : double precision
+ endDate : date
+ isStateActivity : boolean
+ name : varchar(255)
+ participants : enum[]
+ startDate : date
  submittedAt : timestamp with time zone
 }
 
@@ -310,6 +310,31 @@ enum enum_CollabReports_conductMethod {
 }
 
 enum_CollabReports_conductMethod <|-- CollabReports
+
+enum enum_CollabReports_participants {
+ Child Care Training and Technical Assistance Network
+ Child Care and Development Fund
+ Child care licensing
+ DOE/State PreK
+ Head Start Collaboration Office
+ Head Start Recipients
+ Health department/WIC
+ Office of Child Care
+ Other
+ Quality Rating and Improvement System
+ Regional HSA
+ Regional Office staff
+ State HSA
+ State Professional development system
+ State and territory adminstrators
+ State environmental health and safety systems
+ State family engagement systems
+ State health and welness systems
+ State homelessness agency/McKinney Vento liason
+ TTA staff
+}
+
+enum_CollabReports_participants <|-- CollabReports
 
 class CollaboratorRoles{
  * id : integer : <generated>
@@ -1152,6 +1177,7 @@ class SiteAlerts{
 class Topics{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
+ * deprecated : boolean : false
  * name : varchar(255)
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone

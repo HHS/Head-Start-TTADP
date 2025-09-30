@@ -13,10 +13,11 @@ export default function TableWidget(
     loadingLabel,
     title,
     renderData,
+    className,
   },
 ) {
   return (
-    <Container className="smarthub-table-widget shadow-2" loading={loading} loadingLabel={loadingLabel}>
+    <Container className={`smarthub-table-widget shadow-2 ${className}`} loading={loading} loadingLabel={loadingLabel}>
       {/* a scrollable element must be keyboard accessible */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
@@ -56,8 +57,10 @@ TableWidget.propTypes = {
   title: PropTypes.string.isRequired,
   headings: PropTypes.arrayOf(PropTypes.string).isRequired,
   renderData: PropTypes.func.isRequired,
+  className: PropTypes.string,
 };
 
 TableWidget.defaultProps = {
   data: [],
+  className: '',
 };
