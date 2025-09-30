@@ -185,7 +185,7 @@ describe('Review Component', () => {
       });
 
       expect(screen.getByText(/Manager One and Manager Two are requesting changes to the Collaboration Report/)).toBeInTheDocument();
-      expect(screen.getByText(/Please review any manager notes below and re-submit for approval/)).toBeInTheDocument();
+      expect(screen.getByText(/Please review any manager notes below and resubmit for approval/)).toBeInTheDocument();
     });
 
     it('does not display TopAlert when isSubmitted is false', () => {
