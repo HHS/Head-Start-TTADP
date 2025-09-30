@@ -287,6 +287,8 @@ class CollabReports{
  * userId : integer : REFERENCES "Users".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
+ * hasDataUsed : boolean : false
+ * hasGoals : boolean : false
  * submissionStatus : enum
  * updatedAt : timestamp with time zone
  calculatedStatus : enum
@@ -297,6 +299,8 @@ class CollabReports{
  endDate : date
  isStateActivity : boolean
  name : varchar(255)
+ otherDataUsed : text
+ otherParticipants : text
  participants : enum[]
  startDate : date
  submittedAt : timestamp with time zone
