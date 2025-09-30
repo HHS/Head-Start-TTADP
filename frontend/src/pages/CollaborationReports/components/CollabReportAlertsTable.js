@@ -13,7 +13,7 @@ import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import UserContext from '../../../UserContext';
 
-const ReportLink = ({ report, userId }) => {
+export const ReportLink = ({ report, userId }) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApprover = report.approvers.some(({ user }) => user.id === userId);
   const isNeedsAction = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
