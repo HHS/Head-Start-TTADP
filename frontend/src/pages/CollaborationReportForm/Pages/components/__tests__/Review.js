@@ -184,8 +184,7 @@ describe('Review Component', () => {
         approvers: needsActionApprovers,
       });
 
-      expect(screen.getByText(/The following approving manager\(s\) have requested changes/)).toBeInTheDocument();
-      expect(screen.getByText(/Manager One, Manager Two/)).toBeInTheDocument();
+      expect(screen.getByText(/Manager One and Manager Two are requesting changes to the Collaboration Report/)).toBeInTheDocument();
       expect(screen.getByText(/Please review the manager notes and re-submit for approval/)).toBeInTheDocument();
     });
 
@@ -278,7 +277,7 @@ describe('Review Component', () => {
         approvers: [],
       });
 
-      expect(screen.getByText(/The following approving manager\(s\) have requested changes/)).toBeInTheDocument();
+      expect(screen.getByText(/Changes have been requested for the Collaboration Report/)).toBeInTheDocument();
     });
 
     it('handles approvers without user property', () => {
@@ -293,11 +292,11 @@ describe('Review Component', () => {
       });
 
       // Should still render the alert even if some approvers don't have user data
-      expect(screen.getByText(/The following approving manager\(s\) have requested changes/)).toBeInTheDocument();
+      expect(screen.getByText(/Changes have been requested for the Collaboration Report/)).toBeInTheDocument();
     });
   });
 
-  describe('TopAlert getNeedsActionApprovingMangers function', () => {
+  describe('TopAlert formatNeedsActionApprovers function', () => {
     it('returns empty string when no needs action approvers', () => {
       const approvers = [
         {
@@ -329,7 +328,7 @@ describe('Review Component', () => {
         approvers,
       });
 
-      expect(screen.getByText(/Single Manager/)).toBeInTheDocument();
+      expect(screen.getByText(/Single Manager is requesting changes to the Collaboration Report/)).toBeInTheDocument();
     });
   });
 });

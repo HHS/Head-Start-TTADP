@@ -16,27 +16,43 @@ const TopAlert = ({
   pendingApprovalCount,
   approvers,
 }) => {
-  const getNeedsActionApprovingMangers = () => {
+  const formatNeedsActionApprovers = () => {
     const approversList = Array.isArray(approvers) ? approvers : (approvers?.rows || []);
     const needActionApprovers = approversList.filter(
       (a) => a.status === REPORT_STATUSES.NEEDS_ACTION,
     );
-    if (needActionApprovers && needActionApprovers.length > 0) {
-      return needActionApprovers
-        .filter((a) => a.user && a.user.fullName)
-        .map((a) => a.user.fullName)
-        .join(', ');
+
+    if (!needActionApprovers || needActionApprovers.length === 0) {
+      return 'Changes have been requested for the Collaboration Report.';
     }
-    return '';
+
+    const approverNames = needActionApprovers
+      .filter((a) => a.user && a.user.fullName)
+      .map((a) => a.user.fullName);
+
+    if (approverNames.length === 0) {
+      return 'Changes have been requested for the Collaboration Report.';
+    }
+
+    if (approverNames.length === 1) {
+      return `${approverNames[0]} is requesting changes to the Collaboration Report.`;
+    }
+
+    if (approverNames.length === 2) {
+      return `${approverNames[0]} and ${approverNames[1]} are requesting changes to the Collaboration Report.`;
+    }
+
+    // Multiple approvers (3 or more) - use Oxford comma
+    const lastApprover = approverNames.pop();
+    const otherApprovers = approverNames.join(', ');
+    return `${otherApprovers}, and ${lastApprover} are requesting changes to the Collaboration Report.`;
   };
 
   if (isNeedsAction) {
     return (
       <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
         <span className="text-bold">
-          The following approving manager(s) have requested changes to this collaboration report:
-          {' '}
-          {getNeedsActionApprovingMangers()}
+          {formatNeedsActionApprovers()}
         </span>
         <br />
         Please review the manager notes and re-submit for approval.
