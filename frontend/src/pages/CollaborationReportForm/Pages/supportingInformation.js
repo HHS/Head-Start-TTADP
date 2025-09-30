@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -7,7 +8,6 @@ import {
   TextInput,
 } from '@trussworks/react-uswds';
 import { COLLAB_REPORT_PARTICIPANTS } from '@ttahub/common';
-import useGoalTemplates from '../../../hooks/useGoalTemplates';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
 import FormItem from '../../../components/FormItem';
@@ -18,7 +18,7 @@ import { COLLAB_REPORT_DATA } from '../../../Constants';
 const path = 'supporting-information';
 const position = 2;
 
-const SupportingInformation = () => {
+const SupportingInformation = ({ goalTemplates = [] }) => {
   const {
     register,
     watch,
@@ -53,7 +53,6 @@ const SupportingInformation = () => {
   const showGoalsOptions = hasGoals === 'true';
 
   // Fetch goal templates using the custom hook
-  const goalTemplates = useGoalTemplates([], false, false);
   const goalsOptions = (goalTemplates || []).map((template) => ({
     label: template.standard,
     value: template.id,
@@ -214,6 +213,13 @@ const SupportingInformation = () => {
   );
 };
 
+SupportingInformation.propTypes = {
+  goalTemplates: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    standard: PropTypes.string.isRequired,
+  })).isRequired,
+};
+
 export const isPageComplete = (hookForm) => {
   const { getValues } = hookForm;
   const formData = getValues();
@@ -295,7 +301,7 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     _reportId,
     isAppLoading,
@@ -306,19 +312,22 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     Alert,
-  ) => (
-    <>
-      <SupportingInformation />
-      <Alert />
-      <NavigatorButtons
-        isAppLoading={isAppLoading}
-        onContinue={onContinue}
-        onSaveDraft={onSaveDraft}
-        path={path}
-        position={position}
-        onUpdatePage={onUpdatePage}
-      />
-    </>
-  ),
+  ) => {
+    const { goalTemplates } = additionalData;
+    return (
+      <>
+        <SupportingInformation goalTemplates={goalTemplates} />
+        <Alert />
+        <NavigatorButtons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          path={path}
+          position={position}
+          onUpdatePage={onUpdatePage}
+        />
+      </>
+    );
+  },
   isPageComplete,
 };

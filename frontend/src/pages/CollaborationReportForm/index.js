@@ -35,6 +35,7 @@ import {
   submitReport,
 } from '../../fetchers/collaborationReports';
 import { getCollaborators } from '../../fetchers/collaborators';
+import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import AppLoadingContext from '../../AppLoadingContext';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -112,6 +113,31 @@ export const formatReportWithSaveBeforeConversion = async (
   }
 
   return reportData;
+};
+
+export const convertFormDataToReport = (data) => {
+  const {
+    participants,
+    dataUsed,
+    goals,
+    reportGoals,
+    ...rest
+  } = data;
+
+  const participantValues = participants ? participants.map((p) => p.value) : [];
+  const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
+  const goalsValues = goals ? goals.map((g) => g.value) : [];
+  const reportGoalsValues = reportGoals ? reportGoals.map((g) => g.value) : [];
+
+  let reportGoalsToUse = goalsValues;
+  if (goalsValues.length === 0) { reportGoalsToUse = reportGoalsValues; }
+
+  return {
+    ...rest,
+    participants: participantValues,
+    dataUsed: dataUsedValues,
+    reportGoals: reportGoalsToUse,
+  };
 };
 
 function CollaborationReport({ match, location }) {
@@ -252,9 +278,10 @@ function CollaborationReport({ match, location }) {
         const apiCalls = [
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
+          getGoalTemplates([], false),
         ];
 
-        const [collaborators, approvers] = await Promise.all(apiCalls);
+        const [collaborators, approvers, goalTemplates] = await Promise.all(apiCalls);
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
@@ -274,6 +301,7 @@ function CollaborationReport({ match, location }) {
         updateAdditionalData({
           collaborators: filteredCollaborators || [],
           approvers: approvers || [],
+          goalTemplates: goalTemplates || [],
         });
 
         let shouldUpdateFromNetwork = true;
@@ -417,8 +445,11 @@ function CollaborationReport({ match, location }) {
           delete fields.endDate;
         }
 
+        // Process participants, dataUsed, and goals to extract values
+        const fieldsToSave = convertFormDataToReport(fields);
+
         const savedReport = await createReport({
-          ...fields,
+          ...fieldsToSave,
           regionId: formData.regionId,
           version: 2,
         });
@@ -442,8 +473,10 @@ function CollaborationReport({ match, location }) {
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
       } else {
+        // Process participants, dataUsed, and goals to extract values
+        const formDataValues = convertFormDataToReport(data);
         const updatedReport = await formatReportWithSaveBeforeConversion(
-          data,
+          formDataValues,
           formData,
           user,
           userHasOneRole,
