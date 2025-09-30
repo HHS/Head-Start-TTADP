@@ -55,7 +55,7 @@ const TopAlert = ({
           {formatNeedsActionApprovers()}
         </span>
         <br />
-        Please review the manager notes and re-submit for approval.
+        Please review any manager notes below and re-submit for approval.
       </Alert>
     );
   }

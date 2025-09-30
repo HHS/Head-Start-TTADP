@@ -5,7 +5,6 @@ import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import Container from '../Container';
 import {
   DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
   STATES,
   COLLAB_REPORT_REASONS,
   COLLAB_REPORT_DATA,
@@ -48,8 +47,8 @@ export default function SubmittedCollabReport({ report }) {
   } = report;
 
   // Format dates
-  const formattedStartDate = moment(startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT);
-  const formattedEndDate = moment(endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT);
+  const formattedStartDate = moment(startDate).format(DATE_DISPLAY_FORMAT);
+  const formattedEndDate = moment(endDate).format(DATE_DISPLAY_FORMAT);
   const formattedDuration = `${duration} hours`;
   const formattedCreatedAt = moment(createdAt).format(DATE_DISPLAY_FORMAT);
   const formattedSubmittedAt = moment(submittedAt).format(DATE_DISPLAY_FORMAT);

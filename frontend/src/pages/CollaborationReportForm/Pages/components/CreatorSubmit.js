@@ -81,7 +81,7 @@ export default function CreatorSubmit({
         </div>
         )}
 
-        <Button disabled={hasIncompletePages} type="submit">Submit</Button>
+        <Button disabled={hasIncompletePages} type="submit">Submit for approval</Button>
         <Button id={`draft-${path}-save-draft`} className="usa-button--outline" type="button" onClick={() => onSaveDraft()}>Save draft</Button>
         <Button id={`draft-${path}-back`} outline type="button" onClick={() => { onUpdatePage(PREVIOUS_POSITION); }}>Back</Button>
       </Form>

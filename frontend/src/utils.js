@@ -406,24 +406,17 @@ export function getCollabReportStatusDisplayAndClassnames(
   }
 
   if (isApprover) {
-    // if the user is an approver and has been submitted
-    // and they haven't reviewed it yet they see "Needs action"
-    if (
-      calculatedStatus === REPORT_STATUSES.SUBMITTED
-      && (!userApprover.status || userApprover.status === APPROVER_STATUSES.NEEDS_ACTION)
-    ) {
-      displayStatus = 'Needs action';
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
-    } else if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      // else if they have reviewed it and the report status is "needs action"
-      // they see needs action
-      displayStatus = 'Needs action';
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
-    } else if (userApprover.status === APPROVER_STATUSES.APPROVED) {
-      // else if they have reviewed it and approved it, they see "reviewed"
+    // Check if the approver has reviewed the report (has a status)
+    if (userApprover.status) {
+      // If they have reviewed, they always see "Reviewed" regardless of their choice
       displayStatus = 'Reviewed';
       statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
+    } else if (calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+      // If they haven't reviewed it yet and the report is submitted, they see "Needs action"
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
     }
+    // For other statuses (draft, approved, etc.), fall through to default behavior
   }
 
   return {

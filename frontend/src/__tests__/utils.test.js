@@ -165,7 +165,7 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
       expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
     });
 
-    it('should show "Needs action" when submitted and approver status is needs_action', () => {
+    it('should show "Reviewed" when submitted and approver status is needs_action', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         approvers: [createMockApprover(mockUserId, APPROVER_STATUSES.NEEDS_ACTION)],
@@ -173,11 +173,23 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
 
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
-      expect(result.displayStatus).toBe('Needs action');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
+      expect(result.displayStatus).toBe('Reviewed');
+      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
     });
 
-    it('should show "Needs action" when report status is needs_action regardless of approver status', () => {
+    it('should show "Reviewed" when single approver has set status to needs_action', () => {
+      const report = createMockReport({
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [createMockApprover(mockUserId, APPROVER_STATUSES.NEEDS_ACTION)],
+      });
+
+      const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
+
+      expect(result.displayStatus).toBe('Reviewed');
+      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
+    });
+
+    it('should show "Reviewed" when single approver has approved even if report status is needs_action', () => {
       const report = createMockReport({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         approvers: [createMockApprover(mockUserId, APPROVER_STATUSES.APPROVED)],
@@ -185,8 +197,8 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
 
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
-      expect(result.displayStatus).toBe('Needs action');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
+      expect(result.displayStatus).toBe('Reviewed');
+      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
     });
 
     it('should show "Reviewed" when approver has approved', () => {
@@ -224,8 +236,8 @@ describe('getCollabReportStatusDisplayAndClassnames', () => {
 
       const result = getCollabReportStatusDisplayAndClassnames(mockUserId, report);
 
-      expect(result.displayStatus).toBe('Needs action');
-      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`);
+      expect(result.displayStatus).toBe('Reviewed');
+      expect(result.statusClassName).toBe(`smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`);
     });
 
     it('should show "Reviewed" when user has approved their own report', () => {
