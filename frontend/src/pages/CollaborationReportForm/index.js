@@ -225,7 +225,6 @@ function CollaborationReport({ match, location }) {
             // make sure we BELONG here
             const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
             const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
-
             // eslint-disable-next-line max-len
             const isApproverFromFetched = approvers.some(({ user: approver }) => user.id === approver.id);
             const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
