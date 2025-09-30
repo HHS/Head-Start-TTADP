@@ -23,7 +23,6 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
     register,
     watch,
     control,
-    getValues,
   } = useFormContext();
 
   // Watch the participants field to determine if "other" is selected
@@ -66,7 +65,6 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
       <div className="cr-activity-summary-required">
         <IndicatesRequiredField />
       </div>
-      <button type="button" onClick={() => { console.log(getValues()); }}>Get Values</button>
       <Fieldset className="smart-hub--report-legend">
         <FormItem
           label="Who participated in the activity?"
