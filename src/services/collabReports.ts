@@ -274,7 +274,7 @@ export async function collabReportById(crId: string) {
         include: [
           {
             model: Role,
-            as: 'role',
+            as: 'roles',
           },
         ],
       },
@@ -290,7 +290,7 @@ export async function collabReportById(crId: string) {
             include: [
               {
                 model: Role,
-                as: 'role',
+                as: 'roles',
               },
             ],
           },
@@ -334,7 +334,7 @@ export async function collabReportById(crId: string) {
             include: [
               {
                 model: Role,
-                as: 'role',
+                as: 'roles',
               },
             ],
           },
