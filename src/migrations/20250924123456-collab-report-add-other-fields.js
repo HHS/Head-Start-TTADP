@@ -18,15 +18,13 @@ module.exports = {
       }, { transaction });
 
       await queryInterface.addColumn('CollabReports', 'hasDataUsed', {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.BOOLEAN,
-        defaultValue: false,
       }, { transaction });
 
       await queryInterface.addColumn('CollabReports', 'hasGoals', {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.BOOLEAN,
-        defaultValue: false,
       }, { transaction });
     });
   },

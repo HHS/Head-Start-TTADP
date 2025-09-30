@@ -96,18 +96,16 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
       },
       hasDataUsed: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
       otherDataUsed: {
         allowNull: true,
         type: DataTypes.TEXT,
       },
       hasGoals: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
       calculatedStatus: {
         allowNull: true,
