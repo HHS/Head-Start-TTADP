@@ -41,7 +41,7 @@ parameters:
   target_env:
     description: "Environment to target"
     type: enum
-    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging, prod ]
+    enum: [ '-', dev-blue, dev-green, dev-red, dev-gold, dev-pink, staging ]
     default: '-'
 
 # ----------------- Workflows -----------------
