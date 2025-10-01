@@ -391,29 +391,6 @@ class Courses{
  deletedAt : timestamp with time zone
 }
 
-class EventReportPilotNationalCenterUsers{
- * id : integer : <generated>
- * eventReportPilotId : integer : REFERENCES "EventReportPilots".id
- * nationalCenterId : integer : REFERENCES "NationalCenters".id
- * userId : integer : REFERENCES "Users".id
- * createdAt : timestamp with time zone : now()
- * nationalCenterName : varchar(255)
- * updatedAt : timestamp with time zone : now()
- * userName : varchar(255)
-}
-
-class EventReportPilots{
- * id : integer : <generated>
- * collaboratorIds : integer[]
- * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
- * data : jsonb
- * ownerId : integer
- * regionId : integer
- * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
- imported : jsonb
- pocIds : integer[]
-}
-
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -1150,13 +1127,14 @@ class SessionReportSupportingAttachments{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
  * sessionReportId : integer : REFERENCES "SessionReports".id
+ * sessionReportId : integer : REFERENCES "SessionReports".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }
 
 class SessionReports{
  * id : integer : <generated>
- * eventId : integer : REFERENCES "EventReportPilots".id
+ * eventId : integer : REFERENCES "TrainingReports".id
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
@@ -1183,6 +1161,31 @@ class Topics{
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  mapsTo : integer
+}
+
+class TrainingReportNationalCenterUsers{
+ * id : integer : <generated>
+!issue='column should not allow null'
+!issue='column missing from model'
+!issue='column reference missing' * <color:#d54309>eventReportPilotId</color>: integer : REFERENCES "TrainingReports".id
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone : now()
+ * nationalCenterName : varchar(255)
+ * updatedAt : timestamp with time zone : now()
+ * userName : varchar(255)
+}
+
+class TrainingReports{
+ * id : integer : <generated>
+ * collaboratorIds : integer[]
+ * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
+ * data : jsonb
+ * ownerId : integer
+ * regionId : integer
+ * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ imported : jsonb
+ pocIds : integer[]
 }
 
 class UserRoles{
@@ -1688,34 +1691,6 @@ class ZALDDL{
  object_identity : varchar(255)
  object_type : varchar(255)
  schema_name : varchar(255)
- session_sig : text
-}
-
-class ZALEventReportPilotNationalCenterUsers{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALEventReportPilots{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
  session_sig : text
 }
 
@@ -2587,6 +2562,34 @@ class ZALTopics{
  session_sig : text
 }
 
+class ZALTrainingReportNationalCenterUsers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTrainingReports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALUserRoles{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2738,8 +2741,6 @@ CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFile
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : communicationLog, communicationLogRecipients
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
-EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
-EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReports : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
@@ -2794,9 +2795,9 @@ MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" Monitoring
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
 MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : standardLink, monitoringFindingStandards
 MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandards, standardLink
-NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" TrainingReportNationalCenterUsers : trainingReportNationalCenterUsers, nationalCenter
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
@@ -2832,6 +2833,8 @@ SessionReports "1" --[#black,dashed,thickness=2]--{  "n" SessionReportSupporting
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
+TrainingReports "1" --[#black,dashed,thickness=2]--{  "n" SessionReports : event, sessionReports
+TrainingReports "1" --[#black,dashed,thickness=2]--{  "n" TrainingReportNationalCenterUsers : trainingReport, trainingReportNationalCenterUsers
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
@@ -2839,7 +2842,6 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUp
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : user, collabReportApprovers, approvers
 Users "1" --[#black,dashed,thickness=2]--{  "n" CollabReportSpecialists : specialist, collabReportSpecialists
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
-Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : user, goalStatusChanges
 Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, groupCollaborators
@@ -2847,6 +2849,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nati
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
+Users "1" --[#black,dashed,thickness=2]--{  "n" TrainingReportNationalCenterUsers : user, trainingReportNationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus

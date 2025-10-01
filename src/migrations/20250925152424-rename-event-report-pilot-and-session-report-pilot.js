@@ -41,29 +41,25 @@ module.exports = {
         { transaction },
       );
 
+      await queryInterface.renameColumn('SessionReportFiles', 'sessionReportPilotId', 'sessionReportId', { transaction });
+
       await queryInterface.sequelize.query(
         `
         ALTER TABLE "SessionReportFiles"
         ADD CONSTRAINT "SessionReportFiles_sessionReportId_fkey"
-        FOREIGN KEY ("sessionReportPilotId") REFERENCES "SessionReports" (id)
+        FOREIGN KEY ("sessionReportId") REFERENCES "SessionReports" (id)
         `,
         { transaction },
       );
 
       // Update foreign key references in SessionReportSupportingAttachments table
-      await queryInterface.sequelize.query(
-        `
-        ALTER TABLE "SessionReportSupportingAttachments"
-        DROP CONSTRAINT "SessionReportPilotSupportingAttachments_sessionReportPilotId_fkey"
-        `,
-        { transaction },
-      );
+      await queryInterface.renameColumn('SessionReportSupportingAttachments', 'sessionReportPilotId', 'sessionReportId', { transaction });
 
       await queryInterface.sequelize.query(
         `
         ALTER TABLE "SessionReportSupportingAttachments"
         ADD CONSTRAINT "SessionReportSupportingAttachments_sessionReportId_fkey"
-        FOREIGN KEY ("sessionReportPilotId") REFERENCES "SessionReports" (id)
+        FOREIGN KEY ("sessionReportId") REFERENCES "SessionReports" (id)
         `,
         { transaction },
       );
@@ -102,7 +98,7 @@ module.exports = {
         { transaction },
       );
 
-      // Revert foreign key references in SessionReportPilots table
+      // Revert foreign key references in SessionReportSupportingAttachments table
       await queryInterface.sequelize.query(
         `
         ALTER TABLE "SessionReportSupportingAttachments"
@@ -110,6 +106,8 @@ module.exports = {
         `,
         { transaction },
       );
+
+      await queryInterface.renameColumn('SessionReportSupportingAttachments', 'sessionReportId', 'sessionReportPilotId', { transaction });
 
       await queryInterface.sequelize.query(
         `
@@ -120,6 +118,7 @@ module.exports = {
         { transaction },
       );
 
+      // Revert foreign key references in SessionReportFiles table
       await queryInterface.sequelize.query(
         `
         ALTER TABLE "SessionReportFiles"
@@ -127,6 +126,8 @@ module.exports = {
         `,
         { transaction },
       );
+
+      await queryInterface.renameColumn('SessionReportFiles', 'sessionReportId', 'sessionReportPilotId', { transaction });
 
       await queryInterface.sequelize.query(
         `
