@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
@@ -38,6 +38,14 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
   const hasDataUsed = watch('hasDataUsed');
   const showDataUsedOptions = hasDataUsed === 'true';
 
+  useEffect(() => {
+    if (hasDataUsed !== 'true') {
+      // Clear dataUsed and otherDataUsed if hasDataUsed is not "true"
+      control.setValue('dataUsed', []);
+      control.setValue('otherDataUsed', '');
+    }
+  }, [hasDataUsed, control]);
+
   // Map the "Data Used" options for the MultiSelect component
   const dataUsedOptions = Object.entries(COLLAB_REPORT_DATA).map(
     ([key, value]) => ({ label: value, value: key }),
@@ -50,6 +58,13 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
   // Watch the hasDataUsed field to conditionally require data selections
   const hasGoals = watch('hasGoals');
   const showGoalsOptions = hasGoals === 'true';
+
+  useEffect(() => {
+    if (hasGoals !== 'true') {
+      // Clear dataUsed and otherDataUsed if hasDataUsed is not "true"
+      control.setValue('goals', []);
+    }
+  }, [hasGoals, control]);
 
   // Fetch goal templates using the custom hook
   const goalsOptions = (goalTemplates || []).map((template) => ({
@@ -242,17 +257,17 @@ export const isPageComplete = (hookForm) => {
   }
 
   // Check if hasDataUsed and dataUsed is provided
-  if (hasDataUsed && dataUsed && dataUsed.length === 0) {
+  if (hasDataUsed && (!dataUsed || dataUsed.length === 0)) {
     return false;
   }
 
   // Check if data used and "other" selected but not provided
-  if (hasDataUsed && dataUsed && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
+  if (hasDataUsed && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
     return false;
   }
 
   // Check if hasGoals and goals is provided
-  if (hasGoals && goals && goals.length === 0) {
+  if (hasGoals && (!goals || goals.length === 0)) {
     return false;
   }
 
@@ -263,28 +278,42 @@ export const isPageComplete = (hookForm) => {
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    reportGoals,
+    participants,
+    otherParticipants,
     dataUsed,
+    otherDataUsed,
+    goals,
   } = watch();
 
-  const goals = (reportGoals || []).filter(Boolean).map((goal) => goal?.goalTemplate?.standard || '').filter(Boolean).join(', ');
-  const data = (dataUsed || []).filter(Boolean).map((item) => {
-    if (!item) return '';
-    const { collabReportDatum, collabReportDataOther } = item;
-    if (collabReportDatum === 'other') {
-      return collabReportDataOther;
-    }
+  let participantsToDisplay = participants.map((p) => p.label).join(', ');
+  if (participants.some((p) => p.value === 'Other') && otherParticipants) {
+    participantsToDisplay += `: ${otherParticipants}`;
+  }
 
-    return COLLAB_REPORT_DATA[collabReportDatum] || '';
-  }).join(', ');
+  let dataToDisplay = '';
+  if (dataUsed && dataUsed.length > 0) {
+    dataToDisplay = dataUsed.map((d) => d.label).join(', ');
+    if (dataUsed.some((d) => d.value === 'other') && otherDataUsed) {
+      dataToDisplay += `: ${otherDataUsed}`;
+    }
+  } else {
+    dataToDisplay = 'None provided';
+  }
+
+  let goalsToDisplay = '';
+  if (goals && goals.length > 0) {
+    goalsToDisplay = goals.map((g) => g.label).join(', ');
+  } else {
+    goalsToDisplay = 'None provided';
+  }
 
   const sections = [
     {
       anchor: 'support-information',
       items: [
-        { label: 'Participants', name: 'participants', customValue: { participants: '' } },
-        { label: 'Data collected/shared', name: 'data', customValue: { data } },
-        { label: 'Supporting goals', name: 'goals', customValue: { goals } },
+        { label: 'Participants', name: 'participants', customValue: { participants: participantsToDisplay } },
+        { label: 'Data collected/shared', name: 'data', customValue: { data: dataToDisplay } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: goalsToDisplay } },
       ],
     },
   ];
