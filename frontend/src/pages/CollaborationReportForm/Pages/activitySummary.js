@@ -438,12 +438,13 @@ const ReviewSection = () => {
     statesInvolved,
     method,
   } = getValues();
+
   const sections = [
     {
       anchor: 'activity-for',
       items: [
         { label: 'Activity name', name: 'name', customValue: { name } },
-        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map((c) => c.name).join(', ') || '' } },
+        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map(({ specialist }) => specialist.fullName).join(', ') || '' } },
       ],
     },
     {

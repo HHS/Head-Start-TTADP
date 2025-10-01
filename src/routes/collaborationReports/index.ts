@@ -5,7 +5,7 @@ import {
   getAlerts,
   getReport,
   getReports,
-  // reviewReport,
+  reviewReport,
   saveReport,
   softDeleteReport,
   submitReport,
@@ -44,9 +44,11 @@ router.get('/:collabReportId', nameTransactionByBase, checkCollabReportIdParam, 
 router.get('/', transactionWrapper(getReports));
 
 // reviewReport
-// router.put('/:collabReportId/review',
-// checkCollabReportIdParam,
-// transactionWrapper(reviewReport));
+router.put(
+  '/:collabReportId/review',
+  checkCollabReportIdParam,
+  transactionWrapper(reviewReport),
+);
 
 // submitReport
 router.put('/:collabReportId/submit', checkCollabReportIdParam, transactionWrapper(submitReport));

@@ -117,7 +117,7 @@ describe('CreatorSubmit Component', () => {
       expect(screen.getByText('CreatorNeedsAction Component')).toBeInTheDocument();
 
       // Should not render the normal form
-      expect(screen.queryByText('Submit for approval')).not.toBeInTheDocument();
+      expect(screen.queryByText('Submit')).not.toBeInTheDocument();
       expect(screen.queryByText('Save draft')).not.toBeInTheDocument();
       expect(screen.queryByText('Back')).not.toBeInTheDocument();
     });
