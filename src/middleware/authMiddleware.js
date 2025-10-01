@@ -97,6 +97,19 @@ export async function login(req, res) {
     };
 
     const redirectTo = client.buildAuthorizationUrl(issuerConfig, parameters);
+    // Log what we're about to ask the IdP for
+    auditLogger.info('OIDC authorize request', {
+      issuer: process.env.AUTH_BASE,
+      client_id: process.env.AUTH_CLIENT_ID,
+      auth_method: USE_PKCE ? 'pkce' : 'private_key_jwt',
+      redirect_uri: parameters.redirect_uri,
+      scope: parameters.scope,
+      code_challenge_method: USE_PKCE ? parameters.code_challenge_method : undefined,
+      has_code_challenge: USE_PKCE ? !!parameters.code_challenge : undefined,
+      state: req.session.pkce?.state,
+      nonce: req.session.pkce?.nonce,
+    });
+
     res.redirect(redirectTo.href);
   } catch (err) {
     auditLogger.error(`${namespace} Failed to start login`, err);
@@ -107,6 +120,28 @@ export async function login(req, res) {
 export async function getAccessToken(req) {
   try {
     const currentUrl = new URL(req.originalUrl, `${req.protocol}://${req.get('host')}`);
+
+    // Compute what the library will treat as redirect_uri from the callback URL
+    const redirectUriFromCallback = `${currentUrl.origin}${currentUrl.pathname}`;
+    // expected redirect_uri must match exactly what was used in the initial authorize request
+    const expectedRedirectUri = `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`;
+
+    // Logging for troubleshooting invalid_grant
+    auditLogger.info('OIDC token request redirect_uri check', {
+      issuer: process.env.AUTH_BASE,
+      client_id: process.env.AUTH_CLIENT_ID,
+      auth_method: USE_PKCE ? 'pkce' : 'private_key_jwt',
+      redirect_uri_from_callback: redirectUriFromCallback,
+      expected_redirect_uri: expectedRedirectUri,
+      matches: redirectUriFromCallback === expectedRedirectUri,
+    });
+
+    if (redirectUriFromCallback !== expectedRedirectUri) {
+      auditLogger.error('Redirect URI mismatch (token request will fail)', {
+        expectedRedirectUri,
+        redirectUriFromCallback,
+      });
+    }
 
     const client = await getOidcClient();
     // Send the authorization code and the code verifier in a request for an access token.
