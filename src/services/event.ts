@@ -114,7 +114,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     include: [
       {
         model: TrainingReportNationalCenterUser,
-        as: 'eventReportPilotNationalCenterUsers',
+        as: 'trainingReportNationalCenterUsers',
       },
       {
         model: SessionReport,

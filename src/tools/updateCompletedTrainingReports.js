@@ -44,7 +44,7 @@ export default async function updateCompletedTrainingReports() {
           bulkCreate.push({
             userId: owner.id,
             userName: owner.name,
-            eventReportPilotId: report.id,
+            trainingReportId: report.id,
             nationalCenterId: owner.nationalCenters[0].id,
             nationalCenterName: owner.nationalCenters[0].name,
           });
@@ -56,7 +56,7 @@ export default async function updateCompletedTrainingReports() {
           bulkCreate.push({
             userId: collaborator.id,
             userName: collaborator.name,
-            eventReportPilotId: report.id,
+            trainingReportId: report.id,
             nationalCenterId: collaborator.nationalCenters[0].id,
             nationalCenterName: collaborator.nationalCenters[0].name,
           });

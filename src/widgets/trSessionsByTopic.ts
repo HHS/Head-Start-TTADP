@@ -6,7 +6,7 @@ import {
 import { IScopes } from './types';
 
 const {
-  EventReportPilot: TrainingReport,
+  TrainingReport,
 } = db;
 
 export default async function trSessionByTopic(

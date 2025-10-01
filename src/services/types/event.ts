@@ -25,7 +25,7 @@ export type SessionShape = {
 
 type TrainingReportNationalCenterUserType = {
   id: number;
-  eventReportPilotId: number;
+  trainingReportId: number;
   nationalCenterId: number;
   nationalCenterName: string;
   userName: string;
@@ -49,7 +49,7 @@ export type EventShape = {
   updatedAt: string;
   sessionReports: SessionShape[];
   owner: undefined | { id: string; name: string; email: string };
-  eventReportPilotNationalCenterUsers: TrainingReportNationalCenterUserType[];
+  trainingReportNationalCenterUsers: TrainingReportNationalCenterUserType[];
 };
 
 export type CreateEventRequest = {

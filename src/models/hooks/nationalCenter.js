@@ -24,7 +24,7 @@ const updateExistingSessionReports = async (sequelize, instance, options, isDest
         ],
       },
       include: [{
-        model: sequelize.models.EventReportPilot,
+        model: sequelize.models.TrainingReport,
         as: 'event',
         required: true,
         where: {

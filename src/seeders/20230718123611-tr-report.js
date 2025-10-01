@@ -34,7 +34,7 @@ module.exports = {
 
     await queryInterface.sequelize.query(`
     -- create a report for cuke    
-    INSERT INTO "EventReportPilots" (
+    INSERT INTO "TrainingReports" (
       "ownerId",
       "collaboratorIds",
       "regionId",
@@ -58,7 +58,7 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete('EventReportPilots', { ownerId: 1 }, {});
+    await queryInterface.bulkDelete('TrainingReports', { ownerId: 1 }, {});
     await queryInterface.bulkDelete('Permissions', { userId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }, {});
     await queryInterface.bulkDelete('Permissions', { userId: 3, scopeId: POC_TRAINING_REPORTS }, {});
     await queryInterface.bulkDelete('Permissions', { userId: 5, scopeId: READ_WRITE_TRAINING_REPORTS }, {});

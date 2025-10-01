@@ -5,7 +5,7 @@ import {
 import { IScopes } from './types';
 
 const {
-  EventReportPilot: TrainingReport,
+  TrainingReport,
   NationalCenter,
 } = db;
 

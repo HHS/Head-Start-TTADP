@@ -2,7 +2,7 @@ import db from '../models';
 import { baseTRScopes, countBySingleKey, generateReasonList } from './helpers';
 import { IScopes } from './types';
 
-const { EventReportPilot: TrainingReport } = db;
+const { TrainingReport } = db;
 
 export default async function trReasonList(scopes: IScopes) {
   const res = await TrainingReport.findAll({

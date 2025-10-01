@@ -958,11 +958,11 @@ export const processTraningReports = async (where = '') => {
     WHERE data ? 'owner' AND data->'owner' ? 'nameWithNationalCenters'
     ${where};
 
-    -- 5. Update each element's userName in eventReportPilotNationalCenterUsers array using convertUserName()
+    -- 5. Update each element's userName in trainingReportNationalCenterUsers array using convertUserName()
     UPDATE "TrainingReports"
     SET data = jsonb_set(
         data,
-        '{eventReportPilotNationalCenterUsers}',
+        '{trainingReportNationalCenterUsers}',
         (
             SELECT jsonb_agg(
                 CASE 
@@ -971,11 +971,11 @@ export const processTraningReports = async (where = '') => {
                     ELSE user_elem
                 END
             )
-            FROM jsonb_array_elements(data->'eventReportPilotNationalCenterUsers') AS user_elem
+            FROM jsonb_array_elements(data->'trainingReportNationalCenterUsers') AS user_elem
         ),
         false
     )
-    WHERE data ? 'eventReportPilotNationalCenterUsers'
+    WHERE data ? 'trainingReportNationalCenterUsers'
     ${where};
   `);
   // Session

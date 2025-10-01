@@ -68,7 +68,7 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
 };
 
 /**
- * This is really similar to propagateName, but for EventReportPilot.
+ * This is really similar to propagateName, but for TrainingReport.
  */
 const updateTrainingReportGoalText = async (sequelize, instance, options) => {
   const changed = instance.changed();
@@ -76,7 +76,7 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
     && changed.includes('name')) {
     const { id: goalId } = instance;
 
-    const events = await sequelize.models.EventReportPilot.findAll({
+    const events = await sequelize.models.TrainingReport.findAll({
       where: {
         [Op.and]: [
           {
@@ -107,7 +107,7 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
         ev.data.goal = instance.name;
       }
 
-      await sequelize.models.EventReportPilot.update(
+      await sequelize.models.TrainingReport.update(
         { data },
         { where: { id: ev.id } },
       );

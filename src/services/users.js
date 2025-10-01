@@ -512,7 +512,7 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
 
   if (eventId) {
     // get event report pilot that has the id event id.
-    const eventReportPilot = await TrainingReport.findOne({
+    const event = await TrainingReport.findOne({
       attributes: ['id', 'ownerId', 'data'],
       where: {
         data: {
@@ -523,12 +523,12 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       },
     });
 
-    if (eventReportPilot) {
+    if (event) {
       // Check if creators contains the current ownerId.
-      const currentOwner = results.creators.find((creator) => creator.id === eventReportPilot.ownerId);
+      const currentOwner = results.creators.find((creator) => creator.id === event.ownerId);
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
-        const owner = await userById(eventReportPilot.ownerId);
+        const owner = await userById(event.ownerId);
         results.creators.push({ id: owner.id, name: owner.name });
       }
     }

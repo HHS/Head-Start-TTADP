@@ -114,7 +114,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
     const ids = eventReportNationalCenterUsers.map((r) => r.id);
     await sequelize.models.TrainingReportNationalCenterUser.destroy({
       where: {
-        eventReportPilotId: instance.id,
+        trainingReportId: instance.id,
         id: {
           [Op.notIn]: ids,
         },
