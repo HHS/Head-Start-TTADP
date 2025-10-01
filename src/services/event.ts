@@ -180,7 +180,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     data: event?.data,
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
-    eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
+    trainingReportNationalCenterUsers: event?.trainingReportNationalCenterUsers ?? [],
   };
 }
 
