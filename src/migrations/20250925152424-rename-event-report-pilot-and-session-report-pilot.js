@@ -64,6 +64,47 @@ module.exports = {
         { transaction },
       );
 
+      // Recreate audit triggers for renamed tables
+      // The audit system uses specific naming conventions for triggers and functions
+      // We need to drop triggers from the renamed tables first, then drop old functions,
+      // rename the ZAL tables, and finally recreate triggers with new names
+      await queryInterface.sequelize.query(
+        `
+        -- Drop triggers from renamed tables (they still reference old function names)
+        DROP TRIGGER IF EXISTS "ZALTEventReportPilots" ON "TrainingReports";
+        DROP TRIGGER IF EXISTS "ZALTruncateTEventReportPilots" ON "TrainingReports";
+
+        DROP TRIGGER IF EXISTS "ZALTEventReportPilotNationalCenterUsers" ON "TrainingReportNationalCenterUsers";
+        DROP TRIGGER IF EXISTS "ZALTruncateTEventReportPilotNationalCenterUsers" ON "TrainingReportNationalCenterUsers";
+
+        DROP TRIGGER IF EXISTS "ZALTSessionReportPilots" ON "SessionReports";
+        DROP TRIGGER IF EXISTS "ZALTruncateTSessionReportPilots" ON "SessionReports";
+
+        DROP TRIGGER IF EXISTS "ZALTSessionReportPilotFiles" ON "SessionReportFiles";
+        DROP TRIGGER IF EXISTS "ZALTruncateTSessionReportPilotFiles" ON "SessionReportFiles";
+
+        DROP TRIGGER IF EXISTS "ZALTSessionReportPilotSupportingAttachments" ON "SessionReportSupportingAttachments";
+        DROP TRIGGER IF EXISTS "ZALTruncateTSessionReportPilotSupportingAttachments" ON "SessionReportSupportingAttachments";
+
+        -- Drop old audit functions
+        DROP FUNCTION IF EXISTS "ZALFEventReportPilots"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFEventReportPilots"();
+
+        DROP FUNCTION IF EXISTS "ZALFEventReportPilotNationalCenterUsers"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFEventReportPilotNationalCenterUsers"();
+
+        DROP FUNCTION IF EXISTS "ZALFSessionReportPilots"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFSessionReportPilots"();
+
+        DROP FUNCTION IF EXISTS "ZALFSessionReportPilotFiles"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFSessionReportPilotFiles"();
+
+        DROP FUNCTION IF EXISTS "ZALFSessionReportPilotSupportingAttachments"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFSessionReportPilotSupportingAttachments"();
+        `,
+        { transaction },
+      );
+
       // Rename audit tables
       await queryInterface.sequelize.query(
         `
@@ -72,6 +113,18 @@ module.exports = {
         ALTER TABLE "ZALSessionReportPilots" RENAME TO "ZALSessionReports";
         ALTER TABLE "ZALSessionReportPilotFiles" RENAME TO "ZALSessionReportFiles";
         ALTER TABLE "ZALSessionReportPilotSupportingAttachments" RENAME TO "ZALSessionReportSupportingAttachments";
+        `,
+        { transaction },
+      );
+
+      // Create new audit triggers and functions for the renamed tables
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFAddAuditingOnTable"('TrainingReports');
+        SELECT "ZAFAddAuditingOnTable"('TrainingReportNationalCenterUsers');
+        SELECT "ZAFAddAuditingOnTable"('SessionReports');
+        SELECT "ZAFAddAuditingOnTable"('SessionReportFiles');
+        SELECT "ZAFAddAuditingOnTable"('SessionReportSupportingAttachments');
         `,
         { transaction },
       );
@@ -151,6 +204,70 @@ module.exports = {
         ALTER TABLE "SessionReports"
         ADD CONSTRAINT "SessionReportPilots_eventId_fkey"
         FOREIGN KEY ("eventId") REFERENCES "EventReportPilots" (id)
+        `,
+        { transaction },
+      );
+
+      // Recreate audit triggers for the old table names (reverse of up migration)
+      // Drop triggers from renamed tables first, then drop functions,
+      // rename ZAL tables, and recreate triggers
+      await queryInterface.sequelize.query(
+        `
+        -- Drop triggers from renamed tables (they reference new function names)
+        DROP TRIGGER IF EXISTS "ZALTTrainingReports" ON "EventReportPilots";
+        DROP TRIGGER IF EXISTS "ZALTruncateTTrainingReports" ON "EventReportPilots";
+
+        DROP TRIGGER IF EXISTS "ZALTTrainingReportNationalCenterUsers" ON "EventReportPilotNationalCenterUsers";
+        DROP TRIGGER IF EXISTS "ZALTruncateTTrainingReportNationalCenterUsers" ON "EventReportPilotNationalCenterUsers";
+
+        DROP TRIGGER IF EXISTS "ZALTSessionReports" ON "SessionReportPilots";
+        DROP TRIGGER IF EXISTS "ZALTruncateTSessionReports" ON "SessionReportPilots";
+
+        DROP TRIGGER IF EXISTS "ZALTSessionReportFiles" ON "SessionReportPilotFiles";
+        DROP TRIGGER IF EXISTS "ZALTruncateTSessionReportFiles" ON "SessionReportPilotFiles";
+
+        DROP TRIGGER IF EXISTS "ZALTSessionReportSupportingAttachments" ON "SessionReportPilotSupportingAttachments";
+        DROP TRIGGER IF EXISTS "ZALTruncateTSessionReportSupportingAttachments" ON "SessionReportPilotSupportingAttachments";
+
+        -- Drop new audit functions
+        DROP FUNCTION IF EXISTS "ZALFTrainingReports"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFTrainingReports"();
+
+        DROP FUNCTION IF EXISTS "ZALFTrainingReportNationalCenterUsers"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFTrainingReportNationalCenterUsers"();
+
+        DROP FUNCTION IF EXISTS "ZALFSessionReports"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFSessionReports"();
+
+        DROP FUNCTION IF EXISTS "ZALFSessionReportFiles"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFSessionReportFiles"();
+
+        DROP FUNCTION IF EXISTS "ZALFSessionReportSupportingAttachments"();
+        DROP FUNCTION IF EXISTS "ZALTruncateFSessionReportSupportingAttachments"();
+        `,
+        { transaction },
+      );
+
+      // Rename audit tables back
+      await queryInterface.sequelize.query(
+        `
+        ALTER TABLE "ZALTrainingReports" RENAME TO "ZALEventReportPilots";
+        ALTER TABLE "ZALTrainingReportNationalCenterUsers" RENAME TO "ZALEventReportPilotNationalCenterUsers";
+        ALTER TABLE "ZALSessionReports" RENAME TO "ZALSessionReportPilots";
+        ALTER TABLE "ZALSessionReportFiles" RENAME TO "ZALSessionReportPilotFiles";
+        ALTER TABLE "ZALSessionReportSupportingAttachments" RENAME TO "ZALSessionReportPilotSupportingAttachments";
+        `,
+        { transaction },
+      );
+
+      // Create audit triggers for the old table names
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFAddAuditingOnTable"('EventReportPilots');
+        SELECT "ZAFAddAuditingOnTable"('EventReportPilotNationalCenterUsers');
+        SELECT "ZAFAddAuditingOnTable"('SessionReportPilots');
+        SELECT "ZAFAddAuditingOnTable"('SessionReportPilotFiles');
+        SELECT "ZAFAddAuditingOnTable"('SessionReportPilotSupportingAttachments');
         `,
         { transaction },
       );
