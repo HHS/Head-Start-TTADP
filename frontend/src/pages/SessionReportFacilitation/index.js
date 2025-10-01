@@ -17,7 +17,8 @@ import { createSession } from '../../fetchers/session';
 import { eventById } from '../../fetchers/event';
 import { ROUTES } from '../../Constants';
 
-const TRAINING_REPORT_URL = '/training-reports/not-started';
+const TRAINING_REPORT_URL_NOT_STARTED = '/training-reports/not-started';
+const TRAINING_REPORT_URL_IN_PROGRESS = '/training-reports/in-progress';
 const ERROR_MESSAGE = 'Select who is providing the training';
 const INPUT_NAME = 'facilitation';
 
@@ -47,9 +48,8 @@ export default function SessionReportFacilitation({ match }) {
 
   const onSubmit = async (data) => {
     try {
-      const session = await createSession(trainingReportId, data);
-      const url = `/training-report/${trainingReportId}/session/${session.id}/session-summary`;
-      history.push(url);
+      await createSession(trainingReportId, data);
+      history.push(TRAINING_REPORT_URL_IN_PROGRESS);
     } catch (err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }
@@ -62,7 +62,7 @@ export default function SessionReportFacilitation({ match }) {
       <Helmet>
         <title>Training Report - Create a session</title>
       </Helmet>
-      <BackLink to={TRAINING_REPORT_URL}>Back to Training Reports</BackLink>
+      <BackLink to={TRAINING_REPORT_URL_NOT_STARTED}>Back to Training Reports</BackLink>
       <h1 className="landing margin-bottom-1">Training Report - Create a session</h1>
       <p className="margin-0 margin-bottom-4 font-serif-md text-normal">
         {trainingReport.data.eventId}
@@ -113,7 +113,7 @@ export default function SessionReportFacilitation({ match }) {
             </Fieldset>
           </FormGroup>
           <Button type="submit">Create session</Button>
-          <Link className="usa-button usa-button--outline" to={TRAINING_REPORT_URL}>Cancel</Link>
+          <Link className="usa-button usa-button--outline" to={TRAINING_REPORT_URL_NOT_STARTED}>Cancel</Link>
         </form>
       </Container>
     </>

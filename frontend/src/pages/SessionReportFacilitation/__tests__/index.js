@@ -8,6 +8,7 @@ import fetchMock from 'fetch-mock';
 import SessionReportFacilitation from '../index';
 
 const TRAINING_REPORT_URL = '/training-reports/not-started';
+const IN_PROGRESS = '/training-reports/in-progress';
 
 describe('SessionReportFacilitation', () => {
   const trainingReportId = '1';
@@ -201,7 +202,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1/session-summary');
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
       });
     });
 
@@ -229,7 +230,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2/session-summary');
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
       });
     });
 
@@ -257,7 +258,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3/session-summary');
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
       });
     });
 
