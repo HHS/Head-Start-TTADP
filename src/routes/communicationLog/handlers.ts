@@ -55,7 +55,7 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   if (!authorization.canViewUsersInRegion(parseInt(String(regionId), DECIMAL_BASE))) {
     return null;
   }
-
+  const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
   const regionalUsers = await User.findAll({
     attributes: [
       ['id', 'value'],
@@ -114,7 +114,7 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
                 { inactivationDate: { [Op.ne]: null } },
                 {
                   inactivationDate: {
-                    [Op.gte]: new Date(Date.now() - 365),
+                    [Op.gte]: new Date(Date.now() - ONE_YEAR_IN_MS),
                   },
                 },
               ],
