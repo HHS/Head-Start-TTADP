@@ -30,9 +30,9 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
   const showOtherParticipant = selectedParticipants && selectedParticipants.some((p) => p.value === 'Other'); // note that 'Other' needs to be uppercase for this collection
 
   // Map the participants to a format suitable for the MultiSelect component
-  const participantOptions = COLLAB_REPORT_PARTICIPANTS.map(
+  const participantOptions = COLLAB_REPORT_PARTICIPANTS?.map(
     (participant) => ({ label: participant, value: participant }),
-  );
+  ) || [];
 
   // Watch the hasDataUsed field to conditionally require data selections
   const hasDataUsed = watch('hasDataUsed');
@@ -285,14 +285,20 @@ const ReviewSection = () => {
     goals,
   } = watch();
 
-  let participantsToDisplay = participants.map((p) => p.label).join(', ');
-  if (participants.some((p) => p.value === 'Other') && otherParticipants) {
-    participantsToDisplay += `: ${otherParticipants}`;
+  let participantsToDisplay = 'None provided';
+  if (participants) {
+    participants.map((p) => p.label).join(', ');
+    if (participants.some((p) => p.value === 'Other') && otherParticipants) {
+      participantsToDisplay += `: ${otherParticipants}`;
+    }
   }
 
   let dataToDisplay = '';
   if (dataUsed && dataUsed.length > 0) {
-    dataToDisplay = dataUsed.map((d) => d.label).join(', ');
+    dataToDisplay = dataUsed.map((d) => {
+      if (!Object.keys(COLLAB_REPORT_DATA).includes(d.value)) return '';
+      return d.label;
+    }).join(', ');
     if (dataUsed.some((d) => d.value === 'other') && otherDataUsed) {
       dataToDisplay += `: ${otherDataUsed}`;
     }

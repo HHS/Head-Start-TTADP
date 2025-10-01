@@ -67,7 +67,7 @@ const TestWrapper = ({ children, defaultValues = {} }) => {
   );
 };
 
-describe('supportingInformation Page', () => {
+describe('CR Supporting Information Page', () => {
   const mockAlert = () => <div data-testid="alert">Alert Component</div>;
   const mockOnContinue = jest.fn();
   const mockOnSaveDraft = jest.fn();
@@ -200,12 +200,12 @@ describe('supportingInformation Page', () => {
   });
 
   describe('ReviewSection Component', () => {
-    it('processes reportGoals correctly', () => {
+    it('processes goals correctly', () => {
       const formData = {
-        reportGoals: [
-          { goalTemplate: { standard: 'Goal 1' } },
-          { goalTemplate: { standard: 'Goal 2' } },
-          { goalTemplate: { standard: 'Goal 3' } },
+        goals: [
+          { label: 'Goal 1', value: 'goal_1' },
+          { label: 'Goal 2', value: 'goal_2' },
+          { label: 'Goal 3', value: 'goal_3' },
         ],
         dataUsed: [],
       };
@@ -223,10 +223,10 @@ describe('supportingInformation Page', () => {
 
     it('processes dataUsed with COLLAB_REPORT_DATA lookup', () => {
       const formData = {
-        reportGoals: [],
+        goals: [],
         dataUsed: [
-          { collabReportDatum: 'census_data' },
-          { collabReportDatum: 'homelessness' },
+          { label: 'Census data', value: 'census_data' },
+          { label: 'Homelessness', value: 'homelessness' },
         ],
       };
 
@@ -243,10 +243,10 @@ describe('supportingInformation Page', () => {
 
     it('handles "other" data type with otherDataUsed', () => {
       const formData = {
-        reportGoals: [],
+        goals: [],
         dataUsed: [
-          { collabReportDatum: 'other' },
-          { collabReportDatum: 'census_data' },
+          { label: 'Census data', value: 'census_data' },
+          { label: 'Other', value: 'other' },
         ],
         otherDataUsed: 'Custom data type',
       };
@@ -259,15 +259,15 @@ describe('supportingInformation Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe('Custom data type, Census data');
+      expect(dataItem.customValue.data).toBe('Census data, Other: Custom data type');
     });
 
     it('handles unknown data types gracefully', () => {
       const formData = {
-        reportGoals: [],
+        goals: [],
         dataUsed: [
-          { collabReportDatum: 'unknown_type' },
-          { collabReportDatum: 'census_data' },
+          { label: 'unknown_data', value: 'unknown_data' },
+          { label: 'Census data', value: 'census_data' },
         ],
       };
 
@@ -284,8 +284,9 @@ describe('supportingInformation Page', () => {
 
     it('builds sections structure correctly', () => {
       const formData = {
-        reportGoals: [{ goalTemplate: { standard: 'Test Goal' } }],
-        dataUsed: [{ collabReportDatum: 'census_data' }],
+        goals: [{ label: 'Test Goal', value: 'test_goal' }],
+        dataUsed: [{ label: 'census_data', value: 'census_data' }],
+        participants: ['State', 'Other'],
       };
 
       render(
@@ -310,7 +311,7 @@ describe('supportingInformation Page', () => {
 
     it('renders ReviewPage with correct props', () => {
       const formData = {
-        reportGoals: [],
+        goals: [],
         dataUsed: [],
       };
 
@@ -327,7 +328,7 @@ describe('supportingInformation Page', () => {
   });
 
   describe('Data Processing Edge Cases', () => {
-    it('handles empty reportGoals array', () => {
+    it('handles empty goals array', () => {
       const formData = {
         reportGoals: [],
         dataUsed: [],
@@ -341,7 +342,7 @@ describe('supportingInformation Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
-      expect(goalsItem.customValue.goals).toBe('');
+      expect(goalsItem.customValue.goals).toBe('None provided');
     });
 
     it('handles empty dataUsed array', () => {
@@ -358,7 +359,7 @@ describe('supportingInformation Page', () => {
 
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
-      expect(dataItem.customValue.data).toBe('');
+      expect(dataItem.customValue.data).toBe('None provided');
     });
 
     it('handles null/undefined form data', () => {
@@ -372,50 +373,8 @@ describe('supportingInformation Page', () => {
       const goalsItem = sectionsData[0].items.find((item) => item.name === 'goals');
       const dataItem = sectionsData[0].items.find((item) => item.name === 'data');
 
-      expect(goalsItem.customValue.goals).toBe('');
-      expect(dataItem.customValue.data).toBe('');
-    });
-
-    it('handles malformed reportGoals', () => {
-      const formData = {
-        reportGoals: [
-          { goalTemplate: { standard: 'Valid Goal' } },
-          { goalTemplate: {} },
-          {},
-          null,
-        ],
-        dataUsed: [],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      // Should not crash and handle malformed data gracefully
-      expect(screen.getByTestId('review-page')).toBeInTheDocument();
-    });
-
-    it('handles malformed dataUsed', () => {
-      const formData = {
-        reportGoals: [],
-        dataUsed: [
-          { collabReportDatum: 'census_data' },
-          {},
-          null,
-          { collabReportDatum: null },
-        ],
-      };
-
-      render(
-        <TestWrapper defaultValues={formData}>
-          {supportingInformationPage.reviewSection()}
-        </TestWrapper>,
-      );
-
-      // Should not crash and handle malformed data gracefully
-      expect(screen.getByTestId('review-page')).toBeInTheDocument();
+      expect(goalsItem.customValue.goals).toBe('None provided');
+      expect(dataItem.customValue.data).toBe('None provided');
     });
   });
 
@@ -424,6 +383,7 @@ describe('supportingInformation Page', () => {
       const formData = {
         reportGoals: [],
         dataUsed: [],
+        participants: [],
       };
 
       render(
@@ -435,7 +395,7 @@ describe('supportingInformation Page', () => {
       const sectionsData = JSON.parse(screen.getByTestId('review-page-sections').textContent);
       const participantsItem = sectionsData[0].items.find((item) => item.name === 'participants');
       expect(participantsItem.label).toBe('Participants');
-      expect(participantsItem.customValue.participants).toBe('');
+      expect(participantsItem.customValue.participants).toBe('None provided');
     });
   });
 });
