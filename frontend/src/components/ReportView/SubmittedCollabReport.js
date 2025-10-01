@@ -39,11 +39,13 @@ export default function SubmittedCollabReport({ report }) {
     approvedAt,
     submissionStatus,
     calculatedStatus,
-
+    participants,
+    otherParticipants,
     statesInvolved,
     reportReasons,
     reportGoals,
     dataUsed,
+    otherDataUsed,
     steps,
   } = report;
 
@@ -70,12 +72,18 @@ export default function SubmittedCollabReport({ report }) {
   const formattedStates = statesInvolved?.map((activityStateCode) => STATES[activityStateCode] || '').join(', ') || '';
   const formattedReasons = reportReasons.map((reasonId) => COLLAB_REPORT_REASONS[reasonId] || '').join(', ');
   const formattedGoals = reportGoals.map((goal) => goal?.goalTemplate?.standard || '').join(', ');
-  const formattedDataUsed = dataUsed.map(({ collabReportDatum, collabReportDataOther }) => {
+  const formattedDataUsed = dataUsed.map(({ collabReportDatum }) => {
     if (collabReportDatum === 'other') {
-      return collabReportDataOther;
+      return `Other: ${otherDataUsed}`;
     }
 
     return COLLAB_REPORT_DATA[collabReportDatum] || '';
+  }).join(', ');
+  const formattedParticipants = participants.map((p) => {
+    if (p === 'Other' && otherParticipants) {
+      return `Other: ${otherParticipants}`;
+    }
+    return p;
   }).join(', ');
 
   const activityType = isStateActivity ? 'State' : 'Regional';
@@ -166,7 +174,7 @@ export default function SubmittedCollabReport({ report }) {
           sections={[
             {
               data: {
-                Participants: '',
+                Participants: formattedParticipants,
                 'Data collected/shared': formattedDataUsed,
                 'Supporting goals': formattedGoals,
               },
@@ -241,12 +249,14 @@ SubmittedCollabReport.propTypes = {
         id: PropTypes.number,
         collabReportId: PropTypes.number,
         collabReportDatum: PropTypes.string,
-        collabReportDataOther: PropTypes.string,
         createdAt: PropTypes.string,
         updatedAt: PropTypes.string,
         deletedAt: PropTypes.string,
       }),
     ),
+    otherDataUsed: PropTypes.string,
+    participants: PropTypes.arrayOf(PropTypes.string),
+    otherParticipants: PropTypes.string,
     steps: PropTypes.arrayOf(
       PropTypes.shape({
         collabStepCompleteDate: PropTypes.string,

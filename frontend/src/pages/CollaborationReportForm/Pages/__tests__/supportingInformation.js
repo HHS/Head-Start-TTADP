@@ -241,13 +241,14 @@ describe('supportingInformation Page', () => {
       expect(dataItem.customValue.data).toBe('Census data, Homelessness');
     });
 
-    it('handles "other" data type with collabReportDataOther', () => {
+    it('handles "other" data type with otherDataUsed', () => {
       const formData = {
         reportGoals: [],
         dataUsed: [
-          { collabReportDatum: 'other', collabReportDataOther: 'Custom data type' },
+          { collabReportDatum: 'other' },
           { collabReportDatum: 'census_data' },
         ],
+        otherDataUsed: 'Custom data type',
       };
 
       render(
