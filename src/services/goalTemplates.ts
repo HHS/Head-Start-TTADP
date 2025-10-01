@@ -137,6 +137,7 @@ export async function getCuratedTemplates(
           'status',
           'grantId',
           'goalTemplateId',
+          'prestandard',
         ],
         required: false,
         where: goalWhere,

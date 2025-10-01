@@ -19,9 +19,9 @@ export default function useGoalTemplates(
         );
         if (filterOutUsedTemplates) {
           // We want all templates that either have no goals or have goals but all of them
-          // have a status of closed (to allow the re-use of the template for a new standard goal).
+          // are prestandard (to allow the re-use of the template for a new standard goal from RTR).
           const filtered = templates.filter((template) => (
-            !template.goals || template.goals.every((goal) => goal.status === 'Closed')
+            !template.goals || template.goals.every((goal) => goal.prestandard === true)
           ));
           setGoalTemplates(
             filtered,
