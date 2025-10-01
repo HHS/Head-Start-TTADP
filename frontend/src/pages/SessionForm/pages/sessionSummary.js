@@ -631,9 +631,9 @@ const SessionSummary = ({ datePickerKey, event }) => {
 SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   event: PropTypes.shape({
-    data: {
+    data: PropTypes.shape({
       endDate: PropTypes.string,
-    },
+    }),
   }),
 };
 

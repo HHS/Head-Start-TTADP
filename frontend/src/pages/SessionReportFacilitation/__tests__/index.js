@@ -201,7 +201,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(TRAINING_REPORT_URL);
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1/session-summary');
       });
     });
 
@@ -229,7 +229,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(TRAINING_REPORT_URL);
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2/session-summary');
       });
     });
 
@@ -257,7 +257,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(TRAINING_REPORT_URL);
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3/session-summary');
       });
     });
 

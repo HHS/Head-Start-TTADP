@@ -47,8 +47,9 @@ export default function SessionReportFacilitation({ match }) {
 
   const onSubmit = async (data) => {
     try {
-      await createSession(trainingReportId, data);
-      history.push(TRAINING_REPORT_URL);
+      const session = await createSession(trainingReportId, data);
+      const url = `/training-report/${trainingReportId}/session/${session.id}/session-summary`;
+      history.push(url);
     } catch (err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }
