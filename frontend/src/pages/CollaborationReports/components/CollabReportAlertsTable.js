@@ -4,19 +4,24 @@ import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Tag } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
-import ApproverTableDisplay from '../../../components/ApproverTableDisplay';
+import CollabReportApproverTableDisplay from '../../../components/CollabReportApproverTableDisplay';
 import Container from '../../../components/Container';
 import WidgetContainer from '../../../components/WidgetContainer';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
-import { getStatusDisplayAndClassnames } from '../../../utils';
+import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
 import UserContext from '../../../UserContext';
 
-const ReportLink = ({ report, userId }) => {
+export const ReportLink = ({ report, userId }) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApprover = report.approvers.some(({ user }) => user.id === userId);
   const isNeedsAction = report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+  const isCreator = report.author.id === userId;
+
+  if (isCreator && isNeedsAction) {
+    return <Link to={`/collaboration-reports/${report.id}/review`}>{report.displayId}</Link>;
+  }
 
   if (isSubmitted && !isApprover && !isNeedsAction) {
     return <Link to={`/collaboration-reports/view/${report.id}`}>{report.displayId}</Link>;
@@ -32,6 +37,9 @@ const ReportLink = ({ report, userId }) => {
 ReportLink.propTypes = {
   userId: PropTypes.number.isRequired,
   report: PropTypes.shape({
+    author: PropTypes.shape({
+      id: PropTypes.number,
+    }),
     id: PropTypes.number,
     link: PropTypes.string,
     displayId: PropTypes.string,
@@ -83,14 +91,15 @@ const CollabReportAlertsTable = ({
       },
       {
         title: 'Approvers',
-        value: <ApproverTableDisplay approvers={r.approvers} />,
+        value: <CollabReportApproverTableDisplay
+          approvers={r.approvers}
+        />,
       },
       {
         value: (() => {
-          const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
-            r.calculatedStatus,
-            r.approvers,
-            false,
+          const { displayStatus, statusClassName } = getCollabReportStatusDisplayAndClassnames(
+            userId,
+            r,
           );
           return (
             <Tag

@@ -3,6 +3,7 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import '@testing-library/jest-dom';
+import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import moment from 'moment';
@@ -63,6 +64,7 @@ describe('ApproverReview Component', () => {
       { id: 1, name: 'Manager One' },
       { id: 2, name: 'Manager Two' },
     ],
+    status: APPROVER_STATUSES.NEEDS_ACTION,
     dateSubmitted: '2024-01-15T10:30:00Z',
     otherManagerNotes: [],
     hasReviewNote: false,
@@ -144,34 +146,6 @@ describe('ApproverReview Component', () => {
     });
   });
 
-  describe('Rich Text Editor Configuration', () => {
-    it('sets correct defaultValue for notes editor when hasReviewNote is true', () => {
-      renderComponent({
-        hasReviewNote: true,
-        thisApprovingManager: [{ note: 'Existing note', status: 'approved' }],
-      });
-
-      const richEditor = screen.getByTestId('rich-editor');
-      expect(richEditor).toHaveValue('Existing note');
-      expect(richEditor).toHaveAttribute('aria-label', 'Manager notes');
-      expect(richEditor).toHaveAttribute('id', 'note');
-      expect(richEditor).toHaveAttribute('name', 'note');
-    });
-
-    it('sets null defaultValue when hasReviewNote is false', () => {
-      renderComponent({ hasReviewNote: false });
-
-      const richEditor = screen.getByTestId('rich-editor');
-      expect(richEditor).toHaveValue('');
-    });
-
-    it('renders Add manager notes label', () => {
-      renderComponent();
-
-      expect(screen.getByText('Add manager notes')).toBeInTheDocument();
-    });
-  });
-
   describe('Status Dropdown Configuration', () => {
     it('sets correct defaultValue when hasBeenReviewed is true', () => {
       renderComponent({
@@ -198,18 +172,18 @@ describe('ApproverReview Component', () => {
   });
 
   describe('Button State and Form Submission', () => {
-    it('enables submit button when hasIncompletePages is false', () => {
+    it('enables submit button when hasIncompletePages is false', async () => {
       renderComponent({ hasIncompletePages: false });
 
-      const submitButton = screen.getByText('Submit report');
+      const submitButton = await screen.findByRole('button', { name: 'Submit' });
       expect(submitButton).toBeEnabled();
       expect(submitButton).toHaveAttribute('type', 'submit');
     });
 
-    it('disables submit button when hasIncompletePages is true', () => {
+    it('disables submit button when hasIncompletePages is true', async () => {
       renderComponent({ hasIncompletePages: true });
 
-      const submitButton = screen.getByText('Submit report');
+      const submitButton = await screen.findByRole('button', { name: 'Submit' });
       expect(submitButton).toBeDisabled();
     });
 
@@ -225,19 +199,80 @@ describe('ApproverReview Component', () => {
       expect(form).toBeInTheDocument();
     });
   });
+  describe('Manager Notes Editor Conditional Display', () => {
+    it('shows manager notes editor when status is needs_action', () => {
+      const TestWrapperWithStatus = ({ children }) => {
+        const methods = useForm({
+          defaultValues: { status: APPROVER_STATUSES.NEEDS_ACTION },
+        });
+        return (
+          <FormProvider {...methods}>
+            {children}
+          </FormProvider>
+        );
+      };
+
+      render(
+        <TestWrapperWithStatus>
+          <ApproverReview {...defaultProps} />
+        </TestWrapperWithStatus>,
+      );
+
+      expect(screen.getByText('Add manager notes')).toBeInTheDocument();
+      expect(screen.getByTestId('rich-editor')).toBeInTheDocument();
+    });
+
+    it('hides manager notes editor when status is not needs_action', () => {
+      const TestWrapperWithStatus = ({ children }) => {
+        const methods = useForm({
+          defaultValues: { status: 'approved' },
+        });
+        return (
+          <FormProvider {...methods}>
+            {children}
+          </FormProvider>
+        );
+      };
+
+      render(
+        <TestWrapperWithStatus>
+          <ApproverReview {...defaultProps} />
+        </TestWrapperWithStatus>,
+      );
+
+      expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('rich-editor')).not.toBeInTheDocument();
+    });
+
+    it('hides manager notes editor when no status is selected', () => {
+      const TestWrapperWithStatus = ({ children }) => {
+        const methods = useForm({
+          defaultValues: { status: '' },
+        });
+        return (
+          <FormProvider {...methods}>
+            {children}
+          </FormProvider>
+        );
+      };
+
+      render(
+        <TestWrapperWithStatus>
+          <ApproverReview {...defaultProps} />
+        </TestWrapperWithStatus>,
+      );
+
+      expect(screen.queryByText('Add manager notes')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('rich-editor')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Form Structure and Classes', () => {
     it('renders form with correct CSS classes', () => {
       renderComponent();
 
       const form = document.querySelector('form');
       expect(form).toHaveClass('smart-hub--form-large');
-    });
-
-    it('renders fieldset with correct CSS classes', () => {
-      renderComponent();
-
-      const fieldset = document.querySelector('fieldset');
-      expect(fieldset).toHaveClass('smart-hub--report-legend', 'margin-top-4', 'smart-hub--report-legend__no-legend-margin-top');
     });
   });
 });
