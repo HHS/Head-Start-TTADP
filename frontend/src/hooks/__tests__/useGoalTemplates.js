@@ -61,7 +61,7 @@ describe('useGoalTemplates', () => {
     const { result, waitForNextUpdate } = renderHook(() => useGoalTemplates(mockGrants, true));
     expect(result.current).toBeNull();
     await waitForNextUpdate();
-    
+
     // Should keep templates with no goals AND templates where all goals are closed
     expect(result.current).toEqual([mockTemplates[0], mockTemplates[2], mockTemplates[3]]);
     expect(result.current.length).toBe(3);
@@ -78,7 +78,7 @@ describe('useGoalTemplates', () => {
     const { result, waitForNextUpdate } = renderHook(() => useGoalTemplates(mockGrants, true));
     expect(result.current).toBeNull();
     await waitForNextUpdate();
-    
+
     const filteredTemplates = result.current;
     // Should exclude templates with any non-closed goals
     // Template with Not Started goal
