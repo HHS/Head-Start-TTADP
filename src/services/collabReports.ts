@@ -198,7 +198,6 @@ async function saveReportDataUsed(collabReportId, dataUsed) {
     const newDataUsed = dataUsed.map((data) => ({
       collabReportId,
       collabReportDatum: data.collabReportDatum || data,
-      collabReportDataOther: data.collabReportDataOther,
     }));
     await CollabReportDataUsed.bulkCreate(newDataUsed);
   }
