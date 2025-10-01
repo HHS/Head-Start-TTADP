@@ -114,7 +114,7 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
                 { inactivationDate: { [Op.ne]: null } },
                 {
                   inactivationDate: {
-                    [Op.gte]: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+                    [Op.gte]: new Date(Date.now() - 365),
                   },
                 },
               ],
