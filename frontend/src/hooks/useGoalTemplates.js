@@ -17,9 +17,15 @@ export default function useGoalTemplates(
           selectedGrants.map((grant) => grant.id),
           includeClosedSuspended,
         );
-
         if (filterOutUsedTemplates) {
-          setGoalTemplates(templates.filter((template) => !template.goals.length));
+          // We want all templates that either have no goals or have goals but all of them
+          // have a status of closed (to allow the re-use of the template for a new standard goal).
+          const filtered = templates.filter((template) => (
+            !template.goals || template.goals.every((goal) => goal.status === 'Closed')
+          ));
+          setGoalTemplates(
+            filtered,
+          );
         } else {
           setGoalTemplates(templates);
         }
