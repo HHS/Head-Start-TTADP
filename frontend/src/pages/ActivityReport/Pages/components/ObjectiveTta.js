@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Label } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
 import Req from '../../../../components/Req';
 import RichEditor from '../../../../components/RichEditor';
 import { getEditorState } from '../../../../utils';
+import Drawer from '../../../../components/Drawer';
+import DrawerTriggerButton from '../../../../components/DrawerTriggerButton';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
+import './ObjectiveTta.scss';
 
 export default function ObjectiveTta(
   {
@@ -16,6 +20,7 @@ export default function ObjectiveTta(
     inputName,
   },
 ) {
+  const drawerTriggerRef = useRef(null);
   if (isOnApprovedReport) {
     const defaultEditorState = getEditorState(ttaProvided || '');
     return (
@@ -32,22 +37,36 @@ export default function ObjectiveTta(
 
   return (
     <FormGroup error={error.props.children}>
-      <Label className="ttahub-objective-tta" error={error.props.children}>
-        TTA provided
-        {' '}
-        <Req announce />
-        {error}
-        <div className="smart-hub--text-area__resize-vertical margin-top-1">
-          <input type="hidden" name={inputName} value={ttaProvided} />
-          <RichEditor
-            ariaLabel="TTA provided for objective, required"
-            defaultValue={ttaProvided}
-            value={ttaProvided}
-            onChange={onChangeTTA}
-            onBlur={validateTta}
-          />
-        </div>
-      </Label>
+      <Drawer
+        triggerRef={drawerTriggerRef}
+        stickyHeader
+        stickyFooter
+        title="Get help writing TTA provided"
+      >
+        <ContentFromFeedByTag className="ttahub-drawer--objective-tta-provided" tagName="ttahub-tta-provided" contentSelector="table" />
+      </Drawer>
+      <div className="display-flex">
+        <Label htmlFor={inputName}>
+          <>
+            TTA provided
+            <Req />
+          </>
+        </Label>
+        <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+          Get help writing TTA provided
+        </DrawerTriggerButton>
+      </div>
+      {error}
+      <div className="smart-hub--text-area__resize-vertical margin-top-1">
+        <input type="hidden" name={inputName} value={ttaProvided} />
+        <RichEditor
+          ariaLabel="TTA provided for objective, required"
+          defaultValue={ttaProvided}
+          value={ttaProvided}
+          onChange={onChangeTTA}
+          onBlur={validateTta}
+        />
+      </div>
     </FormGroup>
   );
 }
