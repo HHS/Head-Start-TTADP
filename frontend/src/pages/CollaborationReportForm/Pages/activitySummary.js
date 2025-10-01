@@ -4,7 +4,6 @@ import React, {
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
-// import { isUndefined } from 'lodash';
 import {
   Fieldset,
   Radio,
@@ -22,15 +21,17 @@ import FormItem from '../../../components/FormItem';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
-// import HtmlReviewItem from './Review/HtmlReviewItem';
-// import Section from './Review/ReviewSection';
-// import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import StateMultiSelect from '../../../components/StateMultiSelect';
 import './activitySummary.scss';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { COLLAB_REPORT_REASONS, STATES } from '../../../Constants';
+
+const position = 1;
+const path = 'activity-summary';
 
 const ActivitySummary = ({ collaborators = [] }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
@@ -94,8 +95,8 @@ const ActivitySummary = ({ collaborators = [] }) => {
               control={control}
               required={false}
               simple={false}
-              labelProperty="name"
-              valueProperty="value"
+              labelProperty="specialist.fullName"
+              valueProperty="specialistId"
               placeholderText={placeholderText}
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
@@ -362,88 +363,9 @@ ActivitySummary.propTypes = {
   ).isRequired,
 };
 
-// const sections = [
-//   {
-//     title: 'Who was the activity for?',
-//     anchor: 'activity-for',
-//     items: [
-//       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
-//       { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
-//       { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
-//     ],
-//   },
-//   {
-//     title: 'Reason for activity',
-//     anchor: 'reasons',
-//     items: [
-//       { label: 'Requested by', name: 'requester' },
-//       { label: 'Reasons', name: 'reason', sort: true },
-//     ],
-//   },
-//   {
-//     title: 'Activity date',
-//     anchor: 'date',
-//     items: [
-//       { label: 'Start date', name: 'startDate' },
-//       { label: 'End date', name: 'endDate' },
-//       { label: 'Duration', name: 'duration' },
-//     ],
-//   },
-//   {
-//     title: 'Training or Technical Assistance',
-//     anchor: 'tta',
-//     items: [
-//       { label: 'TTA type', name: 'ttaType' },
-//       { label: 'Language used', name: 'language' },
-//       { label: 'Conducted', name: 'deliveryMethod' },
-//     ],
-//   },
-//   {
-//     title: 'Other participants',
-//     anchor: 'other-participants',
-//     items: [
-//       { label: 'Recipient participants', name: 'participants', sort: true },
-//       { label: 'Number of participants', name: 'numberOfParticipants' },
-//     ],
-//   },
-// ];
-
-const ReviewSection = () => <div>Activity name</div>;
-
-// TODO: Abandoned review section
-// const { watch } = useFormContext();
-// const {
-//   context,
-//   calculatedStatus,
-// } = watch();
-
-// const canEdit = reportIsEditable(calculatedStatus);
-// return (
-//   <>
-//     {/* <ReviewPage sections={sections} path="activity-summary" /> */}
-//     {/* eslint-disable-next-line react/jsx-no-undef */}
-//     <Section
-//       hidePrint={isUndefined(context)}
-//       key="context"
-//       basePath="activity-summary"
-//       anchor="context"
-//       title="Context"
-//       canEdit={canEdit}
-//     >
-//       {/* eslint-disable-next-line react/jsx-no-undef */}
-//       <HtmlReviewItem
-//         label="Context"
-//         name="context"
-//       />
-//     </Section>
-//   </>
-// );
-
-export const isPageComplete = (formData, formState) => {
-  const { isValid } = formState;
-  if (isValid) {
-    return true;
-  }
+export const isPageComplete = (hookForm) => {
+  const { getValues } = hookForm;
+  const formData = getValues();
 
   const {
     // strings
@@ -484,8 +406,7 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  // Check statesInvolved only if isStateActivity is 'true'
-  if (isStateActivity === 'true' && !statesInvolved.length) {
+  if (isStateActivity === 'true' && (!statesInvolved || !statesInvolved.length)) {
     return false;
   }
 
@@ -504,10 +425,60 @@ export const isPageComplete = (formData, formState) => {
   return true;
 };
 
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+  const {
+    name,
+    collabReportSpecialists,
+    startDate,
+    endDate,
+    duration,
+    description,
+    reportReasons,
+    isStateActivity,
+    statesInvolved,
+    method,
+  } = getValues();
+
+  const sections = [
+    {
+      anchor: 'activity-for',
+      items: [
+        { label: 'Activity name', name: 'name', customValue: { name } },
+        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map(({ specialist }) => specialist.fullName).join(', ') || '' } },
+      ],
+    },
+    {
+      title: 'Activity date',
+      anchor: 'date',
+      items: [
+        { label: 'Start date', name: 'startDate', customValue: { startDate } },
+        { label: 'End date', name: 'endDate', customValue: { endDate } },
+        { label: 'Duration', name: 'duration', customValue: { duration } },
+      ],
+    },
+    {
+      title: 'Reason for activity',
+      anchor: 'reasons',
+      items: [
+        { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
+        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
+        ...(isStateActivity ? [
+          { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
+        ] : []),
+        { label: 'Activity method', name: 'method', customValue: { method } },
+        { label: 'Activity description', name: 'description', customValue: { description } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export default {
-  position: 0,
+  position,
   label: 'Activity summary',
-  path: 'activity-summary',
+  path,
   reviewSection: () => <ReviewSection />,
   review: false,
   render: (
@@ -534,8 +505,8 @@ export default {
           isAppLoading={isAppLoading}
           onContinue={onContinue}
           onSaveDraft={onSaveDraft}
-          path="activity-summary"
-          position={1}
+          path={path}
+          position={position}
           onUpdatePage={onUpdatePage}
         />
       </>

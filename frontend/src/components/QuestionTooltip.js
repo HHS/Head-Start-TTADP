@@ -14,7 +14,7 @@ export default function QuestionTooltip({ text, customClass }) {
       hideUnderline
       buttonLabel={text}
       screenReadDisplayText={false}
-      className={customClass || 'smart-hub-tooltip--question margin-left-1'}
+      className={customClass || 'smart-hub-tooltip--question'}
     />
   );
 }

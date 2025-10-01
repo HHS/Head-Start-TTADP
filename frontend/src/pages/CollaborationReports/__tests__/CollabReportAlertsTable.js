@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import UserContext from '../../../UserContext';
-import CollabReportAlertsTable from '../components/CollabReportAlertsTable';
+import CollabReportAlertsTable, { ReportLink } from '../components/CollabReportAlertsTable';
 
 describe('CollabReportAlertsTable', () => {
   const defaultProps = {
@@ -54,7 +54,7 @@ describe('CollabReportAlertsTable', () => {
           collaboratingSpecialists: [{ fullName: 'Jane Smith' }],
           updatedAt: '2024-01-02T10:00:00Z',
           link: '/collaboration-reports/1',
-          approvers: [{ userId: 1, user: { fullName: 'Approver user' } }],
+          approvers: [{ id: 1, user: { fullName: 'Approver user', id: 1 } }],
           submissionStatus: REPORT_STATUSES.SUBMITTED,
         },
         {
@@ -88,7 +88,7 @@ describe('CollabReportAlertsTable', () => {
     };
     renderTest({ data });
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(document.querySelector('a[href="/collaboration-reports/1"]')).toBeTruthy();
+    expect(document.querySelector('a[href="/collaboration-reports/1/review"]')).toBeTruthy();
     expect(document.querySelector('a[href="/collaboration-reports/3"]')).toBeNull();
     expect(document.querySelector('a[href="/collaboration-reports/view/3"]')).toBeTruthy();
   });
@@ -96,5 +96,83 @@ describe('CollabReportAlertsTable', () => {
   it('shows loading state when loading is true', () => {
     renderTest({ loading: true });
     expect(screen.getByLabelText('Collaboration reports table loading')).toBeInTheDocument();
+  });
+});
+
+describe('ReportLink', () => {
+  const renderReportLink = (report, userId) => {
+    render(
+      <MemoryRouter>
+        <ReportLink report={report} userId={userId} />
+      </MemoryRouter>,
+    );
+  };
+
+  const baseReport = {
+    id: 1,
+    displayId: 'R01-1',
+    link: '/collaboration-reports/1',
+    author: { id: 1 },
+    submissionStatus: REPORT_STATUSES.DRAFT,
+    calculatedStatus: REPORT_STATUSES.DRAFT,
+    approvers: [],
+  };
+
+  it('renders link to review page when user is creator and report needs action', () => {
+    const report = {
+      ...baseReport,
+      calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+    };
+    renderReportLink(report, 1);
+    expect(screen.getByText('R01-1')).toHaveAttribute('href', '/collaboration-reports/1/review');
+  });
+
+  it('renders link to view page when report is submitted and user is not approver and not needs action', () => {
+    const report = {
+      ...baseReport,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      author: { id: 2 },
+      approvers: [{ user: { id: 3 } }],
+    };
+    renderReportLink(report, 1);
+    expect(screen.getByText('R01-1')).toHaveAttribute('href', '/collaboration-reports/view/1');
+  });
+
+  it('renders link to review page when report is submitted and user is approver', () => {
+    const report = {
+      ...baseReport,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      approvers: [{ user: { id: 1 } }],
+    };
+    renderReportLink(report, 1);
+    expect(screen.getByText('R01-1')).toHaveAttribute('href', '/collaboration-reports/1/review');
+  });
+
+  it('renders default link when no special conditions are met', () => {
+    renderReportLink(baseReport, 1);
+    expect(screen.getByText('R01-1')).toHaveAttribute('href', '/collaboration-reports/1');
+  });
+
+  it('renders default link when report is draft', () => {
+    const report = {
+      ...baseReport,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      author: { id: 1 },
+    };
+    renderReportLink(report, 1);
+    expect(screen.getByText('R01-1')).toHaveAttribute('href', '/collaboration-reports/1');
+  });
+
+  it('prioritizes needs action over other conditions', () => {
+    const report = {
+      ...baseReport,
+      calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      author: { id: 1 },
+      approvers: [{ user: { id: 1 } }],
+    };
+    renderReportLink(report, 1);
+    expect(screen.getByText('R01-1')).toHaveAttribute('href', '/collaboration-reports/1/review');
   });
 });

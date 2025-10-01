@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
+import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
 
 export const CONTAINS = 'contains';
 export const NOT_CONTAINS = 'does not contain';
@@ -143,8 +144,8 @@ export const CENTRAL_OFFICE = 14;
 export const ALL_REGIONS = 15;
 
 export const managerReportStatuses = [
-  'needs_action',
-  'approved',
+  APPROVER_STATUSES.NEEDS_ACTION,
+  APPROVER_STATUSES.APPROVED,
 ];
 
 export const MODEL_TYPES = {
@@ -174,7 +175,7 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.4';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.5';
 export const LOCAL_STORAGE_AR_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_CR_DATA_KEY = (id) => `cr-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;

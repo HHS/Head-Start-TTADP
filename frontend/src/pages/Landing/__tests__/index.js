@@ -44,9 +44,13 @@ const mockFetchWithRegionOne = () => {
   fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 };
 
-const renderLanding = (user) => {
+const renderLanding = (user, locationState = null) => {
+  const initialEntries = locationState
+    ? [{ pathname: '/', state: locationState }]
+    : ['/'];
+
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
           <Landing authenticated />
