@@ -195,6 +195,11 @@ body {
   color: $ttahub-medium-blue;
 }
 
+.usa-button.usa-button--no-margin-top,
+.usa-form .usa-button.usa-button--no-margin-top {
+  margin-top: 0;
+}
+
 input:not([disabled]):focus,
 select:not([disabled]):focus,
 textarea:not([disabled]):focus,
