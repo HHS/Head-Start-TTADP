@@ -70,59 +70,31 @@ export async function login(req, res) {
   try {
     const client = await getOidcClient();
 
-    // // Authorization Code flow with PKCE flow
-    // // https://developer.okta.com/docs/concepts/oauth-openid/#authorization-code-flow-with-pkce
-    // // The flow requires a cryptographically random string called a code verifier.
-    // req.session.pkce = {
-    //   codeVerifier: client.randomPKCECodeVerifier(),
-    // };
-
-    // // The code verifier is then hashed to create the code challenge, and this challenge is
-    // passed
-    // // along with the request for the authorization code. The authorization server responds with
-    // an
-    // // authorization code and associates the code challenge with the authorization code.
-    // const codeChallenge = await client.calculatePKCECodeChallenge(req.session.pkce.codeVerifier);
-
-    // // Generate state/nonce for CSRF & replay protection
-    // req.session.pkce.state = openidClient.randomState();
-    // req.session.pkce.nonce = openidClient.randomNonce();
-
-    // Generate state/nonce for CSRF & replay protection
-    req.session.oauth = {
-      state: openidClient.randomState(),
-      nonce: openidClient.randomNonce(),
+    // Authorization Code flow with PKCE flow
+    // https://developer.okta.com/docs/concepts/oauth-openid/#authorization-code-flow-with-pkce
+    // The flow requires a cryptographically random string called a code verifier.
+    req.session.pkce = {
+      codeVerifier: client.randomPKCECodeVerifier(),
     };
 
-    // Only prepare PKCE when enabled
-    let codeChallenge;
-    if (USE_PKCE) {
-      req.session.pkce = {
-        codeVerifier: client.randomPKCECodeVerifier(),
-      };
-      codeChallenge = await client.calculatePKCECodeChallenge(req.session.pkce.codeVerifier);
-    } else {
-      // ensure any old pkce data is cleared
-      delete req.session.pkce;
-      codeChallenge = undefined;
-    }
+    // The code verifier is then hashed to create the code challenge, and this challenge is passed
+    // along with the request for the authorization code. The authorization server responds with an
+    // authorization code and associates the code challenge with the authorization code.
+    const codeChallenge = await client.calculatePKCECodeChallenge(req.session.pkce.codeVerifier);
+
+    // Generate state/nonce for CSRF & replay protection
+    req.session.pkce.state = openidClient.randomState();
+    req.session.pkce.nonce = openidClient.randomNonce();
 
     const parameters = {
       redirect_uri: `${process.env.REDIRECT_URI_HOST}/oauth2-client/login/oauth2/code/`,
       scope: 'openid email profile:name',
-      // code_challenge: codeChallenge,
-      // code_challenge_method: CODE_CHALLENGE_METHOD,
-      // state: req.session.pkce.state,
-      // nonce: req.session.pkce.nonce,
-      state: req.session.oauth.state,
-      nonce: req.session.oauth.nonce,
+      code_challenge: codeChallenge,
+      code_challenge_method: CODE_CHALLENGE_METHOD,
+      state: req.session.pkce.state,
+      nonce: req.session.pkce.nonce,
       acr_values: 'http://idmanagement.gov/ns/assurance/ial/2',
     };
-
-    if (USE_PKCE) {
-      parameters.code_challenge = codeChallenge;
-      parameters.code_challenge_method = CODE_CHALLENGE_METHOD;
-    }
 
     const redirectTo = client.buildAuthorizationUrl(issuerConfig, parameters);
     // Log what we're about to ask the IdP for
@@ -180,10 +152,10 @@ export async function getAccessToken(req) {
      * @type {import('openid-client').AuthorizationCodeGrantChecks}
      */
     const options = {
-      expectedState: req.session.oauth?.state,
-      expectedNonce: req.session.oauth?.nonce,
+      pkceCodeVerifier: req.session.pkce.codeVerifier,
+      expectedState: req.session.pkce.state,
+      expectedNonce: req.session.pkce.nonce,
       idTokenExpected: true,
-      ...(USE_PKCE ? { pkceCodeVerifier: req.session?.pkce?.codeVerifier } : {}),
     };
 
     // if (USE_PKCE) {
@@ -195,11 +167,11 @@ export async function getAccessToken(req) {
     // }
 
     // Validate session requirements
-    if (!req.session?.oauth?.state || !req.session?.oauth?.nonce) {
-      auditLogger.error('OIDC callback missing session state/nonce. Possible lost session.');
-      return undefined;
-    }
-    if (USE_PKCE && !req.session?.pkce?.codeVerifier) {
+    // if (!req.session?.oauth?.state || !req.session?.oauth?.nonce) {
+    //   auditLogger.error('OIDC callback missing session state/nonce. Possible lost session.');
+    //   return undefined;
+    // }
+    if (!req.session?.pkce?.codeVerifier) {
       auditLogger.error('OIDC callback missing PKCE code verifier. Possible lost session.');
       return undefined;
     }
