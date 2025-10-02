@@ -20,9 +20,14 @@ const retrieveUserFromHSES = async (req) => {
     return null;
   }
 
-  const data = await getUserInfo(accessToken, sub);
-  const dbUser = await retrieveUserDetails(data);
-  return dbUser?.id ?? null;
+  try {
+    const data = await getUserInfo(accessToken, sub);
+    const dbUser = await retrieveUserDetails(data);
+    return dbUser?.id ?? null;
+  } catch (error) {
+    auditLogger.error(`Error when retrieving user details from HSES: ${error}`);
+    return null;
+  }
 };
 
 const tokenMiddleware = async (req, res, next) => {
