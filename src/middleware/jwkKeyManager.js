@@ -1,49 +1,86 @@
-import {
-  generateKeyPair,
-  exportJWK,
-  calculateJwkThumbprint,
-} from 'jose';
+import { importJWK, calculateJwkThumbprint } from 'jose';
 
-let jwkKeys; // singleton
+let cache = null; // { privateJwk, publicJwk, signingKey }
 
-async function generateKeys() {
-  let keys;
-  try {
-    const { privateKey, publicKey } = await generateKeyPair('RS256', {
-      modulusLength: 2048,
-      extractable: true,
-    });
-    keys = {
-      privateKey,
-      publicKey,
-      jwkPrivateKey: await exportJWK(privateKey),
-      jwkPublicKey: await exportJWK(publicKey),
-    };
+function readEnvJson() {
+  const b64 = process.env.PRIVATE_JWK_64;
 
-    // Compute a deterministic kid from the public JWK
-    keys.jwkPublicKey.kid = await calculateJwkThumbprint(keys.jwkPublicKey);
-    keys.jwkPrivateKey.kid = keys.jwkPublicKey.kid;
-  } catch (error) {
-    throw new Error(`Failed to generate key pair: ${error.message}`);
+  if (b64) {
+    const json = Buffer.from(b64, 'base64').toString('utf8');
+    return JSON.parse(json);
   }
-  return keys;
+
+  throw new Error(
+    'Missing private JWK.',
+  );
 }
 
-/** Initialize JWK keys */
-async function ensureKeys() {
-  if (!jwkKeys) {
-    jwkKeys = await generateKeys();
+/** Build a public JWK from a private RSA JWK by omitting private members. */
+function toPublicJwk(privateJwk) {
+  const {
+    kty,
+    n,
+    e,
+    kid,
+    alg,
+    use,
+    x5c,
+    x5t,
+    'x5t#S256': x5tS256,
+  } = privateJwk;
+  // Only keep public-safe members.
+  const pub = { kty, n, e };
+  if (kid) pub.kid = kid;
+  if (alg) pub.alg = alg;
+  if (use) pub.use = use;
+  if (x5c) pub.x5c = x5c;
+  if (x5t) pub.x5t = x5t;
+  if (x5tS256) pub['x5t#S256'] = x5tS256;
+
+  return pub;
+}
+
+async function ensureLoaded() {
+  if (cache) return;
+
+  // 1) Read private JWK from env (CircleCI provides it)
+  const privateJwk = readEnvJson();
+
+  if (privateJwk.kty !== 'RSA') {
+    throw new Error('PRIVATE_JWK must be an RSA JWK (kty="RSA").');
   }
+  if (!privateJwk.d || !privateJwk.n || !privateJwk.e) {
+    throw new Error('PRIVATE_JWK must include RSA fields: n, e, and d.');
+  }
+
+  const signingKey = await importJWK(privateJwk, 'RS256');
+
+  const publicJwk = toPublicJwk(privateJwk);
+  if (!publicJwk.kid) {
+    publicJwk.kid = await calculateJwkThumbprint(publicJwk);
+  }
+  // Keep kid consistent on the private JWK too
+  if (!privateJwk.kid) {
+    privateJwk.kid = publicJwk.kid;
+  }
+
+  cache = { privateJwk, publicJwk, signingKey };
 }
 
-/** Return the public JWK (used for JWKS). */
-export async function getPublicJwk() {
-  await ensureKeys();
-  return structuredClone(jwkKeys.jwkPublicKey);
-}
-
-/** Return the private JWK (used for signing). */
+/** Returns the private JWK object (used by openid-client PrivateKeyJwt). */
 export async function getPrivateJwk() {
-  await ensureKeys();
-  return structuredClone(jwkKeys.privateKey);
+  await ensureLoaded();
+  return JSON.parse(JSON.stringify(cache.privateJwk));
+}
+
+/** Returns the public JWK for JWKS endpoint. */
+export async function getPublicJwk() {
+  await ensureLoaded();
+  return JSON.parse(JSON.stringify(cache.publicJwk));
+}
+
+/** Returns the imported signing key. */
+export async function getSigningKey() {
+  await ensureLoaded();
+  return cache.signingKey;
 }
