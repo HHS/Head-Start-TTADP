@@ -31,6 +31,14 @@ export default (sequelize, DataTypes) => {
         as: 'resources',
       });
       GoalTemplate.hasMany(models.CollabReportGoal, { foreignKey: 'goalTemplateId', as: 'collabReportGoals' });
+      // Session Report Pilot Goal Templates.
+      GoalTemplate.hasMany(models.SessionReportPilotGoalTemplate, { foreignKey: 'goalTemplateId', as: 'sessionReportGoalTemplates' });
+      GoalTemplate.belongsToMany(models.SessionReportPilot, {
+        through: models.SessionReportPilotGoalTemplate,
+        foreignKey: 'goalTemplateId',
+        otherKey: 'sessionReportPilotId',
+        as: 'sessionReports',
+      });
     }
   }
   GoalTemplate.init({
