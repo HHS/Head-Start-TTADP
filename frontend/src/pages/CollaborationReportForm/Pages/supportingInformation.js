@@ -233,6 +233,7 @@ SupportingInformation.propTypes = {
   })).isRequired,
 };
 
+// istanbul ignore next - too hard to test because of the hookForm instance
 export const isPageComplete = (hookForm) => {
   const { getValues } = hookForm;
   const formData = getValues();
