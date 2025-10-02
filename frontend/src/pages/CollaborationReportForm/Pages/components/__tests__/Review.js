@@ -135,9 +135,15 @@ describe('Review Component', () => {
 
   describe('Component Selection', () => {
     it('renders ApproverReview component when isApprover is true', () => {
-      renderTest({ isApprover: true });
+      renderTest({ isApprover: true, isSubmitted: true });
       expect(screen.getByTestId('approver-review')).toBeInTheDocument();
       expect(screen.queryByTestId('creator-submit')).not.toBeInTheDocument();
+    });
+
+    it('renders CreatorSubmit component when isApprover is true and isSubmitted is false', () => {
+      renderTest({ isApprover: true, isSubmitted: false });
+      expect(screen.queryByTestId('approver-review')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('creator-submit')).toBeInTheDocument();
     });
 
     it('renders CreatorSubmit component when isApprover is false', () => {
@@ -259,7 +265,7 @@ describe('Review Component', () => {
         { user: { id: 2 }, status: 'needs_action', note: 'Other note' },
       ];
 
-      renderTest({ approverStatusList, isApprover: true }, { id: 1 });
+      renderTest({ approverStatusList, isApprover: true, isSubmitted: true }, { id: 1 });
       expect(screen.getByTestId('approver-review')).toBeInTheDocument();
     });
   });
