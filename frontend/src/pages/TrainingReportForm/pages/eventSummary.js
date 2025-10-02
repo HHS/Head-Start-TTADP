@@ -51,6 +51,7 @@ targetPopulations.unshift(...firstThree);
 
 const eventOrganizerOptions = [
   'Regional PD Event (with National Centers)',
+  'Regional TTA Hosted Event (no National Centers)',
   'IST TTA/Visit',
 ].map((option) => ({ value: option, label: option }));
 
