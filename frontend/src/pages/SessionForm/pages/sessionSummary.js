@@ -418,7 +418,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 inputRef={register({ required: 'Select at least one goal' })}
                 getOptionLabel={(option) => option.standard}
                 getOptionValue={(option) => option.id}
-                options={goalTemplates || []}
+                options={(goalTemplates ? goalTemplates.filter((g) => g.standard !== 'Monitoring') : [])}
                 isMulti
                 required
               />
