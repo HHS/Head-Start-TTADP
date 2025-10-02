@@ -110,38 +110,55 @@ app.get('/.well-known/jwks.json', async (_req, res) => {
 app.get(oauth2CallbackPath, async (req, res) => {
   try {
     const accessToken = await getAccessToken(req);
-    const data = await getUserInfo(accessToken, req.session.claims.sub);
+    if (!accessToken) {
+      auditLogger.error('No access token retrieved');
+      return res.status(INTERNAL_SERVER_ERROR).end();
+    }
+    const subject = req.session?.claims?.sub;
+    if (!subject) {
+      auditLogger.error('No subject retrieved');
+      return res.status(INTERNAL_SERVER_ERROR).end();
+    }
+    const data = await getUserInfo(accessToken, subject);
     const dbUser = await retrieveUserDetails(data);
-    const claims = req.session.claims || {};
-    const idToken = req.session.id_token || '';
-    const prevPkce = req.session.pkce;
+    const claims = req.session?.claims || {};
+    const idToken = req.session?.id_token || '';
+    const prevPkce = req.session?.pkce; // might not always need this
+    const prevOauth = req.session?.oauth;
 
     // console.log('REQ SESSION BEFORE REGEN:', req.session);
-    req.session.regenerate((err) => {
-      if (err) {
-        auditLogger(`Session regenerate failed: ${err}`);
-        return res.status(INTERNAL_SERVER_ERROR).end();
-      }
-      req.session.accessToken = accessToken;
-      req.session.userId = dbUser.id;
-      req.session.uuid = uuidv4();
-      req.session.clams = claims;
-      req.session.id_token = idToken;
-      req.session.pkce = prevPkce;
+    await new Promise((resolve) => {
+      req.session.regenerate((err) => {
+        if (err) {
+          auditLogger(`Session regenerate failed: ${err}`);
+          res.status(INTERNAL_SERVER_ERROR).end();
+          return resolve();
+        }
 
-      const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
-        ? req.session.referrerPath : '/';
+        req.session.accessToken = accessToken;
+        req.session.userId = dbUser.id;
+        req.session.uuid = uuidv4();
+        req.session.claims = claims;
+        req.session.id_token = idToken;
+        if (prevPkce) req.session.pkce = prevPkce;
+        if (prevOauth) req.session.oauth = prevOauth;
 
-      logger.debug(`referrer path: ${req.session.referrerPath}`);
+        const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
+          ? req.session.referrerPath
+          : '/';
 
-      auditLogger.info(`User ${dbUser.id} logged in`);
-      // console.log('REQ SESSION AFTER REGEN:', req.session);
-      return res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+        logger.debug(`referrer path: ${req.session.referrerPath}`);
+        auditLogger.info(`User ${dbUser.id} logged in`);
+
+        res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+        return resolve();
+      });
     });
-    return;
+
+    return undefined;
   } catch (error) {
     auditLogger.error(`Error logging in: ${error}`);
-    res.status(INTERNAL_SERVER_ERROR).end();
+    return res.status(INTERNAL_SERVER_ERROR).end();
   }
 });
 
