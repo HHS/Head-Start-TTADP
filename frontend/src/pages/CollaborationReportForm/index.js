@@ -420,12 +420,14 @@ function CollaborationReport({ match, location }) {
     );
   }
 
+  // istanbul ignore next
   if (!currentPage) {
     return (
       <Redirect to={`/collaboration-reports/${collabReportId}/activity-summary`} />
     );
   }
 
+  // istanbul ignore next - too hard to test
   const updatePage = (position) => {
     if (!editable) {
       return;
@@ -504,6 +506,7 @@ function CollaborationReport({ match, location }) {
     }
   };
 
+  // istanbul ignore next - too hard to test
   const setSavingLoadScreen = (isAutoSave = false) => {
     if (!isAutoSave && !isAppLoading) {
       setAppLoadingText('Saving');

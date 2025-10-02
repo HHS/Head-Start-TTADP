@@ -11,8 +11,9 @@ import { Router } from 'react-router';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
+import userEvent from '@testing-library/user-event';
 import { mockWindowProperty } from '../../../testHelpers';
-import CollaborationReportForm, { formatReportWithSaveBeforeConversion } from '..';
+import CollaborationReportForm, { convertFormDataToReport, formatReportWithSaveBeforeConversion } from '..';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
 
@@ -247,6 +248,19 @@ describe('CollaborationReportForm', () => {
     it('renders with submitted status and hides side nav for non-approvers', async () => {
       getItem.mockReturnValue(JSON.stringify({
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        regionId: 1,
+        approvers: [],
+      }));
+
+      render(<ReportComponent id="123" />);
+
+      const heading = await screen.findByText(/Collaboration report for Region [\d]/i);
+      expect(heading).toBeInTheDocument();
+    });
+
+    it('renders when report status is "needs action"', async () => {
+      getItem.mockReturnValue(JSON.stringify({
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         regionId: 1,
         approvers: [],
       }));
@@ -628,6 +642,59 @@ describe('CollaborationReportForm', () => {
     });
   });
 
+  // converts Participants, Data Used, and Goals from formData format to API format
+  describe('convertFormDataToReport', () => {
+    const formData = {
+      participants: [
+        { label: 'Head Start Staff', value: 'head_start_staff' },
+      ],
+      dataUsed: [
+        { label: 'Data 1', value: 'data_1' },
+      ],
+      goals: [
+        { label: 'Goal 1', value: 'goal_1' },
+      ],
+      reportGoals: [
+        { label: 'Goal 2', value: 'goal_2' },
+      ],
+    };
+
+    it('converts participants', () => {
+      const result = convertFormDataToReport(formData);
+      expect(result.participants).toEqual(['head_start_staff']);
+    });
+
+    it('converts dataUsed', () => {
+      const result = convertFormDataToReport(formData);
+      expect(result.dataUsed).toEqual(['data_1']);
+    });
+
+    it('converts goals', () => {
+      const result = convertFormDataToReport(formData);
+      expect(result.reportGoals).toEqual(['goal_1']);
+    });
+
+    it('converts reportGoals when goals is null', () => {
+      const dataToTest = { ...formData, goals: null };
+      const result = convertFormDataToReport(dataToTest);
+      expect(result.reportGoals).toEqual(['goal_2']);
+    });
+
+    it('handles empty arrays gracefully', () => {
+      const emptyData = {
+        participants: [],
+        dataUsed: [],
+        goals: [],
+        reportGoals: [],
+      };
+
+      const result = convertFormDataToReport(emptyData);
+      expect(result.participants).toEqual([]);
+      expect(result.dataUsed).toEqual([]);
+      expect(result.reportGoals).toEqual([]);
+    });
+  });
+
   describe('updatePage functionality', () => {
     it('updates page URL when report is editable and ID changes from new', async () => {
       getItem.mockReturnValue(JSON.stringify({
@@ -705,9 +772,18 @@ describe('CollaborationReportForm', () => {
 
       render(<ReportComponent id="123" />);
 
+      // Report initially renders
       await waitFor(() => {
         expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
       });
+
+      // Update the report's name
+      const reportNameInput = await screen.findByLabelText('Activity name');
+      userEvent.type(reportNameInput, 'Report 1');
+
+      // Save a draft
+      const saveDraftButton = screen.getByRole('button', { name: 'Save draft' });
+      userEvent.click(saveDraftButton);
     });
   });
 
