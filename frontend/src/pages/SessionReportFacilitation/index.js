@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
@@ -16,6 +16,7 @@ import Req from '../../components/Req';
 import { createSession } from '../../fetchers/session';
 import { eventById } from '../../fetchers/event';
 import { ROUTES } from '../../Constants';
+import UserContext from '../../UserContext';
 
 const TRAINING_REPORT_URL_NOT_STARTED = '/training-reports/not-started';
 const TRAINING_REPORT_URL_IN_PROGRESS = '/training-reports/in-progress';
@@ -29,6 +30,8 @@ export default function SessionReportFacilitation({ match }) {
     mode: 'onBlur',
     defaultValues: {},
   });
+
+  const { user } = useContext(UserContext);
 
   const { data: trainingReport, error, statusCode } = useFetch(
     null,
@@ -44,12 +47,31 @@ export default function SessionReportFacilitation({ match }) {
     return 'Loading...';
   }
 
+  const trUsers = [
+    ...trainingReport.collaboratorIds,
+    trainingReport.owner.id,
+  ];
+
+  if (!trUsers.includes(user.id)) {
+    history.push(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
+  }
+
   const { register, handleSubmit, errors } = hookForm;
 
   const onSubmit = async (data) => {
     try {
-      await createSession(trainingReportId, data);
-      history.push(TRAINING_REPORT_URL_IN_PROGRESS);
+      const session = await createSession(trainingReportId, data);
+      // we can infer that the user is an the owner, or collaborator
+      // since they'd be forwarded out otherwise (POC cannot create sessions)
+
+      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
+
+      if (isCollaborator) {
+        history.push(TRAINING_REPORT_URL_IN_PROGRESS);
+        return;
+      }
+
+      history.push(`/training-report/${trainingReport.id}/session/${session.id}`);
     } catch (err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }
@@ -63,7 +85,7 @@ export default function SessionReportFacilitation({ match }) {
         <title>Training Report - Create a session</title>
       </Helmet>
       <BackLink to={TRAINING_REPORT_URL_NOT_STARTED}>Back to Training Reports</BackLink>
-      <h1 className="landing margin-bottom-1">Training Report - Create a session</h1>
+      <h1 className="landing margin-bottom-2">Training Report - Create a session</h1>
       <p className="margin-0 margin-bottom-4 font-serif-md text-normal">
         {trainingReport.data.eventId}
         :

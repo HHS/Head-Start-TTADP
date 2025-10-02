@@ -6,6 +6,7 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import SessionReportFacilitation from '../index';
+import UserContext from '../../../UserContext';
 
 const TRAINING_REPORT_URL = '/training-reports/not-started';
 const IN_PROGRESS = '/training-reports/in-progress';
@@ -16,6 +17,10 @@ describe('SessionReportFacilitation', () => {
 
   const mockTrainingReport = {
     id: 1,
+    collaboratorIds: [],
+    owner: {
+      id: 1,
+    },
     data: {
       eventId: 'R01-TR-1234',
       eventName: 'Test Training Event',
@@ -23,15 +28,17 @@ describe('SessionReportFacilitation', () => {
   };
 
   const renderComponent = (reportId = trainingReportId) => render(
-    <Router history={history}>
-      <SessionReportFacilitation
-        match={{
-          params: { trainingReportId: reportId },
-          path: '',
-          url: '',
-        }}
-      />
-    </Router>,
+    <UserContext.Provider value={{ user: { id: 1 } }}>
+      <Router history={history}>
+        <SessionReportFacilitation
+          match={{
+            params: { trainingReportId: reportId },
+            path: '',
+            url: '',
+          }}
+        />
+      </Router>
+    </UserContext.Provider>,
   );
 
   beforeEach(() => {
@@ -173,6 +180,69 @@ describe('SessionReportFacilitation', () => {
     });
   });
 
+  describe('Permissions check', () => {
+    beforeEach(() => {
+      fetchMock.get(`/api/events/id/${trainingReportId}`, {
+        ...mockTrainingReport,
+        owner: {
+          id: 3,
+        },
+        collaboratorIds: [],
+      });
+    });
+    it('redirects', async () => {
+      renderComponent();
+      await waitFor(() => {
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
+      });
+
+      const spy = jest.spyOn(history, 'push');
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith('/something-went-wrong/401');
+      });
+    });
+  });
+
+  describe('Form submission, collaborator', () => {
+    beforeEach(() => {
+      fetchMock.get(`/api/events/id/${trainingReportId}`, {
+        ...mockTrainingReport,
+        owner: {
+          id: 3,
+        },
+        collaboratorIds: [1],
+      });
+    });
+    it('submits form', async () => {
+      renderComponent();
+      await waitFor(() => {
+        expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
+      });
+      const sessionResponse = { id: 3 };
+      fetchMock.post('/api/session-reports', sessionResponse);
+      const spy = jest.spyOn(history, 'push');
+
+      const bothRadio = screen.getByLabelText('Both (National Center and Regional TTA staff)');
+      userEvent.click(bothRadio);
+
+      const submitButton = screen.getByRole('button', { name: 'Create session' });
+      userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchMock.called('/api/session-reports', { method: 'POST' })).toBe(true);
+      });
+
+      const [, options] = fetchMock.lastCall('/api/session-reports');
+      const requestBody = JSON.parse(options.body);
+      expect(requestBody.data.facilitation).toBe('both');
+
+      await waitFor(() => {
+        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
+      });
+    });
+  });
+
   describe('Form submission', () => {
     beforeEach(() => {
       fetchMock.get(`/api/events/id/${trainingReportId}`, mockTrainingReport);
@@ -202,7 +272,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/1');
       });
     });
 
@@ -230,7 +300,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('regional_tta_staff');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/2');
       });
     });
 
@@ -258,7 +328,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('both');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS);
+        expect(spy).toHaveBeenCalledWith('/training-report/1/session/3');
       });
     });
 
