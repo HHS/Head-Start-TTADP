@@ -195,9 +195,9 @@ body {
   color: $ttahub-medium-blue;
 }
 
-.usa-button.usa-button--no-margin-top,
-.usa-form .usa-button.usa-button--no-margin-top {
-  margin-top: 0;
+.usa-button.usa-button--no-margin,
+.usa-form .usa-button.usa-button--no-margin {
+  margin: 0;
 }
 
 input:not([disabled]):focus,

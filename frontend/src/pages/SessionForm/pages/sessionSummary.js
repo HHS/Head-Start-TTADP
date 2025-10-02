@@ -389,7 +389,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
               <Req />
               <button
                 type="button"
-                className="usa-button usa-button--unstyled usa-button--no-margin-top margin-left-1"
+                className="usa-button usa-button--unstyled usa-button--no-margin"
                 ref={goalDrawerTriggerRef}
               >
                 Get help selecting a goal
@@ -457,7 +457,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
               <Req />
               <button
                 type="button"
-                className="usa-button usa-button--unstyled margin-left-1 usa-button--no-margin-top"
+                className="usa-button usa-button--unstyled margin-left-1 usa-button--no-margin"
                 ref={topicsDrawerTriggerRef}
               >
                 Get help choosing topics
@@ -677,7 +677,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           </Label>
           <button
             type="button"
-            className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled usa-button--no-margin-top margin-left-1"
+            className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled usa-button--no-margin margin-left-1"
             ref={supportTypeDrawerTriggerRef}
           >
             Get help choosing a support type
