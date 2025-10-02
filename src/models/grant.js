@@ -34,6 +34,14 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportId',
         as: 'activityReports',
       });
+      // Session Report Pilot Grants.
+      Grant.hasMany(models.SessionReportPilotGrant, { foreignKey: 'grantId', as: 'sessionGrants' });
+      Grant.belongsToMany(models.SessionReportPilot, {
+        through: models.SessionReportPilotGrant,
+        foreignKey: 'grantId',
+        otherKey: 'sessionReportPilotId',
+        as: 'sessionReports',
+      });
 
       Grant.addScope('defaultScope', {
         include: [
