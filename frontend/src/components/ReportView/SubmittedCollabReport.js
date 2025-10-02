@@ -78,7 +78,7 @@ export default function SubmittedCollabReport({ report }) {
 
     return COLLAB_REPORT_DATA[collabReportDatum] || '';
   }).join(', ');
-  const formattedParticipants = participants.map((p) => {
+  const formattedParticipants = participants?.map((p) => {
     if (p === 'Other' && otherParticipants) {
       return `Other: ${otherParticipants}`;
     }
