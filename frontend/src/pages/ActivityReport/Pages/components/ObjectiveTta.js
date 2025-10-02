@@ -43,7 +43,7 @@ export default function ObjectiveTta(
         stickyFooter
         title="Get help writing TTA provided"
       >
-        <ContentFromFeedByTag className="ttahub-drawer--objective-tta-provided" tagName="ttahub-tta-provided" contentSelector="table" />
+        <ContentFromFeedByTag className="ttahub-drawer--objective-tta-provided" tagName="ttahub-tta-provided" />
       </Drawer>
       <div className="display-flex">
         <Label htmlFor={inputName}>
