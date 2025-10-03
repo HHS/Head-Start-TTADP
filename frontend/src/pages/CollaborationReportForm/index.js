@@ -132,9 +132,13 @@ export const convertFormDataToReport = (data) => {
     dataUsed,
     goals,
     reportGoals,
+    statesInvolved,
+    conductMethod,
     ...rest
   } = data;
 
+  const conductMethodValues = conductMethod ? conductMethod.map((c) => c.value) : [];
+  const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => s.value) : [];
   const participantValues = participants ? participants.map((p) => p.value) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => d.value) : [];
   const goalsValues = goals ? goals.map((g) => g.value) : [];
@@ -148,6 +152,8 @@ export const convertFormDataToReport = (data) => {
     participants: participantValues,
     dataUsed: dataUsedValues,
     reportGoals: reportGoalsToUse,
+    statesInvolved: statesInvolvedValues,
+    conductMethod: conductMethodValues,
   };
 };
 

@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 import moment from 'moment';
-import { COLLAB_REPORT_DATA } from '../../Constants';
+import { COLLAB_REPORT_CONDUCT_METHODS, COLLAB_REPORT_DATA, STATES } from '../../Constants';
 
 /**
  * @param string
@@ -66,7 +66,14 @@ export const unflattenResourcesUsed = (array) => {
 
 export const convertReportToFormData = (fetchedReport) => {
   const {
-    participants, hasDataUsed, dataUsed, hasGoals, reportGoals, ...rest
+    participants,
+    hasDataUsed,
+    dataUsed,
+    hasGoals,
+    reportGoals,
+    statesInvolved,
+    conductMethod,
+    ...rest
   } = fetchedReport;
 
   // Convert reasons into a checkbox-friendly format
@@ -93,7 +100,8 @@ export const convertReportToFormData = (fetchedReport) => {
     hasGoalsValue = String(Boolean(hasGoals));
   }
 
-  // Convert participants, dataUsed, and goals for use with multiselect components
+  // Convert participants, dataUsed, goals, statesInvolved,
+  // and conductMethod for use with multiselect components
   const participantValues = participants ? participants.map((p) => ({ label: p, value: p })) : [];
   const dataUsedValues = dataUsed ? dataUsed.map((d) => (
     { label: COLLAB_REPORT_DATA[d.collabReportDatum], value: d.collabReportDatum }
@@ -101,6 +109,13 @@ export const convertReportToFormData = (fetchedReport) => {
   const goalsValues = reportGoals ? reportGoals.map((g) => (
     { label: g.goalTemplate.standard, value: g.goalTemplateId }
   )) : [];
+  const statesInvolvedValues = statesInvolved ? statesInvolved.map((s) => (
+    { label: STATES[s], value: s }
+  )) : [];
+  const conductMethodValues = conductMethod ? conductMethod.map((c) => {
+    const { label } = COLLAB_REPORT_CONDUCT_METHODS.filter((m) => m.value === c)[0];
+    return ({ label, value: c });
+  }) : [];
 
   const retVal = {
     ...rest,
@@ -111,6 +126,8 @@ export const convertReportToFormData = (fetchedReport) => {
     dataUsed: dataUsedValues,
     hasGoals: hasGoalsValue,
     goals: goalsValues,
+    statesInvolved: statesInvolvedValues,
+    conductMethod: conductMethodValues,
   };
   return retVal;
 };
