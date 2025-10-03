@@ -13,7 +13,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { FormProvider, useForm } from 'react-hook-form';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { REPORT_STATUSES, DECIMAL_BASE, APPROVER_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import pages from './Pages';
@@ -56,6 +56,17 @@ const defaultValues = {
   },
   calculatedStatus: REPORT_STATUSES.DRAFT,
   collabReportSpecialists: [],
+  name: '',
+  steps: [],
+  statesInvolved: [],
+  startDate: '',
+  endDate: '',
+  duration: '',
+  reportReasons: [],
+  isStateActivity: '',
+  conductMethod: [],
+  description: '',
+  id: null,
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -424,18 +435,16 @@ function CollaborationReport({ match, location }) {
 
         reportId.current = savedReport.id;
 
+        // Clean up the 'new' local storage entries
         cleanupLocalStorage('new', savedReport.id);
 
-        window.history.replaceState(null, null, `/collaboration-reports/${savedReport.id}/${currentPage}`);
-
-        const currentPageState = hookForm.getValues('pageState');
-        const convertedReport = convertReportToFormData(savedReport);
-        updateFormData({
-          ...convertedReport,
-          pageState: currentPageState || convertedReport.pageState,
-        }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+
+        // Navigate to the new report URL to trigger a proper re-render
+        // with the correct local storage keys
+        const newPath = `/collaboration-reports/${savedReport.id}/${currentPage}`;
+        history.push(newPath, { showLastUpdatedTime: true });
       } else {
         const updatedReport = await formatReportWithSaveBeforeConversion(
           data,
@@ -524,10 +533,40 @@ function CollaborationReport({ match, location }) {
 
   const onReview = async (data) => {
     await reviewReport(reportId.current, { note: data.note, status: data.status });
+    const timezone = moment.tz.guess();
+    const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
+    const message = {
+      time,
+      reportId: formData.id,
+      displayId: formData.displayId,
+    };
+    history.push('/collaboration-reports', {
+      message: {
+        ...message,
+        status: data.status === APPROVER_STATUSES.APPROVED ? 'approved' : 'reviewed',
+      },
+    });
   };
 
   const reportCreator = { name: user.name, roles: user.roles };
-  const tagClass = formData && formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
+  const tagClass = (() => {
+    if (!formData || !formData.calculatedStatus) {
+      return '';
+    }
+
+    const { calculatedStatus } = formData;
+
+    if (calculatedStatus === REPORT_STATUSES.APPROVED) {
+      return 'smart-hub--tag-approved';
+    }
+
+    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      return 'smart-hub--tag-needs-action';
+    }
+
+    return '';
+  })();
+
   // eslint-disable-next-line max-len
   const hideSideNav = formData && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
 
@@ -597,7 +636,7 @@ function CollaborationReport({ match, location }) {
   };
 
   return (
-    <div className="smart-hub-activity-report">
+    <div className="smart-hub-collab-report">
       { error
       && (
       <Alert type="warning">

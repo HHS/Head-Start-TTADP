@@ -55,7 +55,7 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   if (!authorization.canViewUsersInRegion(parseInt(String(regionId), DECIMAL_BASE))) {
     return null;
   }
-
+  const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
   const regionalUsers = await User.findAll({
     attributes: [
       ['id', 'value'],
@@ -97,21 +97,44 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
       ['name', 'label'],
     ],
     where: {
-      // what
       deleted: false,
     },
     include: [
       {
         model: Grant,
         as: 'grants',
-        attributes: [],
-        where: { regionId },
+        attributes: ['status', 'inactivationDate'],
+        where: {
+          regionId,
+          [Op.or]: [
+            { status: 'Active' },
+            {
+              [Op.and]: [
+                { status: 'Inactive' },
+                { inactivationDate: { [Op.ne]: null } },
+                {
+                  inactivationDate: {
+                    [Op.gte]: new Date(Date.now() - ONE_YEAR_IN_MS),
+                  },
+                },
+              ],
+            },
+          ],
+        },
         required: true,
       },
     ],
     order: [['label', 'ASC']],
   });
-
+  // Append ' (Inactive)' to recipient names if all their grants are inactive
+  const recipientsWithInactiveStatus = recipients.map((recipient) => {
+    const recipientToUse = recipient.dataValues || recipient;
+    const allGrantsInactive = recipientToUse.grants.length && recipientToUse.grants.every((grant) => grant.status === 'Inactive');
+    return {
+      value: recipientToUse.value,
+      label: allGrantsInactive ? `${recipientToUse.label} (inactive)` : recipientToUse.label,
+    };
+  });
   const groups = await groupsByRegion(
     Number(regionId),
     userId,
@@ -120,7 +143,7 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   return {
     regionalUsers,
     standardGoals,
-    recipients,
+    recipients: recipientsWithInactiveStatus,
     groups,
   };
 }

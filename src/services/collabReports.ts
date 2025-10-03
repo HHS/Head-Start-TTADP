@@ -66,7 +66,7 @@ export const collabReportScopes = async (filters, userId, status) => {
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra WHERE cra."userId" = ${userId})`),
+          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra INNER JOIN "CollabReports" cr ON cr.id = cra."collabReportId" WHERE cra."userId" = ${userId} AND cr."calculatedStatus" = 'submitted' AND cr."deletedAt" IS NULL)`),
         },
       },
     ];
@@ -271,6 +271,12 @@ export async function collabReportById(crId: string) {
       {
         model: User,
         as: 'author',
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+          },
+        ],
       },
       {
         required: false,
@@ -281,6 +287,12 @@ export async function collabReportById(crId: string) {
           {
             model: User,
             as: 'specialist',
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
           },
         ],
       },
@@ -319,6 +331,12 @@ export async function collabReportById(crId: string) {
             model: User,
             as: 'user',
             attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
           },
         ],
       },
@@ -453,7 +471,7 @@ export async function getCSVReports(
         model: User,
         as: 'author',
         required: true,
-        attributes: ['fullName', 'name'],
+        attributes: ['fullName', 'name', 'id'],
         include: [
           {
             model: Role,
@@ -561,7 +579,7 @@ export async function getReports(
         model: User,
         as: 'author',
         required: true,
-        attributes: ['fullName', 'name'],
+        attributes: ['fullName', 'name', 'id'],
         include: [
           {
             model: Role,
