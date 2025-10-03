@@ -1,9 +1,15 @@
 import { importJWK, calculateJwkThumbprint } from 'jose';
+import { webcrypto } from 'crypto';
 
 let cache = null; // { privateJwk, publicJwk, signingKey }
+const alg = 'RS256';
+
+if (!global.crypto?.subtle) {
+  global.crypto = webcrypto;
+}
 
 function readEnvJson() {
-  const b64 = process.env.PRIVATE_JWK_64;
+  const b64 = process.env.PRIVATE_JWK_64.trim();
 
   if (b64) {
     const json = Buffer.from(b64, 'base64').toString('utf8');
@@ -22,7 +28,7 @@ function toPublicJwk(privateJwk) {
     n,
     e,
     kid,
-    alg,
+    alg: jwkAlg,
     use,
     x5c,
     x5t,
@@ -31,7 +37,7 @@ function toPublicJwk(privateJwk) {
   // Only keep public-safe members.
   const pub = { kty, n, e };
   if (kid) pub.kid = kid;
-  if (alg) pub.alg = alg;
+  if (jwkAlg) pub.alg = jwkAlg;
   if (use) pub.use = use;
   if (x5c) pub.x5c = x5c;
   if (x5t) pub.x5t = x5t;
@@ -53,7 +59,7 @@ async function ensureLoaded() {
     throw new Error('PRIVATE_JWK must include RSA fields: n, e, and d.');
   }
 
-  const signingKey = await importJWK(privateJwk, 'RS256');
+  const signingKey = await importJWK(privateJwk, alg);
 
   const publicJwk = toPublicJwk(privateJwk);
   if (!publicJwk.kid) {
@@ -67,10 +73,15 @@ async function ensureLoaded() {
   cache = { privateJwk, publicJwk, signingKey };
 }
 
-/** Returns the private JWK object (used by openid-client PrivateKeyJwt). */
+/** Returns { key: CryptoKey, alg, kid } for PrivateKeyJwt */
 export async function getPrivateJwk() {
   await ensureLoaded();
-  return JSON.parse(JSON.stringify(cache.privateJwk));
+  // return JSON.parse(JSON.stringify(cache.privateJwk));
+  return {
+    key: cache.signingKey,
+    alg,
+    kid: cache.privateJwk.kid,
+  };
 }
 
 /** Returns the public JWK for JWKS endpoint. */
