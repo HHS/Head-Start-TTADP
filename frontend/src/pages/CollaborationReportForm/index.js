@@ -292,13 +292,17 @@ function CollaborationReport({ match, location }) {
           };
         }
 
+        let collaborators = [];
+        let approvers = [];
+        let goalTemplates = [];
+
         const apiCalls = [
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
           getGoalTemplates([], false),
         ];
 
-        const [collaborators, approvers, goalTemplates] = await Promise.all(apiCalls);
+        [collaborators, approvers, goalTemplates] = await Promise.all(apiCalls);
 
         // If the report creator is in the collaborators list, remove them.
         const filteredCollaborators = collaborators.filter((c) => c.id !== report.userId);
@@ -316,9 +320,9 @@ function CollaborationReport({ match, location }) {
         );
 
         updateAdditionalData({
-          collaborators: filteredCollaborators || [],
-          approvers: approvers || [],
-          goalTemplates: goalTemplates || [],
+          collaborators: filteredCollaborators,
+          approvers,
+          goalTemplates,
         });
 
         let shouldUpdateFromNetwork = true;
