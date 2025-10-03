@@ -239,7 +239,6 @@ class CollabReportDataUsed{
  * collabReportDatum : enum
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- collabReportDataOther : varchar(255)
  deletedAt : timestamp with time zone
 }
 
