@@ -48,7 +48,9 @@ const ReportComponent = ({
   region = 1,
 }) => (
   <Router history={history}>
-    <AppLoadingContext.Provider value={{ setAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+    <AppLoadingContext.Provider
+      value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+    >
       <UserContext.Provider value={{
         user: {
           ...user,
@@ -716,6 +718,7 @@ describe('CollaborationReportForm', () => {
       fetchMock.restore();
       fetchMock.get('/api/users/collaborators?region=1', []);
       fetchMock.get('/api/activity-reports/approvers?region=1', []);
+      fetchMock.get('/api/goal-templates', []);
       fetchMock.get('/api/collaboration-reports/123', dummyReport);
     });
 
@@ -733,13 +736,26 @@ describe('CollaborationReportForm', () => {
       }));
 
       const { container } = render(<ReportComponent id="new" />);
+      expect(container).toBeInTheDocument();
 
       await waitFor(() => {
         expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
       });
 
+      // Update the form
+      const textInputs = await screen.findAllByTestId('textInput');
+      const activityNameInput = textInputs[0];
+      expect(activityNameInput).toBeInTheDocument();
+      userEvent.type(activityNameInput, 'Report 1');
+
       // Simulate form save action through the Navigator component
-      expect(container).toBeInTheDocument();
+      const saveDraftButton = await screen.findByRole('button', { name: 'Save draft' });
+      expect(saveDraftButton).toBeInTheDocument();
+      userEvent.click(saveDraftButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
+      });
     });
 
     it('handles error when creating new report fails', async () => {
@@ -776,14 +792,6 @@ describe('CollaborationReportForm', () => {
       await waitFor(() => {
         expect(screen.getByText(/Collaboration report for Region/)).toBeInTheDocument();
       });
-
-      // Update the report's name
-      const reportNameInput = await screen.findByLabelText('Activity name');
-      userEvent.type(reportNameInput, 'Report 1');
-
-      // Save a draft
-      const saveDraftButton = screen.getByRole('button', { name: 'Save draft' });
-      userEvent.click(saveDraftButton);
     });
   });
 
