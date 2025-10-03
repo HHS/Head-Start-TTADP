@@ -71,7 +71,7 @@ export default function SessionReportFacilitation({ match }) {
         return;
       }
 
-      history.push(`/training-report/${trainingReport.id}/session/${session.id}`);
+      history.push(`/training-report/${session.eventId}/session/${session.id}`);
     } catch (err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }

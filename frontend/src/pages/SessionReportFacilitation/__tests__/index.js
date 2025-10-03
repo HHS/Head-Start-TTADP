@@ -253,7 +253,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 1 };
+      const sessionResponse = { id: 1, eventId: 1 };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -281,7 +281,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 2 };
+      const sessionResponse = { id: 2, eventId: 1 };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
@@ -309,7 +309,7 @@ describe('SessionReportFacilitation', () => {
       await waitFor(() => {
         expect(screen.getByText('Training Report - Create a session')).toBeInTheDocument();
       });
-      const sessionResponse = { id: 3 };
+      const sessionResponse = { id: 3, eventId: 1 };
       fetchMock.post('/api/session-reports', sessionResponse);
       const spy = jest.spyOn(history, 'push');
 
