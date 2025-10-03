@@ -663,9 +663,9 @@ jobs:
             json_data=${results#*"$delim"}
             goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
             echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+          fi
             echo "Error: test asdasd" >> cmd_log.txt
             echo $(grep -o "Error.*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
-          fi
           cat monitoring-updates.txt
     - when:
         condition:
