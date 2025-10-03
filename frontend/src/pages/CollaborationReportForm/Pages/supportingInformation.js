@@ -162,7 +162,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
       {showOtherDataUsed && (
         <Fieldset className="smart-hub--report-legend">
           <FormItem
-            label="Others data collected"
+            label="Other data collected"
             name="otherDataUsed"
             fieldSetWrapper
             required
