@@ -66,7 +66,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
 
   await page.waitForTimeout(2000); // wait for first post to complete
 
-  await page.getByText(/Recipients/i).click();
+  await page.getByText('Recipients *- Select -').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
