@@ -8,10 +8,8 @@ import Select from 'react-select';
 import {
   TARGET_POPULATIONS,
   EVENT_TARGET_POPULATIONS,
-  REASONS,
   TRAINING_REPORT_STATUSES,
 } from '@ttahub/common';
-
 import { useFormContext, Controller } from 'react-hook-form';
 import {
   Label,
@@ -31,8 +29,7 @@ import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
 import UserContext from '../../../UserContext';
 import isAdmin from '../../../permissions';
-
-const placeholderText = '- Select -';
+import { EVENT_PARTNERSHIP, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 
 // Get the first three values in TARGET_POPULATIONS.
 const tgtPop = [...TARGET_POPULATIONS];
@@ -50,9 +47,9 @@ targetPopulations.sort();
 targetPopulations.unshift(...firstThree);
 
 const eventOrganizerOptions = [
-  'Regional PD Event (with National Centers)',
-  'Regional TTA Hosted Event (no National Centers)',
-  'IST TTA/Visit',
+  TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+  TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS,
+  TRAINING_EVENT_ORGANIZER.IST_TTA_VISIT,
 ].map((option) => ({ value: option, label: option }));
 
 const EventSummary = ({
@@ -254,7 +251,36 @@ const EventSummary = ({
               </ReadOnlyField>
             </>
           )}
-
+        <div className="margin-y-3">
+          <FormItem
+            label="Is this event in partnership with a Head Start Association (HSA)? "
+            name="eventPartnership"
+            required
+            fieldSetWrapper
+          >
+            <Radio
+              id="eventPartnership-regional-hsa"
+              name="eventPartnership"
+              value={EVENT_PARTNERSHIP.REGIONAL_HSA}
+              label="Yes, Regional HSA"
+              inputRef={register({ required: 'Select who the event was in partnership with' })}
+            />
+            <Radio
+              id="eventPartnership-state-hsa"
+              name="eventPartnership"
+              value={EVENT_PARTNERSHIP.STATE_HSA}
+              label="Yes, State HSA"
+              inputRef={register({ required: 'Select who the event was in partnership with' })}
+            />
+            <Radio
+              id="eventPartnership-no"
+              name="eventPartnership"
+              value={EVENT_PARTNERSHIP.NO}
+              label="No"
+              inputRef={register({ required: 'Select who the event was in partnership with' })}
+            />
+          </FormItem>
+        </div>
         <div className="margin-top-2" data-testid="collaborator-select">
           <FormItem
             label="Event collaborators "
@@ -445,20 +471,6 @@ const EventSummary = ({
                 <option>Multi-Day single event</option>
                 <option>1 day or less</option>
               </Dropdown>
-            </div>
-            <div className="margin-top-2">
-              <FormItem
-                label="Reasons"
-                name="reasons"
-              >
-                <MultiSelect
-                  name="reasons"
-                  control={control}
-                  options={REASONS.map((reason) => ({ value: reason, label: reason }))}
-                  required="Select at least on reason"
-                  placeholderText={placeholderText}
-                />
-              </FormItem>
             </div>
             <div className="margin-top-2">
               <FormItem
