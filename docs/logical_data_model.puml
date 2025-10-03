@@ -1144,6 +1144,24 @@ class SessionReportPilotFiles{
  * updatedAt : timestamp with time zone
 }
 
+class SessionReportPilotGoalTemplates{
+ * id : integer : <generated>
+ * goalTemplateId : integer : REFERENCES "GoalTemplates".id
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class SessionReportPilotGrants{
+ * id : integer : <generated>
+ * grantId : integer : REFERENCES "Grants".id
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class SessionReportPilotSupportingAttachments{
  * id : integer : <generated>
  * fileId : integer : REFERENCES "Files".id
@@ -1152,8 +1170,18 @@ class SessionReportPilotSupportingAttachments{
  * updatedAt : timestamp with time zone
 }
 
+class SessionReportPilotTrainers{
+ * id : integer : <generated>
+ * sessionReportPilotId : integer : REFERENCES "SessionReportPilots".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class SessionReportPilots{
  * id : integer : <generated>
+ approverId : integer : REFERENCES "Users".id
  * eventId : integer : REFERENCES "EventReportPilots".id
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
@@ -1177,6 +1205,7 @@ class SiteAlerts{
 class Topics{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
+ * deprecated : boolean : false
  * name : varchar(255)
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
@@ -2529,7 +2558,49 @@ class ZALSessionReportPilotFiles{
  session_sig : text
 }
 
+class ZALSessionReportPilotGoalTemplates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALSessionReportPilotGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALSessionReportPilotSupportingAttachments{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALSessionReportPilotTrainers{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2750,6 +2821,7 @@ GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateFieldPrompts
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : goalTemplate, goalTemplateObjectiveTemplates
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : goalTemplate, goalTemplateResources
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" Goals : goals, goalTemplate
+GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGoalTemplates : sessionReportGoalTemplates, goalTemplate
 Goals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : goal, originalGoal, activityReportGoals, reassignedActivityReportGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : goal, goalCollaborators
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, responses
@@ -2767,6 +2839,7 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacements : replacedGra
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
@@ -2826,7 +2899,10 @@ Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
 Scopes "1" --[#black,dashed,thickness=2]--{  "n" Permissions : scope, permissions
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGoalTemplates : sessionReportPilot, sessionGoalTemplates
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionReportPilot, sessionGrants
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : sessionReport, sessionSupportingAttachments
+SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : sessionReportPilot, sessionTrainers
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
@@ -2844,6 +2920,8 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, group
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
+Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
+Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
@@ -2873,9 +2951,11 @@ CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Recipients : recipie
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
+GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
+Grants "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, grants
 Groups "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, groups
 NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
@@ -2884,5 +2964,6 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+SessionReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Users : trainers, sessionReports
 
 @enduml

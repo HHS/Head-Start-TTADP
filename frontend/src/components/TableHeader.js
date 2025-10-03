@@ -47,13 +47,13 @@ export default function TableHeader({
           <span className={`smart-hub--table-controls margin-x-0 ${controlsWrapDisplay} flex-row`}>
             {numberOfSelected > 0
             && (
-              <span className="padding-y-05 padding-left-105 padding-right-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs text-middle margin-right-1 smart-hub--selected-tag">
+              <span className="display-flex flex-align-center padding-x-2 padding-y-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs smart-hub--selected-tag">
                 {numberOfSelected}
                 {' '}
                 selected
                 {' '}
                 <Button
-                  className="smart-hub--select-tag__button"
+                  className="smart-hub--select-tag__button margin-left-1"
                   unstyled
                   aria-label="deselect all reports"
                   onClick={() => {
