@@ -652,6 +652,7 @@ jobs:
         target_env: << parameters.target_env >>
         logfile: cmd_log.txt
     - run:
+        when: always
         command: |
           if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
             echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
@@ -661,6 +662,7 @@ jobs:
             json_data=${results#*"$delim"}
             goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
             echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+            echo $(grep -o "Error: .*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
           fi
           cat monitoring-updates.txt
     - when:
