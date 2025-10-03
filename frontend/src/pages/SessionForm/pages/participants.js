@@ -40,6 +40,7 @@ const Participants = ({ formData }) => {
       </Helmet>
       <IndicatesRequiredField />
       <RecipientsWithGroups
+        showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
         regionId={regionId || eventRegionId}
       />
       <div className="margin-top-2">
