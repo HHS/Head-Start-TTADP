@@ -116,7 +116,7 @@ const Review = ({
   author,
   approvers,
 }) => {
-  const FormComponent = (isApprover) ? ApproverReview : CreatorSubmit;
+  const FormComponent = (isApprover && isSubmitted) ? ApproverReview : CreatorSubmit;
 
   const { watch, getValues } = useFormContext();
   const { user } = useContext(UserContext);
