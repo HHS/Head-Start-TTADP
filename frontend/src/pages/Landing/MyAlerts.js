@@ -32,7 +32,6 @@ const isCreator = (report, user) => report.userId === user.id;
 
 function ReportRow({
   report,
-  message,
   index,
   length,
   updateIdToDelete,
@@ -78,6 +77,9 @@ function ReportRow({
       onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
     });
   }
+
+  const message = history.location.state && history.location.state.message;
+
   const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
     calculatedStatus,
     approvers,
@@ -183,7 +185,7 @@ ReportRow.defaultProps = {
   message: null,
 };
 
-export function ReportsRow({ reports, removeAlert, message }) {
+export function ReportsRow({ reports, removeAlert }) {
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
 
@@ -200,7 +202,6 @@ export function ReportsRow({ reports, removeAlert, message }) {
     <ReportRow
       key={report.id}
       report={report}
-      message={message}
       index={index}
       length={length}
       updateIdToDelete={updateIdToDelete}
@@ -274,7 +275,6 @@ function MyAlerts(props) {
     setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
-    message,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -383,7 +383,7 @@ function MyAlerts(props) {
                 </tr>
               </thead>
               <tbody>
-                <ReportsRow reports={reports} removeAlert={removeAlert} message={message} />
+                <ReportsRow reports={reports} removeAlert={removeAlert} />
               </tbody>
             </Table>
           </div>

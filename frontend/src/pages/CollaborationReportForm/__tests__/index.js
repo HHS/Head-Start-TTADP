@@ -908,6 +908,50 @@ describe('CollaborationReportForm', () => {
       fetchMock.get('/api/activity-reports/approvers?region=1', []);
     });
 
+    it('redirects to view when report is approved', async () => {
+      fetchMock.get('/api/collaboration-reports/123', {
+        ...dummyReport,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        userId: 1,
+        approvers: [],
+        id: 123,
+      });
+
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      }));
+
+      render(<ReportComponent id="123" userId={1} />);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
+      });
+    });
+
+    it('redirects to view when report is submitted and user is not an approver', async () => {
+      fetchMock.get('/api/collaboration-reports/123', {
+        ...dummyReport,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        userId: 2, // Different user
+        approvers: [{ user: { id: 3 } }], // Not current user
+        id: 123,
+      });
+
+      getItem.mockReturnValue(JSON.stringify({
+        regionId: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }));
+
+      render(<ReportComponent id="123" userId={1} />);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123');
+      });
+    });
+
     it('does not redirect when report is submitted and user is an approver', async () => {
       fetchMock.get('/api/collaboration-reports/123', {
         ...dummyReport,
