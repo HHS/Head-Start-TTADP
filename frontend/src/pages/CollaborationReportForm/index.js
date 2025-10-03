@@ -608,8 +608,9 @@ function CollaborationReport({ match, location }) {
     return '';
   })();
 
-  // eslint-disable-next-line max-len
-  const hideSideNav = formData && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED && !isApprover;
+  const hideSideNav = formData
+    && formData.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    && !isApprover;
 
   const author = creatorNameWithRole ? (
       // eslint-disable-next-line react/jsx-indent
@@ -620,7 +621,6 @@ function CollaborationReport({ match, location }) {
           {' '}
           {creatorNameWithRole}
         </p>
-
       </>
   ) : null;
 
@@ -737,6 +737,7 @@ function CollaborationReport({ match, location }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             shouldAutoSave={shouldAutoSave}
+            isAppLoading={isAppLoading}
           />
         </FormProvider>
       </NetworkContext.Provider>
