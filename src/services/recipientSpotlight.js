@@ -14,28 +14,36 @@ export async function getRecipientSpotlightIndicators(
   offset,
   userRegions,
 ) {
-  // Get a list of grant ids using the scopes.
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
+  const grantsWhere = {
+    [Op.and]: [
+      scopes.grant,
+      regionId,
+      {
+        [Op.or]: [
+          { status: 'Active' },
+          {
+            status: 'Inactive',
+            inactivationDate: {
+              [Op.gte]: INACTIVATION_CUT_OFF,
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  // We may or may not have a recipientId but we should always have a regionId.
+  if (recipientId) {
+    grantsWhere[Op.and].push({ recipientId });
+  }
+
+  // Get a list of grant ids using the scopes.
   const grantIds = await Grant.findAll({
     attributes: [
       'id',
     ],
-    where: {
-      [Op.and]: [
-        scopes.grant,
-        {
-          [Op.or]: [
-            { status: 'Active' },
-            {
-              status: 'Inactive',
-              inactivationDate: {
-                [Op.gte]: INACTIVATION_CUT_OFF,
-              },
-            },
-          ],
-        },
-      ],
-    },
+    where: grantsWhere,
     raw: true,
   });
 
