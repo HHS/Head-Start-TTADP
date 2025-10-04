@@ -258,6 +258,35 @@ export default async function authMiddleware(req, res, next) {
   }
 }
 
+// Destroys the local session and clears the session cookie
+function destroyLocalSession(req, res) {
+  const secure = process.env.NODE_ENV === 'production';
+
+  const clearCookie = () => res.clearCookie('session', {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure,
+  });
+
+  return new Promise((resolve) => {
+    const finish = () => { clearCookie(); resolve(); };
+
+    if (req.session && typeof req.session.destroy === 'function') {
+      const sid = req.sessionID;
+      req.session.destroy((err) => {
+        if (err) {
+          auditLogger.error('Error destroying session', err, { sid });
+        }
+        finish();
+      });
+    } else {
+      // no session object, just clear cookie
+      finish();
+    }
+  });
+}
+
 /**
  * Initiates RP-Initiated Logout at the Authorization Server.
  *
@@ -271,6 +300,9 @@ export default async function authMiddleware(req, res, next) {
 export async function logoutOidc(req, res) {
   try {
     const client = await getOidcClient();
+    // grab id_token before we wipe the session
+    const idToken = req.session?.idToken;
+    const userId = req.session?.userId;
 
     const params = {
       post_logout_redirect_uri: `${process.env.TTA_SMART_HUB_URI}/logout`,
@@ -281,19 +313,18 @@ export async function logoutOidc(req, res) {
 
     const redirectTo = client.buildEndSessionUrl(issuerConfig, params);
 
-    const { userId } = req.session || {};
-    req.session = null;
+    await destroyLocalSession(req, res);
     auditLogger.info(`User ${userId} logged out (RP-initiated)`);
     res.redirect(redirectTo.href);
   } catch (err) {
     // If end-session is unavailable, fall back to local logout
     auditLogger.warn(`${namespace} RP-initiated logout unavailable, falling back`, err);
+    await destroyLocalSession(req, res);
     if (!res.headersSent) {
       res.redirect('/logout');
     } else {
       const { userId } = req.session || {};
       auditLogger.info(`User ${userId} logged out (local only)`);
-      req.session = null;
       res.sendStatus(204);
     }
   }
