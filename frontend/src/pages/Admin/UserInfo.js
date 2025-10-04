@@ -1,5 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect, useState, useMemo, memo,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   Label, TextInput, Grid, Fieldset,
@@ -9,10 +11,68 @@ import RegionDropdown from '../../components/RegionDropdown';
 import AdminMultiSelect from '../../components/AdminMultiSelect';
 import { getRoles } from '../../fetchers/Admin';
 
-/**
- * This component is the top half of the UserSection on the admin page. It displays and allows
- * editing of basic user information.
- */
+const AuthoritiesList = memo(({ authorities }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const { alwaysVisible, hidden } = useMemo(() => {
+    if (!Array.isArray(authorities) || authorities.length === 0) {
+      return { alwaysVisible: [], hidden: [] };
+    }
+
+    // First ROLE_* authority (if any)
+    const roleAuth = authorities.find((a) => a && a.startsWith('ROLE_'));
+
+    // First two authorities in original order, excluding the ROLE_* if it’s one of them
+    const firstTwo = authorities.slice(0, 2).filter((a) => a !== roleAuth);
+
+    const visibleBase = [];
+    const seen = new Set();
+
+    const pushUnique = (val) => {
+      if (val == null) return;
+      if (!seen.has(val)) {
+        visibleBase.push(val);
+        seen.add(val);
+      }
+    };
+
+    if (roleAuth) pushUnique(roleAuth);
+    firstTwo.forEach(pushUnique);
+
+    // Hidden = everything not already in visibleBase (preserve original order)
+    const hiddenRest = authorities.filter((a) => !seen.has(a));
+
+    return { alwaysVisible: visibleBase, hidden: hiddenRest };
+  }, [authorities]);
+
+  const visible = expanded ? [...alwaysVisible, ...hidden] : alwaysVisible;
+
+  return (
+    <>
+      <ul>
+        {visible.map((a) => (
+          <li key={a}>{a}</li>
+        ))}
+      </ul>
+
+      {hidden.length > 0 && (
+        <button
+          type="button"
+          className="usa-button usa-button--unstyled margin-top-1"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Show less' : `Show all (${authorities.length})`}
+        </button>
+      )}
+    </>
+  );
+});
+
+AuthoritiesList.propTypes = {
+  authorities: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 function UserInfo({ user, onUserChange }) {
   let { lastLogin } = user;
 
@@ -79,11 +139,14 @@ function UserInfo({ user, onUserChange }) {
             <AdminMultiSelect
               id="user-roles"
               name="roles"
-              value={user.roles ? user.roles.map((role) => (role.fullName)) : []}
+              value={user.roles ? user.roles.map((role) => role.fullName) : []}
               onChange={onUserChange}
               placeholder="Select roles..."
               label="Role(s)"
-              options={roleOptions.map((role) => ({ value: role, label: role }))}
+              options={roleOptions.map((role) => ({
+                value: role,
+                label: role,
+              }))}
             />
           </Grid>
         </Grid>
@@ -100,11 +163,11 @@ function UserInfo({ user, onUserChange }) {
               </dd>
               <dt className="text-bold">HSES Authorities</dt>
               <dd className="margin-bottom-1" data-testid="hses-authorities">
-                <ul>
-                  {(user.hsesAuthorities || []).map((a) => (
-                    <li key={a}>{a}</li>
-                  ))}
-                </ul>
+                {user.hsesAuthorities && user.hsesAuthorities.length > 0 ? (
+                  <AuthoritiesList authorities={user.hsesAuthorities} />
+                ) : (
+                  <span>None</span>
+                )}
               </dd>
               <dt className="text-bold">Last Login</dt>
               <dd data-testid="last-login">{lastLogin}</dd>

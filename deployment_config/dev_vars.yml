@@ -19,15 +19,17 @@ SUPPRESS_ERROR_LOGGING: "false"
 SEND_NOTIFICATIONS: "true"
 FORCE_CRON: "false"
 
-AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov
+AUTH_BASE: https://staging.hses.ohs.acf.hhs.gov/oidc
 REDIRECT_URI_HOST: https://tta-smarthub-${full_env}.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-${full_env}.app.cloud.gov
+OIDC_AUTH_METHOD: "pkce"
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
 SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
 
 AUTH_CLIENT_ID: "${DEV_AUTH_CLIENT_ID}"
+PRIVATE_JWK_64: "${PRIVATE_JWK_64}"
 AUTH_CLIENT_SECRET: "${DEV_AUTH_CLIENT_SECRET}"
 SESSION_SECRET: "${DEV_SESSION_SECRET}"
 JWT_SECRET: "${DEV_JWT_SECRET}"

@@ -119,11 +119,12 @@ describe('HeaderUserMenu', () => {
       beforeEach(async () => before());
       afterEach(() => fetchMock.restore());
 
-      it('logs the user out', async () => {
-        const logoutLink = screen.getByRole('link', { name: 'Log out' });
-        fireEvent.click(logoutLink);
-        expect(await screen.findByText('Log In with HSES')).toBeVisible();
-        expect(await screen.findByText('Logout Successful')).toBeVisible();
+      it('points to the RP-initiated logout endpoint', () => {
+        const logoutLink = screen.getByRole('link', { name: /log out/i });
+        expect(logoutLink).toHaveAttribute('href', '/api/logout-oidc');
+
+        expect(logoutLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
+        expect(logoutLink).not.toHaveAttribute('data-router-link');
       });
     });
   });
