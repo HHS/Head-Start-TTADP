@@ -44,7 +44,7 @@ export default function ContentFromFeedByTag({
               setContent(contentElement.outerHTML);
             } else {
               // eslint-disable-next-line no-console
-              console.log('No content element found with selector', contentSelector, 'displaying entire contents instead');
+              console.log('No content element found with selector', contentSelector, 'displaying entire contents instead: ', tagName);
               setContent(summaryContent);
             }
           } else if (summaryContent) {
