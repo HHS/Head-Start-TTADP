@@ -19,6 +19,10 @@ import {
   MonitoringReviewLink,
   MonitoringReviewStatusLink,
   MonitoringClassSummary,
+  Goal,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Objective,
   ZALGoal,
 } from '../models';
 import processData, {
@@ -27,6 +31,7 @@ import processData, {
   hideRecipientsGrants,
   bootstrapUsers,
   convertName, // Kept as it's still used in the main code
+  processMonitoringReferences,
 } from './processData';
 
 jest.mock('../logger');
@@ -438,6 +443,88 @@ describe('processData', () => {
       });
 
       expect(monitoringClassSummaryRecord).toBeNull();
+    });
+  });
+
+  describe('processMonitoringReferences', () => {
+    let report;
+    let goal;
+    let objective;
+    let aro;
+
+    beforeAll(async () => {
+      report = await ActivityReport.create(reportObject);
+
+      goal = await Goal.create({
+        name: 'tmp goal for monitoringReferences test',
+        status: 'Not Started',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        grantId: GRANT_ID_ONE,
+      });
+
+      objective = await Objective.create({
+        title: 'tmp objective',
+        status: 'Not Started',
+        goalId: goal.id,
+      });
+
+      aro = await ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: objective.id,
+      });
+
+      await hideRecipientsGrants(reportObject.imported.granteeName);
+
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aro.id,
+        citation: '1302.91(e)(2)(ii)',
+        monitoringReferences: [
+          {
+            acro: 'AOC',
+            name: 'AOC - 1302.91(e)(2)(ii) - Education and Child Development',
+            grantId: GRANT_ID_ONE,
+            citation: '1302.91(e)(2)(ii)',
+            severity: 3,
+            findingId: '42CFA92C-609E-426F-9920-90AE5583C0FE',
+            reviewName: '255822F1F',
+            standardId: 204445,
+            findingType: 'Area of Concern',
+            grantNumber: GRANT_NUMBER_ONE,
+            findingSource: 'Education and Child Development',
+            originalGrantId: GRANT_ID_ONE,
+            reportDeliveryDate: '2025-06-04T04:00:00+00:00',
+            monitoringFindingStatusName: 'Active',
+          },
+        ],
+      });
+    });
+
+    afterAll(async () => {
+      await ActivityReportObjectiveCitation.destroy({
+        where: { activityReportObjectiveId: aro.id },
+        force: true,
+      });
+      await ActivityReportObjective.destroy({ where: { id: aro.id }, force: true });
+      await Objective.destroy({ where: { id: objective.id }, force: true });
+      await Goal.destroy({ where: { id: goal.id }, force: true });
+      await ActivityReport.destroy({ where: { id: report.id }, force: true });
+    });
+
+    it('rewrites monitoringReferences[*].grantNumber to the obfuscated value', async () => {
+      await processMonitoringReferences();
+
+      const row = await ActivityReportObjectiveCitation.findOne({
+        where: { activityReportObjectiveId: aro.id },
+        raw: true,
+      });
+
+      const obfuscated = (await Grant.findOne({ where: { id: GRANT_ID_ONE }, raw: true })).number;
+
+      expect(row).toBeTruthy();
+      expect(Array.isArray(row.monitoringReferences)).toBe(true);
+      expect(row.monitoringReferences[0].grantNumber).not.toBe(GRANT_NUMBER_ONE);
+      expect(row.monitoringReferences[0].grantNumber).toBe(obfuscated);
     });
   });
 
