@@ -324,7 +324,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
                 value={
-                    value.length > 0
+                    value && value.length > 0
                       ? {
                         value,
                         label: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
@@ -512,7 +512,7 @@ const ReviewSection = () => {
           customValue: {
             conductMethod: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
               m.value === conductMethod
-            ))[0].label,
+            ))[0]?.label || 'None selected',
           },
         },
         { label: 'Activity description', name: 'description', customValue: { description } },
