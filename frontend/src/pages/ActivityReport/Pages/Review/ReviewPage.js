@@ -33,7 +33,7 @@ const ReviewPage = ({
           >
             {section.items.map((item) => (
               <ReviewItem
-                key={item.label || uniqueId('review-item-')}
+                key={uniqueId('review-item-')}
                 label={item.label}
                 path={item.path}
                 name={item.name}

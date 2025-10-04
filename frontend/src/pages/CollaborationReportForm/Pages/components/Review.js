@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
+import { useHistory } from 'react-router';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Accordion } from '../../../../components/Accordion';
@@ -15,30 +16,46 @@ const TopAlert = ({
   pendingApprovalCount,
   approvers,
 }) => {
-  const getNeedsActionApprovingMangers = () => {
+  const formatNeedsActionApprovers = () => {
     const approversList = Array.isArray(approvers) ? approvers : (approvers?.rows || []);
     const needActionApprovers = approversList.filter(
       (a) => a.status === REPORT_STATUSES.NEEDS_ACTION,
     );
-    if (needActionApprovers && needActionApprovers.length > 0) {
-      return needActionApprovers
-        .filter((a) => a.user && a.user.fullName)
-        .map((a) => a.user.fullName)
-        .join(', ');
+
+    if (!needActionApprovers || needActionApprovers.length === 0) {
+      return 'Changes have been requested for the Collaboration Report.';
     }
-    return '';
+
+    const approverNames = needActionApprovers
+      .filter((a) => a.user && a.user.fullName)
+      .map((a) => a.user.fullName);
+
+    if (approverNames.length === 0) {
+      return 'Changes have been requested for the Collaboration Report.';
+    }
+
+    if (approverNames.length === 1) {
+      return `${approverNames[0]} is requesting changes to the Collaboration Report.`;
+    }
+
+    if (approverNames.length === 2) {
+      return `${approverNames[0]} and ${approverNames[1]} are requesting changes to the Collaboration Report.`;
+    }
+
+    // Multiple approvers (3 or more) - use Oxford comma
+    const lastApprover = approverNames.pop();
+    const otherApprovers = approverNames.join(', ');
+    return `${otherApprovers}, and ${lastApprover} are requesting changes to the Collaboration Report.`;
   };
 
   if (isNeedsAction) {
     return (
       <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
         <span className="text-bold">
-          The following approving manager(s) have requested changes to this collaboration report:
-          {' '}
-          {getNeedsActionApprovingMangers()}
+          {formatNeedsActionApprovers()}
         </span>
         <br />
-        Please review the manager notes and re-submit for approval.
+        Please review any manager notes below and resubmit for approval.
       </Alert>
     );
   }
@@ -49,7 +66,7 @@ const TopAlert = ({
         <span className="text-bold">
           {author.fullName}
           {' '}
-          has requested approval for this collaboration report (
+          has requested approval for this Collaboration report (
           <strong>
             {`${pendingApprovalCount} of
                ${approvers?.length || 0}`}
@@ -59,7 +76,7 @@ const TopAlert = ({
           ).
         </span>
         <br />
-        Please review all information in each section before submitting.
+        Please review all information, then select an approval status.
       </>
     </Alert>
   );
@@ -82,13 +99,13 @@ TopAlert.propTypes = {
 const Review = ({
   onFormReview,
   approverStatusList,
-  pendingOtherApprovals,
   dateSubmitted,
   pages,
   availableApprovers,
   reviewItems,
   isCreator,
   isCollaborator,
+  isApprover,
   isSubmitted,
   onSaveForm,
   onUpdatePage,
@@ -99,13 +116,15 @@ const Review = ({
   author,
   approvers,
 }) => {
-  const FormComponent = (isCreator || isCollaborator) ? CreatorSubmit : ApproverReview;
+  const FormComponent = (isApprover && isSubmitted) ? ApproverReview : CreatorSubmit;
 
-  const { watch } = useFormContext();
+  const { watch, getValues } = useFormContext();
   const { user } = useContext(UserContext);
+  const { id } = getValues();
+  const history = useHistory();
 
   const otherManagerNotes = approverStatusList
-    ? approverStatusList.filter((a) => a.user.id !== user.id) : null;
+    ? approverStatusList.filter((a) => a.user.id !== user.id && a.note) : null;
   const thisApprovingManager = approverStatusList
     ? approverStatusList.filter((a) => a.user.id === user.id) : null;
   const hasBeenReviewed = thisApprovingManager
@@ -123,7 +142,7 @@ const Review = ({
 
   return (
     <>
-      <h2 className="font-family-serif">{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve'}</h2>
+      <h2 className="font-family-serif">Review and submit</h2>
 
       <IndicatesRequiredField />
       {isSubmitted && (
@@ -135,8 +154,19 @@ const Review = ({
       />
       )}
       {reviewItems && reviewItems.length > 0 && (
-        <div className="margin-bottom-3">
-          <Accordion bordered items={reviewItems} multiselectable />
+        <div className="margin-bottom-4">
+          <Accordion
+            bordered
+            items={reviewItems}
+            pages={pages.map((page) => ({
+              ...page,
+              onNavigation: () => {
+                history.push(`/collaboration-reports/${id}/${page.path}`);
+              },
+            }))}
+            multiselectable
+            canEdit
+          />
         </div>
       )}
 
@@ -168,7 +198,6 @@ Review.propTypes = {
   onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   dateSubmitted: PropTypes.string,
-  pendingOtherApprovals: PropTypes.bool,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
     status: PropTypes.string,
@@ -190,6 +219,7 @@ Review.propTypes = {
   isCollaborator: PropTypes.bool.isRequired,
   isCreator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
+  isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
@@ -207,7 +237,6 @@ Review.propTypes = {
 };
 
 Review.defaultProps = {
-  pendingOtherApprovals: false,
   approverStatusList: [],
   dateSubmitted: null,
 };

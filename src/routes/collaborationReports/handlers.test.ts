@@ -444,7 +444,7 @@ describe('Collaboration Reports Handlers', () => {
       (userById as jest.Mock).mockResolvedValue({ id: 123, name: 'Test User' });
       (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
-          canUpdate: jest.fn().mockReturnValue(true),
+          canReview: jest.fn().mockReturnValue(true),
         }) as unknown as jest.Mocked<CollabReportPolicy>);
     });
 
@@ -500,7 +500,7 @@ describe('Collaboration Reports Handlers', () => {
       (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
       (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>)
         .mockImplementation(() => ({
-          canUpdate: jest.fn().mockReturnValue(false),
+          canReview: jest.fn().mockReturnValue(false),
         }) as unknown as jest.Mocked<CollabReportPolicy>);
 
       await reviewReport(mockRequest as Request, mockResponse as Response);
@@ -1085,6 +1085,7 @@ describe('Collaboration Reports Handlers', () => {
       expect(currentUserId).toHaveBeenCalledWith(mockRequest, mockResponse);
       expect(setReadRegions).toHaveBeenCalledWith({}, 123);
       expect(CRServices.getReports).toHaveBeenCalledWith({
+        limit: 'all',
         status: [
           REPORT_STATUSES.DRAFT,
           REPORT_STATUSES.SUBMITTED,
@@ -1113,13 +1114,11 @@ describe('Collaboration Reports Handlers', () => {
       mockRequest.query = {
         sortBy: 'createdAt',
         sortDir: 'desc',
-        limit: '10',
       };
 
       const filteredQuery = {
         sortBy: 'createdAt',
         sortDir: 'desc',
-        limit: '10',
         'region.in': [1, 2],
       };
 
@@ -1131,6 +1130,7 @@ describe('Collaboration Reports Handlers', () => {
       expect(setReadRegions).toHaveBeenCalledWith(mockRequest.query, 123);
       expect(CRServices.getReports).toHaveBeenCalledWith({
         ...filteredQuery,
+        limit: 'all',
         status: [
           REPORT_STATUSES.DRAFT,
           REPORT_STATUSES.SUBMITTED,
@@ -1188,7 +1188,6 @@ describe('Collaboration Reports Handlers', () => {
     it('should handle complex query with all steps successfully', async () => {
       mockRequest.query = {
         offset: '5',
-        limit: '15',
         sortBy: 'title',
         sortDir: 'asc',
         'creator.in': ['123', '456'],
@@ -1197,7 +1196,6 @@ describe('Collaboration Reports Handlers', () => {
       const userId = 789;
       const filteredQuery = {
         offset: '5',
-        limit: '15',
         sortBy: 'title',
         sortDir: 'asc',
         'creator.in': ['123', '456'],
@@ -1223,6 +1221,7 @@ describe('Collaboration Reports Handlers', () => {
       expect(setReadRegions).toHaveBeenCalledWith(mockRequest.query, userId);
       expect(CRServices.getReports).toHaveBeenCalledWith({
         ...filteredQuery,
+        limit: 'all',
         status: [
           REPORT_STATUSES.DRAFT,
           REPORT_STATUSES.SUBMITTED,

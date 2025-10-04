@@ -40,11 +40,6 @@ export default (sequelize, DataTypes) => {
         'other',
       ]),
     },
-    collabReportDataOther: {
-      allowNull: true,
-      type: DataTypes.STRING,
-      comment: 'Required when collabReportDatum is "other"',
-    },
   }, {
     sequelize,
     modelName: 'CollabReportDataUsed',

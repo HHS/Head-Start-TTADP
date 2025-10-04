@@ -1,7 +1,7 @@
 import createMonitoringGoals from './createMonitoringGoals';
 import { auditLogger } from '../logger';
 
-createMonitoringGoals(true)
+createMonitoringGoals()
   .catch((e) => {
     auditLogger.error(e);
     process.exit(1);

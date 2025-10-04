@@ -38,6 +38,16 @@ export default (sequelize, DataTypes) => {
         as: 'collabReports',
       });
       User.hasMany(models.CollabReportApprover, { foreignKey: 'userId', as: 'approvers', hooks: true });
+      // Session Report Pilot Trainers.
+      User.hasMany(models.SessionReportPilotTrainer, { foreignKey: 'userId', as: 'sessionTrainers' });
+      User.belongsToMany(models.SessionReportPilot, {
+        through: models.SessionReportPilotTrainer,
+        foreignKey: 'userId',
+        otherKey: 'sessionReportPilotId',
+        as: 'sessionReports',
+      });
+      // Session Report Pilot Approver.
+      User.hasMany(models.SessionReportPilot, { foreignKey: 'approverId', as: 'sessionReportsAsApprover' });
     }
   }
   User.init({

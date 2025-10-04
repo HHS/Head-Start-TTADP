@@ -262,6 +262,8 @@ workflows:
     - clear_cache_job:
         target_env: "tta-smarthub-staging"
     - clear_cache_job:
+        target_env: "tta-automation"
+    - clear_cache_job:
         target_env: "tta-smarthub-dev-blue" 
     - clear_cache_job:
         target_env: "tta-smarthub-dev-green" 
