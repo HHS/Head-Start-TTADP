@@ -810,10 +810,7 @@ describe('CollaborationReportForm', () => {
             { label: 'Alabama', value: 'AL' },
             { label: 'Alaska', value: 'AK' },
           ],
-          conductMethod: [
-            { label: 'Email', value: 'email' },
-            { label: 'Virtual', value: 'virtual' },
-          ],
+          conductMethod: 'email',
         };
 
         const result = convertFormDataToReport(fullData);
@@ -822,7 +819,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual(['d1', 'd2']);
         expect(result.reportGoals).toEqual(['g1']);
         expect(result.statesInvolved).toEqual(['AL', 'AK']);
-        expect(result.conductMethod).toEqual(['email', 'virtual']);
+        expect(result.conductMethod).toEqual(['email']);
       });
 
       it('preserves other properties through rest spreading', () => {
@@ -864,7 +861,7 @@ describe('CollaborationReportForm', () => {
           goals: undefined,
           reportGoals: [{ label: 'RG1', value: 'rg1' }],
           statesInvolved: [],
-          conductMethod: [{ label: 'Email', value: 'email' }],
+          conductMethod: 'email',
           otherField: 'preserved',
         };
 
