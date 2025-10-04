@@ -88,7 +88,7 @@ Basic enum ( or Dictionary ) Values
 | participate_work_groups | Participate in national, regional, state and local working groups and meetings. |
 | support_coordination | Support partnerships, coordination, and collaboration with state/regional partners |
 | agg_regional_data | Aggregate, analyze, and/or present regional data |
-| develop_presentations | Develop and provide presentations, training, and resources to RO and/or state/regional partners |  
+| develop_presentations | Develop and provide presentations, training, and resources to RO and/or state/regional partners |
 
 ##### CollabReportActivityStates - link table
 
@@ -137,7 +137,6 @@ Similar to the note in `CollabReportGoals` above, this multiple is gated by a bo
 | id | INTEGER | Y | N | none (generated) | PK, AUTO | |
 | collabReportId | INTEGER | Y | N | NONE | FK (`CollabReport.id`) ||
 | collabReportDatum | ENUM | Y | N | String || `['census_data', 'child_abuse_and_neglect','child_safety','child_family_health','disabilities','foster_care','homelessness','kids_count','licensing_data','ohs_monitoring','pir','tta_hub','other']`|
-| collabReportDataOther | VARCHAR| N | Y | String || If `collabReportDataId` is `other`, then this is a required field. Otherwise not |
 | createdAt | TIMESTAMP_ZONE | Y | N | none (generated) || Default value: now() |
 | updatedAt | TIMESTAMP_ZONE | Y | N | none (generated) || Default value: now() |
 
