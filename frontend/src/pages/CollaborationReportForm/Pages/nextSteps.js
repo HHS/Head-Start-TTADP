@@ -1,6 +1,9 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Fieldset } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
@@ -9,16 +12,31 @@ const position = 3;
 
 export const isPageComplete = () => true;
 
-const NextSteps = () => (
-  <>
-    <Helmet>
-      <title>Next Steps</title>
-    </Helmet>
-  </>
-);
+const NextSteps = () => {
+  const {
+    getValues,
+  } = useFormContext();
+
+  return (
+    <>
+      <Helmet>
+        <title>Next Steps</title>
+      </Helmet>
+      <IndicatesRequiredField />
+      <button type="button" onClick={() => { console.log('values: ', getValues()); }}>Get Values</button>
+      <Fieldset id="next-steps-field-set" className="smart-hub--report-legend margin-top-4" legend="What have you agreed to do next?">
+        <NextStepsRepeater
+          id="next-steps-repeater-id"
+          name="steps"
+          ariaName="Next Steps"
+        />
+      </Fieldset>
+    </>
+  );
+};
 
 const getNextStepsSections = (steps) => {
-  const specialistItems = (steps || []).map((step, index) => ([
+  const nextStepItems = (steps || []).map((step, index) => ([
     {
       label: `Step ${index + 1}`,
       name: 'step',
@@ -35,7 +53,7 @@ const getNextStepsSections = (steps) => {
     {
       isEditSection: true,
       anchor: 'next-steps',
-      items: [...specialistItems.flatMap((item) => item)],
+      items: [...nextStepItems.flatMap((item) => item)],
     },
   ];
 };

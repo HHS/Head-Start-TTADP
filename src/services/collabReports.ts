@@ -161,7 +161,7 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
   if (steps && steps.length > 0) {
     const newSteps = steps.map((step: Model) => ({
       collabReportId,
-      ...step.toJSON(),
+      ...step,
     }));
     await CollabReportStep.bulkCreate(newSteps);
   }
