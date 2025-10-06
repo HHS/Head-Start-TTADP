@@ -22,6 +22,7 @@ import {
   Radio,
   Button,
   ErrorMessage,
+  Link,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
@@ -49,6 +50,7 @@ import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import { mustBeQuarterHalfOrWhole } from '../../../Constants';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -646,7 +648,61 @@ const requiredFields = [...Object.keys(sessionSummaryRequiredFields), 'endDate',
 const path = 'session-summary';
 const position = 1;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+
+  const {
+    sessionName,
+    startDate,
+    endDate,
+    duration,
+    context,
+
+    objective,
+    objectiveTopics,
+    objectiveTrainers,
+    courses,
+    objectiveResources,
+    files,
+    ttaProvided,
+    objectiveSupportType,
+  } = getValues();
+
+  // eslint-disable-next-line max-len
+  const objectiveFiles = files.map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
+  const resources = objectiveResources.map((r) => <Link href={r.value}>{r.value}</Link>);
+
+  const sections = [
+    {
+      anchor: 'activity-for',
+      items: [
+        { label: 'Session name', name: 'sessionName', customValue: { sessionName } },
+        { label: 'Session start date', name: 'startDate', customValue: { startDate } },
+        { label: 'Session end date', name: 'endDate', customValue: { endDate } },
+        { label: 'Duration', name: 'duration', customValue: { duration } },
+        { label: 'Session context', name: 'context', customValue: { context } },
+      ],
+    },
+    {
+      title: 'Objective summary',
+      anchor: 'session-objective',
+      items: [
+        { label: 'Session objective', name: 'objective', customValue: { objective } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: '' } }, // todo: revisit when goals available
+        { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
+        { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
+        { label: 'iPD courses', name: 'courses', customValue: { courses: courses.map((c) => c.name) } },
+        { label: 'Resource links', name: 'objectiveResources', customValue: { objectiveResources: resources } },
+        { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
+        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        { label: 'Support type', name: 'objectiveSupportType', customValue: { objectiveSupportType } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
 

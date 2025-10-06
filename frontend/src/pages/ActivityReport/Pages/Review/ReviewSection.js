@@ -28,7 +28,7 @@ const Section = ({
       </div>
       <div className={`grid-row ${title ? 'padding-bottom-1' : 'padding-bottom-0'}`}>
         <div className="grid-col-12 desktop:grid-col-6">
-          {title && <h3 className="margin-y-1">{title}</h3>}
+          {title && <h3 className="margin-y-1 font-sans-lg">{title}</h3>}
         </div>
       </div>
       {children}

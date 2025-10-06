@@ -25,6 +25,7 @@ import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
 import pages from './pages';
+import reviewPage from './pages/reviewSubmit';
 import AppLoadingContext from '../../AppLoadingContext';
 import isAdmin from '../../permissions';
 import sessionSummary from './pages/sessionSummary';
@@ -181,9 +182,11 @@ export default function SessionForm({ match }) {
       pages.participants,
       pages.supportingAttachments,
       pages.nextSteps,
+      reviewPage,
     ];
   } else if (isPoc) {
-    applicationPages = [pages.participants, pages.supportingAttachments, pages.nextSteps];
+    // eslint-disable-next-line max-len
+    applicationPages = [pages.participants, pages.supportingAttachments, pages.nextSteps, reviewPage];
   } else {
     applicationPages = [sessionSummary];
   }
