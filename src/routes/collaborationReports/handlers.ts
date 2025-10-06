@@ -89,8 +89,10 @@ export async function getAlerts(req: Request, res: Response) {
     const query = await setReadRegions(req.query, userId);
     // the query here may contain additional filter information
     // so we expect the collab reports to have a full filter suite
+
     const reportPayload = await getReportsService({
       ...query,
+      limit: 'all',
       status: [
         REPORT_STATUSES.DRAFT,
         REPORT_STATUSES.SUBMITTED,
@@ -352,7 +354,7 @@ export async function reviewReport(req: Request, res: Response) {
     // Make sure the current user is authorized to update the report
     const user = await userById(userId);
     const authorization = new CollabReportPolicy(user, existingReport);
-    if (!authorization.canUpdate()) {
+    if (!authorization.canReview()) {
       res.sendStatus(FORBIDDEN);
       return;
     }

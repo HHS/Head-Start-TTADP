@@ -66,7 +66,7 @@ export const collabReportScopes = async (filters, userId, status) => {
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra WHERE cra."userId" = ${userId})`),
+          [Op.in]: sequelize.literal(`(SELECT cra."collabReportId" FROM "CollabReportApprovers" cra INNER JOIN "CollabReports" cr ON cr.id = cra."collabReportId" WHERE cra."userId" = ${userId} AND cr."calculatedStatus" = 'submitted' AND cr."deletedAt" IS NULL)`),
         },
       },
     ];
@@ -167,6 +167,24 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
   }
 }
 
+async function saveReportGoals(collabReportId: number, reportGoals: number[]) {
+  // First, destroy any existing goals for this report
+  await CollabReportGoal.destroy({
+    where: {
+      collabReportId,
+    },
+  });
+
+  // Then create new goals if any are provided
+  if (reportGoals && reportGoals.length > 0) {
+    const newGoals = reportGoals.map((goal: number) => ({
+      collabReportId,
+      goalTemplateId: goal,
+    }));
+    await CollabReportGoal.bulkCreate(newGoals);
+  }
+}
+
 async function saveReportDataUsed(collabReportId, dataUsed) {
   // First, destroy all existing data used entries for this report
   await CollabReportDataUsed.destroy({
@@ -180,7 +198,6 @@ async function saveReportDataUsed(collabReportId, dataUsed) {
     const newDataUsed = dataUsed.map((data) => ({
       collabReportId,
       collabReportDatum: data.collabReportDatum || data,
-      collabReportDataOther: data.collabReportDataOther,
     }));
     await CollabReportDataUsed.bulkCreate(newDataUsed);
   }
@@ -271,6 +288,12 @@ export async function collabReportById(crId: string) {
       {
         model: User,
         as: 'author',
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+          },
+        ],
       },
       {
         required: false,
@@ -281,6 +304,12 @@ export async function collabReportById(crId: string) {
           {
             model: User,
             as: 'specialist',
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
           },
         ],
       },
@@ -319,6 +348,12 @@ export async function collabReportById(crId: string) {
             model: User,
             as: 'user',
             attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
           },
         ],
       },
@@ -368,6 +403,11 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   // Save any data used
   if (dataUsed) {
     await saveReportDataUsed(reportId, dataUsed);
+  }
+
+  // Save any goals
+  if (reportGoals) {
+    await saveReportGoals(reportId, reportGoals);
   }
 
   // Save any activity states
@@ -453,7 +493,7 @@ export async function getCSVReports(
         model: User,
         as: 'author',
         required: true,
-        attributes: ['fullName', 'name'],
+        attributes: ['fullName', 'name', 'id'],
         include: [
           {
             model: Role,
@@ -561,7 +601,7 @@ export async function getReports(
         model: User,
         as: 'author',
         required: true,
-        attributes: ['fullName', 'name'],
+        attributes: ['fullName', 'name', 'id'],
         include: [
           {
             model: Role,

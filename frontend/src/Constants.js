@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { pickBy } from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
+import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
 
 export const CONTAINS = 'contains';
 export const NOT_CONTAINS = 'does not contain';
@@ -143,8 +144,8 @@ export const CENTRAL_OFFICE = 14;
 export const ALL_REGIONS = 15;
 
 export const managerReportStatuses = [
-  'needs_action',
-  'approved',
+  APPROVER_STATUSES.NEEDS_ACTION,
+  APPROVER_STATUSES.APPROVED,
 ];
 
 export const MODEL_TYPES = {
@@ -270,6 +271,13 @@ export const STATES = {
   ID: 'Idaho',
   AK: 'Alaska',
 };
+
+export const COLLAB_REPORT_CONDUCT_METHODS = [
+  { label: 'Email', value: 'email' },
+  { label: 'Phone', value: 'phone' },
+  { label: 'In person', value: 'in_person' },
+  { label: 'Virtual', value: 'virtual' },
+];
 
 export const COLLAB_REPORT_REASONS = {
   participate_work_groups: 'Participate in national, regional, state, and local work groups and meetings',
