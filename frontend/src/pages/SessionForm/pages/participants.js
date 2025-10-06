@@ -280,7 +280,7 @@ const ReviewSection = () => {
     {
       anchor: 'participants',
       items: [
-        { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients.map((r) => r.label).join(', ') } },
+        { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients?.map((r) => r.label).join(', ') || '' } },
         { label: 'Recipient participants', name: 'participants', customValue: { participants } },
         { label: 'TTA type', name: 'ttaType', customValue: { ttaType: '' } }, // todo: revisit with changes to participants page
         { label: 'Delivery method', name: 'deliveryMethod', customValue: { deliveryMethod } },

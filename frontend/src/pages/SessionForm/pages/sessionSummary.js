@@ -733,6 +733,7 @@ const ReviewSection = () => {
     objectiveTopics,
     objectiveTrainers,
     courses,
+    sessionGoalTemplates,
     objectiveResources,
     files,
     ttaProvided,
@@ -759,7 +760,7 @@ const ReviewSection = () => {
       anchor: 'session-objective',
       items: [
         { label: 'Session objective', name: 'objective', customValue: { objective } },
-        { label: 'Supporting goals', name: 'goals', customValue: { goals: '' } }, // todo: revisit when goals available
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
         { label: 'iPD courses', name: 'courses', customValue: { courses: courses.map((c) => c.name) } },

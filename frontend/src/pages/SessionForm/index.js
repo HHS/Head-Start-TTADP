@@ -13,7 +13,7 @@ import {
 } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import {
@@ -249,6 +249,18 @@ export default function SessionForm({ match }) {
       }
       try {
         const session = await getSessionBySessionId(sessionId);
+
+        // is it submitted?
+        const { submitted, approver } = session;
+        if (submitted) {
+          // if submitted and not an approver (and report is not needs action)
+          // get us out of here
+          const isNeedsAction = approver?.status === REPORT_STATUSES.NEEDS_ACTION;
+          if (user.id !== approver.id && !isNeedsAction) {
+            // history.push(/* view training report page */); // todo
+          }
+        }
+
         // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
         resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
@@ -387,9 +399,6 @@ export default function SessionForm({ match }) {
         roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
       }
 
-      // If both are complete mark the session as complete.
-      roleData.status = data.status;
-
       // Remove complete property data based on current role.
       roleData = removeCompleteDataBaseOnRole(roleData);
 
@@ -398,6 +407,8 @@ export default function SessionForm({ match }) {
         data: {
           ...roleData,
           status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          dateSubmitted: moment().format('MM/DD/YYYY'), // date the session was submitted
+          submitted: true, // tracking whether the session has been official submitted
         },
         trainingReportId,
         eventId: trainingReportId || null,
@@ -432,15 +443,15 @@ export default function SessionForm({ match }) {
     );
   }
 
-  const showSubmitModal = async () => {
-    // updateIncompletePages();
-    const isValidForm = await hookForm.trigger();
+  // const showSubmitModal = async () => {
+  //   // updateIncompletePages();
+  //   const isValidForm = await hookForm.trigger();
 
-    if (isValidForm) {
-      // Toggle the modal only if the form is valid.
-      modalRef.current.toggleModal(true);
-    }
-  };
+  //   if (isValidForm) {
+  //     // Toggle the modal only if the form is valid.
+  //     modalRef.current.toggleModal(true);
+  //   }
+  // };
 
   const { event } = formData;
 
@@ -512,7 +523,7 @@ export default function SessionForm({ match }) {
             }}
             formData={formData}
             pages={applicationPages}
-            onFormSubmit={showSubmitModal}
+            onFormSubmit={onFormSubmit}
             onSave={onSave}
             onResetToDraft={() => {}}
             isApprover={false}

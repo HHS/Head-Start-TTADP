@@ -63,6 +63,10 @@ const istAndPocFields = {
   'pageVisited-supporting-attachments': false,
   facilitation: 'national_center',
   sessionGoalTemplates: [],
+  approverId: null,
+  additionalNotes: '',
+  managerNotes: '',
+  dateSubmitted: null,
 };
 
 const completeFormData = {
