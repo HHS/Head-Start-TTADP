@@ -61,6 +61,8 @@ const istAndPocFields = {
     4: 'Not started',
   },
   'pageVisited-supporting-attachments': false,
+  facilitation: 'national_center',
+  sessionGoalTemplates: [],
 };
 
 const completeFormData = {
@@ -614,6 +616,7 @@ describe('SessionReportForm', () => {
     // Assert the put contains the correct data
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
+
     // Assert the body has istkey porperties using the hasOwnProperty method
     // create a variable to removes pocComplete.
     const istKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
