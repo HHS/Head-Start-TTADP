@@ -59,7 +59,7 @@ const mockReport = {
   ],
   dataUsed: [
     { collabReportDatum: 'coaching-data' },
-    { collabReportDatum: 'other', collabReportDatumOther: 'Custom data type' },
+    { collabReportDatum: 'other' },
   ],
   steps: [
     {

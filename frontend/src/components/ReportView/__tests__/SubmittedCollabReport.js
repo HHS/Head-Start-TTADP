@@ -80,7 +80,7 @@ const mockReport = {
   ],
   dataUsed: [
     { id: 1, collabReportDatum: 'coaching-data' },
-    { id: 2, collabReportDatum: 'other', collabReportDatumOther: 'Custom data type' },
+    { id: 2, collabReportDatum: 'other' },
     { id: 3, collabReportDatum: 'training-data' },
   ],
   steps: [
