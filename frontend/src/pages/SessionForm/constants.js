@@ -52,6 +52,7 @@ export const defaultValues = {
   eventId: '',
   eventDisplayId: '',
   eventName: '',
+  approver: null,
   status: 'In progress',
   pageState: {
     1: NOT_STARTED,
@@ -75,6 +76,10 @@ export const baseDefaultValues = {
     3: NOT_STARTED,
     4: NOT_STARTED,
   },
+  additionalNotes: '',
+  managerNotes: '',
+  approver: null,
+  dateSubmitted: '',
 };
 
 export const pageComplete = (
@@ -104,6 +109,10 @@ export const defaultKeys = [
   'pocComplete',
   'ownerComplete',
   'facilitation',
+  'additionalNotes', // todo: is this in the right place
+  'approverId', // todo: is this in the right place
+  'managerNotes', // todo: is this in the right place
+  'dateSubmitted', // ditto
 ];
 
 export const istKeys = [

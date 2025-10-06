@@ -42,6 +42,7 @@ function SessionCard({
   isCollaborator,
 }) {
   const modalRef = useRef();
+  const { approverId } = session;
   const {
     sessionName,
     startDate,
@@ -53,6 +54,7 @@ function SessionCard({
     status,
     pocComplete,
     ownerComplete,
+    submitted,
   } = session.data;
 
   const getSessionDisplayStatusText = () => {
@@ -68,6 +70,7 @@ function SessionCard({
   const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
   const { user } = useContext(UserContext);
   const isAdminUser = isAdmin(user);
+  const isSessionApprover = user.id === approverId;
 
   const displaySessionStatus = getSessionDisplayStatusText();
 
@@ -81,6 +84,10 @@ function SessionCard({
   })();
 
   const showSessionEdit = () => {
+    if (submitted && !isSessionApprover) {
+      return false;
+    }
+
     // If they are a POC and POC work is complete, they should not be able to edit the session.
     if (isPoc && pocComplete && !isAdminUser) {
       return false;
@@ -193,8 +200,10 @@ export const sessionPropTypes = PropTypes.shape({
       'Needs status',
     ]),
     pocComplete: PropTypes.bool.isRequired,
+    submitted: PropTypes.bool,
     ownerComplete: PropTypes.bool.isRequired,
   }).isRequired,
+  approverId: PropTypes.number,
 });
 SessionCard.propTypes = {
   eventId: PropTypes.number.isRequired,

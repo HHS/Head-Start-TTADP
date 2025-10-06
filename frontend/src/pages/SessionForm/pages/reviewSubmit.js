@@ -3,11 +3,12 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
+// import { REPORT_STATUSES } from '@ttahub/common';
 import pages from '../pages';
 import Review from '../components/Review';
 import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
+import { REVIEW_SUBMIT_POSITION } from '../components/constants';
 
 const ReviewSubmit = ({
   onReview,
@@ -24,11 +25,9 @@ const ReviewSubmit = ({
   const {
     calculatedStatus,
     submissionStatus,
-    approvers,
     submittedAt,
     author,
     userId,
-    collabReportSpecialists,
   } = formData;
 
   const { user } = useContext(UserContext);
@@ -64,21 +63,19 @@ const ReviewSubmit = ({
         )}
 
         <Review
-          author={author}
-          approvers={approvers}
-          isCreator={isCreator}
+          // author={author}
+          // approvers={approvers}
+          // isCreator={isCreator}
           // isSubmitted={isSubmitted}
           // isApproved={isApproved}
           // isNeedsAction={isNeedsAction}
           // isApprover={isApprover}
           // pendingOtherApprovals={pendingOtherApprovals}
-          dateSubmitted={submittedAt}
-          onFormReview={onReview}
-          approverStatusList={approvers}
+          // dateSubmitted={submittedAt}
+          // onFormReview={onReview}
           pages={Object.values(pages)}
-          availableApprovers={availableApprovers}
           reviewItems={reviewItems}
-          onSaveForm={onSaveForm}
+          // onSaveForm={onSaveForm}
           onSaveDraft={onSaveDraft}
           onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
@@ -141,7 +138,7 @@ ReviewSubmit.defaultProps = {
 };
 
 const reviewPage = {
-  position: 5,
+  position: REVIEW_SUBMIT_POSITION,
   review: true,
   label: 'Review and submit',
   path: 'review',

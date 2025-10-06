@@ -156,34 +156,6 @@ export const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sess
   }
 };
 
-export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, options) => {
-  try {
-    if (instance.changed() && instance.changed().includes('data')) {
-      const previous = instance.previous('data') || null;
-      const current = JSON.parse(instance.data.val) || null;
-
-      const currentOwnerComplete = current.ownerComplete || false;
-      const currentPocComplete = current.pocComplete || false;
-
-      if (currentOwnerComplete && currentPocComplete && current.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        sequelize.models.SessionReportPilot.update({
-          data: {
-            ...current,
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
-          },
-        }, {
-          where: {
-            id: instance.id,
-          },
-          transaction: options.transaction,
-        });
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in checkIfBothIstAndPocAreComplete: ${err}`);
-  }
-};
-
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifySessionCreated(sequelize, instance, options);
@@ -191,7 +163,6 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
-  await checkIfBothIstAndPocAreComplete(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
