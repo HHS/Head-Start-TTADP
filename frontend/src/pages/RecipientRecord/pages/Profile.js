@@ -28,6 +28,8 @@ export default function Profile({
             <RecipientSummary summary={recipientSummary} />
           </Grid>
           <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
+          </Grid>
+          <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <RecipientLeadership recipientId={recipientId} regionId={regionId} />
           </Grid>
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
