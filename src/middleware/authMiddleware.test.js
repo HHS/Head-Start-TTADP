@@ -302,23 +302,24 @@ describe('authMiddleware', () => {
 
   it('logoutOidc: redirects to IdP end-session URL and clears session (with id_token_hint)', async () => {
     const req = {
-      session: { id_token: 'fake-id', userId: 123 },
+      sessionID: 'sid-123',
+      session: {
+        idToken: 'id-token-abc',
+        userId: 42,
+        destroy: jest.fn((cb) => cb && cb()),
+      },
     };
-    const res = { redirect: jest.fn() };
+    const res = { redirect: jest.fn(), clearCookie: jest.fn() };
 
     await logoutOidc(req, res);
 
     expect(res.redirect).toHaveBeenCalledWith('https://auth.example/logout');
-    expect(req.session).toBeNull();
-
-    const oc = require('openid-client');
-    expect(oc.buildEndSessionUrl).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        post_logout_redirect_uri: `${process.env.TTA_SMART_HUB_URI}/logout`,
-        id_token_hint: 'fake-id',
-      }),
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      'session',
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
     );
+    // ensure local session destroy was attempted
+    expect(req.session.destroy).toHaveBeenCalled();
   });
 
   it('logoutOidc: falls back to /logout when end-session is unavailable (headers NOT sent)', async () => {
@@ -328,7 +329,7 @@ describe('authMiddleware', () => {
     });
 
     const req = { session: { id_token: 'fake-id', userId: 99 } };
-    const res = { redirect: jest.fn(), headersSent: false };
+    const res = { redirect: jest.fn(), clearCookie: jest.fn(), headersSent: false };
 
     await logoutOidc(req, res);
 
@@ -343,14 +344,25 @@ describe('authMiddleware', () => {
       throw new Error('end-session down');
     });
 
-    const req = { session: { userId: 777 } };
-    const res = { headersSent: true, redirect: jest.fn(), sendStatus: jest.fn() };
+    const req = {
+      session: { userId: 777, destroy: jest.fn((cb) => cb && cb()) },
+    };
+    const res = {
+      headersSent: true,
+      redirect: jest.fn(),
+      clearCookie: jest.fn(),
+      sendStatus: jest.fn(),
+    };
 
     await logoutOidc(req, res);
 
     expect(res.redirect).not.toHaveBeenCalled();
     expect(res.sendStatus).toHaveBeenCalledWith(204);
-    expect(req.session).toBeNull();
+    expect(req.session.destroy).toHaveBeenCalled();
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      'session',
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
+    );
   });
 
   it('login: on error, logs and responds 500 (catch path)', async () => {

@@ -96,17 +96,30 @@ describe('tokenMiddleware', () => {
 
   it('catches other errors', async () => {
     req.headers.authorization = 'Bearer 1234';
-    req.session = { accessToken: 't', claims: { sub: 's' } }; // ensure path executes
+
+    req.session = { userId: 42, accessToken: 't', claims: { sub: 's' } };
+
+    // Force an unexpected error from the downstream call
     retrieveUserDetails.mockRejectedValue(new Error('test error'));
 
     await tokenMiddleware(req, res, next);
 
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
     expect(auditLogger.error).toHaveBeenCalledWith(
       'Error when retrieving user details from HSES: Error: test error',
     );
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // status: expect.stringMatching(/^500$/),
+        status: '401',
+        title: 'Unauthenticated User',
+        detail: expect.any(String),
+      }),
+    );
+    expect(next).not.toHaveBeenCalled();
   });
-  it('401 + warns when Authorization is present but accessToken is missing', async () => {
+
+  it('401  warns when Authorization is present but accessToken is missing', async () => {
     req.headers.authorization = 'Bearer 1234';
     req.session = { claims: { sub: 's' } }; // missing accessToken
 
@@ -124,7 +137,7 @@ describe('tokenMiddleware', () => {
     });
   });
 
-  it('401 + warns when Authorization is present but sub is missing', async () => {
+  it('401  warns when Authorization is present but sub is missing', async () => {
     req.headers.authorization = 'Bearer 1234';
     req.session = { accessToken: 't', claims: {} }; // missing sub
 
