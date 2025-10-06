@@ -9,7 +9,7 @@ if (!global.crypto?.subtle) {
 }
 
 function readEnvJson() {
-  const b64 = process.env.PRIVATE_JWK_64.trim();
+  const b64 = (process.env.PRIVATE_JWK_64 || '').trim();
 
   if (b64) {
     const json = Buffer.from(b64, 'base64').toString('utf8');
@@ -49,7 +49,7 @@ function toPublicJwk(privateJwk) {
 async function ensureLoaded() {
   if (cache) return;
 
-  // 1) Read private JWK from env (CircleCI provides it)
+  // 1) Read private JWK from env
   const privateJwk = readEnvJson();
 
   if (privateJwk.kty !== 'RSA') {
@@ -65,7 +65,7 @@ async function ensureLoaded() {
   if (!publicJwk.kid) {
     publicJwk.kid = await calculateJwkThumbprint(publicJwk);
   }
-  // Keep kid consistent on the private JWK too
+
   if (!privateJwk.kid) {
     privateJwk.kid = publicJwk.kid;
   }
@@ -76,18 +76,19 @@ async function ensureLoaded() {
 /** Returns { key: CryptoKey, alg, kid } for PrivateKeyJwt */
 export async function getPrivateJwk() {
   await ensureLoaded();
-  // return JSON.parse(JSON.stringify(cache.privateJwk));
-  return {
-    key: cache.signingKey,
-    alg,
-    kid: cache.privateJwk.kid,
-  };
+  const keySrc = cache.privateJwk ?? cache.signingKey; // prefer JWK shape
+  const key = typeof structuredClone === 'function'
+    ? structuredClone(keySrc)
+    : JSON.parse(JSON.stringify(keySrc));
+  return { key, alg, kid: cache.privateJwk?.kid ?? key.kid };
 }
 
 /** Returns the public JWK for JWKS endpoint. */
 export async function getPublicJwk() {
   await ensureLoaded();
-  return JSON.parse(JSON.stringify(cache.publicJwk));
+  return typeof structuredClone === 'function'
+    ? structuredClone(cache.publicJwk)
+    : JSON.parse(JSON.stringify(cache.publicJwk));
 }
 
 /** Returns the imported signing key. */
