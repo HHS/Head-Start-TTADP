@@ -97,7 +97,7 @@ export async function login(req, res) {
     };
 
     const redirectTo = client.buildAuthorizationUrl(issuerConfig, parameters);
-    // Log what we're about to ask the IdP for
+    // Log what we're about to ask HSES for
     auditLogger.info('OIDC authorize request', {
       issuer: process.env.AUTH_BASE,
       client_id: process.env.AUTH_CLIENT_ID,
@@ -158,19 +158,6 @@ export async function getAccessToken(req) {
       idTokenExpected: true,
     };
 
-    // if (USE_PKCE) {
-    //   const { pkce } = req.session || {};
-    //   if (!pkce?.codeVerifier || !pkce?.state || !pkce?.nonce) {
-    //     auditLogger.error('OIDC callback missing PKCE/session. Possible lost session.');
-    //     return undefined;
-    //   }
-    // }
-
-    // Validate session requirements
-    // if (!req.session?.oauth?.state || !req.session?.oauth?.nonce) {
-    //   auditLogger.error('OIDC callback missing session state/nonce. Possible lost session.');
-    //   return undefined;
-    // }
     if (!req.session?.pkce?.codeVerifier) {
       auditLogger.error('OIDC callback missing PKCE code verifier. Possible lost session.');
       return undefined;
@@ -252,8 +239,6 @@ export default async function authMiddleware(req, res, next) {
       res.sendStatus(403);
     }
   } catch (error) {
-    // handleErrors returns a promise, and sends a 500 status to the client
-    // it needs to be awaited before exiting the process here
     await handleErrors(req, res, error, namespace);
   }
 }
