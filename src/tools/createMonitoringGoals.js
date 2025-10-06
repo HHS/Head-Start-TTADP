@@ -6,7 +6,7 @@ import {
 } from '../models';
 import { auditLogger } from '../logger';
 
-const createMonitoringGoals = async (from_cli = false) => {
+const createMonitoringGoals = async () => {
   try {
     const cutOffDate = '2025-01-21';
     // Verify that the monitoring goal template exists.
@@ -105,8 +105,8 @@ const createMonitoringGoals = async (from_cli = false) => {
       await Goal.bulkCreate(goals, {
         individualHooks: true,
         transaction,
-        userId: null, // or use a system user ID if you have one
-        autoPopulateCreator: !from_cli, // Skip creator population for CLI scripts
+        userId: null,
+        ignoreHooks: ['autoPopulateCreator'], // Skip creator population for CLI scripts
       });
       // 3. Close monitoring goals that no longer have any active citations, un-approved reports,
       // or open Objectives

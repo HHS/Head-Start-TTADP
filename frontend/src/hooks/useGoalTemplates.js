@@ -3,7 +3,8 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getGoalTemplates } from '../fetchers/goalTemplates';
 
 export default function useGoalTemplates(
-  selectedGrants, filterOutUsedTemplates = false,
+  selectedGrants,
+  filterOutUsedTemplates = false,
   includeClosedSuspended = false,
 ) {
   const [goalTemplates, setGoalTemplates] = useState(null);
@@ -14,12 +15,18 @@ export default function useGoalTemplates(
     async function fetchGoalTemplates() {
       try {
         const templates = await getGoalTemplates(
-          selectedGrants.map((grant) => grant.id),
+          selectedGrants.map((grant) => grant.id || ''),
           includeClosedSuspended,
         );
-
         if (filterOutUsedTemplates) {
-          setGoalTemplates(templates.filter((template) => !template.goals.length));
+          // We want all templates that either have no goals or have goals but all of them
+          // are prestandard (to allow the re-use of the template for a new standard goal from RTR).
+          const filtered = templates.filter((template) => (
+            !template.goals || template.goals.every((goal) => goal.prestandard === true)
+          ));
+          setGoalTemplates(
+            filtered,
+          );
         } else {
           setGoalTemplates(templates);
         }
@@ -28,9 +35,7 @@ export default function useGoalTemplates(
       }
     }
 
-    if (selectedGrants[0] && selectedGrants[0].id) {
-      fetchGoalTemplates();
-    }
+    fetchGoalTemplates();
   }, [selectedGrants]);
 
   return goalTemplates;

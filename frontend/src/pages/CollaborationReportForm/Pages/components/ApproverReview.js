@@ -5,6 +5,7 @@ import _ from 'lodash';
 import {
   Dropdown, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
+import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
 import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../Constants';
 import FormItem from '../../../../components/FormItem';
 import HookFormRichEditor from '../../../../components/HookFormRichEditor';
@@ -22,7 +23,8 @@ export default function ApproverReview({
   thisApprovingManager,
   approverStatusList,
 }) {
-  const { handleSubmit, register } = useFormContext();
+  const { handleSubmit, register, watch } = useFormContext();
+  const status = watch('status');
   const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
 
   return (
@@ -39,34 +41,22 @@ export default function ApproverReview({
         }
 
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top">
-          <Label htmlFor="note">Add manager notes</Label>
-          <div className="margin-top-1">
-            <HookFormRichEditor
-              ariaLabel="Manager notes"
-              id="note"
-              name="note"
-              defaultValue={hasReviewNote
-                ? thisApprovingManager[0].note : null}
-            />
-          </div>
-        </Fieldset>
 
         <>
           {
               dateSubmitted
                 ? (
-                  <>
+                  <div className="margin-bottom-4">
                     <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date Submitted</p>
                     <p className="margin-top-0">{formattedDateSubmitted}</p>
-                  </>
+                  </div>
                 )
                 : null
               }
           <FormItem
             name="status"
             label="Choose approval status"
-            className="margin-bottom-3"
+            className="margin-bottom-4"
           >
             <Dropdown
               id="status"
@@ -76,17 +66,32 @@ export default function ApproverReview({
               inputRef={register({ required: true })}
             >
               <option name="default" value="" disabled hidden>- Select -</option>
-              {managerReportStatuses.map((status) => (
-                <option key={status} value={status}>{_.startCase(status)}</option>
+              {managerReportStatuses.map((reportStatus) => (
+                <option key={reportStatus} value={reportStatus}>{_.startCase(reportStatus)}</option>
               ))}
             </Dropdown>
           </FormItem>
+
+          {status === APPROVER_STATUSES.NEEDS_ACTION && (
+          <Fieldset className="smart-hub--report-legend margin-bottom-4 smart-hub--report-legend__no-legend-margin-top">
+            <Label htmlFor="note">Add manager notes</Label>
+            <div className="margin-top-1">
+              <HookFormRichEditor
+                ariaLabel="Manager notes"
+                id="note"
+                name="note"
+                defaultValue={hasReviewNote
+                  ? thisApprovingManager[0].note : null}
+              />
+            </div>
+          </Fieldset>
+          )}
 
         </>
 
         <ApproverStatusList approverStatus={approverStatusList} />
 
-        <Button disabled={hasIncompletePages} type="submit">Submit report</Button>
+        <Button disabled={hasIncompletePages} type="submit">Submit</Button>
       </Form>
     </>
   );

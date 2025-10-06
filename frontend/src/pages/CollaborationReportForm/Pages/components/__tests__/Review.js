@@ -69,6 +69,7 @@ describe('Review Component', () => {
     ],
     isCreator: false,
     isCollaborator: false,
+    isApprover: false,
     isSubmitted: false,
     onSaveForm: jest.fn(),
     onUpdatePage: jest.fn(),
@@ -123,12 +124,7 @@ describe('Review Component', () => {
   describe('Basic Rendering', () => {
     it('renders the component with default heading', () => {
       renderTest();
-      expect(screen.getByText('Review and approve')).toBeInTheDocument();
-    });
-
-    it('renders "Pending other approvals" heading when pendingOtherApprovals is true', () => {
-      renderTest({ pendingOtherApprovals: true });
-      expect(screen.getByText('Pending other approvals')).toBeInTheDocument();
+      expect(screen.getByText('Review and submit')).toBeInTheDocument();
     });
 
     it('renders IndicatesRequiredField component', () => {
@@ -138,14 +134,20 @@ describe('Review Component', () => {
   });
 
   describe('Component Selection', () => {
-    it('renders ApproverReview component when isCreator is false', () => {
-      renderTest({ isCreator: false });
+    it('renders ApproverReview component when isApprover is true', () => {
+      renderTest({ isApprover: true, isSubmitted: true });
       expect(screen.getByTestId('approver-review')).toBeInTheDocument();
       expect(screen.queryByTestId('creator-submit')).not.toBeInTheDocument();
     });
 
-    it('renders CreatorSubmit component when isCreator is true', () => {
-      renderTest({ isCreator: true });
+    it('renders CreatorSubmit component when isApprover is true and isSubmitted is false', () => {
+      renderTest({ isApprover: true, isSubmitted: false });
+      expect(screen.queryByTestId('approver-review')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('creator-submit')).toBeInTheDocument();
+    });
+
+    it('renders CreatorSubmit component when isApprover is false', () => {
+      renderTest({ isApprover: false });
       expect(screen.getByTestId('creator-submit')).toBeInTheDocument();
       expect(screen.queryByTestId('approver-review')).not.toBeInTheDocument();
     });
@@ -188,9 +190,8 @@ describe('Review Component', () => {
         approvers: needsActionApprovers,
       });
 
-      expect(screen.getByText(/The following approving manager\(s\) have requested changes/)).toBeInTheDocument();
-      expect(screen.getByText(/Manager One, Manager Two/)).toBeInTheDocument();
-      expect(screen.getByText(/Please review the manager notes and re-submit for approval/)).toBeInTheDocument();
+      expect(screen.getByText(/Manager One and Manager Two are requesting changes to the Collaboration Report/)).toBeInTheDocument();
+      expect(screen.getByText(/Please review any manager notes below and resubmit for approval/)).toBeInTheDocument();
     });
 
     it('does not display TopAlert when isSubmitted is false', () => {
@@ -228,7 +229,7 @@ describe('Review Component', () => {
       ];
 
       renderTest({
-        isCreator: false,
+        isApprover: true,
         approverStatusList,
         isSubmitted: true,
         isNeedsAction: true,
@@ -247,13 +248,13 @@ describe('Review Component', () => {
         { state: 'Complete', review: true, label: 'Review Page' },
       ];
 
-      renderTest({ pages, isCreator: true });
+      renderTest({ pages, isApprover: false });
       expect(screen.getByTestId('creator-submit')).toBeInTheDocument();
     });
 
     it('handles empty pages array', () => {
       renderTest({ pages: [] });
-      expect(screen.getByText('Review and approve')).toBeInTheDocument();
+      expect(screen.getByText('Review and submit')).toBeInTheDocument();
     });
   });
 
@@ -264,7 +265,7 @@ describe('Review Component', () => {
         { user: { id: 2 }, status: 'needs_action', note: 'Other note' },
       ];
 
-      renderTest({ approverStatusList }, { id: 1 });
+      renderTest({ approverStatusList, isApprover: true, isSubmitted: true }, { id: 1 });
       expect(screen.getByTestId('approver-review')).toBeInTheDocument();
     });
   });
@@ -272,7 +273,7 @@ describe('Review Component', () => {
   describe('Edge Cases', () => {
     it('handles null approverStatusList', () => {
       renderTest({ approverStatusList: null });
-      expect(screen.getByText('Review and approve')).toBeInTheDocument();
+      expect(screen.getByText('Review and submit')).toBeInTheDocument();
     });
 
     it('handles empty approvers array in TopAlert', () => {
@@ -282,7 +283,7 @@ describe('Review Component', () => {
         approvers: [],
       });
 
-      expect(screen.getByText(/The following approving manager\(s\) have requested changes/)).toBeInTheDocument();
+      expect(screen.getByText(/Changes have been requested for the Collaboration Report/)).toBeInTheDocument();
     });
 
     it('handles approvers without user property', () => {
@@ -297,11 +298,11 @@ describe('Review Component', () => {
       });
 
       // Should still render the alert even if some approvers don't have user data
-      expect(screen.getByText(/The following approving manager\(s\) have requested changes/)).toBeInTheDocument();
+      expect(screen.getByText(/Changes have been requested for the Collaboration Report/)).toBeInTheDocument();
     });
   });
 
-  describe('TopAlert getNeedsActionApprovingMangers function', () => {
+  describe('TopAlert formatNeedsActionApprovers function', () => {
     it('returns empty string when no needs action approvers', () => {
       const approvers = [
         {
@@ -333,7 +334,7 @@ describe('Review Component', () => {
         approvers,
       });
 
-      expect(screen.getByText(/Single Manager/)).toBeInTheDocument();
+      expect(screen.getByText(/Single Manager is requesting changes to the Collaboration Report/)).toBeInTheDocument();
     });
   });
 });
