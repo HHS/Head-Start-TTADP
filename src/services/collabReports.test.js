@@ -58,7 +58,7 @@ const reportObject = {
   regionId: 1,
   lastUpdatedById: mockUser.id,
   duration: 1,
-  conductMethod: ['in_person'],
+  conductMethod: 'in_person',
 };
 
 describe('Collab Reports Service', () => {
