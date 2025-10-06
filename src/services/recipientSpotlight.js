@@ -13,6 +13,7 @@ export async function getRecipientSpotlightIndicators(
   direction,
   offset,
   userRegions,
+  limit,
 ) {
   const INACTIVATION_CUT_OFF = new Date(new Date() - 365 * 24 * 60 * 60 * 1000);
   const grantsWhere = {
@@ -220,7 +221,8 @@ export async function getRecipientSpotlightIndicators(
     
     SELECT * FROM combined_indicators
     ORDER BY "${sortBy || 'recipientName'}" ${direction || 'ASC'}
-    LIMIT 10 OFFSET ${offset || 0}
+    LIMIT ${limit || 10} 
+    OFFSET ${offset || 0}
   `;
 
   // Execute the raw SQL query to get the recipient spotlight indicators.
