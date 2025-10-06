@@ -76,11 +76,7 @@ async function ensureLoaded() {
 /** Returns { key: CryptoKey, alg, kid } for PrivateKeyJwt */
 export async function getPrivateJwk() {
   await ensureLoaded();
-  const keySrc = cache.privateJwk ?? cache.signingKey; // prefer JWK shape
-  const key = typeof structuredClone === 'function'
-    ? structuredClone(keySrc)
-    : JSON.parse(JSON.stringify(keySrc));
-  return { key, alg, kid: cache.privateJwk?.kid ?? key.kid };
+  return { key: cache.signingKey, alg: cache.alg, kid: cache.privateJwk.kid };
 }
 
 /** Returns the public JWK for JWKS endpoint. */
