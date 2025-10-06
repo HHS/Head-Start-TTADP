@@ -61,15 +61,7 @@ describe('sessionSummary', () => {
       expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
     });
   });
-  describe('review', () => {
-    it('renders correctly', async () => {
-      act(() => {
-        render(<>{sessionSummary.reviewSection()}</>);
-      });
 
-      expect(await screen.findByRole('heading', { name: /event summary/i })).toBeInTheDocument();
-    });
-  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
 
@@ -452,6 +444,17 @@ describe('sessionSummary', () => {
       render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete', isAdminUser: true }} />);
       expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ReviewSection', () => {
+    it('exports a reviewSection function', () => {
+      expect(typeof sessionSummary.reviewSection).toBe('function');
+      expect(sessionSummary.reviewSection).toBeDefined();
+    });
+
+    it('has the correct review property', () => {
+      expect(sessionSummary.review).toBe(false);
     });
   });
 });

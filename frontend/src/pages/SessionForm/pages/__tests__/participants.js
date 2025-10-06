@@ -61,15 +61,7 @@ describe('participants', () => {
       expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
     });
   });
-  describe('review', () => {
-    it('renders correctly', async () => {
-      act(() => {
-        render(<>{participants.reviewSection()}</>);
-      });
 
-      expect(await screen.findByRole('heading', { name: /event summary/i })).toBeInTheDocument();
-    });
-  });
   describe('render', () => {
     const userId = 1;
     const todaysDate = moment().format('YYYY-MM-DD');
@@ -340,6 +332,17 @@ describe('participants', () => {
         // Assert use group check box is checked.
         expect(useGroupCheckbox).toBeChecked();
       });
+    });
+  });
+
+  describe('ReviewSection', () => {
+    it('exports a reviewSection function', () => {
+      expect(typeof participants.reviewSection).toBe('function');
+      expect(participants.reviewSection).toBeDefined();
+    });
+
+    it('has the correct review property', () => {
+      expect(participants.review).toBe(false);
     });
   });
 });

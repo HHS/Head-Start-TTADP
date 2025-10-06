@@ -19,6 +19,7 @@ import { recipientParticipants } from '../../ActivityReport/constants'; // TODO 
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 
 const placeholderText = '- Select -';
 
@@ -262,7 +263,41 @@ const fields = Object.keys(participantsFields);
 const path = 'participants';
 const position = 2;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+
+  const {
+    recipients,
+    participants,
+    deliveryMethod,
+    numberOfParticipants,
+    numberOfParticipantsInPerson,
+    numberOfParticipantsVirtually,
+    language,
+  } = getValues();
+
+  const sections = [
+    {
+      anchor: 'participants',
+      items: [
+        { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients.map((r) => r.label).join(', ') } },
+        { label: 'Recipient participants', name: 'participants', customValue: { participants } },
+        { label: 'TTA type', name: 'ttaType', customValue: { ttaType: '' } }, // todo: revisit with changes to participants page
+        { label: 'Delivery method', name: 'deliveryMethod', customValue: { deliveryMethod } },
+        ...(deliveryMethod === 'hybrid' ? [
+          { label: 'Number of participants attending in person', name: 'numberOfParticipantsInPerson', customValue: { numberOfParticipantsInPerson } },
+          { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually', customValue: { numberOfParticipantsVirtually } },
+        ] : [
+          { label: 'Number of participants', name: 'numberOfParticipants', customValue: { numberOfParticipants } },
+        ]),
+        { label: 'Language used', name: 'language', customValue: { language } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export const isPageComplete = (hookForm) => {
   const { isIstVisit } = hookForm.getValues();
 

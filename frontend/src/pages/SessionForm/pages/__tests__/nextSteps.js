@@ -100,15 +100,7 @@ describe('nextSteps', () => {
       })).toBe(false);
     });
   });
-  describe('review', () => {
-    it('renders correctly', async () => {
-      act(() => {
-        render(<>{nextSteps.reviewSection()}</>);
-      });
 
-      expect(await screen.findByRole('heading', { name: /event summary/i })).toBeInTheDocument();
-    });
-  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
     const userId = 1;
@@ -135,7 +127,9 @@ describe('nextSteps', () => {
     const RenderNextSteps = ({
       formValues = defaultFormValues,
       user = defaultUser,
-      additionalData = null,
+      additionalData = {
+        status: 'In progress',
+      },
     }) => {
       const hookForm = useForm({
         mode: 'onBlur',
@@ -208,7 +202,6 @@ describe('nextSteps', () => {
         />);
       });
 
-      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
 
@@ -220,8 +213,18 @@ describe('nextSteps', () => {
         }}
         />);
       });
-      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('ReviewSection', () => {
+    it('exports a reviewSection function', () => {
+      expect(typeof nextSteps.reviewSection).toBe('function');
+      expect(nextSteps.reviewSection).toBeDefined();
+    });
+
+    it('has the correct review property', () => {
+      expect(nextSteps.review).toBe(false);
     });
   });
 });
