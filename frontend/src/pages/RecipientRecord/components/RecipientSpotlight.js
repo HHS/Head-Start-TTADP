@@ -46,7 +46,6 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   const [hasResults, setHasResults] = useState(true);
 
   useEffect(() => {
-    /*
     async function fetchRecipientSpotlight() {
       try {
         const response = await getRecipientSpotlight(
@@ -73,8 +72,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       }
     }
     fetchRecipientSpotlight();
-    */
-  setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+    // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
   }, [recipientId, regionId]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
