@@ -1,3 +1,4 @@
+// istanbul ignore file
 /*
   Collaboration Report Pages index
 */

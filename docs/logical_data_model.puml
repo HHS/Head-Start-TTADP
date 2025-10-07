@@ -239,7 +239,6 @@ class CollabReportDataUsed{
  * collabReportDatum : enum
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- collabReportDataOther : varchar(255)
  deletedAt : timestamp with time zone
 }
 
@@ -295,8 +294,12 @@ class CollabReports{
  description : text
  duration : double precision
  endDate : date
+ hasDataUsed : boolean
+ hasGoals : boolean
  isStateActivity : boolean
  name : varchar(255)
+ otherDataUsed : text
+ otherParticipants : text
  participants : enum[]
  startDate : date
  submittedAt : timestamp with time zone

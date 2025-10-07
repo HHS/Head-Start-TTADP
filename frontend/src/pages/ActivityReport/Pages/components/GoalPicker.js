@@ -265,7 +265,7 @@ const GoalPicker = ({
             Select goal
             <Req />
           </Label>
-          <DrawerTriggerButton customClass="usa-button--custom-goal-guidance-margin" drawerTriggerRef={goalDrawerTriggerRef}>
+          <DrawerTriggerButton customClass="usa-button--no-margin" drawerTriggerRef={goalDrawerTriggerRef}>
             Get help selecting a goal
           </DrawerTriggerButton>
         </div>

@@ -49,6 +49,7 @@ import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import { mustBeQuarterHalfOrWhole } from '../../../Constants';
+import useGoalTemplates from '../../../hooks/useGoalTemplates';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -56,6 +57,8 @@ const DEFAULT_RESOURCE = {
 
 const SessionSummary = ({ datePickerKey, event }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+
+  const goalTemplates = useGoalTemplates([]);
 
   const {
     getValues,
@@ -77,8 +80,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const endDate = watch('endDate');
   const courses = watch('courses');
 
-  // ref for topics guidance drawer
-  const drawerTriggerRef = useRef(null);
+  const topicsDrawerTriggerRef = useRef(null);
+  const goalDrawerTriggerRef = useRef(null);
   const supportTypeDrawerTriggerRef = useRef(null);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
@@ -238,7 +241,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       </Helmet>
       <IndicatesRequiredField />
 
-      <div className="margin-top-2">
+      <div>
         <FormItem
           label="Session name "
           name="sessionName"
@@ -255,7 +258,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div className="margin-top-2">
+      <div>
         <FormItem
           label="Session start date"
           name="startDate"
@@ -283,7 +286,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
             }}
           />
         </FormItem>
-
         <FormItem
           label="Session end date"
           name="endDate"
@@ -307,7 +309,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div className="margin-top-2">
+      <div>
         <FormItem
           label="Duration in hours (round to the nearest quarter hour) "
           name="duration"
@@ -354,7 +356,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
       <h3 className="margin-top-4 margin-bottom-3">Objective summary</h3>
       <FormItem
-        label="Session objective "
+        label="Session objectives "
         name="objective"
         required
       >
@@ -362,20 +364,88 @@ const SessionSummary = ({ datePickerKey, event }) => {
           id="objective"
           name="objective"
           inputRef={register({
-            required: 'Describe the session objective',
+            required: 'Describe the session objectives',
           })}
           required
         />
       </FormItem>
 
-      <div className="margin-top-2">
+      <div>
         <Drawer
-          triggerRef={drawerTriggerRef}
+          triggerRef={goalDrawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Goal guidance"
+        >
+          <ContentFromFeedByTag tagName="ttahub-ohs-standard-goals" />
+        </Drawer>
+        <FormItem
+          required={false}
+          htmlFor="sessionGoalTemplates"
+          label={(
+            <>
+              Select the goals that this activity supports
+              {' '}
+              <Req />
+              <button
+                type="button"
+                className="usa-button usa-button--unstyled usa-button--no-margin"
+                ref={goalDrawerTriggerRef}
+              >
+                Get help selecting a goal
+              </button>
+            </>
+          )}
+          name="sessionGoalTemplates"
+        >
+          <Controller
+            render={({ onChange: controllerOnChange, value, onBlur }) => (
+              <Select
+                value={(goalTemplates || []).filter((option) => (
+                  value.includes(option.standard)
+                ))}
+                inputId="sessionGoalTemplates"
+                name="sessionGoalTemplates"
+                className="usa-select"
+                styles={selectOptionsReset}
+                components={{
+                  DropdownIndicator: null,
+                }}
+                onBlur={onBlur}
+                onChange={(s) => {
+                  controllerOnChange(s.map((o) => o.standard));
+                }}
+                inputRef={register({ required: 'Select at least one goal' })}
+                getOptionLabel={(option) => option.standard}
+                getOptionValue={(option) => option.id}
+                options={(goalTemplates ? goalTemplates.filter((g) => g.standard !== 'Monitoring') : [])}
+                isMulti
+                required
+              />
+            )}
+            control={control}
+            rules={{
+              validate: (value) => {
+                if (!value || value.length === 0) {
+                  return 'Select at least one goal';
+                }
+                return true;
+              },
+            }}
+            name="sessionGoalTemplates"
+            defaultValue={[]}
+          />
+        </FormItem>
+      </div>
+
+      <div>
+        <Drawer
+          triggerRef={topicsDrawerTriggerRef}
           stickyHeader
           stickyFooter
           title="Topic guidance"
         >
-          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
+          <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" />
         </Drawer>
         <FormItem
           required={false}
@@ -387,8 +457,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
               <Req />
               <button
                 type="button"
-                className="usa-button usa-button--unstyled margin-left-1"
-                ref={drawerTriggerRef}
+                className="usa-button usa-button--unstyled margin-left-1 usa-button--no-margin"
+                ref={topicsDrawerTriggerRef}
               >
                 Get help choosing topics
               </button>
@@ -436,7 +506,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div className="margin-top-2">
+      <div>
         <FormItem
           label="Who were the trainers for this session?"
           name="objectiveTrainers"
@@ -498,6 +568,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           Did you use any other TTA resources that are available as a link?
           <QuestionTooltip
             text="Copy & paste web address of TTA resource you'll use for this objective. Usually a HeadStart.gov page."
+            customClass="margin-left-1"
           />
         </legend>
         <div className="ttahub-resource-repeater">
@@ -518,12 +589,12 @@ const SessionSummary = ({ datePickerKey, event }) => {
           })}
         </div>
 
-        <div className="ttahub-resource-repeater--add-new margin-top-1">
+        <div className="ttahub-resource-repeater--add-new margin-top-1 margin-bottom-3">
           <PlusButton text="Add new resource" onClick={() => appendResource(DEFAULT_RESOURCE)} />
         </div>
       </Fieldset>
 
-      <Fieldset className="ttahub-objective-files margin-top-3">
+      <Fieldset className="ttahub-objective-files">
         <legend>
           Did you use any other TTA resources that aren&apos;t available as a link?
           {' '}
@@ -592,7 +663,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         />
       </FormItem>
 
-      <div className="margin-top-2">
+      <div className="margin-bottom-4">
         <SupportTypeDrawer
           drawerTriggerRef={supportTypeDrawerTriggerRef}
         />
@@ -606,7 +677,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           </Label>
           <button
             type="button"
-            className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled margin-left-1"
+            className="usa-button__support-type-drawer-trigger usa-button usa-button--unstyled usa-button--no-margin margin-left-1"
             ref={supportTypeDrawerTriggerRef}
           >
             Get help choosing a support type
@@ -623,7 +694,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
           {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
         </Dropdown>
       </div>
-
+      <input type="hidden" id="facilitation" name="facilitation" ref={register()} />
     </>
   );
 };
@@ -631,9 +702,9 @@ const SessionSummary = ({ datePickerKey, event }) => {
 SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   event: PropTypes.shape({
-    data: {
+    data: PropTypes.shape({
       endDate: PropTypes.string,
-    },
+    }),
   }),
 };
 
