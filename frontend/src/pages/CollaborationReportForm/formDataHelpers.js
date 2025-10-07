@@ -113,7 +113,7 @@ export const convertReportToFormData = (fetchedReport) => {
   )) : [];
 
   // Convert conductMethod array to object for use with single select component
-  const conductMethodValue = conductMethod ? conductMethod[0] : null;
+  const conductMethodValue = conductMethod || null;
 
   const retVal = {
     ...rest,

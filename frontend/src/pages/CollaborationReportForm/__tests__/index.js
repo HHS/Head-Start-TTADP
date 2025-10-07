@@ -679,13 +679,13 @@ describe('CollaborationReportForm', () => {
       it('handles null conductMethod', () => {
         const data = { ...formData, conductMethod: null };
         const result = convertFormDataToReport(data);
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
       it('handles undefined conductMethod', () => {
         const data = { ...formData, conductMethod: undefined };
         const result = convertFormDataToReport(data);
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
       it('handles null statesInvolved', () => {
@@ -819,7 +819,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual(['d1', 'd2']);
         expect(result.reportGoals).toEqual(['g1']);
         expect(result.statesInvolved).toEqual(['AL', 'AK']);
-        expect(result.conductMethod).toEqual(['email']);
+        expect(result.conductMethod).toEqual('email');
       });
 
       it('preserves other properties through rest spreading', () => {
@@ -851,7 +851,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual([]);
         expect(result.reportGoals).toEqual([]);
         expect(result.statesInvolved).toEqual([]);
-        expect(result.conductMethod).toEqual([]);
+        expect(result.conductMethod).toEqual(null);
       });
 
       it('handles mixed null/undefined/empty/populated values', () => {
@@ -871,7 +871,7 @@ describe('CollaborationReportForm', () => {
         expect(result.dataUsed).toEqual([]);
         expect(result.reportGoals).toEqual(['rg1']);
         expect(result.statesInvolved).toEqual([]);
-        expect(result.conductMethod).toEqual(['email']);
+        expect(result.conductMethod).toEqual('email');
         expect(result.otherField).toBe('preserved');
       });
     });
