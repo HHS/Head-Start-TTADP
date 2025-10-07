@@ -4,23 +4,21 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 // import { REPORT_STATUSES } from '@ttahub/common';
-import pages from '../pages';
-import Review from '../components/Review';
+import Review from './Review';
 import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
-import { REVIEW_SUBMIT_POSITION } from '../components/constants';
 
-const ReviewSubmit = ({
+const ReviewSubmitSession = ({
   onReview,
   formData,
   error,
   isPendingApprover,
   availableApprovers,
-  reviewItems,
   onUpdatePage,
   onSaveForm,
   onSaveDraft,
   onSubmit,
+  pages,
 }) => {
   const {
     calculatedStatus,
@@ -51,6 +49,8 @@ const ReviewSubmit = ({
   // const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover;
   // const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
 
+  const reviewPages = pages.filter(({ review }) => Boolean(!review));
+
   return (
     <>
       <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
@@ -73,8 +73,12 @@ const ReviewSubmit = ({
           // pendingOtherApprovals={pendingOtherApprovals}
           // dateSubmitted={submittedAt}
           // onFormReview={onReview}
-          pages={Object.values(pages)}
-          reviewItems={reviewItems}
+          pages={reviewPages}
+          reviewItems={reviewPages.map((p) => ({
+            id: p.path,
+            title: p.label,
+            content: p.reviewSection(),
+          }))}
           // onSaveForm={onSaveForm}
           onSaveDraft={onSaveDraft}
           onSubmit={onSubmit}
@@ -88,7 +92,7 @@ const ReviewSubmit = ({
   );
 };
 
-ReviewSubmit.propTypes = {
+ReviewSubmitSession.propTypes = {
   availableApprovers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
@@ -121,65 +125,19 @@ ReviewSubmit.propTypes = {
     id: PropTypes.number,
     displayId: PropTypes.string,
   }).isRequired,
-  reviewItems: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      content: PropTypes.node.isRequired,
-    }),
-  ).isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  pages: PropTypes.arrayOf(PropTypes.shape({
+    review: PropTypes.bool,
+    path: PropTypes.string,
+    label: PropTypes.string,
+    reviewSection: PropTypes.func,
+  })).isRequired,
 };
 
-ReviewSubmit.defaultProps = {
+ReviewSubmitSession.defaultProps = {
   error: '',
 };
 
-const reviewPage = {
-  position: REVIEW_SUBMIT_POSITION,
-  review: true,
-  label: 'Review and submit',
-  path: 'review',
-  render:
-    (
-      formData,
-      onFormSubmit,
-      additionalData,
-      onReview,
-      isApprover,
-      isPendingApprover,
-      onSave,
-      navigatorPages,
-      reportCreator,
-      lastSaveTime,
-      onUpdatePage,
-      onSaveDraft,
-    ) => (
-      <ReviewSubmit
-        availableApprovers={additionalData.approvers}
-        onSubmit={onFormSubmit}
-        onSaveForm={onSave}
-        onSaveDraft={onSaveDraft}
-        onUpdatePage={onUpdatePage}
-        onReview={onReview}
-        isApprover={isApprover}
-        isPendingApprover={isPendingApprover}
-        lastSaveTime={lastSaveTime}
-        reviewItems={
-          Object.values(pages).map((p) => ({
-            id: p.path,
-            title: p.label,
-            content: p.reviewSection(),
-          }))
-        }
-        formData={formData}
-        pages={navigatorPages}
-        reportCreator={reportCreator}
-      />
-    ),
-};
-
-export { ReviewSubmit };
-export default reviewPage;
+export default ReviewSubmitSession;
