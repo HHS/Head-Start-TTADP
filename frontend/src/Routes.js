@@ -52,6 +52,7 @@ import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogD
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 import SubmittedActivityReport from './pages/SubmittedActivityReport';
 import ViewCollabReport from './pages/ViewCollabReport';
+import SessionReportFacilitation from './pages/SessionReportFacilitation';
 
 export default function Routes({
   alert,
@@ -267,6 +268,15 @@ export default function Routes({
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <TrainingReportForm match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9RT\-]*)/session/new/choose-facilitation"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <SessionReportFacilitation match={match} />
             </AppWrapper>
           )}
         />
