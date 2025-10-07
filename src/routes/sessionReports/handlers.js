@@ -47,7 +47,7 @@ export const getHandler = async (req, res) => {
     // Event auth.
     const event = await findEventBySmartsheetIdSuffix(sessionEventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
-    const eventAuth = await getEventAuthorization(req, res, event);
+    const eventAuth = await getEventAuthorization(req, res, event, session);
     if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
     }
