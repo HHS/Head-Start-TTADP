@@ -40,6 +40,7 @@ export const CollabReportsLanding = () => {
         filters={filters}
         user={user}
         showFilterWithMyRegions={
+            // istanbul ignore next = not easily tested
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
       />
