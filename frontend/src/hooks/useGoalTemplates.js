@@ -3,7 +3,8 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { getGoalTemplates } from '../fetchers/goalTemplates';
 
 export default function useGoalTemplates(
-  selectedGrants, filterOutUsedTemplates = false,
+  selectedGrants,
+  filterOutUsedTemplates = false,
   includeClosedSuspended = false,
 ) {
   const [goalTemplates, setGoalTemplates] = useState(null);
