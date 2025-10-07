@@ -6,14 +6,28 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Container from '../../../components/Container';
 import colors from '../../../colors';
-// import './RecipientSummary.css';
+import IndicatorCounter from './IndicatorCounter';
+import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import './RecipientSpotlight.scss';
 
+/*
 const sampleSpotlightData = [
   {
-    recipientId: 1, regionId: 1, recipientName: 'Recipient A', grantIds: [1, 2, 3], childIncidents: true, deficiency: false, newRecipients: true, newStaff: false, noTTA: true, DRS: false, FEI: false,
+    recipientId: 1,
+    regionId: 1,
+    recipientName: 'Recipient A',
+    grantIds: [1, 2, 3],
+    childIncidents: true,
+    deficiency: false,
+    newRecipients: true,
+    newStaff: false,
+    noTTA: true,
+    DRS: false,
+    FEI: false,
   },
 ];
+*/
+
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
 });
@@ -27,24 +41,23 @@ const mappedData = (data) => ([
   createRowForEachIndicator('noTTA', 'No TTA', data.noTTA, 'Recipient does not have any TTA reports in last 12 months'),
 
 ]);
+
 export default function RecipientSpotlight({ regionId, recipientId }) {
   const [spotlightData, setSpotlightData] = useState([]);
   useEffect(() => {
-    /*
     async function fetchRecipientSpotlight() {
       try {
         const response = await getRecipientSpotlight(
           String(recipientId),
           String(regionId),
         );
-        setSpotlightData(response[0] || []);
+        setSpotlightData(mappedData(response[0] || {}));
       } catch (err) {
         setSpotlightData([]);
       }
     }
     fetchRecipientSpotlight();
-    */
-    setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+    // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
   }, [recipientId, regionId]);
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
 
@@ -60,11 +73,14 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       </div>
       <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
         <div className="display-flex flex-align-center">
-          <div className="display-flex flex-align-center">
-            {hasIndicators
-              ? <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.error} icon={faCircleExclamation} />
-              : <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.success} icon={faCircleCheck} />}
-            <h4 className="margin-0 Merriweather">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h4>
+          <div className="display-flex flex-column">
+            <div className="display-flex flex-align-center">
+              {hasIndicators
+                ? <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.error} icon={faCircleExclamation} />
+                : <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.success} icon={faCircleCheck} />}
+              <h4 className="margin-0 Merriweather">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h4>
+            </div>
+            <IndicatorCounter count={numberOfTrueIndicators} totalCount={7} />
           </div>
         </div>
 
