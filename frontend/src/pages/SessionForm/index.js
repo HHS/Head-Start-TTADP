@@ -9,7 +9,7 @@ import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Alert, Grid, Button, ModalToggleButton,
+  Alert, Grid,
 } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -24,12 +24,8 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
-import pages from './pages';
-import reviewPage from './pages/reviewSubmit';
 import AppLoadingContext from '../../AppLoadingContext';
-import isAdmin from '../../permissions';
-import sessionSummary from './pages/sessionSummary';
-import Modal from '../../components/VanillaModal';
+import useSessionFormRoleAndPages from '../../hooks/useSessionFormRoleAndPages';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -95,7 +91,6 @@ export default function SessionForm({ match }) {
   const { params: { sessionId, currentPage, trainingReportId } } = match;
 
   const reportId = useRef(sessionId);
-  const modalRef = useRef();
 
   // for redirects if a page is not provided
   const history = useHistory();
@@ -144,52 +139,14 @@ export default function SessionForm({ match }) {
     messageStore,
   } = useSocket(user);
 
-  const isAdminUser = isAdmin(user);
-
   const {
     isPoc,
+    isAdminUser,
     isCollaborator,
     isOwner,
-  } = (() => {
-    let isPocUser = false;
-    let isCollaboratorUser = false;
-    let isOwnerUser = false;
-    if (formData && formData.event) {
-      if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))) {
-        isPocUser = true;
-      }
+    applicationPages,
+  } = useSessionFormRoleAndPages(formData);
 
-      if (formData.event.collaboratorIds && formData.event.collaboratorIds.includes(user.id)) {
-        isCollaboratorUser = true;
-      }
-
-      if (formData.event.ownerId && formData.event.ownerId === user.id) {
-        isOwnerUser = true;
-      }
-    }
-    return {
-      isPoc: isPocUser,
-      isCollaborator: isCollaboratorUser,
-      isOwner: isOwnerUser,
-    };
-  })();
-
-  // Set pages based on user role.
-  let applicationPages = [];
-  if (isAdminUser) {
-    applicationPages = [
-      pages.sessionSummary,
-      pages.participants,
-      pages.supportingAttachments,
-      pages.nextSteps,
-      reviewPage,
-    ];
-  } else if (isPoc) {
-    // eslint-disable-next-line max-len
-    applicationPages = [pages.participants, pages.supportingAttachments, pages.nextSteps, reviewPage];
-  } else {
-    applicationPages = [sessionSummary];
-  }
   const redirectPagePath = isPoc && !isAdminUser ? 'participants' : 'session-summary';
 
   useEffect(() => {
@@ -416,8 +373,6 @@ export default function SessionForm({ match }) {
 
       history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
     } catch (err) {
-      // Close the modal if there is an error.
-      modalRef.current.toggleModal(false);
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -442,16 +397,6 @@ export default function SessionForm({ match }) {
       <Redirect to={`/training-report/view/${trainingReportId}`} />
     );
   }
-
-  // const showSubmitModal = async () => {
-  //   // updateIncompletePages();
-  //   const isValidForm = await hookForm.trigger();
-
-  //   if (isValidForm) {
-  //     // Toggle the modal only if the form is valid.
-  //     modalRef.current.toggleModal(true);
-  //   }
-  // };
 
   const { event } = formData;
 
@@ -489,21 +434,6 @@ export default function SessionForm({ match }) {
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <Modal
-            modalRef={modalRef}
-            heading="Are you sure you want to continue?"
-          >
-            <p>You will not be able to make changes once you save the session.</p>
-
-            <Button
-              type="submit"
-              className="margin-right-1"
-              onClick={() => onFormSubmit()}
-            >
-              Yes, continue
-            </Button>
-            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, cancel</ModalToggleButton>
-          </Modal>
           <Navigator
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
@@ -537,7 +467,6 @@ export default function SessionForm({ match }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="status"
-            hideSideNav={!isPoc && !isAdminUser}
           />
         </FormProvider>
       </NetworkContext.Provider>
