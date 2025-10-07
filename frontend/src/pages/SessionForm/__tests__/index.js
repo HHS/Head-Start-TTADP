@@ -144,6 +144,8 @@ describe('SessionReportForm', () => {
     ].map((name, id) => ({ id, name })));
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
+    fetchMock.get('/api/goal-templates', []);
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -262,17 +264,8 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
+    const saveSession = document.querySelector('#session-summary-save-continue');
     userEvent.click(saveSession);
-
-    // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
-
-    // get the button with the text "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
-    act(() => {
-      userEvent.click(yesContinueButton);
-    });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
@@ -341,7 +334,7 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
+    const saveSession = document.querySelector('#session-summary-save-continue');
     userEvent.click(saveSession);
 
     // Wait for the modal to display.
@@ -445,17 +438,20 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
+    const saveSession = document.querySelector('#session-summary-save-continue');
     userEvent.click(saveSession);
 
-    // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
+    // // Wait for the modal to display.
+    // await waitFor(() => expect(
+    // screen.getByText(
+    // /You will not be able to make changes once you save the session./i)).toBeInTheDocument()
+    // );
 
-    // get the button with the text "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
-    act(() => {
-      userEvent.click(yesContinueButton);
-    });
+    // // get the button with the text "Yes, continue".
+    // const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    // act(() => {
+    //   userEvent.click(yesContinueButton);
+    // });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
 

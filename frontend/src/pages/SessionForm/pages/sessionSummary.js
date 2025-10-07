@@ -742,7 +742,7 @@ const ReviewSection = () => {
 
   // eslint-disable-next-line max-len
   const objectiveFiles = files.map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
-  const resources = objectiveResources.map((r) => <Link href={r.value}>{r.value}</Link>);
+  const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
 
   const sections = [
     {
@@ -763,7 +763,7 @@ const ReviewSection = () => {
         { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
-        { label: 'iPD courses', name: 'courses', customValue: { courses: courses.map((c) => c.name) } },
+        { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },
         { label: 'Resource links', name: 'objectiveResources', customValue: { objectiveResources: resources } },
         { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
         { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },

@@ -49,6 +49,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'eventId',
       'data',
       'updatedAt',
+      'approverId',
       // eslint-disable-next-line @typescript-eslint/quotes
       [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
@@ -101,6 +102,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
     supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
     event: session?.event,
+    approverId: session?.approverId ?? null,
   };
 }
 

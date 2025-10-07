@@ -40,6 +40,7 @@ export default function Submit({ onSaveDraft, onUpdatePage, onSubmit }) {
         >
           <option disabled hidden value="">Select an approver</option>
           {/* todo: populate available approvers */}
+          <option value={1}>Hermione Granger</option>
           <option value={5}>Cucumber User</option>
         </Dropdown>
       </FormItem>

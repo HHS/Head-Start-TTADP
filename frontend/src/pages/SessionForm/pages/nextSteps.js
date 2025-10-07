@@ -58,6 +58,10 @@ export const isPageComplete = (hookForm) => {
 
   const { specialistNextSteps, recipientNextSteps } = formData;
 
+  if (!specialistNextSteps || !recipientNextSteps) {
+    return false;
+  }
+
   if (!specialistNextSteps.length || !recipientNextSteps.length) {
     return false;
   }
@@ -86,7 +90,7 @@ export default {
     onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
-    onFormSubmit,
+    _onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
