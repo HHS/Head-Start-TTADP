@@ -7,7 +7,7 @@ if (!global.crypto || !global.crypto.subtle) {
 jest.mock('jose', () => ({
   calculateJwkThumbprint: jest.fn().mockResolvedValue('thumb-123'),
   importJWK: jest.fn().mockResolvedValue({ __cryptoKey: true }),
-}));
+}), { virtual: true });
 
 const jose = require('jose');
 
