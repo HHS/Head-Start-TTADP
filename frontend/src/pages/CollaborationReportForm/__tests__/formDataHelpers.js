@@ -640,7 +640,7 @@ describe('formDataHelpers', () => {
       it('should convert conductMethod to label/value format', () => {
         const fetchedReport = {
           id: 1,
-          conductMethod: ['email'],
+          conductMethod: 'email',
         };
 
         const result = convertReportToFormData(fetchedReport);

@@ -324,12 +324,12 @@ const ActivitySummary = ({ collaborators = [] }) => {
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
                 value={
-                    value && value.length > 0
+                    value
                       ? {
                         value,
                         label: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
                           m.value === value
-                        ))[0].label,
+                        ))[0]?.label || null,
                       }
                       : null
 }
@@ -363,7 +363,7 @@ const ActivitySummary = ({ collaborators = [] }) => {
             control={control}
             rules={{
               validate: (value) => {
-                if (!value || value.length === 0) {
+                if (!value) {
                   return 'Select a reason why this activity was requested';
                 }
                 return true;
