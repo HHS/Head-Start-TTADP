@@ -8,6 +8,7 @@ import Container from '../../../components/Container';
 import colors from '../../../colors';
 import IndicatorCounter from './IndicatorCounter';
 import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
+import NoResultsFound from '../../../components/NoResultsFound';
 import './RecipientSpotlight.scss';
 
 /*
@@ -44,6 +45,8 @@ const mappedData = (data) => ([
 
 export default function RecipientSpotlight({ regionId, recipientId }) {
   const [spotlightData, setSpotlightData] = useState([]);
+  const [hasResults, setHasResults] = useState(true);
+
   useEffect(() => {
     async function fetchRecipientSpotlight() {
       try {
@@ -51,14 +54,29 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
           String(recipientId),
           String(regionId),
         );
-        setSpotlightData(mappedData(response[0] || {}));
+
+        // Check if response is valid and has meaningful data (more than just an empty object)
+        const hasValidData = response
+          && response.length > 0
+          && response[0]
+          && Object.keys(response[0]).length > 1;
+
+        if (hasValidData) {
+          setSpotlightData(mappedData(response[0]));
+          setHasResults(true);
+        } else {
+          setSpotlightData([]);
+          setHasResults(false);
+        }
       } catch (err) {
         setSpotlightData([]);
+        setHasResults(false);
       }
     }
     fetchRecipientSpotlight();
     // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
   }, [recipientId, regionId]);
+
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
 
   const numberOfTrueIndicators = spotlightData
@@ -71,41 +89,47 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
         <h2 className="margin-0 padding-0">Recipient spotlight</h2>
         <p className="margin-0 padding-0 usa-prose">This is the recipient&apos;s current number of priority indicators.</p>
       </div>
-      <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
-        <div className="display-flex flex-align-center">
-          <div className="display-flex flex-column">
-            <div className="display-flex flex-align-center">
-              {hasIndicators
-                ? <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.error} icon={faCircleExclamation} />
-                : <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.success} icon={faCircleCheck} />}
-              <h4 className="margin-0 Merriweather">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h4>
-            </div>
-            <IndicatorCounter count={numberOfTrueIndicators} totalCount={7} />
-          </div>
-        </div>
 
-        <div className="display-flex flex-align-center margin-top-1">
-          <div className="flex-row">
-            <b><p className="usa-prose margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of 7 priority indicators`}</p></b>
-            <div>
-              {
-              spotlightData.map((indicator) => (
-                <div key={indicator.name} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
-                  {indicator.value
-                    ? <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.baseMedium} icon={faX} />
-                    : <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.ttahubMediumBlue} icon={faCheck} />}
-                  <div className="display-flex flex-column">
-                    <b><span className="usa-prose">{indicator.label}</span></b>
-                    <p className="usa-prose margin-y-0 text-wrap">{indicator.description}</p>
+      {hasResults ? (
+        <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
+          <div className="display-flex flex-align-center">
+            <div className="display-flex flex-column">
+              <div className="display-flex flex-align-center">
+                {hasIndicators
+                  ? <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.error} icon={faCircleExclamation} />
+                  : <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.success} icon={faCircleCheck} />}
+                <h4 className="margin-0 Merriweather">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h4>
+              </div>
+              <IndicatorCounter count={numberOfTrueIndicators} totalCount={7} />
+            </div>
+          </div>
+
+          <div className="display-flex flex-align-center margin-top-1">
+            <div className="flex-row">
+              <b><p className="usa-prose margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of 7 priority indicators`}</p></b>
+              <div>
+                {
+                spotlightData.map((indicator) => (
+                  <div key={indicator.name} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
+                    {indicator.value
+                      ? <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.baseMedium} icon={faX} />
+                      : <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.ttahubMediumBlue} icon={faCheck} />}
+                    <div className="display-flex flex-column">
+                      <b><span className="usa-prose">{indicator.label}</span></b>
+                      <p className="usa-prose margin-y-0 text-wrap">{indicator.description}</p>
+                    </div>
                   </div>
-                </div>
-              ))
-            }
+                ))
+              }
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
+      ) : (
+        <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
+          <NoResultsFound />
+        </div>
+      )}
     </Container>
   );
 }

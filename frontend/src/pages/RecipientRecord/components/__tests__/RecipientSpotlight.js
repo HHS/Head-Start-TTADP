@@ -41,6 +41,9 @@ const noIndicatorsMockData = [{
 // Mock empty response
 const emptyMockSpotlightData = [{}];
 
+// Completely empty response (no results)
+const noResultsMockData = [];
+
 describe('RecipientSpotlight', () => {
   const renderRecipientSpotlight = (recipientId = 1, regionId = 1) => {
     render(
@@ -111,7 +114,7 @@ describe('RecipientSpotlight', () => {
     expect(screen.getByText('No TTA')).toBeInTheDocument();
   });
 
-  it('handles API error gracefully', async () => {
+  it('handles API error gracefully with NoResultsFound', async () => {
     const spotlightUrl = '/api/recipient-spotlight/recipientId/1/regionId/1?sortBy=recipientName&sortDir=desc&offset=0&limit=10';
     fetchMock.get(spotlightUrl, 500);
 
@@ -119,12 +122,17 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
+      // Verify header is still present
       expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
-      expect(screen.getByText('0 of 7 priority indicators')).toBeInTheDocument();
+      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+
+      // Verify NoResultsFound component is rendered
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
     });
   });
 
-  it('handles empty response data gracefully', async () => {
+  it('handles empty response object gracefully with NoResultsFound', async () => {
     const spotlightUrl = '/api/recipient-spotlight/recipientId/1/regionId/1?sortBy=recipientName&sortDir=desc&offset=0&limit=10';
     fetchMock.get(spotlightUrl, emptyMockSpotlightData);
 
@@ -132,8 +140,13 @@ describe('RecipientSpotlight', () => {
     expect(fetchMock.called(spotlightUrl)).toBe(true);
 
     await waitFor(() => {
+      // Verify header is still present
       expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
-      expect(screen.getByText('0 of 7 priority indicators')).toBeInTheDocument();
+      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+
+      // Verify NoResultsFound component is rendered
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
     });
   });
 
@@ -163,6 +176,44 @@ describe('RecipientSpotlight', () => {
       expect(screen.getByText(/Recipient has experienced more than one child incident/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)).toBeInTheDocument();
       expect(screen.getByText(/Recipient does not have any TTA reports in last 12 months/i)).toBeInTheDocument();
+    });
+  });
+
+  it('displays NoResultsFound component when API returns empty array', async () => {
+    const spotlightUrl = '/api/recipient-spotlight/recipientId/1/regionId/1?sortBy=recipientName&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(spotlightUrl, noResultsMockData);
+
+    renderRecipientSpotlight();
+    expect(fetchMock.called(spotlightUrl)).toBe(true);
+
+    await waitFor(() => {
+      // Verify header is still present
+      expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+
+      // Verify NoResultsFound component is rendered
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    });
+  });
+
+  it('displays NoResultsFound component when API call fails with error', async () => {
+    const spotlightUrl = '/api/recipient-spotlight/recipientId/1/regionId/1?sortBy=recipientName&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(spotlightUrl, { throws: new Error('API error') });
+
+    renderRecipientSpotlight();
+    expect(fetchMock.called(spotlightUrl)).toBe(true);
+
+    await waitFor(() => {
+      // Verify header is still present
+      expect(screen.getByText('Recipient spotlight')).toBeInTheDocument();
+      expect(screen.getByText("This is the recipient's current number of priority indicators.")).toBeInTheDocument();
+
+      // Verify NoResultsFound component is rendered
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
     });
   });
 });
