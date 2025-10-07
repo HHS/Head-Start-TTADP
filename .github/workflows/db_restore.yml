@@ -1,11 +1,14 @@
-name: Destroy Preview Environment
+name: DB Restore
 on:
   workflow_call:
     inputs:
       source:
-        description: "production" or "processed" (anonymized data)
+        description: use processed (anonymized) or prod data
         required: true
-        type: string
+        type: choice
+        options: 
+        - production
+        - processed
         default: "processed"
       source_date:
         description: either "latest" or a date in YYYY-MM-DD format
@@ -15,60 +18,28 @@ on:
       target_db:
         description: Name of the db to restore into, e.g. "ttahub-dev-blue"
         required: true
-        type: string
+        type: choice
+        options:
+        options: 
+        - ttahub-staging
+        - ttahub-dev-blue
+        - ttahub-dev-red
+        - ttahub-dev-green
+        - ttahub-dev-gold
+        - ttahub-dev-pink
     secrets:
       github-token:
         required: true
 
 jobs:
-  destroy-preview:
+  db-restore:
     runs-on: ubuntu-latest
     concurrency:
-      group: destroy-preview-${{ inputs.pull-request-number }}
+      group: db-restore
       cancel-in-progress: false
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Import CI .env file
-        uses: cardinalby/export-env-action@v2
-        with:
-          envFile: '.github/ci-versions.env'
-          expand: 'true'
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.preview-aws-access-assume-role }}
-          aws-region: ${{ inputs.aws-region }}
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          # The default action of this setup is to install a wrapper which manipulates the output and actually breaks Terragrunt
-          # So we skip that action
-          terraform_wrapper: false
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-      - name: Setup Terragrunt
-        id: setup-terragrunt
-        run: |
-          wget --no-verbose https://github.com/gruntwork-io/terragrunt/releases/download/${{ env.TERRAGRUNT_VERSION }}/terragrunt_linux_amd64
-          chmod +x terragrunt_linux_amd64
-          sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
-      # free env on PR close
-      - name: Destroy preview environment
-        # Use "always" to make sure this step is uncancellable once/if run. Terraform doesn't like to be cancelled.
-        # Warning: if the job/workflow is cancelled, GitHub will forcibly kill *anything* still running 5 minutes later.
-        if: always() && steps.setup-terragrunt.outcome == 'success'
-        timeout-minutes: 30
-        shell: bash --noprofile --norc -exo pipefail {0}
-        run: |
-          terragrunt workspace select ${{ inputs.environment-id }} --terragrunt-working-dir preview/us-east-1/people_app_deploy
-          terragrunt destroy --terragrunt-working-dir preview/us-east-1/people_app_deploy -var "pr=${{ inputs.pull-request-number }}" -var "preview_environment_id=${{ inputs.environment-id }}" -var "commit_tag=${{ inputs.commit-tag }}" -auto-approve
-        working-directory: ops/terraform
-      - name: Remove lock on preview environment
-        shell: bash --noprofile --norc -exo pipefail {0}
-        run: aws dynamodb put-item --table-name $(aws ssm get-parameters --names /the-people-app-preview/terraform/outputs/default/dynamodb_table_id --with-decryption --query 'Parameters[].[Value]' --output text) --item "{\"environmentID\":{\"S\":\"${{ inputs.environment-id }}\"},\"PullRequestID\":{\"S\":\"free\"}}"
-      - name: Set preview environment status as deactivated
-        uses: bobheadxi/deployments@v1.4.0
-        with:
-          step: deactivate-env
-          token: ${{ secrets.github-token }}
-          env: ${{ inputs.environment-id }}
+        uses: actions/checkout@v5
+
+      - name: Run restore script
+        run: db_restore.sh ${{ github.event.inputs.source }} ${{ github.event.inputs.source_date }} ${{ github.event.inputs.target_db }}
