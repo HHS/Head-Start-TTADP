@@ -1,14 +1,16 @@
+@use '../../../colors.scss' as *;
+
 .ttahub-recipient-spotlight-content {
     max-height: 230px;
 }
 
 .ttahub-recipient-spotlight-content-cell-good-indicator {
- border: 1px dashed #b0C9C9C9;
+ border: 1px dashed $base-light;
  border-radius: 4px;
 }
 
 .ttahub-recipient-spotlight-content-cell-bad-indicator {
- border: 1px solid #DFE1E2;
+ border: 1px solid $base-lighter;
  border-radius: 4px;
 }
 

@@ -11,7 +11,6 @@ import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import NoResultsFound from '../../../components/NoResultsFound';
 import './RecipientSpotlight.scss';
 
-/*
 const sampleSpotlightData = [
   {
     recipientId: 1,
@@ -27,7 +26,6 @@ const sampleSpotlightData = [
     FEI: false,
   },
 ];
-*/
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
@@ -48,6 +46,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   const [hasResults, setHasResults] = useState(true);
 
   useEffect(() => {
+    /*
     async function fetchRecipientSpotlight() {
       try {
         const response = await getRecipientSpotlight(
@@ -74,7 +73,8 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       }
     }
     fetchRecipientSpotlight();
-    // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+    */
+  setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
   }, [recipientId, regionId]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
