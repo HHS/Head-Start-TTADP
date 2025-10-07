@@ -1,14 +1,10 @@
 
-.ttahub--indicator-box {
-  width: 43px;
-  height: 16px;
-  border-radius: 4px;
-}
+@use '../../../colors.scss' as *;
 
 .ttahub--indicator-box-filled {
-  background-color: #336A90;
+  background-color: $ttahub-medium-blue;
 }
 
 .ttahub--indicator-box-empty {
-  background-color: #DFE1E2;
+  background-color: $base-lighter;
 }
