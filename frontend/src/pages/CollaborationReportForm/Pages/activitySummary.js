@@ -28,7 +28,7 @@ import StateMultiSelect from '../../../components/StateMultiSelect';
 import './activitySummary.scss';
 import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
-import { COLLAB_REPORT_REASONS, STATES } from '../../../Constants';
+import { COLLAB_REPORT_REASONS, STATES, COLLAB_REPORT_CONDUCT_METHODS } from '../../../Constants';
 
 const position = 1;
 const path = 'activity-summary';
@@ -40,7 +40,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
     register,
     watch,
     control,
-    // clearErrors,
   } = useFormContext();
 
   const isStateActivity = watch('isStateActivity');
@@ -51,13 +50,6 @@ const ActivitySummary = ({ collaborators = [] }) => {
   const { connectionActive } = useContext(NetworkContext);
   const placeholderText = '- Select -';
   const drawerTriggerRef = useRef(null);
-
-  const deliveryMethodOptions = [
-    { label: 'Email', value: 'email' },
-    { label: 'Phone', value: 'phone' },
-    { label: 'In person', value: 'in_person' },
-    { label: 'Virtual', value: 'virtual' },
-  ];
 
   return (
     <>
@@ -329,7 +321,10 @@ const ActivitySummary = ({ collaborators = [] }) => {
           <MultiSelect
             name="conductMethod"
             control={control}
-            options={deliveryMethodOptions}
+            options={COLLAB_REPORT_CONDUCT_METHODS}
+            simple={false}
+            labelProperty="label"
+            valueProperty="value"
             required
           />
         </FormItem>
@@ -439,12 +434,13 @@ const ReviewSection = () => {
     statesInvolved,
     method,
   } = getValues();
+
   const sections = [
     {
       anchor: 'activity-for',
       items: [
         { label: 'Activity name', name: 'name', customValue: { name } },
-        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map((c) => c.name).join(', ') || '' } },
+        { label: 'Collaborating specialists', name: 'collabReportSpecialists', customValue: { collabReportSpecialists: collabReportSpecialists?.map(({ specialist }) => specialist.fullName).join(', ') || '' } },
       ],
     },
     {
