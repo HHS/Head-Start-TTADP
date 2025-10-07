@@ -167,6 +167,24 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
   }
 }
 
+async function saveReportGoals(collabReportId: number, reportGoals: number[]) {
+  // First, destroy any existing goals for this report
+  await CollabReportGoal.destroy({
+    where: {
+      collabReportId,
+    },
+  });
+
+  // Then create new goals if any are provided
+  if (reportGoals && reportGoals.length > 0) {
+    const newGoals = reportGoals.map((goal: number) => ({
+      collabReportId,
+      goalTemplateId: goal,
+    }));
+    await CollabReportGoal.bulkCreate(newGoals);
+  }
+}
+
 async function saveReportDataUsed(collabReportId, dataUsed) {
   // First, destroy all existing data used entries for this report
   await CollabReportDataUsed.destroy({
@@ -180,7 +198,6 @@ async function saveReportDataUsed(collabReportId, dataUsed) {
     const newDataUsed = dataUsed.map((data) => ({
       collabReportId,
       collabReportDatum: data.collabReportDatum || data,
-      collabReportDataOther: data.collabReportDataOther,
     }));
     await CollabReportDataUsed.bulkCreate(newDataUsed);
   }
@@ -386,6 +403,11 @@ export async function createOrUpdateReport(newReport, oldReport): Promise<IColla
   // Save any data used
   if (dataUsed) {
     await saveReportDataUsed(reportId, dataUsed);
+  }
+
+  // Save any goals
+  if (reportGoals) {
+    await saveReportGoals(reportId, reportGoals);
   }
 
   // Save any activity states
