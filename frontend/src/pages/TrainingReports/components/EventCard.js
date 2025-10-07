@@ -296,6 +296,27 @@ function EventCard({
             isCollaborator={isCollaborator}
           />
         ))}
+
+        <span>
+          <strong>
+            Scenario:
+            {' '}
+            {event.data.mockLabel}
+          </strong>
+          {' '}
+          /          Owner:
+          {' '}
+          {event.ownerId}
+          {' '}
+          / POC:
+          {' '}
+          {event.pocIds}
+          {' '}
+          / Collab:
+          {' '}
+          {event.collaboratorIds}
+        </span>
+
       </article>
 
     </>
