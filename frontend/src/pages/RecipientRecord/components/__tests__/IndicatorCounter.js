@@ -6,8 +6,8 @@ describe('IndicatorCounter', () => {
   it('renders the correct number of indicators', () => {
     render(<IndicatorCounter count={0} totalCount={5} />);
 
-    const indicators = document.querySelectorAll('.ttahub--indicator-box');
-    expect(indicators.length).toBe(5);
+    const emptyIndicators = document.querySelectorAll('.ttahub--indicator-box-empty');
+    expect(emptyIndicators.length).toBe(5);
   });
 
   it('renders the correct number of filled indicators', () => {
