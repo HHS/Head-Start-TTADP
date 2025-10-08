@@ -139,7 +139,7 @@ export default (sequelize, DataTypes) => {
       },
       conductMethod: {
         allowNull: true,
-        type: DataTypes.ARRAY(DataTypes.ENUM(['email', 'phone', 'in_person', 'virtual'])),
+        type: DataTypes.ENUM(['email', 'phone', 'in_person', 'virtual']),
       },
       description: {
         allowNull: true,
