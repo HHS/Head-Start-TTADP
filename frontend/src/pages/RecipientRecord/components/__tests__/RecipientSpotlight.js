@@ -226,13 +226,13 @@ describe('RecipientSpotlight', () => {
       // In our mockSpotlightData, we have:
       // childIncidents: true, deficiency: false, newRecipients: true,
       // newStaff: false, noTTA: true, DRS: false, FEI: false
-      
+
       // Check that cells with true values have aria-hidden="false"
       const trueIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-bad-indicator');
       trueIndicatorCells.forEach((cell) => {
         expect(cell).toHaveAttribute('aria-hidden', 'false');
       });
-      
+
       // Check that cells with false values have aria-hidden="true"
       const falseIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
       falseIndicatorCells.forEach((cell) => {
