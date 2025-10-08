@@ -809,13 +809,7 @@ export default {
       <SessionSummary datePickerKey={datePickerKey} event={additionalData.event} />
       <Alert />
       <div className="display-flex">
-        {
-          !additionalData.isAdminUser
-            ? (
-              <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
-            )
-            : <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
-        }
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
         {
           // if status is 'Completed' then don't show the save draft button.
           additionalData

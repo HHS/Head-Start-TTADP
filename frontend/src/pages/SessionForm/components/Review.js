@@ -76,6 +76,7 @@ const Review = ({
   // pendingApprovalCount,
   // author,
   // approvers,
+  reviewSubmitPagePosition,
 }) => {
   const FormComponent = Submit;
 
@@ -129,6 +130,8 @@ const Review = ({
         onSaveDraft={onSaveDraft}
         onUpdatePage={onUpdatePage}
         onSubmit={onSubmit}
+        reviewSubmitPagePosition={reviewSubmitPagePosition}
+        pages={pages}
       />
     </>
   );
@@ -167,6 +170,7 @@ Review.propTypes = {
   author: PropTypes.shape({
     fullName: PropTypes.string,
   }).isRequired,
+  reviewSubmitPagePosition: PropTypes.number.isRequired,
   // pendingApprovalCount: PropTypes.number.isRequired,
   // approvers: PropTypes.arrayOf(PropTypes.shape({
   //   status: PropTypes.string,

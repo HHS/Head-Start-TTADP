@@ -95,7 +95,7 @@ module.exports = {
       5,
       ARRAY[]::INTEGER[],
       1,
-      CAST('{"eventId":"R01-PD-24-1002","eventName":"Regional PD Event - School Readiness","eventOrganizer":"Regional PD Event (with National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","reasons":["Child Incident","New Director or Management","New Program Option"],"targetPopulations":["Expectant families","Infants and Toddlers (ages birth to 3)"],"vision":"School Readiness","creator":"cucumber@hogwarts.com","eventSubmitted":true,"status":"In progress","mockLabel":"Regional PD Event (with National Centers) User 5 is owner"}' AS JSONB),
+      CAST('{"eventId":"R01-PD-24-1002","eventName":"Regional PD Event - School Readiness","eventOrganizer":"Regional PD Event (with National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","reasons":["Child Incident","New Director or Management","New Program Option"],"targetPopulations":["Expectant families","Infants and Toddlers (ages birth to 3)"],"vision":"School Readiness","creator":"cucumber@hogwarts.com","eventSubmitted":false,"status":"In progress","mockLabel":"Regional PD Event (with National Centers) User 5 is owner"}' AS JSONB),
       CAST('{"Event ID":"R01-PD-24-1002","Event Title":"Regional PD Event - School Readiness","Event Organizer - Type of Event":"Regional PD Event (with National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Child Incident\\nNew Director or Management\\nNew Program Option","Target Population(s)":"Expectant families\\nInfants and Toddlers (ages birth to 3)","Overall Vision/Goal for the PD Event":"School Readiness","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
       NOW(),
       NOW(),
