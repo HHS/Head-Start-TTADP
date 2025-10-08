@@ -214,4 +214,30 @@ describe('RecipientSpotlight', () => {
       expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
+
+  it('sets aria-hidden correctly based on indicator values', async () => {
+    const spotlightUrl = '/api/recipient-spotlight/recipientId/1/regionId/1?sortBy=recipientName&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(spotlightUrl, mockSpotlightData);
+
+    renderRecipientSpotlight();
+    expect(fetchMock.called(spotlightUrl)).toBe(true);
+
+    await waitFor(() => {
+      // In our mockSpotlightData, we have:
+      // childIncidents: true, deficiency: false, newRecipients: true,
+      // newStaff: false, noTTA: true, DRS: false, FEI: false
+      
+      // Check that cells with true values have aria-hidden="false"
+      const trueIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-bad-indicator');
+      trueIndicatorCells.forEach((cell) => {
+        expect(cell).toHaveAttribute('aria-hidden', 'false');
+      });
+      
+      // Check that cells with false values have aria-hidden="true"
+      const falseIndicatorCells = document.querySelectorAll('.ttahub-recipient-spotlight-content-cell-good-indicator');
+      falseIndicatorCells.forEach((cell) => {
+        expect(cell).toHaveAttribute('aria-hidden', 'true');
+      });
+    });
+  });
 });
