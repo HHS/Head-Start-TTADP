@@ -53,7 +53,7 @@ const SupportingInformation = ({ goalTemplates = [] }) => {
 
   // Watch the dataUsed field to determine if "other" is selected
   const selectedDataUsed = watch('dataUsed');
-  const showOtherDataUsed = selectedDataUsed && selectedDataUsed.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
+  const showOtherDataUsed = selectedDataUsed === 'true' && selectedDataUsed.some((d) => d.value === 'other'); // note that 'other' needs to be lowercase for the dataUsed collection
 
   // Watch the hasDataUsed field to conditionally require data selections
   const hasGoals = watch('hasGoals');
@@ -258,17 +258,17 @@ export const isPageComplete = (hookForm) => {
   }
 
   // Check if hasDataUsed and dataUsed is provided
-  if (hasDataUsed && (!dataUsed || dataUsed.length === 0)) {
+  if (hasDataUsed === 'true' && (!dataUsed || dataUsed.length === 0)) {
     return false;
   }
 
   // Check if data used and "other" selected but not provided
-  if (hasDataUsed && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
+  if (hasDataUsed === 'true' && dataUsed.some((d) => d.value === 'other') && !otherDataUsed) {
     return false;
   }
 
   // Check if hasGoals and goals is provided
-  if (hasGoals && (!goals || goals.length === 0)) {
+  if (hasGoals === 'true' && (!goals || goals.length === 0)) {
     return false;
   }
 
