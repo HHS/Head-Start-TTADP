@@ -70,12 +70,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
 
   await page.waitForTimeout(2000); // wait for first post to complete
 
-  // session participants
-  await page.getByTestId('form').getByText('No').click();
-  await blur(page);
-  await page.waitForTimeout(2000);
-
-  await page.getByText(/Recipients/i).click();
+  await page.getByText('Recipients *- Select -').click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
@@ -83,6 +78,9 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByText(/Recipient participants/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
+  await blur(page);
+
+  await page.getByTestId('form').getByText('Training').click();
   await blur(page);
 
   await page.getByText(/Language used/i).click();
