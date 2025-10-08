@@ -128,7 +128,7 @@ describe('RecipientSpotlight', () => {
 
       // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
@@ -146,7 +146,7 @@ describe('RecipientSpotlight', () => {
 
       // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
@@ -193,8 +193,7 @@ describe('RecipientSpotlight', () => {
 
       // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 
@@ -212,8 +211,7 @@ describe('RecipientSpotlight', () => {
 
       // Verify NoResultsFound component is rendered
       expect(screen.getByText('No results found.')).toBeInTheDocument();
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+      expect(screen.getByText('There are no current priority indicators for this recipient.')).toBeInTheDocument();
     });
   });
 });

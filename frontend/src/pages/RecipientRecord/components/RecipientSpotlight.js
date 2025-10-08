@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCircleCheck, faCircleExclamation, faCheck, faX,
+  faCircleExclamation, faCheck, faX,
 } from '@fortawesome/free-solid-svg-icons';
 import Container from '../../../components/Container';
 import colors from '../../../colors';
@@ -12,6 +12,7 @@ import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import NoResultsFound from '../../../components/NoResultsFound';
 import './RecipientSpotlight.scss';
 
+/*
 const sampleSpotlightData = [
   {
     recipientId: 1,
@@ -43,6 +44,7 @@ const goodSampleSpotlightData = [
     FEI: false,
   },
 ];
+*/
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
@@ -55,7 +57,6 @@ const mappedData = (data) => ([
   createRowForEachIndicator('newRecipients', 'New recipients', data.newRecipients, 'Recipient is in the first 4 years as a Head Start program with no previous OHS grant'),
   createRowForEachIndicator('newStaff', 'New staff', data.newStaff, 'Recipient has changed the name of the director or fiscal officer within the last two years in HSES, signifying a key hire'),
   createRowForEachIndicator('noTTA', 'No TTA', data.noTTA, 'Recipient does not have any TTA reports in last 12 months'),
-
 ]);
 
 export default function RecipientSpotlight({ regionId, recipientId }) {
@@ -64,7 +65,6 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   const [useGoodData, setUseGoodData] = useState(false);
 
   useEffect(() => {
-    /*
     async function fetchRecipientSpotlight() {
       try {
         const response = await getRecipientSpotlight(
@@ -91,10 +91,8 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       }
     }
     fetchRecipientSpotlight();
-    */
-    const dataToUse = useGoodData ? goodSampleSpotlightData[0] : sampleSpotlightData[0];
-    setSpotlightData(mappedData(dataToUse || {}));
-  }, [recipientId, regionId, useGoodData]);
+    // setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+  }, [recipientId, regionId]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
 
@@ -147,19 +145,10 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
               </div>
             </div>
           </div>
-          <div className="margin-top-1 display-flex flex-justify-center">
-            <button
-              type="button"
-              className="usa-button usa-button--unstyled margin-0"
-              onClick={() => setUseGoodData(!useGoodData)}
-            >
-              {useGoodData ? 'Show Original Data' : 'Show Good Sample Data'}
-            </button>
-          </div>
         </div>
       ) : (
         <div className="ttahub-recipient-spotlight-content padding-3 overflow-y-auto">
-          <NoResultsFound />
+          <NoResultsFound customMessage="There are no current priority indicators for this recipient." hideFilterHelp />
         </div>
       )}
     </Container>
