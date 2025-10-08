@@ -457,11 +457,11 @@ const ReviewSection = () => {
       anchor: 'reasons',
       items: [
         { label: 'Activity purpose', name: 'purpose', customValue: { purpose: reportReasons?.map((r) => COLLAB_REPORT_REASONS[r] || '').join(', ') || '' } },
-        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity ? 'State' : 'Regional' } },
-        ...(isStateActivity ? [
+        { label: 'Activity type', name: 'type', customValue: { type: isStateActivity === 'true' ? 'State' : 'Regional' } },
+        ...(isStateActivity === 'true' ? [
           { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
         ] : []),
-        { label: 'Activity method', name: 'method', customValue: { method } },
+        { label: 'Activity method', name: 'method', customValue: { method: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => m.value === method)[0]?.label } },
         { label: 'Activity description', name: 'description', customValue: { description } },
       ],
     },
