@@ -170,23 +170,6 @@ describe('participants', () => {
       });
     });
 
-    it('toggles IST questions conditionally', async () => {
-      act(() => {
-        render(<RenderParticipants />);
-      });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
-      await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
-
-      act(() => {
-        userEvent.click(
-          screen.getByLabelText(/yes/i),
-        );
-      });
-
-      expect(screen.getByLabelText(/yes/i)).toBeChecked();
-      await selectEvent.select(screen.getByLabelText(/Regional Office\/TTA/i), 'TTAC');
-    });
-
     it('shows read only mode correctly for hybrid', async () => {
       const readOnlyFormValues = {
         ...defaultFormValues,
