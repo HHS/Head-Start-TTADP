@@ -131,7 +131,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
               <div>
                 {
                 spotlightData.map((indicator) => (
-                  <div key={indicator.name} aria-hidden={indicator.value} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} radius-md width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
+                  <div key={indicator.name} aria-hidden={!indicator.value} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} radius-md width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
                     {indicator.value
                       ? <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.baseMedium} icon={faX} />
                       : <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.ttahubMediumBlue} icon={faCheck} />}
