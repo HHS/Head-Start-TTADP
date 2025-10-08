@@ -159,11 +159,24 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
 
   // Then create new steps if any are provided
   if (steps && steps.length > 0) {
-    const newSteps = steps.map((step: Model) => ({
-      collabReportId,
-      ...step,
-    }));
-    await CollabReportStep.bulkCreate(newSteps);
+    const newSteps = steps.map((step: Model) => {
+      // @ts-ignore - This and the below ignores are because we're accessing specific props
+      if (step.collabStepDetail && step.collabStepCompleteDate) {
+        return ({
+          collabReportId,
+          // @ts-ignore
+          collabStepDetail: step.collabStepDetail,
+          // @ts-ignore
+          collabStepCompleteDate: step.collabStepCompleteDate,
+          ...step,
+        });
+      }
+      return null;
+    }).filter((s) => s !== null);
+
+    if (newSteps) {
+      await CollabReportStep.bulkCreate(newSteps);
+    }
   }
 }
 
