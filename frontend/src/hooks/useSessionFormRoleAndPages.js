@@ -4,15 +4,19 @@ import isAdmin from '../permissions';
 import pages from '../pages/SessionForm/pages';
 import sessionSummary from '../pages/SessionForm/pages/sessionSummary';
 import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
-import { REVIEW_SUBMIT_POSITION } from '../pages/SessionForm/components/constants';
 import UserContext from '../UserContext';
 
-const createReviewPage = (applicationPages) => ({
-  position: REVIEW_SUBMIT_POSITION,
-  review: true,
-  label: 'Review and submit',
-  path: 'review',
-  render:
+const createReviewPage = (applicationPages) => {
+  // don't modify original array
+  const lastPage = [...applicationPages].pop();
+  const position = lastPage.position + 1;
+
+  return {
+    position,
+    review: true,
+    label: 'Review and submit',
+    path: 'review',
+    render:
     (
       formData,
       onFormSubmit,
@@ -40,9 +44,11 @@ const createReviewPage = (applicationPages) => ({
         formData={formData}
         pages={applicationPages}
         reportCreator={reportCreator}
+        reviewSubmitPagePosition={position}
       />
     ),
-});
+  };
+};
 
 export default function useSessionFormRoleAndPages(formData) {
   const { user } = useContext(UserContext);
@@ -85,7 +91,7 @@ export default function useSessionFormRoleAndPages(formData) {
         pages.supportingAttachments,
         pages.nextSteps,
       ];
-    } if (isPoc) {
+    } else if (isPoc) {
       pagesWithReview = [
         pages.participants,
         pages.supportingAttachments,

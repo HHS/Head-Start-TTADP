@@ -98,6 +98,7 @@ const Navigator = ({
       onSaveAndContinue();
       return;
     }
+
     setSavingLoadScreen();
     onUpdatePage(page.position + 1);
   };

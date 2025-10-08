@@ -3,12 +3,17 @@ import { Button, Dropdown, Textarea } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
 import IncompletePages from '../../../components/IncompletePages';
-import pages from '../pages';
-import { reviewSubmitComponentProps, REVIEW_SUBMIT_POSITION } from './constants';
+import { reviewSubmitComponentProps } from './constants';
 
 const path = 'submitter-session-report';
 
-export default function Submit({ onSaveDraft, onUpdatePage, onSubmit }) {
+export default function Submit({
+  onSaveDraft,
+  onUpdatePage,
+  onSubmit,
+  reviewSubmitPagePosition,
+  pages,
+}) {
   const { register, watch } = useFormContext();
   const pageState = watch('pageState');
 
@@ -47,7 +52,7 @@ export default function Submit({ onSaveDraft, onUpdatePage, onSubmit }) {
       <div className="display-flex margin-top-4">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onSubmit}>Submit for approval</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
-        <Button id={`${path}-back`} outline type="button" onClick={() => { onUpdatePage(REVIEW_SUBMIT_POSITION - 1); }}>Back</Button>
+        <Button id={`${path}-back`} outline type="button" onClick={() => { onUpdatePage(reviewSubmitPagePosition - 1); }}>Back</Button>
       </div>
     </div>
   );

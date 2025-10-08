@@ -320,13 +320,14 @@ export default function SessionForm({ match }) {
     const whereWeAre = applicationPages.find((p) => p.path === currentPage);
     const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
 
-    if ((isPoc || isAdminUser) && nextPage) {
+    if (nextPage) {
       updatePage(nextPage.position);
     }
   };
 
   const onFormSubmit = async () => {
     try {
+      console.log('submtting');
       await hookForm.trigger();
 
       // reset the error message

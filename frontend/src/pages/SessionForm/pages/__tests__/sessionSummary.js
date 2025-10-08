@@ -409,7 +409,7 @@ describe('sessionSummary', () => {
       };
 
       render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete' }} />);
-      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
 
@@ -420,7 +420,7 @@ describe('sessionSummary', () => {
       };
 
       render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />);
-      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
 

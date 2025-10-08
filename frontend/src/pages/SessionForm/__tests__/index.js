@@ -409,11 +409,15 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { ...completeFormData, status: 'In progress', event: { ownerId: 1, data: { eventId: 1 }, pocIds: [2] } },
+      url, {
+        ...completeFormData,
+        status: 'In progress',
+        event: { ownerId: 1, data: { eventId: 1 }, pocIds: [2] },
+      },
     );
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1');
+      renderSessionForm('1', 'review', '1');
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -421,20 +425,11 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = document.querySelector('#session-summary-save-continue');
-    userEvent.click(saveSession);
 
-    // // Wait for the modal to display.
-    // await waitFor(() => expect(
-    // screen.getByText(
-    // /You will not be able to make changes once you save the session./i)).toBeInTheDocument()
-    // );
-
-    // // get the button with the text "Yes, continue".
-    // const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
-    // act(() => {
-    //   userEvent.click(yesContinueButton);
-    // });
+    const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    act(() => {
+      userEvent.click(submit);
+    });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
 

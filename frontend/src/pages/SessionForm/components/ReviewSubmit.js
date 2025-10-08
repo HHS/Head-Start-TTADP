@@ -19,6 +19,7 @@ const ReviewSubmitSession = ({
   onSaveDraft,
   onSubmit,
   pages,
+  reviewSubmitPagePosition,
 }) => {
   const {
     calculatedStatus,
@@ -83,6 +84,7 @@ const ReviewSubmitSession = ({
           onSaveDraft={onSaveDraft}
           onSubmit={onSubmit}
           onUpdatePage={onUpdatePage}
+          reviewSubmitPagePosition={reviewSubmitPagePosition}
           // pendingApprovalCount={pendingApprovalCount}
           // isCollaborator={isCollaborator}
         />
@@ -93,6 +95,7 @@ const ReviewSubmitSession = ({
 };
 
 ReviewSubmitSession.propTypes = {
+  reviewSubmitPagePosition: PropTypes.number.isRequired,
   availableApprovers: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
