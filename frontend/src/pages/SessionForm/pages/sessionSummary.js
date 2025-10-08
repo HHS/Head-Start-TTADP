@@ -4,7 +4,10 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import {
+  SUPPORT_TYPES,
+  TRAINING_REPORT_STATUSES,
+} from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -26,7 +29,6 @@ import {
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
-import { getNationalCenters } from '../../../fetchers/nationalCenters';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
@@ -49,8 +51,10 @@ import Drawer from '../../../components/Drawer';
 import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
-import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
+import useFetch from '../../../hooks/useFetch';
+import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../../../fetchers/users';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
 
 const DEFAULT_RESOURCE = {
@@ -74,7 +78,63 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
   const data = getValues();
 
-  const { id } = data;
+  const { id, regionId } = data;
+
+  let eventOrganizer = '';
+  let facilitation = '';
+
+  if (event && event.data) {
+    eventOrganizer = event.data.eventOrganizer;
+    facilitation = event.data.facilitation;
+  }
+
+  const {
+    data: regionalTrainers,
+  } = useFetch(
+    [],
+    async () => getRegionalTrainerOptions(String(regionId)),
+    [regionId],
+  );
+
+  const {
+    data: nationalCenterTrainers,
+  } = useFetch(
+    [],
+    async () => getNationalCenterTrainerOptions(String(regionId)),
+    [regionId],
+  );
+
+  let optionsForValue = [];
+
+  const trainerOptions = (() => {
+    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
+      optionsForValue = regionalTrainers;
+      return regionalTrainers;
+    }
+
+    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+      if (facilitation === 'national_center') {
+        optionsForValue = nationalCenterTrainers;
+        return nationalCenterTrainers;
+      }
+
+      if (facilitation === 'regional_tta_staff') {
+        optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
+        return [
+          {
+            label: 'National Center trainers',
+            options: nationalCenterTrainers,
+          },
+          {
+            label: 'Regional trainers',
+            options: regionalTrainers,
+          },
+        ];
+      }
+    }
+
+    return [];
+  })();
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
@@ -116,23 +176,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
       fetchTopics();
     }
   }, [setError, topicOptions]);
-
-  const [trainerOptions, setTrainerOptions] = useState(null);
-  useEffect(() => {
-    async function fetchNationalCenters() {
-      try {
-        const { centers } = await getNationalCenters();
-        setTrainerOptions(centers);
-      } catch (err) {
-        setError('objectiveTrainers', { message: 'There was an error fetching objective trainers' });
-        setTrainerOptions([]);
-      }
-    }
-
-    if (!trainerOptions) {
-      fetchNationalCenters();
-    }
-  }, [setError, trainerOptions]);
 
   // for the resource repeater we are using the built in hook-form
   // field array
@@ -510,14 +553,14 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
       <div>
         <FormItem
-          label="Who were the trainers for this session?"
+          label="Who provided the TTA?"
           name="objectiveTrainers"
           required
         >
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={(trainerOptions || []).filter((option) => (
+                value={(optionsForValue).filter((option) => (
                   value.includes(option.name)
                 ))}
                 inputId="objectiveTrainers"
@@ -533,7 +576,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
                 }}
                 inputRef={register({ required: 'Select at least one trainer' })}
                 options={trainerOptions || []}
-                getOptionLabel={(option) => option.name}
+                getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
                 isMulti
                 required
@@ -706,6 +749,8 @@ SessionSummary.propTypes = {
   event: PropTypes.shape({
     data: PropTypes.shape({
       endDate: PropTypes.string,
+      eventOrganizer: PropTypes.string,
+      facilitation: PropTypes.string,
     }),
   }),
 };
