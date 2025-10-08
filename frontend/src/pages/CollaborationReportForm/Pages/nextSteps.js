@@ -16,9 +16,10 @@ const NextSteps = () => {
 
   useEffect(() => {
     if (!steps || steps.length === 0) {
+      const stepsToAdd = [];
       // If no steps, add an empty one.
-      steps.push({ collabStepDetail: '', collabStepCompleteDate: '' });
-      setValue('steps', steps);
+      stepsToAdd.push({ collabStepDetail: '', collabStepCompleteDate: '' });
+      setValue('steps', stepsToAdd);
     }
   }, [steps, setValue]);
 
