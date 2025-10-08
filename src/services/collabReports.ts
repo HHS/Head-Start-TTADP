@@ -180,8 +180,15 @@ async function saveReportSteps(collabReportId: number, steps: Model[]) {
   }
 }
 
-async function saveReportGoals(collabReportId: number, reportGoals: number[]) {
-  // First, destroy any existing goals for this report
+async function saveReportGoals(collabReportId: number, reportGoals) {
+  let goalsToSet = reportGoals;
+  // Shape the data if an object instead of an array of numbers
+  if (reportGoals && reportGoals.length > 0 && reportGoals[0].goalTemplateId) {
+    // map goal objects to numbers
+    goalsToSet = reportGoals.map((g) => g.goalTemplateId);
+  }
+
+  // Destroy any existing goals for this report
   await CollabReportGoal.destroy({
     where: {
       collabReportId,
@@ -189,8 +196,8 @@ async function saveReportGoals(collabReportId: number, reportGoals: number[]) {
   });
 
   // Then create new goals if any are provided
-  if (reportGoals && reportGoals.length > 0) {
-    const newGoals = reportGoals.map((goal: number) => ({
+  if (goalsToSet && goalsToSet.length > 0) {
+    const newGoals = goalsToSet.map((goal: number) => ({
       collabReportId,
       goalTemplateId: goal,
     }));
