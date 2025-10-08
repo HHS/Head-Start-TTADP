@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 import {
   Fieldset,
   Radio,
@@ -13,10 +13,12 @@ import {
   Checkbox,
   Label,
 } from '@trussworks/react-uswds';
+import Select from 'react-select';
 import moment from 'moment';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import Drawer from '../../../components/Drawer';
 import MultiSelect from '../../../components/MultiSelect';
+import selectOptionsReset from '../../../components/selectOptionsReset';
 import FormItem from '../../../components/FormItem';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import ConnectionError from '../../../components/ConnectionError';
@@ -318,14 +320,57 @@ const ActivitySummary = ({ collaborators = [] }) => {
           name="conductMethod"
           required
         >
-          <MultiSelect
-            name="conductMethod"
+          <Controller
+            render={({ onChange: controllerOnChange, value, onBlur }) => (
+              <Select
+                value={
+                    value
+                      ? {
+                        value,
+                        label: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
+                          m.value === value
+                        ))[0]?.label || null,
+                      }
+                      : null
+}
+                inputId="conductMethodSelect"
+                name="conductMethodSelect"
+                className="usa-select"
+                placeholder="- Select -"
+                styles={{
+                  ...selectOptionsReset,
+                  placeholder: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'black',
+                    fontSize: '1rem',
+                    fontWeight: '400',
+                    lineHeight: '1.3',
+                  }),
+                }}
+                components={{
+                  DropdownIndicator: null,
+                }}
+                onChange={(selected) => {
+                  controllerOnChange(selected ? selected.value : null);
+                }}
+                inputRef={register({ required: 'How was the activity conducted?' })}
+                options={COLLAB_REPORT_CONDUCT_METHODS}
+                onBlur={onBlur}
+                required
+                isMulti={false}
+              />
+            )}
             control={control}
-            options={COLLAB_REPORT_CONDUCT_METHODS}
-            simple={false}
-            labelProperty="label"
-            valueProperty="value"
-            required
+            rules={{
+              validate: (value) => {
+                if (!value) {
+                  return 'Select a reason why this activity was requested';
+                }
+                return true;
+              },
+            }}
+            name="conductMethod"
+            defaultValue={null}
           />
         </FormItem>
       </Fieldset>
@@ -432,7 +477,7 @@ const ReviewSection = () => {
     reportReasons,
     isStateActivity,
     statesInvolved,
-    method,
+    conductMethod,
   } = getValues();
 
   const sections = [
@@ -461,7 +506,15 @@ const ReviewSection = () => {
         ...(isStateActivity === 'true' ? [
           { label: 'States involved', name: 'states', customValue: { states: statesInvolved?.map((s) => STATES[s] || '').join(', ') || '' } },
         ] : []),
-        { label: 'Activity method', name: 'method', customValue: { method: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => m.value === method)[0]?.label } },
+        {
+          label: 'Activity method',
+          name: 'conductMethod',
+          customValue: {
+            conductMethod: COLLAB_REPORT_CONDUCT_METHODS.filter((m) => (
+              m.value === conductMethod
+            ))[0]?.label || 'None selected',
+          },
+        },
         { label: 'Activity description', name: 'description', customValue: { description } },
       ],
     },

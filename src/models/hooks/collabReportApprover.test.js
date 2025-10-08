@@ -29,7 +29,7 @@ const mockCollabReport = {
   endDate: '2024-01-20',
   duration: 5,
   isStateActivity: false,
-  conductMethod: ['virtual'],
+  conductMethod: 'virtual',
   description: 'This is a test collaboration report for testing purposes.',
 };
 
