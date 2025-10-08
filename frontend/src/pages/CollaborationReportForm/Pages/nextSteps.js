@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
@@ -10,23 +10,34 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 const path = 'next-steps';
 const position = 3;
 
-export const isPageComplete = () => true;
+const NextSteps = () => {
+  const { watch, setValue } = useFormContext();
+  const steps = watch('steps');
 
-const NextSteps = () => (
-  <>
-    <Helmet>
-      <title>Next Steps</title>
-    </Helmet>
-    <IndicatesRequiredField />
-    <Fieldset id="next-steps-field-set" className="smart-hub--report-legend margin-top-4" legend="What have you agreed to do next?">
-      <NextStepsRepeater
-        id="next-steps-repeater-id"
-        name="steps"
-        ariaName="Next Steps"
-      />
-    </Fieldset>
-  </>
-);
+  useEffect(() => {
+    if (!steps || steps.length === 0) {
+      // If no steps, add an empty one.
+      steps.push({ collabStepDetail: '', collabStepCompleteDate: '' });
+      setValue('steps', steps);
+    }
+  }, [steps, setValue]);
+
+  return (
+    <>
+      <Helmet>
+        <title>Next Steps</title>
+      </Helmet>
+      <IndicatesRequiredField />
+      <Fieldset id="next-steps-field-set" className="smart-hub--report-legend margin-top-4" legend="What have you agreed to do next?">
+        <NextStepsRepeater
+          id="next-steps-repeater-id"
+          name="steps"
+          ariaName="Next Steps"
+        />
+      </Fieldset>
+    </>
+  );
+};
 
 const getNextStepsSections = (steps) => {
   const nextStepItems = (steps || []).map((step, index) => ([
@@ -49,6 +60,21 @@ const getNextStepsSections = (steps) => {
       items: [...nextStepItems.flatMap((item) => item)],
     },
   ];
+};
+
+export const isPageComplete = (hookForm) => {
+  const { getValues } = hookForm;
+  const { steps } = getValues();
+
+  if (!steps || steps.length === 0) {
+    return false;
+  }
+
+  const allStepsComplete = steps.every((
+    { collabStepDetail: detail, collabStepCompleteDate: date },
+  ) => (
+    detail !== null && detail !== '' && date !== null && date !== ''));
+  return allStepsComplete;
 };
 
 const ReviewSection = () => {
