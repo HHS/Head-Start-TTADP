@@ -25,6 +25,8 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.keyboard.press('Escape');
   await page.getByText('Recipients').click();
 
+  await page.getByText('Yes, Regional HSA').click();
+
   await page.getByLabel('Event start date *mm/dd/yyyy').fill('01/02/2023');
   await page.getByLabel('Event end date *mm/dd/yyyy').fill('02/02/2023');
 
@@ -35,7 +37,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByRole('button', { name: 'Yes, continue' }).click();
 
   // Back on the TR page click create session.
-  await page.getByTestId('context-menu-actions-btn').click();
+  await page.getByRole('button', { name: 'Actions for event R01-PD-23-1037' }).click();
   await page.getByRole('button', { name: 'Create session' }).click();
 
   // IST/Creator session summary
@@ -55,7 +57,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
 
-  await page.getByText(/Who were the trainers for this session/i).click()
+  await page.getByText(/Who provided the TTA/i).click()
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
@@ -126,7 +128,7 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByText('Status Complete').click();
 
   // view/print event
-  await page.getByTestId('context-menu-actions-btn').click();
+  await page.getByRole('button', { name: 'Actions for event R01-PD-23-1037' }).click();
   await page.getByTestId('menu').getByText('View/Print event').click();
 
   await page.waitForTimeout(2000); // waiting for navigation
