@@ -28,7 +28,7 @@ const FAKE_PRIV_JWK = {
 const BASE64_ENV = Buffer.from(JSON.stringify(FAKE_PRIV_JWK)).toString(
   'base64',
 );
-process.env.PRIVATE_JWK_64 = process.env.PRIVATE_JWK_64 || BASE64_ENV;
+process.env.PRIVATE_JWK_64 = BASE64_ENV;
 
 const mgr = require('./jwkKeyManager');
 
