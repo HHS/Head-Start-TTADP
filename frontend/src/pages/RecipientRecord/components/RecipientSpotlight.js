@@ -11,7 +11,7 @@ import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import NoResultsFound from '../../../components/NoResultsFound';
 import './RecipientSpotlight.scss';
 
-/*
+
 const sampleSpotlightData = [
   {
     recipientId: 1,
@@ -27,7 +27,7 @@ const sampleSpotlightData = [
     FEI: false,
   },
 ];
-*/
+
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name, label, value, description,
@@ -48,6 +48,7 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
   const [hasResults, setHasResults] = useState(true);
 
   useEffect(() => {
+    /*
     async function fetchRecipientSpotlight() {
       try {
         const response = await getRecipientSpotlight(
@@ -74,7 +75,8 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
       }
     }
     fetchRecipientSpotlight();
-    /// setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
+    */
+    setSpotlightData(mappedData(sampleSpotlightData[0] || {}));
   }, [recipientId, regionId]);
 
   const hasIndicators = spotlightData.some((indicator) => indicator.value === true);
@@ -98,19 +100,19 @@ export default function RecipientSpotlight({ regionId, recipientId }) {
                 {hasIndicators
                   ? <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.error} icon={faCircleExclamation} />
                   : <FontAwesomeIcon className="margin-right-1" size="2x" color={colors.success} icon={faCircleCheck} />}
-                <h4 className="margin-0 Merriweather">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h4>
+                <h3 className="margin-0 Merriweather">{hasIndicators ? 'Recipient may need prioritized attention' : 'No priority indicators identified'}</h3>
               </div>
               <IndicatorCounter count={numberOfTrueIndicators} totalCount={7} />
             </div>
           </div>
 
-          <div className="display-flex flex-align-center margin-top-1">
+          <div className="display-flex flex-align  <div key={indicator.name} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' :n-center margin-top-1">
             <div className="flex-row">
               <b><p className="usa-prose margin-0 margin-bottom-2">{`${numberOfTrueIndicators} of 7 priority indicators`}</p></b>
               <div>
                 {
                 spotlightData.map((indicator) => (
-                  <div key={indicator.name} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} radius-md width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
+                  <div key={indicator.name} aria-hidden={indicator.value} className={`ttahub-recipient-spotlight-content-cell ttahub-recipient-spotlight-content-cell${indicator.value ? '-bad-indicator' : '-good-indicator'} radius-md width-full display-flex flex-align-center margin-bottom-1 padding-x-2 padding-y-1`}>
                     {indicator.value
                       ? <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.baseMedium} icon={faX} />
                       : <FontAwesomeIcon className="margin-right-2" size="1.5x" color={colors.ttahubMediumBlue} icon={faCheck} />}
