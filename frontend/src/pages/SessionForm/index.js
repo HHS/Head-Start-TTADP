@@ -327,7 +327,6 @@ export default function SessionForm({ match }) {
 
   const onFormSubmit = async () => {
     try {
-      console.log('submtting');
       await hookForm.trigger();
 
       // reset the error message
