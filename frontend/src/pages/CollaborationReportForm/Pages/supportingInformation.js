@@ -287,7 +287,7 @@ const ReviewSection = () => {
   } = watch();
 
   let participantsToDisplay = 'None provided';
-  if (participants) {
+  if (participants && participants.length > 0) {
     participantsToDisplay = participants.map((p) => p.label).join(', ');
     if (participants.some((p) => p.value === 'Other') && otherParticipants) {
       participantsToDisplay += `: ${otherParticipants}`;
