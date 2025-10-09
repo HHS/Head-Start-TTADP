@@ -66,7 +66,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const goalTemplates = useGoalTemplates([]);
 
   const {
-    getValues,
     register,
     watch,
     setValue,
@@ -75,9 +74,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
     setError,
   } = useFormContext();
 
-  const data = getValues();
-
-  const { id } = data;
+  const id = watch('id');
 
   const { trainerOptions, optionsForValue } = useSessionStaff(event);
 
