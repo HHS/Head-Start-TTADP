@@ -66,7 +66,7 @@ NextSteps.defaultProps = {
   activityRecipientType: '',
 };
 
-const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
+export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
   const specialistItems = (specialistNextSteps || []).map((step, index) => ([
     {
       label: `Step ${index + 1}`,

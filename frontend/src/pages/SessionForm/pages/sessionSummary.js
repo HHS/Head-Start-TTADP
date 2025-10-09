@@ -25,6 +25,7 @@ import {
   Radio,
   Button,
   ErrorMessage,
+  Link,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import { getTopics } from '../../../fetchers/topics';
@@ -50,10 +51,10 @@ import Drawer from '../../../components/Drawer';
 import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
-import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
-import useFetch from '../../../hooks/useFetch';
-import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../../../fetchers/users';
+import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import useSessionStaff from '../../../hooks/useSessionStaff';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -74,67 +75,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
   } = useFormContext();
 
   const id = watch('id');
-  const regionId = watch('regionId');
-  const facilitation = watch('facilitation');
 
-  let eventOrganizer = '';
-
-  if (event && event.data) {
-    eventOrganizer = event.data.eventOrganizer;
-  }
-
-  const {
-    data: regionalTrainers,
-  } = useFetch(
-    [],
-    async () => getRegionalTrainerOptions(String(regionId)),
-    [regionId],
-  );
-
-  const {
-    data: nationalCenterTrainers,
-  } = useFetch(
-    [],
-    async () => getNationalCenterTrainerOptions(String(regionId)),
-    [regionId],
-  );
-
-  let optionsForValue = [];
-
-  const trainerOptions = (() => {
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-      optionsForValue = regionalTrainers;
-      return regionalTrainers;
-    }
-
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-      if (facilitation === 'national_center') {
-        optionsForValue = nationalCenterTrainers;
-        return nationalCenterTrainers;
-      }
-
-      if (facilitation === 'regional_tta_staff') {
-        optionsForValue = regionalTrainers;
-        return regionalTrainers;
-      }
-
-      if (facilitation === 'both') {
-        optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
-        return [
-          {
-            label: 'National Center trainers',
-            options: nationalCenterTrainers,
-          },
-          {
-            label: 'Regional trainers',
-            options: regionalTrainers,
-          },
-        ];
-      }
-    }
-
-    return [];
-  })();
+  const { trainerOptions, optionsForValue } = useSessionStaff(event);
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
@@ -747,6 +689,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   event: PropTypes.shape({
+    regionId: PropTypes.number,
     data: PropTypes.shape({
       endDate: PropTypes.string,
       eventOrganizer: PropTypes.string,
@@ -764,7 +707,62 @@ const requiredFields = [...Object.keys(sessionSummaryRequiredFields), 'endDate',
 const path = 'session-summary';
 const position = 1;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
+const ReviewSection = () => {
+  const { getValues } = useFormContext();
+
+  const {
+    sessionName,
+    startDate,
+    endDate,
+    duration,
+    context,
+
+    objective,
+    objectiveTopics,
+    objectiveTrainers,
+    courses,
+    sessionGoalTemplates,
+    objectiveResources,
+    files,
+    ttaProvided,
+    objectiveSupportType,
+  } = getValues();
+
+  // eslint-disable-next-line max-len
+  const objectiveFiles = files.map((f) => (f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName));
+  const resources = (objectiveResources || []).map((r) => <Link href={r.value}>{r.value}</Link>);
+
+  const sections = [
+    {
+      anchor: 'activity-for',
+      items: [
+        { label: 'Session name', name: 'sessionName', customValue: { sessionName } },
+        { label: 'Session start date', name: 'startDate', customValue: { startDate } },
+        { label: 'Session end date', name: 'endDate', customValue: { endDate } },
+        { label: 'Duration', name: 'duration', customValue: { duration } },
+        { label: 'Session context', name: 'context', customValue: { context } },
+      ],
+    },
+    {
+      title: 'Objectives summary',
+      anchor: 'session-objective',
+      items: [
+        { label: 'Session objectives', name: 'objective', customValue: { objective } },
+        { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
+        { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
+        { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
+        { label: 'iPD courses', name: 'courses', customValue: { courses: (courses || []).map((c) => c.name) } },
+        { label: 'Resource links', name: 'objectiveResources', customValue: { objectiveResources: resources } },
+        { label: 'Resource attachments', name: 'files', customValue: { files: objectiveFiles } },
+        { label: 'TTA provided', name: 'ttaProvided', customValue: { ttaProvided } },
+        { label: 'Support type', name: 'objectiveSupportType', customValue: { objectiveSupportType } },
+      ],
+    },
+  ];
+
+  return <ReviewPage sections={sections} path={path} isCustomValue />;
+};
+
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
 
@@ -799,13 +797,7 @@ export default {
       <SessionSummary datePickerKey={datePickerKey} event={additionalData.event} />
       <Alert />
       <div className="display-flex">
-        {
-          !additionalData.isAdminUser
-            ? (
-              <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
-            )
-            : <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
-        }
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
         {
           // if status is 'Completed' then don't show the save draft button.
           additionalData

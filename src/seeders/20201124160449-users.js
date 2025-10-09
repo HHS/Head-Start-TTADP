@@ -88,6 +88,31 @@ const staticUserPermissions = [
     regionId: 1,
     scopeId: APPROVE_REPORTS,
   },
+  {
+    userId: 6,
+    scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 6,
+    regionId: 2,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 2,
+    scopeId: READ_WRITE_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 3,
+    scopeId: READ_REPORTS,
+  },
+  {
+    userId: 6,
+    regionId: 3,
+    scopeId: READ_WRITE_REPORTS,
+  },
 ];
 
 const hsesUsernames = [
@@ -156,6 +181,17 @@ const staticUsers = [
     homeRegionId: 3,
     lastLogin: moment().toISOString(),
   },
+
+  {
+    id: 6,
+    hsesUserId: '6',
+    email: 'larry@hogwarts.com',
+    hsesUsername: 'larry@hogwarts.com',
+    name: 'Larry Botter',
+    phoneNumber: '555-555-5553',
+    homeRegionId: 3,
+    lastLogin: moment().toISOString(),
+  },
 ];
 
 const generatedUsers = hsesUsernames.map((u, i) => ({
@@ -163,7 +199,7 @@ const generatedUsers = hsesUsernames.map((u, i) => ({
   email: `${u}@test.com`,
   hsesUsername: u,
   name: u.split('.')[2],
-  phoneNumber: '555-555-5553',
+  phoneNumber: '555-555-5554',
   homeRegionId: 1,
   lastLogin: moment().toISOString(),
 }));
@@ -344,6 +380,12 @@ module.exports = {
       },
       {
         userId: 5,
+        roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 6,
         roleId: 5,
         createdAt: moment().toISOString(),
         updatedAt: moment().toISOString(),

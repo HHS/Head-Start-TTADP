@@ -6,4 +6,6 @@ export type SessionReportShape = {
   supportingAttachments: unknown[];
   updatedAt: string;
   event: unknown;
+  approverId: number | null;
+  approver: { id: number } | null;
 };
