@@ -4,8 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
 import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
-import useFetch from '../../../hooks/useFetch';
-import { getRegionalTrainerOptions } from '../../../fetchers/users';
+import useSessionStaff from '../../../hooks/useSessionStaff';
 
 const path = 'submitter-session-report';
 
@@ -15,31 +14,31 @@ export default function Submit({
   onSubmit,
   reviewSubmitPagePosition,
   pages,
+  isPoc,
 }) {
   const { register, watch } = useFormContext();
   const pageState = watch('pageState');
-  const regionId = watch('regionId');
+  const event = watch('event');
+
+  const { trainerOptions: approvers } = useSessionStaff(event);
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len
   const incompletePages = Object.values(pages).filter((page) => filtered.includes(page.position)).map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
 
-  const { data: approvers } = useFetch(
-    [],
-    async () => getRegionalTrainerOptions(String(regionId)),
-    [regionId],
-  );
-
   return (
     <div data-testid="session-form-submit">
-      <FormItem
-        label="Creator notes"
-        name="additionalNotes"
-        required={false}
-      >
-        <Textarea inputRef={register()} name="additionalNotes" id="additionalNotes" />
-      </FormItem>
+      {!isPoc && (
+
+        <FormItem
+          label="Creator notes"
+          name="additionalNotes"
+          required={false}
+        >
+          <Textarea inputRef={register()} name="additionalNotes" id="additionalNotes" />
+        </FormItem>
+      )}
       {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
       <FormItem
         label="Approving manager"
@@ -58,6 +57,7 @@ export default function Submit({
           ))}
         </Dropdown>
       </FormItem>
+
       <div className="display-flex margin-top-4">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onSubmit}>Submit for approval</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>

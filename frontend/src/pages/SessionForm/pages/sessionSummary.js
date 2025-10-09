@@ -52,10 +52,9 @@ import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
-import { mustBeQuarterHalfOrWhole, TRAINING_EVENT_ORGANIZER } from '../../../Constants';
-import useFetch from '../../../hooks/useFetch';
-import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../../../fetchers/users';
+import { mustBeQuarterHalfOrWhole } from '../../../Constants';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import useSessionStaff from '../../../hooks/useSessionStaff';
 
 const DEFAULT_RESOURCE = {
   value: '',
@@ -80,61 +79,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
   const { id } = data;
 
-  let eventOrganizer = '';
-  let facilitation = '';
-
-  if (event && event.data) {
-    eventOrganizer = event.data.eventOrganizer;
-    facilitation = event.data.facilitation;
-  }
-
-  const {
-    data: regionalTrainers,
-  } = useFetch(
-    [],
-    async () => (event?.regionId ? getRegionalTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
-  );
-
-  const {
-    data: nationalCenterTrainers,
-  } = useFetch(
-    [],
-    async () => (event?.regionId ? getNationalCenterTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
-  );
-
-  let optionsForValue = [];
-
-  const trainerOptions = (() => {
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-      optionsForValue = regionalTrainers;
-      return regionalTrainers;
-    }
-
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-      if (facilitation === 'national_center') {
-        optionsForValue = nationalCenterTrainers;
-        return nationalCenterTrainers;
-      }
-
-      if (facilitation === 'regional_tta_staff') {
-        optionsForValue = [...nationalCenterTrainers, ...regionalTrainers];
-        return [
-          {
-            label: 'National Center trainers',
-            options: nationalCenterTrainers,
-          },
-          {
-            label: 'Regional trainers',
-            options: regionalTrainers,
-          },
-        ];
-      }
-    }
-
-    return [];
-  })();
+  const { trainerOptions, optionsForValue } = useSessionStaff(event);
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 

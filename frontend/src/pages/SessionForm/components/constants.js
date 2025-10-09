@@ -7,6 +7,7 @@ const reviewSubmitComponentProps = {
   onSubmit: PropTypes.func.isRequired,
   onFormReview: PropTypes.func.isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
+  isPoc: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,
