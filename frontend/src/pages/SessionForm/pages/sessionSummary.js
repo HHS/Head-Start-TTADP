@@ -78,7 +78,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 
   const data = getValues();
 
-  const { id, regionId } = data;
+  const { id } = data;
 
   let eventOrganizer = '';
   let facilitation = '';
@@ -92,16 +92,16 @@ const SessionSummary = ({ datePickerKey, event }) => {
     data: regionalTrainers,
   } = useFetch(
     [],
-    async () => getRegionalTrainerOptions(String(regionId)),
-    [regionId],
+    async () => (event?.regionId ? getRegionalTrainerOptions(String(event.regionId)) : []),
+    [event?.regionId],
   );
 
   const {
     data: nationalCenterTrainers,
   } = useFetch(
     [],
-    async () => getNationalCenterTrainerOptions(String(regionId)),
-    [regionId],
+    async () => (event?.regionId ? getNationalCenterTrainerOptions(String(event.regionId)) : []),
+    [event?.regionId],
   );
 
   let optionsForValue = [];
@@ -747,6 +747,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
 SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   event: PropTypes.shape({
+    regionId: PropTypes.number,
     data: PropTypes.shape({
       endDate: PropTypes.string,
       eventOrganizer: PropTypes.string,
@@ -801,10 +802,10 @@ const ReviewSection = () => {
       ],
     },
     {
-      title: 'Objective summary',
+      title: 'Objectives summary',
       anchor: 'session-objective',
       items: [
-        { label: 'Session objective', name: 'objective', customValue: { objective } },
+        { label: 'Session objectives', name: 'objective', customValue: { objective } },
         { label: 'Supporting goals', name: 'goals', customValue: { goals: sessionGoalTemplates } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },

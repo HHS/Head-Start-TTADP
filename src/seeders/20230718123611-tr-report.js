@@ -24,6 +24,11 @@ module.exports = {
         regionId: 1,
         scopeId: READ_WRITE_TRAINING_REPORTS,
       },
+      {
+        userId: 4,
+        regionId: 1,
+        scopeId: READ_WRITE_TRAINING_REPORTS,
+      },
     ];
 
     const collaboratorTrainingReports = [
@@ -72,7 +77,7 @@ module.exports = {
       "pocIds"
     ) VALUES (
       5,
-      ARRAY[]::INTEGER[],
+      ARRAY[4]::INTEGER[],
       1,
       CAST('{"eventId":"R01-TTA-24-1001","eventName":"Regional TTA Event - Leadership Development","eventOrganizer":"Regional TTA Hosted Event (no National Centers)","eventIntendedAudience":"recipients","trainingType":"Series","reasons":["Monitoring | Area of Concern","Monitoring | Deficiency","Monitoring | Noncompliance"],"targetPopulations":["Infants and Toddlers (ages birth to 3)","Preschool Children (ages 3-5)"],"vision":"Leadership and Governance","creator":"cucumber@hogwarts.com","eventSubmitted":true,"status":"In progress","mockLabel":"Regional TTA Hosted Event (no National Centers) User 5 is owner"}' AS JSONB),
       CAST('{"Event ID":"R01-TTA-24-1001","Event Title":"Regional TTA Event - Leadership Development","Event Organizer - Type of Event":"Regional TTA Hosted Event (no National Centers)","Audience":"Recipients","Event Duration/# NC Days of Support":"Series","Reason for Activity":"Monitoring | Area of Concern\\nMonitoring | Deficiency\\nMonitoring | Noncompliance","Target Population(s)":"Infants and Toddlers (ages birth to 3)\\nPreschool Children (ages 3-5)","Overall Vision/Goal for the PD Event":"Leadership and Governance","IST/Creator":"cucumber@hogwarts.com"}' AS JSONB),
@@ -282,7 +287,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"Leadership Development Session 1","startDate":"2024-01-15","endDate":"2024-01-15","duration":3,"deliveryMethod":"in-person","context":"Developing leadership skills for program directors","objective":"Enhance leadership competencies","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":true,"recipients":[{"value":1234,"label":"Example Recipient 1"}],"objectiveTopics":["Leadership","Management"],"objectiveTrainers":["PFCE"],"participants":["Program Director (HS / EHS)","Manager / Coordinator / Specialist"]}' AS JSONB),
+      CAST('{"sessionName":"Leadership Development Session 1","startDate":"2024-01-15","endDate":"2024-01-15","duration":3,"deliveryMethod":"in-person","context":"Developing leadership skills for program directors","objective":"Enhance leadership competencies","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"recipients":[{"value":1234,"label":"Example Recipient 1"}],"objectiveTopics":["Leadership","Management"],"objectiveTrainers":["PFCE"],"participants":["Program Director (HS / EHS)","Manager / Coordinator / Specialist"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -299,7 +304,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop","startDate":"2024-01-20","endDate":"2024-01-20","duration":4,"deliveryMethod":"virtual","context":"Building school readiness skills","objective":"Improve school readiness outcomes","numberOfParticipants":35,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Teaching Practices"],"objectiveTrainers":["Regional TTA Team"],"participants":["Teacher","Coach","Manager / Coordinator / Specialist"]}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop","startDate":"2024-01-20","endDate":"2024-01-20","duration":4,"deliveryMethod":"virtual","context":"Building school readiness skills","objective":"Improve school readiness outcomes","numberOfParticipants":35,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"regional_tta_staff","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Teaching Practices"],"objectiveTrainers":["Regional TTA Team"],"participants":["Teacher","Coach","Manager / Coordinator / Specialist"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -316,7 +321,7 @@ module.exports = {
     SELECT
       id,
       5,
-      CAST('{"sessionName":"Family Engagement Strategies","startDate":"2024-02-05","endDate":"2024-02-05","duration":2.5,"deliveryMethod":"hybrid","context":"Strengthening family engagement practices","objective":"Increase family participation","numberOfParticipants":20,"status":"In progress","ownerComplete":true,"pocComplete":true,"recipients":[{"value":1236,"label":"Example Recipient 3"}],"objectiveTopics":["Family Engagement","Parent Involvement"],"objectiveTrainers":["PFCE"],"participants":["Family Service Worker / Case Manager","Home Visitor"]}' AS JSONB),
+      CAST('{"sessionName":"Family Engagement Strategies","startDate":"2024-02-05","endDate":"2024-02-05","duration":2.5,"deliveryMethod":"hybrid","context":"Strengthening family engagement practices","objective":"Increase family participation","numberOfParticipants":20,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"recipients":[{"value":1236,"label":"Example Recipient 3"}],"objectiveTopics":["Family Engagement","Parent Involvement"],"objectiveTrainers":["PFCE"],"participants":["Family Service Worker / Case Manager","Home Visitor"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -333,7 +338,7 @@ module.exports = {
     SELECT
       id,
       5,
-      CAST('{"sessionName":"CLASS Implementation Training","startDate":"2024-02-10","endDate":"2024-02-10","duration":6,"deliveryMethod":"in-person","context":"Implementing CLASS framework","objective":"Improve classroom interactions","numberOfParticipants":40,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"regional_tta_staff","recipients":[{"value":1237,"label":"Example Recipient 4"}],"objectiveTopics":["CLASS","Teaching Practices"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach","Education Manager"]}' AS JSONB),
+      CAST('{"sessionName":"CLASS Implementation Training","startDate":"2024-02-10","endDate":"2024-02-10","duration":6,"deliveryMethod":"in-person","context":"Implementing CLASS framework","objective":"Improve classroom interactions","numberOfParticipants":40,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"regional_tta_staff","recipients":[{"value":1237,"label":"Example Recipient 4"}],"objectiveTopics":["CLASS","Teaching Practices"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach","Education Manager"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -350,7 +355,7 @@ module.exports = {
     SELECT
       id,
       3,
-      CAST('{"sessionName":"Fiscal Management Best Practices","startDate":"2024-02-15","endDate":"2024-02-15","duration":3,"deliveryMethod":"virtual","context":"Improving fiscal management systems","objective":"Enhance budget oversight","numberOfParticipants":15,"status":"In progress","ownerComplete":true,"pocComplete":true,"recipients":[{"value":1238,"label":"Example Recipient 5"}],"objectiveTopics":["Fiscal / Budget","Facilities"],"objectiveTrainers":["PFMO"],"participants":["Fiscal Manager/Team","CEO / CFO / Executive"]}' AS JSONB),
+      CAST('{"sessionName":"Fiscal Management Best Practices","startDate":"2024-02-15","endDate":"2024-02-15","duration":3,"deliveryMethod":"virtual","context":"Improving fiscal management systems","objective":"Enhance budget oversight","numberOfParticipants":15,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"recipients":[{"value":1238,"label":"Example Recipient 5"}],"objectiveTopics":["Fiscal / Budget","Facilities"],"objectiveTrainers":["PFMO"],"participants":["Fiscal Manager/Team","CEO / CFO / Executive"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -367,7 +372,7 @@ module.exports = {
     SELECT
       id,
       3,
-      CAST('{"sessionName":"Health and Safety Training","startDate":"2024-02-20","endDate":"2024-02-20","duration":4,"deliveryMethod":"in-person","context":"Ensuring health and safety compliance","objective":"Meet health and safety standards","numberOfParticipants":30,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"regional_tta_staff","recipients":[{"value":1239,"label":"Example Recipient 6"}],"objectiveTopics":["Facilities","Safety Practices"],"objectiveTrainers":["NCHBHS"],"participants":["Health Manager","Family Service Worker / Case Manager","Program Director (HS / EHS)"]}' AS JSONB),
+      CAST('{"sessionName":"Health and Safety Training","startDate":"2024-02-20","endDate":"2024-02-20","duration":4,"deliveryMethod":"in-person","context":"Ensuring health and safety compliance","objective":"Meet health and safety standards","numberOfParticipants":30,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"regional_tta_staff","recipients":[{"value":1239,"label":"Example Recipient 6"}],"objectiveTopics":["Facilities","Safety Practices"],"objectiveTrainers":["NCHBHS"],"participants":["Health Manager","Family Service Worker / Case Manager","Program Director (HS / EHS)"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -386,7 +391,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"Community Partnerships Session","startDate":"2024-03-01","endDate":"2024-03-01","duration":2,"deliveryMethod":"virtual","context":"Building community partnerships","objective":"Strengthen community connections","numberOfParticipants":18,"status":"In progress","ownerComplete":false,"pocComplete":false,"recipients":[{"value":1240,"label":"Example Recipient 7"}],"objectiveTopics":["Community Engagement","Partnerships"],"objectiveTrainers":["Regional TTA Team"],"participants":["Manager / Coordinator / Specialist"]}' AS JSONB),
+      CAST('{"sessionName":"Community Partnerships Session","startDate":"2024-03-01","endDate":"2024-03-01","duration":2,"deliveryMethod":"virtual","context":"Building community partnerships","objective":"Strengthen community connections","numberOfParticipants":18,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"recipients":[{"value":1240,"label":"Example Recipient 7"}],"objectiveTopics":["Community Engagement","Partnerships"],"objectiveTrainers":["Regional TTA Team"],"participants":["Manager / Coordinator / Specialist"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -403,7 +408,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"Nutrition Services Training","startDate":"2024-03-05","endDate":"2024-03-05","duration":3,"deliveryMethod":"in-person","context":"Implementing nutrition guidelines","objective":"Improve nutrition services","numberOfParticipants":22,"status":"In progress","ownerComplete":false,"pocComplete":false,"facilitation":"regional_tta_staff","recipients":[{"value":1241,"label":"Example Recipient 8"}],"objectiveTopics":["Nutrition","Health Services"],"objectiveTrainers":["NCHBHS"],"participants":["Health Manager","Nutrition Specialist"]}' AS JSONB),
+      CAST('{"sessionName":"Nutrition Services Training","startDate":"2024-03-05","endDate":"2024-03-05","duration":3,"deliveryMethod":"in-person","context":"Implementing nutrition guidelines","objective":"Improve nutrition services","numberOfParticipants":22,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"facilitation":"regional_tta_staff","recipients":[{"value":1241,"label":"Example Recipient 8"}],"objectiveTopics":["Nutrition","Health Services"],"objectiveTrainers":["NCHBHS"],"participants":["Health Manager","Nutrition Specialist"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -420,7 +425,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"ERSEA Implementation Session","startDate":"2024-03-10","endDate":"2024-03-10","duration":3.5,"deliveryMethod":"hybrid","context":"Implementing ERSEA processes","objective":"Improve ERSEA compliance","numberOfParticipants":28,"status":"In progress","ownerComplete":false,"pocComplete":false,"facilitation":"regional_tta_staff","recipients":[{"value":1242,"label":"Example Recipient 9"}],"objectiveTopics":["ERSEA","Eligibility"],"objectiveTrainers":["Regional TTA Team"],"participants":["Manager / Coordinator / Specialist","Program Support / Administrative Assistant"]}' AS JSONB),
+      CAST('{"sessionName":"ERSEA Implementation Session","startDate":"2024-03-10","endDate":"2024-03-10","duration":3.5,"deliveryMethod":"hybrid","context":"Implementing ERSEA processes","objective":"Improve ERSEA compliance","numberOfParticipants":28,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"facilitation":"regional_tta_staff","recipients":[{"value":1242,"label":"Example Recipient 9"}],"objectiveTopics":["ERSEA","Eligibility"],"objectiveTrainers":["Regional TTA Team"],"participants":["Manager / Coordinator / Specialist","Program Support / Administrative Assistant"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -437,7 +442,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"Special Needs Support Training","startDate":"2024-03-15","endDate":"2024-03-15","duration":4,"deliveryMethod":"virtual","context":"Supporting children with special needs","objective":"Enhance supportive practices","numberOfParticipants":32,"status":"In progress","ownerComplete":false,"pocComplete":false,"recipients":[{"value":1243,"label":"Example Recipient 10"}],"objectiveTopics":["Disabilities Services","Individualized Support","Special Needs"],"objectiveTrainers":["NCECDTL"],"participants":["Teacher","Special Needs Coordinator","Coach"]}' AS JSONB),
+      CAST('{"sessionName":"Special Needs Support Training","startDate":"2024-03-15","endDate":"2024-03-15","duration":4,"deliveryMethod":"virtual","context":"Supporting children with special needs","objective":"Enhance supportive practices","numberOfParticipants":32,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"recipients":[{"value":1243,"label":"Example Recipient 10"}],"objectiveTopics":["Disabilities Services","Individualized Support","Special Needs"],"objectiveTrainers":["NCECDTL"],"participants":["Teacher","Special Needs Coordinator","Coach"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -455,7 +460,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop - Session 2","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"]}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop - Session 2","startDate":"2024-01-27","endDate":"2024-01-27","duration":3.5,"deliveryMethod":"virtual","context":"Advanced school readiness strategies","objective":"Deepen school readiness implementation","numberOfParticipants":30,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"both","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Curriculum Development"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Teacher","Coach","Education Manager"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -471,7 +476,7 @@ module.exports = {
     SELECT
       id,
       1,
-      CAST('{"sessionName":"School Readiness Workshop - Session 3","startDate":"2024-02-03","endDate":"2024-02-03","duration":4,"deliveryMethod":"in-person","context":"Specialized school readiness assessment","objective":"Master assessment techniques","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment","Child Development"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach"]}' AS JSONB),
+      CAST('{"sessionName":"School Readiness Workshop - Session 3","startDate":"2024-02-03","endDate":"2024-02-03","duration":4,"deliveryMethod":"in-person","context":"Specialized school readiness assessment","objective":"Master assessment techniques","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"national_center","recipients":[{"value":1235,"label":"Example Recipient 2"}],"objectiveTopics":["School Readiness","Assessment","Child Development"],"objectiveTrainers":["NCQTL"],"participants":["Teacher","Coach"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -488,7 +493,7 @@ module.exports = {
     SELECT
       id,
       5,
-      CAST('{"sessionName":"CLASS Implementation Training - Session 2","startDate":"2024-02-17","endDate":"2024-02-17","duration":5,"deliveryMethod":"hybrid","context":"Advanced CLASS coaching techniques","objective":"Refine CLASS implementation","numberOfParticipants":35,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"both","recipients":[{"value":1237,"label":"Example Recipient 4"}],"objectiveTopics":["CLASS","Coaching","Observation"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Coach","Education Manager","Teacher"]}' AS JSONB),
+      CAST('{"sessionName":"CLASS Implementation Training - Session 2","startDate":"2024-02-17","endDate":"2024-02-17","duration":5,"deliveryMethod":"hybrid","context":"Advanced CLASS coaching techniques","objective":"Refine CLASS implementation","numberOfParticipants":35,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"both","recipients":[{"value":1237,"label":"Example Recipient 4"}],"objectiveTopics":["CLASS","Coaching","Observation"],"objectiveTrainers":["Regional TTA Team","NCQTL"],"participants":["Coach","Education Manager","Teacher"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -504,7 +509,7 @@ module.exports = {
     SELECT
       id,
       5,
-      CAST('{"sessionName":"CLASS Implementation Training - Session 3","startDate":"2024-02-24","endDate":"2024-02-24","duration":6,"deliveryMethod":"virtual","context":"CLASS certification preparation","objective":"Prepare for CLASS reliability","numberOfParticipants":20,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"national_center","recipients":[{"value":1237,"label":"Example Recipient 4"}],"objectiveTopics":["CLASS","Certification","Quality Assurance"],"objectiveTrainers":["NCQTL"],"participants":["Coach","Education Manager"]}' AS JSONB),
+      CAST('{"sessionName":"CLASS Implementation Training - Session 3","startDate":"2024-02-24","endDate":"2024-02-24","duration":6,"deliveryMethod":"virtual","context":"CLASS certification preparation","objective":"Prepare for CLASS reliability","numberOfParticipants":20,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"national_center","recipients":[{"value":1237,"label":"Example Recipient 4"}],"objectiveTopics":["CLASS","Certification","Quality Assurance"],"objectiveTrainers":["NCQTL"],"participants":["Coach","Education Manager"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -521,7 +526,7 @@ module.exports = {
     SELECT
       id,
       3,
-      CAST('{"sessionName":"Health and Safety Training - Session 2","startDate":"2024-02-27","endDate":"2024-02-27","duration":3,"deliveryMethod":"virtual","context":"Advanced health protocols","objective":"Enhance health monitoring systems","numberOfParticipants":28,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"both","recipients":[{"value":1239,"label":"Example Recipient 6"}],"objectiveTopics":["Health Services","Monitoring","Compliance"],"objectiveTrainers":["Regional TTA Team","NCHBHS"],"participants":["Health Manager","Program Director (HS / EHS)"]}' AS JSONB),
+      CAST('{"sessionName":"Health and Safety Training - Session 2","startDate":"2024-02-27","endDate":"2024-02-27","duration":3,"deliveryMethod":"virtual","context":"Advanced health protocols","objective":"Enhance health monitoring systems","numberOfParticipants":28,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"both","recipients":[{"value":1239,"label":"Example Recipient 6"}],"objectiveTopics":["Health Services","Monitoring","Compliance"],"objectiveTrainers":["Regional TTA Team","NCHBHS"],"participants":["Health Manager","Program Director (HS / EHS)"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -537,7 +542,7 @@ module.exports = {
     SELECT
       id,
       3,
-      CAST('{"sessionName":"Health and Safety Training - Session 3","startDate":"2024-03-05","endDate":"2024-03-05","duration":4,"deliveryMethod":"in-person","context":"Specialized health screenings","objective":"Implement comprehensive screening protocols","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":true,"facilitation":"national_center","recipients":[{"value":1239,"label":"Example Recipient 6"}],"objectiveTopics":["Health Screenings","Wellness","Preventive Care"],"objectiveTrainers":["NCHBHS"],"participants":["Health Manager","Nurse"]}' AS JSONB),
+      CAST('{"sessionName":"Health and Safety Training - Session 3","startDate":"2024-03-05","endDate":"2024-03-05","duration":4,"deliveryMethod":"in-person","context":"Specialized health screenings","objective":"Implement comprehensive screening protocols","numberOfParticipants":25,"status":"In progress","ownerComplete":true,"pocComplete":false,"regionId":1,"facilitation":"national_center","recipients":[{"value":1239,"label":"Example Recipient 6"}],"objectiveTopics":["Health Screenings","Wellness","Preventive Care"],"objectiveTrainers":["NCHBHS"],"participants":["Health Manager","Nurse"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -554,7 +559,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"Nutrition Services Training - Session 2","startDate":"2024-03-12","endDate":"2024-03-12","duration":2.5,"deliveryMethod":"virtual","context":"Advanced nutrition planning","objective":"Develop comprehensive nutrition plans","numberOfParticipants":20,"status":"In progress","ownerComplete":false,"pocComplete":false,"facilitation":"both","recipients":[{"value":1241,"label":"Example Recipient 8"}],"objectiveTopics":["Nutrition","Menu Planning","Food Safety"],"objectiveTrainers":["Regional TTA Team","NCHBHS"],"participants":["Nutrition Specialist","Health Manager"]}' AS JSONB),
+      CAST('{"sessionName":"Nutrition Services Training - Session 2","startDate":"2024-03-12","endDate":"2024-03-12","duration":2.5,"deliveryMethod":"virtual","context":"Advanced nutrition planning","objective":"Develop comprehensive nutrition plans","numberOfParticipants":20,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"facilitation":"both","recipients":[{"value":1241,"label":"Example Recipient 8"}],"objectiveTopics":["Nutrition","Menu Planning","Food Safety"],"objectiveTrainers":["Regional TTA Team","NCHBHS"],"participants":["Nutrition Specialist","Health Manager"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -570,7 +575,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"Nutrition Services Training - Session 3","startDate":"2024-03-19","endDate":"2024-03-19","duration":3,"deliveryMethod":"hybrid","context":"Specialized dietary accommodations","objective":"Implement individualized nutrition support","numberOfParticipants":18,"status":"In progress","ownerComplete":false,"pocComplete":false,"facilitation":"national_center","recipients":[{"value":1241,"label":"Example Recipient 8"}],"objectiveTopics":["Special Diets","Allergies","Nutrition Science"],"objectiveTrainers":["NCHBHS"],"participants":["Nutrition Specialist","Cook"]}' AS JSONB),
+      CAST('{"sessionName":"Nutrition Services Training - Session 3","startDate":"2024-03-19","endDate":"2024-03-19","duration":3,"deliveryMethod":"hybrid","context":"Specialized dietary accommodations","objective":"Implement individualized nutrition support","numberOfParticipants":18,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"facilitation":"national_center","recipients":[{"value":1241,"label":"Example Recipient 8"}],"objectiveTopics":["Special Diets","Allergies","Nutrition Science"],"objectiveTrainers":["NCHBHS"],"participants":["Nutrition Specialist","Cook"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -587,7 +592,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"ERSEA Implementation Session - Session 2","startDate":"2024-03-17","endDate":"2024-03-17","duration":3,"deliveryMethod":"virtual","context":"Advanced ERSEA strategies","objective":"Optimize eligibility processes","numberOfParticipants":25,"status":"In progress","ownerComplete":false,"pocComplete":false,"facilitation":"both","recipients":[{"value":1242,"label":"Example Recipient 9"}],"objectiveTopics":["ERSEA","Data Management","Community Outreach"],"objectiveTrainers":["Regional TTA Team","National Center"],"participants":["Manager / Coordinator / Specialist","Enrollment Coordinator"]}' AS JSONB),
+      CAST('{"sessionName":"ERSEA Implementation Session - Session 2","startDate":"2024-03-17","endDate":"2024-03-17","duration":3,"deliveryMethod":"virtual","context":"Advanced ERSEA strategies","objective":"Optimize eligibility processes","numberOfParticipants":25,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"facilitation":"both","recipients":[{"value":1242,"label":"Example Recipient 9"}],"objectiveTopics":["ERSEA","Data Management","Community Outreach"],"objectiveTrainers":["Regional TTA Team","National Center"],"participants":["Manager / Coordinator / Specialist","Enrollment Coordinator"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"
@@ -603,7 +608,7 @@ module.exports = {
     SELECT
       id,
       NULL,
-      CAST('{"sessionName":"ERSEA Implementation Session - Session 3","startDate":"2024-03-24","endDate":"2024-03-24","duration":4,"deliveryMethod":"in-person","context":"ERSEA compliance and reporting","objective":"Master ERSEA documentation","numberOfParticipants":22,"status":"In progress","ownerComplete":false,"pocComplete":false,"facilitation":"national_center","recipients":[{"value":1242,"label":"Example Recipient 9"}],"objectiveTopics":["ERSEA","Compliance","Reporting"],"objectiveTrainers":["National Center"],"participants":["Program Support / Administrative Assistant","Manager / Coordinator / Specialist"]}' AS JSONB),
+      CAST('{"sessionName":"ERSEA Implementation Session - Session 3","startDate":"2024-03-24","endDate":"2024-03-24","duration":4,"deliveryMethod":"in-person","context":"ERSEA compliance and reporting","objective":"Master ERSEA documentation","numberOfParticipants":22,"status":"In progress","ownerComplete":false,"pocComplete":false,"regionId":1,"facilitation":"national_center","recipients":[{"value":1242,"label":"Example Recipient 9"}],"objectiveTopics":["ERSEA","Compliance","Reporting"],"objectiveTrainers":["National Center"],"participants":["Program Support / Administrative Assistant","Manager / Coordinator / Specialist"]}' AS JSONB),
       NOW(),
       NOW()
     FROM "EventReportPilots"

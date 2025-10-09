@@ -40,6 +40,8 @@ function SessionCard({
   isPoc,
   isOwner,
   isCollaborator,
+  // eslint-disable-next-line no-unused-vars
+  eventOrganizer, //  TODO: Will leverage later
 }) {
   const modalRef = useRef();
   const { approverId } = session;
@@ -233,5 +235,6 @@ SessionCard.propTypes = {
   isPoc: PropTypes.bool.isRequired,
   isOwner: PropTypes.bool.isRequired,
   isCollaborator: PropTypes.bool.isRequired,
+  eventOrganizer: PropTypes.string.isRequired,
 };
 export default SessionCard;

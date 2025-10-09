@@ -4,6 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import FormItem from '../../../components/FormItem';
 import IncompletePages from '../../../components/IncompletePages';
 import { reviewSubmitComponentProps } from './constants';
+import useFetch from '../../../hooks/useFetch';
+import { getRegionalTrainerOptions } from '../../../fetchers/users';
 
 const path = 'submitter-session-report';
 
@@ -16,11 +18,18 @@ export default function Submit({
 }) {
   const { register, watch } = useFormContext();
   const pageState = watch('pageState');
+  const regionId = watch('regionId');
 
   const filtered = Object.entries(pageState || {}).filter(([, status]) => status !== 'Complete').map(([position]) => Number(position));
   // eslint-disable-next-line max-len
   const incompletePages = Object.values(pages).filter((page) => filtered.includes(page.position)).map(({ label }) => label);
   const hasIncompletePages = incompletePages.length > 0;
+
+  const { data: approvers } = useFetch(
+    [],
+    async () => getRegionalTrainerOptions(String(regionId)),
+    [regionId],
+  );
 
   return (
     <div data-testid="session-form-submit">
@@ -44,9 +53,9 @@ export default function Submit({
           required
         >
           <option disabled hidden value="">Select an approver</option>
-          {/* todo: populate available approvers */}
-          <option value={1}>Hermione Granger</option>
-          <option value={5}>Cucumber User</option>
+          {approvers.map((approver) => (
+            <option value={approver.id}>{approver.fullName}</option>
+          ))}
         </Dropdown>
       </FormItem>
       <div className="display-flex margin-top-4">

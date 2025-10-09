@@ -56,6 +56,7 @@ describe('SessionCard', () => {
             isPoc={isPoc}
             isOwner={isOwner}
             isCollaborator={isCollaborator}
+            eventOrganizer="Regional PD Event (with National Centers)"
           />
         </UserContext.Provider>
       </Router>));
