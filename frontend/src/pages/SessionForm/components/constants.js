@@ -5,6 +5,7 @@ const reviewSubmitComponentProps = {
   onSaveDraft: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  onFormReview: PropTypes.func.isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,

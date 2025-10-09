@@ -9,17 +9,18 @@ import { Accordion } from '../../../components/Accordion';
 // import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Submit from './Submit';
-// import ApproverReview from '../../CollaborationReportForm/Pages/components/ApproverReview';
-// import CreatorSubmit from '../../CollaborationReportForm/Pages/components/CreatorSubmit';
+import Approve from './Approve';
+import NeedsAction from './NeedsAction';
 
 const TopAlert = ({
   isNeedsAction,
   approver,
+  submitter,
 }) => {
   if (isNeedsAction) {
     return (
       <Alert type="error" noIcon slim className="margin-bottom-4 no-print">
-        {approver.user.fullName}
+        {approver.fullName}
         {' '}
         has requested changes to this session.
         {' '}
@@ -31,7 +32,7 @@ const TopAlert = ({
   return (
     <Alert type="info" noIcon slim className="margin-bottom-4 no-print">
       <>
-        Test user
+        {submitter}
         {' '}
         has requested approval for this session report.
         {' '}
@@ -42,15 +43,10 @@ const TopAlert = ({
 };
 
 TopAlert.propTypes = {
-  author: PropTypes.shape({
-    fullName: PropTypes.string,
-  }).isRequired,
+  submitter: PropTypes.string.isRequired,
   isNeedsAction: PropTypes.bool.isRequired,
   approver: PropTypes.shape({
-    status: PropTypes.string,
-    user: PropTypes.shape({
-      fullName: PropTypes.string,
-    }),
+    fullName: PropTypes.string,
   }).isRequired,
 };
 
@@ -58,7 +54,7 @@ const Review = ({
   reviewItems,
   pages,
 
-  // onFormReview,
+  onFormReview,
   // approverStatusList,
 
   // availableApprovers,
@@ -72,17 +68,25 @@ const Review = ({
   onUpdatePage,
   onSaveDraft,
   onSubmit,
-  // isNeedsAction,
+  isNeedsAction,
   // pendingApprovalCount,
   // author,
   // approvers,
   reviewSubmitPagePosition,
 }) => {
-  const FormComponent = Submit;
+  let FormComponent = Submit;
+
+  if (isApprover && !isNeedsAction) {
+    FormComponent = Approve;
+  }
+
+  if (isNeedsAction) {
+    FormComponent = NeedsAction;
+  }
 
   const { getValues } = useFormContext();
   // const { user } = useContext(UserContext);
-  const { id, eventId } = getValues();
+  const { id, eventId, submitter } = getValues();
   const history = useHistory();
 
   // const otherManagerNotes = approverStatusList
@@ -103,8 +107,8 @@ const Review = ({
       <IndicatesRequiredField />
       {isSubmitted && (
       <TopAlert
-        isNeedsAction={false}
-        // author={author}
+        isNeedsAction={isNeedsAction}
+        submitter={submitter}
         approver={approver}
       />
       )}
@@ -135,13 +139,14 @@ const Review = ({
         onSubmit={onSubmit}
         reviewSubmitPagePosition={reviewSubmitPagePosition}
         pages={pages}
+        onFormReview={onFormReview}
       />
     </>
   );
 };
 
 Review.propTypes = {
-  // onFormReview: PropTypes.func.isRequired,
+  onFormReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   // dateSubmitted: PropTypes.string,
   // approverStatusList: PropTypes.arrayOf(PropTypes.shape({
@@ -173,7 +178,7 @@ Review.propTypes = {
   onUpdatePage: PropTypes.func.isRequired,
   // onSaveForm: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
-  // isNeedsAction: PropTypes.bool.isRequired,
+  isNeedsAction: PropTypes.bool.isRequired,
   author: PropTypes.shape({
     fullName: PropTypes.string,
   }).isRequired,

@@ -28,6 +28,7 @@ export const userAttributes = [
   'lastLogin',
   'flags',
   'createdAt',
+  'fullName',
 ];
 
 export async function usersByRoles(roles = [], regionId = null) {

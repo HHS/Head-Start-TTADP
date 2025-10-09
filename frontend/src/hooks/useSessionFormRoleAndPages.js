@@ -96,7 +96,7 @@ export default function useSessionFormRoleAndPages(formData) {
 
   const applicationPages = useMemo(() => {
     let pagesWithReview = [];
-    if (isAdminUser) {
+    if (isAdminUser || isApprover) {
       pagesWithReview = [
         pages.sessionSummary,
         pages.participants,
@@ -124,7 +124,7 @@ export default function useSessionFormRoleAndPages(formData) {
     pagesWithReview.push(reviewPage);
 
     return pagesWithReview;
-  }, [isAdminUser, isCollaborator, isPoc, isRegionalNoNationalCenters]);
+  }, [isAdminUser, isApprover, isCollaborator, isPoc, isRegionalNoNationalCenters]);
 
   return {
     isPoc,
