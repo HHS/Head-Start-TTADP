@@ -11,7 +11,16 @@ const path = 'needs-action-session-report';
 export default function NeedsAction({ onSubmit }) {
   const { register, getValues } = useFormContext();
 
-  const { approver, managerNotes } = getValues();
+  const { approver, managerNotes, status } = getValues();
+
+  const approverStatus = [
+    {
+      status,
+      user: {
+        fullName: approver.fullName,
+      },
+    },
+  ];
 
   return (
     <div data-testid="session-form-submit">
@@ -22,10 +31,14 @@ export default function NeedsAction({ onSubmit }) {
       >
         <Textarea inputRef={register()} name="additionalNotes" id="additionalNotes" />
       </FormItem>
-      <ReadOnlyField label="Creator notes">
-        {managerNotes}
-      </ReadOnlyField>
-      <ApproverStatusList approverStatus={[approver]} />
+      <div className="margin-top-4">
+        <ReadOnlyField label="Manager notes">
+          {managerNotes}
+        </ReadOnlyField>
+      </div>
+      <div className="margin-top-4">
+        <ApproverStatusList approverStatus={approverStatus} />
+      </div>
       <div className="display-flex margin-top-4">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onSubmit}>Update report</Button>
       </div>

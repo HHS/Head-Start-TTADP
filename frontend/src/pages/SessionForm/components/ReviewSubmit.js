@@ -3,7 +3,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
-// import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common';
 import Review from './Review';
 import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
@@ -22,7 +22,7 @@ const ReviewSubmitSession = ({
   reviewSubmitPagePosition,
 }) => {
   const {
-    calculatedStatus,
+    status,
     submissionStatus,
     submittedAt,
     author,
@@ -48,7 +48,7 @@ const ReviewSubmitSession = ({
   // const isCollaborator = collabReportSpecialists.some(({ specialistId }) => user.id === specialistId);
   // const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   // const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
-  // const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+  const isNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
   const isApprover = Number(approverId) === user.id;
 
   const reviewPages = pages.filter(({ review }) => Boolean(!review));
@@ -70,11 +70,11 @@ const ReviewSubmitSession = ({
           // isCreator={isCreator}
           isSubmitted={submitted}
           // isApproved={isApproved}
-          // isNeedsAction={isNeedsAction}
+          isNeedsAction={isNeedsAction}
           isApprover={isApprover}
           approver={approver}
           // dateSubmitted={submittedAt}
-          // onFormReview={onReview}
+          onFormReview={onReview}
           pages={reviewPages}
           reviewItems={reviewPages.map((p) => ({
             id: p.path,
@@ -112,6 +112,7 @@ ReviewSubmitSession.propTypes = {
       id: PropTypes.number,
       fullName: PropTypes.string,
     }),
+    status: PropTypes.string,
     approverId: PropTypes.number,
     userId: PropTypes.number,
     additionalNotes: PropTypes.string,

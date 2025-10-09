@@ -10,14 +10,24 @@ import ApproverStatusList from '../../ActivityReport/Pages/components/ApproverSt
 
 const path = 'approver-session-report';
 
-export default function Approve({ onSubmit }) {
+export default function Approve({ onFormReview }) {
   const { register, getValues } = useFormContext();
 
   const {
     additionalNotes,
     approver,
     dateSubmitted,
+    status,
   } = getValues();
+
+  const approverStatus = [
+    {
+      status,
+      user: {
+        fullName: approver.fullName,
+      },
+    },
+  ];
 
   return (
     <div data-testid="session-form-approver">
@@ -37,13 +47,13 @@ export default function Approve({ onSubmit }) {
         {dateSubmitted}
       </ReadOnlyField>
       <FormItem
-        name="status"
+        name="approvalStatus"
         label="Choose approval status"
         className="margin-bottom-4"
       >
         <Dropdown
-          id="status"
-          name="status"
+          id="approvalStatus"
+          name="approvalStatus"
           inputRef={register({ required: true })}
         >
           <option name="default" value="" disabled hidden>- Select -</option>
@@ -52,9 +62,9 @@ export default function Approve({ onSubmit }) {
           ))}
         </Dropdown>
       </FormItem>
-      <ApproverStatusList approverStatus={[approver]} />
+      <ApproverStatusList approverStatus={approverStatus} />
       <div className="display-flex margin-top-4">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onSubmit}>Submit </Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" onClick={onFormReview}>Submit </Button>
       </div>
     </div>
   );

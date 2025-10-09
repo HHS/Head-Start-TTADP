@@ -54,6 +54,7 @@ const Navigator = ({
   setShouldAutoSave,
   preFlightForNavigation,
   hideSideNav,
+  deadNavigation,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -171,6 +172,7 @@ const Navigator = ({
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
           savedToStorageTime={savedToStorageTime}
+          deadNavigation={deadNavigation}
         />
       </Grid>
       )}
@@ -271,9 +273,11 @@ Navigator.propTypes = {
   setShouldAutoSave: PropTypes.func,
   preFlightForNavigation: PropTypes.func,
   hideSideNav: PropTypes.bool,
+  deadNavigation: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
+  deadNavigation: false,
   onSaveAndContinue: null,
   showSavedDraft: false,
   additionalData: {},

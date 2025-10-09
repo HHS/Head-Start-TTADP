@@ -14,6 +14,7 @@ import {
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import {
@@ -246,36 +247,56 @@ export default function SessionForm({ match }) {
       const viewTrUrl = `/training-report/view/${trainingReportId}`;
       try {
         const session = await getSessionBySessionId(sessionId);
+
+        /**
+         * handle the cases where we need to redirect away
+         * we'll do this here inline instead of loading into state
+         * (just to save render cycles)
+         */
+
         // is it submitted?
         const { data: { submitted }, approverId } = session;
         const isApproverUser = user.id === Number(approverId);
-        if (submitted) {
-          // if submitted and not an approver (and report is not needs action)
-          // get us out of here
-          const isNeedsAction = false; // approver?.status === REPORT_STATUSES.NEEDS_ACTION;
 
-          if (isApproverUser && !isNeedsAction && !isAdminUser) {
-            history.push(viewTrUrl); // todo
-            return;
-          }
+        const isNeedsAction = session.data.status === REPORT_STATUSES.NEEDS_ACTION;
+        const sessionComplete = session.data.status === TRAINING_REPORT_STATUSES.COMPLETE;
 
-          if (isApproverUser) {
-            history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
-            return;
-          }
-        }
+        const notSubmittedApprover = !submitted && isApproverUser && !isAdminUser;
+        const needsActionApprover = submitted && isApproverUser && isNeedsAction;
 
         // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
         // eslint-disable-next-line max-len
         const isCollaboratorFromSession = (session.event.collaboratorIds || []).includes(user.id) && !isAdminUser;
 
+        const isOwnerFromSession = session.event.ownerId === user.id;
+
         // check the event organizer and user role
         const { event: { data: { eventOrganizer: eventOrganizerFromSession } } } = session;
+
         // eslint-disable-next-line max-len
-        if (eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession) {
-          // in this case, POCs have no responsiblity
+        const isRegionalEventPoc = eventOrganizerFromSession === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS && isPocFromSession && !isAdminUser;
+        // eslint-disable-next-line max-len
+        const isFormUser = (isPocFromSession || isOwnerFromSession || isCollaboratorFromSession) && !isAdminUser;
+
+        const submittedFormUser = submitted && isFormUser && !isNeedsAction;
+        const completeSessionFormUser = sessionComplete && (isFormUser || isApproverUser);
+
+        // when do we redirect to the "View" page?
+        if (
+          notSubmittedApprover // approver, session not submitted yet
+          || submittedFormUser // when the form is submitted and we are a form-filler
+          || completeSessionFormUser // when the form is complete and we are a form-filler
+          || needsActionApprover // when we are an approver and the form is needs action
+          || isRegionalEventPoc // if it's a "regional" session and we are a POC (corner case)
+        ) {
           history.push(viewTrUrl);
+          return;
+        }
+
+        // we push approvers to the review page
+        if (submitted && isApproverUser && !isNeedsAction && currentPage !== 'review') {
+          history.push(`/training-report/${trainingReportId}/session/${session.id}/review`);
           return;
         }
 
@@ -288,6 +309,7 @@ export default function SessionForm({ match }) {
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
         });
+
         reportId.current = session.id;
       } catch (e) {
         history.push(`/something-went-wrong/${e.status}`);
@@ -398,6 +420,54 @@ export default function SessionForm({ match }) {
     }
   };
 
+  const onReview = async () => {
+    try {
+      await hookForm.trigger();
+
+      // reset the error message
+      setError('');
+      setIsAppLoading(true);
+
+      // grab the newest data from the form
+      const {
+        approvalStatus,
+        ...data
+      } = hookForm.getValues();
+
+      const status = (() => {
+        if (approvalStatus === REPORT_STATUSES.APPROVED) {
+          return TRAINING_REPORT_STATUSES.COMPLETE;
+        }
+
+        if (approvalStatus === REPORT_STATUSES.NEEDS_ACTION) {
+          return REPORT_STATUSES.NEEDS_ACTION;
+        }
+
+        return '';
+      })();
+
+      if (!status) {
+        return;
+      }
+
+      // PUT it to the backend
+      await updateSession(sessionId, {
+        data: {
+          ...data,
+          status,
+        },
+        trainingReportId,
+        eventId: trainingReportId || null,
+      });
+
+      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
+    } catch (err) {
+      setError('There was an error saving the session report. Please try again later.');
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
   const onFormSubmit = async () => {
     try {
       await hookForm.trigger();
@@ -410,10 +480,6 @@ export default function SessionForm({ match }) {
       const {
         ...data
       } = hookForm.getValues();
-
-      if (data.submitted) {
-        return;
-      }
 
       // Get form data based on role IST vs POC.
       const keyArray = determineKeyArray({
@@ -472,16 +538,6 @@ export default function SessionForm({ match }) {
     return null;
   }
 
-  const nonFormUser = !isOwner && !isAdminUser && !isPoc && !isCollaborator && (sessionId !== 'new') && !error;
-  if (reportFetched
-      && ((formData.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && (!isAdminUser))
-      || nonFormUser)) {
-    return (
-      <Redirect to={`/training-report/view/${trainingReportId}`} />
-    );
-  }
-
   const { event } = formData;
 
   return (
@@ -519,6 +575,7 @@ export default function SessionForm({ match }) {
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <Navigator
+            deadNavigation={isApprover}
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
             key={currentPage}
@@ -542,7 +599,7 @@ export default function SessionForm({ match }) {
             onResetToDraft={() => {}}
             isApprover={false}
             isPendingApprover={false}
-            onReview={() => {}}
+            onReview={onReview}
             errorMessage={errorMessage}
             updateErrorMessage={updateErrorMessage}
             savedToStorageTime={savedToStorageTime}

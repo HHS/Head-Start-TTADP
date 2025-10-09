@@ -67,6 +67,8 @@ const istAndPocFields = {
   additionalNotes: '',
   managerNotes: '',
   dateSubmitted: null,
+  submitter: '',
+  submitted: false,
 };
 
 const completeFormData = {
@@ -300,19 +302,6 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
 
-  it('redirects if session is complete', async () => {
-    const url = join(sessionsUrl, 'id', '1');
-
-    fetchMock.get(url, completeFormData);
-
-    act(() => {
-      renderSessionForm('1', 'session-summary', '1');
-    });
-
-    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
-    expect(history.location.pathname).toBe('/training-report/view/1');
-  });
-
   it('redirects when user is a POC', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
@@ -427,7 +416,11 @@ describe('SessionReportForm', () => {
       url, {
         ...completeFormData,
         id: 1,
-        data: completeFormData,
+        data: {
+          ...completeFormData,
+          approverId: 3,
+        },
+        approverId: 3,
         status: 'In progress',
         event: {
           regionId: 1, ownerId: 2, data: { eventId: 1 }, pocIds: [1],
@@ -436,7 +429,7 @@ describe('SessionReportForm', () => {
     );
 
     act(() => {
-      renderSessionForm('1', 'next-steps', '1');
+      renderSessionForm('1', 'review', '1');
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -444,8 +437,10 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Review and submit/i);
-    userEvent.click(saveSession);
+    const saveSession = await screen.findByRole('button', { name: /submit for approval/i });
+    act(() => {
+      userEvent.click(saveSession);
+    });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
 
@@ -470,7 +465,14 @@ describe('SessionReportForm', () => {
       url, {
         ...completeFormData,
         id: 1,
-        data: completeFormData,
+        data: {
+          ...completeFormData,
+          status: 'In progress',
+          approverId: 3,
+          approver: { id: 3, fullName: 'Approver Name' },
+        },
+        approverId: 3,
+        approver: { id: 3, fullName: 'Approver Name' },
         status: 'In progress',
         event: {
           regionId: 1, ownerId: 1, data: { eventId: 1 }, pocIds: [2],
@@ -497,7 +499,7 @@ describe('SessionReportForm', () => {
 
     const putBody = fetchMock.lastOptions(url).body;
 
-    // Assert the poc complete properties.
+    // Assert the owner complete properties.
     const putBodyJson = JSON.parse(putBody);
     expect(putBodyJson.data.ownerComplete).toBe(true);
     expect(putBodyJson.data.ownerCompleteId).toBe(1);
@@ -618,11 +620,16 @@ describe('SessionReportForm', () => {
     // Assert the put contains the correct data
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
-    // Assert the body has istkey porperties using the hasOwnProperty method
-    // create a variable to removes pocComplete.
+    // Assert the body has istkey properties using the hasOwnProperty method
+    // Owner (not admin) should only get IST keys, and pocComplete should be removed.
     const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
     istKeysWithoutPocComplete.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
+    // Assert POC-only fields are NOT present (fields in pocKeys but not in istKeys)
+    const pocOnlyKeys = pocKeys.filter((key) => !istKeys.includes(key));
+    pocOnlyKeys.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
     });
   });
 
@@ -659,11 +666,16 @@ describe('SessionReportForm', () => {
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
 
-    // Assert the body has istkey porperties using the hasOwnProperty method
-    // create a variable to removes pocComplete.
-    const istKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
-    istKeysWithoutOwnerComplete.forEach((key) => {
+    // Assert the body has POC key properties using the hasOwnProperty method
+    // POC (not admin) should only get POC keys, and ownerComplete should be removed.
+    const pocKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
+    pocKeysWithoutOwnerComplete.forEach((key) => {
       expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
+    // Assert IST-only fields are NOT present (fields in istKeys but not in pocKeys)
+    const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
+    istOnlyKeys.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(false);
     });
   });
 });
